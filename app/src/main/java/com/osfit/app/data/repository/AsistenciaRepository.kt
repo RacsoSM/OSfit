@@ -29,6 +29,23 @@ class AsistenciaRepository(
         awaitClose { registro.remove() }
     }
 
+    fun observarAsistenciasPorRango(fechaInicio: String, fechaFin: String): Flow<List<Asistencia>> = callbackFlow {
+        val registro = coleccion
+            .whereGreaterThanOrEqualTo("fecha", fechaInicio)
+            .whereLessThanOrEqualTo("fecha", fechaFin)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    close(error)
+                    return@addSnapshotListener
+                }
+                val asistencias = snapshot?.documents?.mapNotNull { doc ->
+                    doc.toObject(Asistencia::class.java)?.copy(id = doc.id)
+                } ?: emptyList()
+                trySend(asistencias)
+            }
+        awaitClose { registro.remove() }
+    }
+
     fun observarAsistenciasPorCliente(clienteId: String): Flow<List<Asistencia>> = callbackFlow {
         val registro = coleccion.whereEqualTo("clienteId", clienteId)
             .addSnapshotListener { snapshot, error ->

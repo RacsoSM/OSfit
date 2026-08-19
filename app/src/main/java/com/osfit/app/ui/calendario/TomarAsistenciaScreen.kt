@@ -11,6 +11,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -26,12 +27,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.osfit.app.data.model.Asistencia
 import com.osfit.app.data.model.Cliente
+
+private val VerdeAsistio = Color(0xFF048751)
+private val RojoFalto = Color(0xFFC23636)
 
 @Composable
 fun TomarAsistenciaScreen(fecha: String) {
@@ -95,8 +100,27 @@ private fun ClienteAsistenciaRow(
                 }
                 Text(estado, style = MaterialTheme.typography.bodySmall)
             }
-            OutlinedButton(onClick = onFalto) { Text("Faltó") }
-            Button(onClick = { mostrarSelectorDia = true }, enabled = tieneRutina) { Text("Asistió") }
+            val yaFalto = asistenciaExistente?.asistio == false
+            val yaAsistio = asistenciaExistente?.asistio == true
+
+            if (yaFalto) {
+                Button(
+                    onClick = onFalto,
+                    colors = ButtonDefaults.buttonColors(containerColor = RojoFalto, contentColor = Color.White)
+                ) { Text("Faltó") }
+            } else {
+                OutlinedButton(onClick = onFalto) { Text("Faltó") }
+            }
+
+            if (yaAsistio) {
+                Button(
+                    onClick = { mostrarSelectorDia = true },
+                    enabled = tieneRutina,
+                    colors = ButtonDefaults.buttonColors(containerColor = VerdeAsistio, contentColor = Color.White)
+                ) { Text("Asistió") }
+            } else {
+                OutlinedButton(onClick = { mostrarSelectorDia = true }, enabled = tieneRutina) { Text("Asistió") }
+            }
         }
     }
 
