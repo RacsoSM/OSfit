@@ -2,17 +2,26 @@ package com.osfit.app.ui.clientes
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.Payments
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -22,6 +31,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -46,6 +56,7 @@ fun ClienteDetailScreen(clienteId: String, onVerAsistencias: (String) -> Unit) {
 
     var mostrarDialogoPago by remember { mutableStateOf(false) }
     var mostrarDialogoRutina by remember { mutableStateOf(false) }
+    var mostrarConfirmacionActivo by remember { mutableStateOf(false) }
 
     val clienteActual = cliente ?: return
 
@@ -55,6 +66,9 @@ fun ClienteDetailScreen(clienteId: String, onVerAsistencias: (String) -> Unit) {
                 Text(clienteActual.nombre, style = MaterialTheme.typography.headlineSmall)
                 if (clienteActual.telefono.isNotBlank()) {
                     Text(clienteActual.telefono, style = MaterialTheme.typography.bodyMedium)
+                }
+                if (!clienteActual.activo) {
+                    Text("Inactivo", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.labelLarge)
                 }
             }
             item {
@@ -73,13 +87,19 @@ fun ClienteDetailScreen(clienteId: String, onVerAsistencias: (String) -> Unit) {
                 }
             }
             item {
-                Button(onClick = { mostrarDialogoPago = true }, modifier = Modifier.fillMaxWidth()) {
-                    Text("Registrar pago")
-                }
-            }
-            item {
-                OutlinedButton(onClick = { onVerAsistencias(clienteId) }, modifier = Modifier.fillMaxWidth()) {
-                    Text("Ver calendario de asistencia")
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    AccionCard(
+                        icono = Icons.Filled.Payments,
+                        texto = "Registrar pago",
+                        modifier = Modifier.weight(1f),
+                        onClick = { mostrarDialogoPago = true }
+                    )
+                    AccionCard(
+                        icono = Icons.Filled.CalendarMonth,
+                        texto = "Asistencia",
+                        modifier = Modifier.weight(1f),
+                        onClick = { onVerAsistencias(clienteId) }
+                    )
                 }
             }
             item {
@@ -89,6 +109,15 @@ fun ClienteDetailScreen(clienteId: String, onVerAsistencias: (String) -> Unit) {
                 item { Text("Sin pagos registrados todavía.") }
             } else {
                 items(pagos, key = { it.id }) { pago -> PagoItem(pago) }
+            }
+            item {
+                Spacer(modifier = Modifier.height(12.dp))
+                OutlinedButton(
+                    onClick = { mostrarConfirmacionActivo = true },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(if (clienteActual.activo) "Marcar cliente como inactivo" else "Reactivar cliente")
+                }
             }
         }
     }
@@ -117,6 +146,37 @@ fun ClienteDetailScreen(clienteId: String, onVerAsistencias: (String) -> Unit) {
             onCancelar = { mostrarDialogoRutina = false }
         )
     }
+
+    if (mostrarConfirmacionActivo) {
+        ConfirmarActivoDialog(
+            activo = clienteActual.activo,
+            nombreCliente = clienteActual.nombre,
+            onConfirmar = {
+                viewModel.actualizarActivo(!clienteActual.activo)
+                mostrarConfirmacionActivo = false
+            },
+            onCancelar = { mostrarConfirmacionActivo = false }
+        )
+    }
+}
+
+@Composable
+private fun AccionCard(
+    icono: androidx.compose.ui.graphics.vector.ImageVector,
+    texto: String,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    Card(onClick = onClick, modifier = modifier) {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Icon(icono, contentDescription = texto)
+            Spacer(modifier = Modifier.height(6.dp))
+            Text(texto, style = MaterialTheme.typography.bodyMedium)
+        }
+    }
 }
 
 @Composable
@@ -134,6 +194,9 @@ private fun PagoItem(pago: Pago) {
     }
 }
 
+private const val DIAS_CICLO_SEMANAL = 7
+private const val DIAS_CICLO_MENSUAL = 30
+
 @Composable
 private fun RegistrarPagoDialog(
     errorValidacion: String?,
@@ -142,6 +205,7 @@ private fun RegistrarPagoDialog(
 ) {
     var montoTexto by remember { mutableStateOf("") }
     var nota by remember { mutableStateOf("") }
+    var cicloDias by remember { mutableStateOf(DIAS_CICLO_MENSUAL) }
 
     AlertDialog(
         onDismissRequest = onCancelar,
@@ -164,8 +228,16 @@ private fun RegistrarPagoDialog(
                     label = { Text("Nota (opcional)") },
                     modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
                 )
+                Text("Ciclo de pago", style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(top = 12.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    RadioButton(selected = cicloDias == DIAS_CICLO_SEMANAL, onClick = { cicloDias = DIAS_CICLO_SEMANAL })
+                    Text("Semanal")
+                    Spacer(modifier = Modifier.width(16.dp))
+                    RadioButton(selected = cicloDias == DIAS_CICLO_MENSUAL, onClick = { cicloDias = DIAS_CICLO_MENSUAL })
+                    Text("Mensual")
+                }
                 Text(
-                    "Fecha de pago: hoy. Próximo pago sugerido: hoy + 30 días.",
+                    "Fecha de pago: hoy. Próximo pago sugerido: hoy + $cicloDias días.",
                     style = MaterialTheme.typography.bodySmall,
                     modifier = Modifier.padding(top = 8.dp)
                 )
@@ -177,7 +249,7 @@ private fun RegistrarPagoDialog(
                 val hoy = Timestamp.now()
                 val calendario = Calendar.getInstance().apply {
                     time = hoy.toDate()
-                    add(Calendar.DAY_OF_MONTH, 30)
+                    add(Calendar.DAY_OF_MONTH, cicloDias)
                 }
                 val proximoPago = Timestamp(calendario.time)
                 onConfirmar(monto, hoy, proximoPago, nota)
@@ -212,6 +284,34 @@ private fun AsignarRutinaDialog(
             }
         },
         confirmButton = {},
+        dismissButton = {
+            TextButton(onClick = onCancelar) { Text("Cancelar") }
+        }
+    )
+}
+
+@Composable
+private fun ConfirmarActivoDialog(
+    activo: Boolean,
+    nombreCliente: String,
+    onConfirmar: () -> Unit,
+    onCancelar: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onCancelar,
+        title = { Text(if (activo) "¿Marcar como inactivo?" else "¿Reactivar cliente?") },
+        text = {
+            Text(
+                if (activo) {
+                    "$nombreCliente dejará de aparecer en la lista de clientes activos del Calendario. Podrás reactivarlo cuando quieras."
+                } else {
+                    "$nombreCliente volverá a aparecer en la lista de clientes activos del Calendario."
+                }
+            )
+        },
+        confirmButton = {
+            TextButton(onClick = onConfirmar) { Text("Confirmar") }
+        },
         dismissButton = {
             TextButton(onClick = onCancelar) { Text("Cancelar") }
         }

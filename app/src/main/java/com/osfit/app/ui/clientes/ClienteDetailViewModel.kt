@@ -56,4 +56,10 @@ class ClienteDetailViewModel(
             clienteRepository.asignarRutina(clienteId, rutina)
         }
     }
+
+    fun actualizarActivo(activo: Boolean) {
+        viewModelScope.launch {
+            clienteRepository.actualizarActivo(clienteId, activo)
+        }
+    }
 }

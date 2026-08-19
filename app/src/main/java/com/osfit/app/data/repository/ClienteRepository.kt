@@ -53,4 +53,8 @@ class ClienteRepository(
             )
         ).await()
     }
+
+    suspend fun actualizarActivo(clienteId: String, activo: Boolean) {
+        coleccion.document(clienteId).update("activo", activo).await()
+    }
 }

@@ -84,7 +84,12 @@ private fun ClienteItem(cliente: Cliente, onClick: () -> Unit) {
             modifier = Modifier.fillMaxWidth().padding(16.dp),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Text(cliente.nombre, style = MaterialTheme.typography.titleMedium)
+            Column {
+                Text(cliente.nombre, style = MaterialTheme.typography.titleMedium)
+                if (!cliente.activo) {
+                    Text("Inactivo", style = MaterialTheme.typography.labelSmall, color = Color(0xFF9E9E9E))
+                }
+            }
             Text(etiqueta, color = color, style = MaterialTheme.typography.labelLarge)
         }
     }
