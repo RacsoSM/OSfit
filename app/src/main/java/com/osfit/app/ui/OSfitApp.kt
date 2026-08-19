@@ -71,9 +71,8 @@ private fun OSfitContent() {
                         selected = rutaActual == pantalla.route,
                         onClick = {
                             navController.navigate(pantalla.route) {
-                                popUpTo(navController.graph.startDestinationId) { saveState = true }
+                                popUpTo(navController.graph.startDestinationId)
                                 launchSingleTop = true
-                                restoreState = true
                             }
                         },
                         icon = { Icon(icono, contentDescription = etiqueta) },

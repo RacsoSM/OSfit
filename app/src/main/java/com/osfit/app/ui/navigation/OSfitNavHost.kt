@@ -37,7 +37,7 @@ fun OSfitNavHost(navController: NavHostController, modifier: Modifier = Modifier
             arguments = listOf(navArgument("clienteId") { type = NavType.StringType })
         ) { backStackEntry ->
             val clienteId = backStackEntry.arguments?.getString("clienteId") ?: return@composable
-            Text("Detalle de $clienteId", modifier = Modifier.padding(16.dp))
+            com.osfit.app.ui.clientes.ClienteDetailScreen(clienteId = clienteId)
         }
         composable(
             route = Screen.RutinaEditor.route,
