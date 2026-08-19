@@ -1,0 +1,14 @@
+package com.osfit.app.data.model
+
+import com.google.firebase.Timestamp
+
+data class Cliente(
+    val id: String = "",
+    val nombre: String = "",
+    val telefono: String = "",
+    val activo: Boolean = true,
+    val rutinaAsignada: Rutina? = null,
+    val plantillaOrigenId: String = "",
+    val diaActualIndex: Int = 0,
+    val fechaProximoPago: Timestamp? = null
+)
