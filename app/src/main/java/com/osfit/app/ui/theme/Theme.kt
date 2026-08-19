@@ -5,28 +5,16 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
 
-private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80
-)
+private val AzulOscuro = Color(0xFF1B5E20)
+private val AzulClaro = Color(0xFF4CAF50)
 
-private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
-)
+private val EsquemaOscuro = darkColorScheme(primary = AzulClaro)
+private val EsquemaClaro = lightColorScheme(primary = AzulOscuro)
 
 @Composable
-fun OSfitTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
-    content: @Composable () -> Unit
-) {
-    val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
-    MaterialTheme(
-        colorScheme = colorScheme,
-        typography = Typography,
-        content = content
-    )
+fun OSfitTheme(content: @Composable () -> Unit) {
+    val colorScheme = if (isSystemInDarkTheme()) EsquemaOscuro else EsquemaClaro
+    MaterialTheme(colorScheme = colorScheme, content = content)
 }

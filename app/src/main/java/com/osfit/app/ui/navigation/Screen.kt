@@ -1,0 +1,18 @@
+package com.osfit.app.ui.navigation
+
+sealed class Screen(val route: String) {
+    data object Clientes : Screen("clientes")
+    data object Calendario : Screen("calendario")
+    data object Rutinas : Screen("rutinas")
+
+    data object ClienteDetail : Screen("cliente_detail/{clienteId}") {
+        fun crearRuta(clienteId: String) = "cliente_detail/$clienteId"
+    }
+
+    data object RutinaEditor : Screen("rutina_editor?rutinaId={rutinaId}") {
+        const val ARG_RUTINA_NUEVA = "nueva"
+        fun crearRuta(rutinaId: String? = null) = "rutina_editor?rutinaId=${rutinaId ?: ARG_RUTINA_NUEVA}"
+    }
+}
+
+val screensConBarraInferior = listOf(Screen.Clientes, Screen.Calendario, Screen.Rutinas)
