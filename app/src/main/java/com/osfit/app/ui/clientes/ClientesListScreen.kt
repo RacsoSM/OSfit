@@ -2,6 +2,7 @@ package com.osfit.app.ui.clientes
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -24,13 +25,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.google.firebase.Timestamp
 import com.osfit.app.data.model.Cliente
-import java.util.Date
 
 @Composable
 fun ClientesListScreen(
@@ -76,31 +77,30 @@ fun ClientesListScreen(
     }
 }
 
+private val GrisInactivo = Color(0xFF5A5A5A)
+
 @Composable
 private fun ClienteItem(cliente: Cliente, onClick: () -> Unit) {
-    val (etiqueta, color) = estadoPago(cliente.fechaProximoPago)
+    val nombreDia = cliente.rutinaAsignada?.dias?.getOrNull(cliente.diaActualIndex)?.nombreDia
+        ?: "Sin rutina asignada"
     Card(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
-        androidx.compose.foundation.layout.Row(
+        Row(
             modifier = Modifier.fillMaxWidth().padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Column {
-                Text(cliente.nombre, style = MaterialTheme.typography.titleMedium)
-                if (!cliente.activo) {
-                    Text("Inactivo", style = MaterialTheme.typography.labelSmall, color = Color(0xFF9E9E9E))
-                }
-            }
-            Text(etiqueta, color = color, style = MaterialTheme.typography.labelLarge)
+            Text(
+                cliente.nombre,
+                style = MaterialTheme.typography.titleMedium,
+                color = if (cliente.activo) Color.Unspecified else GrisInactivo,
+                textDecoration = if (cliente.activo) null else TextDecoration.LineThrough
+            )
+            Text(
+                nombreDia,
+                style = MaterialTheme.typography.bodyMedium,
+                color = if (cliente.activo) Color.Unspecified else GrisInactivo
+            )
         }
-    }
-}
-
-private fun estadoPago(fechaProximoPago: Timestamp?): Pair<String, Color> {
-    if (fechaProximoPago == null) return "Sin pago registrado" to Color(0xFF9E9E9E)
-    return if (fechaProximoPago.toDate().before(Date())) {
-        "Atrasado" to Color(0xFFD32F2F)
-    } else {
-        "Al día" to Color(0xFF2E7D32)
     }
 }
 

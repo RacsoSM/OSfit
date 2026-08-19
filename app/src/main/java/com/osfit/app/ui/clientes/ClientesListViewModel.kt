@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -17,6 +18,7 @@ class ClientesListViewModel(
 ) : ViewModel() {
 
     val clientes: StateFlow<List<Cliente>> = clienteRepository.observarClientes()
+        .map { lista -> lista.sortedBy { !it.activo } }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     private val _errorValidacion = MutableStateFlow<String?>(null)
