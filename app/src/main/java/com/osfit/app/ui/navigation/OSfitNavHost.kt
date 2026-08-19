@@ -25,7 +25,10 @@ fun OSfitNavHost(navController: NavHostController, modifier: Modifier = Modifier
             Text("Calendario", modifier = Modifier.padding(16.dp))
         }
         composable(Screen.Rutinas.route) {
-            Text("Rutinas", modifier = Modifier.padding(16.dp))
+            com.osfit.app.ui.rutinas.RutinasListScreen(
+                onCrearRutina = { navController.navigate(Screen.RutinaEditor.crearRuta()) },
+                onEditarRutina = { rutinaId -> navController.navigate(Screen.RutinaEditor.crearRuta(rutinaId)) }
+            )
         }
         composable(
             route = Screen.ClienteDetail.route,
@@ -38,8 +41,12 @@ fun OSfitNavHost(navController: NavHostController, modifier: Modifier = Modifier
             route = Screen.RutinaEditor.route,
             arguments = listOf(navArgument("rutinaId") { type = NavType.StringType; defaultValue = Screen.RutinaEditor.ARG_RUTINA_NUEVA })
         ) { backStackEntry ->
-            val rutinaId = backStackEntry.arguments?.getString("rutinaId")
-            Text("Editor de rutina $rutinaId", modifier = Modifier.padding(16.dp))
+            val rutinaIdArg = backStackEntry.arguments?.getString("rutinaId")
+            val rutinaId = if (rutinaIdArg == Screen.RutinaEditor.ARG_RUTINA_NUEVA) null else rutinaIdArg
+            com.osfit.app.ui.rutinas.RutinaEditorScreen(
+                rutinaId = rutinaId,
+                onGuardado = { navController.popBackStack() }
+            )
         }
     }
 }
