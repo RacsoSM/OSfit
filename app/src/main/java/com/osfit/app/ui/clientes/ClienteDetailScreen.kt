@@ -11,13 +11,18 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.EditCalendar
+import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.Payments
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -26,6 +31,7 @@ import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -41,8 +47,14 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.google.firebase.Timestamp
 import com.osfit.app.data.model.Pago
 import com.osfit.app.data.model.Rutina
+import com.osfit.app.domain.PagoCalculator
+import com.osfit.app.ui.common.TextoMaquinaEscribir
 import java.text.SimpleDateFormat
+import java.time.Instant
+import java.time.ZoneId
+import java.time.ZoneOffset
 import java.util.Calendar
+import java.util.Date
 import java.util.Locale
 
 @Composable
@@ -59,6 +71,7 @@ fun ClienteDetailScreen(clienteId: String, onVerAsistencias: (String) -> Unit, o
     var mostrarDialogoPago by remember { mutableStateOf(false) }
     var mostrarDialogoRutina by remember { mutableStateOf(false) }
     var mostrarDialogoAsignarDia by remember { mutableStateOf(false) }
+    var mostrarDialogoProximoPago by remember { mutableStateOf(false) }
     var mostrarConfirmacionActivo by remember { mutableStateOf(false) }
     var mostrarConfirmacionEliminar by remember { mutableStateOf(false) }
 
@@ -73,7 +86,11 @@ fun ClienteDetailScreen(clienteId: String, onVerAsistencias: (String) -> Unit, o
     Scaffold { padding ->
         LazyColumn(modifier = Modifier.fillMaxSize().padding(padding).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             item {
-                Text(clienteActual.nombre, style = MaterialTheme.typography.headlineSmall)
+                TextoMaquinaEscribir(
+                    texto = clienteActual.nombre,
+                    style = MaterialTheme.typography.headlineSmall,
+                    empezar = true
+                )
                 if (clienteActual.telefono.isNotBlank()) {
                     Text(clienteActual.telefono, style = MaterialTheme.typography.bodyMedium)
                 }
@@ -82,24 +99,62 @@ fun ClienteDetailScreen(clienteId: String, onVerAsistencias: (String) -> Unit, o
                 }
             }
             item {
+                var expandidaRutina by remember { mutableStateOf(false) }
                 val nombreDiaActual = clienteActual.rutinaAsignada?.dias?.getOrNull(clienteActual.diaActualIndex)?.nombreDia
                 Card(modifier = Modifier.fillMaxWidth()) {
                     Column(modifier = Modifier.padding(12.dp)) {
-                        Text("Rutina asignada", style = MaterialTheme.typography.titleSmall)
-                        Text(clienteActual.rutinaAsignada?.nombre ?: "Sin rutina asignada")
-                        if (nombreDiaActual != null) {
-                            Text("Próximo día: $nombreDiaActual", style = MaterialTheme.typography.bodyMedium)
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { expandidaRutina = !expandidaRutina },
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text("Rutina asignada", style = MaterialTheme.typography.titleSmall)
+                            Icon(
+                                if (expandidaRutina) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
+                                contentDescription = if (expandidaRutina) "Ocultar" else "Mostrar"
+                            )
                         }
-                        Row(modifier = Modifier.padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Button(onClick = { mostrarDialogoRutina = true }) {
-                                Text(if (clienteActual.rutinaAsignada == null) "Asignar rutina" else "Cambiar rutina")
+                        if (expandidaRutina) {
+                            Text(
+                                clienteActual.rutinaAsignada?.nombre ?: "Sin rutina asignada",
+                                modifier = Modifier.padding(top = 8.dp)
+                            )
+                            clienteActual.rutinaAsignada?.dias?.forEachIndexed { indice, dia ->
+                                Text(
+                                    "Día ${indice + 1}: ${dia.nombreDia}",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    modifier = Modifier.padding(top = 4.dp)
+                                )
                             }
-                            if (clienteActual.rutinaAsignada != null) {
-                                OutlinedButton(onClick = { mostrarDialogoAsignarDia = true }) {
-                                    Text("Asignar día")
-                                }
+                            if (nombreDiaActual != null) {
+                                Text(
+                                    "Día Actual",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    modifier = Modifier.padding(top = 12.dp)
+                                )
+                                Text(nombreDiaActual, style = MaterialTheme.typography.bodyMedium)
                             }
                         }
+                    }
+                }
+            }
+            item {
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    AccionCard(
+                        icono = Icons.Filled.FitnessCenter,
+                        texto = if (clienteActual.rutinaAsignada == null) "Asignar rutina" else "Cambiar rutina",
+                        modifier = Modifier.weight(1f),
+                        onClick = { mostrarDialogoRutina = true }
+                    )
+                    if (clienteActual.rutinaAsignada != null) {
+                        AccionCard(
+                            icono = Icons.Filled.EditCalendar,
+                            texto = "Asignar día",
+                            modifier = Modifier.weight(1f),
+                            onClick = { mostrarDialogoAsignarDia = true }
+                        )
                     }
                 }
             }
@@ -120,12 +175,79 @@ fun ClienteDetailScreen(clienteId: String, onVerAsistencias: (String) -> Unit, o
                 }
             }
             item {
-                Text("Historial de pagos", style = MaterialTheme.typography.titleSmall)
+                var expandido by remember { mutableStateOf(false) }
+                val diasParaPago = PagoCalculator.diasParaProximoPago(clienteActual)
+                val formato = remember { SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()) }
+                Card(modifier = Modifier.fillMaxWidth()) {
+                    Column(modifier = Modifier.padding(12.dp)) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { expandido = !expandido },
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text("Próximo pago", style = MaterialTheme.typography.titleSmall)
+                            Icon(
+                                if (expandido) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
+                                contentDescription = if (expandido) "Ocultar" else "Mostrar"
+                            )
+                        }
+                        if (expandido) {
+                            Text(
+                                when {
+                                    clienteActual.fechaProximoPago == null -> "Sin pago registrado"
+                                    diasParaPago == 0L -> "Hoy (${formato.format(clienteActual.fechaProximoPago.toDate())})"
+                                    else -> "${formato.format(clienteActual.fechaProximoPago.toDate())} (${if (diasParaPago!! >= 0) "faltan $diasParaPago días" else "hace ${-diasParaPago} días"})"
+                                },
+                                style = MaterialTheme.typography.bodyMedium,
+                                modifier = Modifier.padding(top = 8.dp)
+                            )
+                            OutlinedButton(
+                                onClick = { mostrarDialogoProximoPago = true },
+                                modifier = Modifier.padding(top = 8.dp)
+                            ) {
+                                Text("Asignar fecha")
+                            }
+                        }
+                    }
+                }
             }
-            if (pagos.isEmpty()) {
-                item { Text("Sin pagos registrados todavía.") }
-            } else {
-                items(pagos, key = { it.id }) { pago -> PagoItem(pago) }
+            item {
+                var expandidoHistorial by remember { mutableStateOf(false) }
+                Card(modifier = Modifier.fillMaxWidth()) {
+                    Column(modifier = Modifier.padding(12.dp)) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { expandidoHistorial = !expandidoHistorial },
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text("Historial de pagos", style = MaterialTheme.typography.titleSmall)
+                            Icon(
+                                if (expandidoHistorial) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
+                                contentDescription = if (expandidoHistorial) "Ocultar" else "Mostrar"
+                            )
+                        }
+                        if (expandidoHistorial) {
+                            if (pagos.isEmpty()) {
+                                Text(
+                                    "Sin pagos registrados todavía.",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    modifier = Modifier.padding(top = 8.dp)
+                                )
+                            } else {
+                                Column(
+                                    modifier = Modifier.padding(top = 8.dp),
+                                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                                ) {
+                                    pagos.forEach { pago -> ContenidoPago(pago) }
+                                }
+                            }
+                        }
+                    }
+                }
             }
             item {
                 Spacer(modifier = Modifier.height(12.dp))
@@ -184,6 +306,17 @@ fun ClienteDetailScreen(clienteId: String, onVerAsistencias: (String) -> Unit, o
         )
     }
 
+    if (mostrarDialogoProximoPago) {
+        AsignarProximoPagoDialog(
+            fechaActual = clienteActual.fechaProximoPago,
+            onConfirmar = { fecha ->
+                viewModel.asignarProximoPago(fecha)
+                mostrarDialogoProximoPago = false
+            },
+            onCancelar = { mostrarDialogoProximoPago = false }
+        )
+    }
+
     if (mostrarConfirmacionActivo) {
         ConfirmarActivoDialog(
             activo = clienteActual.activo,
@@ -220,7 +353,7 @@ private fun AccionCard(
             modifier = Modifier.fillMaxWidth().padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Icon(icono, contentDescription = texto)
+            Icon(icono, contentDescription = texto, tint = MaterialTheme.colorScheme.secondary)
             Spacer(modifier = Modifier.height(6.dp))
             Text(texto, style = MaterialTheme.typography.bodyMedium)
         }
@@ -228,16 +361,14 @@ private fun AccionCard(
 }
 
 @Composable
-private fun PagoItem(pago: Pago) {
+private fun ContenidoPago(pago: Pago) {
     val formato = remember { SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()) }
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(12.dp)) {
-            Text("$${pago.monto}", style = MaterialTheme.typography.titleMedium)
-            Text("Fecha: ${formato.format(pago.fecha.toDate())}", style = MaterialTheme.typography.bodySmall)
-            Text("Próximo pago: ${formato.format(pago.fechaProximoPagoGenerada.toDate())}", style = MaterialTheme.typography.bodySmall)
-            if (pago.nota.isNotBlank()) {
-                Text(pago.nota, style = MaterialTheme.typography.bodySmall)
-            }
+    Column {
+        Text("$${pago.monto}", style = MaterialTheme.typography.titleMedium)
+        Text("Fecha: ${formato.format(pago.fecha.toDate())}", style = MaterialTheme.typography.bodySmall)
+        Text("Próximo pago: ${formato.format(pago.fechaProximoPagoGenerada.toDate())}", style = MaterialTheme.typography.bodySmall)
+        if (pago.nota.isNotBlank()) {
+            Text(pago.nota, style = MaterialTheme.typography.bodySmall)
         }
     }
 }
@@ -406,6 +537,36 @@ private fun AsignarDiaDialog(
             TextButton(onClick = onCancelar) { Text("Cancelar") }
         }
     )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun AsignarProximoPagoDialog(
+    fechaActual: Timestamp?,
+    onConfirmar: (Timestamp) -> Unit,
+    onCancelar: () -> Unit
+) {
+    val estadoSelector = rememberDatePickerState(
+        initialSelectedDateMillis = (fechaActual ?: Timestamp.now()).toDate().toInstant()
+            .atZone(ZoneOffset.UTC).toLocalDate().atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
+    )
+
+    DatePickerDialog(
+        onDismissRequest = onCancelar,
+        confirmButton = {
+            TextButton(onClick = {
+                val millis = estadoSelector.selectedDateMillis ?: return@TextButton
+                val localDate = Instant.ofEpochMilli(millis).atZone(ZoneOffset.UTC).toLocalDate()
+                val instant = localDate.atTime(12, 0).atZone(ZoneId.systemDefault()).toInstant()
+                onConfirmar(Timestamp(Date.from(instant)))
+            }) { Text("Confirmar") }
+        },
+        dismissButton = {
+            TextButton(onClick = onCancelar) { Text("Cancelar") }
+        }
+    ) {
+        DatePicker(state = estadoSelector)
+    }
 }
 
 @Composable

@@ -1,5 +1,6 @@
 package com.osfit.app.data.repository
 
+import com.google.firebase.Timestamp
 import com.google.firebase.firestore.FirebaseFirestore
 import com.osfit.app.data.model.Cliente
 import com.osfit.app.data.model.Rutina
@@ -60,6 +61,10 @@ class ClienteRepository(
 
     suspend fun actualizarDiaActual(clienteId: String, diaIndex: Int) {
         coleccion.document(clienteId).update("diaActualIndex", diaIndex).await()
+    }
+
+    suspend fun actualizarProximoPago(clienteId: String, fecha: Timestamp) {
+        coleccion.document(clienteId).update("fechaProximoPago", fecha).await()
     }
 
     suspend fun eliminarCliente(clienteId: String) {

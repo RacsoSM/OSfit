@@ -72,6 +72,12 @@ class ClienteDetailViewModel(
         }
     }
 
+    fun asignarProximoPago(fecha: Timestamp) {
+        viewModelScope.launch {
+            clienteRepository.actualizarProximoPago(clienteId, fecha)
+        }
+    }
+
     fun eliminarCliente() {
         viewModelScope.launch {
             clienteRepository.eliminarCliente(clienteId)

@@ -17,6 +17,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.EventAvailable
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -39,6 +41,7 @@ import java.util.Locale
 private val VerdeBuenaAsistencia = Color(0xFF048751)
 private val AmarilloAsistenciaMedia = Color(0xFFDBD74B)
 private val RojoBajaAsistencia = Color(0xFFC23636)
+private val GrisSinDatos = Color(0xFF5A5A5A)
 
 @Composable
 fun CalendarioScreen(
@@ -53,7 +56,13 @@ fun CalendarioScreen(
         calcularColoresPorFecha(asistenciasDelMes, clientesActivos.map { it.id }.toSet(), mesVisible)
     }
 
-    Scaffold { padding ->
+    Scaffold(
+        floatingActionButton = {
+            FloatingActionButton(onClick = { onAbrirAsistencia(LocalDate.now().toString()) }) {
+                Icon(Icons.Filled.EventAvailable, contentDescription = "Registrar asistencia de hoy")
+            }
+        }
+    ) { padding ->
         Column(modifier = Modifier.fillMaxSize().padding(padding)) {
             CalendarHeader(
                 mesVisible = mesVisible,
@@ -75,23 +84,27 @@ private fun calcularColoresPorFecha(
     mesVisible: YearMonth
 ): Map<LocalDate, Color> {
     if (idsClientesActivos.isEmpty()) return emptyMap()
-    val hoy = LocalDate.now()
-    return asistencias
+    val registrosPorFecha = asistencias
         .filter { it.clienteId in idsClientesActivos }
         .groupBy { it.fecha }
-        .mapNotNull { (fechaTexto, registrosDelDia) ->
-            val fecha = runCatching { LocalDate.parse(fechaTexto) }.getOrNull() ?: return@mapNotNull null
-            if (YearMonth.from(fecha) != mesVisible || fecha.isAfter(hoy)) return@mapNotNull null
-            val asistieron = registrosDelDia.count { it.asistio }
+
+    val primerDiaDelMes = mesVisible.atDay(1)
+    return (0 until mesVisible.lengthOfMonth()).associate { offset ->
+        val fecha = primerDiaDelMes.plusDays(offset.toLong())
+        val registrosDelDia = registrosPorFecha[fecha.toString()]
+        val asistieron = registrosDelDia?.count { it.asistio } ?: 0
+        val color = if (registrosDelDia.isNullOrEmpty() || asistieron == 0) {
+            GrisSinDatos
+        } else {
             val porcentaje = asistieron.toDouble() / idsClientesActivos.size
-            val color = when {
+            when {
                 porcentaje >= 0.65 -> VerdeBuenaAsistencia
                 porcentaje >= 0.35 -> AmarilloAsistenciaMedia
                 else -> RojoBajaAsistencia
             }
-            fecha to color
         }
-        .toMap()
+        fecha to color
+    }
 }
 
 @Composable

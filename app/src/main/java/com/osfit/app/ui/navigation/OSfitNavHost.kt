@@ -57,7 +57,10 @@ fun OSfitNavHost(navController: NavHostController, modifier: Modifier = Modifier
             arguments = listOf(navArgument("fecha") { type = NavType.StringType })
         ) { backStackEntry ->
             val fecha = backStackEntry.arguments?.getString("fecha") ?: return@composable
-            com.osfit.app.ui.calendario.TomarAsistenciaScreen(fecha = fecha)
+            com.osfit.app.ui.calendario.TomarAsistenciaScreen(
+                fecha = fecha,
+                onGuardado = { navController.popBackStack() }
+            )
         }
         composable(
             route = Screen.RutinaEditor.route,

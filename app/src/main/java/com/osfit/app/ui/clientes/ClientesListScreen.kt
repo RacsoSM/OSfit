@@ -1,13 +1,18 @@
 package com.osfit.app.ui.clientes
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.AlertDialog
@@ -20,6 +25,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -28,10 +34,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.osfit.app.data.model.Cliente
+import com.osfit.app.domain.PagoCalculator
+import com.osfit.app.ui.common.TextoMaquinaEscribir
+import com.osfit.app.ui.theme.ColoresAvatar
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 @Composable
 fun ClientesListScreen(
@@ -51,10 +63,16 @@ fun ClientesListScreen(
     ) { padding ->
         if (clientes.isEmpty()) {
             Column(modifier = Modifier.fillMaxSize().padding(padding).padding(24.dp)) {
-                Text("Aún no hay clientes. Toca + para agregar uno.")
+                EncabezadoSaludo()
+                Text("Aún no hay clientes. Toca + para agregar uno.", modifier = Modifier.padding(top = 16.dp))
             }
         } else {
-            LazyColumn(modifier = Modifier.fillMaxSize().padding(padding).padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize().padding(padding).padding(horizontal = 12.dp),
+                contentPadding = PaddingValues(top = 12.dp, bottom = 88.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                item { EncabezadoSaludo() }
                 items(clientes, key = { it.id }) { cliente ->
                     ClienteItem(cliente = cliente, onClick = { onClienteClick(cliente.id) })
                 }
@@ -77,30 +95,103 @@ fun ClientesListScreen(
     }
 }
 
+@Composable
+private fun EncabezadoSaludo() {
+    val fecha = remember {
+        java.time.LocalDate.now()
+            .format(DateTimeFormatter.ofPattern("EEEE, d 'de' MMMM", Locale("es")))
+            .replaceFirstChar { it.uppercase() }
+    }
+    var saludoListo by remember { mutableStateOf(false) }
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.Bottom
+    ) {
+        TextoMaquinaEscribir(
+            texto = "Hola, Oscar",
+            style = MaterialTheme.typography.headlineMedium,
+            empezar = true,
+            onTerminar = { saludoListo = true }
+        )
+        Box(contentAlignment = Alignment.CenterStart) {
+            // Reserva el ancho final para que el texto no se desplace mientras se "escribe".
+            Text(fecha, style = MaterialTheme.typography.titleSmall, color = Color.Transparent)
+            TextoMaquinaEscribir(
+                texto = fecha,
+                style = MaterialTheme.typography.titleSmall,
+                empezar = saludoListo
+            )
+        }
+    }
+}
+
 private val GrisInactivo = Color(0xFF5A5A5A)
 
 @Composable
 private fun ClienteItem(cliente: Cliente, onClick: () -> Unit) {
     val nombreDia = cliente.rutinaAsignada?.dias?.getOrNull(cliente.diaActualIndex)?.nombreDia
         ?: "Sin rutina asignada"
+    val colorTexto = if (cliente.activo) Color.Unspecified else GrisInactivo
     Card(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 20.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                cliente.nombre,
-                style = MaterialTheme.typography.titleMedium,
-                color = if (cliente.activo) Color.Unspecified else GrisInactivo,
-                textDecoration = if (cliente.activo) null else TextDecoration.LineThrough
-            )
+            Row(modifier = Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
+                AvatarCliente(nombre = cliente.nombre, activo = cliente.activo)
+                Column(modifier = Modifier.padding(start = 12.dp)) {
+                    Text(
+                        cliente.nombre,
+                        style = MaterialTheme.typography.titleMedium,
+                        color = colorTexto,
+                        textDecoration = if (cliente.activo) null else TextDecoration.LineThrough
+                    )
+                    val diasParaPago = PagoCalculator.diasParaProximoPago(cliente)
+                    val colorLeyenda = if (diasParaPago != null && diasParaPago < 0 && cliente.activo) {
+                        MaterialTheme.colorScheme.error
+                    } else {
+                        colorTexto
+                    }
+                    Text(
+                        when {
+                            diasParaPago == null -> "Sin pago registrado"
+                            diasParaPago == 0L -> "Pago hoy"
+                            else -> "Pago en $diasParaPago días"
+                        },
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = colorLeyenda
+                    )
+                }
+            }
             Text(
                 nombreDia,
                 style = MaterialTheme.typography.bodyMedium,
-                color = if (cliente.activo) Color.Unspecified else GrisInactivo
+                color = colorTexto,
+                textAlign = TextAlign.End,
+                modifier = Modifier.weight(1f).padding(start = 8.dp)
             )
         }
+    }
+}
+
+@Composable
+private fun AvatarCliente(nombre: String, activo: Boolean) {
+    val color = if (!activo) {
+        GrisInactivo
+    } else {
+        ColoresAvatar[(nombre.hashCode().let { if (it < 0) -it else it }) % ColoresAvatar.size]
+    }
+    Box(
+        modifier = Modifier.size(44.dp).background(color, CircleShape),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            nombre.firstOrNull()?.uppercaseChar()?.toString() ?: "?",
+            style = MaterialTheme.typography.titleMedium,
+            color = Color.White
+        )
     }
 }
 
