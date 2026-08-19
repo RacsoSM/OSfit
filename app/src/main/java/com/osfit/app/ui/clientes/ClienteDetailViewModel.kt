@@ -36,6 +36,9 @@ class ClienteDetailViewModel(
     private val _errorPago = MutableStateFlow<String?>(null)
     val errorPago: StateFlow<String?> = _errorPago.asStateFlow()
 
+    private val _eliminado = MutableStateFlow(false)
+    val eliminado: StateFlow<Boolean> = _eliminado.asStateFlow()
+
     fun registrarPago(monto: Double, fecha: Timestamp, fechaProximoPago: Timestamp, nota: String) {
         if (monto <= 0.0) {
             _errorPago.value = "El monto debe ser mayor a 0"
@@ -60,6 +63,19 @@ class ClienteDetailViewModel(
     fun actualizarActivo(activo: Boolean) {
         viewModelScope.launch {
             clienteRepository.actualizarActivo(clienteId, activo)
+        }
+    }
+
+    fun asignarDiaActual(diaIndex: Int) {
+        viewModelScope.launch {
+            clienteRepository.actualizarDiaActual(clienteId, diaIndex)
+        }
+    }
+
+    fun eliminarCliente() {
+        viewModelScope.launch {
+            clienteRepository.eliminarCliente(clienteId)
+            _eliminado.value = true
         }
     }
 }

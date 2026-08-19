@@ -57,4 +57,12 @@ class ClienteRepository(
     suspend fun actualizarActivo(clienteId: String, activo: Boolean) {
         coleccion.document(clienteId).update("activo", activo).await()
     }
+
+    suspend fun actualizarDiaActual(clienteId: String, diaIndex: Int) {
+        coleccion.document(clienteId).update("diaActualIndex", diaIndex).await()
+    }
+
+    suspend fun eliminarCliente(clienteId: String) {
+        coleccion.document(clienteId).delete().await()
+    }
 }

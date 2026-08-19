@@ -41,7 +41,8 @@ fun OSfitNavHost(navController: NavHostController, modifier: Modifier = Modifier
             val clienteId = backStackEntry.arguments?.getString("clienteId") ?: return@composable
             com.osfit.app.ui.clientes.ClienteDetailScreen(
                 clienteId = clienteId,
-                onVerAsistencias = { id -> navController.navigate(Screen.ClienteAsistencia.crearRuta(id)) }
+                onVerAsistencias = { id -> navController.navigate(Screen.ClienteAsistencia.crearRuta(id)) },
+                onEliminado = { navController.popBackStack() }
             )
         }
         composable(

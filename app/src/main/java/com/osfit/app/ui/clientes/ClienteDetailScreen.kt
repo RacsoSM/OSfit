@@ -1,5 +1,6 @@
 package com.osfit.app.ui.clientes
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -45,7 +46,7 @@ import java.util.Calendar
 import java.util.Locale
 
 @Composable
-fun ClienteDetailScreen(clienteId: String, onVerAsistencias: (String) -> Unit) {
+fun ClienteDetailScreen(clienteId: String, onVerAsistencias: (String) -> Unit, onEliminado: () -> Unit) {
     val viewModel: ClienteDetailViewModel = viewModel(
         factory = viewModelFactory { initializer { ClienteDetailViewModel(clienteId) } }
     )
@@ -53,10 +54,19 @@ fun ClienteDetailScreen(clienteId: String, onVerAsistencias: (String) -> Unit) {
     val pagos by viewModel.pagos.collectAsState()
     val plantillas by viewModel.plantillasDisponibles.collectAsState()
     val errorPago by viewModel.errorPago.collectAsState()
+    val eliminado by viewModel.eliminado.collectAsState()
 
     var mostrarDialogoPago by remember { mutableStateOf(false) }
     var mostrarDialogoRutina by remember { mutableStateOf(false) }
+    var mostrarDialogoAsignarDia by remember { mutableStateOf(false) }
     var mostrarConfirmacionActivo by remember { mutableStateOf(false) }
+    var mostrarConfirmacionEliminar by remember { mutableStateOf(false) }
+
+    androidx.compose.runtime.LaunchedEffect(eliminado) {
+        if (eliminado) onEliminado()
+    }
+
+    if (eliminado) return
 
     val clienteActual = cliente ?: return
 
@@ -80,8 +90,15 @@ fun ClienteDetailScreen(clienteId: String, onVerAsistencias: (String) -> Unit) {
                         if (nombreDiaActual != null) {
                             Text("Próximo día: $nombreDiaActual", style = MaterialTheme.typography.bodyMedium)
                         }
-                        Button(onClick = { mostrarDialogoRutina = true }, modifier = Modifier.padding(top = 8.dp)) {
-                            Text(if (clienteActual.rutinaAsignada == null) "Asignar rutina" else "Cambiar rutina")
+                        Row(modifier = Modifier.padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Button(onClick = { mostrarDialogoRutina = true }) {
+                                Text(if (clienteActual.rutinaAsignada == null) "Asignar rutina" else "Cambiar rutina")
+                            }
+                            if (clienteActual.rutinaAsignada != null) {
+                                OutlinedButton(onClick = { mostrarDialogoAsignarDia = true }) {
+                                    Text("Asignar día")
+                                }
+                            }
                         }
                     }
                 }
@@ -119,6 +136,14 @@ fun ClienteDetailScreen(clienteId: String, onVerAsistencias: (String) -> Unit) {
                     Text(if (clienteActual.activo) "Marcar cliente como inactivo" else "Reactivar cliente")
                 }
             }
+            item {
+                TextButton(
+                    onClick = { mostrarConfirmacionEliminar = true },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Eliminar cliente", color = MaterialTheme.colorScheme.error)
+                }
+            }
         }
     }
 
@@ -147,6 +172,18 @@ fun ClienteDetailScreen(clienteId: String, onVerAsistencias: (String) -> Unit) {
         )
     }
 
+    if (mostrarDialogoAsignarDia && clienteActual.rutinaAsignada != null) {
+        AsignarDiaDialog(
+            dias = clienteActual.rutinaAsignada.dias.map { it.nombreDia },
+            diaActual = clienteActual.diaActualIndex,
+            onConfirmar = { diaElegido ->
+                viewModel.asignarDiaActual(diaElegido)
+                mostrarDialogoAsignarDia = false
+            },
+            onCancelar = { mostrarDialogoAsignarDia = false }
+        )
+    }
+
     if (mostrarConfirmacionActivo) {
         ConfirmarActivoDialog(
             activo = clienteActual.activo,
@@ -156,6 +193,17 @@ fun ClienteDetailScreen(clienteId: String, onVerAsistencias: (String) -> Unit) {
                 mostrarConfirmacionActivo = false
             },
             onCancelar = { mostrarConfirmacionActivo = false }
+        )
+    }
+
+    if (mostrarConfirmacionEliminar) {
+        ConfirmarEliminarDialog(
+            nombreCliente = clienteActual.nombre,
+            onConfirmar = {
+                viewModel.eliminarCliente()
+                mostrarConfirmacionEliminar = false
+            },
+            onCancelar = { mostrarConfirmacionEliminar = false }
         )
     }
 }
@@ -311,6 +359,74 @@ private fun ConfirmarActivoDialog(
         },
         confirmButton = {
             TextButton(onClick = onConfirmar) { Text("Confirmar") }
+        },
+        dismissButton = {
+            TextButton(onClick = onCancelar) { Text("Cancelar") }
+        }
+    )
+}
+
+@Composable
+private fun AsignarDiaDialog(
+    dias: List<String>,
+    diaActual: Int,
+    onConfirmar: (Int) -> Unit,
+    onCancelar: () -> Unit
+) {
+    var seleccionado by remember { mutableStateOf(diaActual.coerceIn(0, dias.lastIndex)) }
+
+    AlertDialog(
+        onDismissRequest = onCancelar,
+        title = { Text("Asignar día del ciclo") },
+        text = {
+            Column {
+                Text(
+                    "Útil si el cliente se salió de lo que le tocaba y quieres corregir manualmente en qué día del ciclo está, sin marcar una asistencia.",
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                dias.forEachIndexed { indice, nombreDia ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { seleccionado = indice }
+                            .padding(vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        RadioButton(selected = seleccionado == indice, onClick = { seleccionado = indice })
+                        Text(nombreDia + if (indice == diaActual) " (actual)" else "")
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = { onConfirmar(seleccionado) }) { Text("Confirmar") }
+        },
+        dismissButton = {
+            TextButton(onClick = onCancelar) { Text("Cancelar") }
+        }
+    )
+}
+
+@Composable
+private fun ConfirmarEliminarDialog(
+    nombreCliente: String,
+    onConfirmar: () -> Unit,
+    onCancelar: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onCancelar,
+        title = { Text("¿Eliminar cliente?") },
+        text = {
+            Text(
+                "Se eliminará a $nombreCliente permanentemente. Esta acción no se puede deshacer. " +
+                    "Su historial de pagos y asistencias dejará de ser accesible desde la app."
+            )
+        },
+        confirmButton = {
+            TextButton(onClick = onConfirmar) {
+                Text("Eliminar", color = MaterialTheme.colorScheme.error)
+            }
         },
         dismissButton = {
             TextButton(onClick = onCancelar) { Text("Cancelar") }
