@@ -1325,9 +1325,8 @@ private fun OSfitContent() {
                         selected = rutaActual == pantalla.route,
                         onClick = {
                             navController.navigate(pantalla.route) {
-                                popUpTo(navController.graph.startDestinationId) { saveState = true }
+                                popUpTo(navController.graph.startDestinationId)
                                 launchSingleTop = true
-                                restoreState = true
                             }
                         },
                         icon = { Icon(icono, contentDescription = etiqueta) },
@@ -1341,6 +1340,8 @@ private fun OSfitContent() {
     }
 }
 ```
+
+Nota: deliberadamente **sin** `saveState`/`restoreState` en el `popUpTo`. Ese idiom estándar de Navigation Compose está pensado para grafos anidados (un sub-grafo por pestaña) y en un grafo plano de un solo nivel como este falla de forma reproducible cuando el destino tocado es exactamente el `startDestination` (`Screen.Clientes`) y hay una pantalla empujada encima (p. ej. `ClienteDetail`): el pop no se refleja visualmente y la barra inferior queda "atascada" en la pantalla empujada. Verificado en dispositivo real durante Task 15. `popUpTo` + `launchSingleTop` solo, sin guardar/restaurar estado, no tiene este problema y es suficiente aquí (no hay estado de scroll por pestaña que valga la pena preservar).
 
 - [ ] **Paso 6: Reescribir `MainActivity.kt`**
 
