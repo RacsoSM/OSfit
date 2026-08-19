@@ -19,7 +19,9 @@ fun OSfitNavHost(navController: NavHostController, modifier: Modifier = Modifier
         modifier = modifier
     ) {
         composable(Screen.Clientes.route) {
-            Text("Clientes", modifier = Modifier.padding(16.dp))
+            com.osfit.app.ui.clientes.ClientesListScreen(
+                onClienteClick = { clienteId -> navController.navigate(Screen.ClienteDetail.crearRuta(clienteId)) }
+            )
         }
         composable(Screen.Calendario.route) {
             Text("Calendario", modifier = Modifier.padding(16.dp))
