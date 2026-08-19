@@ -24,7 +24,9 @@ fun OSfitNavHost(navController: NavHostController, modifier: Modifier = Modifier
             )
         }
         composable(Screen.Calendario.route) {
-            com.osfit.app.ui.calendario.CalendarioScreen()
+            com.osfit.app.ui.calendario.CalendarioScreen(
+                onAbrirAsistencia = { fecha -> navController.navigate(Screen.TomarAsistencia.crearRuta(fecha)) }
+            )
         }
         composable(Screen.Rutinas.route) {
             com.osfit.app.ui.rutinas.RutinasListScreen(
@@ -37,7 +39,24 @@ fun OSfitNavHost(navController: NavHostController, modifier: Modifier = Modifier
             arguments = listOf(navArgument("clienteId") { type = NavType.StringType })
         ) { backStackEntry ->
             val clienteId = backStackEntry.arguments?.getString("clienteId") ?: return@composable
-            com.osfit.app.ui.clientes.ClienteDetailScreen(clienteId = clienteId)
+            com.osfit.app.ui.clientes.ClienteDetailScreen(
+                clienteId = clienteId,
+                onVerAsistencias = { id -> navController.navigate(Screen.ClienteAsistencia.crearRuta(id)) }
+            )
+        }
+        composable(
+            route = Screen.ClienteAsistencia.route,
+            arguments = listOf(navArgument("clienteId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val clienteId = backStackEntry.arguments?.getString("clienteId") ?: return@composable
+            com.osfit.app.ui.clientes.ClienteAsistenciaScreen(clienteId = clienteId)
+        }
+        composable(
+            route = Screen.TomarAsistencia.route,
+            arguments = listOf(navArgument("fecha") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val fecha = backStackEntry.arguments?.getString("fecha") ?: return@composable
+            com.osfit.app.ui.calendario.TomarAsistenciaScreen(fecha = fecha)
         }
         composable(
             route = Screen.RutinaEditor.route,

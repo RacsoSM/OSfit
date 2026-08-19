@@ -11,6 +11,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -34,7 +35,7 @@ import java.util.Calendar
 import java.util.Locale
 
 @Composable
-fun ClienteDetailScreen(clienteId: String) {
+fun ClienteDetailScreen(clienteId: String, onVerAsistencias: (String) -> Unit) {
     val viewModel: ClienteDetailViewModel = viewModel(
         factory = viewModelFactory { initializer { ClienteDetailViewModel(clienteId) } }
     )
@@ -74,6 +75,11 @@ fun ClienteDetailScreen(clienteId: String) {
             item {
                 Button(onClick = { mostrarDialogoPago = true }, modifier = Modifier.fillMaxWidth()) {
                     Text("Registrar pago")
+                }
+            }
+            item {
+                OutlinedButton(onClick = { onVerAsistencias(clienteId) }, modifier = Modifier.fillMaxWidth()) {
+                    Text("Ver calendario de asistencia")
                 }
             }
             item {

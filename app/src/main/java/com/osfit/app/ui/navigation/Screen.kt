@@ -9,6 +9,14 @@ sealed class Screen(val route: String) {
         fun crearRuta(clienteId: String) = "cliente_detail/$clienteId"
     }
 
+    data object ClienteAsistencia : Screen("cliente_asistencia/{clienteId}") {
+        fun crearRuta(clienteId: String) = "cliente_asistencia/$clienteId"
+    }
+
+    data object TomarAsistencia : Screen("tomar_asistencia/{fecha}") {
+        fun crearRuta(fecha: String) = "tomar_asistencia/$fecha"
+    }
+
     data object RutinaEditor : Screen("rutina_editor?rutinaId={rutinaId}") {
         const val ARG_RUTINA_NUEVA = "nueva"
         fun crearRuta(rutinaId: String? = null) = "rutina_editor?rutinaId=${rutinaId ?: ARG_RUTINA_NUEVA}"

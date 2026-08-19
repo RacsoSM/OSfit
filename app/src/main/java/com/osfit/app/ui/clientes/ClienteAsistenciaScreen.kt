@@ -1,7 +1,6 @@
-package com.osfit.app.ui.calendario
+package com.osfit.app.ui.clientes
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,11 +9,8 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -30,69 +26,68 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.osfit.app.data.model.Cliente
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
 import com.osfit.app.ui.common.MonthCalendarHeader
 import java.time.LocalDate
 import java.time.YearMonth
+import java.time.format.DateTimeParseException
+
+private val VerdeAsistio = Color(0xFF2E7D32)
+private val RojoFalto = Color(0xFFD32F2F)
 
 @Composable
-fun CalendarioScreen(
-    onAbrirAsistencia: (fecha: String) -> Unit,
-    viewModel: CalendarioViewModel = viewModel()
-) {
-    val fechaSeleccionada by viewModel.fechaSeleccionada.collectAsState()
-    val clientes by viewModel.clientesActivos.collectAsState()
-    var mesVisible by remember { mutableStateOf(YearMonth.from(fechaSeleccionada)) }
+fun ClienteAsistenciaScreen(clienteId: String) {
+    val viewModel: ClienteAsistenciaViewModel = viewModel(
+        factory = viewModelFactory { initializer { ClienteAsistenciaViewModel(clienteId) } }
+    )
+    val asistencias by viewModel.asistencias.collectAsState()
+    var mesVisible by remember { mutableStateOf(YearMonth.now()) }
+
+    val estadoPorFecha: Map<LocalDate, Boolean> = remember(asistencias) {
+        asistencias.mapNotNull { asistencia ->
+            try {
+                LocalDate.parse(asistencia.fecha) to asistencia.asistio
+            } catch (e: DateTimeParseException) {
+                null
+            }
+        }.toMap()
+    }
 
     Scaffold { padding ->
         Column(modifier = Modifier.fillMaxSize().padding(padding)) {
+            Text(
+                "Calendario de asistencia",
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(16.dp)
+            )
             MonthCalendarHeader(
                 mesVisible = mesVisible,
                 onMesAnterior = { mesVisible = mesVisible.minusMonths(1) },
                 onMesSiguiente = { mesVisible = mesVisible.plusMonths(1) }
             )
-            CalendarGrid(
-                mesVisible = mesVisible,
-                fechaSeleccionada = fechaSeleccionada,
-                onDiaClick = { viewModel.seleccionarFecha(it) }
-            )
-            Button(
-                onClick = { onAbrirAsistencia(fechaSeleccionada.toString()) },
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
+            HistorialCalendarGrid(mesVisible = mesVisible, estadoPorFecha = estadoPorFecha)
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(16.dp),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Text("Asistencia")
-            }
-            Text(
-                "Clientes activos — $fechaSeleccionada",
-                style = MaterialTheme.typography.titleSmall,
-                modifier = Modifier.padding(16.dp)
-            )
-            LazyColumn(modifier = Modifier.fillMaxSize().padding(horizontal = 12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                items(clientes, key = { it.id }) { cliente ->
-                    ClienteRutinaRow(cliente)
-                }
+                Leyenda(color = VerdeAsistio, texto = "Asistió")
+                Leyenda(color = RojoFalto, texto = "Faltó")
             }
         }
     }
 }
 
 @Composable
-private fun ClienteRutinaRow(cliente: Cliente) {
-    val nombreDia = cliente.rutinaAsignada?.dias?.getOrNull(cliente.diaActualIndex)?.nombreDia
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(12.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(cliente.nombre, style = MaterialTheme.typography.titleSmall)
-            Text(nombreDia ?: "Sin rutina asignada", style = MaterialTheme.typography.bodyMedium)
-        }
+private fun Leyenda(color: Color, texto: String) {
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        Box(modifier = Modifier.size(14.dp).clip(CircleShape).background(color))
+        Text(texto, style = MaterialTheme.typography.bodySmall)
     }
 }
 
 @Composable
-private fun CalendarGrid(mesVisible: YearMonth, fechaSeleccionada: LocalDate, onDiaClick: (LocalDate) -> Unit) {
+private fun HistorialCalendarGrid(mesVisible: YearMonth, estadoPorFecha: Map<LocalDate, Boolean>) {
     val primerDiaDelMes = mesVisible.atDay(1)
     val diasEnMes = mesVisible.lengthOfMonth()
     val offsetInicial = primerDiaDelMes.dayOfWeek.value % 7 // Domingo = 0
@@ -117,18 +112,22 @@ private fun CalendarGrid(mesVisible: YearMonth, fechaSeleccionada: LocalDate, on
                     ) {
                         if (indiceDia in 1..diasEnMes) {
                             val fecha = mesVisible.atDay(indiceDia)
-                            val seleccionado = fecha == fechaSeleccionada
+                            val asistio = estadoPorFecha[fecha]
+                            val colorFondo = when (asistio) {
+                                true -> VerdeAsistio
+                                false -> RojoFalto
+                                null -> Color.Transparent
+                            }
                             Box(
                                 modifier = Modifier
                                     .fillMaxSize()
                                     .clip(CircleShape)
-                                    .background(if (seleccionado) MaterialTheme.colorScheme.primary else Color.Transparent)
-                                    .clickable { onDiaClick(fecha) },
+                                    .background(colorFondo),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Text(
                                     indiceDia.toString(),
-                                    color = if (seleccionado) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
+                                    color = if (asistio != null) Color.White else MaterialTheme.colorScheme.onSurface
                                 )
                             }
                         }
