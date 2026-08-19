@@ -24,7 +24,7 @@ fun OSfitNavHost(navController: NavHostController, modifier: Modifier = Modifier
             )
         }
         composable(Screen.Calendario.route) {
-            Text("Calendario", modifier = Modifier.padding(16.dp))
+            com.osfit.app.ui.calendario.CalendarioScreen()
         }
         composable(Screen.Rutinas.route) {
             com.osfit.app.ui.rutinas.RutinasListScreen(
