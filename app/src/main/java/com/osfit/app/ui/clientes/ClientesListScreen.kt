@@ -40,6 +40,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.osfit.app.data.model.Cliente
 import com.osfit.app.domain.PagoCalculator
+import com.osfit.app.domain.RutinaProgressCalculator
 import com.osfit.app.ui.common.TextoMaquinaEscribir
 import com.osfit.app.ui.theme.ColoresAvatar
 import java.time.format.DateTimeFormatter
@@ -130,7 +131,7 @@ private val GrisInactivo = Color(0xFF5A5A5A)
 
 @Composable
 private fun ClienteItem(cliente: Cliente, onClick: () -> Unit) {
-    val nombreDia = cliente.rutinaAsignada?.dias?.getOrNull(cliente.diaActualIndex)?.nombreDia
+    val nombreDia = cliente.rutinaAsignada?.dias?.getOrNull(RutinaProgressCalculator.diaEfectivo(cliente))?.nombreDia
         ?: "Sin rutina asignada"
     val colorTexto = if (cliente.activo) Color.Unspecified else GrisInactivo
     Card(onClick = onClick, modifier = Modifier.fillMaxWidth()) {

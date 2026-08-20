@@ -1,10 +1,24 @@
 package com.osfit.app.domain
 
+import com.osfit.app.data.model.Cliente
+import java.time.LocalDate
+
 /**
  * Calcula el próximo día del ciclo de rutina que le toca a un cliente
  * después de marcar su asistencia en una fecha.
  */
 object RutinaProgressCalculator {
+
+    fun diaEfectivo(diaActualIndex: Int, diaPendienteIndex: Int?, diaPendienteFecha: String?, hoy: String): Int {
+        return if (diaPendienteIndex != null && diaPendienteFecha != null && hoy > diaPendienteFecha) {
+            diaPendienteIndex
+        } else {
+            diaActualIndex
+        }
+    }
+
+    fun diaEfectivo(cliente: Cliente): Int =
+        diaEfectivo(cliente.diaActualIndex, cliente.diaPendienteIndex, cliente.diaPendienteFecha, LocalDate.now().toString())
 
     fun calcularSiguienteDiaActualIndex(
         asistio: Boolean,

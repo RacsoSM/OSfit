@@ -68,6 +68,7 @@ class AsistenciaRepository(
         diaActualIndexPrevio: Int,
         diaRutinaRealizado: Int?,
         totalDiasRutina: Int,
+        diaPendienteFechaActual: String? = null,
         nota: String = ""
     ) {
         val siguienteDiaActualIndex = RutinaProgressCalculator.calcularSiguienteDiaActualIndex(
@@ -100,9 +101,30 @@ class AsistenciaRepository(
 
         val batch = db.batch()
         batch.set(asistenciaRef, asistencia.copy(id = ""))
+        // El día de rutina no se aplica de inmediato: queda pendiente hasta el día siguiente
+        // (calendario), para que la lista de Clientes no cambie mientras se sigue tomando asistencia.
         if (asistio) {
-            batch.update(clientesCollection.document(clienteId), "diaActualIndex", siguienteDiaActualIndex)
+            batch.update(
+                clientesCollection.document(clienteId),
+                mapOf("diaPendienteIndex" to siguienteDiaActualIndex, "diaPendienteFecha" to fecha)
+            )
+        } else if (diaPendienteFechaActual == fecha) {
+            batch.update(
+                clientesCollection.document(clienteId),
+                mapOf("diaPendienteIndex" to null, "diaPendienteFecha" to null)
+            )
         }
         batch.commit().await()
+    }
+
+    suspend fun actualizarDiaRealizado(clienteId: String, fecha: String, nuevoDia: Int) {
+        val asistenciaExistente = coleccion
+            .whereEqualTo("clienteId", clienteId)
+            .whereEqualTo("fecha", fecha)
+            .limit(1)
+            .get()
+            .await()
+        val ref = asistenciaExistente.documents.firstOrNull()?.reference ?: return
+        ref.update("diaRutinaRealizado", nuevoDia).await()
     }
 }

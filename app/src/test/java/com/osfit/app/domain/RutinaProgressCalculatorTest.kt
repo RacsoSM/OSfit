@@ -118,4 +118,28 @@ class RutinaProgressCalculatorTest {
             )
         }
     }
+
+    @Test
+    fun `sin pendiente, el dia efectivo es el dia actual`() {
+        val resultado = RutinaProgressCalculator.diaEfectivo(
+            diaActualIndex = 2, diaPendienteIndex = null, diaPendienteFecha = null, hoy = "2026-08-19"
+        )
+        assertEquals(2, resultado)
+    }
+
+    @Test
+    fun `pendiente del mismo dia que hoy, no se aplica todavia`() {
+        val resultado = RutinaProgressCalculator.diaEfectivo(
+            diaActualIndex = 2, diaPendienteIndex = 3, diaPendienteFecha = "2026-08-19", hoy = "2026-08-19"
+        )
+        assertEquals(2, resultado)
+    }
+
+    @Test
+    fun `pendiente de un dia anterior a hoy, ya se aplica`() {
+        val resultado = RutinaProgressCalculator.diaEfectivo(
+            diaActualIndex = 2, diaPendienteIndex = 3, diaPendienteFecha = "2026-08-19", hoy = "2026-08-20"
+        )
+        assertEquals(3, resultado)
+    }
 }

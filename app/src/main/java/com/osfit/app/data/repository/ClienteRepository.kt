@@ -50,7 +50,9 @@ class ClienteRepository(
             mapOf(
                 "rutinaAsignada" to rutina,
                 "plantillaOrigenId" to rutina.id,
-                "diaActualIndex" to 0
+                "diaActualIndex" to 0,
+                "diaPendienteIndex" to null,
+                "diaPendienteFecha" to null
             )
         ).await()
     }
@@ -60,7 +62,13 @@ class ClienteRepository(
     }
 
     suspend fun actualizarDiaActual(clienteId: String, diaIndex: Int) {
-        coleccion.document(clienteId).update("diaActualIndex", diaIndex).await()
+        coleccion.document(clienteId).update(
+            mapOf(
+                "diaActualIndex" to diaIndex,
+                "diaPendienteIndex" to null,
+                "diaPendienteFecha" to null
+            )
+        ).await()
     }
 
     suspend fun actualizarProximoPago(clienteId: String, fecha: Timestamp) {

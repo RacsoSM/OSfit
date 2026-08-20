@@ -24,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.osfit.app.data.model.Rutina
+import com.osfit.app.ui.common.TextoMaquinaEscribir
 
 @Composable
 fun RutinasListScreen(
@@ -42,10 +43,24 @@ fun RutinasListScreen(
     ) { padding ->
         if (rutinas.isEmpty()) {
             Column(modifier = Modifier.fillMaxSize().padding(padding).padding(24.dp)) {
+                TextoMaquinaEscribir(
+                    texto = "Rutinas",
+                    style = MaterialTheme.typography.headlineMedium,
+                    empezar = true,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
                 Text("Aún no hay plantillas de rutina. Toca + para crear una.")
             }
         } else {
             LazyColumn(modifier = Modifier.fillMaxSize().padding(padding).padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                item {
+                    TextoMaquinaEscribir(
+                        texto = "Rutinas",
+                        style = MaterialTheme.typography.headlineMedium,
+                        empezar = true,
+                        modifier = Modifier.padding(bottom = 16.dp)
+                    )
+                }
                 items(rutinas, key = { it.id }) { rutina ->
                     RutinaItem(rutina = rutina, onClick = { onEditarRutina(rutina.id) }, onEliminar = { viewModel.eliminarRutina(rutina.id) })
                 }

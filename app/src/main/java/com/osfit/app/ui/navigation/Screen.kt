@@ -13,6 +13,14 @@ sealed class Screen(val route: String) {
         fun crearRuta(clienteId: String) = "cliente_asistencia/$clienteId"
     }
 
+    data object ClientePagos : Screen("cliente_pagos/{clienteId}") {
+        fun crearRuta(clienteId: String) = "cliente_pagos/$clienteId"
+    }
+
+    data object Estadisticas : Screen("estadisticas")
+
+    data object Top : Screen("top")
+
     data object TomarAsistencia : Screen("tomar_asistencia/{fecha}") {
         fun crearRuta(fecha: String) = "tomar_asistencia/$fecha"
     }

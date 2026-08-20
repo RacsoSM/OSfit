@@ -7,6 +7,7 @@ import com.osfit.app.data.model.Asistencia
 import com.osfit.app.data.model.Cliente
 import com.osfit.app.data.repository.AsistenciaRepository
 import com.osfit.app.data.repository.ClienteRepository
+import com.osfit.app.domain.RutinaProgressCalculator
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -35,11 +36,27 @@ class TomarAsistenciaViewModel(
             asistencias.associate { it.clienteId to it.asistio } + pendientes
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyMap())
 
+    private val cambiosDiaPendientes = MutableStateFlow<Map<String, Int>>(emptyMap())
+
+    val diaRealizadoPorCliente: StateFlow<Map<String, Int>> =
+        combine(asistenciasDelDia, cambiosDiaPendientes) { asistencias, pendientes ->
+            asistencias.mapNotNull { asistencia ->
+                asistencia.diaRutinaRealizado?.let { asistencia.clienteId to it }
+            }.toMap() + pendientes
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyMap())
+
     private val _guardando = MutableStateFlow(false)
     val guardando: StateFlow<Boolean> = _guardando
 
+    private val _guardandoDia = MutableStateFlow(false)
+    val guardandoDia: StateFlow<Boolean> = _guardandoDia
+
     fun marcar(cliente: Cliente, asistio: Boolean) {
         cambiosPendientes.value = cambiosPendientes.value + (cliente.id to asistio)
+    }
+
+    fun marcarDiaRealizado(cliente: Cliente, diaIndex: Int) {
+        cambiosDiaPendientes.value = cambiosDiaPendientes.value + (cliente.id to diaIndex)
     }
 
     fun guardarTodo(onCompletado: () -> Unit) {
@@ -48,16 +65,35 @@ class TomarAsistenciaViewModel(
             val estado = estadoPorCliente.value
             clientesActivos.value.forEach { cliente ->
                 val asistio = estado[cliente.id] ?: false
+                val diaEfectivo = RutinaProgressCalculator.diaEfectivo(cliente)
                 asistenciaRepository.registrarAsistencia(
                     clienteId = cliente.id,
                     fecha = fecha,
                     asistio = asistio,
-                    diaActualIndexPrevio = cliente.diaActualIndex,
-                    diaRutinaRealizado = if (asistio) cliente.diaActualIndex else null,
-                    totalDiasRutina = cliente.rutinaAsignada?.dias?.size ?: 1
+                    diaActualIndexPrevio = diaEfectivo,
+                    diaRutinaRealizado = if (asistio) diaEfectivo else null,
+                    totalDiasRutina = cliente.rutinaAsignada?.dias?.size ?: 1,
+                    diaPendienteFechaActual = cliente.diaPendienteFecha
                 )
             }
             _guardando.value = false
+            onCompletado()
+        }
+    }
+
+    fun guardarCambiosDia(onCompletado: () -> Unit) {
+        viewModelScope.launch {
+            _guardandoDia.value = true
+            val cambios = cambiosDiaPendientes.value
+            clientesActivos.value.forEach { cliente ->
+                val diaElegido = cambios[cliente.id] ?: return@forEach
+                val totalDias = cliente.rutinaAsignada?.dias?.size ?: return@forEach
+                asistenciaRepository.actualizarDiaRealizado(cliente.id, fecha, diaElegido)
+                val siguiente = (diaElegido + 1).let { if (it >= totalDias) 0 else it }
+                clienteRepository.actualizarDiaActual(cliente.id, siguiente)
+            }
+            cambiosDiaPendientes.value = emptyMap()
+            _guardandoDia.value = false
             onCompletado()
         }
     }

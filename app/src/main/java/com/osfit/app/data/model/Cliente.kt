@@ -10,5 +10,7 @@ data class Cliente(
     val rutinaAsignada: Rutina? = null,
     val plantillaOrigenId: String = "",
     val diaActualIndex: Int = 0,
+    val diaPendienteIndex: Int? = null,
+    val diaPendienteFecha: String? = null,
     val fechaProximoPago: Timestamp? = null
 )

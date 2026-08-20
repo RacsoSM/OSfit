@@ -5,6 +5,7 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,14 +25,17 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -46,8 +50,11 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
-import com.osfit.app.data.model.Asistencia
 import com.osfit.app.data.model.Cliente
+import com.osfit.app.ui.common.TextoMaquinaEscribir
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 private val VerdeAsistio = Color(0xFF048751)
 private val RojoFalto = Color(0xFFC23636)
@@ -60,9 +67,16 @@ fun TomarAsistenciaScreen(fecha: String, onGuardado: () -> Unit = {}) {
     )
     val clientes by viewModel.clientesActivos.collectAsState()
     val estadoPorCliente by viewModel.estadoPorCliente.collectAsState()
-    val asistenciasDelDia by viewModel.asistenciasDelDia.collectAsState()
+    val diaRealizadoPorCliente by viewModel.diaRealizadoPorCliente.collectAsState()
     val guardando by viewModel.guardando.collectAsState()
+    val guardandoDia by viewModel.guardandoDia.collectAsState()
     var tabSeleccionada by remember { mutableStateOf(0) }
+
+    val fechaFormateada = remember(fecha) {
+        LocalDate.parse(fecha)
+            .format(DateTimeFormatter.ofPattern("EEEE, d 'de' MMMM 'del' yyyy", Locale("es")))
+            .replaceFirstChar { it.uppercase() }
+    }
 
     Scaffold(
         bottomBar = {
@@ -74,13 +88,22 @@ fun TomarAsistenciaScreen(fecha: String, onGuardado: () -> Unit = {}) {
                 ) {
                     Text(if (guardando) "Guardando..." else "Guardar")
                 }
+            } else {
+                Button(
+                    onClick = { viewModel.guardarCambiosDia(onGuardado) },
+                    enabled = !guardandoDia && clientes.isNotEmpty(),
+                    modifier = Modifier.fillMaxWidth().padding(16.dp)
+                ) {
+                    Text(if (guardandoDia) "Guardando..." else "Guardar")
+                }
             }
         }
     ) { padding ->
         Column(modifier = Modifier.fillMaxSize().padding(padding)) {
-            Text(
-                "Asistencia — $fecha",
+            TextoMaquinaEscribir(
+                texto = fechaFormateada,
                 style = MaterialTheme.typography.titleMedium,
+                empezar = true,
                 modifier = Modifier.padding(16.dp)
             )
             TabRow(selectedTabIndex = tabSeleccionada) {
@@ -121,8 +144,14 @@ fun TomarAsistenciaScreen(fecha: String, onGuardado: () -> Unit = {}) {
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     items(clientes, key = { it.id }) { cliente ->
-                        val asistencia = asistenciasDelDia.find { it.clienteId == cliente.id }
-                        ClienteRutinaRow(cliente = cliente, asistencia = asistencia)
+                        val asistio = estadoPorCliente[cliente.id] ?: false
+                        val diaRealizado = diaRealizadoPorCliente[cliente.id]
+                        ClienteRutinaRow(
+                            cliente = cliente,
+                            asistio = asistio,
+                            diaRealizado = diaRealizado,
+                            onElegirDia = { diaElegido -> viewModel.marcarDiaRealizado(cliente, diaElegido) }
+                        )
                     }
                 }
             }
@@ -162,8 +191,21 @@ private fun ClienteAsistenciaRow(
 }
 
 @Composable
-private fun ClienteRutinaRow(cliente: Cliente, asistencia: Asistencia?) {
-    Card(modifier = Modifier.fillMaxWidth()) {
+private fun ClienteRutinaRow(
+    cliente: Cliente,
+    asistio: Boolean,
+    diaRealizado: Int?,
+    onElegirDia: (Int) -> Unit
+) {
+    var mostrarSelector by remember { mutableStateOf(false) }
+    val dias = cliente.rutinaAsignada?.dias
+    val editable = asistio && dias != null
+
+    Card(
+        onClick = { mostrarSelector = true },
+        enabled = editable,
+        modifier = Modifier.fillMaxWidth()
+    ) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(16.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -171,17 +213,62 @@ private fun ClienteRutinaRow(cliente: Cliente, asistencia: Asistencia?) {
         ) {
             Text(cliente.nombre, style = MaterialTheme.typography.titleMedium)
             val texto = when {
-                asistencia == null -> "Sin registrar"
-                !asistencia.asistio -> "Faltó"
+                !asistio -> "Faltó"
+                diaRealizado == null -> "Sin registrar"
                 else -> {
-                    val indice = asistencia.diaRutinaRealizado
-                    val nombreDia = indice?.let { cliente.rutinaAsignada?.dias?.getOrNull(it)?.nombreDia }
-                    if (indice != null && nombreDia != null) "Día ${indice + 1}: $nombreDia" else "Asistió"
+                    val nombreDia = dias?.getOrNull(diaRealizado)?.nombreDia
+                    if (nombreDia != null) "Día ${diaRealizado + 1}: $nombreDia" else "Asistió"
                 }
             }
             Text(texto, style = MaterialTheme.typography.bodyMedium)
         }
     }
+
+    if (mostrarSelector && dias != null) {
+        SeleccionarDiaRealizadoDialog(
+            dias = dias.map { it.nombreDia },
+            diaSugerido = diaRealizado ?: 0,
+            onConfirmar = { diaElegido ->
+                onElegirDia(diaElegido)
+                mostrarSelector = false
+            },
+            onCancelar = { mostrarSelector = false }
+        )
+    }
+}
+
+@Composable
+private fun SeleccionarDiaRealizadoDialog(
+    dias: List<String>,
+    diaSugerido: Int,
+    onConfirmar: (Int) -> Unit,
+    onCancelar: () -> Unit
+) {
+    var seleccionado by remember { mutableStateOf(diaSugerido.coerceIn(0, dias.lastIndex)) }
+
+    AlertDialog(
+        onDismissRequest = onCancelar,
+        title = { Text("¿Qué día hizo?") },
+        text = {
+            Column {
+                dias.forEachIndexed { indice, nombreDia ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth().clickable { seleccionado = indice }.padding(vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        RadioButton(selected = seleccionado == indice, onClick = { seleccionado = indice })
+                        Text("Día ${indice + 1}: $nombreDia")
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = { onConfirmar(seleccionado) }) { Text("Confirmar") }
+        },
+        dismissButton = {
+            TextButton(onClick = onCancelar) { Text("Cancelar") }
+        }
+    )
 }
 
 private val anchoSegmento = 56.dp
