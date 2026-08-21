@@ -1,0 +1,290 @@
+{
+  "app/build.gradle.kts": {
+    "mtime": 1787153437.5832024,
+    "seen": 1787249825.5361993,
+    "ast_hash": "da196af28012f7fe2a9ffccb7abcc547",
+    "semantic_hash": "da196af28012f7fe2a9ffccb7abcc547"
+  },
+  "app/src/main/java/com/osfit/app/MainActivity.kt": {
+    "mtime": 1787154520.4254668,
+    "seen": 1787249825.5361993,
+    "ast_hash": "3a97814fb4d05a05024a01112c69d127",
+    "semantic_hash": "3a97814fb4d05a05024a01112c69d127"
+  },
+  "app/src/main/java/com/osfit/app/auth/AuthManager.kt": {
+    "mtime": 1787154389.5950685,
+    "seen": 1787249825.5361993,
+    "ast_hash": "c2ecc092108c7b70a2209c87b5743267",
+    "semantic_hash": "c2ecc092108c7b70a2209c87b5743267"
+  },
+  "app/src/main/java/com/osfit/app/data/AppContainer.kt": {
+    "mtime": 1787154428.2056072,
+    "seen": 1787249825.5361993,
+    "ast_hash": "b855eda169b240228511a9602805a1de",
+    "semantic_hash": "b855eda169b240228511a9602805a1de"
+  },
+  "app/src/main/java/com/osfit/app/data/model/Asistencia.kt": {
+    "mtime": 1787154383.4989529,
+    "seen": 1787249825.5361993,
+    "ast_hash": "6ad81495f0a9968f4cc8aeee46c0a106",
+    "semantic_hash": "6ad81495f0a9968f4cc8aeee46c0a106"
+  },
+  "app/src/main/java/com/osfit/app/data/model/Cliente.kt": {
+    "mtime": 1787241474.15686,
+    "seen": 1787249825.5361993,
+    "ast_hash": "cafc61a421325db4700bb52e1700a8c2",
+    "semantic_hash": "cafc61a421325db4700bb52e1700a8c2"
+  },
+  "app/src/main/java/com/osfit/app/data/model/DiaRutina.kt": {
+    "mtime": 1787154361.8612185,
+    "seen": 1787249825.5361993,
+    "ast_hash": "17cd731b573445ed7f4e72d32753edf7",
+    "semantic_hash": "17cd731b573445ed7f4e72d32753edf7"
+  },
+  "app/src/main/java/com/osfit/app/data/model/Ejercicio.kt": {
+    "mtime": 1787154357.3432314,
+    "seen": 1787249825.5361993,
+    "ast_hash": "7e303b702aba9df923af0d43c8454595",
+    "semantic_hash": "7e303b702aba9df923af0d43c8454595"
+  },
+  "app/src/main/java/com/osfit/app/data/model/Pago.kt": {
+    "mtime": 1787154379.579267,
+    "seen": 1787249825.5361993,
+    "ast_hash": "32746f4e1d435ed213dafe71114c7893",
+    "semantic_hash": "32746f4e1d435ed213dafe71114c7893"
+  },
+  "app/src/main/java/com/osfit/app/data/model/Rutina.kt": {
+    "mtime": 1787154365.2897358,
+    "seen": 1787249825.5361993,
+    "ast_hash": "91f10de09d93c016344572b3cac73974",
+    "semantic_hash": "91f10de09d93c016344572b3cac73974"
+  },
+  "app/src/main/java/com/osfit/app/data/repository/AsistenciaRepository.kt": {
+    "mtime": 1787241538.3716097,
+    "seen": 1787249825.5361993,
+    "ast_hash": "5b5bc62445a13d6d3df6f2455b39a18c",
+    "semantic_hash": "5b5bc62445a13d6d3df6f2455b39a18c"
+  },
+  "app/src/main/java/com/osfit/app/data/repository/ClienteRepository.kt": {
+    "mtime": 1787241516.0064206,
+    "seen": 1787249825.5361993,
+    "ast_hash": "a8c0d5596f44a2a7524409f8de698f17",
+    "semantic_hash": "a8c0d5596f44a2a7524409f8de698f17"
+  },
+  "app/src/main/java/com/osfit/app/data/repository/PagoRepository.kt": {
+    "mtime": 1787154413.324749,
+    "seen": 1787249825.5361993,
+    "ast_hash": "79c0ac58ae849ba8b911dc8f8a3e55cd",
+    "semantic_hash": "79c0ac58ae849ba8b911dc8f8a3e55cd"
+  },
+  "app/src/main/java/com/osfit/app/data/repository/RutinaRepository.kt": {
+    "mtime": 1787154397.0236416,
+    "seen": 1787249825.5361993,
+    "ast_hash": "4e36cd548c98d0eff47aa50edf0d1bfe",
+    "semantic_hash": "4e36cd548c98d0eff47aa50edf0d1bfe"
+  },
+  "app/src/main/java/com/osfit/app/domain/PagoCalculator.kt": {
+    "mtime": 1787163429.8728528,
+    "seen": 1787249825.5361993,
+    "ast_hash": "70d908c986493bbf2956bf2e8482d291",
+    "semantic_hash": "70d908c986493bbf2956bf2e8482d291"
+  },
+  "app/src/main/java/com/osfit/app/domain/RutinaProgressCalculator.kt": {
+    "mtime": 1787241483.3177185,
+    "seen": 1787249825.5361993,
+    "ast_hash": "35c6534659b5788c45c0b0e93a9e5ae5",
+    "semantic_hash": "35c6534659b5788c45c0b0e93a9e5ae5"
+  },
+  "app/src/main/java/com/osfit/app/ui/OSfitApp.kt": {
+    "mtime": 1787243715.1498075,
+    "seen": 1787249825.5361993,
+    "ast_hash": "8eeeef65ad4f2545897403ad093b72b3",
+    "semantic_hash": "8eeeef65ad4f2545897403ad093b72b3"
+  },
+  "app/src/main/java/com/osfit/app/ui/calendario/CalendarioScreen.kt": {
+    "mtime": 1787165553.1130981,
+    "seen": 1787249825.5361993,
+    "ast_hash": "320a0fd352c67c341fdca318892bfc09",
+    "semantic_hash": "320a0fd352c67c341fdca318892bfc09"
+  },
+  "app/src/main/java/com/osfit/app/ui/calendario/CalendarioViewModel.kt": {
+    "mtime": 1787165565.4060702,
+    "seen": 1787249825.5361993,
+    "ast_hash": "3857719e6e779f4c0ce50a9bfa318e13",
+    "semantic_hash": "3857719e6e779f4c0ce50a9bfa318e13"
+  },
+  "app/src/main/java/com/osfit/app/ui/calendario/TomarAsistenciaScreen.kt": {
+    "mtime": 1787241606.309861,
+    "seen": 1787249825.5361993,
+    "ast_hash": "44c4f0f900e6c94bada1dd6b1401ebf4",
+    "semantic_hash": "44c4f0f900e6c94bada1dd6b1401ebf4"
+  },
+  "app/src/main/java/com/osfit/app/ui/calendario/TomarAsistenciaViewModel.kt": {
+    "mtime": 1787241556.722672,
+    "seen": 1787249825.5361993,
+    "ast_hash": "4c94fef0fb47f4821f252536f08464b7",
+    "semantic_hash": "4c94fef0fb47f4821f252536f08464b7"
+  },
+  "app/src/main/java/com/osfit/app/ui/clientes/ClienteAsistenciaScreen.kt": {
+    "mtime": 1787156789.359868,
+    "seen": 1787249825.5361993,
+    "ast_hash": "2054cc8573094dc073e637ae9e66e43d",
+    "semantic_hash": "2054cc8573094dc073e637ae9e66e43d"
+  },
+  "app/src/main/java/com/osfit/app/ui/clientes/ClienteAsistenciaViewModel.kt": {
+    "mtime": 1787156771.7734237,
+    "seen": 1787249825.5361993,
+    "ast_hash": "d99a06978315fd0b7ffefb331fa45b41",
+    "semantic_hash": "d99a06978315fd0b7ffefb331fa45b41"
+  },
+  "app/src/main/java/com/osfit/app/ui/clientes/ClienteDetailScreen.kt": {
+    "mtime": 1787242028.6951344,
+    "seen": 1787249825.5361993,
+    "ast_hash": "94f1bddc80d693c53e0f4e63052a8cb9",
+    "semantic_hash": "94f1bddc80d693c53e0f4e63052a8cb9"
+  },
+  "app/src/main/java/com/osfit/app/ui/clientes/ClienteDetailViewModel.kt": {
+    "mtime": 1787163461.405356,
+    "seen": 1787249825.5361993,
+    "ast_hash": "dbcfc415b18d6998940d882dbd065d12",
+    "semantic_hash": "dbcfc415b18d6998940d882dbd065d12"
+  },
+  "app/src/main/java/com/osfit/app/ui/clientes/ClientePagosScreen.kt": {
+    "mtime": 1787242075.3021865,
+    "seen": 1787249825.5361993,
+    "ast_hash": "750a88d317f4d22b437aadde374abd57",
+    "semantic_hash": "750a88d317f4d22b437aadde374abd57"
+  },
+  "app/src/main/java/com/osfit/app/ui/clientes/ClientesListScreen.kt": {
+    "mtime": 1787241628.0241613,
+    "seen": 1787249825.5361993,
+    "ast_hash": "4da1d95727d1d86a0f978aad1ce1b362",
+    "semantic_hash": "4da1d95727d1d86a0f978aad1ce1b362"
+  },
+  "app/src/main/java/com/osfit/app/ui/clientes/ClientesListViewModel.kt": {
+    "mtime": 1787159106.116023,
+    "seen": 1787249825.5361993,
+    "ast_hash": "41cb5a851b5c7e33f97164cf13c0fad9",
+    "semantic_hash": "41cb5a851b5c7e33f97164cf13c0fad9"
+  },
+  "app/src/main/java/com/osfit/app/ui/common/AccionCard.kt": {
+    "mtime": 1787241849.9028122,
+    "seen": 1787249825.5361993,
+    "ast_hash": "2684b228b617a9bf5914a6c0a60a49ff",
+    "semantic_hash": "2684b228b617a9bf5914a6c0a60a49ff"
+  },
+  "app/src/main/java/com/osfit/app/ui/common/ErrorScreen.kt": {
+    "mtime": 1787154492.5412855,
+    "seen": 1787249825.5361993,
+    "ast_hash": "e60a8abb26d76ca0a03d51dd81fdb3e5",
+    "semantic_hash": "e60a8abb26d76ca0a03d51dd81fdb3e5"
+  },
+  "app/src/main/java/com/osfit/app/ui/common/MonthCalendarHeader.kt": {
+    "mtime": 1787156708.2661655,
+    "seen": 1787249825.5361993,
+    "ast_hash": "1bb85968587a50ddadd3d124ddc119ee",
+    "semantic_hash": "1bb85968587a50ddadd3d124ddc119ee"
+  },
+  "app/src/main/java/com/osfit/app/ui/common/PantallaVacia.kt": {
+    "mtime": 1787242081.6216447,
+    "seen": 1787249825.5361993,
+    "ast_hash": "cbc49034ec5bf93df456c240ff89003f",
+    "semantic_hash": "cbc49034ec5bf93df456c240ff89003f"
+  },
+  "app/src/main/java/com/osfit/app/ui/common/TextoMaquinaEscribir.kt": {
+    "mtime": 1787169229.003446,
+    "seen": 1787249825.5361993,
+    "ast_hash": "3fe6b274c300c7fbd822113d6d543b44",
+    "semantic_hash": "3fe6b274c300c7fbd822113d6d543b44"
+  },
+  "app/src/main/java/com/osfit/app/ui/navigation/OSfitNavHost.kt": {
+    "mtime": 1787242051.6394393,
+    "seen": 1787249825.5361993,
+    "ast_hash": "5bfa61d254fb2ced1f1e1648c1219fa8",
+    "semantic_hash": "5bfa61d254fb2ced1f1e1648c1219fa8"
+  },
+  "app/src/main/java/com/osfit/app/ui/navigation/Screen.kt": {
+    "mtime": 1787241803.1965313,
+    "seen": 1787249825.5361993,
+    "ast_hash": "82b56463f0b0d7afc5fac94f5b5ee19a",
+    "semantic_hash": "82b56463f0b0d7afc5fac94f5b5ee19a"
+  },
+  "app/src/main/java/com/osfit/app/ui/rutinas/RutinaEditorScreen.kt": {
+    "mtime": 1787154717.337922,
+    "seen": 1787249825.5361993,
+    "ast_hash": "561b0e7e9f6afe158cbd68d54239cbd6",
+    "semantic_hash": "561b0e7e9f6afe158cbd68d54239cbd6"
+  },
+  "app/src/main/java/com/osfit/app/ui/rutinas/RutinaEditorViewModel.kt": {
+    "mtime": 1787154665.3537896,
+    "seen": 1787249825.5361993,
+    "ast_hash": "eb47197c95f644f3251dd361155b9b8a",
+    "semantic_hash": "eb47197c95f644f3251dd361155b9b8a"
+  },
+  "app/src/main/java/com/osfit/app/ui/rutinas/RutinasListScreen.kt": {
+    "mtime": 1787242150.9381876,
+    "seen": 1787249825.5361993,
+    "ast_hash": "1f771c4ffe169f58a01529d1f5a6c0dd",
+    "semantic_hash": "1f771c4ffe169f58a01529d1f5a6c0dd"
+  },
+  "app/src/main/java/com/osfit/app/ui/rutinas/RutinasViewModel.kt": {
+    "mtime": 1787154642.9262896,
+    "seen": 1787249825.5361993,
+    "ast_hash": "734db7f4407c1b74247a272893137625",
+    "semantic_hash": "734db7f4407c1b74247a272893137625"
+  },
+  "app/src/main/java/com/osfit/app/ui/theme/Theme.kt": {
+    "mtime": 1787168809.562463,
+    "seen": 1787249825.5361993,
+    "ast_hash": "745ed72486f9a2f316b0c8c7995c8b77",
+    "semantic_hash": "745ed72486f9a2f316b0c8c7995c8b77"
+  },
+  "app/src/test/java/com/osfit/app/domain/RutinaProgressCalculatorTest.kt": {
+    "mtime": 1787241500.3018618,
+    "seen": 1787249825.5361993,
+    "ast_hash": "0a2ea95cb54270f130853bd2d767201f",
+    "semantic_hash": "0a2ea95cb54270f130853bd2d767201f"
+  },
+  "build.gradle.kts": {
+    "mtime": 1787153422.3832417,
+    "seen": 1787249825.5361993,
+    "ast_hash": "6a573aecc923601f943ed75de78d1b3f",
+    "semantic_hash": "6a573aecc923601f943ed75de78d1b3f"
+  },
+  "gradlew": {
+    "mtime": 1787153364.799561,
+    "seen": 1787249825.5361993,
+    "ast_hash": "f092910dfa8e47c5a37a452c3f6baf8a",
+    "semantic_hash": "f092910dfa8e47c5a37a452c3f6baf8a"
+  },
+  "settings.gradle.kts": {
+    "mtime": 1787153323.5647638,
+    "seen": 1787249825.5361993,
+    "ast_hash": "584e5bbc2df0fe2b883fd8418468c89a",
+    "semantic_hash": "584e5bbc2df0fe2b883fd8418468c89a"
+  },
+  "README.md": {
+    "mtime": 1787156084.6027598,
+    "seen": 1787249825.5361993,
+    "ast_hash": "e9f7b55bc2067cfcc3f0bd7b20e3bad4",
+    "semantic_hash": "e9f7b55bc2067cfcc3f0bd7b20e3bad4"
+  },
+  "docs/superpowers/plans/2026-08-18-osfit-implementation.md": {
+    "mtime": 1787155825.8537927,
+    "seen": 1787249825.5361993,
+    "ast_hash": "cbbb7b8d89a933213c4c20e077cd2ced",
+    "semantic_hash": "cbbb7b8d89a933213c4c20e077cd2ced"
+  },
+  "docs/superpowers/specs/2026-08-18-osfit-gym-manager-design.md": {
+    "mtime": 1787087985.0996928,
+    "seen": 1787249825.5361993,
+    "ast_hash": "b8c32e628c99ee6dd8b6eb61946fcba7",
+    "semantic_hash": "b8c32e628c99ee6dd8b6eb61946fcba7"
+  },
+  "app/src/main/res/drawable/ic_launcher_foreground.png": {
+    "mtime": 1787167425.3062708,
+    "seen": 1787249825.5361993,
+    "ast_hash": "a912daff6711554b8d2b92ea662a6024",
+    "semantic_hash": "a912daff6711554b8d2b92ea662a6024"
+  }
+}
