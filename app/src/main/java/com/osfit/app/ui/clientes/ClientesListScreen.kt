@@ -147,12 +147,22 @@ private fun ClienteItem(cliente: Cliente, racha: Int, onClick: () -> Unit) {
         else -> Color.Unspecified
     }
     Card(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 20.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+        Box(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 20.dp)
         ) {
-            Row(modifier = Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
+            // Se dibuja primero para que, si el nombre es muy largo, la fila de avatar+racha
+            // (compuesta después) quede encima y lo tape, en vez de truncar el nombre.
+            Text(
+                nombreDia,
+                style = MaterialTheme.typography.bodyMedium,
+                color = colorTexto,
+                textAlign = TextAlign.End,
+                modifier = Modifier.align(Alignment.CenterEnd).fillMaxWidth(0.45f)
+            )
+            Row(
+                modifier = Modifier.align(Alignment.CenterStart),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 AvatarCliente(nombre = cliente.nombre, activo = cliente.activo)
                 Column(modifier = Modifier.padding(start = 12.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -160,7 +170,8 @@ private fun ClienteItem(cliente: Cliente, racha: Int, onClick: () -> Unit) {
                             cliente.nombre,
                             style = MaterialTheme.typography.titleMedium,
                             color = colorTexto,
-                            textDecoration = if (cliente.activo) null else TextDecoration.LineThrough
+                            textDecoration = if (cliente.activo) null else TextDecoration.LineThrough,
+                            maxLines = 1
                         )
                         if (racha > 0) {
                             RachaBadge(racha = racha)
@@ -168,13 +179,6 @@ private fun ClienteItem(cliente: Cliente, racha: Int, onClick: () -> Unit) {
                     }
                 }
             }
-            Text(
-                nombreDia,
-                style = MaterialTheme.typography.bodyMedium,
-                color = colorTexto,
-                textAlign = TextAlign.End,
-                modifier = Modifier.weight(1f).padding(start = 8.dp)
-            )
         }
     }
 }
