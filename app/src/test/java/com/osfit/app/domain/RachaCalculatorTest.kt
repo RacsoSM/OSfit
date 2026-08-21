@@ -104,6 +104,37 @@ class RachaCalculatorTest {
     }
 
     @Test
+    fun `racha mas larga en rango ignora asistencias fuera del rango`() {
+        val fechas = setOf(
+            LocalDate.parse("2026-07-31"), // viernes, mes anterior
+            LocalDate.parse("2026-08-03"), // lunes
+            LocalDate.parse("2026-08-04"), // martes
+            LocalDate.parse("2026-08-05")  // miercoles
+        )
+        val racha = RachaCalculator.calcularRachaMasLargaEnRango(
+            fechas,
+            inicio = LocalDate.parse("2026-08-01"),
+            fin = LocalDate.parse("2026-08-31")
+        )
+        assertEquals(3, racha)
+    }
+
+    @Test
+    fun `racha mas larga en rango con fin futuro no cuenta dias sin asistencia`() {
+        val fechas = setOf(
+            LocalDate.parse("2026-08-17"),
+            LocalDate.parse("2026-08-18"),
+            LocalDate.parse("2026-08-19")
+        )
+        val racha = RachaCalculator.calcularRachaMasLargaEnRango(
+            fechas,
+            inicio = LocalDate.parse("2026-08-01"),
+            fin = LocalDate.parse("2026-08-31")
+        )
+        assertEquals(3, racha)
+    }
+
+    @Test
     fun `dias desde ingreso cuenta dias de calendario sin importar fin de semana`() {
         val dias = RachaCalculator.diasDesdeIngreso(
             fechaIngreso = LocalDate.parse("2026-08-01"),

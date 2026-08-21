@@ -69,7 +69,7 @@ fun OSfitNavHost(navController: NavHostController, modifier: Modifier = Modifier
             com.osfit.app.ui.clientes.EstadisticasScreen(clienteId = clienteId)
         }
         composable(Screen.Top.route) {
-            com.osfit.app.ui.common.PantallaVacia("topppp")
+            com.osfit.app.ui.top.TopScreen()
         }
         composable(
             route = Screen.TomarAsistencia.route,

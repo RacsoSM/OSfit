@@ -36,8 +36,10 @@ object RachaCalculator {
 
     fun calcularRachaMasLarga(fechasAsistencia: Set<LocalDate>): Int {
         if (fechasAsistencia.isEmpty()) return 0
-        val inicio = fechasAsistencia.min()
-        val fin = fechasAsistencia.max()
+        return calcularRachaMasLargaEnRango(fechasAsistencia, fechasAsistencia.min(), fechasAsistencia.max())
+    }
+
+    fun calcularRachaMasLargaEnRango(fechasAsistencia: Set<LocalDate>, inicio: LocalDate, fin: LocalDate): Int {
         var mejor = 0
         var actual = 0
         var fecha = inicio
