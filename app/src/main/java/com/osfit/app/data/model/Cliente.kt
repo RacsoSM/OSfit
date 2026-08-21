@@ -12,5 +12,8 @@ data class Cliente(
     val diaActualIndex: Int = 0,
     val diaPendienteIndex: Int? = null,
     val diaPendienteFecha: String? = null,
-    val fechaProximoPago: Timestamp? = null
+    val fechaProximoPago: Timestamp? = null,
+    val fechaIngreso: Timestamp? = null,
+    val ejercicioFavoritoPorDia: Map<String, String> = emptyMap(),
+    val diaFavoritoIndex: Int? = null
 )

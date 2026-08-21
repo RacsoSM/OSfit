@@ -75,6 +75,18 @@ class ClienteRepository(
         coleccion.document(clienteId).update("fechaProximoPago", fecha).await()
     }
 
+    suspend fun actualizarFechaIngreso(clienteId: String, fecha: Timestamp) {
+        coleccion.document(clienteId).update("fechaIngreso", fecha).await()
+    }
+
+    suspend fun actualizarEjercicioFavorito(clienteId: String, diaIndex: Int, ejercicio: String) {
+        coleccion.document(clienteId).update("ejercicioFavoritoPorDia.$diaIndex", ejercicio).await()
+    }
+
+    suspend fun actualizarDiaFavorito(clienteId: String, diaIndex: Int) {
+        coleccion.document(clienteId).update("diaFavoritoIndex", diaIndex).await()
+    }
+
     suspend fun eliminarCliente(clienteId: String) {
         coleccion.document(clienteId).delete().await()
     }

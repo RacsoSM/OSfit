@@ -7,13 +7,17 @@ import com.osfit.app.data.AppContainer
 import com.osfit.app.data.model.Cliente
 import com.osfit.app.data.model.Pago
 import com.osfit.app.data.model.Rutina
+import com.osfit.app.data.repository.AsistenciaRepository
 import com.osfit.app.data.repository.ClienteRepository
 import com.osfit.app.data.repository.PagoRepository
 import com.osfit.app.data.repository.RutinaRepository
+import com.osfit.app.domain.RachaCalculator
+import java.time.LocalDate
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -21,7 +25,8 @@ class ClienteDetailViewModel(
     private val clienteId: String,
     private val clienteRepository: ClienteRepository = AppContainer.clienteRepository,
     private val pagoRepository: PagoRepository = AppContainer.pagoRepository,
-    private val rutinaRepository: RutinaRepository = AppContainer.rutinaRepository
+    private val rutinaRepository: RutinaRepository = AppContainer.rutinaRepository,
+    private val asistenciaRepository: AsistenciaRepository = AppContainer.asistenciaRepository
 ) : ViewModel() {
 
     val cliente: StateFlow<Cliente?> = clienteRepository.observarCliente(clienteId)
@@ -32,6 +37,13 @@ class ClienteDetailViewModel(
 
     val plantillasDisponibles: StateFlow<List<Rutina>> = rutinaRepository.observarRutinas()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val rachaActual: StateFlow<Int> = asistenciaRepository.observarAsistenciasPorCliente(clienteId)
+        .map { asistencias ->
+            val fechas = asistencias.filter { it.asistio }.map { LocalDate.parse(it.fecha) }.toSet()
+            RachaCalculator.calcularRachaActual(fechas, LocalDate.now())
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0)
 
     private val _errorPago = MutableStateFlow<String?>(null)
     val errorPago: StateFlow<String?> = _errorPago.asStateFlow()

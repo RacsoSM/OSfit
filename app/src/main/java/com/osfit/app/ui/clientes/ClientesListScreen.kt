@@ -25,7 +25,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -34,6 +33,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
@@ -41,6 +41,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.osfit.app.data.model.Cliente
 import com.osfit.app.domain.PagoCalculator
 import com.osfit.app.domain.RutinaProgressCalculator
+import com.osfit.app.ui.common.RachaBadge
 import com.osfit.app.ui.common.TextoMaquinaEscribir
 import com.osfit.app.ui.theme.ColoresAvatar
 import java.time.format.DateTimeFormatter
@@ -52,6 +53,7 @@ fun ClientesListScreen(
     viewModel: ClientesListViewModel = viewModel()
 ) {
     val clientes by viewModel.clientes.collectAsState()
+    val rachasPorCliente by viewModel.rachasPorCliente.collectAsState()
     val errorValidacion by viewModel.errorValidacion.collectAsState()
     var mostrarDialogo by remember { mutableStateOf(false) }
 
@@ -75,7 +77,11 @@ fun ClientesListScreen(
             ) {
                 item { EncabezadoSaludo() }
                 items(clientes, key = { it.id }) { cliente ->
-                    ClienteItem(cliente = cliente, onClick = { onClienteClick(cliente.id) })
+                    ClienteItem(
+                        cliente = cliente,
+                        racha = rachasPorCliente[cliente.id] ?: 0,
+                        onClick = { onClienteClick(cliente.id) }
+                    )
                 }
             }
         }
@@ -130,10 +136,16 @@ private fun EncabezadoSaludo() {
 private val GrisInactivo = Color(0xFF5A5A5A)
 
 @Composable
-private fun ClienteItem(cliente: Cliente, onClick: () -> Unit) {
+private fun ClienteItem(cliente: Cliente, racha: Int, onClick: () -> Unit) {
     val nombreDia = cliente.rutinaAsignada?.dias?.getOrNull(RutinaProgressCalculator.diaEfectivo(cliente))?.nombreDia
         ?: "Sin rutina asignada"
-    val colorTexto = if (cliente.activo) Color.Unspecified else GrisInactivo
+    val diasParaPago = PagoCalculator.diasParaProximoPago(cliente)
+    val pagoProximo = diasParaPago != null && diasParaPago < 3
+    val colorTexto = when {
+        !cliente.activo -> GrisInactivo
+        pagoProximo -> lerp(MaterialTheme.colorScheme.onSurface, MaterialTheme.colorScheme.error, 0.55f)
+        else -> Color.Unspecified
+    }
     Card(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 20.dp),
@@ -143,27 +155,17 @@ private fun ClienteItem(cliente: Cliente, onClick: () -> Unit) {
             Row(modifier = Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
                 AvatarCliente(nombre = cliente.nombre, activo = cliente.activo)
                 Column(modifier = Modifier.padding(start = 12.dp)) {
-                    Text(
-                        cliente.nombre,
-                        style = MaterialTheme.typography.titleMedium,
-                        color = colorTexto,
-                        textDecoration = if (cliente.activo) null else TextDecoration.LineThrough
-                    )
-                    val diasParaPago = PagoCalculator.diasParaProximoPago(cliente)
-                    val colorLeyenda = if (diasParaPago != null && diasParaPago < 0 && cliente.activo) {
-                        MaterialTheme.colorScheme.error
-                    } else {
-                        colorTexto
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            cliente.nombre,
+                            style = MaterialTheme.typography.titleMedium,
+                            color = colorTexto,
+                            textDecoration = if (cliente.activo) null else TextDecoration.LineThrough
+                        )
+                        if (racha > 0) {
+                            RachaBadge(racha = racha)
+                        }
                     }
-                    Text(
-                        when {
-                            diasParaPago == null -> "Sin pago registrado"
-                            diasParaPago == 0L -> "Pago hoy"
-                            else -> "Pago en $diasParaPago días"
-                        },
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = colorLeyenda
-                    )
                 }
             }
             Text(

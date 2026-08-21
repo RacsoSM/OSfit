@@ -37,12 +37,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.osfit.app.data.model.Rutina
 import com.osfit.app.domain.RutinaProgressCalculator
 import com.osfit.app.ui.common.AccionCard
+import com.osfit.app.ui.common.RachaBadge
 import com.osfit.app.ui.common.TextoMaquinaEscribir
 
 @Composable
@@ -50,7 +52,7 @@ fun ClienteDetailScreen(
     clienteId: String,
     onVerAsistencias: (String) -> Unit,
     onVerPagos: (String) -> Unit,
-    onVerEstadisticas: () -> Unit,
+    onVerEstadisticas: (String) -> Unit,
     onEliminado: () -> Unit
 ) {
     val viewModel: ClienteDetailViewModel = viewModel(
@@ -59,6 +61,7 @@ fun ClienteDetailScreen(
     val cliente by viewModel.cliente.collectAsState()
     val plantillas by viewModel.plantillasDisponibles.collectAsState()
     val eliminado by viewModel.eliminado.collectAsState()
+    val rachaActual by viewModel.rachaActual.collectAsState()
 
     var mostrarDialogoRutina by remember { mutableStateOf(false) }
     var mostrarDialogoAsignarDia by remember { mutableStateOf(false) }
@@ -76,11 +79,22 @@ fun ClienteDetailScreen(
     Scaffold { padding ->
         LazyColumn(modifier = Modifier.fillMaxSize().padding(padding).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             item {
-                TextoMaquinaEscribir(
-                    texto = clienteActual.nombre,
-                    style = MaterialTheme.typography.headlineSmall,
-                    empezar = true
-                )
+                var nombreListo by remember(clienteId) { mutableStateOf(false) }
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    TextoMaquinaEscribir(
+                        texto = clienteActual.nombre,
+                        style = MaterialTheme.typography.headlineSmall,
+                        empezar = true,
+                        onTerminar = { nombreListo = true }
+                    )
+                    if (nombreListo && rachaActual > 0) {
+                        RachaBadge(
+                            racha = rachaActual,
+                            iconSize = 28.sp,
+                            textStyle = MaterialTheme.typography.headlineSmall
+                        )
+                    }
+                }
                 if (clienteActual.telefono.isNotBlank()) {
                     Text(clienteActual.telefono, style = MaterialTheme.typography.bodyMedium)
                 }
@@ -171,7 +185,7 @@ fun ClienteDetailScreen(
                         icono = Icons.Filled.QueryStats,
                         texto = "Estadísticas",
                         modifier = Modifier.weight(1f),
-                        onClick = onVerEstadisticas
+                        onClick = { onVerEstadisticas(clienteId) }
                     )
                 }
             }

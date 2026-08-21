@@ -43,7 +43,7 @@ fun OSfitNavHost(navController: NavHostController, modifier: Modifier = Modifier
                 clienteId = clienteId,
                 onVerAsistencias = { id -> navController.navigate(Screen.ClienteAsistencia.crearRuta(id)) },
                 onVerPagos = { id -> navController.navigate(Screen.ClientePagos.crearRuta(id)) },
-                onVerEstadisticas = { navController.navigate(Screen.Estadisticas.route) },
+                onVerEstadisticas = { id -> navController.navigate(Screen.Estadisticas.crearRuta(id)) },
                 onEliminado = { navController.popBackStack() }
             )
         }
@@ -61,8 +61,12 @@ fun OSfitNavHost(navController: NavHostController, modifier: Modifier = Modifier
             val clienteId = backStackEntry.arguments?.getString("clienteId") ?: return@composable
             com.osfit.app.ui.clientes.ClientePagosScreen(clienteId = clienteId)
         }
-        composable(Screen.Estadisticas.route) {
-            com.osfit.app.ui.common.PantallaVacia("Estadísticas")
+        composable(
+            route = Screen.Estadisticas.route,
+            arguments = listOf(navArgument("clienteId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val clienteId = backStackEntry.arguments?.getString("clienteId") ?: return@composable
+            com.osfit.app.ui.clientes.EstadisticasScreen(clienteId = clienteId)
         }
         composable(Screen.Top.route) {
             com.osfit.app.ui.common.PantallaVacia("topppp")
