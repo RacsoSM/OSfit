@@ -72,6 +72,12 @@ class ClienteDetailViewModel(
         }
     }
 
+    fun actualizarDatosPersonales(nombre: String, telefono: String, peso: Double?, altura: Double?, edad: Int?) {
+        viewModelScope.launch {
+            clienteRepository.actualizarDatosPersonales(clienteId, nombre, telefono, peso, altura, edad)
+        }
+    }
+
     fun actualizarActivo(activo: Boolean) {
         viewModelScope.launch {
             clienteRepository.actualizarActivo(clienteId, activo)

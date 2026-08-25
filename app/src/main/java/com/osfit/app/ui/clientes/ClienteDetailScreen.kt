@@ -1,5 +1,8 @@
 package com.osfit.app.ui.clientes
 
+import android.content.ActivityNotFoundException
+import android.content.Intent
+import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -13,15 +16,19 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.Chat
 import androidx.compose.material.icons.filled.EditCalendar
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.Payments
 import androidx.compose.material.icons.filled.QueryStats
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.RadioButton
@@ -36,6 +43,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -46,6 +54,7 @@ import com.osfit.app.domain.RutinaProgressCalculator
 import com.osfit.app.ui.common.AccionCard
 import com.osfit.app.ui.common.RachaBadge
 import com.osfit.app.ui.common.TextoMaquinaEscribir
+import com.osfit.app.util.WhatsAppUtil
 
 @Composable
 fun ClienteDetailScreen(
@@ -53,6 +62,7 @@ fun ClienteDetailScreen(
     onVerAsistencias: (String) -> Unit,
     onVerPagos: (String) -> Unit,
     onVerEstadisticas: (String) -> Unit,
+    onEditarCliente: (String) -> Unit,
     onEliminado: () -> Unit
 ) {
     val viewModel: ClienteDetailViewModel = viewModel(
@@ -75,24 +85,34 @@ fun ClienteDetailScreen(
     if (eliminado) return
 
     val clienteActual = cliente ?: return
+    val context = LocalContext.current
 
     Scaffold { padding ->
         LazyColumn(modifier = Modifier.fillMaxSize().padding(padding).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             item {
                 var nombreListo by remember(clienteId) { mutableStateOf(false) }
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    TextoMaquinaEscribir(
-                        texto = clienteActual.nombre,
-                        style = MaterialTheme.typography.headlineSmall,
-                        empezar = true,
-                        onTerminar = { nombreListo = true }
-                    )
-                    if (nombreListo && rachaActual > 0) {
-                        RachaBadge(
-                            racha = rachaActual,
-                            iconSize = 28.sp,
-                            textStyle = MaterialTheme.typography.headlineSmall
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        TextoMaquinaEscribir(
+                            texto = clienteActual.nombre,
+                            style = MaterialTheme.typography.headlineSmall,
+                            empezar = true,
+                            onTerminar = { nombreListo = true }
                         )
+                        if (nombreListo && rachaActual > 0) {
+                            RachaBadge(
+                                racha = rachaActual,
+                                iconSize = 28.sp,
+                                textStyle = MaterialTheme.typography.headlineSmall
+                            )
+                        }
+                    }
+                    IconButton(onClick = { onEditarCliente(clienteId) }) {
+                        Icon(Icons.Filled.Settings, contentDescription = "Editar cliente")
                     }
                 }
                 if (clienteActual.telefono.isNotBlank()) {
@@ -105,7 +125,12 @@ fun ClienteDetailScreen(
             item {
                 var expandidaRutina by remember { mutableStateOf(false) }
                 val diaActualEfectivo = RutinaProgressCalculator.diaEfectivo(clienteActual)
-                val nombreDiaActual = clienteActual.rutinaAsignada?.dias?.getOrNull(diaActualEfectivo)?.nombreDia
+                // La plantilla puede haber cambiado (ej. se le agregaron ejercicios) después de
+                // asignarla: se usa la versión viva de la plantilla si todavía existe, en vez de
+                // la copia congelada que quedó guardada en el cliente al momento de asignarla.
+                val rutinaViva = plantillas.firstOrNull { it.id == clienteActual.plantillaOrigenId }
+                val diaRutinaActual = (rutinaViva?.dias ?: clienteActual.rutinaAsignada?.dias)?.getOrNull(diaActualEfectivo)
+                val nombreDiaActual = diaRutinaActual?.nombreDia
                 Card(modifier = Modifier.fillMaxWidth()) {
                     Column(modifier = Modifier.padding(12.dp)) {
                         Row(
@@ -140,6 +165,26 @@ fun ClienteDetailScreen(
                                     modifier = Modifier.padding(top = 12.dp)
                                 )
                                 Text(nombreDiaActual, style = MaterialTheme.typography.bodyMedium)
+                            }
+                            if (diaRutinaActual != null && clienteActual.telefono.isNotBlank()) {
+                                Button(
+                                    onClick = {
+                                        val uri = WhatsAppUtil.crearUriEnviarRutinaDelDia(
+                                            telefono = clienteActual.telefono,
+                                            nombreCliente = clienteActual.nombre,
+                                            dia = diaRutinaActual
+                                        )
+                                        try {
+                                            context.startActivity(Intent(Intent.ACTION_VIEW, uri))
+                                        } catch (e: ActivityNotFoundException) {
+                                            Toast.makeText(context, "No se encontró una app para abrir WhatsApp", Toast.LENGTH_SHORT).show()
+                                        }
+                                    },
+                                    modifier = Modifier.fillMaxWidth().padding(top = 12.dp)
+                                ) {
+                                    Icon(Icons.Filled.Chat, contentDescription = null)
+                                    Text("Enviar rutina de hoy por WhatsApp", modifier = Modifier.padding(start = 8.dp))
+                                }
                             }
                         }
                     }
@@ -187,6 +232,24 @@ fun ClienteDetailScreen(
                         modifier = Modifier.weight(1f),
                         onClick = { onVerEstadisticas(clienteId) }
                     )
+                    if (clienteActual.telefono.isNotBlank()) {
+                        AccionCard(
+                            icono = Icons.Filled.Chat,
+                            texto = "Confirmar Asistencia",
+                            modifier = Modifier.weight(1f),
+                            onClick = {
+                                val uri = WhatsAppUtil.crearUriConfirmarAsistencia(
+                                    telefono = clienteActual.telefono,
+                                    nombreCliente = clienteActual.nombre
+                                )
+                                try {
+                                    context.startActivity(Intent(Intent.ACTION_VIEW, uri))
+                                } catch (e: ActivityNotFoundException) {
+                                    Toast.makeText(context, "No se encontró una app para abrir WhatsApp", Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                        )
+                    }
                 }
             }
             item {

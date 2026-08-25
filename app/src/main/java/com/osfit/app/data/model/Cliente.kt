@@ -15,5 +15,8 @@ data class Cliente(
     val fechaProximoPago: Timestamp? = null,
     val fechaIngreso: Timestamp? = null,
     val ejercicioFavoritoPorDia: Map<String, String> = emptyMap(),
-    val diaFavoritoIndex: Int? = null
+    val diaFavoritoIndex: Int? = null,
+    val peso: Double? = null,
+    val altura: Double? = null,
+    val edad: Int? = null
 )

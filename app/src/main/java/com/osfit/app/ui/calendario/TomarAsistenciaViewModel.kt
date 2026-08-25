@@ -8,6 +8,9 @@ import com.osfit.app.data.model.Cliente
 import com.osfit.app.data.repository.AsistenciaRepository
 import com.osfit.app.data.repository.ClienteRepository
 import com.osfit.app.domain.RutinaProgressCalculator
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -62,19 +65,30 @@ class TomarAsistenciaViewModel(
     fun guardarTodo(onCompletado: () -> Unit) {
         viewModelScope.launch {
             _guardando.value = true
-            val estado = estadoPorCliente.value
-            clientesActivos.value.forEach { cliente ->
-                val asistio = estado[cliente.id] ?: false
-                val diaEfectivo = RutinaProgressCalculator.diaEfectivo(cliente)
-                asistenciaRepository.registrarAsistencia(
-                    clienteId = cliente.id,
-                    fecha = fecha,
-                    asistio = asistio,
-                    diaActualIndexPrevio = diaEfectivo,
-                    diaRutinaRealizado = if (asistio) diaEfectivo else null,
-                    totalDiasRutina = cliente.rutinaAsignada?.dias?.size ?: 1,
-                    diaPendienteFechaActual = cliente.diaPendienteFecha
-                )
+            val pendientes = cambiosPendientes.value
+            val yaRegistrados = asistenciasDelDia.value.map { it.clienteId }.toSet()
+            coroutineScope {
+                clientesActivos.value.mapNotNull { cliente ->
+                    // Solo se escribe si el entrenador lo tocó en esta sesión, o si el cliente
+                    // todavía no tiene registro para esta fecha (línea base "Faltó"). Así nunca
+                    // se pisa una asistencia ya guardada por una lectura desincronizada del listener.
+                    val asistio = pendientes[cliente.id]
+                        ?: if (cliente.id in yaRegistrados) return@mapNotNull null else false
+                    cliente to asistio
+                }.map { (cliente, asistio) ->
+                    async {
+                        val diaEfectivo = RutinaProgressCalculator.diaEfectivo(cliente)
+                        asistenciaRepository.registrarAsistencia(
+                            clienteId = cliente.id,
+                            fecha = fecha,
+                            asistio = asistio,
+                            diaActualIndexPrevio = diaEfectivo,
+                            diaRutinaRealizado = if (asistio) diaEfectivo else null,
+                            totalDiasRutina = cliente.rutinaAsignada?.dias?.size ?: 1,
+                            diaPendienteFechaActual = cliente.diaPendienteFecha
+                        )
+                    }
+                }.awaitAll()
             }
             _guardando.value = false
             onCompletado()
@@ -85,12 +99,18 @@ class TomarAsistenciaViewModel(
         viewModelScope.launch {
             _guardandoDia.value = true
             val cambios = cambiosDiaPendientes.value
-            clientesActivos.value.forEach { cliente ->
-                val diaElegido = cambios[cliente.id] ?: return@forEach
-                val totalDias = cliente.rutinaAsignada?.dias?.size ?: return@forEach
-                asistenciaRepository.actualizarDiaRealizado(cliente.id, fecha, diaElegido)
-                val siguiente = (diaElegido + 1).let { if (it >= totalDias) 0 else it }
-                clienteRepository.actualizarDiaActual(cliente.id, siguiente)
+            coroutineScope {
+                clientesActivos.value.mapNotNull { cliente ->
+                    val diaElegido = cambios[cliente.id] ?: return@mapNotNull null
+                    val totalDias = cliente.rutinaAsignada?.dias?.size ?: return@mapNotNull null
+                    Triple(cliente.id, diaElegido, totalDias)
+                }.map { (clienteId, diaElegido, totalDias) ->
+                    async {
+                        asistenciaRepository.actualizarDiaRealizado(clienteId, fecha, diaElegido)
+                        val siguiente = (diaElegido + 1).let { if (it >= totalDias) 0 else it }
+                        clienteRepository.actualizarDiaActual(clienteId, siguiente)
+                    }
+                }.awaitAll()
             }
             cambiosDiaPendientes.value = emptyMap()
             _guardandoDia.value = false

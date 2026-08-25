@@ -57,6 +57,25 @@ class ClienteRepository(
         ).await()
     }
 
+    suspend fun actualizarDatosPersonales(
+        clienteId: String,
+        nombre: String,
+        telefono: String,
+        peso: Double?,
+        altura: Double?,
+        edad: Int?
+    ) {
+        coleccion.document(clienteId).update(
+            mapOf(
+                "nombre" to nombre,
+                "telefono" to telefono,
+                "peso" to peso,
+                "altura" to altura,
+                "edad" to edad
+            )
+        ).await()
+    }
+
     suspend fun actualizarActivo(clienteId: String, activo: Boolean) {
         coleccion.document(clienteId).update("activo", activo).await()
     }

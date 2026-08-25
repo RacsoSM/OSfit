@@ -1,5 +1,8 @@
 package com.osfit.app.ui.clientes
 
+import android.content.ActivityNotFoundException
+import android.content.Intent
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -11,6 +14,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Chat
 import androidx.compose.material.icons.filled.EditCalendar
 import androidx.compose.material.icons.filled.Payments
 import androidx.compose.material3.AlertDialog
@@ -33,6 +37,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
@@ -41,6 +46,7 @@ import com.google.firebase.Timestamp
 import com.osfit.app.data.model.Pago
 import com.osfit.app.domain.PagoCalculator
 import com.osfit.app.ui.common.AccionCard
+import com.osfit.app.util.WhatsAppUtil
 import java.text.SimpleDateFormat
 import java.time.Instant
 import java.time.ZoneId
@@ -64,6 +70,7 @@ fun ClientePagosScreen(clienteId: String) {
     val clienteActual = cliente ?: return
     val formato = remember { SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()) }
     val diasParaPago = PagoCalculator.diasParaProximoPago(clienteActual)
+    val context = LocalContext.current
 
     Scaffold { padding ->
         LazyColumn(
@@ -84,6 +91,27 @@ fun ClientePagosScreen(clienteId: String) {
                         texto = "Asignar fecha de pago",
                         modifier = Modifier.weight(1f),
                         onClick = { mostrarDialogoProximoPago = true }
+                    )
+                }
+            }
+            if (clienteActual.fechaProximoPago != null && clienteActual.telefono.isNotBlank()) {
+                item {
+                    AccionCard(
+                        icono = Icons.Filled.Chat,
+                        texto = "Recordar pago por WhatsApp",
+                        modifier = Modifier.fillMaxWidth(),
+                        onClick = {
+                            val uri = WhatsAppUtil.crearUriRecordatorioPago(
+                                telefono = clienteActual.telefono,
+                                nombreCliente = clienteActual.nombre,
+                                fechaProximoPago = formato.format(clienteActual.fechaProximoPago.toDate())
+                            )
+                            try {
+                                context.startActivity(Intent(Intent.ACTION_VIEW, uri))
+                            } catch (e: ActivityNotFoundException) {
+                                Toast.makeText(context, "No se encontró una app para abrir WhatsApp", Toast.LENGTH_SHORT).show()
+                            }
+                        }
                     )
                 }
             }
