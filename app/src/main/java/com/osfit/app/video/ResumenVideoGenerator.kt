@@ -5,13 +5,20 @@ import com.osfit.app.domain.ResumenClienteData
 import com.osfit.app.domain.TipoResumen
 import com.osfit.app.util.CompartirUtil
 import java.io.File
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 object ResumenVideoGenerator {
 
     private const val SEGUNDOS_POR_TARJETA = 8
 
     suspend fun generarYCompartir(context: Context, resumen: ResumenClienteData) {
-        val tarjetas = construirTarjetas(resumen).map { ResumenCardRenderer.renderizar(it) }
+        // Dibujar 3-4 bitmaps de 1080x1920 con StaticLayout no puede pasar por el hilo
+        // principal: quien llama lo hace desde un scope de Compose (Dispatchers.Main) y
+        // `generar` recién cambia de dispatcher internamente.
+        val tarjetas = withContext(Dispatchers.Default) {
+            construirTarjetas(resumen).map { ResumenCardRenderer.renderizar(it) }
+        }
         val salida = File(context.cacheDir, "resumenes/${resumen.cliente.id}_${resumen.rango.tipo}.mp4")
         ResumenVideoEncoder.generar(
             tarjetas = tarjetas,
