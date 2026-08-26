@@ -27,7 +27,9 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
@@ -37,6 +39,7 @@ import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -50,8 +53,11 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import com.osfit.app.data.model.Asistencia
 import com.osfit.app.data.model.Cliente
+import com.osfit.app.domain.TiempoGymCalculator
 import com.osfit.app.ui.common.TextoMaquinaEscribir
+import kotlinx.coroutines.delay
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -68,9 +74,15 @@ fun TomarAsistenciaScreen(fecha: String, onGuardado: () -> Unit = {}) {
     val clientes by viewModel.clientesActivos.collectAsState()
     val estadoPorCliente by viewModel.estadoPorCliente.collectAsState()
     val diaRealizadoPorCliente by viewModel.diaRealizadoPorCliente.collectAsState()
+    val asistenciasDelDia by viewModel.asistenciasDelDia.collectAsState()
     val guardando by viewModel.guardando.collectAsState()
     val guardandoDia by viewModel.guardandoDia.collectAsState()
+    val reiniciando by viewModel.reiniciando.collectAsState()
+    val tiempoPorCliente = remember(asistenciasDelDia) {
+        asistenciasDelDia.associateBy { it.clienteId }
+    }
     var tabSeleccionada by remember { mutableStateOf(0) }
+    var mostrarConfirmacionReinicio by remember { mutableStateOf(false) }
 
     val fechaFormateada = remember(fecha) {
         LocalDate.parse(fecha)
@@ -133,8 +145,22 @@ fun TomarAsistenciaScreen(fecha: String, onGuardado: () -> Unit = {}) {
                             cliente = cliente,
                             asistio = asistio,
                             tieneRutina = tieneRutina,
-                            onMarcar = { valor -> viewModel.marcar(cliente, valor) }
+                            onMarcar = { valor -> viewModel.marcar(cliente, valor) },
+                            mostrarCronometro = viewModel.esHoy,
+                            asistencia = tiempoPorCliente[cliente.id],
+                            onIniciarTiempo = { viewModel.iniciarTiempo(cliente) },
+                            onDetenerTiempo = { viewModel.detenerTiempo(cliente) }
                         )
+                    }
+                    item {
+                        TextButton(
+                            onClick = { mostrarConfirmacionReinicio = true },
+                            enabled = !reiniciando,
+                            colors = ButtonDefaults.textButtonColors(contentColor = RojoFalto),
+                            modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
+                        ) {
+                            Text(if (reiniciando) "Reiniciando..." else "Reiniciar día")
+                        }
                     }
                 }
             } else {
@@ -157,6 +183,23 @@ fun TomarAsistenciaScreen(fecha: String, onGuardado: () -> Unit = {}) {
             }
         }
     }
+
+    if (mostrarConfirmacionReinicio) {
+        AlertDialog(
+            onDismissRequest = { mostrarConfirmacionReinicio = false },
+            title = { Text("¿Reiniciar el día?") },
+            text = { Text("Se borra toda la asistencia y los cronómetros de este día, como si no se hubiera tocado nada. No se puede deshacer.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    mostrarConfirmacionReinicio = false
+                    viewModel.reiniciarDia {}
+                }) { Text("Reiniciar") }
+            },
+            dismissButton = {
+                TextButton(onClick = { mostrarConfirmacionReinicio = false }) { Text("Cancelar") }
+            }
+        )
+    }
 }
 
 @Composable
@@ -164,30 +207,103 @@ private fun ClienteAsistenciaRow(
     cliente: Cliente,
     asistio: Boolean,
     tieneRutina: Boolean,
-    onMarcar: (Boolean) -> Unit
+    onMarcar: (Boolean) -> Unit,
+    mostrarCronometro: Boolean,
+    asistencia: Asistencia?,
+    onIniciarTiempo: () -> Unit,
+    onDetenerTiempo: () -> Unit
 ) {
+    // El color de fondo es solo indicativo (asistió/faltó); el toggle real vive en el
+    // segmento de la derecha para no competir con el botón del cronómetro dentro del card.
+    val colorFondo by animateColorAsState(
+        targetValue = when {
+            !tieneRutina -> MaterialTheme.colorScheme.surfaceVariant
+            asistio -> VerdeAsistio.copy(alpha = 0.18f)
+            else -> RojoFalto.copy(alpha = 0.18f)
+        },
+        label = "colorFondoCard"
+    )
+
     Card(
-        onClick = { onMarcar(!asistio) },
-        enabled = tieneRutina,
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = colorFondo)
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(cliente.nombre, style = MaterialTheme.typography.titleMedium)
-                val estado = when {
-                    !tieneRutina -> "Sin rutina asignada"
-                    asistio -> "Asistió"
-                    else -> "Faltó"
+        Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(cliente.nombre, style = MaterialTheme.typography.titleMedium)
+                    val estado = when {
+                        !tieneRutina -> "Sin rutina asignada"
+                        asistio -> "Asistió"
+                        else -> "Faltó"
+                    }
+                    Text(estado, style = MaterialTheme.typography.bodyMedium)
                 }
-                Text(estado, style = MaterialTheme.typography.bodyMedium)
+                SegmentoAsistencia(
+                    checked = asistio,
+                    enabled = tieneRutina,
+                    onClick = { onMarcar(!asistio) }
+                )
             }
-            SegmentoAsistencia(checked = asistio, enabled = tieneRutina)
+            if (mostrarCronometro && tieneRutina) {
+                CronometroRow(
+                    asistencia = asistencia,
+                    onIniciar = onIniciarTiempo,
+                    onDetener = onDetenerTiempo
+                )
+            }
         }
     }
+}
+
+@Composable
+private fun CronometroRow(
+    asistencia: Asistencia?,
+    onIniciar: () -> Unit,
+    onDetener: () -> Unit
+) {
+    val horaLlegadaMillis = asistencia?.horaLlegada?.toDate()?.time
+    val horaSalidaMillis = asistencia?.horaSalida?.toDate()?.time
+
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        when {
+            horaLlegadaMillis == null -> {
+                Text("Sin iniciar", style = MaterialTheme.typography.bodySmall)
+                TextButton(onClick = onIniciar) { Text("Iniciar tiempo") }
+            }
+            horaSalidaMillis == null -> {
+                var tiempoTexto by remember(horaLlegadaMillis) { mutableStateOf(formatearDuracion(0L)) }
+                LaunchedEffect(horaLlegadaMillis) {
+                    while (true) {
+                        val transcurridoMs = (System.currentTimeMillis() - horaLlegadaMillis)
+                            .coerceIn(0L, TiempoGymCalculator.TOPE_MINUTOS * 60_000L)
+                        tiempoTexto = formatearDuracion(transcurridoMs)
+                        delay(1000)
+                    }
+                }
+                Text("⏱ $tiempoTexto", style = MaterialTheme.typography.bodySmall)
+                TextButton(onClick = onDetener) { Text("Detener") }
+            }
+            else -> {
+                Text("Duración: ${asistencia?.duracionMinutos ?: 0} min", style = MaterialTheme.typography.bodySmall)
+            }
+        }
+    }
+}
+
+private fun formatearDuracion(ms: Long): String {
+    val totalSegundos = ms / 1000
+    val minutos = totalSegundos / 60
+    val segundos = totalSegundos % 60
+    return "%02d:%02d".format(minutos, segundos)
 }
 
 @Composable
@@ -275,7 +391,7 @@ private val anchoSegmento = 56.dp
 private val altoSegmento = 48.dp
 
 @Composable
-private fun SegmentoAsistencia(checked: Boolean, enabled: Boolean) {
+private fun SegmentoAsistencia(checked: Boolean, enabled: Boolean, onClick: () -> Unit) {
     val colorPildora by animateColorAsState(
         targetValue = if (!enabled) GrisDeshabilitado else if (checked) VerdeAsistio else RojoFalto,
         label = "colorPildora"
@@ -292,6 +408,7 @@ private fun SegmentoAsistencia(checked: Boolean, enabled: Boolean) {
             .height(altoSegmento)
             .clip(RoundedCornerShape(50))
             .background(MaterialTheme.colorScheme.surfaceVariant)
+            .clickable(enabled = enabled) { onClick() }
     ) {
         Box(
             modifier = Modifier

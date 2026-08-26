@@ -18,12 +18,15 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import java.time.LocalDate
 
 class TomarAsistenciaViewModel(
     private val fecha: String,
     private val clienteRepository: ClienteRepository = AppContainer.clienteRepository,
     private val asistenciaRepository: AsistenciaRepository = AppContainer.asistenciaRepository
 ) : ViewModel() {
+
+    val esHoy: Boolean = fecha == LocalDate.now().toString()
 
     val clientesActivos: StateFlow<List<Cliente>> = clienteRepository.observarClientes()
         .map { lista -> lista.filter { it.activo } }
@@ -54,12 +57,27 @@ class TomarAsistenciaViewModel(
     private val _guardandoDia = MutableStateFlow(false)
     val guardandoDia: StateFlow<Boolean> = _guardandoDia
 
+    private val _reiniciando = MutableStateFlow(false)
+    val reiniciando: StateFlow<Boolean> = _reiniciando
+
     fun marcar(cliente: Cliente, asistio: Boolean) {
         cambiosPendientes.value = cambiosPendientes.value + (cliente.id to asistio)
     }
 
     fun marcarDiaRealizado(cliente: Cliente, diaIndex: Int) {
         cambiosDiaPendientes.value = cambiosDiaPendientes.value + (cliente.id to diaIndex)
+    }
+
+    fun iniciarTiempo(cliente: Cliente) {
+        viewModelScope.launch {
+            asistenciaRepository.iniciarTiempo(cliente.id, fecha)
+        }
+    }
+
+    fun detenerTiempo(cliente: Cliente) {
+        viewModelScope.launch {
+            asistenciaRepository.detenerTiempo(cliente.id, fecha)
+        }
     }
 
     fun guardarTodo(onCompletado: () -> Unit) {
@@ -95,6 +113,18 @@ class TomarAsistenciaViewModel(
         }
     }
 
+    fun reiniciarDia(onCompletado: () -> Unit) {
+        viewModelScope.launch {
+            _reiniciando.value = true
+            val clienteIdsConPendiente = RutinaProgressCalculator.clientesConPendienteEnFecha(clientesActivos.value, fecha)
+            asistenciaRepository.reiniciarDia(fecha, clienteIdsConPendiente)
+            cambiosPendientes.value = emptyMap()
+            cambiosDiaPendientes.value = emptyMap()
+            _reiniciando.value = false
+            onCompletado()
+        }
+    }
+
     fun guardarCambiosDia(onCompletado: () -> Unit) {
         viewModelScope.launch {
             _guardandoDia.value = true
@@ -103,12 +133,17 @@ class TomarAsistenciaViewModel(
                 clientesActivos.value.mapNotNull { cliente ->
                     val diaElegido = cambios[cliente.id] ?: return@mapNotNull null
                     val totalDias = cliente.rutinaAsignada?.dias?.size ?: return@mapNotNull null
-                    Triple(cliente.id, diaElegido, totalDias)
-                }.map { (clienteId, diaElegido, totalDias) ->
+                    Triple(cliente, diaElegido, totalDias)
+                }.map { (cliente, diaElegido, totalDias) ->
                     async {
-                        asistenciaRepository.actualizarDiaRealizado(clienteId, fecha, diaElegido)
-                        val siguiente = (diaElegido + 1).let { if (it >= totalDias) 0 else it }
-                        clienteRepository.actualizarDiaActual(clienteId, siguiente)
+                        asistenciaRepository.actualizarDiaRealizado(cliente.id, fecha, diaElegido)
+                        // El avance por esta corrección queda pendiente igual que una asistencia
+                        // normal (RutinaProgressCalculator.diaEfectivo) y solo se aplica si esta
+                        // fecha es la más reciente conocida, para no pisar un pendiente posterior.
+                        if (RutinaProgressCalculator.debeActualizarPendiente(fecha, cliente.diaPendienteFecha)) {
+                            val siguiente = (diaElegido + 1).let { if (it >= totalDias) 0 else it }
+                            clienteRepository.actualizarDiaPendiente(cliente.id, siguiente, fecha)
+                        }
                     }
                 }.awaitAll()
             }
