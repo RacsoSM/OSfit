@@ -24,6 +24,7 @@ import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.Payments
 import androidx.compose.material.icons.filled.QueryStats
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Videocam
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -40,6 +41,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -55,6 +57,8 @@ import com.osfit.app.ui.common.AccionCard
 import com.osfit.app.ui.common.RachaBadge
 import com.osfit.app.ui.common.TextoMaquinaEscribir
 import com.osfit.app.util.WhatsAppUtil
+import com.osfit.app.video.ResumenVideoGenerator
+import kotlinx.coroutines.launch
 
 @Composable
 fun ClienteDetailScreen(
@@ -72,6 +76,11 @@ fun ClienteDetailScreen(
     val plantillas by viewModel.plantillasDisponibles.collectAsState()
     val eliminado by viewModel.eliminado.collectAsState()
     val rachaActual by viewModel.rachaActual.collectAsState()
+    val resumenViewModel: ResumenClienteViewModel = viewModel(
+        factory = viewModelFactory { initializer { ResumenClienteViewModel(clienteId) } }
+    )
+    var generandoResumen by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
 
     var mostrarDialogoRutina by remember { mutableStateOf(false) }
     var mostrarDialogoAsignarDia by remember { mutableStateOf(false) }
@@ -250,6 +259,44 @@ fun ClienteDetailScreen(
                             }
                         )
                     }
+                }
+            }
+            item {
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    AccionCard(
+                        icono = Icons.Filled.Videocam,
+                        texto = if (generandoResumen) "Generando..." else "Resumen semanal",
+                        modifier = Modifier.weight(1f),
+                        onClick = {
+                            if (!generandoResumen) {
+                                generandoResumen = true
+                                scope.launch {
+                                    val resumen = resumenViewModel.calcularResumenSemanal()
+                                    if (resumen != null) {
+                                        ResumenVideoGenerator.generarYCompartir(context, resumen)
+                                    }
+                                    generandoResumen = false
+                                }
+                            }
+                        }
+                    )
+                    AccionCard(
+                        icono = Icons.Filled.Videocam,
+                        texto = if (generandoResumen) "Generando..." else "Resumen mensual",
+                        modifier = Modifier.weight(1f),
+                        onClick = {
+                            if (!generandoResumen) {
+                                generandoResumen = true
+                                scope.launch {
+                                    val resumen = resumenViewModel.calcularResumenMensual()
+                                    if (resumen != null) {
+                                        ResumenVideoGenerator.generarYCompartir(context, resumen)
+                                    }
+                                    generandoResumen = false
+                                }
+                            }
+                        }
+                    )
                 }
             }
             item {
