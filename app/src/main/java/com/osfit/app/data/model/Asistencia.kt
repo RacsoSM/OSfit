@@ -6,5 +6,6 @@ data class Asistencia(
     val fecha: String = "",
     val asistio: Boolean = false,
     val diaRutinaRealizado: Int? = null,
-    val nota: String = ""
+    val nota: String = "",
+    val duracionMinutos: Int? = null
 )
