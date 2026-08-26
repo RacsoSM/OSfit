@@ -8,6 +8,7 @@ import android.media.MediaExtractor
 import android.media.MediaFormat
 import android.media.MediaMuxer
 import android.util.Log
+import android.view.Surface
 import java.io.File
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -115,10 +116,11 @@ object ResumenVideoEncoder {
             setInteger(MediaFormat.KEY_FRAME_RATE, 1)
             setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 1)
         }
-        val encoder = MediaCodec.createEncoderByType(MediaFormat.MIMETYPE_VIDEO_AVC)
-        encoder.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
-        val surface = encoder.createInputSurface()
-        encoder.start()
+        // La construcción/configure/start también van dentro del try: un MediaCodec que
+        // se fuga bloquea el codificador de hardware para todo el dispositivo hasta que
+        // muere el proceso.
+        var encoder: MediaCodec? = null
+        var surface: Surface? = null
 
         val duracionFrameUs = segundosPorTarjeta * 1_000_000L
         var salidaFormato: MediaFormat? = null
@@ -128,14 +130,14 @@ object ResumenVideoEncoder {
         // vacío no cuentan), de modo que pts = indiceMuestra * duracionFrameUs.
         var indiceMuestra = 0
 
-        fun drenar(finalDeFlujo: Boolean) {
-            if (finalDeFlujo) encoder.signalEndOfInputStream()
+        fun drenar(enc: MediaCodec, finalDeFlujo: Boolean) {
+            if (finalDeFlujo) enc.signalEndOfInputStream()
             while (true) {
-                val indiceSalida = encoder.dequeueOutputBuffer(bufferInfo, TIMEOUT_US)
+                val indiceSalida = enc.dequeueOutputBuffer(bufferInfo, TIMEOUT_US)
                 when {
                     indiceSalida == MediaCodec.INFO_TRY_AGAIN_LATER -> if (!finalDeFlujo) return
                     indiceSalida == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED -> {
-                        salidaFormato = encoder.outputFormat
+                        salidaFormato = enc.outputFormat
                     }
                     indiceSalida >= 0 -> {
                         val esCodecConfig =
@@ -143,7 +145,7 @@ object ResumenVideoEncoder {
                         // El csd (SPS/PPS) viaja en el MediaFormat de salida; MediaMuxer
                         // no debe recibirlo como muestra ni debe consumir un índice de pts.
                         if (bufferInfo.size > 0 && !esCodecConfig) {
-                            val buffer = encoder.getOutputBuffer(indiceSalida)!!
+                            val buffer = enc.getOutputBuffer(indiceSalida)!!
                             buffer.position(bufferInfo.offset)
                             buffer.limit(bufferInfo.offset + bufferInfo.size)
                             val datos = ByteArray(bufferInfo.size)
@@ -162,7 +164,7 @@ object ResumenVideoEncoder {
                                 )
                             )
                         }
-                        encoder.releaseOutputBuffer(indiceSalida, false)
+                        enc.releaseOutputBuffer(indiceSalida, false)
                         if (bufferInfo.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM != 0) return
                     }
                 }
@@ -170,20 +172,29 @@ object ResumenVideoEncoder {
         }
 
         try {
+            val enc = MediaCodec.createEncoderByType(MediaFormat.MIMETYPE_VIDEO_AVC)
+            encoder = enc
+            enc.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
+            val sfc = enc.createInputSurface()
+            surface = sfc
+            enc.start()
+
             tarjetas.forEach { bitmap ->
-                val canvas = surface.lockCanvas(null)
+                val canvas = sfc.lockCanvas(null)
                 try {
                     canvas.drawBitmap(bitmap, 0f, 0f, null)
                 } finally {
-                    surface.unlockCanvasAndPost(canvas)
+                    sfc.unlockCanvasAndPost(canvas)
                 }
-                drenar(finalDeFlujo = false)
+                drenar(enc, finalDeFlujo = false)
             }
-            drenar(finalDeFlujo = true)
+            drenar(enc, finalDeFlujo = true)
         } finally {
-            runCatching { encoder.stop() }
-            encoder.release()
-            surface.release()
+            encoder?.let {
+                runCatching { it.stop() }
+                it.release()
+            }
+            surface?.release()
         }
 
         val formatoFinal = checkNotNull(salidaFormato) {
@@ -215,63 +226,72 @@ object ResumenVideoEncoder {
         val afd = context.resources.openRawResourceFd(resId)
             ?: error("El recurso de música no se puede abrir como fd (¿está comprimido?)")
         val extractor = MediaExtractor()
-        try {
-            extractor.setDataSource(afd.fileDescriptor, afd.startOffset, afd.length)
-        } finally {
-            afd.close()
-        }
-
-        var trackIndex = -1
-        var format: MediaFormat? = null
-        for (i in 0 until extractor.trackCount) {
-            val f = extractor.getTrackFormat(i)
-            if (f.getString(MediaFormat.KEY_MIME)?.startsWith("audio/") == true) {
-                trackIndex = i
-                format = f
-                break
-            }
-        }
-        val formatoEntrada = requireNotNull(format) { "El archivo de música no tiene pista de audio" }
-        extractor.selectTrack(trackIndex)
-
-        var sampleRate = formatoEntrada.getInteger(MediaFormat.KEY_SAMPLE_RATE)
-        var canales = formatoEntrada.getInteger(MediaFormat.KEY_CHANNEL_COUNT)
-        val mime = formatoEntrada.getString(MediaFormat.KEY_MIME)!!
-
-        val decoder = MediaCodec.createDecoderByType(mime)
-        decoder.configure(formatoEntrada, null, null, 0)
-        decoder.start()
-
+        // El decodificador se construye DENTRO del try: si configure()/start() lanza,
+        // el finally igual libera extractor y códec (un MediaCodec fugado bloquea el
+        // hardware para todo el dispositivo hasta que muere el proceso).
+        var decoder: MediaCodec? = null
         val acumulador = AcumuladorPcm()
-        val bufferInfo = MediaCodec.BufferInfo()
-        var entradaTerminada = false
-        var salidaTerminada = false
-        var suficiente = false
+        var sampleRate = 0
+        var canales = 0
 
         try {
+            try {
+                extractor.setDataSource(afd.fileDescriptor, afd.startOffset, afd.length)
+            } finally {
+                afd.close()
+            }
+
+            var trackIndex = -1
+            var format: MediaFormat? = null
+            for (i in 0 until extractor.trackCount) {
+                val f = extractor.getTrackFormat(i)
+                if (f.getString(MediaFormat.KEY_MIME)?.startsWith("audio/") == true) {
+                    trackIndex = i
+                    format = f
+                    break
+                }
+            }
+            val formatoEntrada =
+                requireNotNull(format) { "El archivo de música no tiene pista de audio" }
+            extractor.selectTrack(trackIndex)
+
+            sampleRate = formatoEntrada.getInteger(MediaFormat.KEY_SAMPLE_RATE)
+            canales = formatoEntrada.getInteger(MediaFormat.KEY_CHANNEL_COUNT)
+            val mime = formatoEntrada.getString(MediaFormat.KEY_MIME)!!
+
+            val dec = MediaCodec.createDecoderByType(mime)
+            decoder = dec
+            dec.configure(formatoEntrada, null, null, 0)
+            dec.start()
+
+            val bufferInfo = MediaCodec.BufferInfo()
+            var entradaTerminada = false
+            var salidaTerminada = false
+            var suficiente = false
+
             while (!salidaTerminada) {
                 if (!entradaTerminada) {
-                    val indiceEntrada = decoder.dequeueInputBuffer(TIMEOUT_US)
+                    val indiceEntrada = dec.dequeueInputBuffer(TIMEOUT_US)
                     if (indiceEntrada >= 0) {
-                        val buffer = decoder.getInputBuffer(indiceEntrada)!!
+                        val buffer = dec.getInputBuffer(indiceEntrada)!!
                         buffer.clear()
                         val tam = if (suficiente) -1 else extractor.readSampleData(buffer, 0)
                         if (tam < 0) {
-                            decoder.queueInputBuffer(
+                            dec.queueInputBuffer(
                                 indiceEntrada, 0, 0, 0, MediaCodec.BUFFER_FLAG_END_OF_STREAM
                             )
                             entradaTerminada = true
                         } else {
-                            decoder.queueInputBuffer(indiceEntrada, 0, tam, extractor.sampleTime, 0)
+                            dec.queueInputBuffer(indiceEntrada, 0, tam, extractor.sampleTime, 0)
                             extractor.advance()
                         }
                     }
                 }
-                val indiceSalida = decoder.dequeueOutputBuffer(bufferInfo, TIMEOUT_US)
+                val indiceSalida = dec.dequeueOutputBuffer(bufferInfo, TIMEOUT_US)
                 when {
                     indiceSalida == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED -> {
                         // El PCM real puede diferir del formato del contenedor.
-                        val fSalida = decoder.outputFormat
+                        val fSalida = dec.outputFormat
                         if (fSalida.containsKey(MediaFormat.KEY_SAMPLE_RATE)) {
                             sampleRate = fSalida.getInteger(MediaFormat.KEY_SAMPLE_RATE)
                         }
@@ -281,7 +301,7 @@ object ResumenVideoEncoder {
                     }
                     indiceSalida >= 0 -> {
                         if (bufferInfo.size > 0) {
-                            val buffer = decoder.getOutputBuffer(indiceSalida)!!
+                            val buffer = dec.getOutputBuffer(indiceSalida)!!
                             buffer.position(bufferInfo.offset)
                             buffer.limit(bufferInfo.offset + bufferInfo.size)
                             // Los buffers de MediaCodec son PCM 16 bits en orden nativo.
@@ -290,7 +310,7 @@ object ResumenVideoEncoder {
                             shortBuffer.get(temp)
                             acumulador.agregar(temp, temp.size)
                         }
-                        decoder.releaseOutputBuffer(indiceSalida, false)
+                        dec.releaseOutputBuffer(indiceSalida, false)
                         if (bufferInfo.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM != 0) {
                             salidaTerminada = true
                         }
@@ -300,8 +320,10 @@ object ResumenVideoEncoder {
                 }
             }
         } finally {
-            runCatching { decoder.stop() }
-            decoder.release()
+            decoder?.let {
+                runCatching { it.stop() }
+                it.release()
+            }
             extractor.release()
         }
 
@@ -337,9 +359,9 @@ object ResumenVideoEncoder {
             setInteger(MediaFormat.KEY_AAC_PROFILE, MediaCodecInfo.CodecProfileLevel.AACObjectLC)
             setInteger(MediaFormat.KEY_BIT_RATE, BIT_RATE_AUDIO)
         }
-        val encoder = MediaCodec.createEncoderByType(MediaFormat.MIMETYPE_AUDIO_AAC)
-        encoder.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
-        encoder.start()
+        // Igual que en video: construir/configurar/arrancar dentro del try para no
+        // fugar el códec si algo de eso lanza.
+        var encoder: MediaCodec? = null
 
         val bufferInfo = MediaCodec.BufferInfo()
         var salidaFormato: MediaFormat? = null
@@ -355,22 +377,27 @@ object ResumenVideoEncoder {
         // 1_000_000 * 1024 / sampleRate con enteros en cada frame).
         var muestrasPorCanalEnviadas = 0L
         var entradaTerminada = false
+        // Se marca en cuanto se ve el buffer de salida con EOS, en CUALQUIER llamada a
+        // drenar(). Sin esta bandera, si un drenar(false) alcanzara a consumir el EOS,
+        // el drenar(true) posterior giraría para siempre sobre INFO_TRY_AGAIN_LATER.
+        var salidaTerminada = false
 
         fun ptsActual(): Long = muestrasPorCanalEnviadas * 1_000_000L / pcm.sampleRate
 
-        fun drenar(finalDeFlujo: Boolean) {
+        fun drenar(enc: MediaCodec, finalDeFlujo: Boolean) {
+            if (salidaTerminada) return
             while (true) {
-                val indiceSalida = encoder.dequeueOutputBuffer(bufferInfo, TIMEOUT_US)
+                val indiceSalida = enc.dequeueOutputBuffer(bufferInfo, TIMEOUT_US)
                 when {
                     indiceSalida == MediaCodec.INFO_TRY_AGAIN_LATER -> if (!finalDeFlujo) return
                     indiceSalida == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED -> {
-                        salidaFormato = encoder.outputFormat
+                        salidaFormato = enc.outputFormat
                     }
                     indiceSalida >= 0 -> {
                         val esCodecConfig =
                             bufferInfo.flags and MediaCodec.BUFFER_FLAG_CODEC_CONFIG != 0
                         if (bufferInfo.size > 0 && !esCodecConfig) {
-                            val buffer = encoder.getOutputBuffer(indiceSalida)!!
+                            val buffer = enc.getOutputBuffer(indiceSalida)!!
                             buffer.position(bufferInfo.offset)
                             buffer.limit(bufferInfo.offset + bufferInfo.size)
                             val datos = ByteArray(bufferInfo.size)
@@ -387,39 +414,60 @@ object ResumenVideoEncoder {
                                 )
                             )
                         }
-                        encoder.releaseOutputBuffer(indiceSalida, false)
-                        if (bufferInfo.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM != 0) return
+                        enc.releaseOutputBuffer(indiceSalida, false)
+                        if (bufferInfo.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM != 0) {
+                            salidaTerminada = true
+                            return
+                        }
                     }
                 }
             }
         }
 
         try {
+            val enc = MediaCodec.createEncoderByType(MediaFormat.MIMETYPE_AUDIO_AAC)
+            encoder = enc
+            enc.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
+            enc.start()
+
             while (!entradaTerminada) {
-                val indiceEntrada = encoder.dequeueInputBuffer(TIMEOUT_US)
+                val indiceEntrada = enc.dequeueInputBuffer(TIMEOUT_US)
                 if (indiceEntrada >= 0) {
-                    val buffer = encoder.getInputBuffer(indiceEntrada)!!
+                    val buffer = enc.getInputBuffer(indiceEntrada)!!
                     buffer.clear()
                     val restante = bytesPcm.size - offset
                     if (restante <= 0) {
-                        encoder.queueInputBuffer(
+                        enc.queueInputBuffer(
                             indiceEntrada, 0, 0, ptsActual(), MediaCodec.BUFFER_FLAG_END_OF_STREAM
                         )
                         entradaTerminada = true
                     } else {
-                        val tam = minOf(bytesPorFrame, restante, buffer.remaining())
+                        // Recortar a un número entero de frames de audio: si `offset`
+                        // cayera a mitad de una muestra, los canales quedarían invertidos
+                        // para todo el resto de la pista y el pts se desfasaría.
+                        val bruto = minOf(bytesPorFrame, restante, buffer.remaining())
+                        val tam = bruto - bruto % bytesPorMuestra
+                        check(tam > 0) {
+                            "El buffer de entrada del codificador AAC ($bruto B) no alcanza " +
+                                "para una muestra de $bytesPorMuestra B"
+                        }
                         buffer.put(bytesPcm, offset, tam)
-                        encoder.queueInputBuffer(indiceEntrada, 0, tam, ptsActual(), 0)
+                        enc.queueInputBuffer(indiceEntrada, 0, tam, ptsActual(), 0)
                         offset += tam
                         muestrasPorCanalEnviadas += (tam / bytesPorMuestra).toLong()
                     }
                 }
-                drenar(finalDeFlujo = false)
+                // Sólo se drena mientras aún queda entrada por alimentar. Una vez que se
+                // encoló el EOS de entrada, el único drenaje es el final: así ninguna
+                // llamada con finalDeFlujo=false puede robarse el EOS de salida.
+                if (!entradaTerminada) drenar(enc, finalDeFlujo = false)
             }
-            drenar(finalDeFlujo = true)
+            drenar(enc, finalDeFlujo = true)
         } finally {
-            runCatching { encoder.stop() }
-            encoder.release()
+            encoder?.let {
+                runCatching { it.stop() }
+                it.release()
+            }
         }
 
         val formatoFinal = checkNotNull(salidaFormato) {
