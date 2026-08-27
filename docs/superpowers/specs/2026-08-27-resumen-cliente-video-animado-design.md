@@ -22,11 +22,15 @@ en vez de cortes duros.
 - **Resolución**: se mantiene 1080×1920 (no 4K real). El video se genera en el
   celular del entrenador al compartir, sin servidor; 4K real cuadruplicaría el
   costo de codificación sin beneficio visible en un teléfono.
-- **Blur de los blobs**: blur gaussiano real vía `RenderEffect` en Android 12+
-  (API 31). En Android 8-11 (API 26-30, todavía soportado por `minSdk = 26`) no
-  existe `RenderEffect`; se usa como *fallback* un blob dibujado con
-  `RadialGradient` (color → transparente), visualmente muy similar sin blur real
-  por píxel.
+- **Blur de los blobs**: blur gaussiano real vía `BlurMaskFilter`
+  (`Paint().maskFilter`), no `RenderEffect`. Cada frame se arma como un
+  `Bitmap`/`Canvas` normal (software), y `RenderEffect` solo compone sobre un
+  canvas de hardware (`Surface.lockHardwareCanvas()`) — hubiera obligado a
+  redisañar todo el pipeline para dibujar directamente sobre el Surface del
+  encoder. `BlurMaskFilter` da blur real sobre un canvas por software, existe
+  desde API 1 (muy por debajo de `minSdk = 26`), y es la técnica estándar de
+  Android para este efecto — una sola implementación, sin ramificar por
+  versión de Android y sin riesgo técnico que validar primero.
 - **Escenas incluidas**: Saludo, Asistencia, Tiempo, Día favorito y (solo en el
   resumen mensual) Racha más larga — las 5 escenas que existían como tarjetas
   hoy, más el saludo nuevo, todas rediseñadas con el mismo lenguaje visual.
@@ -36,19 +40,6 @@ en vez de cortes duros.
   escritura rápida nueva.
 - **Misma estructura para semanal y mensual**: un solo diseño de escenas que se
   adapta con "semana"/"mes" según `RangoResumen.tipo`, igual que hoy.
-
-## Riesgo técnico a validar primero (spike)
-
-Componer un `RenderNode` con `setRenderEffect(blur)` sobre el `Surface` de
-entrada de `MediaCodec` requiere `Surface.lockHardwareCanvas()` en vez del
-`lockCanvas()` (software) que usa `ResumenVideoEncoder` hoy. No está validado
-que `canvas.drawRenderNode(...)` funcione correctamente sobre ese Surface
-específico (el de un encoder de video, no el de una `View`). Antes de construir
-el resto del diseño encima, la implementación debe empezar con un spike
-acotado: dibujar un blob borroso en un frame de prueba y confirmar visualmente
-(guardando el bitmap o generando un video de 1 segundo) que se ve correcto. Si
-no compone bien, el fallback es usar `FondoBlobRendererGradiente` también en
-API 31+ (perder el blur real no bloquea el resto del diseño).
 
 ## Modelo de escenas y timeline
 
@@ -90,25 +81,45 @@ Duración fija por tipo de escena (constantes, no configurables por ahora):
 
 Video semanal (4 escenas): ~19s. Video mensual (5 escenas): ~23s.
 
-**Sin relleno extra**: el crossfade de 0.6s se toma de los últimos 0.6s del
-`hold` de la escena saliente — la escena entrante empieza a animar su propio
-contenido desde ese mismo instante mientras aparece con alpha creciente. La
-suma de duraciones por escena ya es la duración total del video, sin necesitar
-tiempo adicional. Si en la prueba en dispositivo se siente apretado, se ajustan
-estas constantes (quedan documentadas en un solo lugar).
+**Sin relleno extra**: los `inicioMs` de cada tramo son una suma acumulada
+simple de las duraciones de la tabla (sin huecos) — la suma de duraciones por
+escena ya es la duración total del video. El crossfade de 0.6s es un truco de
+*rendering*, no de tiempo: en los últimos 600ms de cursor de una escena, la
+escena **siguiente** ya se dibuja encimada (con alpha creciente) usando su
+propio reloj de contenido, que arranca 600ms **antes** de su `inicioMs` de
+cursor oficial — así su animación ya está en marcha cuando alcanza opacidad
+completa exactamente en el `inicioMs` de cursor. La escena saliente, en ese
+mismo instante, ya terminó su propio contenido (los últimos 600ms de su
+`duracionMs` caen siempre después de que su escritura y su hold principal
+terminaron) así que se ve congelada en su estado final mientras se desvanece.
+Si en la prueba en dispositivo se siente apretado, se ajustan las constantes
+de duración (quedan documentadas en un solo lugar).
 
 Nuevo archivo `app/src/main/java/com/osfit/app/video/TimelineResumen.kt`:
 
 ```kotlin
-data class TramoEscena(val escena: EscenaResumen, val inicioMs: Long, val duracionMs: Long)
+data class TramoEscena(val escena: EscenaResumen, val inicioMs: Long, val duracionMs: Long) {
+    val finMs: Long get() = inicioMs + duracionMs
+}
 
-class TimelineResumen(private val tramos: List<TramoEscena>) {
+class TimelineResumen(escenas: List<EscenaResumen>) {
+    val tramos: List<TramoEscena>
     val duracionTotalMs: Long
+
+    /** Tramo "dueño" de [tiempoGlobalMs] según el cursor (suma acumulada de duraciones). */
     fun tramoActivo(tiempoGlobalMs: Long): TramoEscena
-    /** No-nulo solo durante los últimos 600ms de una escena que no es la última. */
-    fun tramoSaliente(tiempoGlobalMs: Long): TramoEscena?
-    /** 1.0 → 0.0 a lo largo de la ventana de crossfade; fuera de ella no se llama. */
-    fun alphaSaliente(tiempoGlobalMs: Long): Float
+
+    /** Próximo tramo si [tiempoGlobalMs] cae en los 600ms previos al cambio de escena
+     * (su ventana de entrada anticipada); null fuera de esa ventana o si es la última escena. */
+    fun tramoEntrante(tiempoGlobalMs: Long): TramoEscena?
+
+    /** 0f al empezar la ventana de crossfade, 1f al terminarla. Llamar solo si
+     * [tramoEntrante] no es null en ese instante. */
+    fun alphaEntrante(tiempoGlobalMs: Long): Float
+
+    /** Milisegundos transcurridos dentro del contenido propio de [tramo], acotados a
+     * [0, tramo.duracionMs]. Si [tramo] es el entrante, ya cuenta su adelanto de 600ms. */
+    fun elapsedEnTramo(tramo: TramoEscena, tiempoGlobalMs: Long): Long
 }
 ```
 
@@ -124,25 +135,20 @@ cada uno con posición base, radio y fase/velocidad de oscilación. Una función
 lento (período ~8-15s, amplitud ~10-15% del canvas) — determinístico, sin
 `Random`, testeable en JVM sin Android.
 
-Interfaz común, implementada dos veces según versión de Android:
+Un único renderer, sin ramificar por versión de Android:
 
 ```kotlin
-interface FondoBlobRenderer {
+object FondoBlobRenderer {
     fun dibujar(canvas: Canvas, ancho: Int, alto: Int, tiempoGlobalMs: Long)
 }
 ```
 
-- `FondoBlobRendererBlur` (API 31+): dibuja círculos sólidos de
-  `BlobsGeometria` dentro de un `RenderNode` con
-  `setRenderEffect(RenderEffect.createBlurEffect(...))`, compositado con
-  `canvas.drawRenderNode(...)` (canvas debe venir de `lockHardwareCanvas()`).
-- `FondoBlobRendererGradiente` (API 26-30, y fallback si el spike de blur no
-  compone bien): mismos blobs/posiciones, pero cada uno como un círculo con
-  `Paint().shader = RadialGradient(...)` (color opaco en el centro → transparente
-  en el borde).
-
-`ResumenFrameRenderer` elige la implementación una sola vez con
-`Build.VERSION.SDK_INT >= 31`, no por frame.
+Por cada blob de `BlobsGeometria`, dibuja un círculo sólido
+(`canvas.drawCircle`) con un `Paint` que tiene
+`maskFilter = BlurMaskFilter(radioBlurPx, BlurMaskFilter.Blur.NORMAL)` — blur
+gaussiano real aplicado a la máscara de alpha de la forma, funciona en
+cualquier canvas por software (como el `Canvas(bitmap)` que arma cada frame),
+sin necesitar `Surface.lockHardwareCanvas()` ni ramificar por `Build.VERSION`.
 
 El fondo se dibuja **una sola vez por frame**, con el tiempo global del video
 (no el tiempo relativo de la escena) — así los blobs jamás se cortan ni
@@ -166,12 +172,14 @@ bloque de texto animar y en qué ventana de tiempo relativo a su propio inicio.
 `ResumenFrameRenderer` (reemplaza `ResumenCardRenderer`) compone cada frame:
 
 1. Fondo negro + `FondoBlobRenderer.dibujar(canvas, ancho, alto, tiempoGlobalMs)`.
-2. Si `timeline.tramoSaliente(tiempoGlobalMs) != null` (dentro de una ventana de
-   crossfade): dibuja el texto de la escena saliente congelado en su último
-   estado con `paint.alpha = (255 * alphaSaliente).toInt()`, y el texto de la
-   escena entrante con `paint.alpha = (255 * (1 - alphaSaliente)).toInt()`,
-   ambos sobre el mismo fondo de blobs.
-3. Si no hay crossfade activo: dibuja solo el texto de la escena activa a alpha
+2. Si `timeline.tramoEntrante(tiempoGlobalMs) != null` (dentro de una ventana de
+   crossfade): dibuja el texto del tramo activo (congelado en su estado final,
+   vía `elapsedEnTramo` que ya lo acota a `duracionMs`) con
+   `paint.alpha = (255 * (1 - alphaEntrante)).toInt()`, y el texto del tramo
+   entrante (con su propio `elapsedEnTramo`, que ya arrancó 600ms antes) con
+   `paint.alpha = (255 * alphaEntrante).toInt()`, ambos sobre el mismo fondo de
+   blobs.
+3. Si no hay crossfade activo: dibuja solo el texto del tramo activo a alpha
    completo, con `MaquinaEscribir` recortando cada bloque según su sub-tramo.
 
 No se renderizan dos escenas completas y se mezclan a nivel de píxeles (caro);
@@ -206,9 +214,10 @@ terminar). Cambia únicamente qué arma internamente
 ## Plan de pruebas
 
 - **Unitarias (JVM, sin dispositivo)**:
-  - `TimelineResumen`: tramo activo/saliente en distintos puntos del timeline,
-    incluida la última escena (sin crossfade de salida), `alphaSaliente` en los
-    bordes de la ventana (0.0 y 1.0) y a la mitad.
+  - `TimelineResumen`: `tramoActivo`/`tramoEntrante` en distintos puntos del
+    timeline, incluida la última escena (sin `tramoEntrante` nunca), continuidad
+    de `elapsedEnTramo` en el instante exacto del cambio de cursor, y
+    `alphaEntrante` en los bordes de la ventana (0.0 y 1.0) y a la mitad.
   - `BlobsGeometria.posicionEn`: determinismo (mismo tiempo → misma posición),
     posición dentro de límites razonables del canvas.
   - `MaquinaEscribir.textoVisible`: `elapsedMs <= 0` → cadena vacía,
@@ -216,23 +225,19 @@ terminar). Cambia únicamente qué arma internamente
     proporcional.
   - `construirEscenas`: mismo criterio que el `construirTarjetas` actual
     (racha solo en mensual, orden de escenas).
-- **Spike manual en dispositivo (primero, antes del resto)**: confirmar que
-  `RenderNode` + `RenderEffect` blur composita correctamente sobre
-  `lockHardwareCanvas()` del Surface de MediaCodec, en un video de prueba corto.
 - **Manual en dispositivo (adb, al final)**: generar un resumen semanal y uno
-  mensual para un cliente con datos reales en un equipo API 31+ (blur real) y,
-  si hay disponible, en uno API 26-30 (fallback de gradiente); confirmar que
-  los blobs se mueven de forma continua sin cortes en los cambios de escena,
-  que el texto crossfadea, que las duraciones se sienten bien, y que el archivo
-  final reproduce con audio.
+  mensual para un cliente con datos reales; confirmar que los blobs se mueven
+  de forma continua y borrosa sin cortes en los cambios de escena, que el texto
+  crossfadea, que las duraciones se sienten bien, y que el archivo final
+  reproduce con audio.
 
 ## Supuestos a confirmar durante la implementación
 
 - Las constantes de tiempo de la tabla de arriba son el punto de partida; se
   ajustan si en la prueba real en dispositivo alguna transición se siente
   apretada o lenta.
-- El radio de blur y el tamaño/velocidad exactos de los blobs no están
-  numéricamente fijados en este spec — quedan a criterio de implementación
-  dentro del espíritu descrito (colores magenta/cian/púrpura eléctrico,
-  movimiento lento y orgánico), ajustables a ojo durante la prueba en
-  dispositivo.
+- El radio de blur (`BlurMaskFilter`) y el tamaño/velocidad exactos de los
+  blobs no están numéricamente fijados en este spec — quedan a criterio de
+  implementación dentro del espíritu descrito (colores magenta/cian/púrpura
+  eléctrico, movimiento lento y orgánico), ajustables a ojo durante la prueba
+  en dispositivo.
