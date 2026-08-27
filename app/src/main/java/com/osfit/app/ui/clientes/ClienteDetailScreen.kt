@@ -1,9 +1,7 @@
 package com.osfit.app.ui.clientes
 
 import android.content.ActivityNotFoundException
-import android.content.Context
 import android.content.Intent
-import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -43,7 +41,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -54,47 +51,12 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.osfit.app.data.model.Rutina
-import com.osfit.app.domain.ResumenClienteData
 import com.osfit.app.domain.RutinaProgressCalculator
 import com.osfit.app.ui.common.AccionCard
 import com.osfit.app.ui.common.RachaBadge
 import com.osfit.app.ui.common.TextoMaquinaEscribir
 import com.osfit.app.ui.common.rememberFechaActual
 import com.osfit.app.util.WhatsAppUtil
-import com.osfit.app.video.ResumenVideoGenerator
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.launch
-
-private const val TAG_RESUMEN = "ResumenVideo"
-
-/**
- * Calcula el resumen y genera/comparte el video atrapando cualquier fallo.
- *
- * `rememberCoroutineScope()` no instala ningún manejador de excepciones, así que sin este
- * try/catch una excepción del códec (MediaCodec por Surface no está soportado en todos los
- * dispositivos), del FileProvider o un OutOfMemoryError al crear los bitmaps llegaría al
- * manejador por defecto y mataría el proceso completo en vez de avisarle al usuario.
- * Por eso se atrapa `Throwable` y no sólo `Exception`.
- */
-private suspend fun generarResumenSeguro(
-    context: Context,
-    obtenerResumen: suspend () -> ResumenClienteData?
-) {
-    try {
-        val resumen = obtenerResumen()
-        if (resumen == null) {
-            Toast.makeText(context, "No se pudo calcular el resumen de este cliente", Toast.LENGTH_SHORT).show()
-            return
-        }
-        ResumenVideoGenerator.generarYCompartir(context, resumen)
-    } catch (e: CancellationException) {
-        // La cancelación (salir de la pantalla) no es un error: debe seguir propagándose.
-        throw e
-    } catch (e: Throwable) {
-        Log.w(TAG_RESUMEN, "Falló la generación del resumen en video", e)
-        Toast.makeText(context, "No se pudo generar el video del resumen", Toast.LENGTH_LONG).show()
-    }
-}
 
 @Composable
 fun ClienteDetailScreen(
@@ -115,9 +77,12 @@ fun ClienteDetailScreen(
     val resumenViewModel: ResumenClienteViewModel = viewModel(
         factory = viewModelFactory { initializer { ResumenClienteViewModel(clienteId) } }
     )
-    var generandoResumen by remember { mutableStateOf(false) }
-    val scope = rememberCoroutineScope()
+    // El estado de generación vive en el ViewModel (viewModelScope): sobrevive a la rotación,
+    // así el botón sigue mostrando "Generando..." y no se puede disparar una segunda corrida.
+    val generandoResumen by resumenViewModel.generando.collectAsState()
+    val mensajeResumen by resumenViewModel.mensaje.collectAsState()
     val hoy by rememberFechaActual()
+    val context = LocalContext.current
 
     var mostrarDialogoRutina by remember { mutableStateOf(false) }
     var mostrarDialogoAsignarDia by remember { mutableStateOf(false) }
@@ -128,10 +93,17 @@ fun ClienteDetailScreen(
         if (eliminado) onEliminado()
     }
 
+    // El mensaje se emite desde el ViewModel (que sobrevive a la rotación) y la pantalla
+    // lo consume: si la Activity se recreó a media generación, el aviso igual se muestra.
+    androidx.compose.runtime.LaunchedEffect(mensajeResumen) {
+        val mensaje = mensajeResumen ?: return@LaunchedEffect
+        Toast.makeText(context, mensaje, Toast.LENGTH_LONG).show()
+        resumenViewModel.limpiarMensaje()
+    }
+
     if (eliminado) return
 
     val clienteActual = cliente ?: return
-    val context = LocalContext.current
 
     Scaffold { padding ->
         LazyColumn(modifier = Modifier.fillMaxSize().padding(padding).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -306,41 +278,13 @@ fun ClienteDetailScreen(
                         icono = Icons.Filled.Videocam,
                         texto = if (generandoResumen) "Generando..." else "Resumen semanal",
                         modifier = Modifier.weight(1f),
-                        onClick = {
-                            if (!generandoResumen) {
-                                generandoResumen = true
-                                scope.launch {
-                                    try {
-                                        generarResumenSeguro(context) {
-                                            resumenViewModel.calcularResumenSemanal()
-                                        }
-                                    } finally {
-                                        // En `finally` para que el botón no quede trabado
-                                        // aunque la corrutina se cancele a media generación.
-                                        generandoResumen = false
-                                    }
-                                }
-                            }
-                        }
+                        onClick = { resumenViewModel.generarResumenSemanal(context) }
                     )
                     AccionCard(
                         icono = Icons.Filled.Videocam,
                         texto = if (generandoResumen) "Generando..." else "Resumen mensual",
                         modifier = Modifier.weight(1f),
-                        onClick = {
-                            if (!generandoResumen) {
-                                generandoResumen = true
-                                scope.launch {
-                                    try {
-                                        generarResumenSeguro(context) {
-                                            resumenViewModel.calcularResumenMensual()
-                                        }
-                                    } finally {
-                                        generandoResumen = false
-                                    }
-                                }
-                            }
-                        }
+                        onClick = { resumenViewModel.generarResumenMensual(context) }
                     )
                 }
             }

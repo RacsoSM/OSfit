@@ -17,11 +17,18 @@ object CompartirUtil {
             type = "video/mp4"
             putExtra(Intent.EXTRA_STREAM, uri)
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            // La generación corre en el viewModelScope con el applicationContext (sobrevive a
+            // la rotación), y arrancar una Activity desde un contexto que no es de Activity
+            // exige NEW_TASK.
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }
         try {
             context.startActivity(Intent(intentBase).setPackage("com.whatsapp"))
         } catch (e: ActivityNotFoundException) {
-            context.startActivity(Intent.createChooser(intentBase, "Compartir resumen"))
+            context.startActivity(
+                Intent.createChooser(intentBase, "Compartir resumen")
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            )
         }
     }
 }
