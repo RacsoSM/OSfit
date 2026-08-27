@@ -587,7 +587,10 @@ object ResumenFrameRenderer {
                 "${determinante(escena.unidad, mayuscula = true)} ${escena.unidad} asististe ${escena.dias} días",
                 inicioMs = 400, duracionMs = 2_400, y = 700f, tamano = 84f, color = VERDE, estilo = Typeface.BOLD
             ),
-            BloqueTexto(comparacion(escena.ranking, "asistencias"), inicioMs = 3_400, duracionMs = 800, y = 1500f, tamano = 40f, color = Color.LTGRAY, estilo = Typeface.NORMAL)
+            BloqueTexto(
+                comparacion(escena.ranking, "¡Vas primero en asistencias ${determinante(escena.unidad)} ${escena.unidad}!", "asistencias"),
+                inicioMs = 3_400, duracionMs = 800, y = 1500f, tamano = 40f, color = Color.LTGRAY, estilo = Typeface.NORMAL
+            )
         )
         is EscenaResumen.Tiempo -> {
             val horas = escena.minutos / 60
@@ -595,7 +598,10 @@ object ResumenFrameRenderer {
             listOf(
                 BloqueTexto("Estuviste en el poderoso Focus un total de", inicioMs = 0, duracionMs = 400, y = 500f, tamano = 44f, color = Color.WHITE, estilo = Typeface.NORMAL),
                 BloqueTexto("${horas}h ${minutos}min", inicioMs = 400, duracionMs = 2_400, y = 800f, tamano = 96f, color = VERDE, estilo = Typeface.BOLD),
-                BloqueTexto(comparacion(escena.ranking, "tiempo asistido"), inicioMs = 3_400, duracionMs = 800, y = 1500f, tamano = 40f, color = Color.LTGRAY, estilo = Typeface.NORMAL)
+                BloqueTexto(
+                    comparacion(escena.ranking, "¡Vas primero en tiempo asistido!", "tiempo asistido"),
+                    inicioMs = 3_400, duracionMs = 800, y = 1500f, tamano = 40f, color = Color.LTGRAY, estilo = Typeface.NORMAL
+                )
             )
         }
         is EscenaResumen.DiaFavorito -> listOf(
@@ -604,7 +610,10 @@ object ResumenFrameRenderer {
         is EscenaResumen.RachaMasLarga -> listOf(
             BloqueTexto("Tu racha más larga fue de", inicioMs = 0, duracionMs = 300, y = 700f, tamano = 44f, color = Color.WHITE, estilo = Typeface.NORMAL),
             BloqueTexto("${escena.dias} días seguidos", inicioMs = 300, duracionMs = 1_900, y = 1000f, tamano = 88f, color = VERDE, estilo = Typeface.BOLD),
-            BloqueTexto(comparacion(escena.ranking, "racha"), inicioMs = 2_600, duracionMs = 600, y = 1500f, tamano = 40f, color = Color.LTGRAY, estilo = Typeface.NORMAL)
+            BloqueTexto(
+                comparacion(escena.ranking, "¡Vas primero en racha este mes!", "racha"),
+                inicioMs = 2_600, duracionMs = 600, y = 1500f, tamano = 40f, color = Color.LTGRAY, estilo = Typeface.NORMAL
+            )
         )
     }
 
@@ -613,11 +622,17 @@ object ResumenFrameRenderer {
         return if (mayuscula) base.replaceFirstChar { it.uppercase() } else base
     }
 
-    private fun comparacion(ranking: RankingResultado, etiqueta: String): String =
+    /**
+     * [fraseVasPrimero] es el texto exacto ya usado en el renderer de tarjetas estáticas para
+     * el caso "vas primero" de cada tipo de escena (Asistencia incluye "esta semana"/"este mes",
+     * Tiempo no lleva sufijo, Racha lo tiene fijo en "este mes") — se preserva verbatim, no se
+     * genera genéricamente a partir de [etiquetaLugar].
+     */
+    private fun comparacion(ranking: RankingResultado, fraseVasPrimero: String, etiquetaLugar: String): String =
         if (ranking.nombresPorEncima.isEmpty()) {
-            "¡Vas primero en $etiqueta!"
+            fraseVasPrimero
         } else {
-            "Estás en el lugar ${ranking.puesto} de $etiqueta, solamente detrás de: " +
+            "Estás en el lugar ${ranking.puesto} de $etiquetaLugar, solamente detrás de: " +
                 ranking.nombresPorEncima.joinToString(", ")
         }
 
