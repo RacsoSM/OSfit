@@ -55,6 +55,15 @@ object ResumenVideoEncoder {
     private const val BIT_RATE_VIDEO = 4_000_000
     private const val BIT_RATE_AUDIO = 128_000
     private const val TIMEOUT_US = 10_000L
+
+    /**
+     * Tope de espera del drenaje final de video. Si el codificador nunca entrega el buffer
+     * marcado con END_OF_STREAM (se ha visto en hardware real quedándose corto por un frame),
+     * el bucle de drenaje sale al agotarse este tiempo en vez de girar para siempre: el
+     * `check(muestras.size == totalFrames)` posterior convierte el cuelgue indefinido en un
+     * error inmediato y diagnosticable.
+     */
+    private const val MAX_ESPERA_EOS_MS = 5_000L
     private const val MUESTRAS_POR_FRAME_AAC = 1024
 
     suspend fun generar(
@@ -133,14 +142,35 @@ object ResumenVideoEncoder {
 
         fun drenar(enc: MediaCodec, finalDeFlujo: Boolean) {
             if (finalDeFlujo) enc.signalEndOfInputStream()
+            // Reloj de inactividad del drenaje final: se mide con reloj de pared (y no
+            // sumando TIMEOUT_US por vuelta) para que el tope aplique a CUALQUIER camino
+            // del `when`, incluidos códigos de retorno inesperados sin rama propia.
+            // Con finalDeFlujo=false nunca se usa: el primer INFO_TRY_AGAIN_LATER ya
+            // devuelve el control al bucle de frames.
+            var inicioInactividadNs = System.nanoTime()
             while (true) {
                 val indiceSalida = enc.dequeueOutputBuffer(bufferInfo, TIMEOUT_US)
+                val inactividadMs = (System.nanoTime() - inicioInactividadNs) / 1_000_000L
                 when {
-                    indiceSalida == MediaCodec.INFO_TRY_AGAIN_LATER -> if (!finalDeFlujo) return
+                    indiceSalida == MediaCodec.INFO_TRY_AGAIN_LATER -> {
+                        if (!finalDeFlujo) return
+                        if (inactividadMs >= MAX_ESPERA_EOS_MS) {
+                            Log.w(
+                                TAG,
+                                "El codificador de video no entregó END_OF_STREAM tras " +
+                                    "$MAX_ESPERA_EOS_MS ms; se abandona el drenaje final con " +
+                                    "${muestras.size} frames"
+                            )
+                            return
+                        }
+                    }
                     indiceSalida == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED -> {
                         salidaFormato = enc.outputFormat
+                        // Hubo avance: el tope de espera cuenta inactividad, no trabajo útil.
+                        inicioInactividadNs = System.nanoTime()
                     }
                     indiceSalida >= 0 -> {
+                        inicioInactividadNs = System.nanoTime()
                         val esCodecConfig =
                             bufferInfo.flags and MediaCodec.BUFFER_FLAG_CODEC_CONFIG != 0
                         // El csd (SPS/PPS) viaja en el MediaFormat de salida; MediaMuxer
@@ -168,6 +198,17 @@ object ResumenVideoEncoder {
                         enc.releaseOutputBuffer(indiceSalida, false)
                         if (bufferInfo.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM != 0) return
                     }
+                    // Códigos negativos sin rama propia (p.ej. el obsoleto
+                    // INFO_OUTPUT_BUFFERS_CHANGED): se ignoran, pero sin exceptuarlos del
+                    // tope de inactividad, para que ningún retorno inesperado cuelgue el bucle.
+                    finalDeFlujo && inactividadMs >= MAX_ESPERA_EOS_MS -> {
+                        Log.w(
+                            TAG,
+                            "Drenaje final abandonado tras $MAX_ESPERA_EOS_MS ms sin avance " +
+                                "(último código $indiceSalida) con ${muestras.size} frames"
+                        )
+                        return
+                    }
                 }
             }
         }
@@ -191,6 +232,12 @@ object ResumenVideoEncoder {
                 }
                 drenar(enc, finalDeFlujo = false)
             }
+            // Drenaje extra antes de señalar el fin de flujo: el pipeline interno del
+            // codificador con entrada por Surface tiene latencia (el propio códec reporta
+            // `latency = 4` en este dispositivo), así que el último unlockCanvasAndPost()
+            // puede no haberse latcheado todavía cuando se llama a signalEndOfInputStream().
+            // Esta pasada le da la oportunidad de emitir lo que ya tenga listo antes del EOS.
+            drenar(enc, finalDeFlujo = false)
             drenar(enc, finalDeFlujo = true)
         } finally {
             encoder?.let {
