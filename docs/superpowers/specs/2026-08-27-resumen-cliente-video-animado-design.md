@@ -84,7 +84,7 @@ Duración fija por tipo de escena (constantes, no configurables por ahora):
 | Escena | Total | Desglose interno |
 |---|---|---|
 | Saludo | 3.0s | 2.0s escritura lenta "Hola, {nombre}" + 0.4s hold + **0.6s crossfade** |
-| Asistencia | 6.0s | 0.4s encabezado de rango + 2.4s título grande escritura lenta + 0.6s hold + 0.8s condiciones escritura rápida + 1.2s hold (0.6s finales = **crossfade**) |
+| Asistencia | 6.0s | 0.4s encabezado de rango + 2.4s título grande escritura lenta + 0.6s hold + 0.8s condiciones escritura rápida + 1.8s hold (0.6s finales = **crossfade**) |
 | Tiempo | 6.0s | mismo reparto que Asistencia (título = "{h}h {m}min") |
 | DíaFavorito / RachaMasLarga | 4.0s | 2.2s escritura lenta + 1.8s hold (0.6s finales = **crossfade**, salvo si es la última escena del video) |
 
