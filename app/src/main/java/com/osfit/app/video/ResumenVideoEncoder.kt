@@ -40,12 +40,12 @@ private class AcumuladorPcm(capacidadInicial: Int = 1 shl 16) {
 }
 
 /**
- * Codifica una lista de tarjetas (bitmaps fijos) como un video mp4: cada tarjeta se
- * mantiene [segundosPorTarjeta] segundos, con una pista de audio opcional (música de
- * fondo transcodificada a AAC) si `res/raw/resumen_musica.*` existe.
+ * Codifica un video mp4 pidiéndole a `renderizarFrame` el bitmap de cada instante: se
+ * generan `duracionTotalMs * fps / 1000` frames, con una pista de audio opcional (música
+ * de fondo transcodificada a AAC) si `res/raw/resumen_musica.*` existe.
  *
- * Los timestamps de video se asignan manualmente por índice de tarjeta (no hay pacing
- * en tiempo real): la tarjeta `i` se presenta en `i * segundosPorTarjeta` segundos.
+ * Los timestamps de video se asignan manualmente por índice de frame (no hay pacing en
+ * tiempo real): el frame `i` se presenta en `i / fps` segundos.
  */
 object ResumenVideoEncoder {
 
@@ -58,21 +58,21 @@ object ResumenVideoEncoder {
     private const val MUESTRAS_POR_FRAME_AAC = 1024
 
     suspend fun generar(
-        tarjetas: List<Bitmap>,
-        segundosPorTarjeta: Int,
+        duracionTotalMs: Long,
+        fps: Int,
         context: Context,
-        salida: File
+        salida: File,
+        renderizarFrame: (tiempoMs: Long) -> Bitmap
     ) = withContext(Dispatchers.Default) {
-        require(tarjetas.isNotEmpty()) { "Debe haber al menos una tarjeta" }
-        require(segundosPorTarjeta > 0) { "segundosPorTarjeta debe ser positivo" }
-        val duracionTotalUs = tarjetas.size.toLong() * segundosPorTarjeta * 1_000_000L
+        require(duracionTotalMs > 0) { "duracionTotalMs debe ser positivo" }
+        require(fps > 0) { "fps debe ser positivo" }
 
-        val pistaVideo = codificarVideo(tarjetas, segundosPorTarjeta)
+        val pistaVideo = codificarVideo(duracionTotalMs, fps, renderizarFrame)
 
         // El audio es opcional: si el recurso no existe o falla la transcodificación,
         // se genera el video sin música en vez de abortar todo.
         val pistaAudio = obtenerResIdMusica(context)?.let { resId ->
-            runCatching { codificarAudioDesdeRecurso(context, resId, duracionTotalUs) }
+            runCatching { codificarAudioDesdeRecurso(context, resId, duracionTotalMs * 1_000L) }
                 .onFailure { Log.w(TAG, "No se pudo transcodificar la música de fondo", it) }
                 .getOrNull()
         }?.takeIf { it.muestras.isNotEmpty() }
@@ -109,12 +109,12 @@ object ResumenVideoEncoder {
 
     // ---------------------------------------------------------------- video
 
-    private fun codificarVideo(tarjetas: List<Bitmap>, segundosPorTarjeta: Int): PistaCodificada {
+    private fun codificarVideo(duracionTotalMs: Long, fps: Int, renderizarFrame: (Long) -> Bitmap): PistaCodificada {
         val format = MediaFormat.createVideoFormat(MediaFormat.MIMETYPE_VIDEO_AVC, ANCHO, ALTO).apply {
             setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface)
             setInteger(MediaFormat.KEY_BIT_RATE, BIT_RATE_VIDEO)
-            setInteger(MediaFormat.KEY_FRAME_RATE, 1)
-            setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 1)
+            setInteger(MediaFormat.KEY_FRAME_RATE, fps)
+            setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 2)
         }
         // La construcción/configure/start también van dentro del try: un MediaCodec que
         // se fuga bloquea el codificador de hardware para todo el dispositivo hasta que
@@ -122,7 +122,8 @@ object ResumenVideoEncoder {
         var encoder: MediaCodec? = null
         var surface: Surface? = null
 
-        val duracionFrameUs = segundosPorTarjeta * 1_000_000L
+        val totalFrames = ((duracionTotalMs * fps) / 1000L).toInt().coerceAtLeast(1)
+        val duracionFrameUs = 1_000_000L / fps
         var salidaFormato: MediaFormat? = null
         val muestras = mutableListOf<MuestraCodificada>()
         val bufferInfo = MediaCodec.BufferInfo()
@@ -179,7 +180,9 @@ object ResumenVideoEncoder {
             surface = sfc
             enc.start()
 
-            tarjetas.forEach { bitmap ->
+            for (indiceFrame in 0 until totalFrames) {
+                val tiempoMs = indiceFrame * 1000L / fps
+                val bitmap = renderizarFrame(tiempoMs)
                 val canvas = sfc.lockCanvas(null)
                 try {
                     canvas.drawBitmap(bitmap, 0f, 0f, null)
@@ -200,12 +203,12 @@ object ResumenVideoEncoder {
         val formatoFinal = checkNotNull(salidaFormato) {
             "El codificador de video nunca entregó su MediaFormat de salida (falta el csd)"
         }
-        // Post-condición fuerte: como las tarjetas se postean a la Surface una tras otra sin
+        // Post-condición fuerte: como los frames se postean a la Surface uno tras otro sin
         // pacing en tiempo real, algunos codificadores pueden fusionar o descartar frames.
         // Si eso pasa, el mp4 resultante sería válido y reproducible pero le faltarían
-        // tarjetas; mejor fallar aquí que compartirle al cliente un video incompleto.
-        check(muestras.size == tarjetas.size) {
-            "El codificador de video emitió ${muestras.size} de ${tarjetas.size} tarjetas"
+        // frames; mejor fallar aquí que compartirle al cliente un video incompleto.
+        check(muestras.size == totalFrames) {
+            "El codificador de video emitió ${muestras.size} de $totalFrames frames"
         }
         return PistaCodificada(formatoFinal, muestras)
     }

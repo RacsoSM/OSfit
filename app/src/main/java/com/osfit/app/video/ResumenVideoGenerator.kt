@@ -5,33 +5,33 @@ import com.osfit.app.domain.ResumenClienteData
 import com.osfit.app.domain.TipoResumen
 import com.osfit.app.util.CompartirUtil
 import java.io.File
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 object ResumenVideoGenerator {
 
-    private const val SEGUNDOS_POR_TARJETA = 8
+    private const val FPS = 30
     private const val VIDA_UTIL_MS = 60 * 60 * 1000L
+    private val FORMATO_DIA_MES = DateTimeFormatter.ofPattern("d 'de' MMMM", Locale("es"))
 
     suspend fun generarYCompartir(context: Context, resumen: ResumenClienteData) {
-        // Dibujar 3-4 bitmaps de 1080x1920 con StaticLayout no puede pasar por el hilo
-        // principal: quien llama lo hace desde un scope de Compose (Dispatchers.Main) y
-        // `generar` recién cambia de dispatcher internamente.
         // El timestamp evita que dos generaciones que lleguen a solaparse (por ejemplo una
         // huérfana que siga corriendo) escriban el mismo archivo con dos MediaMuxer a la vez.
         val ahora = System.currentTimeMillis()
         val carpeta = File(context.cacheDir, "resumenes")
         val salida = File(carpeta, "${resumen.cliente.id}_${resumen.rango.tipo}_$ahora.mp4")
-        val tarjetas = withContext(Dispatchers.Default) {
+        val timeline = withContext(Dispatchers.Default) {
             borrarResumenesViejos(carpeta, ahora)
-            construirTarjetas(resumen).map { ResumenCardRenderer.renderizar(it) }
+            TimelineResumen(construirEscenas(resumen))
         }
         ResumenVideoEncoder.generar(
-            tarjetas = tarjetas,
-            segundosPorTarjeta = SEGUNDOS_POR_TARJETA,
+            duracionTotalMs = timeline.duracionTotalMs,
+            fps = FPS,
             context = context,
             salida = salida
-        )
+        ) { tiempoMs -> ResumenFrameRenderer.renderizarFrame(timeline, tiempoMs) }
         CompartirUtil.compartirVideo(context, salida)
     }
 
@@ -49,21 +49,26 @@ object ResumenVideoGenerator {
         }
     }
 
-    fun construirTarjetas(resumen: ResumenClienteData): List<TarjetaResumen> {
+    fun construirEscenas(resumen: ResumenClienteData): List<EscenaResumen> {
         val unidad = if (resumen.rango.tipo == TipoResumen.SEMANAL) "semana" else "mes"
-        val tarjetas = mutableListOf<TarjetaResumen>(
-            TarjetaResumen.Asistencia(
-                encabezado = resumen.rango.encabezado,
-                nombreCliente = resumen.cliente.nombre,
+        val encabezadoRango = if (resumen.rango.tipo == TipoResumen.SEMANAL) {
+            "Semana del ${resumen.rango.inicio.format(FORMATO_DIA_MES)} al ${resumen.rango.fin.format(FORMATO_DIA_MES)}"
+        } else {
+            resumen.rango.encabezado
+        }
+        val escenas = mutableListOf<EscenaResumen>(
+            EscenaResumen.Saludo(nombreCliente = resumen.cliente.nombre),
+            EscenaResumen.Asistencia(
+                encabezadoRango = encabezadoRango,
                 dias = resumen.diasAsistidos,
                 unidad = unidad,
                 ranking = resumen.rankingAsistencia
             ),
-            TarjetaResumen.Tiempo(
+            EscenaResumen.Tiempo(
                 minutos = resumen.minutosEnGym,
                 ranking = resumen.rankingTiempo
             ),
-            TarjetaResumen.DiaFavorito(
+            EscenaResumen.DiaFavorito(
                 nombreDia = resumen.diaFavoritoNombre,
                 unidad = unidad,
                 diasAsistidos = resumen.diasAsistidos
@@ -72,8 +77,8 @@ object ResumenVideoGenerator {
         val racha = resumen.rachaMasLarga
         val rankingRacha = resumen.rankingRacha
         if (resumen.rango.tipo == TipoResumen.MENSUAL && racha != null && rankingRacha != null) {
-            tarjetas += TarjetaResumen.RachaMasLarga(dias = racha, ranking = rankingRacha)
+            escenas += EscenaResumen.RachaMasLarga(dias = racha, ranking = rankingRacha)
         }
-        return tarjetas
+        return escenas
     }
 }
