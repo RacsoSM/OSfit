@@ -90,6 +90,15 @@ class ClienteRepository(
         ).await()
     }
 
+    suspend fun actualizarDiaPendiente(clienteId: String, diaIndex: Int, fecha: String) {
+        coleccion.document(clienteId).update(
+            mapOf(
+                "diaPendienteIndex" to diaIndex,
+                "diaPendienteFecha" to fecha
+            )
+        ).await()
+    }
+
     suspend fun actualizarProximoPago(clienteId: String, fecha: Timestamp) {
         coleccion.document(clienteId).update("fechaProximoPago", fecha).await()
     }

@@ -43,7 +43,9 @@ import com.osfit.app.domain.PagoCalculator
 import com.osfit.app.domain.RutinaProgressCalculator
 import com.osfit.app.ui.common.RachaBadge
 import com.osfit.app.ui.common.TextoMaquinaEscribir
+import com.osfit.app.ui.common.rememberFechaActual
 import com.osfit.app.ui.theme.ColoresAvatar
+import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
@@ -55,6 +57,7 @@ fun ClientesListScreen(
     val clientes by viewModel.clientes.collectAsState()
     val rachasPorCliente by viewModel.rachasPorCliente.collectAsState()
     val errorValidacion by viewModel.errorValidacion.collectAsState()
+    val hoy by rememberFechaActual()
     var mostrarDialogo by remember { mutableStateOf(false) }
 
     Scaffold(
@@ -80,6 +83,7 @@ fun ClientesListScreen(
                     ClienteItem(
                         cliente = cliente,
                         racha = rachasPorCliente[cliente.id] ?: 0,
+                        hoy = hoy,
                         onClick = { onClienteClick(cliente.id) }
                     )
                 }
@@ -136,8 +140,11 @@ private fun EncabezadoSaludo() {
 private val GrisInactivo = Color(0xFF5A5A5A)
 
 @Composable
-private fun ClienteItem(cliente: Cliente, racha: Int, onClick: () -> Unit) {
-    val nombreDia = cliente.rutinaAsignada?.dias?.getOrNull(RutinaProgressCalculator.diaEfectivo(cliente))?.nombreDia
+private fun ClienteItem(cliente: Cliente, racha: Int, hoy: LocalDate, onClick: () -> Unit) {
+    val diaEfectivo = RutinaProgressCalculator.diaEfectivo(
+        cliente.diaActualIndex, cliente.diaPendienteIndex, cliente.diaPendienteFecha, hoy.toString()
+    )
+    val nombreDia = cliente.rutinaAsignada?.dias?.getOrNull(diaEfectivo)?.nombreDia
         ?: "Sin rutina asignada"
     val diasParaPago = PagoCalculator.diasParaProximoPago(cliente)
     val pagoProximo = diasParaPago != null && diasParaPago < 3

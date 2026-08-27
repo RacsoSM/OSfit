@@ -42,4 +42,21 @@ object RutinaProgressCalculator {
         val siguiente = realizado + 1
         return if (siguiente >= totalDias) 0 else siguiente
     }
+
+    /**
+     * Al corregir el día de rutina realizado en una fecha pasada, el avance resultante
+     * solo debe quedar pendiente (no aplicarse ya) y solo si esa fecha es la más reciente
+     * conocida. Si ya había un pendiente de una fecha posterior, la corrección de una
+     * fecha más vieja no debe pisarlo.
+     */
+    fun debeActualizarPendiente(fecha: String, diaPendienteFechaActual: String?): Boolean =
+        diaPendienteFechaActual == null || fecha >= diaPendienteFechaActual
+
+    /**
+     * Al reiniciar por completo una fecha (borrar toda la asistencia tomada ese día),
+     * hay que deshacer también el avance de rutina que esa fecha haya dejado pendiente
+     * en cada cliente. Si el pendiente es de otra fecha, no se toca.
+     */
+    fun clientesConPendienteEnFecha(clientes: List<Cliente>, fecha: String): List<String> =
+        clientes.filter { it.diaPendienteFecha == fecha }.map { it.id }
 }

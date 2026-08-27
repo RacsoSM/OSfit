@@ -1,5 +1,6 @@
 package com.osfit.app.domain
 
+import com.osfit.app.data.model.Cliente
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertThrows
 import org.junit.Test
@@ -141,5 +142,60 @@ class RutinaProgressCalculatorTest {
             diaActualIndex = 2, diaPendienteIndex = 3, diaPendienteFecha = "2026-08-19", hoy = "2026-08-20"
         )
         assertEquals(3, resultado)
+    }
+
+    @Test
+    fun `sin pendiente previo, corregir un dia pasado si actualiza el pendiente`() {
+        val resultado = RutinaProgressCalculator.debeActualizarPendiente(
+            fecha = "2026-08-10", diaPendienteFechaActual = null
+        )
+        assertEquals(true, resultado)
+    }
+
+    @Test
+    fun `corregir una fecha mas vieja que el pendiente actual no lo pisa`() {
+        // Se corrige el día realizado del 10 de agosto, pero ya hay un pendiente
+        // generado por una asistencia más reciente (20 de agosto): no debe pisarse.
+        val resultado = RutinaProgressCalculator.debeActualizarPendiente(
+            fecha = "2026-08-10", diaPendienteFechaActual = "2026-08-20"
+        )
+        assertEquals(false, resultado)
+    }
+
+    @Test
+    fun `corregir la misma fecha del pendiente actual si lo actualiza`() {
+        val resultado = RutinaProgressCalculator.debeActualizarPendiente(
+            fecha = "2026-08-20", diaPendienteFechaActual = "2026-08-20"
+        )
+        assertEquals(true, resultado)
+    }
+
+    @Test
+    fun `corregir una fecha mas nueva que el pendiente actual si lo actualiza`() {
+        val resultado = RutinaProgressCalculator.debeActualizarPendiente(
+            fecha = "2026-08-21", diaPendienteFechaActual = "2026-08-20"
+        )
+        assertEquals(true, resultado)
+    }
+
+    @Test
+    fun `al reiniciar el dia, solo se limpia el pendiente de clientes con esa fecha exacta`() {
+        val clientes = listOf(
+            Cliente(id = "a", diaPendienteFecha = "2026-08-20"),
+            Cliente(id = "b", diaPendienteFecha = "2026-08-19"),
+            Cliente(id = "c", diaPendienteFecha = null)
+        )
+        val resultado = RutinaProgressCalculator.clientesConPendienteEnFecha(clientes, "2026-08-20")
+        assertEquals(listOf("a"), resultado)
+    }
+
+    @Test
+    fun `al reiniciar el dia, si nadie tiene pendiente en esa fecha no devuelve nada`() {
+        val clientes = listOf(
+            Cliente(id = "a", diaPendienteFecha = "2026-08-19"),
+            Cliente(id = "b", diaPendienteFecha = null)
+        )
+        val resultado = RutinaProgressCalculator.clientesConPendienteEnFecha(clientes, "2026-08-20")
+        assertEquals(emptyList<String>(), resultado)
     }
 }

@@ -59,6 +59,7 @@ import com.osfit.app.domain.RutinaProgressCalculator
 import com.osfit.app.ui.common.AccionCard
 import com.osfit.app.ui.common.RachaBadge
 import com.osfit.app.ui.common.TextoMaquinaEscribir
+import com.osfit.app.ui.common.rememberFechaActual
 import com.osfit.app.util.WhatsAppUtil
 import com.osfit.app.video.ResumenVideoGenerator
 import kotlinx.coroutines.CancellationException
@@ -116,6 +117,7 @@ fun ClienteDetailScreen(
     )
     var generandoResumen by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
+    val hoy by rememberFechaActual()
 
     var mostrarDialogoRutina by remember { mutableStateOf(false) }
     var mostrarDialogoAsignarDia by remember { mutableStateOf(false) }
@@ -168,7 +170,9 @@ fun ClienteDetailScreen(
             }
             item {
                 var expandidaRutina by remember { mutableStateOf(false) }
-                val diaActualEfectivo = RutinaProgressCalculator.diaEfectivo(clienteActual)
+                val diaActualEfectivo = RutinaProgressCalculator.diaEfectivo(
+                    clienteActual.diaActualIndex, clienteActual.diaPendienteIndex, clienteActual.diaPendienteFecha, hoy.toString()
+                )
                 // La plantilla puede haber cambiado (ej. se le agregaron ejercicios) después de
                 // asignarla: se usa la versión viva de la plantilla si todavía existe, en vez de
                 // la copia congelada que quedó guardada en el cliente al momento de asignarla.
@@ -374,7 +378,9 @@ fun ClienteDetailScreen(
     if (mostrarDialogoAsignarDia && clienteActual.rutinaAsignada != null) {
         AsignarDiaDialog(
             dias = clienteActual.rutinaAsignada.dias.map { it.nombreDia },
-            diaActual = RutinaProgressCalculator.diaEfectivo(clienteActual),
+            diaActual = RutinaProgressCalculator.diaEfectivo(
+                clienteActual.diaActualIndex, clienteActual.diaPendienteIndex, clienteActual.diaPendienteFecha, hoy.toString()
+            ),
             onConfirmar = { diaElegido ->
                 viewModel.asignarDiaActual(diaElegido)
                 mostrarDialogoAsignarDia = false

@@ -1,8 +1,11 @@
 package com.osfit.app.data.repository
 
+import com.google.firebase.Timestamp
+import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.FirebaseFirestore
 import com.osfit.app.data.model.Asistencia
 import com.osfit.app.domain.RutinaProgressCalculator
+import com.osfit.app.domain.TiempoGymCalculator
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -75,6 +78,18 @@ class AsistenciaRepository(
         awaitClose { registro.remove() }
     }
 
+    private suspend fun obtenerAsistencia(clienteId: String, fecha: String): Pair<DocumentReference, Asistencia?> {
+        val existente = coleccion
+            .whereEqualTo("clienteId", clienteId)
+            .whereEqualTo("fecha", fecha)
+            .limit(1)
+            .get()
+            .await()
+        val doc = existente.documents.firstOrNull()
+        val ref = doc?.reference ?: coleccion.document()
+        return ref to doc?.toObject(Asistencia::class.java)
+    }
+
     suspend fun registrarAsistencia(
         clienteId: String,
         fecha: String,
@@ -92,25 +107,20 @@ class AsistenciaRepository(
             totalDias = totalDiasRutina
         )
 
-        val asistenciaExistente = coleccion
-            .whereEqualTo("clienteId", clienteId)
-            .whereEqualTo("fecha", fecha)
-            .limit(1)
-            .get()
-            .await()
+        val (asistenciaRef, existente) = obtenerAsistencia(clienteId, fecha)
 
-        val asistenciaRef = if (!asistenciaExistente.isEmpty) {
-            asistenciaExistente.documents.first().reference
-        } else {
-            coleccion.document()
-        }
-
+        // Preserva el cronómetro (horaLlegada/horaSalida/duracionMinutos) ya guardado:
+        // este método hace un set() completo del documento y no debe pisar un tiempo
+        // que ya se haya iniciado o detenido por separado.
         val asistencia = Asistencia(
             clienteId = clienteId,
             fecha = fecha,
             asistio = asistio,
             diaRutinaRealizado = if (asistio) diaRutinaRealizado else null,
-            nota = nota
+            nota = nota,
+            horaLlegada = existente?.horaLlegada,
+            horaSalida = existente?.horaSalida,
+            duracionMinutos = existente?.duracionMinutos
         )
 
         val batch = db.batch()
@@ -123,6 +133,49 @@ class AsistenciaRepository(
                 mapOf("diaPendienteIndex" to siguienteDiaActualIndex, "diaPendienteFecha" to fecha)
             )
         } else if (diaPendienteFechaActual == fecha) {
+            batch.update(
+                clientesCollection.document(clienteId),
+                mapOf("diaPendienteIndex" to null, "diaPendienteFecha" to null)
+            )
+        }
+        batch.commit().await()
+    }
+
+    suspend fun iniciarTiempo(clienteId: String, fecha: String) {
+        val (ref, existente) = obtenerAsistencia(clienteId, fecha)
+        val asistencia = (existente ?: Asistencia(clienteId = clienteId, fecha = fecha)).copy(
+            id = "",
+            asistio = true,
+            horaLlegada = Timestamp.now(),
+            horaSalida = null,
+            duracionMinutos = null
+        )
+        ref.set(asistencia).await()
+    }
+
+    suspend fun detenerTiempo(clienteId: String, fecha: String) {
+        val (ref, existente) = obtenerAsistencia(clienteId, fecha)
+        val horaLlegada = existente?.horaLlegada ?: return
+        val ahora = Timestamp.now()
+        val duracion = TiempoGymCalculator.calcularDuracionMinutos(
+            inicioMillis = horaLlegada.toDate().time,
+            finMillis = ahora.toDate().time
+        )
+        ref.update(
+            mapOf(
+                "horaSalida" to ahora,
+                "duracionMinutos" to duracion
+            )
+        ).await()
+    }
+
+    suspend fun reiniciarDia(fecha: String, clienteIdsConPendiente: List<String>) {
+        val existentes = coleccion.whereEqualTo("fecha", fecha).get().await()
+        val batch = db.batch()
+        existentes.documents.forEach { doc -> batch.delete(doc.reference) }
+        // Deshace el avance de rutina que esta fecha haya dejado pendiente en cada cliente,
+        // igual que el "faltó" normal en registrarAsistencia.
+        clienteIdsConPendiente.forEach { clienteId ->
             batch.update(
                 clientesCollection.document(clienteId),
                 mapOf("diaPendienteIndex" to null, "diaPendienteFecha" to null)
