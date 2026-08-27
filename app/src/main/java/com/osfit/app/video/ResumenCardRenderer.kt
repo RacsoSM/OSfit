@@ -21,7 +21,17 @@ sealed class TarjetaResumen {
 
     data class Tiempo(val minutos: Int, val ranking: RankingResultado) : TarjetaResumen()
 
-    data class DiaFavorito(val nombreDia: String?, val unidad: String) : TarjetaResumen()
+    /**
+     * [diasAsistidos] distingue las dos razones por las que [nombreDia] puede venir en nulo:
+     * si el cliente no asistió (0 días) el mensaje es "no viniste"; si sí asistió pero no se
+     * pudo determinar el día favorito (sin rutina asignada, o sin día de rutina registrado),
+     * el mensaje debe ser otro para no contradecir a la tarjeta de asistencia.
+     */
+    data class DiaFavorito(
+        val nombreDia: String?,
+        val unidad: String,
+        val diasAsistidos: Int
+    ) : TarjetaResumen()
 
     data class RachaMasLarga(val dias: Int, val ranking: RankingResultado) : TarjetaResumen()
 }
@@ -30,6 +40,15 @@ object ResumenCardRenderer {
 
     private const val VERDE = 0xFF048751.toInt()
     private const val FONDO = 0xFF121212.toInt()
+
+    /**
+     * Determinante que concuerda en género con la unidad del rango: "esta semana" pero
+     * "este mes". Se usa en cualquier frase donde `unidad` va precedida del demostrativo.
+     */
+    private fun determinante(unidad: String, mayuscula: Boolean = false): String {
+        val base = if (unidad == "mes") "este" else "esta"
+        return if (mayuscula) base.replaceFirstChar { it.uppercase() } else base
+    }
 
     fun renderizar(tarjeta: TarjetaResumen, ancho: Int = 1080, alto: Int = 1920): Bitmap {
         val bitmap = Bitmap.createBitmap(ancho, alto, Bitmap.Config.ARGB_8888)
@@ -51,10 +70,14 @@ object ResumenCardRenderer {
         y += 40f
         y = dibujarTexto(canvas, "Hola, ${t.nombreCliente}", ancho, y, 56f, Color.WHITE, Typeface.BOLD)
         y += 120f
-        y = dibujarTexto(canvas, "Esta ${t.unidad} asististe ${t.dias} días", ancho, y, 80f, VERDE, Typeface.BOLD)
+        y = dibujarTexto(
+            canvas,
+            "${determinante(t.unidad, mayuscula = true)} ${t.unidad} asististe ${t.dias} días",
+            ancho, y, 80f, VERDE, Typeface.BOLD
+        )
         y += 100f
         val comparacion = if (t.ranking.nombresPorEncima.isEmpty()) {
-            "¡Vas primero en asistencias esta ${t.unidad}!"
+            "¡Vas primero en asistencias ${determinante(t.unidad)} ${t.unidad}!"
         } else {
             "Estás en el lugar ${t.ranking.puesto} de asistencias, solamente detrás de: " +
                 t.ranking.nombresPorEncima.joinToString(", ")
@@ -85,10 +108,14 @@ object ResumenCardRenderer {
 
     private fun dibujarDiaFavorito(canvas: Canvas, ancho: Int, alto: Int, t: TarjetaResumen.DiaFavorito) {
         val y = alto / 2f - 100f
-        val texto = if (t.nombreDia != null) {
-            "Tu día favorito fue ${t.nombreDia}"
-        } else {
-            "Esta ${t.unidad} no viniste, ¡te esperamos la próxima!"
+        // Tres casos distintos, no uno: con día favorito, sin asistencias, y con
+        // asistencias pero sin día de rutina registrado (o sin rutina asignada).
+        val texto = when {
+            t.nombreDia != null -> "Tu día favorito fue ${t.nombreDia}"
+            t.diasAsistidos == 0 ->
+                "${determinante(t.unidad, mayuscula = true)} ${t.unidad} no viniste, ¡te esperamos la próxima!"
+            else ->
+                "¡Sigue registrando tu día de rutina para descubrir cuál es tu favorito!"
         }
         dibujarTexto(canvas, texto, ancho, y, 64f, Color.WHITE, Typeface.BOLD)
     }

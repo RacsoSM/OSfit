@@ -91,6 +91,21 @@ class ResumenClienteCalculatorTest {
     }
 
     @Test
+    fun `calcularRanking con todos empatados en cero deja a todos en primer lugar`() {
+        // Caso real de hoy: ningún cliente tiene duracionMinutos capturado todavía, así que
+        // en la tarjeta de Tiempo todos empatan en 0 y a todos se les dice "¡Vas primero!".
+        val a = Cliente(id = "a", nombre = "Ana")
+        val b = Cliente(id = "b", nombre = "Beto")
+        val c = Cliente(id = "c", nombre = "Caro")
+        val valores = listOf(a to 0, b to 0, c to 0)
+        for (id in listOf("a", "b", "c")) {
+            val resultado = ResumenClienteCalculator.calcularRanking(valores, id)
+            assertEquals(1, resultado.puesto)
+            assertEquals(emptyList<String>(), resultado.nombresPorEncima)
+        }
+    }
+
+    @Test
     fun `diaFavoritoEnRango devuelve el dia con mas repeticiones`() {
         val dias = listOf("Pecho", "Espalda", "Pierna")
         val asistencias = listOf(
@@ -115,6 +130,33 @@ class ResumenClienteCalculatorTest {
         )
         val resultado = ResumenClienteCalculator.diaFavoritoEnRango(asistencias, dias)
         assertEquals(true, resultado == "Pecho" || resultado == "Espalda")
+    }
+
+    @Test
+    fun `diaFavoritoEnRango con indice fuera de la rutina actual devuelve null`() {
+        // Índice viejo que quedó de una rutina reasignada a media semana.
+        val dias = listOf("Pecho", "Espalda")
+        val asistencias = listOf(Asistencia(diaRutinaRealizado = 7))
+        assertEquals(null, ResumenClienteCalculator.diaFavoritoEnRango(asistencias, dias))
+    }
+
+    @Test
+    fun `calcularResumenCliente con asistencias pero sin dia de rutina deja diaFavorito nulo`() {
+        // Este es el caso que la tarjeta de día favorito NO debe contar como "no viniste":
+        // el cliente sí asistió, sólo que no hay día de rutina que reportar.
+        val cliente = Cliente(id = "a", nombre = "Ana", activo = true)
+        val rango = RangoResumen(
+            inicio = LocalDate.of(2024, 3, 18), fin = LocalDate.of(2024, 3, 22),
+            tipo = TipoResumen.SEMANAL, encabezado = "Semana 4 de marzo"
+        )
+        val asistencias = listOf(
+            Asistencia(clienteId = "a", fecha = "2024-03-18", asistio = true, diaRutinaRealizado = null),
+            Asistencia(clienteId = "a", fecha = "2024-03-19", asistio = true, diaRutinaRealizado = null)
+        )
+        val resumen = ResumenClienteCalculator.calcularResumenCliente(cliente, listOf(cliente), asistencias, rango)
+
+        assertEquals(2, resumen.diasAsistidos)
+        assertEquals(null, resumen.diaFavoritoNombre)
     }
 
     @Test

@@ -200,7 +200,13 @@ object ResumenVideoEncoder {
         val formatoFinal = checkNotNull(salidaFormato) {
             "El codificador de video nunca entregó su MediaFormat de salida (falta el csd)"
         }
-        check(muestras.isNotEmpty()) { "El codificador de video no produjo ninguna muestra" }
+        // Post-condición fuerte: como las tarjetas se postean a la Surface una tras otra sin
+        // pacing en tiempo real, algunos codificadores pueden fusionar o descartar frames.
+        // Si eso pasa, el mp4 resultante sería válido y reproducible pero le faltarían
+        // tarjetas; mejor fallar aquí que compartirle al cliente un video incompleto.
+        check(muestras.size == tarjetas.size) {
+            "El codificador de video emitió ${muestras.size} de ${tarjetas.size} tarjetas"
+        }
         return PistaCodificada(formatoFinal, muestras)
     }
 
