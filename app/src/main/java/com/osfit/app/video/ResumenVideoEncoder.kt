@@ -139,6 +139,10 @@ object ResumenVideoEncoder {
         // Cuenta sólo muestras reales escritas (los buffers de codec-config y el EOS
         // vacío no cuentan), de modo que pts = indiceMuestra * duracionFrameUs.
         var indiceMuestra = 0
+        // Se marca si el drenaje final salió por el tope de inactividad en vez de por el
+        // buffer con END_OF_STREAM, para que el mensaje del check() posterior distinga
+        // "el códec se colgó" de "el códec terminó bien pero perdió un frame".
+        var drenajeFinalAbandonado = false
 
         fun drenar(enc: MediaCodec, finalDeFlujo: Boolean) {
             if (finalDeFlujo) enc.signalEndOfInputStream()
@@ -161,6 +165,7 @@ object ResumenVideoEncoder {
                                     "$MAX_ESPERA_EOS_MS ms; se abandona el drenaje final con " +
                                     "${muestras.size} frames"
                             )
+                            drenajeFinalAbandonado = true
                             return
                         }
                     }
@@ -199,15 +204,23 @@ object ResumenVideoEncoder {
                         if (bufferInfo.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM != 0) return
                     }
                     // Códigos negativos sin rama propia (p.ej. el obsoleto
-                    // INFO_OUTPUT_BUFFERS_CHANGED): se ignoran, pero sin exceptuarlos del
-                    // tope de inactividad, para que ningún retorno inesperado cuelgue el bucle.
-                    finalDeFlujo && inactividadMs >= MAX_ESPERA_EOS_MS -> {
-                        Log.w(
-                            TAG,
-                            "Drenaje final abandonado tras $MAX_ESPERA_EOS_MS ms sin avance " +
-                                "(último código $indiceSalida) con ${muestras.size} frames"
-                        )
-                        return
+                    // INFO_OUTPUT_BUFFERS_CHANGED). Esta rama es el `else` real del `when`:
+                    // ninguna combinación de código de retorno y `finalDeFlujo` puede quedar
+                    // sin salida acotada.
+                    else -> {
+                        // En el drenaje por frame (dentro del bucle principal) no hay nada que
+                        // esperar: igual que con INFO_TRY_AGAIN_LATER, se devuelve el control
+                        // de inmediato en vez de girar aquí.
+                        if (!finalDeFlujo) return
+                        if (inactividadMs >= MAX_ESPERA_EOS_MS) {
+                            Log.w(
+                                TAG,
+                                "Drenaje final abandonado tras $MAX_ESPERA_EOS_MS ms sin avance " +
+                                    "(último código $indiceSalida) con ${muestras.size} frames"
+                            )
+                            drenajeFinalAbandonado = true
+                            return
+                        }
                     }
                 }
             }
@@ -255,7 +268,12 @@ object ResumenVideoEncoder {
         // Si eso pasa, el mp4 resultante sería válido y reproducible pero le faltarían
         // frames; mejor fallar aquí que compartirle al cliente un video incompleto.
         check(muestras.size == totalFrames) {
-            "El codificador de video emitió ${muestras.size} de $totalFrames frames"
+            val motivo = if (drenajeFinalAbandonado) {
+                " (drenaje final abandonado por timeout de $MAX_ESPERA_EOS_MS ms)"
+            } else {
+                ""
+            }
+            "El codificador de video emitió ${muestras.size} de $totalFrames frames$motivo"
         }
         return PistaCodificada(formatoFinal, muestras)
     }
