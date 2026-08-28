@@ -26,12 +26,17 @@ object ResumenVideoGenerator {
             borrarResumenesViejos(carpeta, ahora)
             TimelineResumen(construirEscenas(resumen))
         }
+        // Una instancia de fondo por generación: su bitmap y sus paints son estado mutable,
+        // y dos generaciones solapadas se corromperían los frames si lo compartieran.
+        val fondo = FondoBlobRenderer()
         ResumenVideoEncoder.generar(
             duracionTotalMs = timeline.duracionTotalMs,
             fps = FPS,
             context = context,
             salida = salida
-        ) { canvas, tiempoMs -> ResumenFrameRenderer.dibujarFrame(canvas, timeline, tiempoMs) }
+        ) { canvas, tiempoMs ->
+            ResumenFrameRenderer.dibujarFrame(canvas, timeline, fondo, tiempoMs)
+        }
         CompartirUtil.compartirVideo(context, salida)
     }
 

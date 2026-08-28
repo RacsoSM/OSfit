@@ -18,15 +18,22 @@ import android.graphics.RectF
  * está en fracciones del canvas (ver [BlobSpec]), así que se escala sola al pintar sobre la
  * capa pequeña; lo único que hay que escalar a mano es el radio del blur, que está en px.
  *
- * El `Paint`, el `BlurMaskFilter` y la bitmap de la capa se construyen una sola vez y se
- * reutilizan en todos los frames (antes se creaban 4 de cada uno por frame: ~3.500 por video).
- * Pensado para el bucle de frames de [ResumenVideoEncoder], que es de un solo hilo.
+ * El `Paint`, el `BlurMaskFilter` y la bitmap de la capa se construyen una sola vez por
+ * instancia y se reutilizan en todos los frames (antes se creaban 4 de cada uno por frame:
+ * ~3.500 por video).
+ *
+ * **Esto es una clase, no un `object`, a propósito**: todo ese estado es mutable, así que
+ * compartirlo entre dos generaciones simultáneas (que sí ocurren: basta salir de la pantalla
+ * y volver a entrar) haría que se pisaran los blobs una a la otra. Se crea una instancia por
+ * generación de video, se usa desde el único hilo de su bucle de frames, y se descarta con
+ * ella —lo que además evita retener la bitmap de ~518 KB durante toda la vida del proceso.
  */
-object FondoBlobRenderer {
-    private const val RADIO_BLUR_PX = 80f
+class FondoBlobRenderer {
 
-    /** Reducción de la capa de blobs: 1080x1920 se dibuja como 270x480. */
-    private const val FACTOR_ESCALA = 4
+    /** La capa y su canvas viven juntos: no hay estado a medio publicar ni `!!` que sostener. */
+    private class Capa(val bitmap: Bitmap) {
+        val canvas = Canvas(bitmap)
+    }
 
     private val paintBlob = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         maskFilter = BlurMaskFilter(RADIO_BLUR_PX / FACTOR_ESCALA, BlurMaskFilter.Blur.NORMAL)
@@ -36,34 +43,31 @@ object FondoBlobRenderer {
     private val paintEscalado = Paint(Paint.FILTER_BITMAP_FLAG)
 
     private val destino = RectF()
-    private var capa: Bitmap? = null
-    private var canvasCapa: Canvas? = null
+    private var capa: Capa? = null
 
     fun dibujar(canvas: Canvas, ancho: Int, alto: Int, tiempoGlobalMs: Long) {
         val anchoCapa = (ancho / FACTOR_ESCALA).coerceAtLeast(1)
         val altoCapa = (alto / FACTOR_ESCALA).coerceAtLeast(1)
 
         val cacheada = capa
-        val bitmapCapa = if (
-            cacheada != null && !cacheada.isRecycled &&
-            cacheada.width == anchoCapa && cacheada.height == altoCapa
+        val capaActual = if (
+            cacheada != null &&
+            cacheada.bitmap.width == anchoCapa && cacheada.bitmap.height == altoCapa
         ) {
             cacheada
         } else {
-            cacheada?.recycle()
-            Bitmap.createBitmap(anchoCapa, altoCapa, Bitmap.Config.ARGB_8888).also {
+            cacheada?.bitmap?.recycle()
+            Capa(Bitmap.createBitmap(anchoCapa, altoCapa, Bitmap.Config.ARGB_8888)).also {
                 capa = it
-                canvasCapa = Canvas(it)
             }
         }
-        val lienzoCapa = canvasCapa!!
 
         // La capa se reutiliza entre frames: hay que borrarla entera antes de repintarla.
-        bitmapCapa.eraseColor(Color.TRANSPARENT)
+        capaActual.bitmap.eraseColor(Color.TRANSPARENT)
         BlobsGeometria.blobs.forEach { blob ->
             val centro = BlobsGeometria.posicionEn(blob, tiempoGlobalMs)
             paintBlob.color = blob.colorArgb
-            lienzoCapa.drawCircle(
+            capaActual.canvas.drawCircle(
                 centro.x * anchoCapa,
                 centro.y * altoCapa,
                 blob.radio * anchoCapa,
@@ -74,6 +78,13 @@ object FondoBlobRenderer {
         // Componer los blobs entre sí en la capa y luego la capa sobre el fondo negro da el
         // mismo resultado que pintarlos uno a uno sobre el fondo: SrcOver es asociativo.
         destino.set(0f, 0f, ancho.toFloat(), alto.toFloat())
-        canvas.drawBitmap(bitmapCapa, null, destino, paintEscalado)
+        canvas.drawBitmap(capaActual.bitmap, null, destino, paintEscalado)
+    }
+
+    private companion object {
+        const val RADIO_BLUR_PX = 80f
+
+        /** Reducción de la capa de blobs: 1080x1920 se dibuja como 270x480. */
+        const val FACTOR_ESCALA = 4
     }
 }

@@ -13,6 +13,8 @@ import java.io.File
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 
 private data class MuestraCodificada(val datos: ByteArray, val info: MediaCodec.BufferInfo)
@@ -160,11 +162,20 @@ object ResumenVideoEncoder {
     private fun framesTotales(duracionTotalMs: Long, fps: Int): Int =
         ((duracionTotalMs * fps) / 1000L).toInt().coerceAtLeast(1)
 
-    private fun codificarVideo(
+    /**
+     * `suspend` para poder cooperar con la cancelación: el bucle de frames no tiene ningún
+     * punto de suspensión propio, así que sin el `ensureActive()` de cada vuelta una
+     * generación abandonada (el usuario sale de la pantalla y se cancela el `viewModelScope`)
+     * seguía codificando sus ~870 frames a pleno CPU, compitiendo con la siguiente. Al
+     * lanzarse la `CancellationException` desde dentro del `try`, el `finally` igual libera
+     * el MediaCodec y la Surface.
+     */
+    private suspend fun codificarVideo(
         duracionTotalMs: Long,
         fps: Int,
         dibujarFrame: (Canvas, Long) -> Unit
     ): PistaCodificada {
+        val contexto = currentCoroutineContext()
         val format = MediaFormat.createVideoFormat(MediaFormat.MIMETYPE_VIDEO_AVC, ANCHO, ALTO).apply {
             setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface)
             setInteger(MediaFormat.KEY_BIT_RATE, BIT_RATE_VIDEO)
@@ -288,6 +299,9 @@ object ResumenVideoEncoder {
             enc.start()
 
             for (indiceFrame in 0 until totalFrames) {
+                // Un frame es el grano de cancelación: si se canceló, se sale aquí (a lo sumo
+                // un frame tarde) y el finally libera códec y Surface.
+                contexto.ensureActive()
                 val tiempoMs = indiceFrame * 1000L / fps
                 // Se pinta directo sobre el canvas de la Surface: sin bitmap intermedia de
                 // pantalla completa por frame y sin el blit posterior.

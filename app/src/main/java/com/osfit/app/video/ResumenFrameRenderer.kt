@@ -40,16 +40,21 @@ object ResumenFrameRenderer {
      * esto es lo que lo limpia.
      *
      * [canvas] sólo se usa durante la llamada; no se guarda ninguna referencia a él.
+     *
+     * [fondo] lo aporta quien genera el video: es estado mutable (bitmap y paints
+     * reutilizados entre frames) y debe ser exclusivo de esa generación, porque dos
+     * generaciones pueden solaparse. Este renderer no guarda ninguna referencia a él.
      */
     fun dibujarFrame(
         canvas: Canvas,
         timeline: TimelineResumen,
+        fondo: FondoBlobRenderer,
         tiempoGlobalMs: Long,
         ancho: Int = ANCHO_DEFECTO,
         alto: Int = ALTO_DEFECTO
     ) {
         canvas.drawColor(NEGRO)
-        FondoBlobRenderer.dibujar(canvas, ancho, alto, tiempoGlobalMs)
+        fondo.dibujar(canvas, ancho, alto, tiempoGlobalMs)
 
         val activo = timeline.tramoActivo(tiempoGlobalMs)
         val entrante = timeline.tramoEntrante(tiempoGlobalMs)
