@@ -68,7 +68,9 @@ class TimelineResumen(escenas: List<EscenaResumen>) {
     private fun duracionParaTipo(escena: EscenaResumen): Long = when (escena) {
         is EscenaResumen.Saludo -> 3_000L
         is EscenaResumen.Asistencia -> 6_000L
-        is EscenaResumen.Tiempo -> 6_000L
+        // 8s y no 6s como Asistencia: su frase de entrada es larga y la línea de ranking
+        // ("...solamente detrás de: <nombres>") necesita más tiempo en pantalla para leerse.
+        is EscenaResumen.Tiempo -> 8_000L
         is EscenaResumen.DiaFavorito -> 4_000L
         is EscenaResumen.RachaMasLarga -> 4_000L
     }

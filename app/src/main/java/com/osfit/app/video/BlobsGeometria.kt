@@ -20,9 +20,13 @@ data class BlobSpec(
 
 /** Geometría pura y determinística de los blobs de fondo: sin Random, sin Android. */
 object BlobsGeometria {
-    private const val MAGENTA = 0xFFE026D6.toInt()
-    private const val CIAN = 0xFF26E0E0.toInt()
-    private const val PURPURA = 0xFF8A26E0.toInt()
+    // Tonos apagados y semitransparentes a propósito: los blobs son fondo, no protagonistas.
+    // Se conservan los tres matices originales (magenta / cian / púrpura) pero bajados de
+    // brillo (~55%) y con alfa parcial, para que el texto blanco y el dato en verde sigan
+    // siendo lo que más resalta en pantalla.
+    private const val MAGENTA = 0xB37B1575.toInt()
+    private const val CIAN = 0xB3157B7B.toInt()
+    private const val PURPURA = 0xB34C157B.toInt()
 
     val blobs: List<BlobSpec> = listOf(
         BlobSpec(colorArgb = MAGENTA, radio = 0.32f, centroBaseX = 0.28f, centroBaseY = 0.22f, amplitudX = 0.10f, amplitudY = 0.07f, periodoMs = 11_000L, faseMs = 0L),

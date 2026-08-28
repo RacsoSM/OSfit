@@ -75,18 +75,18 @@ object ResumenFrameRenderer {
             ),
             BloqueTexto(
                 comparacion(escena.ranking, "¡Vas primero en asistencias ${determinante(escena.unidad)} ${escena.unidad}!", "asistencias"),
-                inicioMs = 3_400, duracionMs = 800, y = 1500f, tamano = 40f, color = Color.LTGRAY, estilo = Typeface.NORMAL
+                inicioMs = 3_400, duracionMs = 800, y = 1500f, tamano = 48f, color = Color.LTGRAY, estilo = Typeface.NORMAL
             )
         )
         is EscenaResumen.Tiempo -> {
             val horas = escena.minutos / 60
             val minutos = escena.minutos % 60
             listOf(
-                BloqueTexto("Estuviste en el poderoso Focus un total de", inicioMs = 0, duracionMs = 400, y = 500f, tamano = 44f, color = Color.WHITE, estilo = Typeface.NORMAL),
-                BloqueTexto("${horas}h ${minutos}min", inicioMs = 400, duracionMs = 2_400, y = 800f, tamano = 96f, color = VERDE, estilo = Typeface.BOLD),
+                BloqueTexto("Estuviste en el poderoso Focus un total de", inicioMs = 0, duracionMs = 900, y = 500f, tamano = 44f, color = Color.WHITE, estilo = Typeface.NORMAL),
+                BloqueTexto("${horas}h ${minutos}min", inicioMs = 900, duracionMs = 2_400, y = 800f, tamano = 96f, color = VERDE, estilo = Typeface.BOLD),
                 BloqueTexto(
                     comparacion(escena.ranking, "¡Vas primero en tiempo asistido!", "tiempo asistido"),
-                    inicioMs = 3_400, duracionMs = 800, y = 1500f, tamano = 40f, color = Color.LTGRAY, estilo = Typeface.NORMAL
+                    inicioMs = 4_000, duracionMs = 1_200, y = 1500f, tamano = 48f, color = Color.LTGRAY, estilo = Typeface.NORMAL
                 )
             )
         }
@@ -98,7 +98,7 @@ object ResumenFrameRenderer {
             BloqueTexto("${escena.dias} días seguidos", inicioMs = 300, duracionMs = 1_900, y = 1000f, tamano = 88f, color = VERDE, estilo = Typeface.BOLD),
             BloqueTexto(
                 comparacion(escena.ranking, "¡Vas primero en racha este mes!", "racha"),
-                inicioMs = 2_600, duracionMs = 600, y = 1500f, tamano = 40f, color = Color.LTGRAY, estilo = Typeface.NORMAL
+                inicioMs = 2_600, duracionMs = 600, y = 1500f, tamano = 48f, color = Color.LTGRAY, estilo = Typeface.NORMAL
             )
         )
     }
