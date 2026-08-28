@@ -59,11 +59,30 @@ object ResumenVideoEncoder {
     /**
      * Tope de espera del drenaje final de video. Si el codificador nunca entrega el buffer
      * marcado con END_OF_STREAM (se ha visto en hardware real quedándose corto por un frame),
-     * el bucle de drenaje sale al agotarse este tiempo en vez de girar para siempre: el
-     * `check(muestras.size == totalFrames)` posterior convierte el cuelgue indefinido en un
+     * el bucle de drenaje sale al agotarse este tiempo en vez de girar para siempre: la
+     * post-condición posterior sobre el número de frames convierte el cuelgue indefinido en un
      * error inmediato y diagnosticable.
      */
     private const val MAX_ESPERA_EOS_MS = 5_000L
+
+    /**
+     * Proporción mínima de frames codificados respecto a los pedidos para dar el video por
+     * bueno.
+     *
+     * La post-condición original exigía igualdad exacta, y con razón: cuando esta función
+     * codificaba 3-4 tarjetas estáticas, una muestra perdida era una pantalla entera de
+     * contenido desaparecida. A 30 fps una "muestra" es 1/30 de segundo: perder un par de
+     * frames deja el video 33-66 ms más corto, sin contenido faltante ni saltos visibles.
+     * Un codificador con entrada por Surface no garantiza correspondencia 1:1 entre los
+     * buffers posteados con `unlockCanvasAndPost()` y los buffers de salida (puede fusionar
+     * o descartar frames, sobre todo cuando el productor postea sin pacing en tiempo real,
+     * como hace el bucle de abajo). Con igualdad exacta esa diferencia imperceptible se
+     * convierte en un fallo total: el usuario no recibe ningún video.
+     *
+     * El guardia se mantiene, pero calibrado: salta cuando faltan tantos frames que el video
+     * sí quedaría degradado, y toda pérdida —aunque se tolere— se registra con Log.w.
+     */
+    private const val MIN_PROPORCION_FRAMES = 0.95
     private const val MUESTRAS_POR_FRAME_AAC = 1024
 
     suspend fun generar(
@@ -263,17 +282,33 @@ object ResumenVideoEncoder {
         val formatoFinal = checkNotNull(salidaFormato) {
             "El codificador de video nunca entregó su MediaFormat de salida (falta el csd)"
         }
-        // Post-condición fuerte: como los frames se postean a la Surface uno tras otro sin
-        // pacing en tiempo real, algunos codificadores pueden fusionar o descartar frames.
-        // Si eso pasa, el mp4 resultante sería válido y reproducible pero le faltarían
-        // frames; mejor fallar aquí que compartirle al cliente un video incompleto.
-        check(muestras.size == totalFrames) {
+        // Post-condición: como los frames se postean a la Surface uno tras otro sin pacing en
+        // tiempo real, algunos codificadores pueden fusionar o descartar frames. Perder unos
+        // pocos a 30 fps es imperceptible (ver MIN_PROPORCION_FRAMES), pero perder muchos sí
+        // degrada el video, y cero frames nunca es aceptable: mejor fallar aquí que
+        // compartirle al cliente un video incompleto.
+        val minimoFrames = Math
+            .ceil(totalFrames * MIN_PROPORCION_FRAMES)
+            .toInt()
+            .coerceIn(1, totalFrames)
+        check(muestras.isNotEmpty() && muestras.size >= minimoFrames) {
             val motivo = if (drenajeFinalAbandonado) {
                 " (drenaje final abandonado por timeout de $MAX_ESPERA_EOS_MS ms)"
             } else {
                 ""
             }
-            "El codificador de video emitió ${muestras.size} de $totalFrames frames$motivo"
+            "El codificador de video emitió ${muestras.size} de $totalFrames frames " +
+                "(mínimo aceptable $minimoFrames)$motivo"
+        }
+        if (muestras.size != totalFrames) {
+            // Pérdida tolerada: el video es válido y se comparte, pero queda rastro del
+            // número exacto de frames que descartó este dispositivo para poder diagnosticarlo
+            // desde un reporte de error.
+            Log.w(
+                TAG,
+                "El codificador de video emitió ${muestras.size} de $totalFrames frames; " +
+                    "dentro de la tolerancia (mínimo $minimoFrames), se continúa"
+            )
         }
         return PistaCodificada(formatoFinal, muestras)
     }
