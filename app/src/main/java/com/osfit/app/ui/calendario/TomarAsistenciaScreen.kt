@@ -255,6 +255,12 @@ private fun ClienteAsistenciaRow(
                     onIniciar = onIniciarTiempo,
                     onDetener = onDetenerTiempo
                 )
+            } else if (asistio && asistencia?.duracionMinutos != null) {
+                Text(
+                    "Duración: ${asistencia.duracionMinutos} min",
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(top = 8.dp)
+                )
             }
         }
     }
