@@ -71,6 +71,8 @@ class TimelineResumen(escenas: List<EscenaResumen>) {
         // 8s y no 6s como Asistencia: su frase de entrada es larga y la línea de ranking
         // ("...solamente detrás de: <nombres>") necesita más tiempo en pantalla para leerse.
         is EscenaResumen.Tiempo -> 8_000L
+        // Misma duración que Tiempo: carga una cantidad comparable de texto que leer.
+        is EscenaResumen.Esfuerzo -> 8_000L
         is EscenaResumen.DiaFavorito -> 4_000L
         is EscenaResumen.RachaMasLarga -> 4_000L
     }

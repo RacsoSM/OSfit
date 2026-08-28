@@ -1,6 +1,7 @@
 package com.osfit.app.video
 
 import com.osfit.app.data.model.Cliente
+import com.osfit.app.domain.DesgloseEsfuerzo
 import com.osfit.app.domain.RangoResumen
 import com.osfit.app.domain.RankingResultado
 import com.osfit.app.domain.ResumenClienteCalculator
@@ -8,6 +9,7 @@ import com.osfit.app.domain.ResumenClienteData
 import java.time.LocalDate
 import java.time.YearMonth
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -15,7 +17,11 @@ class ResumenVideoGeneratorTest {
 
     private val ranking = RankingResultado(puesto = 1, nombresPorEncima = emptyList())
 
-    private fun resumen(rango: RangoResumen, racha: Int? = null): ResumenClienteData = ResumenClienteData(
+    private fun resumen(
+        rango: RangoResumen,
+        racha: Int? = null,
+        desgloseEsfuerzo: DesgloseEsfuerzo? = null
+    ): ResumenClienteData = ResumenClienteData(
         cliente = Cliente(id = "c1", nombre = "Ana"),
         rango = rango,
         diasAsistidos = 3,
@@ -24,7 +30,8 @@ class ResumenVideoGeneratorTest {
         rankingTiempo = ranking,
         diaFavoritoNombre = "Lunes",
         rachaMasLarga = racha,
-        rankingRacha = if (racha != null) ranking else null
+        rankingRacha = if (racha != null) ranking else null,
+        desgloseEsfuerzo = desgloseEsfuerzo
     )
 
     @Test
@@ -55,6 +62,60 @@ class ResumenVideoGeneratorTest {
         val escenas = ResumenVideoGenerator.construirEscenas(resumen(rango, racha = null))
 
         assertEquals(4, escenas.size)
+    }
+
+    @Test
+    fun `el resumen semanal con desglose de esfuerzo agrega Esfuerzo justo despues de Tiempo`() {
+        val rango = ResumenClienteCalculator.rangoSemanal(LocalDate.of(2024, 3, 20))
+        val desglose = DesgloseEsfuerzo(minutosEntrenando = 16, minutosDescansando = 71, porcentajeEntrenando = 18)
+        val escenas = ResumenVideoGenerator.construirEscenas(resumen(rango, desgloseEsfuerzo = desglose))
+
+        assertEquals(5, escenas.size)
+        assertTrue(escenas[0] is EscenaResumen.Saludo)
+        assertTrue(escenas[1] is EscenaResumen.Asistencia)
+        assertTrue(escenas[2] is EscenaResumen.Tiempo)
+        assertTrue(escenas[3] is EscenaResumen.Esfuerzo)
+        assertTrue(escenas[4] is EscenaResumen.DiaFavorito)
+    }
+
+    @Test
+    fun `el resumen sin desglose de esfuerzo no agrega la escena Esfuerzo`() {
+        val rango = ResumenClienteCalculator.rangoSemanal(LocalDate.of(2024, 3, 20))
+        val escenas = ResumenVideoGenerator.construirEscenas(resumen(rango, desgloseEsfuerzo = null))
+
+        assertEquals(4, escenas.size)
+        assertTrue(escenas.none { it is EscenaResumen.Esfuerzo })
+        assertTrue(escenas[0] is EscenaResumen.Saludo)
+        assertTrue(escenas[1] is EscenaResumen.Asistencia)
+        assertTrue(escenas[2] is EscenaResumen.Tiempo)
+        assertTrue(escenas[3] is EscenaResumen.DiaFavorito)
+    }
+
+    @Test
+    fun `la escena Esfuerzo lleva minutosEnGym como minutosTotales y el mismo DesgloseEsfuerzo`() {
+        val rango = ResumenClienteCalculator.rangoSemanal(LocalDate.of(2024, 3, 20))
+        val desglose = DesgloseEsfuerzo(minutosEntrenando = 16, minutosDescansando = 71, porcentajeEntrenando = 18)
+        val datos = resumen(rango, desgloseEsfuerzo = desglose)
+        val escenas = ResumenVideoGenerator.construirEscenas(datos)
+
+        val esfuerzo = escenas[3] as EscenaResumen.Esfuerzo
+        assertEquals(datos.minutosEnGym, esfuerzo.minutosTotales)
+        assertSame(desglose, esfuerzo.desglose)
+    }
+
+    @Test
+    fun `el resumen mensual con desglose y racha produce el orden completo`() {
+        val rango = ResumenClienteCalculator.rangoMensual(YearMonth.of(2024, 3))
+        val desglose = DesgloseEsfuerzo(minutosEntrenando = 16, minutosDescansando = 71, porcentajeEntrenando = 18)
+        val escenas = ResumenVideoGenerator.construirEscenas(resumen(rango, racha = 5, desgloseEsfuerzo = desglose))
+
+        assertEquals(6, escenas.size)
+        assertTrue(escenas[0] is EscenaResumen.Saludo)
+        assertTrue(escenas[1] is EscenaResumen.Asistencia)
+        assertTrue(escenas[2] is EscenaResumen.Tiempo)
+        assertTrue(escenas[3] is EscenaResumen.Esfuerzo)
+        assertTrue(escenas[4] is EscenaResumen.DiaFavorito)
+        assertTrue(escenas[5] is EscenaResumen.RachaMasLarga)
     }
 
     @Test

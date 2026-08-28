@@ -92,6 +92,21 @@ object ResumenFrameRenderer {
                 )
             )
         }
+        is EscenaResumen.Esfuerzo -> listOf(
+            BloqueTexto(
+                "De tu tiempo asistido, ${formatoDuracion(escena.minutosTotales)}",
+                inicioMs = 0, duracionMs = 900, y = 460f, tamano = 44f, color = Color.WHITE, estilo = Typeface.NORMAL
+            ),
+            BloqueTexto(
+                "Estuviste entrenando ${formatoDuracion(escena.desglose.minutosEntrenando)} y descansando " +
+                    formatoDuracion(escena.desglose.minutosDescansando),
+                inicioMs = 900, duracionMs = 2_600, y = 760f, tamano = 72f, color = DESTACADO, estilo = Typeface.BOLD
+            ),
+            BloqueTexto(
+                "lo cual representa un ${escena.desglose.porcentajeEntrenando}% del total del tiempo",
+                inicioMs = 4_000, duracionMs = 1_200, y = 1500f, tamano = 48f, color = Color.LTGRAY, estilo = Typeface.NORMAL
+            )
+        )
         is EscenaResumen.DiaFavorito -> listOf(
             BloqueTexto(mensajeDiaFavorito(escena), inicioMs = 0, duracionMs = 2_200, y = 860f, tamano = 64f, color = Color.WHITE, estilo = Typeface.BOLD)
         )
@@ -103,6 +118,17 @@ object ResumenFrameRenderer {
                 inicioMs = 2_600, duracionMs = 600, y = 1500f, tamano = 48f, color = Color.LTGRAY, estilo = Typeface.NORMAL
             )
         )
+    }
+
+    /** Formatea un total de minutos como texto legible: "1h 27min", "1h", "16min", "0min". */
+    private fun formatoDuracion(minutos: Int): String {
+        val horas = minutos / 60
+        val mins = minutos % 60
+        return when {
+            horas > 0 && mins > 0 -> "${horas}h ${mins}min"
+            horas > 0 -> "${horas}h"
+            else -> "${mins}min"
+        }
     }
 
     private fun determinante(unidad: String, mayuscula: Boolean = false): String {
