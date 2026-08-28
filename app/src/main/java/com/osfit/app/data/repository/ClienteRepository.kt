@@ -63,7 +63,9 @@ class ClienteRepository(
         telefono: String,
         peso: Double?,
         altura: Double?,
-        edad: Int?
+        edad: Int?,
+        segundosPorEjercicio: Int?,
+        minutosDescanso: Double?
     ) {
         coleccion.document(clienteId).update(
             mapOf(
@@ -71,7 +73,9 @@ class ClienteRepository(
                 "telefono" to telefono,
                 "peso" to peso,
                 "altura" to altura,
-                "edad" to edad
+                "edad" to edad,
+                "segundosPorEjercicio" to segundosPorEjercicio,
+                "minutosDescanso" to minutosDescanso
             )
         ).await()
     }

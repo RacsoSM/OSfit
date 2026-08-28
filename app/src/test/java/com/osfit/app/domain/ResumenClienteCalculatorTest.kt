@@ -221,4 +221,100 @@ class ResumenClienteCalculatorTest {
         assertEquals(null, resumen.diaFavoritoNombre)
         assertEquals(1, resumen.rankingAsistencia.puesto)
     }
+
+    @Test
+    fun `calcularDesgloseEsfuerzo con el ejemplo de Estela`() {
+        val resultado = ResumenClienteCalculator.calcularDesgloseEsfuerzo(
+            minutosEnGym = 87,
+            segundosPorEjercicio = 40,
+            minutosDescanso = 3.0
+        )
+        assertEquals(DesgloseEsfuerzo(minutosEntrenando = 16, minutosDescansando = 71, porcentajeEntrenando = 18), resultado)
+    }
+
+    @Test
+    fun `calcularDesgloseEsfuerzo siempre suma exactamente el total, incluso con redondeo incomodo`() {
+        val casos = listOf(
+            Triple(87, 40, 3.0),
+            Triple(60, 15, 1.0),
+            Triple(1, 40, 3.0),
+            Triple(100, 33, 2.5),
+            Triple(45, 90, 0.5),
+            Triple(200, 1, 10.0)
+        )
+        for ((minutosEnGym, segundosPorEjercicio, minutosDescanso) in casos) {
+            val resultado = ResumenClienteCalculator.calcularDesgloseEsfuerzo(minutosEnGym, segundosPorEjercicio, minutosDescanso)
+            requireNotNull(resultado)
+            assertEquals(minutosEnGym, resultado.minutosEntrenando + resultado.minutosDescansando)
+        }
+    }
+
+    @Test
+    fun `calcularDesgloseEsfuerzo es null cuando falta segundosPorEjercicio`() {
+        assertEquals(
+            null,
+            ResumenClienteCalculator.calcularDesgloseEsfuerzo(minutosEnGym = 87, segundosPorEjercicio = null, minutosDescanso = 3.0)
+        )
+    }
+
+    @Test
+    fun `calcularDesgloseEsfuerzo es null cuando falta minutosDescanso`() {
+        assertEquals(
+            null,
+            ResumenClienteCalculator.calcularDesgloseEsfuerzo(minutosEnGym = 87, segundosPorEjercicio = 40, minutosDescanso = null)
+        )
+    }
+
+    @Test
+    fun `calcularDesgloseEsfuerzo es null cuando minutosEnGym es cero`() {
+        assertEquals(
+            null,
+            ResumenClienteCalculator.calcularDesgloseEsfuerzo(minutosEnGym = 0, segundosPorEjercicio = 40, minutosDescanso = 3.0)
+        )
+    }
+
+    @Test
+    fun `calcularDesgloseEsfuerzo es null cuando segundosPorEjercicio no es positivo`() {
+        assertEquals(
+            null,
+            ResumenClienteCalculator.calcularDesgloseEsfuerzo(minutosEnGym = 87, segundosPorEjercicio = 0, minutosDescanso = 3.0)
+        )
+        assertEquals(
+            null,
+            ResumenClienteCalculator.calcularDesgloseEsfuerzo(minutosEnGym = 87, segundosPorEjercicio = -5, minutosDescanso = 3.0)
+        )
+    }
+
+    @Test
+    fun `calcularResumenCliente con los dos campos de esfuerzo llena desgloseEsfuerzo`() {
+        val cliente = Cliente(
+            id = "a", nombre = "Ana", activo = true,
+            segundosPorEjercicio = 40, minutosDescanso = 3.0
+        )
+        val rango = RangoResumen(
+            inicio = LocalDate.of(2024, 3, 18), fin = LocalDate.of(2024, 3, 22),
+            tipo = TipoResumen.SEMANAL, encabezado = "Semana 4 de marzo"
+        )
+        val asistencias = listOf(
+            Asistencia(clienteId = "a", fecha = "2024-03-18", asistio = true, duracionMinutos = 87)
+        )
+        val resumen = ResumenClienteCalculator.calcularResumenCliente(cliente, listOf(cliente), asistencias, rango)
+
+        assertEquals(DesgloseEsfuerzo(minutosEntrenando = 16, minutosDescansando = 71, porcentajeEntrenando = 18), resumen.desgloseEsfuerzo)
+    }
+
+    @Test
+    fun `calcularResumenCliente sin los campos de esfuerzo deja desgloseEsfuerzo nulo`() {
+        val cliente = Cliente(id = "a", nombre = "Ana", activo = true)
+        val rango = RangoResumen(
+            inicio = LocalDate.of(2024, 3, 18), fin = LocalDate.of(2024, 3, 22),
+            tipo = TipoResumen.SEMANAL, encabezado = "Semana 4 de marzo"
+        )
+        val asistencias = listOf(
+            Asistencia(clienteId = "a", fecha = "2024-03-18", asistio = true, duracionMinutos = 87)
+        )
+        val resumen = ResumenClienteCalculator.calcularResumenCliente(cliente, listOf(cliente), asistencias, rango)
+
+        assertEquals(null, resumen.desgloseEsfuerzo)
+    }
 }

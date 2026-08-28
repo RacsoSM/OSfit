@@ -40,6 +40,8 @@ fun ClienteEditarScreen(
     var peso by remember { mutableStateOf(clienteActual.peso?.toString() ?: "") }
     var altura by remember { mutableStateOf(clienteActual.altura?.toString() ?: "") }
     var edad by remember { mutableStateOf(clienteActual.edad?.toString() ?: "") }
+    var segundosPorEjercicio by remember { mutableStateOf(clienteActual.segundosPorEjercicio?.toString() ?: "") }
+    var minutosDescanso by remember { mutableStateOf(clienteActual.minutosDescanso?.toString() ?: "") }
 
     val nombreValido = nombre.isNotBlank()
 
@@ -52,7 +54,9 @@ fun ClienteEditarScreen(
                         telefono = telefono.trim(),
                         peso = peso.toDoubleOrNull(),
                         altura = altura.toDoubleOrNull(),
-                        edad = edad.toIntOrNull()
+                        edad = edad.toIntOrNull(),
+                        segundosPorEjercicio = segundosPorEjercicio.toIntOrNull(),
+                        minutosDescanso = minutosDescanso.toDoubleOrNull()
                     )
                     onGuardado()
                 },
@@ -101,6 +105,20 @@ fun ClienteEditarScreen(
                 onValueChange = { edad = it },
                 label = { Text("Edad") },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                modifier = Modifier.fillMaxWidth()
+            )
+            OutlinedTextField(
+                value = segundosPorEjercicio,
+                onValueChange = { segundosPorEjercicio = it },
+                label = { Text("Segundos por ejercicio") },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                modifier = Modifier.fillMaxWidth()
+            )
+            OutlinedTextField(
+                value = minutosDescanso,
+                onValueChange = { minutosDescanso = it },
+                label = { Text("Minutos de descanso") },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 modifier = Modifier.fillMaxWidth()
             )
         }
