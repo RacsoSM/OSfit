@@ -27,7 +27,9 @@ private data class BloqueTexto(
 object ResumenFrameRenderer {
 
     private const val NEGRO = 0xFF000000.toInt()
-    private const val VERDE = 0xFF048751.toInt()
+    /** Color del dato destacado de cada escena. Rojo vivo: sobre el fondo negro con blobs
+     *  apagados es lo que más contrasta, y no se confunde con el magenta/púrpura del fondo. */
+    private const val DESTACADO = 0xFFFF3B30.toInt()
     private const val ANCHO_DEFECTO = 1080
     private const val ALTO_DEFECTO = 1920
 
@@ -71,7 +73,7 @@ object ResumenFrameRenderer {
             BloqueTexto(escena.encabezadoRango, inicioMs = 0, duracionMs = 400, y = 160f, tamano = 44f, color = Color.LTGRAY, estilo = Typeface.NORMAL),
             BloqueTexto(
                 "${determinante(escena.unidad, mayuscula = true)} ${escena.unidad} asististe ${escena.dias} días",
-                inicioMs = 400, duracionMs = 2_400, y = 700f, tamano = 84f, color = VERDE, estilo = Typeface.BOLD
+                inicioMs = 400, duracionMs = 2_400, y = 700f, tamano = 84f, color = DESTACADO, estilo = Typeface.BOLD
             ),
             BloqueTexto(
                 comparacion(escena.ranking, "¡Vas primero en asistencias ${determinante(escena.unidad)} ${escena.unidad}!", "asistencias"),
@@ -83,7 +85,7 @@ object ResumenFrameRenderer {
             val minutos = escena.minutos % 60
             listOf(
                 BloqueTexto("Estuviste en el poderoso Focus un total de", inicioMs = 0, duracionMs = 900, y = 500f, tamano = 44f, color = Color.WHITE, estilo = Typeface.NORMAL),
-                BloqueTexto("${horas}h ${minutos}min", inicioMs = 900, duracionMs = 2_400, y = 800f, tamano = 96f, color = VERDE, estilo = Typeface.BOLD),
+                BloqueTexto("${horas}h ${minutos}min", inicioMs = 900, duracionMs = 2_400, y = 800f, tamano = 96f, color = DESTACADO, estilo = Typeface.BOLD),
                 BloqueTexto(
                     comparacion(escena.ranking, "¡Vas primero en tiempo asistido!", "tiempo asistido"),
                     inicioMs = 4_000, duracionMs = 1_200, y = 1500f, tamano = 48f, color = Color.LTGRAY, estilo = Typeface.NORMAL
@@ -95,7 +97,7 @@ object ResumenFrameRenderer {
         )
         is EscenaResumen.RachaMasLarga -> listOf(
             BloqueTexto("Tu racha más larga fue de", inicioMs = 0, duracionMs = 300, y = 700f, tamano = 44f, color = Color.WHITE, estilo = Typeface.NORMAL),
-            BloqueTexto("${escena.dias} días seguidos", inicioMs = 300, duracionMs = 1_900, y = 1000f, tamano = 88f, color = VERDE, estilo = Typeface.BOLD),
+            BloqueTexto("${escena.dias} días seguidos", inicioMs = 300, duracionMs = 1_900, y = 1000f, tamano = 88f, color = DESTACADO, estilo = Typeface.BOLD),
             BloqueTexto(
                 comparacion(escena.ranking, "¡Vas primero en racha este mes!", "racha"),
                 inicioMs = 2_600, duracionMs = 600, y = 1500f, tamano = 48f, color = Color.LTGRAY, estilo = Typeface.NORMAL
