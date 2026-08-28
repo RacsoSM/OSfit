@@ -1,7 +1,7 @@
 package com.osfit.app.video
 
 import android.content.Context
-import android.graphics.Bitmap
+import android.graphics.Canvas
 import android.media.MediaCodec
 import android.media.MediaCodecInfo
 import android.media.MediaExtractor
@@ -40,9 +40,10 @@ private class AcumuladorPcm(capacidadInicial: Int = 1 shl 16) {
 }
 
 /**
- * Codifica un video mp4 pidiéndole a `renderizarFrame` el bitmap de cada instante: se
- * generan `duracionTotalMs * fps / 1000` frames, con una pista de audio opcional (música
- * de fondo transcodificada a AAC) si `res/raw/resumen_musica.*` existe.
+ * Codifica un video mp4 haciendo que `dibujarFrame` pinte cada instante directamente sobre
+ * el canvas de la Surface de entrada del codificador: se generan
+ * `duracionTotalMs * fps / 1000` frames, con una pista de audio opcional (música de fondo
+ * transcodificada a AAC) si `res/raw/resumen_musica.*` existe.
  *
  * Los timestamps de video se asignan manualmente por índice de frame (no hay pacing en
  * tiempo real): el frame `i` se presenta en `i / fps` segundos.
@@ -85,25 +86,35 @@ object ResumenVideoEncoder {
     private const val MIN_PROPORCION_FRAMES = 0.95
     private const val MUESTRAS_POR_FRAME_AAC = 1024
 
+    /**
+     * @param dibujarFrame pinta el frame del instante dado sobre el canvas que recibe (el de
+     *   la Surface de entrada del codificador). Se le exige limpiar el canvas: puede llegar
+     *   con contenido de un frame anterior.
+     */
     suspend fun generar(
         duracionTotalMs: Long,
         fps: Int,
         context: Context,
         salida: File,
-        renderizarFrame: (tiempoMs: Long) -> Bitmap
-    ) = withContext(Dispatchers.Default) {
+        dibujarFrame: (canvas: Canvas, tiempoMs: Long) -> Unit
+    ) = withContext<Unit>(Dispatchers.Default) {
         require(duracionTotalMs > 0) { "duracionTotalMs debe ser positivo" }
         require(fps > 0) { "fps debe ser positivo" }
 
-        val pistaVideo = codificarVideo(duracionTotalMs, fps, renderizarFrame)
+        val inicioTotalNs = System.nanoTime()
+        val inicioVideoNs = System.nanoTime()
+        val pistaVideo = codificarVideo(duracionTotalMs, fps, dibujarFrame)
+        val msVideo = (System.nanoTime() - inicioVideoNs) / 1_000_000L
 
         // El audio es opcional: si el recurso no existe o falla la transcodificación,
         // se genera el video sin música en vez de abortar todo.
+        val inicioAudioNs = System.nanoTime()
         val pistaAudio = obtenerResIdMusica(context)?.let { resId ->
             runCatching { codificarAudioDesdeRecurso(context, resId, duracionTotalMs * 1_000L) }
                 .onFailure { Log.w(TAG, "No se pudo transcodificar la música de fondo", it) }
                 .getOrNull()
         }?.takeIf { it.muestras.isNotEmpty() }
+        val msAudio = (System.nanoTime() - inicioAudioNs) / 1_000_000L
 
         salida.parentFile?.mkdirs()
         val muxer = MediaMuxer(salida.absolutePath, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4)
@@ -124,6 +135,14 @@ object ResumenVideoEncoder {
         } finally {
             muxer.release()
         }
+
+        // Diagnóstico de rendimiento (una sola línea, para leer desde adb logcat).
+        val msTotal = (System.nanoTime() - inicioTotalNs) / 1_000_000L
+        Log.i(
+            TAG,
+            "Video generado en $msTotal ms (frames: $msVideo ms, audio: $msAudio ms, " +
+                "${framesTotales(duracionTotalMs, fps)} frames a $fps fps)"
+        )
     }
 
     /**
@@ -137,7 +156,15 @@ object ResumenVideoEncoder {
 
     // ---------------------------------------------------------------- video
 
-    private fun codificarVideo(duracionTotalMs: Long, fps: Int, renderizarFrame: (Long) -> Bitmap): PistaCodificada {
+    /** Frames que se van a postear para [duracionTotalMs] a [fps]. */
+    private fun framesTotales(duracionTotalMs: Long, fps: Int): Int =
+        ((duracionTotalMs * fps) / 1000L).toInt().coerceAtLeast(1)
+
+    private fun codificarVideo(
+        duracionTotalMs: Long,
+        fps: Int,
+        dibujarFrame: (Canvas, Long) -> Unit
+    ): PistaCodificada {
         val format = MediaFormat.createVideoFormat(MediaFormat.MIMETYPE_VIDEO_AVC, ANCHO, ALTO).apply {
             setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface)
             setInteger(MediaFormat.KEY_BIT_RATE, BIT_RATE_VIDEO)
@@ -150,7 +177,7 @@ object ResumenVideoEncoder {
         var encoder: MediaCodec? = null
         var surface: Surface? = null
 
-        val totalFrames = ((duracionTotalMs * fps) / 1000L).toInt().coerceAtLeast(1)
+        val totalFrames = framesTotales(duracionTotalMs, fps)
         val duracionFrameUs = 1_000_000L / fps
         var salidaFormato: MediaFormat? = null
         val muestras = mutableListOf<MuestraCodificada>()
@@ -177,6 +204,10 @@ object ResumenVideoEncoder {
                 when {
                     indiceSalida == MediaCodec.INFO_TRY_AGAIN_LATER -> {
                         if (!finalDeFlujo) return
+                        // La salida ya está completa: seguir esperando el buffer con
+                        // END_OF_STREAM no puede mejorarla, y en el dispositivo del usuario ese
+                        // buffer no llega nunca (se quemaban los 5 s del tope en cada video).
+                        if (muestras.size >= totalFrames) return
                         if (inactividadMs >= MAX_ESPERA_EOS_MS) {
                             Log.w(
                                 TAG,
@@ -231,6 +262,9 @@ object ResumenVideoEncoder {
                         // esperar: igual que con INFO_TRY_AGAIN_LATER, se devuelve el control
                         // de inmediato en vez de girar aquí.
                         if (!finalDeFlujo) return
+                        // Misma salida temprana que arriba: con la salida ya completa no queda
+                        // nada que esperar.
+                        if (muestras.size >= totalFrames) return
                         if (inactividadMs >= MAX_ESPERA_EOS_MS) {
                             Log.w(
                                 TAG,
@@ -255,10 +289,11 @@ object ResumenVideoEncoder {
 
             for (indiceFrame in 0 until totalFrames) {
                 val tiempoMs = indiceFrame * 1000L / fps
-                val bitmap = renderizarFrame(tiempoMs)
+                // Se pinta directo sobre el canvas de la Surface: sin bitmap intermedia de
+                // pantalla completa por frame y sin el blit posterior.
                 val canvas = sfc.lockCanvas(null)
                 try {
-                    canvas.drawBitmap(bitmap, 0f, 0f, null)
+                    dibujarFrame(canvas, tiempoMs)
                 } finally {
                     sfc.unlockCanvasAndPost(canvas)
                 }

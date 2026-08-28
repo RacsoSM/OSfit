@@ -1,6 +1,5 @@
 package com.osfit.app.video
 
-import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Typeface
@@ -33,14 +32,22 @@ object ResumenFrameRenderer {
     private const val ANCHO_DEFECTO = 1080
     private const val ALTO_DEFECTO = 1920
 
-    fun renderizarFrame(
+    /**
+     * Pinta el frame de [tiempoGlobalMs] directamente sobre [canvas] —el de la Surface del
+     * codificador— en vez de componerlo en una bitmap intermedia de pantalla completa
+     * (~8.3 MB por frame) que después habría que blitear. El `drawColor(NEGRO)` inicial no es
+     * decorativo: el canvas que entrega `Surface.lockCanvas()` puede traer contenido viejo y
+     * esto es lo que lo limpia.
+     *
+     * [canvas] sólo se usa durante la llamada; no se guarda ninguna referencia a él.
+     */
+    fun dibujarFrame(
+        canvas: Canvas,
         timeline: TimelineResumen,
         tiempoGlobalMs: Long,
         ancho: Int = ANCHO_DEFECTO,
         alto: Int = ALTO_DEFECTO
-    ): Bitmap {
-        val bitmap = Bitmap.createBitmap(ancho, alto, Bitmap.Config.ARGB_8888)
-        val canvas = Canvas(bitmap)
+    ) {
         canvas.drawColor(NEGRO)
         FondoBlobRenderer.dibujar(canvas, ancho, alto, tiempoGlobalMs)
 
@@ -53,7 +60,6 @@ object ResumenFrameRenderer {
         } else {
             dibujarEscena(canvas, ancho, activo.escena, timeline.elapsedEnTramo(activo, tiempoGlobalMs), alpha = 1f)
         }
-        return bitmap
     }
 
     private fun dibujarEscena(canvas: Canvas, ancho: Int, escena: EscenaResumen, elapsedMs: Long, alpha: Float) {

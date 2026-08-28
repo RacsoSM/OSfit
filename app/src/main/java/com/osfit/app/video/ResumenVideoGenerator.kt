@@ -31,7 +31,7 @@ object ResumenVideoGenerator {
             fps = FPS,
             context = context,
             salida = salida
-        ) { tiempoMs -> ResumenFrameRenderer.renderizarFrame(timeline, tiempoMs) }
+        ) { canvas, tiempoMs -> ResumenFrameRenderer.dibujarFrame(canvas, timeline, tiempoMs) }
         CompartirUtil.compartirVideo(context, salida)
     }
 
