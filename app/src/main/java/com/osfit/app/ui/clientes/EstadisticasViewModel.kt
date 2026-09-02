@@ -47,11 +47,11 @@ class EstadisticasViewModel(
 
     val uiState: StateFlow<EstadisticasUiState> = combine(cliente, asistencias) { clienteActual, listaAsistencias ->
         val hoy = LocalDate.now()
-        val fechasAsistidas = listaAsistencias.filter { it.asistio }.map { LocalDate.parse(it.fecha) }.toSet()
+        val fechasParaRacha = RachaCalculator.fechasQueCuentan(listaAsistencias)
         val diaFavoritoEfectivo = clienteActual?.diaFavoritoIndex ?: RachaCalculator.diaFavorito(listaAsistencias)
         EstadisticasUiState(
-            rachaActual = RachaCalculator.calcularRachaActual(fechasAsistidas, hoy),
-            rachaMasLarga = RachaCalculator.calcularRachaMasLarga(fechasAsistidas),
+            rachaActual = RachaCalculator.calcularRachaActual(fechasParaRacha, hoy),
+            rachaMasLarga = RachaCalculator.calcularRachaMasLarga(fechasParaRacha),
             diasTotalesAsistidos = RachaCalculator.diasTotalesAsistidos(listaAsistencias),
             diaFavoritoIndex = diaFavoritoEfectivo,
             diaFavoritoNombre = diaFavoritoEfectivo?.let { indice ->

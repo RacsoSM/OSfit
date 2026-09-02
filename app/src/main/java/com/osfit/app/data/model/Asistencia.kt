@@ -7,6 +7,8 @@ data class Asistencia(
     val clienteId: String = "",
     val fecha: String = "",
     val asistio: Boolean = false,
+    /** Falta justificada ("soborno"): no asistió, pero cuenta para la racha. */
+    val justificada: Boolean = false,
     val diaRutinaRealizado: Int? = null,
     val nota: String = "",
     val horaLlegada: Timestamp? = null,

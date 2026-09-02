@@ -61,6 +61,7 @@ class FakeAsistenciaRepository : AsistenciaRepository {
                 clienteId = clienteId,
                 fecha = fecha,
                 asistio = asistio,
+                justificada = !asistio && existente?.justificada == true,
                 diaRutinaRealizado = if (asistio) diaRutinaRealizado else null,
                 nota = nota,
                 horaLlegada = existente?.horaLlegada,
@@ -81,6 +82,7 @@ class FakeAsistenciaRepository : AsistenciaRepository {
         upsert(
             (existente ?: Asistencia(clienteId = clienteId, fecha = fecha)).copy(
                 asistio = true,
+                justificada = false,
                 diaRutinaRealizado = dia,
                 horaLlegada = Timestamp.now(),
                 horaSalida = null,
@@ -107,5 +109,11 @@ class FakeAsistenciaRepository : AsistenciaRepository {
     override suspend fun actualizarDiaRealizado(clienteId: String, fecha: String, nuevoDia: Int) {
         val existente = obtenerExistente(clienteId, fecha) ?: return
         upsert(existente.copy(diaRutinaRealizado = nuevoDia))
+    }
+
+    override suspend fun justificarFalta(clienteId: String, fecha: String, justificada: Boolean) {
+        val existente = obtenerExistente(clienteId, fecha) ?: return
+        if (existente.asistio) return
+        upsert(existente.copy(justificada = justificada))
     }
 }

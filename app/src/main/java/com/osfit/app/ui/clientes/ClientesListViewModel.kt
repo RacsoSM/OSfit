@@ -43,11 +43,9 @@ class ClientesListViewModel(
         .map { asistencias ->
             val hoy = LocalDate.now()
             asistencias
-                .filter { it.asistio }
                 .groupBy { it.clienteId }
                 .mapValues { (_, lista) ->
-                    val fechas = lista.map { LocalDate.parse(it.fecha) }.toSet()
-                    RachaCalculator.calcularRachaActual(fechas, hoy)
+                    RachaCalculator.calcularRachaActual(RachaCalculator.fechasQueCuentan(lista), hoy)
                 }
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyMap())

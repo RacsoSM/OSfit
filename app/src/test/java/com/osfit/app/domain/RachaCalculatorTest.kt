@@ -142,4 +142,65 @@ class RachaCalculatorTest {
         )
         assertEquals(20, dias)
     }
+
+    @Test
+    fun `una falta justificada cuenta como asistencia para la racha`() {
+        val asistencias = listOf(
+            Asistencia(fecha = "2026-08-17", asistio = true),
+            Asistencia(fecha = "2026-08-18", asistio = false, justificada = true),
+            Asistencia(fecha = "2026-08-19", asistio = true)
+        )
+        val fechas = RachaCalculator.fechasQueCuentan(asistencias)
+        val racha = RachaCalculator.calcularRachaActual(fechas, hoy = LocalDate.parse("2026-08-19"))
+        assertEquals(3, racha)
+    }
+
+    @Test
+    fun `una falta sin justificar sigue rompiendo la racha`() {
+        val asistencias = listOf(
+            Asistencia(fecha = "2026-08-17", asistio = true),
+            Asistencia(fecha = "2026-08-18", asistio = false),
+            Asistencia(fecha = "2026-08-19", asistio = true)
+        )
+        val fechas = RachaCalculator.fechasQueCuentan(asistencias)
+        val racha = RachaCalculator.calcularRachaActual(fechas, hoy = LocalDate.parse("2026-08-19"))
+        assertEquals(1, racha)
+    }
+
+    @Test
+    fun `fechasQueCuentan incluye asistidas y justificadas`() {
+        val asistencias = listOf(
+            Asistencia(fecha = "2026-08-17", asistio = true),
+            Asistencia(fecha = "2026-08-18", asistio = false, justificada = true),
+            Asistencia(fecha = "2026-08-19", asistio = false)
+        )
+        assertEquals(
+            setOf(LocalDate.parse("2026-08-17"), LocalDate.parse("2026-08-18")),
+            RachaCalculator.fechasQueCuentan(asistencias)
+        )
+    }
+
+    @Test
+    fun `una falta justificada no rompe la racha aunque no haya asistencia despues`() {
+        val asistencias = listOf(
+            Asistencia(fecha = "2026-08-17", asistio = true),
+            Asistencia(fecha = "2026-08-18", asistio = true),
+            Asistencia(fecha = "2026-08-19", asistio = false, justificada = true)
+        )
+        val fechas = RachaCalculator.fechasQueCuentan(asistencias)
+        val racha = RachaCalculator.calcularRachaActual(fechas, hoy = LocalDate.parse("2026-08-19"))
+        assertEquals(3, racha)
+    }
+
+    @Test
+    fun `la racha mas larga tambien cuenta las faltas justificadas`() {
+        val asistencias = listOf(
+            Asistencia(fecha = "2026-08-17", asistio = true),
+            Asistencia(fecha = "2026-08-18", asistio = false, justificada = true),
+            Asistencia(fecha = "2026-08-19", asistio = true),
+            Asistencia(fecha = "2026-08-20", asistio = false)
+        )
+        val fechas = RachaCalculator.fechasQueCuentan(asistencias)
+        assertEquals(3, RachaCalculator.calcularRachaMasLarga(fechas))
+    }
 }

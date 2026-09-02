@@ -14,6 +14,15 @@ object RachaCalculator {
     private fun esDiaHabil(fecha: LocalDate): Boolean =
         fecha.dayOfWeek != DayOfWeek.SATURDAY && fecha.dayOfWeek != DayOfWeek.SUNDAY
 
+    /**
+     * Fechas que cuentan para la racha: las asistidas y las faltas justificadas
+     * ("soborno"), que valen igual que una asistencia. Para todo lo demás
+     * (días asistidos, tiempo en el gym, rankings) una falta justificada sigue
+     * siendo una falta.
+     */
+    fun fechasQueCuentan(asistencias: List<Asistencia>): Set<LocalDate> =
+        asistencias.filter { it.asistio || it.justificada }.map { LocalDate.parse(it.fecha) }.toSet()
+
     fun calcularRachaActual(fechasAsistencia: Set<LocalDate>, hoy: LocalDate): Int {
         var fecha = hoy
         // Día de gracia: si hoy es hábil y aún no hay registro, no rompe la racha todavía.

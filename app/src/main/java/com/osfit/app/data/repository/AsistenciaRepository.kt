@@ -31,4 +31,10 @@ interface AsistenciaRepository {
     suspend fun detenerTiempo(clienteId: String, fecha: String)
     suspend fun reiniciarDia(fecha: String)
     suspend fun actualizarDiaRealizado(clienteId: String, fecha: String, nuevoDia: Int)
+
+    /**
+     * Marca (o desmarca) una falta como justificada. Una falta justificada sigue
+     * siendo una falta para las estadísticas, pero cuenta como asistencia para la racha.
+     */
+    suspend fun justificarFalta(clienteId: String, fecha: String, justificada: Boolean)
 }

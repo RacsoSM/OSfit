@@ -106,6 +106,9 @@ class FirestoreAsistenciaRepository(
             clienteId = clienteId,
             fecha = fecha,
             asistio = asistio,
+            // Al marcar asistencia deja de haber falta que justificar; al remarcar una
+            // falta se conserva el soborno que ya se le haya dado.
+            justificada = !asistio && existente?.justificada == true,
             diaRutinaRealizado = if (asistio) diaRutinaRealizado else null,
             nota = nota,
             horaLlegada = existente?.horaLlegada,
@@ -134,6 +137,7 @@ class FirestoreAsistenciaRepository(
         val asistencia = (existente ?: Asistencia(clienteId = clienteId, fecha = fecha)).copy(
             id = "",
             asistio = true,
+            justificada = false,
             diaRutinaRealizado = dia,
             horaLlegada = Timestamp.now(),
             horaSalida = null,
@@ -176,5 +180,12 @@ class FirestoreAsistenciaRepository(
             .await()
         val ref = asistenciaExistente.documents.firstOrNull()?.reference ?: return
         ref.update("diaRutinaRealizado", nuevoDia).await()
+    }
+
+    override suspend fun justificarFalta(clienteId: String, fecha: String, justificada: Boolean) {
+        val (ref, existente) = obtenerAsistencia(clienteId, fecha)
+        // Solo tiene sentido justificar una falta ya registrada.
+        if (existente == null || existente.asistio) return
+        ref.update("justificada", justificada).await()
     }
 }

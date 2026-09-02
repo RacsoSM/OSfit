@@ -84,6 +84,7 @@ fun ClienteAsistenciaScreen(clienteId: String) {
             ) {
                 Leyenda(color = VerdeAsistio, texto = "Asistió")
                 Leyenda(color = RojoFalto, texto = "Faltó")
+                Leyenda(color = AzulJustificado, texto = "Justificada")
             }
         }
     }
@@ -108,7 +109,13 @@ private fun DetalleAsistenciaDialog(asistencia: Asistencia, onDismiss: () -> Uni
         title = { Text(fecha) },
         text = {
             Column {
-                Text(if (asistencia.asistio) "Asistió" else "Faltó")
+                Text(
+                    when {
+                        asistencia.asistio -> "Asistió"
+                        asistencia.justificada -> "Falta justificada"
+                        else -> "Faltó"
+                    }
+                )
                 if (asistencia.asistio) {
                     Text("Duración: ${formatearDuracion(asistencia.duracionMinutos)}")
                 }
@@ -163,10 +170,11 @@ private fun HistorialCalendarGrid(
                         if (indiceDia in 1..diasEnMes) {
                             val fecha = mesVisible.atDay(indiceDia)
                             val asistencia = estadoPorFecha[fecha]
-                            val colorFondo = when (asistencia?.asistio) {
-                                true -> VerdeAsistio
-                                false -> RojoFalto
-                                null -> Color.Transparent
+                            val colorFondo = when {
+                                asistencia == null -> Color.Transparent
+                                asistencia.asistio -> VerdeAsistio
+                                asistencia.justificada -> AzulJustificado
+                                else -> RojoFalto
                             }
                             Box(
                                 modifier = Modifier

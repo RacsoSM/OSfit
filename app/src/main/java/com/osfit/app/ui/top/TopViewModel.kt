@@ -53,9 +53,10 @@ class TopViewModel(
     val topRacha: StateFlow<List<PuestoPodio>> = combine(clientesActivos, asistenciasDelMes, _mesVisible) { clientes, asistencias, mes ->
         val inicio = mes.atDay(1)
         val fin = mes.atEndOfMonth()
-        val asistenciasPorCliente = asistencias.filter { it.asistio }.groupBy { it.clienteId }
+        // Las faltas justificadas ("soborno") cuentan como asistencia solo aquí, en la racha.
+        val asistenciasPorCliente = asistencias.groupBy { it.clienteId }
         val candidatos = clientes.mapNotNull { cliente ->
-            val fechas = asistenciasPorCliente[cliente.id]?.map { LocalDate.parse(it.fecha) }?.toSet() ?: emptySet()
+            val fechas = RachaCalculator.fechasQueCuentan(asistenciasPorCliente[cliente.id].orEmpty())
             val racha = RachaCalculator.calcularRachaMasLargaEnRango(fechas, inicio, fin)
             if (racha > 0) TopCliente(cliente.id, cliente.nombre, racha) else null
         }

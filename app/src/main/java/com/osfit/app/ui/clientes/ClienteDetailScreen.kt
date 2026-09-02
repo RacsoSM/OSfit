@@ -21,6 +21,7 @@ import androidx.compose.material.icons.filled.EditCalendar
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.FitnessCenter
+import androidx.compose.material.icons.filled.Handshake
 import androidx.compose.material.icons.filled.Payments
 import androidx.compose.material.icons.filled.QueryStats
 import androidx.compose.material.icons.filled.Settings
@@ -75,6 +76,7 @@ fun ClienteDetailScreen(
     val eliminado by viewModel.eliminado.collectAsState()
     val rachaActual by viewModel.rachaActual.collectAsState()
     val diaQueToca by viewModel.diaQueToca.collectAsState()
+    val faltas by viewModel.faltas.collectAsState()
     val resumenViewModel: ResumenClienteViewModel = viewModel(
         factory = viewModelFactory { initializer { ResumenClienteViewModel(clienteId) } }
     )
@@ -87,6 +89,7 @@ fun ClienteDetailScreen(
 
     var mostrarDialogoRutina by remember { mutableStateOf(false) }
     var mostrarDialogoAsignarDia by remember { mutableStateOf(false) }
+    var mostrarDialogoSoborno by remember { mutableStateOf(false) }
     var mostrarConfirmacionActivo by remember { mutableStateOf(false) }
     var mostrarConfirmacionEliminar by remember { mutableStateOf(false) }
 
@@ -274,6 +277,17 @@ fun ClienteDetailScreen(
             item {
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     AccionCard(
+                        icono = Icons.Filled.Handshake,
+                        texto = "Soborno",
+                        modifier = Modifier.weight(1f),
+                        onClick = { mostrarDialogoSoborno = true }
+                    )
+                    Spacer(modifier = Modifier.weight(1f))
+                }
+            }
+            item {
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    AccionCard(
                         icono = Icons.Filled.Videocam,
                         texto = if (generandoResumen) "Generando..." else "Resumen semanal",
                         modifier = Modifier.weight(1f),
@@ -327,6 +341,14 @@ fun ClienteDetailScreen(
                 mostrarDialogoAsignarDia = false
             },
             onCancelar = { mostrarDialogoAsignarDia = false }
+        )
+    }
+
+    if (mostrarDialogoSoborno) {
+        SobornoDialog(
+            faltas = faltas,
+            onAlternar = { viewModel.alternarSoborno(it) },
+            onCerrar = { mostrarDialogoSoborno = false }
         )
     }
 

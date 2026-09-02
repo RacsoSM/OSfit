@@ -135,10 +135,13 @@ object ResumenClienteCalculator {
         var rachaMasLarga: Int? = null
         var rankingRacha: RankingResultado? = null
         if (rango.tipo == TipoResumen.MENSUAL) {
-            val fechasCliente = asistenciasPorCliente[cliente.id]?.map { LocalDate.parse(it.fecha) }?.toSet() ?: emptySet()
+            // La racha es lo único donde una falta justificada ("soborno") cuenta como
+            // asistencia, así que se parte de todos los registros, no solo de los asistidos.
+            val registrosPorCliente = asistenciasEnRango.groupBy { it.clienteId }
+            val fechasCliente = RachaCalculator.fechasQueCuentan(registrosPorCliente[cliente.id].orEmpty())
             rachaMasLarga = RachaCalculator.calcularRachaMasLargaEnRango(fechasCliente, rango.inicio, rango.fin)
             val valoresRacha = clientesActivos.map { c ->
-                val fechas = asistenciasPorCliente[c.id]?.map { LocalDate.parse(it.fecha) }?.toSet() ?: emptySet()
+                val fechas = RachaCalculator.fechasQueCuentan(registrosPorCliente[c.id].orEmpty())
                 c to RachaCalculator.calcularRachaMasLargaEnRango(fechas, rango.inicio, rango.fin)
             }
             rankingRacha = calcularRanking(valoresRacha, cliente.id)

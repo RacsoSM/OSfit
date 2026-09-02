@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.Timestamp
 import com.osfit.app.data.AppContainer
+import com.osfit.app.data.model.Asistencia
 import com.osfit.app.data.model.Cliente
 import com.osfit.app.data.model.Pago
 import com.osfit.app.data.model.Rutina
@@ -49,10 +50,21 @@ class ClienteDetailViewModel(
 
     val rachaActual: StateFlow<Int> = asistenciaRepository.observarAsistenciasPorCliente(clienteId)
         .map { asistencias ->
-            val fechas = asistencias.filter { it.asistio }.map { LocalDate.parse(it.fecha) }.toSet()
-            RachaCalculator.calcularRachaActual(fechas, LocalDate.now())
+            RachaCalculator.calcularRachaActual(RachaCalculator.fechasQueCuentan(asistencias), LocalDate.now())
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0)
+
+    /** Faltas del cliente, de la más reciente a la más vieja: lo que se puede sobornar. */
+    val faltas: StateFlow<List<Asistencia>> = asistenciasDelCliente
+        .map { asistencias -> asistencias.filterNot { it.asistio }.sortedByDescending { it.fecha } }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    /** Soborno: marca o desmarca una falta como justificada. */
+    fun alternarSoborno(asistencia: Asistencia) {
+        viewModelScope.launch {
+            asistenciaRepository.justificarFalta(clienteId, asistencia.fecha, !asistencia.justificada)
+        }
+    }
 
     private val _errorPago = MutableStateFlow<String?>(null)
     val errorPago: StateFlow<String?> = _errorPago.asStateFlow()
