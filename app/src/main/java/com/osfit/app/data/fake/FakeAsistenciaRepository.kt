@@ -84,10 +84,22 @@ class FakeAsistenciaRepository(
 
         upsert(asistencia)
 
+        // Consolida en diaActualIndex el día que se hace hoy antes de dejar el nuevo pendiente,
+        // igual que el batch de FirestoreAsistenciaRepository.
         if (asistio) {
-            clienteRepository.actualizarDiaPendiente(clienteId, siguienteDiaActualIndex, fecha)
+            clienteRepository.aplicarProgreso(
+                clienteId = clienteId,
+                diaActualIndex = diaActualIndexPrevio,
+                diaPendienteIndex = siguienteDiaActualIndex,
+                diaPendienteFecha = fecha
+            )
         } else if (diaPendienteFechaActual == fecha) {
-            clienteRepository.limpiarDiaPendiente(clienteId)
+            clienteRepository.aplicarProgreso(
+                clienteId = clienteId,
+                diaActualIndex = diaActualIndexPrevio,
+                diaPendienteIndex = null,
+                diaPendienteFecha = null
+            )
         }
     }
 
@@ -118,7 +130,12 @@ class FakeAsistenciaRepository(
                 diaRutinaRealizado = diaRutinaRealizado,
                 totalDias = totalDiasRutina
             )
-            clienteRepository.actualizarDiaPendiente(clienteId, siguienteDiaActualIndex, fecha)
+            clienteRepository.aplicarProgreso(
+                clienteId = clienteId,
+                diaActualIndex = diaActualIndexPrevio,
+                diaPendienteIndex = siguienteDiaActualIndex,
+                diaPendienteFecha = fecha
+            )
         }
     }
 

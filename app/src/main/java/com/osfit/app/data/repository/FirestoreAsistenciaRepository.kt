@@ -127,15 +127,27 @@ class FirestoreAsistenciaRepository(
         batch.set(asistenciaRef, asistencia.copy(id = ""))
         // El día de rutina no se aplica de inmediato: queda pendiente hasta el día siguiente
         // (calendario), para que la lista de Clientes no cambie mientras se sigue tomando asistencia.
+        // Al escribir el nuevo pendiente hay que consolidar en diaActualIndex el día que se está
+        // haciendo hoy (diaActualIndexPrevio, que ya es el día efectivo): si no, un pendiente
+        // anterior que ya venció se pierde, porque el pendiente nuevo lleva la fecha de hoy y
+        // diaEfectivo deja de aplicarlo, cayendo de vuelta al diaActualIndex viejo.
         if (asistio) {
             batch.update(
                 clientesCollection.document(clienteId),
-                mapOf("diaPendienteIndex" to siguienteDiaActualIndex, "diaPendienteFecha" to fecha)
+                mapOf(
+                    "diaActualIndex" to diaActualIndexPrevio,
+                    "diaPendienteIndex" to siguienteDiaActualIndex,
+                    "diaPendienteFecha" to fecha
+                )
             )
         } else if (diaPendienteFechaActual == fecha) {
             batch.update(
                 clientesCollection.document(clienteId),
-                mapOf("diaPendienteIndex" to null, "diaPendienteFecha" to null)
+                mapOf(
+                    "diaActualIndex" to diaActualIndexPrevio,
+                    "diaPendienteIndex" to null,
+                    "diaPendienteFecha" to null
+                )
             )
         }
         batch.commit().await()
@@ -174,7 +186,11 @@ class FirestoreAsistenciaRepository(
             )
             batch.update(
                 clientesCollection.document(clienteId),
-                mapOf("diaPendienteIndex" to siguienteDiaActualIndex, "diaPendienteFecha" to fecha)
+                mapOf(
+                    "diaActualIndex" to diaActualIndexPrevio,
+                    "diaPendienteIndex" to siguienteDiaActualIndex,
+                    "diaPendienteFecha" to fecha
+                )
             )
         }
         batch.commit().await()

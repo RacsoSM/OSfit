@@ -192,6 +192,27 @@ class FakeClienteRepository : ClienteRepository {
         actualizarCliente(clienteId) { it.copy(diaPendienteIndex = null, diaPendienteFecha = null) }
     }
 
+    /**
+     * Método exclusivo del fake: escribe de una sola vez el día actual consolidado y el
+     * pendiente, replicando el batch de
+     * [com.osfit.app.data.repository.FirestoreAsistenciaRepository] que actualiza los tres
+     * campos juntos al registrar asistencia o iniciar el tiempo.
+     */
+    suspend fun aplicarProgreso(
+        clienteId: String,
+        diaActualIndex: Int,
+        diaPendienteIndex: Int?,
+        diaPendienteFecha: String?
+    ) {
+        actualizarCliente(clienteId) {
+            it.copy(
+                diaActualIndex = diaActualIndex,
+                diaPendienteIndex = diaPendienteIndex,
+                diaPendienteFecha = diaPendienteFecha
+            )
+        }
+    }
+
     private fun actualizarCliente(clienteId: String, transform: (Cliente) -> Cliente) {
         clientesFlow.update { lista ->
             lista.map { cliente -> if (cliente.id == clienteId) transform(cliente) else cliente }
