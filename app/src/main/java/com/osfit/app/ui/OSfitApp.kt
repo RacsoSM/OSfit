@@ -99,6 +99,17 @@ private fun OSfitContent() {
                             },
                             modifier = Modifier.padding(12.dp)
                         )
+                        if (com.osfit.app.BuildConfig.DEBUG) {
+                            NavigationDrawerItem(
+                                label = { Text("Sandbox (prueba)") },
+                                selected = rutaActual == Screen.Sandbox.route,
+                                onClick = {
+                                    scope.launch { drawerState.close() }
+                                    navController.navigate(Screen.Sandbox.route)
+                                },
+                                modifier = Modifier.padding(12.dp)
+                            )
+                        }
                     }
                 }
             }

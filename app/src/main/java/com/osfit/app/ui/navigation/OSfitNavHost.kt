@@ -103,5 +103,10 @@ fun OSfitNavHost(navController: NavHostController, modifier: Modifier = Modifier
                 onGuardado = { navController.popBackStack() }
             )
         }
+        if (com.osfit.app.BuildConfig.DEBUG) {
+            composable(Screen.Sandbox.route) {
+                com.osfit.app.ui.sandbox.SandboxScreen()
+            }
+        }
     }
 }

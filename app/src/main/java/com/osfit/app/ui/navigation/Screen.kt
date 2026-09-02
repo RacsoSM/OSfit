@@ -35,6 +35,10 @@ sealed class Screen(val route: String) {
         const val ARG_RUTINA_NUEVA = "nueva"
         fun crearRuta(rutinaId: String? = null) = "rutina_editor?rutinaId=${rutinaId ?: ARG_RUTINA_NUEVA}"
     }
+
+    // Solo accesible en builds debug (ver OSfitApp.kt): pantalla de prueba para el avance
+    // de día de rutina con datos 100% en memoria, nunca conectada a Firebase.
+    data object Sandbox : Screen("sandbox")
 }
 
 val screensConBarraInferior = listOf(Screen.Clientes, Screen.Calendario, Screen.Rutinas)
