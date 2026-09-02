@@ -32,7 +32,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -53,6 +52,7 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.osfit.app.data.model.Rutina
 import com.osfit.app.domain.RutinaProgressCalculator
 import com.osfit.app.ui.common.AccionCard
+import com.osfit.app.ui.common.AsignarDiaDialog
 import com.osfit.app.ui.common.RachaBadge
 import com.osfit.app.ui.common.TextoMaquinaEscribir
 import com.osfit.app.ui.common.rememberFechaActual
@@ -407,48 +407,6 @@ private fun ConfirmarActivoDialog(
         },
         confirmButton = {
             TextButton(onClick = onConfirmar) { Text("Confirmar") }
-        },
-        dismissButton = {
-            TextButton(onClick = onCancelar) { Text("Cancelar") }
-        }
-    )
-}
-
-@Composable
-private fun AsignarDiaDialog(
-    dias: List<String>,
-    diaActual: Int,
-    onConfirmar: (Int) -> Unit,
-    onCancelar: () -> Unit
-) {
-    var seleccionado by remember { mutableStateOf(diaActual.coerceIn(0, dias.lastIndex)) }
-
-    AlertDialog(
-        onDismissRequest = onCancelar,
-        title = { Text("Asignar día del ciclo") },
-        text = {
-            Column {
-                Text(
-                    "Útil si el cliente se salió de lo que le tocaba y quieres corregir manualmente en qué día del ciclo está, sin marcar una asistencia.",
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.padding(bottom = 8.dp)
-                )
-                dias.forEachIndexed { indice, nombreDia ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { seleccionado = indice }
-                            .padding(vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        RadioButton(selected = seleccionado == indice, onClick = { seleccionado = indice })
-                        Text(nombreDia + if (indice == diaActual) " (actual)" else "")
-                    }
-                }
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = { onConfirmar(seleccionado) }) { Text("Confirmar") }
         },
         dismissButton = {
             TextButton(onClick = onCancelar) { Text("Cancelar") }

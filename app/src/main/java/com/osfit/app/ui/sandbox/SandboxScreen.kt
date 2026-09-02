@@ -20,7 +20,9 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -28,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.osfit.app.data.model.Cliente
 import com.osfit.app.domain.RutinaProgressCalculator
+import com.osfit.app.ui.common.AsignarDiaDialog
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -106,7 +109,8 @@ fun SandboxScreen() {
                             asistioHoy = asistio,
                             onAsistio = { viewModel.marcar(cliente, true) },
                             onFalto = { viewModel.marcar(cliente, false) },
-                            onIniciarTiempo = { viewModel.iniciarTiempo(cliente) }
+                            onIniciarTiempo = { viewModel.iniciarTiempo(cliente) },
+                            onAsignarDia = { dia -> viewModel.asignarDiaActual(cliente, dia) }
                         )
                     }
                 }
@@ -122,8 +126,10 @@ private fun SandboxClienteCard(
     asistioHoy: Boolean,
     onAsistio: () -> Unit,
     onFalto: () -> Unit,
-    onIniciarTiempo: () -> Unit
+    onIniciarTiempo: () -> Unit,
+    onAsignarDia: (Int) -> Unit
 ) {
+    var mostrarAsignarDia by remember { mutableStateOf(false) }
     val diaEfectivo = RutinaProgressCalculator.diaEfectivo(
         cliente.diaActualIndex,
         cliente.diaPendienteIndex,
@@ -169,6 +175,27 @@ private fun SandboxClienteCard(
                 Button(onClick = onFalto) { Text("Faltó") }
                 TextButton(onClick = onIniciarTiempo) { Text("Iniciar tiempo") }
             }
+
+            // Mismo diálogo compartido que usa Clientes (ClienteDetailScreen).
+            TextButton(
+                onClick = { mostrarAsignarDia = true },
+                enabled = cliente.rutinaAsignada != null
+            ) {
+                Text("Asignar día")
+            }
         }
+    }
+
+    val dias = cliente.rutinaAsignada?.dias
+    if (mostrarAsignarDia && dias != null) {
+        AsignarDiaDialog(
+            dias = dias.map { it.nombreDia },
+            diaActual = diaEfectivo,
+            onConfirmar = { diaElegido ->
+                onAsignarDia(diaElegido)
+                mostrarAsignarDia = false
+            },
+            onCancelar = { mostrarAsignarDia = false }
+        )
     }
 }

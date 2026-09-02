@@ -90,6 +90,13 @@ class SandboxViewModel : ViewModel() {
         }
     }
 
+    /** Misma corrección manual que "Asignar día" en Clientes: pisa el día actual y limpia el pendiente. */
+    fun asignarDiaActual(cliente: Cliente, diaIndex: Int) {
+        viewModelScope.launch {
+            clienteRepository.actualizarDiaActual(cliente.id, diaIndex)
+        }
+    }
+
     fun pasarDia() {
         // Solo mueve la fecha simulada; no toca ningún dato guardado. Así se puede observar
         // cómo RutinaProgressCalculator.diaEfectivo reevalúa el día pendiente contra el nuevo "hoy".
