@@ -3,7 +3,6 @@ package com.osfit.app.data.fake
 import com.google.firebase.Timestamp
 import com.osfit.app.data.model.Asistencia
 import com.osfit.app.data.repository.AsistenciaRepository
-import com.osfit.app.domain.RutinaProgressCalculator
 import com.osfit.app.domain.TiempoGymCalculator
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -13,14 +12,10 @@ import kotlinx.coroutines.flow.update
 
 /**
  * Implementación 100% en memoria de [AsistenciaRepository], usada por el modo sandbox.
- * Recibe el [FakeClienteRepository] concreto (no la interfaz) porque, igual que la
- * implementación real hace un batch write cruzando las colecciones "asistencias" y
- * "clientes", este fake necesita llamar a [FakeClienteRepository.actualizarDiaPendiente]
- * y a su método exclusivo [FakeClienteRepository.limpiarDiaPendiente].
+ * Solo guarda registros de asistencia: el día que le toca a cada cliente se deduce de
+ * ellos, así que ya no necesita tocar el repositorio de clientes.
  */
-class FakeAsistenciaRepository(
-    private val clienteRepository: FakeClienteRepository
-) : AsistenciaRepository {
+class FakeAsistenciaRepository : AsistenciaRepository {
 
     private val asistenciasFlow = MutableStateFlow<List<Asistencia>>(emptyList())
     private val idCounter = java.util.concurrent.atomic.AtomicInteger(1)
@@ -56,87 +51,42 @@ class FakeAsistenciaRepository(
         clienteId: String,
         fecha: String,
         asistio: Boolean,
-        diaActualIndexPrevio: Int,
         diaRutinaRealizado: Int?,
-        totalDiasRutina: Int,
-        diaPendienteFechaActual: String?,
         nota: String
     ) {
-        val siguienteDiaActualIndex = RutinaProgressCalculator.calcularSiguienteDiaActualIndex(
-            asistio = asistio,
-            diaActualIndexPrevio = diaActualIndexPrevio,
-            diaRutinaRealizado = diaRutinaRealizado,
-            totalDias = totalDiasRutina
-        )
-
         val existente = obtenerExistente(clienteId, fecha)
-
-        val asistencia = Asistencia(
-            clienteId = clienteId,
-            fecha = fecha,
-            asistio = asistio,
-            diaRutinaRealizado = if (asistio) diaRutinaRealizado else null,
-            nota = nota,
-            horaLlegada = existente?.horaLlegada,
-            horaSalida = existente?.horaSalida,
-            duracionMinutos = existente?.duracionMinutos
+        // Solo se escribe el registro: el día del cliente se deduce de estos registros.
+        upsert(
+            Asistencia(
+                clienteId = clienteId,
+                fecha = fecha,
+                asistio = asistio,
+                diaRutinaRealizado = if (asistio) diaRutinaRealizado else null,
+                nota = nota,
+                horaLlegada = existente?.horaLlegada,
+                horaSalida = existente?.horaSalida,
+                duracionMinutos = existente?.duracionMinutos
+            )
         )
-
-        upsert(asistencia)
-
-        // Consolida en diaActualIndex el día que se hace hoy antes de dejar el nuevo pendiente,
-        // igual que el batch de FirestoreAsistenciaRepository.
-        if (asistio) {
-            clienteRepository.aplicarProgreso(
-                clienteId = clienteId,
-                diaActualIndex = diaActualIndexPrevio,
-                diaPendienteIndex = siguienteDiaActualIndex,
-                diaPendienteFecha = fecha
-            )
-        } else if (diaPendienteFechaActual == fecha) {
-            clienteRepository.aplicarProgreso(
-                clienteId = clienteId,
-                diaActualIndex = diaActualIndexPrevio,
-                diaPendienteIndex = null,
-                diaPendienteFecha = null
-            )
-        }
     }
 
     override suspend fun iniciarTiempo(
         clienteId: String,
         fecha: String,
-        diaActualIndexPrevio: Int,
-        totalDiasRutina: Int
+        diaRutinaRealizado: Int
     ) {
         val existente = obtenerExistente(clienteId, fecha)
-
-        val diaRutinaRealizado = existente?.diaRutinaRealizado ?: diaActualIndexPrevio
-
-        val asistencia = (existente ?: Asistencia(clienteId = clienteId, fecha = fecha)).copy(
-            asistio = true,
-            diaRutinaRealizado = diaRutinaRealizado,
-            horaLlegada = Timestamp.now(),
-            horaSalida = null,
-            duracionMinutos = null
-        )
-
-        upsert(asistencia)
-
-        if (existente?.diaRutinaRealizado == null) {
-            val siguienteDiaActualIndex = RutinaProgressCalculator.calcularSiguienteDiaActualIndex(
+        // Respeta un día ya registrado, para no pisar una corrección hecha en la pestaña Rutina.
+        val dia = existente?.diaRutinaRealizado ?: diaRutinaRealizado
+        upsert(
+            (existente ?: Asistencia(clienteId = clienteId, fecha = fecha)).copy(
                 asistio = true,
-                diaActualIndexPrevio = diaActualIndexPrevio,
-                diaRutinaRealizado = diaRutinaRealizado,
-                totalDias = totalDiasRutina
+                diaRutinaRealizado = dia,
+                horaLlegada = Timestamp.now(),
+                horaSalida = null,
+                duracionMinutos = null
             )
-            clienteRepository.aplicarProgreso(
-                clienteId = clienteId,
-                diaActualIndex = diaActualIndexPrevio,
-                diaPendienteIndex = siguienteDiaActualIndex,
-                diaPendienteFecha = fecha
-            )
-        }
+        )
     }
 
     override suspend fun detenerTiempo(clienteId: String, fecha: String) {
@@ -150,11 +100,8 @@ class FakeAsistenciaRepository(
         upsert(existente.copy(horaSalida = ahora, duracionMinutos = duracion))
     }
 
-    override suspend fun reiniciarDia(fecha: String, clienteIdsConPendiente: List<String>) {
+    override suspend fun reiniciarDia(fecha: String) {
         asistenciasFlow.update { lista -> lista.filterNot { it.fecha == fecha } }
-        clienteIdsConPendiente.forEach { clienteId ->
-            clienteRepository.limpiarDiaPendiente(clienteId)
-        }
     }
 
     override suspend fun actualizarDiaRealizado(clienteId: String, fecha: String, nuevoDia: Int) {

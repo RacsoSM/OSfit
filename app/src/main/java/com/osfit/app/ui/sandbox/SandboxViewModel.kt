@@ -27,9 +27,7 @@ class SandboxViewModel : ViewModel() {
     // Envueltos en un StateFlow (en vez de simples `var`) para que reiniciarSandbox() pueda
     // sustituir la instancia y que los flujos derivados (clientes, asistenciasDelDia), que ya
     // fueron suscritos con flatMapLatest, reaccionen y se vuelvan a suscribir al repo nuevo.
-    private val _repos = MutableStateFlow(FakeClienteRepository().let { cliente ->
-        cliente to FakeAsistenciaRepository(cliente)
-    })
+    private val _repos = MutableStateFlow(FakeClienteRepository() to FakeAsistenciaRepository())
     private val clienteRepository: FakeClienteRepository get() = _repos.value.first
     private val asistenciaRepository: FakeAsistenciaRepository get() = _repos.value.second
 
@@ -42,50 +40,54 @@ class SandboxViewModel : ViewModel() {
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     @OptIn(ExperimentalCoroutinesApi::class)
+    val todasAsistencias: StateFlow<List<Asistencia>> =
+        _repos.flatMapLatest { (_, asistenciaRepo) -> asistenciaRepo.observarTodasAsistencias() }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
     val asistenciasDelDia: StateFlow<List<Asistencia>> =
-        combine(
-            _simulatedFecha,
-            _repos.flatMapLatest { (_, asistenciaRepo) -> asistenciaRepo.observarTodasAsistencias() }
-        ) { fecha, asistencias ->
+        combine(_simulatedFecha, todasAsistencias) { fecha, asistencias ->
             asistencias.filter { it.fecha == fecha.toString() }
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    /** Día del ciclo que le toca a cada cliente en la fecha simulada. */
+    val diaQueTocaPorCliente: StateFlow<Map<String, Int>> =
+        combine(clientes, todasAsistencias, _simulatedFecha) { lista, asistencias, fecha ->
+            val porCliente = asistencias.groupBy { it.clienteId }
+            lista.associate { cliente ->
+                cliente.id to RutinaProgressCalculator.diaQueToca(
+                    cliente, porCliente[cliente.id].orEmpty(), fecha.toString()
+                )
+            }
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyMap())
 
     fun marcar(cliente: Cliente, asistio: Boolean) {
         viewModelScope.launch {
             val fecha = _simulatedFecha.value.toString()
-            val diaEfectivo = RutinaProgressCalculator.diaEfectivo(
-                cliente.diaActualIndex,
-                cliente.diaPendienteIndex,
-                cliente.diaPendienteFecha,
-                fecha
-            )
             asistenciaRepository.registrarAsistencia(
                 clienteId = cliente.id,
                 fecha = fecha,
                 asistio = asistio,
-                diaActualIndexPrevio = diaEfectivo,
-                diaRutinaRealizado = if (asistio) diaEfectivo else null,
-                totalDiasRutina = cliente.rutinaAsignada?.dias?.size ?: 1,
-                diaPendienteFechaActual = cliente.diaPendienteFecha,
+                diaRutinaRealizado = if (asistio) diaQueTocaDe(cliente) else null,
                 nota = ""
             )
         }
     }
 
+    private fun diaQueTocaDe(cliente: Cliente): Int = RutinaProgressCalculator.diaQueToca(
+        cliente,
+        asistenciasDeCliente(cliente.id),
+        _simulatedFecha.value.toString()
+    )
+
+    private fun asistenciasDeCliente(clienteId: String): List<Asistencia> =
+        todasAsistencias.value.filter { it.clienteId == clienteId }
+
     fun iniciarTiempo(cliente: Cliente) {
         viewModelScope.launch {
-            val fecha = _simulatedFecha.value.toString()
-            val diaEfectivo = RutinaProgressCalculator.diaEfectivo(
-                cliente.diaActualIndex,
-                cliente.diaPendienteIndex,
-                cliente.diaPendienteFecha,
-                fecha
-            )
             asistenciaRepository.iniciarTiempo(
                 clienteId = cliente.id,
-                fecha = fecha,
-                diaActualIndexPrevio = diaEfectivo,
-                totalDiasRutina = cliente.rutinaAsignada?.dias?.size ?: 1
+                fecha = _simulatedFecha.value.toString(),
+                diaRutinaRealizado = diaQueTocaDe(cliente)
             )
         }
     }
@@ -93,7 +95,7 @@ class SandboxViewModel : ViewModel() {
     /** Misma corrección manual que "Asignar día" en Clientes: pisa el día actual y limpia el pendiente. */
     fun asignarDiaActual(cliente: Cliente, diaIndex: Int) {
         viewModelScope.launch {
-            clienteRepository.actualizarDiaActual(cliente.id, diaIndex)
+            clienteRepository.asignarDiaAncla(cliente.id, diaIndex, _simulatedFecha.value.toString())
         }
     }
 
@@ -104,8 +106,7 @@ class SandboxViewModel : ViewModel() {
     }
 
     fun reiniciarSandbox() {
-        val clienteRepoNuevo = FakeClienteRepository()
-        _repos.value = clienteRepoNuevo to FakeAsistenciaRepository(clienteRepoNuevo)
+        _repos.value = FakeClienteRepository() to FakeAsistenciaRepository()
         _simulatedFecha.value = LocalDate.now()
     }
 }

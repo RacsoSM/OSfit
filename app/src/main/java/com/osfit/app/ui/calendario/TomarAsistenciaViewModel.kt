@@ -32,8 +32,29 @@ class TomarAsistenciaViewModel(
         .map { lista -> lista.filter { it.activo } }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    val asistenciasDelDia: StateFlow<List<Asistencia>> = asistenciaRepository.observarAsistenciasPorFecha(fecha)
+    // Historial completo: hace falta para deducir qué día le toca a cada cliente, ya que
+    // esa respuesta ahora sale de los registros de asistencia y no de un campo del cliente.
+    private val todasAsistencias: StateFlow<List<Asistencia>> = asistenciaRepository.observarTodasAsistencias()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val asistenciasDelDia: StateFlow<List<Asistencia>> = todasAsistencias
+        .map { lista -> lista.filter { it.fecha == fecha } }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    /** Día del ciclo que le toca a cada cliente en la fecha abierta. */
+    val diaQueTocaPorCliente: StateFlow<Map<String, Int>> =
+        combine(clientesActivos, todasAsistencias) { clientes, asistencias ->
+            val porCliente = asistencias.groupBy { it.clienteId }
+            clientes.associate { cliente ->
+                cliente.id to RutinaProgressCalculator.diaQueToca(
+                    cliente, porCliente[cliente.id].orEmpty(), fecha
+                )
+            }
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyMap())
+
+    private fun diaQueToca(cliente: Cliente): Int = RutinaProgressCalculator.diaQueToca(
+        cliente, todasAsistencias.value.filter { it.clienteId == cliente.id }, fecha
+    )
 
     private val cambiosPendientes = MutableStateFlow<Map<String, Boolean>>(emptyMap())
 
@@ -73,8 +94,7 @@ class TomarAsistenciaViewModel(
             asistenciaRepository.iniciarTiempo(
                 clienteId = cliente.id,
                 fecha = fecha,
-                diaActualIndexPrevio = RutinaProgressCalculator.diaEfectivo(cliente),
-                totalDiasRutina = cliente.rutinaAsignada?.dias?.size ?: 1
+                diaRutinaRealizado = diaQueToca(cliente)
             )
         }
     }
@@ -100,15 +120,11 @@ class TomarAsistenciaViewModel(
                     cliente to asistio
                 }.map { (cliente, asistio) ->
                     async {
-                        val diaEfectivo = RutinaProgressCalculator.diaEfectivo(cliente)
                         asistenciaRepository.registrarAsistencia(
                             clienteId = cliente.id,
                             fecha = fecha,
                             asistio = asistio,
-                            diaActualIndexPrevio = diaEfectivo,
-                            diaRutinaRealizado = if (asistio) diaEfectivo else null,
-                            totalDiasRutina = cliente.rutinaAsignada?.dias?.size ?: 1,
-                            diaPendienteFechaActual = cliente.diaPendienteFecha,
+                            diaRutinaRealizado = if (asistio) diaQueToca(cliente) else null,
                             nota = ""
                         )
                     }
@@ -122,8 +138,7 @@ class TomarAsistenciaViewModel(
     fun reiniciarDia(onCompletado: () -> Unit) {
         viewModelScope.launch {
             _reiniciando.value = true
-            val clienteIdsConPendiente = RutinaProgressCalculator.clientesConPendienteEnFecha(clientesActivos.value, fecha)
-            asistenciaRepository.reiniciarDia(fecha, clienteIdsConPendiente)
+            asistenciaRepository.reiniciarDia(fecha)
             cambiosPendientes.value = emptyMap()
             cambiosDiaPendientes.value = emptyMap()
             _reiniciando.value = false
@@ -136,20 +151,11 @@ class TomarAsistenciaViewModel(
             _guardandoDia.value = true
             val cambios = cambiosDiaPendientes.value
             coroutineScope {
-                clientesActivos.value.mapNotNull { cliente ->
-                    val diaElegido = cambios[cliente.id] ?: return@mapNotNull null
-                    val totalDias = cliente.rutinaAsignada?.dias?.size ?: return@mapNotNull null
-                    Triple(cliente, diaElegido, totalDias)
-                }.map { (cliente, diaElegido, totalDias) ->
+                cambios.map { (clienteId, diaElegido) ->
                     async {
-                        asistenciaRepository.actualizarDiaRealizado(cliente.id, fecha, diaElegido)
-                        // El avance por esta corrección queda pendiente igual que una asistencia
-                        // normal (RutinaProgressCalculator.diaEfectivo) y solo se aplica si esta
-                        // fecha es la más reciente conocida, para no pisar un pendiente posterior.
-                        if (RutinaProgressCalculator.debeActualizarPendiente(fecha, cliente.diaPendienteFecha)) {
-                            val siguiente = (diaElegido + 1).let { if (it >= totalDias) 0 else it }
-                            clienteRepository.actualizarDiaPendiente(cliente.id, siguiente, fecha)
-                        }
+                        // Solo se corrige el registro: al ser la fuente de verdad, el día
+                        // que le toca al cliente se recalcula solo a partir de él.
+                        asistenciaRepository.actualizarDiaRealizado(clienteId, fecha, diaElegido)
                     }
                 }.awaitAll()
             }

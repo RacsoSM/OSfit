@@ -7,11 +7,13 @@ import com.osfit.app.data.model.Cliente
 import com.osfit.app.data.repository.AsistenciaRepository
 import com.osfit.app.data.repository.ClienteRepository
 import com.osfit.app.domain.RachaCalculator
+import com.osfit.app.domain.RutinaProgressCalculator
 import java.time.LocalDate
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -24,6 +26,18 @@ class ClientesListViewModel(
     val clientes: StateFlow<List<Cliente>> = clienteRepository.observarClientes()
         .map { lista -> lista.sortedBy { !it.activo } }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    /** Día del ciclo que le toca a cada cliente, deducido del historial de asistencias. */
+    val diaQueTocaPorCliente: StateFlow<Map<String, Int>> =
+        combine(clientes, asistenciaRepository.observarTodasAsistencias()) { lista, asistencias ->
+            val hoy = LocalDate.now().toString()
+            val porCliente = asistencias.groupBy { it.clienteId }
+            lista.associate { cliente ->
+                cliente.id to RutinaProgressCalculator.diaQueToca(
+                    cliente, porCliente[cliente.id].orEmpty(), hoy
+                )
+            }
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyMap())
 
     val rachasPorCliente: StateFlow<Map<String, Int>> = asistenciaRepository.observarTodasAsistencias()
         .map { asistencias ->

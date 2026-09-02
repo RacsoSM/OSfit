@@ -28,8 +28,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.osfit.app.data.model.Asistencia
 import com.osfit.app.data.model.Cliente
-import com.osfit.app.domain.RutinaProgressCalculator
 import com.osfit.app.ui.common.AsignarDiaDialog
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -50,6 +50,7 @@ fun SandboxScreen() {
     val simulatedFecha by viewModel.simulatedFecha.collectAsState()
     val clientes by viewModel.clientes.collectAsState()
     val asistenciasDelDia by viewModel.asistenciasDelDia.collectAsState()
+    val diaQueTocaPorCliente by viewModel.diaQueTocaPorCliente.collectAsState()
 
     val asistenciaPorCliente = remember(asistenciasDelDia) {
         asistenciasDelDia.associateBy { it.clienteId }
@@ -105,7 +106,8 @@ fun SandboxScreen() {
                         val asistio = asistenciaPorCliente[cliente.id]?.asistio ?: false
                         SandboxClienteCard(
                             cliente = cliente,
-                            simulatedFecha = simulatedFecha,
+                            diaQueToca = diaQueTocaPorCliente[cliente.id] ?: 0,
+                            asistenciaHoy = asistenciasDelDia.firstOrNull { it.clienteId == cliente.id },
                             asistioHoy = asistio,
                             onAsistio = { viewModel.marcar(cliente, true) },
                             onFalto = { viewModel.marcar(cliente, false) },
@@ -122,7 +124,8 @@ fun SandboxScreen() {
 @Composable
 private fun SandboxClienteCard(
     cliente: Cliente,
-    simulatedFecha: LocalDate,
+    diaQueToca: Int,
+    asistenciaHoy: Asistencia?,
     asistioHoy: Boolean,
     onAsistio: () -> Unit,
     onFalto: () -> Unit,
@@ -130,13 +133,7 @@ private fun SandboxClienteCard(
     onAsignarDia: (Int) -> Unit
 ) {
     var mostrarAsignarDia by remember { mutableStateOf(false) }
-    val diaEfectivo = RutinaProgressCalculator.diaEfectivo(
-        cliente.diaActualIndex,
-        cliente.diaPendienteIndex,
-        cliente.diaPendienteFecha,
-        simulatedFecha.toString()
-    )
-    val nombreDiaEfectivo = cliente.rutinaAsignada?.dias?.getOrNull(diaEfectivo)?.nombreDia
+    val nombreDiaEfectivo = cliente.rutinaAsignada?.dias?.getOrNull(diaQueToca)?.nombreDia
 
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
@@ -151,12 +148,16 @@ private fun SandboxClienteCard(
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Text(
-                    "Guardado: actual=${cliente.diaActualIndex} pendiente=${cliente.diaPendienteIndex ?: "-"} (${cliente.diaPendienteFecha ?: "-"})",
+                    "Ancla: día=${cliente.diaActualIndex} desde=${cliente.diaAnclaFecha ?: "(cliente viejo)"}",
                     style = MaterialTheme.typography.bodySmall
                 )
             }
             Text(
-                "Calculado (diaEfectivo): $diaEfectivo",
+                "Calendario-Rutina hoy: ${asistenciaHoy?.diaRutinaRealizado?.let { "día $it" } ?: "sin registro"}",
+                style = MaterialTheme.typography.bodySmall
+            )
+            Text(
+                "Día que toca (deducido): $diaQueToca",
                 style = MaterialTheme.typography.bodySmall
             )
 
@@ -190,7 +191,7 @@ private fun SandboxClienteCard(
     if (mostrarAsignarDia && dias != null) {
         AsignarDiaDialog(
             dias = dias.map { it.nombreDia },
-            diaActual = diaEfectivo,
+            diaActual = diaQueToca,
             onConfirmar = { diaElegido ->
                 onAsignarDia(diaElegido)
                 mostrarAsignarDia = false

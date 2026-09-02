@@ -19,8 +19,8 @@ interface ClienteRepository {
         edad: Int?
     )
     suspend fun actualizarActivo(clienteId: String, activo: Boolean)
-    suspend fun actualizarDiaActual(clienteId: String, diaIndex: Int)
-    suspend fun actualizarDiaPendiente(clienteId: String, diaIndex: Int, fecha: String)
+    /** "Asignar día": deja el ancla manual. No toca ningún registro de asistencia. */
+    suspend fun asignarDiaAncla(clienteId: String, diaIndex: Int, fecha: String)
     suspend fun actualizarProximoPago(clienteId: String, fecha: Timestamp)
     suspend fun actualizarFechaIngreso(clienteId: String, fecha: Timestamp)
     suspend fun actualizarEjercicioFavorito(clienteId: String, diaIndex: Int, ejercicio: String)

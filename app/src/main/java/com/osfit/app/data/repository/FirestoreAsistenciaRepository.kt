@@ -94,19 +94,9 @@ class FirestoreAsistenciaRepository(
         clienteId: String,
         fecha: String,
         asistio: Boolean,
-        diaActualIndexPrevio: Int,
         diaRutinaRealizado: Int?,
-        totalDiasRutina: Int,
-        diaPendienteFechaActual: String?,
         nota: String
     ) {
-        val siguienteDiaActualIndex = RutinaProgressCalculator.calcularSiguienteDiaActualIndex(
-            asistio = asistio,
-            diaActualIndexPrevio = diaActualIndexPrevio,
-            diaRutinaRealizado = diaRutinaRealizado,
-            totalDias = totalDiasRutina
-        )
-
         val (asistenciaRef, existente) = obtenerAsistencia(clienteId, fecha)
 
         // Preserva el cronómetro (horaLlegada/horaSalida/duracionMinutos) ya guardado:
@@ -123,77 +113,33 @@ class FirestoreAsistenciaRepository(
             duracionMinutos = existente?.duracionMinutos
         )
 
-        val batch = db.batch()
-        batch.set(asistenciaRef, asistencia.copy(id = ""))
-        // El día de rutina no se aplica de inmediato: queda pendiente hasta el día siguiente
-        // (calendario), para que la lista de Clientes no cambie mientras se sigue tomando asistencia.
-        // Al escribir el nuevo pendiente hay que consolidar en diaActualIndex el día que se está
-        // haciendo hoy (diaActualIndexPrevio, que ya es el día efectivo): si no, un pendiente
-        // anterior que ya venció se pierde, porque el pendiente nuevo lleva la fecha de hoy y
-        // diaEfectivo deja de aplicarlo, cayendo de vuelta al diaActualIndex viejo.
-        if (asistio) {
-            batch.update(
-                clientesCollection.document(clienteId),
-                mapOf(
-                    "diaActualIndex" to diaActualIndexPrevio,
-                    "diaPendienteIndex" to siguienteDiaActualIndex,
-                    "diaPendienteFecha" to fecha
-                )
-            )
-        } else if (diaPendienteFechaActual == fecha) {
-            batch.update(
-                clientesCollection.document(clienteId),
-                mapOf(
-                    "diaActualIndex" to diaActualIndexPrevio,
-                    "diaPendienteIndex" to null,
-                    "diaPendienteFecha" to null
-                )
-            )
-        }
-        batch.commit().await()
+        // Solo se escribe el registro: el día que le toca al cliente se deduce de estos
+        // registros (Calendario-Rutina es la fuente de verdad), así que ya no hay que
+        // tocar la colección de clientes ni mantener un caché que pueda quedar viejo.
+        asistenciaRef.set(asistencia.copy(id = "")).await()
     }
 
     override suspend fun iniciarTiempo(
         clienteId: String,
         fecha: String,
-        diaActualIndexPrevio: Int,
-        totalDiasRutina: Int
+        diaRutinaRealizado: Int
     ) {
         val (ref, existente) = obtenerAsistencia(clienteId, fecha)
 
-        // Iniciar el cronómetro equivale a marcar la asistencia: si todavía no se
-        // había registrado el día de rutina para esta fecha, se asigna aquí el día
-        // efectivo del cliente, igual que hace registrarAsistencia al marcar "Asistió".
-        val diaRutinaRealizado = existente?.diaRutinaRealizado ?: diaActualIndexPrevio
+        // Iniciar el cronómetro equivale a marcar la asistencia. Si ya había un día
+        // registrado para esta fecha se respeta, para no pisar una corrección manual
+        // hecha desde la pestaña Rutina.
+        val dia = existente?.diaRutinaRealizado ?: diaRutinaRealizado
 
         val asistencia = (existente ?: Asistencia(clienteId = clienteId, fecha = fecha)).copy(
             id = "",
             asistio = true,
-            diaRutinaRealizado = diaRutinaRealizado,
+            diaRutinaRealizado = dia,
             horaLlegada = Timestamp.now(),
             horaSalida = null,
             duracionMinutos = null
         )
-
-        val batch = db.batch()
-        batch.set(ref, asistencia)
-        if (existente?.diaRutinaRealizado == null) {
-            val siguienteDiaActualIndex = RutinaProgressCalculator.calcularSiguienteDiaActualIndex(
-                asistio = true,
-                diaActualIndexPrevio = diaActualIndexPrevio,
-                diaRutinaRealizado = diaRutinaRealizado,
-                totalDias = totalDiasRutina
-            )
-            batch.update(
-                clientesCollection.document(clienteId),
-                mapOf(
-                    "diaActualIndex" to diaActualIndexPrevio,
-                    "diaPendienteIndex" to siguienteDiaActualIndex,
-                    "diaPendienteFecha" to fecha
-                )
-            )
-        }
-        batch.commit().await()
+        ref.set(asistencia).await()
     }
 
     override suspend fun detenerTiempo(clienteId: String, fecha: String) {
@@ -212,18 +158,12 @@ class FirestoreAsistenciaRepository(
         ).await()
     }
 
-    override suspend fun reiniciarDia(fecha: String, clienteIdsConPendiente: List<String>) {
+    override suspend fun reiniciarDia(fecha: String) {
+        // Basta con borrar los registros del día: al desaparecer, el día de cada cliente
+        // vuelve solo a lo que dictaba el registro anterior.
         val existentes = coleccion.whereEqualTo("fecha", fecha).get().await()
         val batch = db.batch()
         existentes.documents.forEach { doc -> batch.delete(doc.reference) }
-        // Deshace el avance de rutina que esta fecha haya dejado pendiente en cada cliente,
-        // igual que el "faltó" normal en registrarAsistencia.
-        clienteIdsConPendiente.forEach { clienteId ->
-            batch.update(
-                clientesCollection.document(clienteId),
-                mapOf("diaPendienteIndex" to null, "diaPendienteFecha" to null)
-            )
-        }
         batch.commit().await()
     }
 

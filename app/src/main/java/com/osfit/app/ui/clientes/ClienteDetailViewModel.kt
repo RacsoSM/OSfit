@@ -12,11 +12,13 @@ import com.osfit.app.data.repository.ClienteRepository
 import com.osfit.app.data.repository.PagoRepository
 import com.osfit.app.data.repository.RutinaRepository
 import com.osfit.app.domain.RachaCalculator
+import com.osfit.app.domain.RutinaProgressCalculator
 import java.time.LocalDate
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -37,6 +39,13 @@ class ClienteDetailViewModel(
 
     val plantillasDisponibles: StateFlow<List<Rutina>> = rutinaRepository.observarRutinas()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    private val asistenciasDelCliente = asistenciaRepository.observarAsistenciasPorCliente(clienteId)
+
+    /** Día del ciclo que le toca, deducido del historial de asistencias. */
+    val diaQueToca: StateFlow<Int> = combine(cliente, asistenciasDelCliente) { c, asistencias ->
+        if (c == null) 0 else RutinaProgressCalculator.diaQueToca(c, asistencias)
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0)
 
     val rachaActual: StateFlow<Int> = asistenciaRepository.observarAsistenciasPorCliente(clienteId)
         .map { asistencias ->
@@ -86,7 +95,7 @@ class ClienteDetailViewModel(
 
     fun asignarDiaActual(diaIndex: Int) {
         viewModelScope.launch {
-            clienteRepository.actualizarDiaActual(clienteId, diaIndex)
+            clienteRepository.asignarDiaAncla(clienteId, diaIndex, LocalDate.now().toString())
         }
     }
 

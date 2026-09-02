@@ -51,8 +51,7 @@ class FirestoreClienteRepository(
                 "rutinaAsignada" to rutina,
                 "plantillaOrigenId" to rutina.id,
                 "diaActualIndex" to 0,
-                "diaPendienteIndex" to null,
-                "diaPendienteFecha" to null
+                "diaAnclaFecha" to null
             )
         ).await()
     }
@@ -80,22 +79,9 @@ class FirestoreClienteRepository(
         coleccion.document(clienteId).update("activo", activo).await()
     }
 
-    override suspend fun actualizarDiaActual(clienteId: String, diaIndex: Int) {
+    override suspend fun asignarDiaAncla(clienteId: String, diaIndex: Int, fecha: String) {
         coleccion.document(clienteId).update(
-            mapOf(
-                "diaActualIndex" to diaIndex,
-                "diaPendienteIndex" to null,
-                "diaPendienteFecha" to null
-            )
-        ).await()
-    }
-
-    override suspend fun actualizarDiaPendiente(clienteId: String, diaIndex: Int, fecha: String) {
-        coleccion.document(clienteId).update(
-            mapOf(
-                "diaPendienteIndex" to diaIndex,
-                "diaPendienteFecha" to fecha
-            )
+            mapOf("diaActualIndex" to diaIndex, "diaAnclaFecha" to fecha)
         ).await()
     }
 

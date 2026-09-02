@@ -1,0 +1,82 @@
+package com.osfit.app.domain
+
+import com.osfit.app.data.fake.FakeAsistenciaRepository
+import com.osfit.app.data.fake.FakeClienteRepository
+import com.osfit.app.data.model.Asistencia
+import com.osfit.app.data.model.Cliente
+import kotlinx.coroutines.flow.first
+
+/**
+ * Escenario compartido por los tests del día de rutina. Cada método imita la misma
+ * secuencia de llamadas que hacen las pantallas reales, para que los tests ejerciten el
+ * camino de verdad y no una versión simplificada.
+ *
+ * Clientes sembrados (ver [FakeClienteRepository]):
+ *  - "1" Ana   — 4 días, ancla día 1 en FECHA_CORTE
+ *  - "2" Beto  — 3 días, ancla día 2 (último del ciclo)
+ *  - "3" Carla — cliente anterior al cambio: sin ancla, con pendiente viejo ya vencido
+ *  - "4" Diego — sin rutina asignada
+ */
+class EscenarioRutina {
+    val clientes = FakeClienteRepository()
+    val asistencias = FakeAsistenciaRepository()
+
+    companion object {
+        const val ANA = "1"
+        const val BETO = "2"
+        const val CARLA = "3"
+        const val DIEGO = "4"
+
+        // Todas posteriores a RutinaProgressCalculator.FECHA_CORTE (2026-09-01).
+        const val DIA1 = "2026-09-02"
+        const val DIA2 = "2026-09-03"
+        const val DIA3 = "2026-09-04"
+        const val DIA4 = "2026-09-05"
+    }
+
+    suspend fun cliente(id: String): Cliente =
+        clientes.observarClientes().first().first { it.id == id }
+
+    suspend fun asistenciasDe(id: String): List<Asistencia> =
+        asistencias.observarAsistenciasPorCliente(id).first()
+
+    suspend fun registro(id: String, fecha: String): Asistencia? =
+        asistenciasDe(id).firstOrNull { it.fecha == fecha }
+
+    /** Día del ciclo que le toca, deducido igual que en las pantallas. */
+    suspend fun diaQueToca(id: String, hoy: String): Int =
+        RutinaProgressCalculator.diaQueToca(cliente(id), asistenciasDe(id), hoy)
+
+    /** Marcar Asistió/Faltó y guardar (TomarAsistenciaViewModel.guardarTodo). */
+    suspend fun marcar(id: String, fecha: String, asistio: Boolean) {
+        asistencias.registrarAsistencia(
+            clienteId = id,
+            fecha = fecha,
+            asistio = asistio,
+            diaRutinaRealizado = if (asistio) diaQueToca(id, fecha) else null,
+            nota = ""
+        )
+    }
+
+    /** Botón "Iniciar tiempo". */
+    suspend fun iniciarTiempo(id: String, fecha: String) {
+        asistencias.iniciarTiempo(
+            clienteId = id,
+            fecha = fecha,
+            diaRutinaRealizado = diaQueToca(id, fecha)
+        )
+    }
+
+    /** Botón "Asignar día": deja el ancla y no toca ningún registro. */
+    suspend fun asignarDia(id: String, dia: Int, fecha: String) =
+        clientes.asignarDiaAncla(id, dia, fecha)
+
+    /** Corregir el día desde la pestaña Rutina de Calendario. */
+    suspend fun corregirDiaEnCalendario(id: String, fecha: String, dia: Int) =
+        asistencias.actualizarDiaRealizado(id, fecha, dia)
+
+    /** Botón "Reiniciar día". */
+    suspend fun reiniciarDia(fecha: String) = asistencias.reiniciarDia(fecha)
+
+    suspend fun totalDias(id: String): Int = cliente(id).rutinaAsignada?.dias?.size ?: 1
+}

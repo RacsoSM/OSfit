@@ -74,6 +74,7 @@ fun ClienteDetailScreen(
     val plantillas by viewModel.plantillasDisponibles.collectAsState()
     val eliminado by viewModel.eliminado.collectAsState()
     val rachaActual by viewModel.rachaActual.collectAsState()
+    val diaQueToca by viewModel.diaQueToca.collectAsState()
     val resumenViewModel: ResumenClienteViewModel = viewModel(
         factory = viewModelFactory { initializer { ResumenClienteViewModel(clienteId) } }
     )
@@ -142,9 +143,7 @@ fun ClienteDetailScreen(
             }
             item {
                 var expandidaRutina by remember { mutableStateOf(false) }
-                val diaActualEfectivo = RutinaProgressCalculator.diaEfectivo(
-                    clienteActual.diaActualIndex, clienteActual.diaPendienteIndex, clienteActual.diaPendienteFecha, hoy.toString()
-                )
+                val diaActualEfectivo = diaQueToca
                 // La plantilla puede haber cambiado (ej. se le agregaron ejercicios) después de
                 // asignarla: se usa la versión viva de la plantilla si todavía existe, en vez de
                 // la copia congelada que quedó guardada en el cliente al momento de asignarla.
@@ -322,9 +321,7 @@ fun ClienteDetailScreen(
     if (mostrarDialogoAsignarDia && clienteActual.rutinaAsignada != null) {
         AsignarDiaDialog(
             dias = clienteActual.rutinaAsignada.dias.map { it.nombreDia },
-            diaActual = RutinaProgressCalculator.diaEfectivo(
-                clienteActual.diaActualIndex, clienteActual.diaPendienteIndex, clienteActual.diaPendienteFecha, hoy.toString()
-            ),
+            diaActual = diaQueToca,
             onConfirmar = { diaElegido ->
                 viewModel.asignarDiaActual(diaElegido)
                 mostrarDialogoAsignarDia = false

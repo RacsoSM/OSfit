@@ -9,8 +9,17 @@ data class Cliente(
     val activo: Boolean = true,
     val rutinaAsignada: Rutina? = null,
     val plantillaOrigenId: String = "",
+    // Ancla de "Asignar día": el día asignado manualmente y desde cuándo vale. El día que
+    // le toca al cliente se deduce del historial de asistencias (Calendario-Rutina); el
+    // ancla solo manda mientras no haya asistencias posteriores a su fecha.
     val diaActualIndex: Int = 0,
+    val diaAnclaFecha: String? = null,
+    // Obsoletos: ya no se escriben. Se conservan solo para congelar el día de los clientes
+    // que existían antes de que Calendario-Rutina pasara a ser la fuente de verdad.
+    // Ver RutinaProgressCalculator.FECHA_CORTE.
+    @Deprecated("Reemplazado por la derivación desde asistencias")
     val diaPendienteIndex: Int? = null,
+    @Deprecated("Reemplazado por la derivación desde asistencias")
     val diaPendienteFecha: String? = null,
     val fechaProximoPago: Timestamp? = null,
     val fechaIngreso: Timestamp? = null,

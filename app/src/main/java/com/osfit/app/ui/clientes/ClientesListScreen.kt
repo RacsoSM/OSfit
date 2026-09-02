@@ -56,6 +56,7 @@ fun ClientesListScreen(
 ) {
     val clientes by viewModel.clientes.collectAsState()
     val rachasPorCliente by viewModel.rachasPorCliente.collectAsState()
+    val diaQueTocaPorCliente by viewModel.diaQueTocaPorCliente.collectAsState()
     val errorValidacion by viewModel.errorValidacion.collectAsState()
     val hoy by rememberFechaActual()
     var mostrarDialogo by remember { mutableStateOf(false) }
@@ -83,7 +84,7 @@ fun ClientesListScreen(
                     ClienteItem(
                         cliente = cliente,
                         racha = rachasPorCliente[cliente.id] ?: 0,
-                        hoy = hoy,
+                        diaQueToca = diaQueTocaPorCliente[cliente.id] ?: 0,
                         onClick = { onClienteClick(cliente.id) }
                     )
                 }
@@ -140,11 +141,8 @@ private fun EncabezadoSaludo() {
 private val GrisInactivo = Color(0xFF5A5A5A)
 
 @Composable
-private fun ClienteItem(cliente: Cliente, racha: Int, hoy: LocalDate, onClick: () -> Unit) {
-    val diaEfectivo = RutinaProgressCalculator.diaEfectivo(
-        cliente.diaActualIndex, cliente.diaPendienteIndex, cliente.diaPendienteFecha, hoy.toString()
-    )
-    val nombreDia = cliente.rutinaAsignada?.dias?.getOrNull(diaEfectivo)?.nombreDia
+private fun ClienteItem(cliente: Cliente, racha: Int, diaQueToca: Int, onClick: () -> Unit) {
+    val nombreDia = cliente.rutinaAsignada?.dias?.getOrNull(diaQueToca)?.nombreDia
         ?: "Sin rutina asignada"
     val diasParaPago = PagoCalculator.diasParaProximoPago(cliente)
     val pagoProximo = diasParaPago != null && diasParaPago < 3

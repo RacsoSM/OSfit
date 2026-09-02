@@ -1,201 +1,242 @@
 package com.osfit.app.domain
 
+import com.osfit.app.data.model.Asistencia
 import com.osfit.app.data.model.Cliente
+import com.osfit.app.data.model.DiaRutina
+import com.osfit.app.data.model.Rutina
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertThrows
 import org.junit.Test
+import java.time.LocalDate
 
+/** Unidad: la regla que deduce el día del ciclo a partir del historial de asistencias. */
 class RutinaProgressCalculatorTest {
 
+    private val corte = RutinaProgressCalculator.FECHA_CORTE
+    private val despuesDelCorte = LocalDate.parse(corte).plusDays(1).toString()
+
+    private fun rutina(dias: Int) = Rutina(
+        id = "r",
+        nombre = "r",
+        dias = (0 until dias).map { DiaRutina(nombreDia = "Día ${it + 1}") }
+    )
+
+    private fun cliente(
+        diaAncla: Int = 0,
+        anclaFecha: String? = corte,
+        totalDias: Int = 4,
+        pendienteIndex: Int? = null,
+        pendienteFecha: String? = null
+    ) = Cliente(
+        id = "c",
+        rutinaAsignada = rutina(totalDias),
+        diaActualIndex = diaAncla,
+        diaAnclaFecha = anclaFecha,
+        diaPendienteIndex = pendienteIndex,
+        diaPendienteFecha = pendienteFecha
+    )
+
+    private fun asistio(fecha: String, dia: Int) =
+        Asistencia(clienteId = "c", fecha = fecha, asistio = true, diaRutinaRealizado = dia)
+
+    private fun falto(fecha: String) =
+        Asistencia(clienteId = "c", fecha = fecha, asistio = false, diaRutinaRealizado = null)
+
+    // ---- Sin historial: manda el ancla ----
+
     @Test
-    fun `falta no cambia el diaActualIndex`() {
-        val resultado = RutinaProgressCalculator.calcularSiguienteDiaActualIndex(
-            asistio = false,
-            diaActualIndexPrevio = 2,
-            diaRutinaRealizado = null,
-            totalDias = 5
+    fun `sin asistencias, le toca el dia del ancla`() {
+        val resultado = RutinaProgressCalculator.diaQueToca(
+            cliente(diaAncla = 2), emptyList(), "2026-09-10"
         )
         assertEquals(2, resultado)
     }
 
     @Test
-    fun `asiste al dia que tocaba y avanza al siguiente`() {
-        val resultado = RutinaProgressCalculator.calcularSiguienteDiaActualIndex(
-            asistio = true,
-            diaActualIndexPrevio = 1,
-            diaRutinaRealizado = 1,
-            totalDias = 5
+    fun `sin rutina asignada, siempre dia 0`() {
+        val sinRutina = Cliente(id = "c", rutinaAsignada = null, diaActualIndex = 3)
+        assertEquals(0, RutinaProgressCalculator.diaQueToca(sinRutina, emptyList(), "2026-09-10"))
+    }
+
+    // ---- Con historial: manda Calendario-Rutina ----
+
+    @Test
+    fun `la asistencia de hoy dice el dia que se esta haciendo hoy`() {
+        val resultado = RutinaProgressCalculator.diaQueToca(
+            cliente(diaAncla = 0), listOf(asistio("2026-09-05", 2)), "2026-09-05"
         )
         assertEquals(2, resultado)
     }
 
     @Test
-    fun `asiste al ultimo dia del ciclo y vuelve al dia 1`() {
-        val resultado = RutinaProgressCalculator.calcularSiguienteDiaActualIndex(
-            asistio = true,
-            diaActualIndexPrevio = 4,
-            diaRutinaRealizado = 4,
-            totalDias = 5
-        )
-        assertEquals(0, resultado)
-    }
-
-    @Test
-    fun `entrenador anula el dia sugerido y avanza segun el dia realizado, no el que tocaba`() {
-        // Tocaba el día 1 (index 1), pero el cliente en realidad hizo el día 3 (index 3, pierna glúteo)
-        val resultado = RutinaProgressCalculator.calcularSiguienteDiaActualIndex(
-            asistio = true,
-            diaActualIndexPrevio = 1,
-            diaRutinaRealizado = 3,
-            totalDias = 5
-        )
-        assertEquals(4, resultado)
-    }
-
-    @Test
-    fun `falto el dia 3, la siguiente vez que asista sigue tocando el dia 3`() {
-        // Simula la secuencia completa del ejemplo del spec:
-        // faltó cuando tocaba día 3 (index 2) -> index no cambia
-        val trasFalta = RutinaProgressCalculator.calcularSiguienteDiaActualIndex(
-            asistio = false,
-            diaActualIndexPrevio = 2,
-            diaRutinaRealizado = null,
-            totalDias = 5
-        )
-        assertEquals(2, trasFalta)
-        // en su siguiente sesión asiste e hizo el día pendiente (index 2) -> avanza al 3
-        val trasAsistir = RutinaProgressCalculator.calcularSiguienteDiaActualIndex(
-            asistio = true,
-            diaActualIndexPrevio = trasFalta,
-            diaRutinaRealizado = 2,
-            totalDias = 5
-        )
-        assertEquals(3, trasAsistir)
-    }
-
-    @Test
-    fun `ciclo de un solo dia siempre vuelve al dia 1`() {
-        val resultado = RutinaProgressCalculator.calcularSiguienteDiaActualIndex(
-            asistio = true,
-            diaActualIndexPrevio = 0,
-            diaRutinaRealizado = 0,
-            totalDias = 1
-        )
-        assertEquals(0, resultado)
-    }
-
-    @Test
-    fun `lanza excepcion si asistio es true sin diaRutinaRealizado`() {
-        assertThrows(IllegalArgumentException::class.java) {
-            RutinaProgressCalculator.calcularSiguienteDiaActualIndex(
-                asistio = true,
-                diaActualIndexPrevio = 0,
-                diaRutinaRealizado = null,
-                totalDias = 5
-            )
-        }
-    }
-
-    @Test
-    fun `lanza excepcion si totalDias es cero o negativo`() {
-        assertThrows(IllegalArgumentException::class.java) {
-            RutinaProgressCalculator.calcularSiguienteDiaActualIndex(
-                asistio = false,
-                diaActualIndexPrevio = 0,
-                diaRutinaRealizado = null,
-                totalDias = 0
-            )
-        }
-    }
-
-    @Test
-    fun `lanza excepcion si diaRutinaRealizado esta fuera de rango`() {
-        assertThrows(IllegalArgumentException::class.java) {
-            RutinaProgressCalculator.calcularSiguienteDiaActualIndex(
-                asistio = true,
-                diaActualIndexPrevio = 0,
-                diaRutinaRealizado = 5,
-                totalDias = 5
-            )
-        }
-    }
-
-    @Test
-    fun `sin pendiente, el dia efectivo es el dia actual`() {
-        val resultado = RutinaProgressCalculator.diaEfectivo(
-            diaActualIndex = 2, diaPendienteIndex = null, diaPendienteFecha = null, hoy = "2026-08-19"
-        )
-        assertEquals(2, resultado)
-    }
-
-    @Test
-    fun `pendiente del mismo dia que hoy, no se aplica todavia`() {
-        val resultado = RutinaProgressCalculator.diaEfectivo(
-            diaActualIndex = 2, diaPendienteIndex = 3, diaPendienteFecha = "2026-08-19", hoy = "2026-08-19"
-        )
-        assertEquals(2, resultado)
-    }
-
-    @Test
-    fun `pendiente de un dia anterior a hoy, ya se aplica`() {
-        val resultado = RutinaProgressCalculator.diaEfectivo(
-            diaActualIndex = 2, diaPendienteIndex = 3, diaPendienteFecha = "2026-08-19", hoy = "2026-08-20"
+    fun `tras una asistencia anterior, le toca el dia siguiente`() {
+        val resultado = RutinaProgressCalculator.diaQueToca(
+            cliente(diaAncla = 0), listOf(asistio("2026-09-05", 2)), "2026-09-06"
         )
         assertEquals(3, resultado)
     }
 
     @Test
-    fun `sin pendiente previo, corregir un dia pasado si actualiza el pendiente`() {
-        val resultado = RutinaProgressCalculator.debeActualizarPendiente(
-            fecha = "2026-08-10", diaPendienteFechaActual = null
+    fun `tras el ultimo dia del ciclo, vuelve al dia 1`() {
+        val resultado = RutinaProgressCalculator.diaQueToca(
+            cliente(diaAncla = 0, totalDias = 4), listOf(asistio("2026-09-05", 3)), "2026-09-06"
         )
-        assertEquals(true, resultado)
+        assertEquals(0, resultado)
     }
 
     @Test
-    fun `corregir una fecha mas vieja que el pendiente actual no lo pisa`() {
-        // Se corrige el día realizado del 10 de agosto, pero ya hay un pendiente
-        // generado por una asistencia más reciente (20 de agosto): no debe pisarse.
-        val resultado = RutinaProgressCalculator.debeActualizarPendiente(
-            fecha = "2026-08-10", diaPendienteFechaActual = "2026-08-20"
+    fun `manda la asistencia mas reciente, no el orden de la lista`() {
+        val desordenadas = listOf(
+            asistio("2026-09-03", 0),
+            asistio("2026-09-07", 2),
+            asistio("2026-09-05", 1)
         )
-        assertEquals(false, resultado)
+        val resultado = RutinaProgressCalculator.diaQueToca(
+            cliente(diaAncla = 0), desordenadas, "2026-09-08"
+        )
+        assertEquals("cuenta la del 07, que registró el día 2", 3, resultado)
     }
 
     @Test
-    fun `corregir la misma fecha del pendiente actual si lo actualiza`() {
-        val resultado = RutinaProgressCalculator.debeActualizarPendiente(
-            fecha = "2026-08-20", diaPendienteFechaActual = "2026-08-20"
+    fun `las faltas no avanzan el ciclo`() {
+        val historial = listOf(asistio("2026-09-05", 1), falto("2026-09-06"), falto("2026-09-07"))
+        val resultado = RutinaProgressCalculator.diaQueToca(
+            cliente(diaAncla = 0), historial, "2026-09-08"
         )
-        assertEquals(true, resultado)
+        assertEquals("sigue tocando el siguiente al día 1", 2, resultado)
     }
 
     @Test
-    fun `corregir una fecha mas nueva que el pendiente actual si lo actualiza`() {
-        val resultado = RutinaProgressCalculator.debeActualizarPendiente(
-            fecha = "2026-08-21", diaPendienteFechaActual = "2026-08-20"
+    fun `las asistencias futuras no cuentan`() {
+        val resultado = RutinaProgressCalculator.diaQueToca(
+            cliente(diaAncla = 0), listOf(asistio("2026-09-20", 3)), "2026-09-10"
         )
-        assertEquals(true, resultado)
+        assertEquals("una fecha posterior a hoy se ignora", 0, resultado)
+    }
+
+    // ---- El ancla corta el historial ----
+
+    @Test
+    fun `las asistencias anteriores al ancla no cuentan`() {
+        val resultado = RutinaProgressCalculator.diaQueToca(
+            cliente(diaAncla = 3, anclaFecha = "2026-09-10"),
+            listOf(asistio("2026-09-05", 0)),
+            "2026-09-12"
+        )
+        assertEquals("manda el ancla, no el registro viejo", 3, resultado)
     }
 
     @Test
-    fun `al reiniciar el dia, solo se limpia el pendiente de clientes con esa fecha exacta`() {
-        val clientes = listOf(
-            Cliente(id = "a", diaPendienteFecha = "2026-08-20"),
-            Cliente(id = "b", diaPendienteFecha = "2026-08-19"),
-            Cliente(id = "c", diaPendienteFecha = null)
+    fun `una asistencia del mismo dia del ancla no pisa la asignacion manual`() {
+        val resultado = RutinaProgressCalculator.diaQueToca(
+            cliente(diaAncla = 3, anclaFecha = "2026-09-10"),
+            listOf(asistio("2026-09-10", 0)),
+            "2026-09-10"
         )
-        val resultado = RutinaProgressCalculator.clientesConPendienteEnFecha(clientes, "2026-08-20")
-        assertEquals(listOf("a"), resultado)
+        assertEquals("el ancla manda en su propia fecha", 3, resultado)
     }
 
     @Test
-    fun `al reiniciar el dia, si nadie tiene pendiente en esa fecha no devuelve nada`() {
-        val clientes = listOf(
-            Cliente(id = "a", diaPendienteFecha = "2026-08-19"),
-            Cliente(id = "b", diaPendienteFecha = null)
+    fun `una asistencia posterior al ancla si manda`() {
+        val resultado = RutinaProgressCalculator.diaQueToca(
+            cliente(diaAncla = 3, anclaFecha = "2026-09-10"),
+            listOf(asistio("2026-09-11", 0)),
+            "2026-09-12"
         )
-        val resultado = RutinaProgressCalculator.clientesConPendienteEnFecha(clientes, "2026-08-20")
-        assertEquals(emptyList<String>(), resultado)
+        assertEquals("el historial retoma el mando", 1, resultado)
+    }
+
+    // ---- Migración: clientes anteriores al cambio ----
+
+    @Test
+    fun `cliente viejo sin pendiente conserva su diaActualIndex`() {
+        val viejo = cliente(diaAncla = 2, anclaFecha = null)
+        assertEquals(2, RutinaProgressCalculator.diaQueToca(viejo, emptyList(), "2026-09-20"))
+    }
+
+    @Test
+    fun `cliente viejo con pendiente ya vencido queda congelado en el pendiente`() {
+        val viejo = cliente(
+            diaAncla = 0,
+            anclaFecha = null,
+            pendienteIndex = 2,
+            pendienteFecha = LocalDate.parse(corte).minusDays(3).toString()
+        )
+        assertEquals(
+            "el pendiente venció antes del corte, así que va en el ancla",
+            2,
+            RutinaProgressCalculator.diaQueToca(viejo, emptyList(), "2026-09-20")
+        )
+    }
+
+    @Test
+    fun `el dia congelado de un cliente viejo no se mueve con el paso del tiempo`() {
+        val viejo = cliente(
+            diaAncla = 0,
+            anclaFecha = null,
+            pendienteIndex = 2,
+            pendienteFecha = LocalDate.parse(corte).minusDays(3).toString()
+        )
+        val enSeptiembre = RutinaProgressCalculator.diaQueToca(viejo, emptyList(), "2026-09-20")
+        val enDiciembre = RutinaProgressCalculator.diaQueToca(viejo, emptyList(), "2026-12-20")
+        assertEquals("congelado significa congelado", enSeptiembre, enDiciembre)
+    }
+
+    @Test
+    fun `un registro de un cliente viejo posterior al corte no se cuenta dos veces`() {
+        // Pendiente que aún no había vencido en el corte: no entra en el ancla,
+        // pero su registro sí pasa el filtro. Debe contarse exactamente una vez.
+        val viejo = cliente(
+            diaAncla = 1,
+            anclaFecha = null,
+            pendienteIndex = 2,
+            pendienteFecha = despuesDelCorte
+        )
+        val resultado = RutinaProgressCalculator.diaQueToca(
+            viejo, listOf(asistio(despuesDelCorte, 1)), LocalDate.parse(despuesDelCorte).plusDays(1).toString()
+        )
+        assertEquals("el día 1 quedó hecho, toca el 2", 2, resultado)
+    }
+
+    // ---- siguienteDia ----
+
+    @Test
+    fun `siguienteDia avanza dentro del ciclo`() {
+        assertEquals(2, RutinaProgressCalculator.siguienteDia(1, 5))
+    }
+
+    @Test
+    fun `siguienteDia da la vuelta en el ultimo dia`() {
+        assertEquals(0, RutinaProgressCalculator.siguienteDia(4, 5))
+    }
+
+    @Test
+    fun `siguienteDia en un ciclo de un solo dia siempre vuelve al mismo`() {
+        assertEquals(0, RutinaProgressCalculator.siguienteDia(0, 1))
+    }
+
+    @Test
+    fun `siguienteDia lanza excepcion si totalDias no es positivo`() {
+        assertThrows(IllegalArgumentException::class.java) {
+            RutinaProgressCalculator.siguienteDia(0, 0)
+        }
+    }
+
+    // ---- Robustez ante datos corruptos ----
+
+    @Test
+    fun `un dia registrado fuera de rango se recorta al ciclo`() {
+        val resultado = RutinaProgressCalculator.diaQueToca(
+            cliente(diaAncla = 0, totalDias = 3), listOf(asistio("2026-09-05", 99)), "2026-09-05"
+        )
+        assertEquals("se recorta al último día válido", 2, resultado)
+    }
+
+    @Test
+    fun `un ancla fuera de rango se recorta al ciclo`() {
+        val resultado = RutinaProgressCalculator.diaQueToca(
+            cliente(diaAncla = 99, totalDias = 3), emptyList(), "2026-09-05"
+        )
+        assertEquals(2, resultado)
     }
 }

@@ -6,6 +6,7 @@ import com.osfit.app.data.model.DiaRutina
 import com.osfit.app.data.model.Ejercicio
 import com.osfit.app.data.model.Rutina
 import com.osfit.app.data.repository.ClienteRepository
+import com.osfit.app.domain.RutinaProgressCalculator
 import java.time.LocalDate
 import java.util.concurrent.atomic.AtomicInteger
 import kotlinx.coroutines.flow.Flow
@@ -49,7 +50,7 @@ class FakeClienteRepository : ClienteRepository {
     private val idCounter = AtomicInteger(5)
 
     private val clientesIniciales: List<Cliente> = listOf(
-        // a. A mitad de ciclo, sin día pendiente.
+        // a. A mitad de ciclo, con ancla propia y sin asistencias posteriores.
         Cliente(
             id = "1",
             nombre = "Ana Mitad de Ciclo",
@@ -58,8 +59,7 @@ class FakeClienteRepository : ClienteRepository {
             rutinaAsignada = rutinaDe4Dias("Ana"),
             plantillaOrigenId = "rutina-Ana",
             diaActualIndex = 1,
-            diaPendienteIndex = null,
-            diaPendienteFecha = null
+            diaAnclaFecha = RutinaProgressCalculator.FECHA_CORTE
         ),
         // b. En el último día de su ciclo: sirve para probar el wraparound a día 0.
         Cliente(
@@ -70,20 +70,21 @@ class FakeClienteRepository : ClienteRepository {
             rutinaAsignada = rutinaDe3Dias("Beto"),
             plantillaOrigenId = "rutina-Beto",
             diaActualIndex = 2,
-            diaPendienteIndex = null,
-            diaPendienteFecha = null
+            diaAnclaFecha = RutinaProgressCalculator.FECHA_CORTE
         ),
-        // c. Con día pendiente "vencido": diaEfectivo ya debería reportar el pendiente.
+        // c. Cliente anterior al cambio: sin ancla propia y con los campos pendientes
+        //    viejos. Su día debe quedar congelado en el pendiente ya vencido (día 1).
         Cliente(
             id = "3",
-            nombre = "Carla Pendiente Vencido",
+            nombre = "Carla Cliente Viejo",
             telefono = "555-0003",
             activo = true,
             rutinaAsignada = rutinaDe4Dias("Carla"),
             plantillaOrigenId = "rutina-Carla",
             diaActualIndex = 0,
+            diaAnclaFecha = null,
             diaPendienteIndex = 1,
-            diaPendienteFecha = LocalDate.now().minusDays(3).toString()
+            diaPendienteFecha = LocalDate.parse(RutinaProgressCalculator.FECHA_CORTE).minusDays(3).toString()
         ),
         // d. Sin rutina asignada.
         Cliente(
@@ -94,8 +95,7 @@ class FakeClienteRepository : ClienteRepository {
             rutinaAsignada = null,
             plantillaOrigenId = "",
             diaActualIndex = 0,
-            diaPendienteIndex = null,
-            diaPendienteFecha = null
+            diaAnclaFecha = null
         )
     )
 
@@ -125,8 +125,7 @@ class FakeClienteRepository : ClienteRepository {
                 rutinaAsignada = rutina,
                 plantillaOrigenId = rutina.id,
                 diaActualIndex = 0,
-                diaPendienteIndex = null,
-                diaPendienteFecha = null
+                diaAnclaFecha = null
             )
         }
     }
@@ -148,15 +147,9 @@ class FakeClienteRepository : ClienteRepository {
         actualizarCliente(clienteId) { it.copy(activo = activo) }
     }
 
-    override suspend fun actualizarDiaActual(clienteId: String, diaIndex: Int) {
+    override suspend fun asignarDiaAncla(clienteId: String, diaIndex: Int, fecha: String) {
         actualizarCliente(clienteId) {
-            it.copy(diaActualIndex = diaIndex, diaPendienteIndex = null, diaPendienteFecha = null)
-        }
-    }
-
-    override suspend fun actualizarDiaPendiente(clienteId: String, diaIndex: Int, fecha: String) {
-        actualizarCliente(clienteId) {
-            it.copy(diaPendienteIndex = diaIndex, diaPendienteFecha = fecha)
+            it.copy(diaActualIndex = diaIndex, diaAnclaFecha = fecha)
         }
     }
 
@@ -182,36 +175,7 @@ class FakeClienteRepository : ClienteRepository {
         clientesFlow.update { lista -> lista.filterNot { it.id == clienteId } }
     }
 
-    /**
-     * Método exclusivo del fake (no forma parte de [ClienteRepository]): limpia el día
-     * pendiente de un cliente, replicando lo que hace inline
-     * [com.osfit.app.data.repository.FirestoreAsistenciaRepository.registrarAsistencia]
-     * cuando se marca "Faltó" en la fecha del pendiente actual.
-     */
-    suspend fun limpiarDiaPendiente(clienteId: String) {
-        actualizarCliente(clienteId) { it.copy(diaPendienteIndex = null, diaPendienteFecha = null) }
-    }
 
-    /**
-     * Método exclusivo del fake: escribe de una sola vez el día actual consolidado y el
-     * pendiente, replicando el batch de
-     * [com.osfit.app.data.repository.FirestoreAsistenciaRepository] que actualiza los tres
-     * campos juntos al registrar asistencia o iniciar el tiempo.
-     */
-    suspend fun aplicarProgreso(
-        clienteId: String,
-        diaActualIndex: Int,
-        diaPendienteIndex: Int?,
-        diaPendienteFecha: String?
-    ) {
-        actualizarCliente(clienteId) {
-            it.copy(
-                diaActualIndex = diaActualIndex,
-                diaPendienteIndex = diaPendienteIndex,
-                diaPendienteFecha = diaPendienteFecha
-            )
-        }
-    }
 
     private fun actualizarCliente(clienteId: String, transform: (Cliente) -> Cliente) {
         clientesFlow.update { lista ->

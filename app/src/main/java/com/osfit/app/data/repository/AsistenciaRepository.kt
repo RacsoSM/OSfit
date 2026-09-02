@@ -9,25 +9,26 @@ interface AsistenciaRepository {
     fun observarTodasAsistencias(): Flow<List<Asistencia>>
     fun observarAsistenciasPorCliente(clienteId: String): Flow<List<Asistencia>>
 
+    /**
+     * Registra la asistencia del día. Solo escribe el registro: el día que le toca al
+     * cliente se deduce de estos registros, así que no hay nada que actualizar en él.
+     */
     suspend fun registrarAsistencia(
         clienteId: String,
         fecha: String,
         asistio: Boolean,
-        diaActualIndexPrevio: Int,
         diaRutinaRealizado: Int?,
-        totalDiasRutina: Int,
-        diaPendienteFechaActual: String?,
         nota: String
     )
 
+    /** Iniciar el cronómetro equivale a marcar asistencia del [diaRutinaRealizado] dado. */
     suspend fun iniciarTiempo(
         clienteId: String,
         fecha: String,
-        diaActualIndexPrevio: Int,
-        totalDiasRutina: Int
+        diaRutinaRealizado: Int
     )
 
     suspend fun detenerTiempo(clienteId: String, fecha: String)
-    suspend fun reiniciarDia(fecha: String, clienteIdsConPendiente: List<String>)
+    suspend fun reiniciarDia(fecha: String)
     suspend fun actualizarDiaRealizado(clienteId: String, fecha: String, nuevoDia: Int)
 }
