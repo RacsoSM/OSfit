@@ -70,7 +70,12 @@ class TomarAsistenciaViewModel(
 
     fun iniciarTiempo(cliente: Cliente) {
         viewModelScope.launch {
-            asistenciaRepository.iniciarTiempo(cliente.id, fecha)
+            asistenciaRepository.iniciarTiempo(
+                clienteId = cliente.id,
+                fecha = fecha,
+                diaActualIndexPrevio = RutinaProgressCalculator.diaEfectivo(cliente),
+                totalDiasRutina = cliente.rutinaAsignada?.dias?.size ?: 1
+            )
         }
     }
 
@@ -103,7 +108,8 @@ class TomarAsistenciaViewModel(
                             diaActualIndexPrevio = diaEfectivo,
                             diaRutinaRealizado = if (asistio) diaEfectivo else null,
                             totalDiasRutina = cliente.rutinaAsignada?.dias?.size ?: 1,
-                            diaPendienteFechaActual = cliente.diaPendienteFecha
+                            diaPendienteFechaActual = cliente.diaPendienteFecha,
+                            nota = ""
                         )
                     }
                 }.awaitAll()
