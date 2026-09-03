@@ -32,6 +32,8 @@ data class DesgloseEsfuerzo(
 
 data class PuntoTiempoDiario(val fecha: LocalDate, val minutos: Int)
 
+data class ConteoDiaRutina(val nombreDia: String, val veces: Int)
+
 data class ResumenClienteData(
     val cliente: Cliente,
     val rango: RangoResumen,
@@ -45,7 +47,10 @@ data class ResumenClienteData(
     val desgloseEsfuerzo: DesgloseEsfuerzo? = null,
     // Minutos asistidos por cada día del rango, en orden (rango.inicio primero), 0 en los
     // días sin asistencia. Alimenta la gráfica de línea de la escena Tiempo del video.
-    val tiempoPorDia: List<PuntoTiempoDiario> = emptyList()
+    val tiempoPorDia: List<PuntoTiempoDiario> = emptyList(),
+    // Cuántas veces se hizo cada día de la rutina en el rango, de mayor a menor. Alimenta la
+    // gráfica de dona de la escena DiaFavorito del video.
+    val conteoDias: List<ConteoDiaRutina> = emptyList()
 )
 
 /**
@@ -128,15 +133,26 @@ object ResumenClienteCalculator {
         return RankingResultado(puesto = puestoDelCliente, nombresPorEncima = nombresPorEncima)
     }
 
-    fun diaFavoritoEnRango(asistencias: List<Asistencia>, nombresDias: List<String>): String? {
+    /**
+     * Cuántas veces se hizo cada día de la rutina actual en [asistencias], de mayor a menor.
+     * Los índices de [Asistencia.diaRutinaRealizado] que ya no existen en [nombresDias]
+     * (rutina reasignada a media semana) se descartan.
+     */
+    fun conteoDiasEnRango(asistencias: List<Asistencia>, nombresDias: List<String>): List<ConteoDiaRutina> {
         val conteo = asistencias.mapNotNull { it.diaRutinaRealizado }
             .groupingBy { it }
             .eachCount()
+        return conteo.entries
+            .mapNotNull { (indice, veces) -> nombresDias.getOrNull(indice)?.let { ConteoDiaRutina(it, veces) } }
+            .sortedByDescending { it.veces }
+    }
+
+    fun diaFavoritoEnRango(asistencias: List<Asistencia>, nombresDias: List<String>): String? {
+        val conteo = conteoDiasEnRango(asistencias, nombresDias)
         if (conteo.isEmpty()) return null
-        val maximo = conteo.values.max()
-        val empatados = conteo.filterValues { it == maximo }.keys.toList()
-        val indiceElegido = empatados[Random.nextInt(empatados.size)]
-        return nombresDias.getOrNull(indiceElegido)
+        val maximo = conteo.first().veces
+        val empatados = conteo.filter { it.veces == maximo }
+        return empatados[Random.nextInt(empatados.size)].nombreDia
     }
 
     fun leyendaPorPuesto(puesto: Int): String = when {
@@ -205,7 +221,9 @@ object ResumenClienteCalculator {
         val rankingTiempo = calcularRanking(valoresTiempo, cliente.id)
 
         val nombresDias = cliente.rutinaAsignada?.dias?.map { it.nombreDia } ?: emptyList()
-        val diaFavoritoNombre = diaFavoritoEnRango(asistenciasPorCliente[cliente.id] ?: emptyList(), nombresDias)
+        val asistenciasDelCliente = asistenciasPorCliente[cliente.id] ?: emptyList()
+        val conteoDias = conteoDiasEnRango(asistenciasDelCliente, nombresDias)
+        val diaFavoritoNombre = diaFavoritoEnRango(asistenciasDelCliente, nombresDias)
 
         var rachaMasLarga: Int? = null
         var rankingRacha: RankingResultado? = null
@@ -244,7 +262,8 @@ object ResumenClienteCalculator {
             rachaMasLarga = rachaMasLarga,
             rankingRacha = rankingRacha,
             desgloseEsfuerzo = desgloseEsfuerzo,
-            tiempoPorDia = tiempoPorDia
+            tiempoPorDia = tiempoPorDia,
+            conteoDias = conteoDias
         )
     }
 }

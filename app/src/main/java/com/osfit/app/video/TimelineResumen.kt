@@ -76,7 +76,10 @@ class TimelineResumen(escenas: List<EscenaResumen>) {
         // entrenando/descansando largo esa cola puede llegar a los ~8.4s), más 1s extra a
         // pedido del trainer para que la escena no corte justo cuando termina de animarse.
         is EscenaResumen.Esfuerzo -> 10_500L
-        is EscenaResumen.DiaFavorito -> 4_000L
+        // 7s y no 4s: la dona de días de rutina empieza a aparecer justo cuando termina de
+        // escribirse el texto (~2.2s) y necesita quedarse en pantalla un rato para leerse;
+        // +2s extra a pedido del trainer sobre los 5s que ya tenía.
+        is EscenaResumen.DiaFavorito -> 7_000L
         is EscenaResumen.RachaMasLarga -> 4_000L
         // "Gracias por confiar en nosotros" a la velocidad del saludo (~155ms/carácter) tarda
         // ~4.8s en escribirse; se deja 1.2s extra de margen para que quede en pantalla ya completa.

@@ -4,15 +4,19 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Path
+import android.graphics.RectF
 import android.graphics.Typeface
 import android.text.Layout
 import android.text.SpannableStringBuilder
 import android.text.StaticLayout
 import android.text.TextPaint
 import android.text.style.ForegroundColorSpan
+import com.osfit.app.domain.ConteoDiaRutina
 import com.osfit.app.domain.PuntoTiempoDiario
 import com.osfit.app.domain.RankingResultado
 import java.time.format.DateTimeFormatter
+import kotlin.math.cos
+import kotlin.math.sin
 
 private data class Resaltado(val rango: IntRange, val color: Int)
 
@@ -59,6 +63,28 @@ object ResumenFrameRenderer {
      *  con ella, por eso lleva su propio desplazamiento en vez de reusar el de arriba. */
     private const val DESPLAZAMIENTO_GRAFICA = DESPLAZAMIENTO_ABAJO - ALTO_DEFECTO * 0.10f
     private val FORMATO_FECHA_EJE = DateTimeFormatter.ofPattern("dd/MM")
+
+    /** La dona de la escena DiaFavorito aparece justo después de que termina de escribirse
+     *  su mensaje (2200ms de máquina de escribir). */
+    private const val DONA_INICIO_MS = 2_400L
+    private const val DONA_FADE_MS = 500L
+    /** Título y dona de la escena DiaFavorito se subieron 20% de la altura del video
+     *  (1920 * 0.20), a pedido del trainer. */
+    private const val DESPLAZAMIENTO_ARRIBA_DIA_FAVORITO = ALTO_DEFECTO * 0.20f
+    /** La dona sola se bajó otro 20% de vuelta (el título no se movió), también a pedido
+     *  del trainer — por eso lleva su propio desplazamiento en vez de reusar el de arriba. */
+    private const val DESPLAZAMIENTO_ABAJO_DONA_DIA_FAVORITO = ALTO_DEFECTO * 0.20f
+    /** Paleta pastel para las rebanadas de la dona, asignada en orden fijo (día con más
+     *  repeticiones primero): así cada rebanada se distingue por color además de por su
+     *  etiqueta directa, en vez del esquema anterior de "favorito destacado vs. resto apagado". */
+    private val DONA_PALETA_PASTEL = listOf(
+        0xFFA8E6CF.toInt(), // menta
+        0xFFAEC9F0.toInt(), // azul
+        0xFFF6D186.toInt(), // amarillo
+        0xFFF3A6C1.toInt(), // rosa
+        0xFFCBB7EE.toInt(), // lavanda
+        0xFFF6B989.toInt() // durazno
+    )
 
     /**
      * Pinta el frame de [tiempoGlobalMs] directamente sobre [canvas] —el de la Surface del
@@ -109,6 +135,9 @@ object ResumenFrameRenderer {
         }
         if (escena is EscenaResumen.Tiempo) {
             dibujarGraficaTiempo(canvas, ancho, escena.tiempoPorDia, elapsedMs, alpha)
+        }
+        if (escena is EscenaResumen.DiaFavorito) {
+            dibujarDonaDiasFavoritos(canvas, ancho, escena.conteoDias, elapsedMs, alpha)
         }
     }
 
@@ -206,7 +235,10 @@ object ResumenFrameRenderer {
             )
         }
         is EscenaResumen.DiaFavorito -> listOf(
-            BloqueTexto(mensajeDiaFavorito(escena), inicioMs = 0, duracionMs = 2_200, y = 860f, tamano = 64f, color = Color.WHITE, estilo = Typeface.BOLD)
+            BloqueTexto(
+                mensajeDiaFavorito(escena), inicioMs = 0, duracionMs = 2_200,
+                y = 860f - DESPLAZAMIENTO_ARRIBA_DIA_FAVORITO, tamano = 64f, color = Color.WHITE, estilo = Typeface.BOLD
+            )
         )
         is EscenaResumen.RachaMasLarga -> listOf(
             BloqueTexto("Tu racha más larga fue de", inicioMs = 0, duracionMs = 300, y = 700f, tamano = 44f, color = Color.WHITE, estilo = Typeface.NORMAL),
@@ -372,6 +404,76 @@ object ResumenFrameRenderer {
                 tamano = 22f, color = Color.LTGRAY, alphaAplicado = alphaAplicado, alineacion = Paint.Align.RIGHT
             )
         }
+    }
+
+    /**
+     * Dona con cuántas veces se hizo cada día de la rutina en el rango. Cada rebanada usa un
+     * color distinto de [DONA_PALETA_PASTEL] (día con más repeticiones primero) y lleva su
+     * nombre y conteo como etiqueta directa en ese mismo color.
+     */
+    private fun dibujarDonaDiasFavoritos(
+        canvas: Canvas, ancho: Int, conteo: List<ConteoDiaRutina>, elapsedMs: Long, alphaEscena: Float
+    ) {
+        if (conteo.isEmpty()) return
+        val total = conteo.sumOf { it.veces }
+        if (total <= 0) return
+
+        val progreso = ((elapsedMs - DONA_INICIO_MS).coerceIn(0L, DONA_FADE_MS)).toFloat() / DONA_FADE_MS
+        if (progreso <= 0f) return
+        val alphaAplicado = (255 * progreso * alphaEscena).toInt().coerceIn(0, 255)
+
+        val centroX = ancho / 2f
+        val centroY = 1320f - DESPLAZAMIENTO_ARRIBA_DIA_FAVORITO + DESPLAZAMIENTO_ABAJO_DONA_DIA_FAVORITO
+        val radioExterior = 260f
+        val radioInterior = 150f
+        val radioMedio = (radioExterior + radioInterior) / 2f
+        val grosor = radioExterior - radioInterior
+        // Separación visual entre rebanadas (el "surface gap" entre rellenos adyacentes);
+        // sin espacio si solo hay una rebanada, para que se vea como un círculo completo.
+        val gapGrados = if (conteo.size > 1) 3f else 0f
+
+        val rect = RectF(centroX - radioMedio, centroY - radioMedio, centroX + radioMedio, centroY + radioMedio)
+        val paintArco = Paint().apply {
+            isAntiAlias = true
+            style = Paint.Style.STROKE
+            strokeWidth = grosor
+        }
+
+        var anguloInicio = -90f
+        conteo.forEachIndexed { indice, dia ->
+            val color = DONA_PALETA_PASTEL[indice % DONA_PALETA_PASTEL.size]
+            val sweep = (dia.veces.toFloat() / total) * 360f
+            val sweepDibujado = (sweep - gapGrados).coerceAtLeast(0f)
+            paintArco.color = color
+            paintArco.alpha = alphaAplicado
+            canvas.drawArc(rect, anguloInicio + gapGrados / 2f, sweepDibujado, false, paintArco)
+
+            val anguloMedioRad = Math.toRadians((anguloInicio + sweep / 2f).toDouble())
+            val radioEtiqueta = radioExterior + 70f
+            val x = centroX + (radioEtiqueta * cos(anguloMedioRad)).toFloat()
+            val y = centroY + (radioEtiqueta * sin(anguloMedioRad)).toFloat()
+            dibujarTextoCentrado(
+                canvas, "${dia.nombreDia} ×${dia.veces}", x, y, tamano = 30f,
+                color = color, alphaAplicado = alphaAplicado
+            )
+            anguloInicio += sweep
+        }
+    }
+
+    /** Dibuja [texto] centrado horizontal y verticalmente en ([x], [y]). Usado para las
+     *  etiquetas de las rebanadas de [dibujarDonaDiasFavoritos]. */
+    private fun dibujarTextoCentrado(
+        canvas: Canvas, texto: String, x: Float, y: Float, tamano: Float, color: Int, alphaAplicado: Int
+    ) {
+        val paint = Paint().apply {
+            isAntiAlias = true
+            this.color = color
+            alpha = alphaAplicado
+            textSize = tamano
+            typeface = Typeface.DEFAULT
+            textAlign = Paint.Align.CENTER
+        }
+        canvas.drawText(texto, x, y + tamano * 0.35f, paint)
     }
 
     /** Dibuja [texto] rotado 90° en sentido antihorario (se lee de abajo hacia arriba),

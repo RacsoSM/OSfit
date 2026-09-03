@@ -99,7 +99,8 @@ object ResumenVideoGenerator {
             EscenaResumen.DiaFavorito(
                 nombreDia = resumen.diaFavoritoNombre,
                 unidad = unidad,
-                diasAsistidos = resumen.diasAsistidos
+                diasAsistidos = resumen.diasAsistidos,
+                conteoDias = resumen.conteoDias
             )
         )
         val racha = resumen.rachaMasLarga

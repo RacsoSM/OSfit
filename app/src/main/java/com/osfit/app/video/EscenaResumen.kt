@@ -1,5 +1,6 @@
 package com.osfit.app.video
 
+import com.osfit.app.domain.ConteoDiaRutina
 import com.osfit.app.domain.DesgloseEsfuerzo
 import com.osfit.app.domain.PuntoTiempoDiario
 import com.osfit.app.domain.RankingResultado
@@ -22,7 +23,14 @@ sealed class EscenaResumen {
         val minutosTotales: Int,
         val desglose: DesgloseEsfuerzo
     ) : EscenaResumen()
-    data class DiaFavorito(val nombreDia: String?, val unidad: String, val diasAsistidos: Int) : EscenaResumen()
+    data class DiaFavorito(
+        val nombreDia: String?,
+        val unidad: String,
+        val diasAsistidos: Int,
+        // Cuántas veces se hizo cada día de rutina en el rango, de mayor a menor; alimenta la
+        // gráfica de dona de la escena.
+        val conteoDias: List<ConteoDiaRutina> = emptyList()
+    ) : EscenaResumen()
     data class RachaMasLarga(val dias: Int, val ranking: RankingResultado) : EscenaResumen()
     object Despedida : EscenaResumen()
 }

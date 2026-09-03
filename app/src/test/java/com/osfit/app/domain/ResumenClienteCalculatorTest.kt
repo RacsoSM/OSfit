@@ -170,6 +170,35 @@ class ResumenClienteCalculatorTest {
     }
 
     @Test
+    fun `conteoDiasEnRango cuenta cada dia y ordena de mayor a menor`() {
+        val dias = listOf("Pecho", "Espalda", "Pierna")
+        val asistencias = listOf(
+            Asistencia(diaRutinaRealizado = 0),
+            Asistencia(diaRutinaRealizado = 0),
+            Asistencia(diaRutinaRealizado = 1),
+            Asistencia(diaRutinaRealizado = 2),
+            Asistencia(diaRutinaRealizado = 2),
+            Asistencia(diaRutinaRealizado = 2)
+        )
+        val resultado = ResumenClienteCalculator.conteoDiasEnRango(asistencias, dias)
+        assertEquals(
+            listOf(
+                ConteoDiaRutina("Pierna", 3),
+                ConteoDiaRutina("Pecho", 2),
+                ConteoDiaRutina("Espalda", 1)
+            ),
+            resultado
+        )
+    }
+
+    @Test
+    fun `conteoDiasEnRango descarta indices fuera de la rutina actual`() {
+        val dias = listOf("Pecho", "Espalda")
+        val asistencias = listOf(Asistencia(diaRutinaRealizado = 0), Asistencia(diaRutinaRealizado = 7))
+        assertEquals(listOf(ConteoDiaRutina("Pecho", 1)), ResumenClienteCalculator.conteoDiasEnRango(asistencias, dias))
+    }
+
+    @Test
     fun `diaFavoritoEnRango sin asistencias devuelve null`() {
         assertEquals(null, ResumenClienteCalculator.diaFavoritoEnRango(emptyList(), listOf("Pecho")))
     }
@@ -233,6 +262,7 @@ class ResumenClienteCalculatorTest {
         assertEquals(2, resumen.diasAsistidos)
         assertEquals(105, resumen.minutosEnGym)
         assertEquals("Pecho", resumen.diaFavoritoNombre)
+        assertEquals(listOf(ConteoDiaRutina("Pecho", 2)), resumen.conteoDias)
         assertEquals(1, resumen.rankingAsistencia.puesto)
         assertEquals(emptyList<String>(), resumen.rankingAsistencia.nombresPorEncima)
         assertEquals(2, resumen.rankingTiempo.puesto)
