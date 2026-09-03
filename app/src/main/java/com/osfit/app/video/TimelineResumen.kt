@@ -75,5 +75,8 @@ class TimelineResumen(escenas: List<EscenaResumen>) {
         is EscenaResumen.Esfuerzo -> 8_000L
         is EscenaResumen.DiaFavorito -> 4_000L
         is EscenaResumen.RachaMasLarga -> 4_000L
+        // "Gracias por confiar en nosotros" a la velocidad del saludo (~155ms/carácter) tarda
+        // ~4.8s en escribirse; se deja 1.2s extra de margen para que quede en pantalla ya completa.
+        is EscenaResumen.Despedida -> 6_000L
     }
 }

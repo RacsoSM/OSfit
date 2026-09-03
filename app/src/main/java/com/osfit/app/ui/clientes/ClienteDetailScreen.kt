@@ -83,6 +83,7 @@ fun ClienteDetailScreen(
     // El estado de generación vive en el ViewModel (viewModelScope): sobrevive a la rotación,
     // así el botón sigue mostrando "Generando..." y no se puede disparar una segunda corrida.
     val generandoResumen by resumenViewModel.generando.collectAsState()
+    val progresoResumen by resumenViewModel.progreso.collectAsState()
     val mensajeResumen by resumenViewModel.mensaje.collectAsState()
     val hoy by rememberFechaActual()
     val context = LocalContext.current
@@ -289,13 +290,13 @@ fun ClienteDetailScreen(
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     AccionCard(
                         icono = Icons.Filled.Videocam,
-                        texto = if (generandoResumen) "Generando..." else "Resumen semanal",
+                        texto = if (generandoResumen) "Generando... ${(progresoResumen * 100).toInt()}%" else "Resumen semanal",
                         modifier = Modifier.weight(1f),
                         onClick = { resumenViewModel.generarResumenSemanal(context) }
                     )
                     AccionCard(
                         icono = Icons.Filled.Videocam,
-                        texto = if (generandoResumen) "Generando..." else "Resumen mensual",
+                        texto = if (generandoResumen) "Generando... ${(progresoResumen * 100).toInt()}%" else "Resumen mensual",
                         modifier = Modifier.weight(1f),
                         onClick = { resumenViewModel.generarResumenMensual(context) }
                     )

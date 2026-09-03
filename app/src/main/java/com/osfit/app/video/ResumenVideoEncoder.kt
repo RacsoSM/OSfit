@@ -98,6 +98,7 @@ object ResumenVideoEncoder {
         fps: Int,
         context: Context,
         salida: File,
+        onProgreso: (Float) -> Unit = {},
         dibujarFrame: (canvas: Canvas, tiempoMs: Long) -> Unit
     ) = withContext<Unit>(Dispatchers.Default) {
         require(duracionTotalMs > 0) { "duracionTotalMs debe ser positivo" }
@@ -105,7 +106,11 @@ object ResumenVideoEncoder {
 
         val inicioTotalNs = System.nanoTime()
         val inicioVideoNs = System.nanoTime()
-        val pistaVideo = codificarVideo(duracionTotalMs, fps, dibujarFrame)
+        // El video (dibujar + codificar cada frame) es, con mucho, la parte lenta: se le
+        // reserva el 95% de la barra de progreso y el 5% restante a audio + mux.
+        val pistaVideo = codificarVideo(duracionTotalMs, fps, dibujarFrame) { fraccionVideo ->
+            onProgreso(fraccionVideo * 0.95f)
+        }
         val msVideo = (System.nanoTime() - inicioVideoNs) / 1_000_000L
 
         // El audio es opcional: si el recurso no existe o falla la transcodificación,
@@ -137,6 +142,7 @@ object ResumenVideoEncoder {
         } finally {
             muxer.release()
         }
+        onProgreso(1f)
 
         // Diagnóstico de rendimiento (una sola línea, para leer desde adb logcat).
         val msTotal = (System.nanoTime() - inicioTotalNs) / 1_000_000L
@@ -173,7 +179,8 @@ object ResumenVideoEncoder {
     private suspend fun codificarVideo(
         duracionTotalMs: Long,
         fps: Int,
-        dibujarFrame: (Canvas, Long) -> Unit
+        dibujarFrame: (Canvas, Long) -> Unit,
+        onProgreso: (Float) -> Unit
     ): PistaCodificada {
         val contexto = currentCoroutineContext()
         val format = MediaFormat.createVideoFormat(MediaFormat.MIMETYPE_VIDEO_AVC, ANCHO, ALTO).apply {
@@ -312,6 +319,7 @@ object ResumenVideoEncoder {
                     sfc.unlockCanvasAndPost(canvas)
                 }
                 drenar(enc, finalDeFlujo = false)
+                onProgreso((indiceFrame + 1).toFloat() / totalFrames)
             }
             // Drenaje extra antes de señalar el fin de flujo: el pipeline interno del
             // codificador con entrada por Surface tiene latencia (el propio códec reporta

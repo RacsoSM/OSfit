@@ -18,4 +18,5 @@ sealed class EscenaResumen {
     ) : EscenaResumen()
     data class DiaFavorito(val nombreDia: String?, val unidad: String, val diasAsistidos: Int) : EscenaResumen()
     data class RachaMasLarga(val dias: Int, val ranking: RankingResultado) : EscenaResumen()
+    object Despedida : EscenaResumen()
 }

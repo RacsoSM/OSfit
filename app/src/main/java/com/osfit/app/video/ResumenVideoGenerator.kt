@@ -16,7 +16,11 @@ object ResumenVideoGenerator {
     private const val VIDA_UTIL_MS = 60 * 60 * 1000L
     private val FORMATO_DIA_MES = DateTimeFormatter.ofPattern("d 'de' MMMM", Locale("es"))
 
-    suspend fun generarYCompartir(context: Context, resumen: ResumenClienteData) {
+    suspend fun generarYCompartir(
+        context: Context,
+        resumen: ResumenClienteData,
+        onProgreso: (Float) -> Unit = {}
+    ) {
         // El timestamp evita que dos generaciones que lleguen a solaparse (por ejemplo una
         // huérfana que siga corriendo) escriban el mismo archivo con dos MediaMuxer a la vez.
         val ahora = System.currentTimeMillis()
@@ -33,7 +37,8 @@ object ResumenVideoGenerator {
             duracionTotalMs = timeline.duracionTotalMs,
             fps = FPS,
             context = context,
-            salida = salida
+            salida = salida,
+            onProgreso = onProgreso
         ) { canvas, tiempoMs ->
             ResumenFrameRenderer.dibujarFrame(canvas, timeline, fondo, tiempoMs)
         }
@@ -93,6 +98,7 @@ object ResumenVideoGenerator {
         if (resumen.rango.tipo == TipoResumen.MENSUAL && racha != null && rankingRacha != null) {
             escenas += EscenaResumen.RachaMasLarga(dias = racha, ranking = rankingRacha)
         }
+        escenas += EscenaResumen.Despedida
         return escenas
     }
 }

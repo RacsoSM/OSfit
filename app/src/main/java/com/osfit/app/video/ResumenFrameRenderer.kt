@@ -4,9 +4,13 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Typeface
 import android.text.Layout
+import android.text.SpannableStringBuilder
 import android.text.StaticLayout
 import android.text.TextPaint
+import android.text.style.ForegroundColorSpan
 import com.osfit.app.domain.RankingResultado
+
+private data class Resaltado(val rango: IntRange, val color: Int)
 
 private data class BloqueTexto(
     val texto: String,
@@ -15,7 +19,8 @@ private data class BloqueTexto(
     val y: Float,
     val tamano: Float,
     val color: Int,
-    val estilo: Int
+    val estilo: Int,
+    val resaltados: List<Resaltado> = emptyList()
 )
 
 /**
@@ -26,9 +31,15 @@ private data class BloqueTexto(
 object ResumenFrameRenderer {
 
     private const val NEGRO = 0xFF000000.toInt()
-    /** Color del dato destacado de cada escena. Rojo vivo: sobre el fondo negro con blobs
-     *  apagados es lo que más contrasta, y no se confunde con el magenta/púrpura del fondo. */
-    private const val DESTACADO = 0xFFFF3B30.toInt()
+    /** Color del dato destacado de cada escena. Verde aqua fuerte: se distingue bien del fondo
+     *  negro con blobs apagados y del magenta/púrpura del fondo, sin ser tan agresivo como el rojo. */
+    private const val DESTACADO = 0xFF00E6A8.toInt()
+    /** Velocidad de máquina de escribir de los textos destacados grandes (Asistencia y Esfuerzo):
+     *  ambos deben "sentirse" igual de rápidos aunque su longitud de texto varíe. */
+    private const val VELOCIDAD_DESTACADO_MS_POR_CARACTER = 2_400.0 / 29.0
+    /** Misma velocidad que el saludo ("Hola, <nombre>", 2000ms para ~13 caracteres de
+     *  referencia): la usa también la Despedida para que ambas se sientan iguales. */
+    private const val VELOCIDAD_SALUDO_MS_POR_CARACTER = 2_000.0 / 13.0
     private const val ANCHO_DEFECTO = 1080
     private const val ALTO_DEFECTO = 1920
 
@@ -71,26 +82,56 @@ object ResumenFrameRenderer {
         bloquesPara(escena).forEach { bloque ->
             val texto = MaquinaEscribir.textoVisible(bloque.texto, elapsedMs - bloque.inicioMs, bloque.duracionMs)
             if (texto.isNotEmpty()) {
-                dibujarTexto(canvas, texto, ancho, bloque.y, bloque.tamano, bloque.color, bloque.estilo, alpha)
+                val resaltadosVisibles = bloque.resaltados.mapNotNull { resaltado ->
+                    val inicio = resaltado.rango.first.coerceIn(0, texto.length)
+                    val fin = resaltado.rango.last.plus(1).coerceIn(0, texto.length)
+                    if (inicio < fin) Resaltado(inicio until fin, resaltado.color) else null
+                }
+                dibujarTexto(canvas, texto, ancho, bloque.y, bloque.tamano, bloque.color, bloque.estilo, alpha, resaltadosVisibles)
             }
         }
     }
 
     private fun bloquesPara(escena: EscenaResumen): List<BloqueTexto> = when (escena) {
-        is EscenaResumen.Saludo -> listOf(
-            BloqueTexto("Hola, ${escena.nombreCliente}", inicioMs = 0, duracionMs = 2_000, y = 880f, tamano = 76f, color = Color.WHITE, estilo = Typeface.BOLD)
-        )
-        is EscenaResumen.Asistencia -> listOf(
-            BloqueTexto(escena.encabezadoRango, inicioMs = 0, duracionMs = 400, y = 160f, tamano = 44f, color = Color.LTGRAY, estilo = Typeface.NORMAL),
-            BloqueTexto(
-                "${determinante(escena.unidad, mayuscula = true)} ${escena.unidad} asististe ${escena.dias} días",
-                inicioMs = 400, duracionMs = 2_400, y = 700f, tamano = 84f, color = DESTACADO, estilo = Typeface.BOLD
-            ),
-            BloqueTexto(
-                comparacion(escena.ranking, "¡Vas primero en asistencias ${determinante(escena.unidad)} ${escena.unidad}!", "asistencias"),
-                inicioMs = 3_400, duracionMs = 800, y = 1500f, tamano = 48f, color = Color.LTGRAY, estilo = Typeface.NORMAL
+        is EscenaResumen.Saludo -> {
+            val prefijo = "Hola, "
+            val texto = prefijo + escena.nombreCliente
+            listOf(
+                BloqueTexto(
+                    texto, inicioMs = 0, duracionMs = 2_000, y = 880f, tamano = 76f, color = Color.WHITE, estilo = Typeface.BOLD,
+                    resaltados = listOf(Resaltado(prefijo.length until texto.length, DESTACADO))
+                )
             )
-        )
+        }
+        is EscenaResumen.Despedida -> {
+            val texto = "Gracias por confiar en nosotros"
+            listOf(
+                BloqueTexto(
+                    texto, inicioMs = 0,
+                    duracionMs = (texto.length * VELOCIDAD_SALUDO_MS_POR_CARACTER).toLong(),
+                    y = 880f, tamano = 76f, color = Color.WHITE, estilo = Typeface.BOLD
+                )
+            )
+        }
+        is EscenaResumen.Asistencia -> {
+            val prefijo = "${determinante(escena.unidad, mayuscula = true)} ${escena.unidad} asististe "
+            val diasTexto = "${escena.dias} días"
+            val texto = prefijo + diasTexto
+            listOf(
+                BloqueTexto(escena.encabezadoRango, inicioMs = 0, duracionMs = 400, y = 160f, tamano = 44f, color = Color.LTGRAY, estilo = Typeface.NORMAL),
+                BloqueTexto(
+                    texto,
+                    inicioMs = 400,
+                    duracionMs = (texto.length * VELOCIDAD_DESTACADO_MS_POR_CARACTER).toLong(),
+                    y = 700f, tamano = 84f, color = Color.WHITE, estilo = Typeface.BOLD,
+                    resaltados = listOf(Resaltado(prefijo.length until texto.length, DESTACADO))
+                ),
+                BloqueTexto(
+                    comparacion(escena.ranking, "¡Vas primero en asistencias ${determinante(escena.unidad)} ${escena.unidad}!", "asistencias"),
+                    inicioMs = 3_400, duracionMs = 800, y = 1500f, tamano = 48f, color = Color.LTGRAY, estilo = Typeface.NORMAL
+                )
+            )
+        }
         is EscenaResumen.Tiempo -> {
             val horas = escena.minutos / 60
             val minutos = escena.minutos % 60
@@ -99,25 +140,41 @@ object ResumenFrameRenderer {
                 BloqueTexto("${horas}h ${minutos}min", inicioMs = 900, duracionMs = 2_400, y = 800f, tamano = 96f, color = DESTACADO, estilo = Typeface.BOLD),
                 BloqueTexto(
                     comparacion(escena.ranking, "¡Vas primero en tiempo asistido!", "tiempo asistido"),
-                    inicioMs = 4_000, duracionMs = 1_200, y = 1500f, tamano = 48f, color = Color.LTGRAY, estilo = Typeface.NORMAL
+                    inicioMs = 4_000, duracionMs = 1_500, y = 1500f, tamano = 48f, color = Color.LTGRAY, estilo = Typeface.NORMAL
                 )
             )
         }
-        is EscenaResumen.Esfuerzo -> listOf(
-            BloqueTexto(
-                "De tu tiempo asistido, ${formatoDuracion(escena.minutosTotales)}",
-                inicioMs = 0, duracionMs = 900, y = 460f, tamano = 44f, color = Color.WHITE, estilo = Typeface.NORMAL
-            ),
-            BloqueTexto(
-                "Estuviste entrenando ${formatoDuracion(escena.desglose.minutosEntrenando)} y descansando " +
-                    formatoDuracion(escena.desglose.minutosDescansando),
-                inicioMs = 900, duracionMs = 2_600, y = 760f, tamano = 72f, color = DESTACADO, estilo = Typeface.BOLD
-            ),
-            BloqueTexto(
-                "lo cual representa un ${escena.desglose.porcentajeEntrenando}% del total del tiempo",
-                inicioMs = 4_000, duracionMs = 1_200, y = 1500f, tamano = 48f, color = Color.LTGRAY, estilo = Typeface.NORMAL
+        is EscenaResumen.Esfuerzo -> {
+            val prefijoEntrenando = "Estuviste entrenando "
+            val tiempoEntrenando = formatoDuracion(escena.desglose.minutosEntrenando)
+            val medio = " y descansando "
+            val tiempoDescansando = formatoDuracion(escena.desglose.minutosDescansando)
+            val texto = prefijoEntrenando + tiempoEntrenando + medio + tiempoDescansando
+            val inicioEntrenando = prefijoEntrenando.length
+            val finEntrenando = inicioEntrenando + tiempoEntrenando.length
+            val inicioDescansando = finEntrenando + medio.length
+            listOf(
+                BloqueTexto(
+                    "De tu tiempo asistido, ${formatoDuracion(escena.minutosTotales)}",
+                    inicioMs = 0, duracionMs = 900, y = 460f, tamano = 44f, color = Color.WHITE, estilo = Typeface.NORMAL
+                ),
+                BloqueTexto(
+                    texto,
+                    inicioMs = 900,
+                    duracionMs = (texto.length * VELOCIDAD_DESTACADO_MS_POR_CARACTER).toLong(),
+                    y = 760f, tamano = 72f, color = Color.WHITE, estilo = Typeface.BOLD,
+                    resaltados = listOf(
+                        Resaltado(inicioEntrenando until finEntrenando, DESTACADO),
+                        Resaltado(inicioDescansando until texto.length, DESTACADO)
+                    )
+                ),
+                BloqueTexto(
+                    "Lo cual representa un ${escena.desglose.porcentajeEntrenando}% del total del tiempo",
+                    inicioMs = 900 + (texto.length * VELOCIDAD_DESTACADO_MS_POR_CARACTER).toLong() + 500,
+                    duracionMs = 1_200, y = 1500f, tamano = 48f, color = Color.LTGRAY, estilo = Typeface.NORMAL
+                )
             )
-        )
+        }
         is EscenaResumen.DiaFavorito -> listOf(
             BloqueTexto(mensajeDiaFavorito(escena), inicioMs = 0, duracionMs = 2_200, y = 860f, tamano = 64f, color = Color.WHITE, estilo = Typeface.BOLD)
         )
@@ -170,7 +227,8 @@ object ResumenFrameRenderer {
 
     private fun dibujarTexto(
         canvas: Canvas, texto: String, anchoCanvas: Int, y: Float,
-        tamano: Float, color: Int, estilo: Int, alpha: Float
+        tamano: Float, color: Int, estilo: Int, alpha: Float,
+        resaltados: List<Resaltado> = emptyList()
     ) {
         val margen = 80
         val paint = TextPaint().apply {
@@ -180,9 +238,27 @@ object ResumenFrameRenderer {
             textSize = tamano
             typeface = Typeface.create(Typeface.DEFAULT, estilo)
         }
+        val alphaAplicado = (255 * alpha).toInt().coerceIn(0, 255)
+        val contenido: CharSequence = if (resaltados.isEmpty()) {
+            texto
+        } else {
+            SpannableStringBuilder(texto).apply {
+                resaltados.forEach { resaltado ->
+                    val colorConAlpha = Color.argb(
+                        alphaAplicado,
+                        Color.red(resaltado.color), Color.green(resaltado.color), Color.blue(resaltado.color)
+                    )
+                    setSpan(
+                        ForegroundColorSpan(colorConAlpha),
+                        resaltado.rango.first, resaltado.rango.last + 1,
+                        android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+                    )
+                }
+            }
+        }
         val anchoDisponible = anchoCanvas - margen * 2
         val layout = StaticLayout.Builder
-            .obtain(texto, 0, texto.length, paint, anchoDisponible)
+            .obtain(contenido, 0, contenido.length, paint, anchoDisponible)
             .setAlignment(Layout.Alignment.ALIGN_CENTER)
             .build()
         canvas.save()
