@@ -197,10 +197,11 @@ object ResumenFrameRenderer {
                     duracionMs = duracionPorcentaje, y = 1500f, tamano = 48f, color = Color.LTGRAY, estilo = Typeface.NORMAL
                 ),
                 // Aparece 500ms después de que termina de escribirse la línea del porcentaje.
+                // y = 1580 + 10% de la altura del video (1920 * 0.10 = 192), a pedido del trainer.
                 BloqueTexto(
                     "No te espantes, lo normal es entre 15% y 25%",
                     inicioMs = inicioPorcentaje + duracionPorcentaje + 500,
-                    duracionMs = 1_200, y = 1580f, tamano = 40f, color = Color.LTGRAY, estilo = Typeface.NORMAL
+                    duracionMs = 1_200, y = 1580f + ALTO_DEFECTO * 0.10f, tamano = 40f, color = Color.LTGRAY, estilo = Typeface.NORMAL
                 )
             )
         }
