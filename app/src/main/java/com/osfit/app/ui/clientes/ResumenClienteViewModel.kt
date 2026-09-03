@@ -30,6 +30,11 @@ class ResumenClienteViewModel(
     private val _generando = MutableStateFlow(false)
     val generando: StateFlow<Boolean> = _generando
 
+    /** 0f..1f mientras `generando` es true; sólo para feedback visual, no hay garantía de
+     *  linealidad real (el codificador puede fusionar/descartar frames de hardware). */
+    private val _progreso = MutableStateFlow(0f)
+    val progreso: StateFlow<Float> = _progreso
+
     /** Mensaje para mostrarle al entrenador (Toast); la pantalla lo limpia al consumirlo. */
     private val _mensaje = MutableStateFlow<String?>(null)
     val mensaje: StateFlow<String?> = _mensaje
@@ -64,6 +69,7 @@ class ResumenClienteViewModel(
     ) {
         if (_generando.value) return
         _generando.value = true
+        _progreso.value = 0f
         val contextoApp = context.applicationContext
         viewModelScope.launch {
             try {
@@ -72,7 +78,9 @@ class ResumenClienteViewModel(
                     _mensaje.value = "No se pudo calcular el resumen de este cliente"
                     return@launch
                 }
-                ResumenVideoGenerator.generarYCompartir(contextoApp, resumen)
+                ResumenVideoGenerator.generarYCompartir(contextoApp, resumen) { fraccion ->
+                    _progreso.value = fraccion
+                }
             } catch (e: CancellationException) {
                 // La cancelación (se cerró la pantalla) no es un error: debe seguir propagándose.
                 throw e
@@ -82,6 +90,7 @@ class ResumenClienteViewModel(
             } finally {
                 // En `finally` para que el botón no quede trabado aunque falle o se cancele.
                 _generando.value = false
+                _progreso.value = 0f
             }
         }
     }
