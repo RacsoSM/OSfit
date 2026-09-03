@@ -7,6 +7,7 @@ import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.TextStyle
 import java.util.Locale
+import kotlin.math.roundToInt
 import kotlin.random.Random
 
 enum class TipoResumen { SEMANAL, MENSUAL }
@@ -23,6 +24,12 @@ data class RankingResultado(
     val nombresPorEncima: List<String>
 )
 
+data class DesgloseEsfuerzo(
+    val minutosEntrenando: Int,
+    val minutosDescansando: Int,
+    val porcentajeEntrenando: Int
+)
+
 data class ResumenClienteData(
     val cliente: Cliente,
     val rango: RangoResumen,
@@ -32,7 +39,8 @@ data class ResumenClienteData(
     val rankingTiempo: RankingResultado,
     val diaFavoritoNombre: String?,
     val rachaMasLarga: Int?,
-    val rankingRacha: RankingResultado?
+    val rankingRacha: RankingResultado?,
+    val desgloseEsfuerzo: DesgloseEsfuerzo? = null
 )
 
 /**
@@ -111,6 +119,30 @@ object ResumenClienteCalculator {
         else -> "Échale ganitas jefe"
     }
 
+    fun calcularDesgloseEsfuerzo(
+        minutosEnGym: Int,
+        segundosPorEjercicio: Int?,
+        minutosDescanso: Double?
+    ): DesgloseEsfuerzo? {
+        if (segundosPorEjercicio == null || minutosDescanso == null) return null
+        if (minutosEnGym <= 0) return null
+        if (segundosPorEjercicio <= 0 || minutosDescanso < 0) return null
+
+        val ciclo = segundosPorEjercicio + minutosDescanso * 60
+        if (ciclo <= 0) return null
+
+        val fraccion = segundosPorEjercicio / ciclo
+        val minutosEntrenando = (minutosEnGym * fraccion).roundToInt()
+        val minutosDescansando = minutosEnGym - minutosEntrenando
+        val porcentajeEntrenando = (fraccion * 100).roundToInt()
+
+        return DesgloseEsfuerzo(
+            minutosEntrenando = minutosEntrenando,
+            minutosDescansando = minutosDescansando,
+            porcentajeEntrenando = porcentajeEntrenando
+        )
+    }
+
     fun calcularResumenCliente(
         cliente: Cliente,
         clientesActivos: List<Cliente>,
@@ -147,6 +179,12 @@ object ResumenClienteCalculator {
             rankingRacha = calcularRanking(valoresRacha, cliente.id)
         }
 
+        val desgloseEsfuerzo = calcularDesgloseEsfuerzo(
+            minutosEnGym = minutosEnGym,
+            segundosPorEjercicio = cliente.segundosPorEjercicio,
+            minutosDescanso = cliente.minutosDescanso
+        )
+
         return ResumenClienteData(
             cliente = cliente,
             rango = rango,
@@ -156,7 +194,8 @@ object ResumenClienteCalculator {
             rankingTiempo = rankingTiempo,
             diaFavoritoNombre = diaFavoritoNombre,
             rachaMasLarga = rachaMasLarga,
-            rankingRacha = rankingRacha
+            rankingRacha = rankingRacha,
+            desgloseEsfuerzo = desgloseEsfuerzo
         )
     }
 }

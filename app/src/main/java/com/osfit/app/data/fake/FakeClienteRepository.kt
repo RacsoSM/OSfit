@@ -136,10 +136,20 @@ class FakeClienteRepository : ClienteRepository {
         telefono: String,
         peso: Double?,
         altura: Double?,
-        edad: Int?
+        edad: Int?,
+        segundosPorEjercicio: Int?,
+        minutosDescanso: Double?
     ) {
         actualizarCliente(clienteId) {
-            it.copy(nombre = nombre, telefono = telefono, peso = peso, altura = altura, edad = edad)
+            it.copy(
+                nombre = nombre,
+                telefono = telefono,
+                peso = peso,
+                altura = altura,
+                edad = edad,
+                segundosPorEjercicio = segundosPorEjercicio,
+                minutosDescanso = minutosDescanso
+            )
         }
     }
 

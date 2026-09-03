@@ -16,7 +16,9 @@ interface ClienteRepository {
         telefono: String,
         peso: Double?,
         altura: Double?,
-        edad: Int?
+        edad: Int?,
+        segundosPorEjercicio: Int?,
+        minutosDescanso: Double?
     )
     suspend fun actualizarActivo(clienteId: String, activo: Boolean)
     /** "Asignar día": deja el ancla manual. No toca ningún registro de asistencia. */

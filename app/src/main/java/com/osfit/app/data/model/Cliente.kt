@@ -27,5 +27,7 @@ data class Cliente(
     val diaFavoritoIndex: Int? = null,
     val peso: Double? = null,
     val altura: Double? = null,
-    val edad: Int? = null
+    val edad: Int? = null,
+    val segundosPorEjercicio: Int? = null,
+    val minutosDescanso: Double? = null
 )

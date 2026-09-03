@@ -1,7 +1,7 @@
 package com.osfit.app.video
 
 import android.content.Context
-import android.graphics.Bitmap
+import android.graphics.Canvas
 import android.media.MediaCodec
 import android.media.MediaCodecInfo
 import android.media.MediaExtractor
@@ -13,6 +13,8 @@ import java.io.File
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 
 private data class MuestraCodificada(val datos: ByteArray, val info: MediaCodec.BufferInfo)
@@ -40,12 +42,13 @@ private class AcumuladorPcm(capacidadInicial: Int = 1 shl 16) {
 }
 
 /**
- * Codifica una lista de tarjetas (bitmaps fijos) como un video mp4: cada tarjeta se
- * mantiene [segundosPorTarjeta] segundos, con una pista de audio opcional (música de
- * fondo transcodificada a AAC) si `res/raw/resumen_musica.*` existe.
+ * Codifica un video mp4 haciendo que `dibujarFrame` pinte cada instante directamente sobre
+ * el canvas de la Surface de entrada del codificador: se generan
+ * `duracionTotalMs * fps / 1000` frames, con una pista de audio opcional (música de fondo
+ * transcodificada a AAC) si `res/raw/resumen_musica.*` existe.
  *
- * Los timestamps de video se asignan manualmente por índice de tarjeta (no hay pacing
- * en tiempo real): la tarjeta `i` se presenta en `i * segundosPorTarjeta` segundos.
+ * Los timestamps de video se asignan manualmente por índice de frame (no hay pacing en
+ * tiempo real): el frame `i` se presenta en `i / fps` segundos.
  */
 object ResumenVideoEncoder {
 
@@ -55,27 +58,65 @@ object ResumenVideoEncoder {
     private const val BIT_RATE_VIDEO = 4_000_000
     private const val BIT_RATE_AUDIO = 128_000
     private const val TIMEOUT_US = 10_000L
+
+    /**
+     * Tope de espera del drenaje final de video. Si el codificador nunca entrega el buffer
+     * marcado con END_OF_STREAM (se ha visto en hardware real quedándose corto por un frame),
+     * el bucle de drenaje sale al agotarse este tiempo en vez de girar para siempre: la
+     * post-condición posterior sobre el número de frames convierte el cuelgue indefinido en un
+     * error inmediato y diagnosticable.
+     */
+    private const val MAX_ESPERA_EOS_MS = 5_000L
+
+    /**
+     * Proporción mínima de frames codificados respecto a los pedidos para dar el video por
+     * bueno.
+     *
+     * La post-condición original exigía igualdad exacta, y con razón: cuando esta función
+     * codificaba 3-4 tarjetas estáticas, una muestra perdida era una pantalla entera de
+     * contenido desaparecida. A 30 fps una "muestra" es 1/30 de segundo: perder un par de
+     * frames deja el video 33-66 ms más corto, sin contenido faltante ni saltos visibles.
+     * Un codificador con entrada por Surface no garantiza correspondencia 1:1 entre los
+     * buffers posteados con `unlockCanvasAndPost()` y los buffers de salida (puede fusionar
+     * o descartar frames, sobre todo cuando el productor postea sin pacing en tiempo real,
+     * como hace el bucle de abajo). Con igualdad exacta esa diferencia imperceptible se
+     * convierte en un fallo total: el usuario no recibe ningún video.
+     *
+     * El guardia se mantiene, pero calibrado: salta cuando faltan tantos frames que el video
+     * sí quedaría degradado, y toda pérdida —aunque se tolere— se registra con Log.w.
+     */
+    private const val MIN_PROPORCION_FRAMES = 0.95
     private const val MUESTRAS_POR_FRAME_AAC = 1024
 
+    /**
+     * @param dibujarFrame pinta el frame del instante dado sobre el canvas que recibe (el de
+     *   la Surface de entrada del codificador). Se le exige limpiar el canvas: puede llegar
+     *   con contenido de un frame anterior.
+     */
     suspend fun generar(
-        tarjetas: List<Bitmap>,
-        segundosPorTarjeta: Int,
+        duracionTotalMs: Long,
+        fps: Int,
         context: Context,
-        salida: File
-    ) = withContext(Dispatchers.Default) {
-        require(tarjetas.isNotEmpty()) { "Debe haber al menos una tarjeta" }
-        require(segundosPorTarjeta > 0) { "segundosPorTarjeta debe ser positivo" }
-        val duracionTotalUs = tarjetas.size.toLong() * segundosPorTarjeta * 1_000_000L
+        salida: File,
+        dibujarFrame: (canvas: Canvas, tiempoMs: Long) -> Unit
+    ) = withContext<Unit>(Dispatchers.Default) {
+        require(duracionTotalMs > 0) { "duracionTotalMs debe ser positivo" }
+        require(fps > 0) { "fps debe ser positivo" }
 
-        val pistaVideo = codificarVideo(tarjetas, segundosPorTarjeta)
+        val inicioTotalNs = System.nanoTime()
+        val inicioVideoNs = System.nanoTime()
+        val pistaVideo = codificarVideo(duracionTotalMs, fps, dibujarFrame)
+        val msVideo = (System.nanoTime() - inicioVideoNs) / 1_000_000L
 
         // El audio es opcional: si el recurso no existe o falla la transcodificación,
         // se genera el video sin música en vez de abortar todo.
+        val inicioAudioNs = System.nanoTime()
         val pistaAudio = obtenerResIdMusica(context)?.let { resId ->
-            runCatching { codificarAudioDesdeRecurso(context, resId, duracionTotalUs) }
+            runCatching { codificarAudioDesdeRecurso(context, resId, duracionTotalMs * 1_000L) }
                 .onFailure { Log.w(TAG, "No se pudo transcodificar la música de fondo", it) }
                 .getOrNull()
         }?.takeIf { it.muestras.isNotEmpty() }
+        val msAudio = (System.nanoTime() - inicioAudioNs) / 1_000_000L
 
         salida.parentFile?.mkdirs()
         val muxer = MediaMuxer(salida.absolutePath, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4)
@@ -96,6 +137,14 @@ object ResumenVideoEncoder {
         } finally {
             muxer.release()
         }
+
+        // Diagnóstico de rendimiento (una sola línea, para leer desde adb logcat).
+        val msTotal = (System.nanoTime() - inicioTotalNs) / 1_000_000L
+        Log.i(
+            TAG,
+            "Video generado en $msTotal ms (frames: $msVideo ms, audio: $msAudio ms, " +
+                "${framesTotales(duracionTotalMs, fps)} frames a $fps fps)"
+        )
     }
 
     /**
@@ -109,12 +158,29 @@ object ResumenVideoEncoder {
 
     // ---------------------------------------------------------------- video
 
-    private fun codificarVideo(tarjetas: List<Bitmap>, segundosPorTarjeta: Int): PistaCodificada {
+    /** Frames que se van a postear para [duracionTotalMs] a [fps]. */
+    private fun framesTotales(duracionTotalMs: Long, fps: Int): Int =
+        ((duracionTotalMs * fps) / 1000L).toInt().coerceAtLeast(1)
+
+    /**
+     * `suspend` para poder cooperar con la cancelación: el bucle de frames no tiene ningún
+     * punto de suspensión propio, así que sin el `ensureActive()` de cada vuelta una
+     * generación abandonada (el usuario sale de la pantalla y se cancela el `viewModelScope`)
+     * seguía codificando sus ~870 frames a pleno CPU, compitiendo con la siguiente. Al
+     * lanzarse la `CancellationException` desde dentro del `try`, el `finally` igual libera
+     * el MediaCodec y la Surface.
+     */
+    private suspend fun codificarVideo(
+        duracionTotalMs: Long,
+        fps: Int,
+        dibujarFrame: (Canvas, Long) -> Unit
+    ): PistaCodificada {
+        val contexto = currentCoroutineContext()
         val format = MediaFormat.createVideoFormat(MediaFormat.MIMETYPE_VIDEO_AVC, ANCHO, ALTO).apply {
             setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface)
             setInteger(MediaFormat.KEY_BIT_RATE, BIT_RATE_VIDEO)
-            setInteger(MediaFormat.KEY_FRAME_RATE, 1)
-            setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 1)
+            setInteger(MediaFormat.KEY_FRAME_RATE, fps)
+            setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 2)
         }
         // La construcción/configure/start también van dentro del try: un MediaCodec que
         // se fuga bloquea el codificador de hardware para todo el dispositivo hasta que
@@ -122,24 +188,55 @@ object ResumenVideoEncoder {
         var encoder: MediaCodec? = null
         var surface: Surface? = null
 
-        val duracionFrameUs = segundosPorTarjeta * 1_000_000L
+        val totalFrames = framesTotales(duracionTotalMs, fps)
+        val duracionFrameUs = 1_000_000L / fps
         var salidaFormato: MediaFormat? = null
         val muestras = mutableListOf<MuestraCodificada>()
         val bufferInfo = MediaCodec.BufferInfo()
         // Cuenta sólo muestras reales escritas (los buffers de codec-config y el EOS
         // vacío no cuentan), de modo que pts = indiceMuestra * duracionFrameUs.
         var indiceMuestra = 0
+        // Se marca si el drenaje final salió por el tope de inactividad en vez de por el
+        // buffer con END_OF_STREAM, para que el mensaje del check() posterior distinga
+        // "el códec se colgó" de "el códec terminó bien pero perdió un frame".
+        var drenajeFinalAbandonado = false
 
         fun drenar(enc: MediaCodec, finalDeFlujo: Boolean) {
             if (finalDeFlujo) enc.signalEndOfInputStream()
+            // Reloj de inactividad del drenaje final: se mide con reloj de pared (y no
+            // sumando TIMEOUT_US por vuelta) para que el tope aplique a CUALQUIER camino
+            // del `when`, incluidos códigos de retorno inesperados sin rama propia.
+            // Con finalDeFlujo=false nunca se usa: el primer INFO_TRY_AGAIN_LATER ya
+            // devuelve el control al bucle de frames.
+            var inicioInactividadNs = System.nanoTime()
             while (true) {
                 val indiceSalida = enc.dequeueOutputBuffer(bufferInfo, TIMEOUT_US)
+                val inactividadMs = (System.nanoTime() - inicioInactividadNs) / 1_000_000L
                 when {
-                    indiceSalida == MediaCodec.INFO_TRY_AGAIN_LATER -> if (!finalDeFlujo) return
+                    indiceSalida == MediaCodec.INFO_TRY_AGAIN_LATER -> {
+                        if (!finalDeFlujo) return
+                        // La salida ya está completa: seguir esperando el buffer con
+                        // END_OF_STREAM no puede mejorarla, y en el dispositivo del usuario ese
+                        // buffer no llega nunca (se quemaban los 5 s del tope en cada video).
+                        if (muestras.size >= totalFrames) return
+                        if (inactividadMs >= MAX_ESPERA_EOS_MS) {
+                            Log.w(
+                                TAG,
+                                "El codificador de video no entregó END_OF_STREAM tras " +
+                                    "$MAX_ESPERA_EOS_MS ms; se abandona el drenaje final con " +
+                                    "${muestras.size} frames"
+                            )
+                            drenajeFinalAbandonado = true
+                            return
+                        }
+                    }
                     indiceSalida == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED -> {
                         salidaFormato = enc.outputFormat
+                        // Hubo avance: el tope de espera cuenta inactividad, no trabajo útil.
+                        inicioInactividadNs = System.nanoTime()
                     }
                     indiceSalida >= 0 -> {
+                        inicioInactividadNs = System.nanoTime()
                         val esCodecConfig =
                             bufferInfo.flags and MediaCodec.BUFFER_FLAG_CODEC_CONFIG != 0
                         // El csd (SPS/PPS) viaja en el MediaFormat de salida; MediaMuxer
@@ -167,6 +264,28 @@ object ResumenVideoEncoder {
                         enc.releaseOutputBuffer(indiceSalida, false)
                         if (bufferInfo.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM != 0) return
                     }
+                    // Códigos negativos sin rama propia (p.ej. el obsoleto
+                    // INFO_OUTPUT_BUFFERS_CHANGED). Esta rama es el `else` real del `when`:
+                    // ninguna combinación de código de retorno y `finalDeFlujo` puede quedar
+                    // sin salida acotada.
+                    else -> {
+                        // En el drenaje por frame (dentro del bucle principal) no hay nada que
+                        // esperar: igual que con INFO_TRY_AGAIN_LATER, se devuelve el control
+                        // de inmediato en vez de girar aquí.
+                        if (!finalDeFlujo) return
+                        // Misma salida temprana que arriba: con la salida ya completa no queda
+                        // nada que esperar.
+                        if (muestras.size >= totalFrames) return
+                        if (inactividadMs >= MAX_ESPERA_EOS_MS) {
+                            Log.w(
+                                TAG,
+                                "Drenaje final abandonado tras $MAX_ESPERA_EOS_MS ms sin avance " +
+                                    "(último código $indiceSalida) con ${muestras.size} frames"
+                            )
+                            drenajeFinalAbandonado = true
+                            return
+                        }
+                    }
                 }
             }
         }
@@ -179,15 +298,27 @@ object ResumenVideoEncoder {
             surface = sfc
             enc.start()
 
-            tarjetas.forEach { bitmap ->
+            for (indiceFrame in 0 until totalFrames) {
+                // Un frame es el grano de cancelación: si se canceló, se sale aquí (a lo sumo
+                // un frame tarde) y el finally libera códec y Surface.
+                contexto.ensureActive()
+                val tiempoMs = indiceFrame * 1000L / fps
+                // Se pinta directo sobre el canvas de la Surface: sin bitmap intermedia de
+                // pantalla completa por frame y sin el blit posterior.
                 val canvas = sfc.lockCanvas(null)
                 try {
-                    canvas.drawBitmap(bitmap, 0f, 0f, null)
+                    dibujarFrame(canvas, tiempoMs)
                 } finally {
                     sfc.unlockCanvasAndPost(canvas)
                 }
                 drenar(enc, finalDeFlujo = false)
             }
+            // Drenaje extra antes de señalar el fin de flujo: el pipeline interno del
+            // codificador con entrada por Surface tiene latencia (el propio códec reporta
+            // `latency = 4` en este dispositivo), así que el último unlockCanvasAndPost()
+            // puede no haberse latcheado todavía cuando se llama a signalEndOfInputStream().
+            // Esta pasada le da la oportunidad de emitir lo que ya tenga listo antes del EOS.
+            drenar(enc, finalDeFlujo = false)
             drenar(enc, finalDeFlujo = true)
         } finally {
             encoder?.let {
@@ -200,12 +331,33 @@ object ResumenVideoEncoder {
         val formatoFinal = checkNotNull(salidaFormato) {
             "El codificador de video nunca entregó su MediaFormat de salida (falta el csd)"
         }
-        // Post-condición fuerte: como las tarjetas se postean a la Surface una tras otra sin
-        // pacing en tiempo real, algunos codificadores pueden fusionar o descartar frames.
-        // Si eso pasa, el mp4 resultante sería válido y reproducible pero le faltarían
-        // tarjetas; mejor fallar aquí que compartirle al cliente un video incompleto.
-        check(muestras.size == tarjetas.size) {
-            "El codificador de video emitió ${muestras.size} de ${tarjetas.size} tarjetas"
+        // Post-condición: como los frames se postean a la Surface uno tras otro sin pacing en
+        // tiempo real, algunos codificadores pueden fusionar o descartar frames. Perder unos
+        // pocos a 30 fps es imperceptible (ver MIN_PROPORCION_FRAMES), pero perder muchos sí
+        // degrada el video, y cero frames nunca es aceptable: mejor fallar aquí que
+        // compartirle al cliente un video incompleto.
+        val minimoFrames = Math
+            .ceil(totalFrames * MIN_PROPORCION_FRAMES)
+            .toInt()
+            .coerceIn(1, totalFrames)
+        check(muestras.isNotEmpty() && muestras.size >= minimoFrames) {
+            val motivo = if (drenajeFinalAbandonado) {
+                " (drenaje final abandonado por timeout de $MAX_ESPERA_EOS_MS ms)"
+            } else {
+                ""
+            }
+            "El codificador de video emitió ${muestras.size} de $totalFrames frames " +
+                "(mínimo aceptable $minimoFrames)$motivo"
+        }
+        if (muestras.size != totalFrames) {
+            // Pérdida tolerada: el video es válido y se comparte, pero queda rastro del
+            // número exacto de frames que descartó este dispositivo para poder diagnosticarlo
+            // desde un reporte de error.
+            Log.w(
+                TAG,
+                "El codificador de video emitió ${muestras.size} de $totalFrames frames; " +
+                    "dentro de la tolerancia (mínimo $minimoFrames), se continúa"
+            )
         }
         return PistaCodificada(formatoFinal, muestras)
     }
