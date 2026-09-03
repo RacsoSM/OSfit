@@ -39,11 +39,12 @@ class ResumenVideoGeneratorTest {
         val rango = ResumenClienteCalculator.rangoSemanal(LocalDate.of(2024, 3, 20))
         val escenas = ResumenVideoGenerator.construirEscenas(resumen(rango))
 
-        assertEquals(4, escenas.size)
+        assertEquals(5, escenas.size)
         assertTrue(escenas[0] is EscenaResumen.Saludo)
         assertTrue(escenas[1] is EscenaResumen.Asistencia)
         assertTrue(escenas[2] is EscenaResumen.Tiempo)
         assertTrue(escenas[3] is EscenaResumen.DiaFavorito)
+        assertTrue(escenas[4] is EscenaResumen.Despedida)
     }
 
     @Test
@@ -51,9 +52,10 @@ class ResumenVideoGeneratorTest {
         val rango = ResumenClienteCalculator.rangoMensual(YearMonth.of(2024, 3))
         val escenas = ResumenVideoGenerator.construirEscenas(resumen(rango, racha = 5))
 
-        assertEquals(5, escenas.size)
+        assertEquals(6, escenas.size)
         assertTrue(escenas[4] is EscenaResumen.RachaMasLarga)
         assertEquals(5, (escenas[4] as EscenaResumen.RachaMasLarga).dias)
+        assertTrue(escenas[5] is EscenaResumen.Despedida)
     }
 
     @Test
@@ -61,7 +63,8 @@ class ResumenVideoGeneratorTest {
         val rango = ResumenClienteCalculator.rangoMensual(YearMonth.of(2024, 3))
         val escenas = ResumenVideoGenerator.construirEscenas(resumen(rango, racha = null))
 
-        assertEquals(4, escenas.size)
+        assertEquals(5, escenas.size)
+        assertTrue(escenas.none { it is EscenaResumen.RachaMasLarga })
     }
 
     @Test
@@ -70,12 +73,13 @@ class ResumenVideoGeneratorTest {
         val desglose = DesgloseEsfuerzo(minutosEntrenando = 16, minutosDescansando = 71, porcentajeEntrenando = 18)
         val escenas = ResumenVideoGenerator.construirEscenas(resumen(rango, desgloseEsfuerzo = desglose))
 
-        assertEquals(5, escenas.size)
+        assertEquals(6, escenas.size)
         assertTrue(escenas[0] is EscenaResumen.Saludo)
         assertTrue(escenas[1] is EscenaResumen.Asistencia)
         assertTrue(escenas[2] is EscenaResumen.Tiempo)
         assertTrue(escenas[3] is EscenaResumen.Esfuerzo)
         assertTrue(escenas[4] is EscenaResumen.DiaFavorito)
+        assertTrue(escenas[5] is EscenaResumen.Despedida)
     }
 
     @Test
@@ -83,12 +87,13 @@ class ResumenVideoGeneratorTest {
         val rango = ResumenClienteCalculator.rangoSemanal(LocalDate.of(2024, 3, 20))
         val escenas = ResumenVideoGenerator.construirEscenas(resumen(rango, desgloseEsfuerzo = null))
 
-        assertEquals(4, escenas.size)
+        assertEquals(5, escenas.size)
         assertTrue(escenas.none { it is EscenaResumen.Esfuerzo })
         assertTrue(escenas[0] is EscenaResumen.Saludo)
         assertTrue(escenas[1] is EscenaResumen.Asistencia)
         assertTrue(escenas[2] is EscenaResumen.Tiempo)
         assertTrue(escenas[3] is EscenaResumen.DiaFavorito)
+        assertTrue(escenas[4] is EscenaResumen.Despedida)
     }
 
     @Test
@@ -109,13 +114,14 @@ class ResumenVideoGeneratorTest {
         val desglose = DesgloseEsfuerzo(minutosEntrenando = 16, minutosDescansando = 71, porcentajeEntrenando = 18)
         val escenas = ResumenVideoGenerator.construirEscenas(resumen(rango, racha = 5, desgloseEsfuerzo = desglose))
 
-        assertEquals(6, escenas.size)
+        assertEquals(7, escenas.size)
         assertTrue(escenas[0] is EscenaResumen.Saludo)
         assertTrue(escenas[1] is EscenaResumen.Asistencia)
         assertTrue(escenas[2] is EscenaResumen.Tiempo)
         assertTrue(escenas[3] is EscenaResumen.Esfuerzo)
         assertTrue(escenas[4] is EscenaResumen.DiaFavorito)
         assertTrue(escenas[5] is EscenaResumen.RachaMasLarga)
+        assertTrue(escenas[6] is EscenaResumen.Despedida)
     }
 
     @Test

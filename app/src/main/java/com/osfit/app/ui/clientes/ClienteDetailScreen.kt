@@ -283,16 +283,21 @@ fun ClienteDetailScreen(
                         modifier = Modifier.weight(1f),
                         onClick = { mostrarDialogoSoborno = true }
                     )
-                    Spacer(modifier = Modifier.weight(1f))
+                    AccionCard(
+                        icono = Icons.Filled.Videocam,
+                        texto = if (generandoResumen) "Generando... ${(progresoResumen * 100).toInt()}%" else "Resumen semanal",
+                        modifier = Modifier.weight(1f),
+                        onClick = { resumenViewModel.generarResumenSemanal(context) }
+                    )
                 }
             }
             item {
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     AccionCard(
                         icono = Icons.Filled.Videocam,
-                        texto = if (generandoResumen) "Generando... ${(progresoResumen * 100).toInt()}%" else "Resumen semanal",
+                        texto = if (generandoResumen) "Generando... ${(progresoResumen * 100).toInt()}%" else "Resumen quincenal",
                         modifier = Modifier.weight(1f),
-                        onClick = { resumenViewModel.generarResumenSemanal(context) }
+                        onClick = { resumenViewModel.generarResumenQuincenal(context) }
                     )
                     AccionCard(
                         icono = Icons.Filled.Videocam,

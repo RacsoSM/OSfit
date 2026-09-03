@@ -157,6 +157,12 @@ class FakeClienteRepository : ClienteRepository {
         actualizarCliente(clienteId) { it.copy(activo = activo) }
     }
 
+    override suspend fun actualizarCancion(clienteId: String, archivo: String?, inicioSegundos: Int?) {
+        actualizarCliente(clienteId) {
+            it.copy(cancionArchivo = archivo, cancionInicioSegundos = inicioSegundos)
+        }
+    }
+
     override suspend fun asignarDiaAncla(clienteId: String, diaIndex: Int, fecha: String) {
         actualizarCliente(clienteId) {
             it.copy(diaActualIndex = diaIndex, diaAnclaFecha = fecha)

@@ -10,7 +10,7 @@ import java.util.Locale
 import kotlin.math.roundToInt
 import kotlin.random.Random
 
-enum class TipoResumen { SEMANAL, MENSUAL }
+enum class TipoResumen { SEMANAL, QUINCENAL, MENSUAL }
 
 data class RangoResumen(
     val inicio: LocalDate,
@@ -71,6 +71,28 @@ object ResumenClienteCalculator {
             tipo = TipoResumen.SEMANAL,
             encabezado = "Semana ${numeroSemanaDelMes(viernes)} de $nombreMes"
         )
+    }
+
+    /**
+     * Quincena de nómina: días 1-15 y 16-fin de mes, según en cuál caiga [fechaReferencia].
+     */
+    fun rangoQuincenal(fechaReferencia: LocalDate): RangoResumen {
+        val nombreMes = fechaReferencia.month.getDisplayName(TextStyle.FULL, Locale("es"))
+        return if (fechaReferencia.dayOfMonth <= 15) {
+            RangoResumen(
+                inicio = fechaReferencia.withDayOfMonth(1),
+                fin = fechaReferencia.withDayOfMonth(15),
+                tipo = TipoResumen.QUINCENAL,
+                encabezado = "1ra quincena de $nombreMes"
+            )
+        } else {
+            RangoResumen(
+                inicio = fechaReferencia.withDayOfMonth(16),
+                fin = YearMonth.from(fechaReferencia).atEndOfMonth(),
+                tipo = TipoResumen.QUINCENAL,
+                encabezado = "2da quincena de $nombreMes"
+            )
+        }
     }
 
     fun rangoMensual(mes: YearMonth): RangoResumen {
@@ -166,7 +188,7 @@ object ResumenClienteCalculator {
 
         var rachaMasLarga: Int? = null
         var rankingRacha: RankingResultado? = null
-        if (rango.tipo == TipoResumen.MENSUAL) {
+        if (rango.tipo == TipoResumen.MENSUAL || rango.tipo == TipoResumen.QUINCENAL) {
             // La racha es lo único donde una falta justificada ("soborno") cuenta como
             // asistencia, así que se parte de todos los registros, no solo de los asistidos.
             val registrosPorCliente = asistenciasEnRango.groupBy { it.clienteId }

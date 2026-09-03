@@ -29,5 +29,9 @@ data class Cliente(
     val altura: Double? = null,
     val edad: Int? = null,
     val segundosPorEjercicio: Int? = null,
-    val minutosDescanso: Double? = null
+    val minutosDescanso: Double? = null,
+    // Nombre del archivo dentro de filesDir/canciones/ (no la URI original: se copia al
+    // elegirla para no depender de un permiso de content:// que puede revocarse).
+    val cancionArchivo: String? = null,
+    val cancionInicioSegundos: Int? = null
 )

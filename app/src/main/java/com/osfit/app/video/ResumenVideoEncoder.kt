@@ -98,6 +98,10 @@ object ResumenVideoEncoder {
         fps: Int,
         context: Context,
         salida: File,
+        // Canción personalizada del cliente; si es null o no existe en disco, se cae al
+        // recurso `res/raw/resumen_musica.*` empacado en el APK.
+        archivoMusica: File? = null,
+        inicioMusicaSegundos: Int = 0,
         onProgreso: (Float) -> Unit = {},
         dibujarFrame: (canvas: Canvas, tiempoMs: Long) -> Unit
     ) = withContext<Unit>(Dispatchers.Default) {
@@ -113,14 +117,21 @@ object ResumenVideoEncoder {
         }
         val msVideo = (System.nanoTime() - inicioVideoNs) / 1_000_000L
 
-        // El audio es opcional: si el recurso no existe o falla la transcodificación,
-        // se genera el video sin música en vez de abortar todo.
+        // El audio es opcional: si no hay canción personalizada ni recurso empacado, o falla
+        // la transcodificación, se genera el video sin música en vez de abortar todo.
         val inicioAudioNs = System.nanoTime()
-        val pistaAudio = obtenerResIdMusica(context)?.let { resId ->
-            runCatching { codificarAudioDesdeRecurso(context, resId, duracionTotalMs * 1_000L) }
-                .onFailure { Log.w(TAG, "No se pudo transcodificar la música de fondo", it) }
-                .getOrNull()
-        }?.takeIf { it.muestras.isNotEmpty() }
+        val pistaAudio = runCatching {
+            if (archivoMusica != null && archivoMusica.exists()) {
+                codificarAudioDesdeArchivo(
+                    archivoMusica, inicioMusicaSegundos * 1_000_000L, duracionTotalMs * 1_000L
+                )
+            } else {
+                obtenerResIdMusica(context)?.let { resId ->
+                    codificarAudioDesdeRecurso(context, resId, duracionTotalMs * 1_000L)
+                }
+            }
+        }.onFailure { Log.w(TAG, "No se pudo transcodificar la música de fondo", it) }
+            .getOrNull()?.takeIf { it.muestras.isNotEmpty() }
         val msAudio = (System.nanoTime() - inicioAudioNs) / 1_000_000L
 
         salida.parentFile?.mkdirs()
@@ -377,7 +388,15 @@ object ResumenVideoEncoder {
         resId: Int,
         duracionObjetivoUs: Long
     ): PistaCodificada? {
-        val pcm = decodificarAPcm(context, resId, duracionObjetivoUs)
+        val pcm = decodificarAPcm(duracionObjetivoUs, inicioUs = 0L) { extractor ->
+            val afd = context.resources.openRawResourceFd(resId)
+                ?: error("El recurso de música no se puede abrir como fd (¿está comprimido?)")
+            try {
+                extractor.setDataSource(afd.fileDescriptor, afd.startOffset, afd.length)
+            } finally {
+                afd.close()
+            }
+        }
         if (pcm.datos.isEmpty()) return null
         val pcmLoop = repetirHastaDuracion(pcm, duracionObjetivoUs)
         if (pcmLoop.datos.isEmpty()) return null
@@ -385,12 +404,36 @@ object ResumenVideoEncoder {
     }
 
     /**
-     * Decodifica el recurso a PCM 16 bits. Deja de decodificar en cuanto tiene suficiente
-     * material para [duracionObjetivoUs] (evita cargar en memoria pistas muy largas).
+     * Igual que [codificarAudioDesdeRecurso] pero desde un archivo en disco (la canción
+     * personalizada de un cliente), arrancando en [inicioUs] en vez de en el segundo 0: es
+     * el fragmento que el trainer eligió en el preview de Editar cliente.
      */
-    private fun decodificarAPcm(context: Context, resId: Int, duracionObjetivoUs: Long): Pcm {
-        val afd = context.resources.openRawResourceFd(resId)
-            ?: error("El recurso de música no se puede abrir como fd (¿está comprimido?)")
+    private fun codificarAudioDesdeArchivo(
+        archivo: File,
+        inicioUs: Long,
+        duracionObjetivoUs: Long
+    ): PistaCodificada? {
+        val pcm = decodificarAPcm(duracionObjetivoUs, inicioUs) { extractor ->
+            extractor.setDataSource(archivo.absolutePath)
+        }
+        if (pcm.datos.isEmpty()) return null
+        val pcmLoop = repetirHastaDuracion(pcm, duracionObjetivoUs)
+        if (pcmLoop.datos.isEmpty()) return null
+        return codificarPcmAAac(pcmLoop)
+    }
+
+    /**
+     * Decodifica a PCM 16 bits la fuente que arma [configurarFuente] sobre el extractor.
+     * Deja de decodificar en cuanto tiene suficiente material para [duracionObjetivoUs]
+     * (evita cargar en memoria pistas muy largas). El seek a [inicioUs] se hace DESPUÉS de
+     * seleccionar la pista: `MediaExtractor.seekTo()` no tiene efecto sobre pistas que
+     * todavía no se seleccionaron con `selectTrack()`.
+     */
+    private fun decodificarAPcm(
+        duracionObjetivoUs: Long,
+        inicioUs: Long,
+        configurarFuente: (MediaExtractor) -> Unit
+    ): Pcm {
         val extractor = MediaExtractor()
         // El decodificador se construye DENTRO del try: si configure()/start() lanza,
         // el finally igual libera extractor y códec (un MediaCodec fugado bloquea el
@@ -401,11 +444,7 @@ object ResumenVideoEncoder {
         var canales = 0
 
         try {
-            try {
-                extractor.setDataSource(afd.fileDescriptor, afd.startOffset, afd.length)
-            } finally {
-                afd.close()
-            }
+            configurarFuente(extractor)
 
             var trackIndex = -1
             var format: MediaFormat? = null
@@ -420,6 +459,7 @@ object ResumenVideoEncoder {
             val formatoEntrada =
                 requireNotNull(format) { "El archivo de música no tiene pista de audio" }
             extractor.selectTrack(trackIndex)
+            if (inicioUs > 0) extractor.seekTo(inicioUs, MediaExtractor.SEEK_TO_CLOSEST_SYNC)
 
             sampleRate = formatoEntrada.getInteger(MediaFormat.KEY_SAMPLE_RATE)
             canales = formatoEntrada.getInteger(MediaFormat.KEY_CHANNEL_COUNT)

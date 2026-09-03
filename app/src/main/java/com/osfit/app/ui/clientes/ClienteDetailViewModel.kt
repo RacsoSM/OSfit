@@ -115,6 +115,12 @@ class ClienteDetailViewModel(
         }
     }
 
+    fun actualizarCancion(archivo: String?, inicioSegundos: Int?) {
+        viewModelScope.launch {
+            clienteRepository.actualizarCancion(clienteId, archivo, inicioSegundos)
+        }
+    }
+
     fun asignarDiaActual(diaIndex: Int) {
         viewModelScope.launch {
             clienteRepository.asignarDiaAncla(clienteId, diaIndex, LocalDate.now().toString())

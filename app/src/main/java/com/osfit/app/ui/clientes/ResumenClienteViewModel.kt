@@ -47,6 +47,10 @@ class ResumenClienteViewModel(
         generarYCompartir(context) { calcularResumenSemanal(fechaReferencia) }
     }
 
+    fun generarResumenQuincenal(context: Context, fechaReferencia: LocalDate = LocalDate.now()) {
+        generarYCompartir(context) { calcularResumenQuincenal(fechaReferencia) }
+    }
+
     fun generarResumenMensual(context: Context, mes: YearMonth = YearMonth.now()) {
         generarYCompartir(context) { calcularResumenMensual(mes) }
     }
@@ -97,6 +101,9 @@ class ResumenClienteViewModel(
 
     suspend fun calcularResumenSemanal(fechaReferencia: LocalDate = LocalDate.now()): ResumenClienteData? =
         calcularResumen(ResumenClienteCalculator.rangoSemanal(fechaReferencia))
+
+    suspend fun calcularResumenQuincenal(fechaReferencia: LocalDate = LocalDate.now()): ResumenClienteData? =
+        calcularResumen(ResumenClienteCalculator.rangoQuincenal(fechaReferencia))
 
     suspend fun calcularResumenMensual(mes: YearMonth = YearMonth.now()): ResumenClienteData? =
         calcularResumen(ResumenClienteCalculator.rangoMensual(mes))

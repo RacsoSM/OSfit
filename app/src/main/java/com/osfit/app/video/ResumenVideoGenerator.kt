@@ -3,6 +3,7 @@ package com.osfit.app.video
 import android.content.Context
 import com.osfit.app.domain.ResumenClienteData
 import com.osfit.app.domain.TipoResumen
+import com.osfit.app.util.CancionUtil
 import com.osfit.app.util.CompartirUtil
 import java.io.File
 import java.time.format.DateTimeFormatter
@@ -33,11 +34,14 @@ object ResumenVideoGenerator {
         // Una instancia de fondo por generación: su bitmap y sus paints son estado mutable,
         // y dos generaciones solapadas se corromperían los frames si lo compartieran.
         val fondo = FondoBlobRenderer()
+        val cancionArchivo = resumen.cliente.cancionArchivo
         ResumenVideoEncoder.generar(
             duracionTotalMs = timeline.duracionTotalMs,
             fps = FPS,
             context = context,
             salida = salida,
+            archivoMusica = cancionArchivo?.let { CancionUtil.archivoCancion(context, it) },
+            inicioMusicaSegundos = resumen.cliente.cancionInicioSegundos ?: 0,
             onProgreso = onProgreso
         ) { canvas, tiempoMs ->
             ResumenFrameRenderer.dibujarFrame(canvas, timeline, fondo, tiempoMs)
@@ -60,7 +64,11 @@ object ResumenVideoGenerator {
     }
 
     fun construirEscenas(resumen: ResumenClienteData): List<EscenaResumen> {
-        val unidad = if (resumen.rango.tipo == TipoResumen.SEMANAL) "semana" else "mes"
+        val unidad = when (resumen.rango.tipo) {
+            TipoResumen.SEMANAL -> "semana"
+            TipoResumen.QUINCENAL -> "quincena"
+            TipoResumen.MENSUAL -> "mes"
+        }
         val encabezadoRango = if (resumen.rango.tipo == TipoResumen.SEMANAL) {
             "Semana del ${resumen.rango.inicio.format(FORMATO_DIA_MES)} al ${resumen.rango.fin.format(FORMATO_DIA_MES)}"
         } else {
@@ -95,7 +103,8 @@ object ResumenVideoGenerator {
         )
         val racha = resumen.rachaMasLarga
         val rankingRacha = resumen.rankingRacha
-        if (resumen.rango.tipo == TipoResumen.MENSUAL && racha != null && rankingRacha != null) {
+        val incluyeRacha = resumen.rango.tipo == TipoResumen.MENSUAL || resumen.rango.tipo == TipoResumen.QUINCENAL
+        if (incluyeRacha && racha != null && rankingRacha != null) {
             escenas += EscenaResumen.RachaMasLarga(dias = racha, ranking = rankingRacha)
         }
         escenas += EscenaResumen.Despedida

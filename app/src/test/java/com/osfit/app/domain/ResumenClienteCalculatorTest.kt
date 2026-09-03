@@ -45,6 +45,24 @@ class ResumenClienteCalculatorTest {
     }
 
     @Test
+    fun `rangoQuincenal arma el 1-15 cuando la fecha cae en la primera mitad del mes`() {
+        val rango = ResumenClienteCalculator.rangoQuincenal(LocalDate.of(2024, 3, 8))
+        assertEquals(LocalDate.of(2024, 3, 1), rango.inicio)
+        assertEquals(LocalDate.of(2024, 3, 15), rango.fin)
+        assertEquals(TipoResumen.QUINCENAL, rango.tipo)
+        assertEquals("1ra quincena de marzo", rango.encabezado)
+    }
+
+    @Test
+    fun `rangoQuincenal arma el 16-fin de mes cuando la fecha cae en la segunda mitad del mes`() {
+        val rango = ResumenClienteCalculator.rangoQuincenal(LocalDate.of(2024, 3, 20))
+        assertEquals(LocalDate.of(2024, 3, 16), rango.inicio)
+        assertEquals(LocalDate.of(2024, 3, 31), rango.fin)
+        assertEquals(TipoResumen.QUINCENAL, rango.tipo)
+        assertEquals("2da quincena de marzo", rango.encabezado)
+    }
+
+    @Test
     fun `leyendaPorPuesto devuelve el mensaje correcto segun el puesto`() {
         assertEquals("¡Felicidades, tú eres el mejor!", ResumenClienteCalculator.leyendaPorPuesto(1))
         assertEquals("¡Felicidades, estás en el podio, sigue así!", ResumenClienteCalculator.leyendaPorPuesto(2))
