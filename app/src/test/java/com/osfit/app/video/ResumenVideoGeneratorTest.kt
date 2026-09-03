@@ -2,6 +2,7 @@ package com.osfit.app.video
 
 import com.osfit.app.data.model.Cliente
 import com.osfit.app.domain.DesgloseEsfuerzo
+import com.osfit.app.domain.PuntoTiempoDiario
 import com.osfit.app.domain.RangoResumen
 import com.osfit.app.domain.RankingResultado
 import com.osfit.app.domain.ResumenClienteCalculator
@@ -20,7 +21,8 @@ class ResumenVideoGeneratorTest {
     private fun resumen(
         rango: RangoResumen,
         racha: Int? = null,
-        desgloseEsfuerzo: DesgloseEsfuerzo? = null
+        desgloseEsfuerzo: DesgloseEsfuerzo? = null,
+        tiempoPorDia: List<PuntoTiempoDiario> = emptyList()
     ): ResumenClienteData = ResumenClienteData(
         cliente = Cliente(id = "c1", nombre = "Ana"),
         rango = rango,
@@ -31,8 +33,21 @@ class ResumenVideoGeneratorTest {
         diaFavoritoNombre = "Lunes",
         rachaMasLarga = racha,
         rankingRacha = if (racha != null) ranking else null,
-        desgloseEsfuerzo = desgloseEsfuerzo
+        desgloseEsfuerzo = desgloseEsfuerzo,
+        tiempoPorDia = tiempoPorDia
     )
+
+    @Test
+    fun `la escena Tiempo lleva el tiempoPorDia del resumen`() {
+        val rango = ResumenClienteCalculator.rangoSemanal(LocalDate.of(2024, 3, 20))
+        val valores = listOf(45, 0, 60, 0, 30).mapIndexed { indice, minutos ->
+            PuntoTiempoDiario(rango.inicio.plusDays(indice.toLong()), minutos)
+        }
+        val escenas = ResumenVideoGenerator.construirEscenas(resumen(rango, tiempoPorDia = valores))
+
+        val tiempo = escenas[2] as EscenaResumen.Tiempo
+        assertEquals(valores, tiempo.tiempoPorDia)
+    }
 
     @Test
     fun `el resumen semanal arma Saludo, Asistencia, Tiempo y DiaFavorito, sin RachaMasLarga`() {

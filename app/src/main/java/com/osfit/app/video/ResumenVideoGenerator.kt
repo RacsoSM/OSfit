@@ -84,7 +84,8 @@ object ResumenVideoGenerator {
             ),
             EscenaResumen.Tiempo(
                 minutos = resumen.minutosEnGym,
-                ranking = resumen.rankingTiempo
+                ranking = resumen.rankingTiempo,
+                tiempoPorDia = resumen.tiempoPorDia
             )
         )
         val desglose = resumen.desgloseEsfuerzo

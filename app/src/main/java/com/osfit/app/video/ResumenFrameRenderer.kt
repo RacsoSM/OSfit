@@ -2,13 +2,17 @@ package com.osfit.app.video
 
 import android.graphics.Canvas
 import android.graphics.Color
+import android.graphics.Paint
+import android.graphics.Path
 import android.graphics.Typeface
 import android.text.Layout
 import android.text.SpannableStringBuilder
 import android.text.StaticLayout
 import android.text.TextPaint
 import android.text.style.ForegroundColorSpan
+import com.osfit.app.domain.PuntoTiempoDiario
 import com.osfit.app.domain.RankingResultado
+import java.time.format.DateTimeFormatter
 
 private data class Resaltado(val rango: IntRange, val color: Int)
 
@@ -42,6 +46,19 @@ object ResumenFrameRenderer {
     private const val VELOCIDAD_SALUDO_MS_POR_CARACTER = 2_000.0 / 13.0
     private const val ANCHO_DEFECTO = 1080
     private const val ALTO_DEFECTO = 1920
+
+    /** La gráfica de la escena Tiempo aparece justo después de que termina de escribirse
+     *  el número grande (900ms de inicio + 2400ms de máquina de escribir). */
+    private const val GRAFICA_INICIO_MS = 3_400L
+    private const val GRAFICA_FADE_MS = 600L
+    /** El texto de "en qué lugar quedó" se corrió 15% de la altura del video (1920 * 0.15)
+     *  hacia abajo, a pedido del trainer. */
+    private const val DESPLAZAMIENTO_ABAJO = ALTO_DEFECTO * 0.15f
+    /** La gráfica en sí se corrió esos mismos 15% hacia abajo y luego 10% de vuelta hacia
+     *  arriba (1920 * 0.10), también a pedido del trainer — el texto del lugar no se movió
+     *  con ella, por eso lleva su propio desplazamiento en vez de reusar el de arriba. */
+    private const val DESPLAZAMIENTO_GRAFICA = DESPLAZAMIENTO_ABAJO - ALTO_DEFECTO * 0.10f
+    private val FORMATO_FECHA_EJE = DateTimeFormatter.ofPattern("dd/MM")
 
     /**
      * Pinta el frame de [tiempoGlobalMs] directamente sobre [canvas] —el de la Surface del
@@ -89,6 +106,9 @@ object ResumenFrameRenderer {
                 }
                 dibujarTexto(canvas, texto, ancho, bloque.y, bloque.tamano, bloque.color, bloque.estilo, alpha, resaltadosVisibles)
             }
+        }
+        if (escena is EscenaResumen.Tiempo) {
+            dibujarGraficaTiempo(canvas, ancho, escena.tiempoPorDia, elapsedMs, alpha)
         }
     }
 
@@ -140,7 +160,8 @@ object ResumenFrameRenderer {
                 BloqueTexto("${horas}h ${minutos}min", inicioMs = 900, duracionMs = 2_400, y = 800f, tamano = 96f, color = DESTACADO, estilo = Typeface.BOLD),
                 BloqueTexto(
                     comparacion(escena.ranking, "¡Vas primero en tiempo asistido!", "tiempo asistido"),
-                    inicioMs = 4_000, duracionMs = 1_500, y = 1500f, tamano = 48f, color = Color.LTGRAY, estilo = Typeface.NORMAL
+                    inicioMs = 4_000, duracionMs = 1_500,
+                    y = 1500f + DESPLAZAMIENTO_ABAJO, tamano = 48f, color = Color.LTGRAY, estilo = Typeface.NORMAL
                 )
             )
         }
@@ -153,6 +174,8 @@ object ResumenFrameRenderer {
             val inicioEntrenando = prefijoEntrenando.length
             val finEntrenando = inicioEntrenando + tiempoEntrenando.length
             val inicioDescansando = finEntrenando + medio.length
+            val inicioPorcentaje = 900 + (texto.length * VELOCIDAD_DESTACADO_MS_POR_CARACTER).toLong() + 500
+            val duracionPorcentaje = 1_200L
             listOf(
                 BloqueTexto(
                     "De tu tiempo asistido, ${formatoDuracion(escena.minutosTotales)}",
@@ -170,8 +193,14 @@ object ResumenFrameRenderer {
                 ),
                 BloqueTexto(
                     "Lo cual representa un ${escena.desglose.porcentajeEntrenando}% del total del tiempo",
-                    inicioMs = 900 + (texto.length * VELOCIDAD_DESTACADO_MS_POR_CARACTER).toLong() + 500,
-                    duracionMs = 1_200, y = 1500f, tamano = 48f, color = Color.LTGRAY, estilo = Typeface.NORMAL
+                    inicioMs = inicioPorcentaje,
+                    duracionMs = duracionPorcentaje, y = 1500f, tamano = 48f, color = Color.LTGRAY, estilo = Typeface.NORMAL
+                ),
+                // Aparece 500ms después de que termina de escribirse la línea del porcentaje.
+                BloqueTexto(
+                    "No te espantes, lo normal es entre 15% y 25%",
+                    inicioMs = inicioPorcentaje + duracionPorcentaje + 500,
+                    duracionMs = 1_200, y = 1580f, tamano = 40f, color = Color.LTGRAY, estilo = Typeface.NORMAL
                 )
             )
         }
@@ -264,6 +293,105 @@ object ResumenFrameRenderer {
         canvas.save()
         canvas.translate(margen.toFloat(), y)
         layout.draw(canvas)
+        canvas.restore()
+    }
+
+    /**
+     * Línea de minutos por día del rango. Un solo trazo, un solo color —el mismo [DESTACADO]
+     * del número grande de arriba, para que se lea como parte del mismo dato—, con puntos
+     * solo en los días con asistencia real. Eje Y a la izquierda ("Minutos por día", vertical)
+     * y eje X abajo con la fecha de cada día en formato dd/MM, también vertical: a esta escala
+     * (hasta 31 puntos en un resumen mensual) una etiqueta horizontal por día se encimaría con
+     * la siguiente.
+     */
+    private fun dibujarGraficaTiempo(
+        canvas: Canvas, ancho: Int, valores: List<PuntoTiempoDiario>, elapsedMs: Long, alphaEscena: Float
+    ) {
+        if (valores.size < 2) return
+        val maximo = valores.maxOf { it.minutos }
+        if (maximo <= 0) return
+
+        val progreso = ((elapsedMs - GRAFICA_INICIO_MS).coerceIn(0L, GRAFICA_FADE_MS)).toFloat() / GRAFICA_FADE_MS
+        if (progreso <= 0f) return
+        val alphaAplicado = (255 * progreso * alphaEscena).toInt().coerceIn(0, 255)
+
+        // izquierda queda más adentro que el margen general: entre margen y ella va la
+        // etiqueta vertical del eje Y.
+        val margen = 80f
+        val izquierda = 150f
+        val derecha = ancho - margen
+        val arriba = 1060f + DESPLAZAMIENTO_GRAFICA
+        val abajo = 1380f + DESPLAZAMIENTO_GRAFICA
+        val pasoX = (derecha - izquierda) / (valores.size - 1)
+        fun puntoX(indice: Int) = izquierda + pasoX * indice
+        fun puntoY(minutos: Int) = abajo - (minutos.toFloat() / maximo) * (abajo - arriba)
+
+        val paintBase = Paint().apply {
+            isAntiAlias = true
+            color = Color.WHITE
+            alpha = (alphaAplicado * 0.25f).toInt()
+            strokeWidth = 2f
+        }
+        canvas.drawLine(izquierda, abajo, derecha, abajo, paintBase)
+
+        val trazo = Path()
+        valores.forEachIndexed { indice, punto ->
+            val x = puntoX(indice)
+            val y = puntoY(punto.minutos)
+            if (indice == 0) trazo.moveTo(x, y) else trazo.lineTo(x, y)
+        }
+        val paintLinea = Paint().apply {
+            isAntiAlias = true
+            color = DESTACADO
+            alpha = alphaAplicado
+            style = Paint.Style.STROKE
+            strokeWidth = 5f
+            strokeCap = Paint.Cap.ROUND
+            strokeJoin = Paint.Join.ROUND
+        }
+        canvas.drawPath(trazo, paintLinea)
+
+        val paintPunto = Paint().apply {
+            isAntiAlias = true
+            color = DESTACADO
+            alpha = alphaAplicado
+            style = Paint.Style.FILL
+        }
+        valores.forEachIndexed { indice, punto ->
+            if (punto.minutos > 0) canvas.drawCircle(puntoX(indice), puntoY(punto.minutos), 8f, paintPunto)
+        }
+
+        dibujarTextoVertical(
+            canvas, "Minutos por día", x = 110f, y = (arriba + abajo) / 2f,
+            tamano = 32f, color = Color.LTGRAY, alphaAplicado = alphaAplicado, alineacion = Paint.Align.CENTER
+        )
+        valores.forEachIndexed { indice, punto ->
+            dibujarTextoVertical(
+                canvas, punto.fecha.format(FORMATO_FECHA_EJE), x = puntoX(indice), y = abajo + 12f,
+                tamano = 22f, color = Color.LTGRAY, alphaAplicado = alphaAplicado, alineacion = Paint.Align.RIGHT
+            )
+        }
+    }
+
+    /** Dibuja [texto] rotado 90° en sentido antihorario (se lee de abajo hacia arriba),
+     *  anclado en ([x], [y]) según [alineacion]. Usado para las etiquetas de los ejes de
+     *  [dibujarGraficaTiempo], donde una etiqueta horizontal por punto no entra. */
+    private fun dibujarTextoVertical(
+        canvas: Canvas, texto: String, x: Float, y: Float,
+        tamano: Float, color: Int, alphaAplicado: Int, alineacion: Paint.Align
+    ) {
+        val paint = Paint().apply {
+            isAntiAlias = true
+            this.color = color
+            alpha = alphaAplicado
+            textSize = tamano
+            typeface = Typeface.DEFAULT
+            textAlign = alineacion
+        }
+        canvas.save()
+        canvas.translate(x, y)
+        canvas.rotate(-90f)
+        canvas.drawText(texto, 0f, 0f, paint)
         canvas.restore()
     }
 }

@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Chat
@@ -33,6 +34,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -51,13 +53,20 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.osfit.app.data.model.Rutina
+import com.osfit.app.domain.RangoResumen
+import com.osfit.app.domain.ResumenClienteCalculator
 import com.osfit.app.domain.RutinaProgressCalculator
+import com.osfit.app.domain.TipoResumen
 import com.osfit.app.ui.common.AccionCard
 import com.osfit.app.ui.common.AsignarDiaDialog
 import com.osfit.app.ui.common.RachaBadge
 import com.osfit.app.ui.common.TextoMaquinaEscribir
 import com.osfit.app.ui.common.rememberFechaActual
 import com.osfit.app.util.WhatsAppUtil
+import java.time.LocalDate
+import java.time.YearMonth
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 @Composable
 fun ClienteDetailScreen(
@@ -93,6 +102,9 @@ fun ClienteDetailScreen(
     var mostrarDialogoSoborno by remember { mutableStateOf(false) }
     var mostrarConfirmacionActivo by remember { mutableStateOf(false) }
     var mostrarConfirmacionEliminar by remember { mutableStateOf(false) }
+    // Qué tipo de resumen se está por generar, mientras el trainer elige la fecha del rango
+    // en SeleccionarRangoResumenDialog; null = el diálogo está cerrado.
+    var tipoResumenParaFecha by remember { mutableStateOf<TipoResumen?>(null) }
 
     androidx.compose.runtime.LaunchedEffect(eliminado) {
         if (eliminado) onEliminado()
@@ -287,7 +299,7 @@ fun ClienteDetailScreen(
                         icono = Icons.Filled.Videocam,
                         texto = if (generandoResumen) "Generando... ${(progresoResumen * 100).toInt()}%" else "Resumen semanal",
                         modifier = Modifier.weight(1f),
-                        onClick = { resumenViewModel.generarResumenSemanal(context) }
+                        onClick = { tipoResumenParaFecha = TipoResumen.SEMANAL }
                     )
                 }
             }
@@ -297,13 +309,13 @@ fun ClienteDetailScreen(
                         icono = Icons.Filled.Videocam,
                         texto = if (generandoResumen) "Generando... ${(progresoResumen * 100).toInt()}%" else "Resumen quincenal",
                         modifier = Modifier.weight(1f),
-                        onClick = { resumenViewModel.generarResumenQuincenal(context) }
+                        onClick = { tipoResumenParaFecha = TipoResumen.QUINCENAL }
                     )
                     AccionCard(
                         icono = Icons.Filled.Videocam,
                         texto = if (generandoResumen) "Generando... ${(progresoResumen * 100).toInt()}%" else "Resumen mensual",
                         modifier = Modifier.weight(1f),
-                        onClick = { resumenViewModel.generarResumenMensual(context) }
+                        onClick = { tipoResumenParaFecha = TipoResumen.MENSUAL }
                     )
                 }
             }
@@ -380,6 +392,21 @@ fun ClienteDetailScreen(
             onCancelar = { mostrarConfirmacionEliminar = false }
         )
     }
+
+    tipoResumenParaFecha?.let { tipo ->
+        SeleccionarRangoResumenDialog(
+            tipo = tipo,
+            onConfirmar = { fecha ->
+                when (tipo) {
+                    TipoResumen.SEMANAL -> resumenViewModel.generarResumenSemanal(context, fecha)
+                    TipoResumen.QUINCENAL -> resumenViewModel.generarResumenQuincenal(context, fecha)
+                    TipoResumen.MENSUAL -> resumenViewModel.generarResumenMensual(context, YearMonth.from(fecha))
+                }
+                tipoResumenParaFecha = null
+            },
+            onCancelar = { tipoResumenParaFecha = null }
+        )
+    }
 }
 
 @Composable
@@ -410,6 +437,122 @@ private fun AsignarRutinaDialog(
         }
     )
 }
+
+/**
+ * Elige cualquier fecha dentro del período que se quiere resumir (no el rango completo:
+ * [ResumenClienteCalculator] deriva semana/quincena/mes a partir de una sola fecha de
+ * referencia). Se abre siempre en "hoy", así que confirmar sin tocar nada genera el período
+ * más reciente — igual que el comportamiento anterior sin selector.
+ */
+private data class OpcionPeriodoResumen(val etiqueta: String, val fechaReferencia: LocalDate)
+
+/** Cuántos períodos hacia atrás se ofrecen en la lista (12 semanas ~3 meses, 12 quincenas
+ *  ~6 meses, 12 meses ~1 año). */
+private const val PERIODOS_HACIA_ATRAS = 12
+
+/**
+ * En vez de un selector de día suelto (que permitía elegir cualquier fecha, incluso una que
+ * cayera a mitad de semana sin que fuera obvio a cuál pertenece), lista los períodos reales
+ * -las mismas semanas/quincenas/meses que arma [ResumenClienteCalculator]- para que el
+ * trainer elija entre ellos por nombre. La primera opción es siempre el período más reciente,
+ * así que confirmar sin cambiar nada reproduce el comportamiento de antes del selector.
+ */
+@Composable
+private fun SeleccionarRangoResumenDialog(
+    tipo: TipoResumen,
+    onConfirmar: (LocalDate) -> Unit,
+    onCancelar: () -> Unit
+) {
+    val opciones = remember(tipo) { opcionesPeriodo(tipo) }
+    var seleccionado by remember(tipo) { mutableStateOf(opciones.first()) }
+
+    val titulo = when (tipo) {
+        TipoResumen.SEMANAL -> "Elige la semana"
+        TipoResumen.QUINCENAL -> "Elige la quincena"
+        TipoResumen.MENSUAL -> "Elige el mes"
+    }
+
+    AlertDialog(
+        onDismissRequest = onCancelar,
+        title = { Text(titulo) },
+        text = {
+            LazyColumn(modifier = Modifier.height(320.dp)) {
+                items(opciones) { opcion ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { seleccionado = opcion }
+                            .padding(vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        RadioButton(selected = opcion == seleccionado, onClick = { seleccionado = opcion })
+                        Text(opcion.etiqueta)
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = { onConfirmar(seleccionado.fechaReferencia) }) { Text("Generar") }
+        },
+        dismissButton = {
+            TextButton(onClick = onCancelar) { Text("Cancelar") }
+        }
+    )
+}
+
+private fun opcionesPeriodo(tipo: TipoResumen): List<OpcionPeriodoResumen> {
+    val hoy = LocalDate.now()
+    return when (tipo) {
+        TipoResumen.SEMANAL -> {
+            val opciones = mutableListOf<OpcionPeriodoResumen>()
+            var fechaReferencia = hoy
+            repeat(PERIODOS_HACIA_ATRAS) {
+                val rango = ResumenClienteCalculator.rangoSemanal(fechaReferencia)
+                opciones += OpcionPeriodoResumen(etiquetaRangoSemanal(rango), fechaReferencia)
+                fechaReferencia = rango.inicio.minusDays(1)
+            }
+            opciones
+        }
+        TipoResumen.QUINCENAL -> {
+            val opciones = mutableListOf<OpcionPeriodoResumen>()
+            var fechaReferencia = hoy
+            repeat(PERIODOS_HACIA_ATRAS) {
+                val rango = ResumenClienteCalculator.rangoQuincenal(fechaReferencia)
+                opciones += OpcionPeriodoResumen(capitalizar(rango.encabezado), fechaReferencia)
+                fechaReferencia = rango.inicio.minusDays(1)
+            }
+            opciones
+        }
+        TipoResumen.MENSUAL -> {
+            val opciones = mutableListOf<OpcionPeriodoResumen>()
+            var mes = YearMonth.from(hoy)
+            repeat(PERIODOS_HACIA_ATRAS) {
+                opciones += OpcionPeriodoResumen(etiquetaMes(mes), mes.atDay(1))
+                mes = mes.minusMonths(1)
+            }
+            opciones
+        }
+    }
+}
+
+/** "Semana del 18 al 22 de marzo", o con ambos meses si la semana cruza de uno a otro. */
+private fun etiquetaRangoSemanal(rango: RangoResumen): String {
+    val formatoDia = DateTimeFormatter.ofPattern("d")
+    val formatoDiaYMes = DateTimeFormatter.ofPattern("d 'de' MMMM", Locale("es"))
+    val inicio = if (rango.inicio.month == rango.fin.month) {
+        rango.inicio.format(formatoDia)
+    } else {
+        rango.inicio.format(formatoDiaYMes)
+    }
+    return "Semana del $inicio al ${rango.fin.format(formatoDiaYMes)}"
+}
+
+private fun etiquetaMes(mes: YearMonth): String {
+    val nombre = mes.month.getDisplayName(java.time.format.TextStyle.FULL, Locale("es"))
+    return "${capitalizar(nombre)} ${mes.year}"
+}
+
+private fun capitalizar(texto: String): String = texto.replaceFirstChar { it.uppercase() }
 
 @Composable
 private fun ConfirmarActivoDialog(

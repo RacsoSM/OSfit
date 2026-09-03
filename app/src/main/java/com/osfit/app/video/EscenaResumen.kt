@@ -1,6 +1,7 @@
 package com.osfit.app.video
 
 import com.osfit.app.domain.DesgloseEsfuerzo
+import com.osfit.app.domain.PuntoTiempoDiario
 import com.osfit.app.domain.RankingResultado
 
 sealed class EscenaResumen {
@@ -11,7 +12,12 @@ sealed class EscenaResumen {
         val unidad: String,
         val ranking: RankingResultado
     ) : EscenaResumen()
-    data class Tiempo(val minutos: Int, val ranking: RankingResultado) : EscenaResumen()
+    data class Tiempo(
+        val minutos: Int,
+        val ranking: RankingResultado,
+        // Minutos por día del rango, en orden; alimenta la gráfica de línea de la escena.
+        val tiempoPorDia: List<PuntoTiempoDiario> = emptyList()
+    ) : EscenaResumen()
     data class Esfuerzo(
         val minutosTotales: Int,
         val desglose: DesgloseEsfuerzo

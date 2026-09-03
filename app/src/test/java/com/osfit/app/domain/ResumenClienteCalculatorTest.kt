@@ -63,6 +63,41 @@ class ResumenClienteCalculatorTest {
     }
 
     @Test
+    fun `tiempoPorDiaEnRango arma un valor por cada dia del rango, 0 sin asistencia`() {
+        val rango = ResumenClienteCalculator.rangoSemanal(LocalDate.of(2024, 3, 20))
+        val asistencias = listOf(
+            Asistencia(clienteId = "c1", fecha = "2024-03-18", asistio = true, duracionMinutos = 45),
+            Asistencia(clienteId = "c1", fecha = "2024-03-20", asistio = true, duracionMinutos = 60),
+            // No asistió: no debe sumar aunque tenga duracionMinutos.
+            Asistencia(clienteId = "c1", fecha = "2024-03-21", asistio = false, duracionMinutos = 30)
+        )
+
+        val resultado = ResumenClienteCalculator.tiempoPorDiaEnRango(asistencias, rango)
+
+        assertEquals(listOf(45, 0, 60, 0, 0), resultado.map { it.minutos })
+        assertEquals(
+            listOf(
+                LocalDate.of(2024, 3, 18), LocalDate.of(2024, 3, 19), LocalDate.of(2024, 3, 20),
+                LocalDate.of(2024, 3, 21), LocalDate.of(2024, 3, 22)
+            ),
+            resultado.map { it.fecha }
+        )
+    }
+
+    @Test
+    fun `tiempoPorDiaEnRango suma varios registros del mismo dia`() {
+        val rango = ResumenClienteCalculator.rangoSemanal(LocalDate.of(2024, 3, 20))
+        val asistencias = listOf(
+            Asistencia(clienteId = "c1", fecha = "2024-03-18", asistio = true, duracionMinutos = 20),
+            Asistencia(clienteId = "c1", fecha = "2024-03-18", asistio = true, duracionMinutos = 25)
+        )
+
+        val resultado = ResumenClienteCalculator.tiempoPorDiaEnRango(asistencias, rango)
+
+        assertEquals(listOf(45, 0, 0, 0, 0), resultado.map { it.minutos })
+    }
+
+    @Test
     fun `leyendaPorPuesto devuelve el mensaje correcto segun el puesto`() {
         assertEquals("¡Felicidades, tú eres el mejor!", ResumenClienteCalculator.leyendaPorPuesto(1))
         assertEquals("¡Felicidades, estás en el podio, sigue así!", ResumenClienteCalculator.leyendaPorPuesto(2))

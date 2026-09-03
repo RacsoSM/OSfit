@@ -30,6 +30,8 @@ data class DesgloseEsfuerzo(
     val porcentajeEntrenando: Int
 )
 
+data class PuntoTiempoDiario(val fecha: LocalDate, val minutos: Int)
+
 data class ResumenClienteData(
     val cliente: Cliente,
     val rango: RangoResumen,
@@ -40,7 +42,10 @@ data class ResumenClienteData(
     val diaFavoritoNombre: String?,
     val rachaMasLarga: Int?,
     val rankingRacha: RankingResultado?,
-    val desgloseEsfuerzo: DesgloseEsfuerzo? = null
+    val desgloseEsfuerzo: DesgloseEsfuerzo? = null,
+    // Minutos asistidos por cada día del rango, en orden (rango.inicio primero), 0 en los
+    // días sin asistencia. Alimenta la gráfica de línea de la escena Tiempo del video.
+    val tiempoPorDia: List<PuntoTiempoDiario> = emptyList()
 )
 
 /**
@@ -165,6 +170,22 @@ object ResumenClienteCalculator {
         )
     }
 
+    /**
+     * Minutos asistidos por cada día de [rango.inicio] a [rango.fin] (ambos incluidos),
+     * en orden cronológico, 0 en los días sin asistencia. [asistenciasCliente] puede traer
+     * registros no asistidos (soborno) o de fuera del rango; se filtran acá.
+     */
+    fun tiempoPorDiaEnRango(asistenciasCliente: List<Asistencia>, rango: RangoResumen): List<PuntoTiempoDiario> {
+        val minutosPorFecha = asistenciasCliente
+            .filter { it.asistio }
+            .groupingBy { it.fecha }
+            .fold(0) { acumulado, asistencia -> acumulado + (asistencia.duracionMinutos ?: 0) }
+        return generateSequence(rango.inicio) { it.plusDays(1) }
+            .takeWhile { !it.isAfter(rango.fin) }
+            .map { fecha -> PuntoTiempoDiario(fecha, minutosPorFecha[fecha.toString()] ?: 0) }
+            .toList()
+    }
+
     fun calcularResumenCliente(
         cliente: Cliente,
         clientesActivos: List<Cliente>,
@@ -207,6 +228,11 @@ object ResumenClienteCalculator {
             minutosDescanso = cliente.minutosDescanso
         )
 
+        val tiempoPorDia = tiempoPorDiaEnRango(
+            asistenciasEnRango.filter { it.clienteId == cliente.id },
+            rango
+        )
+
         return ResumenClienteData(
             cliente = cliente,
             rango = rango,
@@ -217,7 +243,8 @@ object ResumenClienteCalculator {
             diaFavoritoNombre = diaFavoritoNombre,
             rachaMasLarga = rachaMasLarga,
             rankingRacha = rankingRacha,
-            desgloseEsfuerzo = desgloseEsfuerzo
+            desgloseEsfuerzo = desgloseEsfuerzo,
+            tiempoPorDia = tiempoPorDia
         )
     }
 }
