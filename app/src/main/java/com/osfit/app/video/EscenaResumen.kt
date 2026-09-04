@@ -1,5 +1,7 @@
 package com.osfit.app.video
 
+import android.graphics.Bitmap
+import com.osfit.app.data.model.CategoriaMedallaAutomatica
 import com.osfit.app.domain.ConteoDiaRutina
 import com.osfit.app.domain.DesgloseEsfuerzo
 import com.osfit.app.domain.PuntoTiempoDiario
@@ -32,5 +34,12 @@ sealed class EscenaResumen {
         val conteoDias: List<ConteoDiaRutina> = emptyList()
     ) : EscenaResumen()
     data class RachaMasLarga(val dias: Int, val ranking: RankingResultado) : EscenaResumen()
+    data class Medalla(
+        val nombre: String,
+        // null = medalla subjetiva; usada para elegir el color/glifo de la insignia por
+        // defecto cuando no hay imagenPersonalizada.
+        val categoria: CategoriaMedallaAutomatica?,
+        val imagenPersonalizada: Bitmap?
+    ) : EscenaResumen()
     object Despedida : EscenaResumen()
 }

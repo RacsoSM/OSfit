@@ -81,6 +81,9 @@ class TimelineResumen(escenas: List<EscenaResumen>) {
         // +2s extra a pedido del trainer sobre los 5s que ya tenía.
         is EscenaResumen.DiaFavorito -> 7_000L
         is EscenaResumen.RachaMasLarga -> 4_000L
+        // 6.5s: el título ("¡Felicidades! Te ganaste:") tarda ~1.8s en escribirse, la imagen
+        // hace fade 600ms después, y el resto es tiempo para que se lea el nombre de la medalla.
+        is EscenaResumen.Medalla -> 6_500L
         // "Gracias por confiar en nosotros" a la velocidad del saludo (~155ms/carácter) tarda
         // ~4.8s en escribirse; se deja 1.2s extra de margen para que quede en pantalla ya completa.
         is EscenaResumen.Despedida -> 6_000L
