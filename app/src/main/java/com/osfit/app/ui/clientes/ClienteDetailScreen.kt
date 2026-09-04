@@ -44,6 +44,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -68,6 +69,7 @@ import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import kotlinx.coroutines.launch
 
 @Composable
 fun ClienteDetailScreen(
@@ -97,6 +99,7 @@ fun ClienteDetailScreen(
     val mensajeResumen by resumenViewModel.mensaje.collectAsState()
     val hoy by rememberFechaActual()
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
 
     var mostrarDialogoRutina by remember { mutableStateOf(false) }
     var mostrarDialogoAsignarDia by remember { mutableStateOf(false) }
@@ -106,6 +109,8 @@ fun ClienteDetailScreen(
     // Qué tipo de resumen se está por generar, mientras el trainer elige la fecha del rango
     // en SeleccionarRangoResumenDialog; null = el diálogo está cerrado.
     var tipoResumenParaFecha by remember { mutableStateOf<TipoResumen?>(null) }
+    var cargandoMedalla by remember { mutableStateOf(false) }
+    var preparacionMedalla by remember { mutableStateOf<ResumenClienteViewModel.PreparacionMedalla?>(null) }
 
     androidx.compose.runtime.LaunchedEffect(eliminado) {
         if (eliminado) onEliminado()
@@ -347,7 +352,11 @@ fun ClienteDetailScreen(
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     AccionCard(
                         icono = Icons.Filled.Videocam,
-                        texto = if (generandoResumen) "Generando... ${(progresoResumen * 100).toInt()}%" else "Resumen quincenal",
+                        texto = when {
+                            generandoResumen -> "Generando... ${(progresoResumen * 100).toInt()}%"
+                            cargandoMedalla -> "Calculando..."
+                            else -> "Resumen quincenal"
+                        },
                         modifier = Modifier.weight(1f),
                         onClick = { tipoResumenParaFecha = TipoResumen.QUINCENAL }
                     )
@@ -437,14 +446,32 @@ fun ClienteDetailScreen(
         SeleccionarRangoResumenDialog(
             tipo = tipo,
             onConfirmar = { fecha ->
+                tipoResumenParaFecha = null
                 when (tipo) {
                     TipoResumen.SEMANAL -> resumenViewModel.generarResumenSemanal(context, fecha)
-                    TipoResumen.QUINCENAL -> resumenViewModel.generarResumenQuincenal(context, fecha)
+                    TipoResumen.QUINCENAL -> {
+                        cargandoMedalla = true
+                        scope.launch {
+                            preparacionMedalla = resumenViewModel.prepararConfirmacionMedalla(fecha)
+                            cargandoMedalla = false
+                        }
+                    }
                     TipoResumen.MENSUAL -> resumenViewModel.generarResumenMensual(context, YearMonth.from(fecha))
                 }
-                tipoResumenParaFecha = null
             },
             onCancelar = { tipoResumenParaFecha = null }
+        )
+    }
+
+    preparacionMedalla?.let { prep ->
+        ConfirmarMedallaDialog(
+            sugerencia = prep.sugerencia,
+            catalogo = prep.catalogo,
+            onConfirmar = { elegida ->
+                resumenViewModel.confirmarYGenerarQuincenal(context, prep, elegida)
+                preparacionMedalla = null
+            },
+            onCancelar = { preparacionMedalla = null }
         )
     }
 }
