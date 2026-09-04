@@ -1,5 +1,6 @@
 package com.osfit.app.video
 
+import com.osfit.app.data.model.CategoriaMedallaAutomatica
 import com.osfit.app.data.model.Cliente
 import com.osfit.app.domain.DesgloseEsfuerzo
 import com.osfit.app.domain.PuntoTiempoDiario
@@ -156,5 +157,24 @@ class ResumenVideoGeneratorTest {
         val asistencia = escenas[1] as EscenaResumen.Asistencia
 
         assertEquals("Mes de marzo", asistencia.encabezadoRango)
+    }
+
+    @Test
+    fun `la escena Medalla se agrega justo antes de Despedida cuando se pasa una`() {
+        val rango = ResumenClienteCalculator.rangoMensual(YearMonth.of(2024, 3))
+        val medalla = EscenaResumen.Medalla(nombre = "Rey de la asistencia", categoria = CategoriaMedallaAutomatica.ASISTENCIA, imagenPersonalizada = null)
+        val escenas = ResumenVideoGenerator.construirEscenas(resumen(rango, racha = 5), medalla)
+
+        assertEquals(7, escenas.size)
+        assertSame(medalla, escenas[5])
+        assertTrue(escenas[6] is EscenaResumen.Despedida)
+    }
+
+    @Test
+    fun `sin medalla no se agrega ninguna escena Medalla`() {
+        val rango = ResumenClienteCalculator.rangoSemanal(LocalDate.of(2024, 3, 20))
+        val escenas = ResumenVideoGenerator.construirEscenas(resumen(rango))
+
+        assertTrue(escenas.none { it is EscenaResumen.Medalla })
     }
 }

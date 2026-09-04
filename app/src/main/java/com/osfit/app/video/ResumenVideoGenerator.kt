@@ -1,10 +1,12 @@
 package com.osfit.app.video
 
 import android.content.Context
+import com.osfit.app.data.model.MedallaCatalogo
 import com.osfit.app.domain.ResumenClienteData
 import com.osfit.app.domain.TipoResumen
 import com.osfit.app.util.CancionUtil
 import com.osfit.app.util.CompartirUtil
+import com.osfit.app.util.MedallaImagenUtil
 import java.io.File
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -20,6 +22,7 @@ object ResumenVideoGenerator {
     suspend fun generarYCompartir(
         context: Context,
         resumen: ResumenClienteData,
+        medallaOtorgada: MedallaCatalogo? = null,
         onProgreso: (Float) -> Unit = {}
     ) {
         // El timestamp evita que dos generaciones que lleguen a solaparse (por ejemplo una
@@ -27,9 +30,16 @@ object ResumenVideoGenerator {
         val ahora = System.currentTimeMillis()
         val carpeta = File(context.cacheDir, "resumenes")
         val salida = File(carpeta, "${resumen.cliente.id}_${resumen.rango.tipo}_$ahora.mp4")
+        val medallaEscena = medallaOtorgada?.let {
+            EscenaResumen.Medalla(
+                nombre = it.nombre,
+                categoria = it.categoria,
+                imagenPersonalizada = MedallaImagenUtil.cargarBitmapPropio(context, it)
+            )
+        }
         val timeline = withContext(Dispatchers.Default) {
             borrarResumenesViejos(carpeta, ahora)
-            TimelineResumen(construirEscenas(resumen))
+            TimelineResumen(construirEscenas(resumen, medallaEscena))
         }
         // Una instancia de fondo por generación: su bitmap y sus paints son estado mutable,
         // y dos generaciones solapadas se corromperían los frames si lo compartieran.
@@ -63,7 +73,7 @@ object ResumenVideoGenerator {
         }
     }
 
-    fun construirEscenas(resumen: ResumenClienteData): List<EscenaResumen> {
+    fun construirEscenas(resumen: ResumenClienteData, medalla: EscenaResumen.Medalla? = null): List<EscenaResumen> {
         val unidad = when (resumen.rango.tipo) {
             TipoResumen.SEMANAL -> "semana"
             TipoResumen.QUINCENAL -> "quincena"
@@ -109,6 +119,7 @@ object ResumenVideoGenerator {
         if (incluyeRacha && racha != null && rankingRacha != null) {
             escenas += EscenaResumen.RachaMasLarga(dias = racha, ranking = rankingRacha)
         }
+        if (medalla != null) escenas += medalla
         escenas += EscenaResumen.Despedida
         return escenas
     }
