@@ -44,6 +44,7 @@ fun OSfitNavHost(navController: NavHostController, modifier: Modifier = Modifier
                 onVerAsistencias = { id -> navController.navigate(Screen.ClienteAsistencia.crearRuta(id)) },
                 onVerPagos = { id -> navController.navigate(Screen.ClientePagos.crearRuta(id)) },
                 onVerEstadisticas = { id -> navController.navigate(Screen.Estadisticas.crearRuta(id)) },
+                onVerLogros = { id -> navController.navigate(Screen.Logros.crearRuta(id)) },
                 onEditarCliente = { id -> navController.navigate(Screen.ClienteEditar.crearRuta(id)) },
                 onEliminado = { navController.popBackStack() }
             )
@@ -78,6 +79,13 @@ fun OSfitNavHost(navController: NavHostController, modifier: Modifier = Modifier
         ) { backStackEntry ->
             val clienteId = backStackEntry.arguments?.getString("clienteId") ?: return@composable
             com.osfit.app.ui.clientes.EstadisticasScreen(clienteId = clienteId)
+        }
+        composable(
+            route = Screen.Logros.route,
+            arguments = listOf(navArgument("clienteId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val clienteId = backStackEntry.arguments?.getString("clienteId") ?: return@composable
+            com.osfit.app.ui.clientes.LogrosClienteScreen(clienteId = clienteId)
         }
         composable(Screen.Top.route) {
             com.osfit.app.ui.top.TopScreen()

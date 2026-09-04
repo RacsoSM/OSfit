@@ -19,6 +19,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Chat
 import androidx.compose.material.icons.filled.EditCalendar
+import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.FitnessCenter
@@ -26,7 +27,6 @@ import androidx.compose.material.icons.filled.Handshake
 import androidx.compose.material.icons.filled.Payments
 import androidx.compose.material.icons.filled.QueryStats
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Videocam
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -77,6 +77,7 @@ fun ClienteDetailScreen(
     onVerAsistencias: (String) -> Unit,
     onVerPagos: (String) -> Unit,
     onVerEstadisticas: (String) -> Unit,
+    onVerLogros: (String) -> Unit,
     onEditarCliente: (String) -> Unit,
     onEliminado: () -> Unit
 ) {
@@ -232,45 +233,6 @@ fun ClienteDetailScreen(
                 }
             }
             item {
-                var expandidaLogros by remember { mutableStateOf(false) }
-                val logros by viewModel.medallasOtorgadas.collectAsState()
-                Card(modifier = Modifier.fillMaxWidth()) {
-                    Column(modifier = Modifier.padding(12.dp)) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable { expandidaLogros = !expandidaLogros },
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text("Logros", style = MaterialTheme.typography.titleSmall)
-                            Icon(
-                                if (expandidaLogros) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
-                                contentDescription = if (expandidaLogros) "Ocultar" else "Mostrar"
-                            )
-                        }
-                        if (expandidaLogros) {
-                            if (logros.isEmpty()) {
-                                Text("Todavía no tiene medallas.", modifier = Modifier.padding(top = 8.dp))
-                            } else {
-                                logros.forEach { logro ->
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Icon(Icons.Filled.Star, contentDescription = null)
-                                        Column(modifier = Modifier.padding(start = 8.dp)) {
-                                            Text(logro.nombreMedalla, style = MaterialTheme.typography.bodyMedium)
-                                            Text(logro.encabezadoRango, style = MaterialTheme.typography.bodySmall)
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            item {
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     AccionCard(
                         icono = Icons.Filled.FitnessCenter,
@@ -341,10 +303,10 @@ fun ClienteDetailScreen(
                         onClick = { mostrarDialogoSoborno = true }
                     )
                     AccionCard(
-                        icono = Icons.Filled.Videocam,
-                        texto = if (generandoResumen) "Generando... ${(progresoResumen * 100).toInt()}%" else "Resumen semanal",
+                        icono = Icons.Filled.EmojiEvents,
+                        texto = "Logros",
                         modifier = Modifier.weight(1f),
-                        onClick = { tipoResumenParaFecha = TipoResumen.SEMANAL }
+                        onClick = { onVerLogros(clienteId) }
                     )
                 }
             }

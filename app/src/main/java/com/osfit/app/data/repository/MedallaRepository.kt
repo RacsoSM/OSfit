@@ -87,4 +87,9 @@ class MedallaRepository(
     suspend fun otorgarMedalla(clienteId: String, otorgada: MedallaOtorgada) {
         otorgadasCollection(clienteId).document(otorgada.rangoInicio).set(otorgada).await()
     }
+
+    /** Quita una insignia ya otorgada (p. ej. desde "Logros", fuera del flujo de resumen). */
+    suspend fun quitarMedalla(clienteId: String, rangoInicio: String) {
+        otorgadasCollection(clienteId).document(rangoInicio).delete().await()
+    }
 }

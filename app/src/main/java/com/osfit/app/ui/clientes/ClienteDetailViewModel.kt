@@ -6,6 +6,7 @@ import com.google.firebase.Timestamp
 import com.osfit.app.data.AppContainer
 import com.osfit.app.data.model.Asistencia
 import com.osfit.app.data.model.Cliente
+import com.osfit.app.data.model.MedallaCatalogo
 import com.osfit.app.data.model.MedallaOtorgada
 import com.osfit.app.data.model.Pago
 import com.osfit.app.data.model.Rutina
@@ -35,13 +36,20 @@ class ClienteDetailViewModel(
     private val medallaRepository: MedallaRepository = AppContainer.medallaRepository
 ) : ViewModel() {
 
+    init {
+        viewModelScope.launch { medallaRepository.asegurarCategoriasAutomaticas() }
+    }
+
     val cliente: StateFlow<Cliente?> = clienteRepository.observarCliente(clienteId)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
-    val pagos: StateFlow<List<Pago>> = pagoRepository.observarPagos(clienteId)
+    val catalogoMedallas: StateFlow<List<MedallaCatalogo>> = medallaRepository.observarCatalogo()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val medallasOtorgadas: StateFlow<List<MedallaOtorgada>> = medallaRepository.observarOtorgadas(clienteId)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val pagos: StateFlow<List<Pago>> = pagoRepository.observarPagos(clienteId)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val plantillasDisponibles: StateFlow<List<Rutina>> = rutinaRepository.observarRutinas()
@@ -144,5 +152,28 @@ class ClienteDetailViewModel(
             clienteRepository.eliminarCliente(clienteId)
             _eliminado.value = true
         }
+    }
+
+    /** Otorga una insignia fuera del flujo de resumen quincenal (directo desde "Logros"). Como
+     *  [MedallaOtorgada] usa `rangoInicio` como id de documento (pensado para upsert por
+     *  quincena), acá se genera uno único por timestamp para no pisar otras otorgadas el mismo
+     *  día. */
+    fun otorgarMedalla(medalla: MedallaCatalogo) {
+        viewModelScope.launch {
+            medallaRepository.otorgarMedalla(
+                clienteId,
+                MedallaOtorgada(
+                    rangoInicio = "manual_${System.currentTimeMillis()}",
+                    medallaId = medalla.id,
+                    nombreMedalla = medalla.nombre,
+                    encabezadoRango = "Otorgada manualmente el ${LocalDate.now()}",
+                    fueAjustadaManualmente = true
+                )
+            )
+        }
+    }
+
+    fun quitarMedalla(otorgada: MedallaOtorgada) {
+        viewModelScope.launch { medallaRepository.quitarMedalla(clienteId, otorgada.rangoInicio) }
     }
 }
