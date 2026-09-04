@@ -50,7 +50,14 @@ data class ResumenClienteData(
     val tiempoPorDia: List<PuntoTiempoDiario> = emptyList(),
     // Cuántas veces se hizo cada día de la rutina en el rango, de mayor a menor. Alimenta la
     // gráfica de dona de la escena DiaFavorito del video.
-    val conteoDias: List<ConteoDiaRutina> = emptyList()
+    val conteoDias: List<ConteoDiaRutina> = emptyList(),
+    // Ranking cruzado contra clientesActivos por porcentaje entrenando (DesgloseEsfuerzo).
+    // null si el propio cliente no tiene segundosPorEjercicio/minutosDescanso configurados.
+    val rankingEsfuerzo: RankingResultado? = null,
+    // Ranking cruzado contra clientesActivos por (máximo de conteoDias) / diasAsistidos: qué
+    // tan seguido repite su día más frecuente, relativo a cuánto asistió en total. null si el
+    // propio cliente no tiene asistencias en el rango.
+    val rankingConstancia: RankingResultado? = null
 )
 
 /**
@@ -220,10 +227,35 @@ object ResumenClienteCalculator {
         }
         val rankingTiempo = calcularRanking(valoresTiempo, cliente.id)
 
+        val desgloseEsfuerzo = calcularDesgloseEsfuerzo(
+            minutosEnGym = minutosEnGym,
+            segundosPorEjercicio = cliente.segundosPorEjercicio,
+            minutosDescanso = cliente.minutosDescanso
+        )
+        // Solo compara contra clientes que también tengan segundos/descanso configurados: el
+        // porcentaje entrenando no es comparable si al otro cliente le falta ese dato.
+        val valoresEsfuerzo = clientesActivos.mapNotNull { c ->
+            val minutosC = asistenciasPorCliente[c.id]?.sumOf { it.duracionMinutos ?: 0 } ?: 0
+            calcularDesgloseEsfuerzo(minutosC, c.segundosPorEjercicio, c.minutosDescanso)?.let { c to it.porcentajeEntrenando }
+        }
+        val rankingEsfuerzo = if (desgloseEsfuerzo != null) calcularRanking(valoresEsfuerzo, cliente.id) else null
+
         val nombresDias = cliente.rutinaAsignada?.dias?.map { it.nombreDia } ?: emptyList()
         val asistenciasDelCliente = asistenciasPorCliente[cliente.id] ?: emptyList()
         val conteoDias = conteoDiasEnRango(asistenciasDelCliente, nombresDias)
         val diaFavoritoNombre = diaFavoritoEnRango(asistenciasDelCliente, nombresDias)
+
+        // Constancia: qué tan seguido repite su día más frecuente, relativo a cuánto asistió en
+        // total (si no, quien asiste más siempre ganaría solo por acumular más repeticiones).
+        // Escalado a entero (x1000) porque calcularRanking compara valores Int.
+        val valoresConstancia = clientesActivos.mapNotNull { c ->
+            val asistenciasC = asistenciasPorCliente[c.id] ?: emptyList()
+            if (asistenciasC.isEmpty()) return@mapNotNull null
+            val nombresDiasC = c.rutinaAsignada?.dias?.map { it.nombreDia } ?: emptyList()
+            val maximoC = conteoDiasEnRango(asistenciasC, nombresDiasC).maxOfOrNull { it.veces } ?: 0
+            c to (maximoC * 1000 / asistenciasC.size)
+        }
+        val rankingConstancia = if (diasAsistidos > 0) calcularRanking(valoresConstancia, cliente.id) else null
 
         var rachaMasLarga: Int? = null
         var rankingRacha: RankingResultado? = null
@@ -239,12 +271,6 @@ object ResumenClienteCalculator {
             }
             rankingRacha = calcularRanking(valoresRacha, cliente.id)
         }
-
-        val desgloseEsfuerzo = calcularDesgloseEsfuerzo(
-            minutosEnGym = minutosEnGym,
-            segundosPorEjercicio = cliente.segundosPorEjercicio,
-            minutosDescanso = cliente.minutosDescanso
-        )
 
         val tiempoPorDia = tiempoPorDiaEnRango(
             asistenciasEnRango.filter { it.clienteId == cliente.id },
@@ -263,7 +289,9 @@ object ResumenClienteCalculator {
             rankingRacha = rankingRacha,
             desgloseEsfuerzo = desgloseEsfuerzo,
             tiempoPorDia = tiempoPorDia,
-            conteoDias = conteoDias
+            conteoDias = conteoDias,
+            rankingEsfuerzo = rankingEsfuerzo,
+            rankingConstancia = rankingConstancia
         )
     }
 }

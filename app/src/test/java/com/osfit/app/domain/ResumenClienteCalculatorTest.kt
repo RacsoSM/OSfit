@@ -400,4 +400,74 @@ class ResumenClienteCalculatorTest {
 
         assertEquals(null, resumen.desgloseEsfuerzo)
     }
+
+    @Test
+    fun `calcularResumenCliente calcula rankingEsfuerzo comparando porcentaje entrenando`() {
+        val cliente = Cliente(id = "a", nombre = "Ana", activo = true, segundosPorEjercicio = 40, minutosDescanso = 1.0)
+        val otro = Cliente(id = "b", nombre = "Beto", activo = true, segundosPorEjercicio = 20, minutosDescanso = 1.0)
+        val rango = RangoResumen(
+            inicio = LocalDate.of(2024, 3, 18), fin = LocalDate.of(2024, 3, 22),
+            tipo = TipoResumen.SEMANAL, encabezado = "Semana 4 de marzo"
+        )
+        val asistencias = listOf(
+            Asistencia(clienteId = "a", fecha = "2024-03-18", asistio = true, duracionMinutos = 60),
+            Asistencia(clienteId = "b", fecha = "2024-03-18", asistio = true, duracionMinutos = 60)
+        )
+        val resumen = ResumenClienteCalculator.calcularResumenCliente(cliente, listOf(cliente, otro), asistencias, rango)
+
+        // Ana: ciclo 40+60=100s, fracción 0.4 -> 40%. Beto: ciclo 20+60=80s, fracción 0.25 -> 25%.
+        assertEquals(1, resumen.rankingEsfuerzo?.puesto)
+        assertEquals(emptyList<String>(), resumen.rankingEsfuerzo?.nombresPorEncima)
+    }
+
+    @Test
+    fun `calcularResumenCliente deja rankingEsfuerzo nulo sin segundosPorEjercicio configurado`() {
+        val cliente = Cliente(id = "a", nombre = "Ana", activo = true)
+        val rango = RangoResumen(
+            inicio = LocalDate.of(2024, 3, 18), fin = LocalDate.of(2024, 3, 22),
+            tipo = TipoResumen.SEMANAL, encabezado = "Semana 4 de marzo"
+        )
+        val asistencias = listOf(Asistencia(clienteId = "a", fecha = "2024-03-18", asistio = true, duracionMinutos = 60))
+        val resumen = ResumenClienteCalculator.calcularResumenCliente(cliente, listOf(cliente), asistencias, rango)
+
+        assertEquals(null, resumen.rankingEsfuerzo)
+    }
+
+    @Test
+    fun `calcularResumenCliente calcula rankingConstancia por proporcion del dia mas repetido`() {
+        val diasA = listOf(DiaRutina(nombreDia = "Pecho"), DiaRutina(nombreDia = "Espalda"))
+        val cliente = Cliente(id = "a", nombre = "Ana", activo = true, rutinaAsignada = Rutina(dias = diasA))
+        val otro = Cliente(id = "b", nombre = "Beto", activo = true, rutinaAsignada = Rutina(dias = diasA))
+        val rango = RangoResumen(
+            inicio = LocalDate.of(2024, 3, 18), fin = LocalDate.of(2024, 3, 22),
+            tipo = TipoResumen.SEMANAL, encabezado = "Semana 4 de marzo"
+        )
+        // Ana: 3 asistencias, las 3 el mismo día -> 100% de constancia.
+        // Beto: 4 asistencias, 2 en el mismo día -> 50% de constancia.
+        val asistencias = listOf(
+            Asistencia(clienteId = "a", fecha = "2024-03-18", asistio = true, diaRutinaRealizado = 0),
+            Asistencia(clienteId = "a", fecha = "2024-03-19", asistio = true, diaRutinaRealizado = 0),
+            Asistencia(clienteId = "a", fecha = "2024-03-20", asistio = true, diaRutinaRealizado = 0),
+            Asistencia(clienteId = "b", fecha = "2024-03-18", asistio = true, diaRutinaRealizado = 0),
+            Asistencia(clienteId = "b", fecha = "2024-03-19", asistio = true, diaRutinaRealizado = 0),
+            Asistencia(clienteId = "b", fecha = "2024-03-20", asistio = true, diaRutinaRealizado = 1),
+            Asistencia(clienteId = "b", fecha = "2024-03-21", asistio = true, diaRutinaRealizado = 1)
+        )
+        val resumen = ResumenClienteCalculator.calcularResumenCliente(cliente, listOf(cliente, otro), asistencias, rango)
+
+        assertEquals(1, resumen.rankingConstancia?.puesto)
+        assertEquals(emptyList<String>(), resumen.rankingConstancia?.nombresPorEncima)
+    }
+
+    @Test
+    fun `calcularResumenCliente deja rankingConstancia nulo sin asistencias`() {
+        val cliente = Cliente(id = "a", nombre = "Ana", activo = true)
+        val rango = RangoResumen(
+            inicio = LocalDate.of(2024, 3, 18), fin = LocalDate.of(2024, 3, 22),
+            tipo = TipoResumen.SEMANAL, encabezado = "Semana 4 de marzo"
+        )
+        val resumen = ResumenClienteCalculator.calcularResumenCliente(cliente, listOf(cliente), emptyList(), rango)
+
+        assertEquals(null, resumen.rankingConstancia)
+    }
 }
