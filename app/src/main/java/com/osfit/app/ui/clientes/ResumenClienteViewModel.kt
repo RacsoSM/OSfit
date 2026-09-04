@@ -5,8 +5,12 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.osfit.app.data.AppContainer
+import com.osfit.app.data.model.MedallaCatalogo
+import com.osfit.app.data.model.MedallaOtorgada
 import com.osfit.app.data.repository.AsistenciaRepository
 import com.osfit.app.data.repository.ClienteRepository
+import com.osfit.app.data.repository.MedallaRepository
+import com.osfit.app.domain.MedallaCalculator
 import com.osfit.app.domain.RangoResumen
 import com.osfit.app.domain.ResumenClienteCalculator
 import com.osfit.app.domain.ResumenClienteData
@@ -24,7 +28,8 @@ private const val TAG_RESUMEN = "ResumenVideo"
 class ResumenClienteViewModel(
     private val clienteId: String,
     private val clienteRepository: ClienteRepository = AppContainer.clienteRepository,
-    private val asistenciaRepository: AsistenciaRepository = AppContainer.asistenciaRepository
+    private val asistenciaRepository: AsistenciaRepository = AppContainer.asistenciaRepository,
+    private val medallaRepository: MedallaRepository = AppContainer.medallaRepository
 ) : ViewModel() {
 
     private val _generando = MutableStateFlow(false)
@@ -45,10 +50,6 @@ class ResumenClienteViewModel(
 
     fun generarResumenSemanal(context: Context, fechaReferencia: LocalDate = LocalDate.now()) {
         generarYCompartir(context) { calcularResumenSemanal(fechaReferencia) }
-    }
-
-    fun generarResumenQuincenal(context: Context, fechaReferencia: LocalDate = LocalDate.now()) {
-        generarYCompartir(context) { calcularResumenQuincenal(fechaReferencia) }
     }
 
     fun generarResumenMensual(context: Context, mes: YearMonth = YearMonth.now()) {
@@ -107,6 +108,66 @@ class ResumenClienteViewModel(
 
     suspend fun calcularResumenMensual(mes: YearMonth = YearMonth.now()): ResumenClienteData? =
         calcularResumen(ResumenClienteCalculator.rangoMensual(mes))
+
+    data class PreparacionMedalla(
+        val resumen: ResumenClienteData,
+        val sugerencia: MedallaCatalogo?,
+        val catalogo: List<MedallaCatalogo>
+    )
+
+    /** Calcula el resumen quincenal y, con él, la categoría automática sugerida (si hay), ya
+     *  resuelta contra el catálogo actual — todo lo que necesita ConfirmarMedallaDialog en un
+     *  solo viaje. Lee el catálogo directo del repositorio (no del StateFlow ya cacheado de
+     *  MedallasViewModel, que esta pantalla no comparte) para no depender de que algo más lo
+     *  haya suscrito antes. */
+    suspend fun prepararConfirmacionMedalla(fechaReferencia: LocalDate = LocalDate.now()): PreparacionMedalla? {
+        val resumen = calcularResumenQuincenal(fechaReferencia) ?: return null
+        val catalogoActual = medallaRepository.observarCatalogo().first()
+        val categoriaSugerida = MedallaCalculator.sugerirCategoria(resumen)
+        val sugerencia = categoriaSugerida?.let { cat -> catalogoActual.firstOrNull { it.categoria == cat } }
+        return PreparacionMedalla(resumen, sugerencia, catalogoActual)
+    }
+
+    /**
+     * Duplica parte del try/catch/finally de [generarYCompartir] a propósito: ese helper genérico
+     * recalcula el resumen desde una lambda y no conoce medallas, y este flujo ya trae el resumen
+     * calculado (de [prepararConfirmacionMedalla]) más el efecto secundario de otorgar la medalla
+     * antes de generar — meter eso en el helper genérico lo complicaría para las otras 2 llamadas
+     * (semanal/mensual) que nunca lo necesitan.
+     */
+    fun confirmarYGenerarQuincenal(context: Context, preparacion: PreparacionMedalla, elegida: MedallaCatalogo?) {
+        if (_generando.value) return
+        _generando.value = true
+        _progreso.value = 0f
+        val contextoApp = context.applicationContext
+        viewModelScope.launch {
+            try {
+                if (elegida != null) {
+                    medallaRepository.otorgarMedalla(
+                        preparacion.resumen.cliente.id,
+                        MedallaOtorgada(
+                            rangoInicio = preparacion.resumen.rango.inicio.toString(),
+                            medallaId = elegida.id,
+                            nombreMedalla = elegida.nombre,
+                            encabezadoRango = preparacion.resumen.rango.encabezado,
+                            fueAjustadaManualmente = elegida.id != preparacion.sugerencia?.id
+                        )
+                    )
+                }
+                ResumenVideoGenerator.generarYCompartir(contextoApp, preparacion.resumen, elegida) { fraccion ->
+                    _progreso.value = fraccion
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Throwable) {
+                Log.w(TAG_RESUMEN, "Falló la generación del resumen en video", e)
+                _mensaje.value = "No se pudo generar el video del resumen"
+            } finally {
+                _generando.value = false
+                _progreso.value = 0f
+            }
+        }
+    }
 
     private suspend fun calcularResumen(rango: RangoResumen): ResumenClienteData? {
         val cliente = clienteRepository.observarCliente(clienteId).first() ?: return null
