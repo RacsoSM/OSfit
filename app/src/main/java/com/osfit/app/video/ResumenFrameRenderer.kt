@@ -11,6 +11,7 @@ import android.text.SpannableStringBuilder
 import android.text.StaticLayout
 import android.text.TextPaint
 import android.text.style.ForegroundColorSpan
+import com.osfit.app.data.model.CategoriaMedallaAutomatica
 import com.osfit.app.domain.ConteoDiaRutina
 import com.osfit.app.domain.PuntoTiempoDiario
 import com.osfit.app.domain.RankingResultado
@@ -97,6 +98,19 @@ object ResumenFrameRenderer {
         0xFFF6B989.toInt() // durazno
     )
 
+    private const val MEDALLA_INICIO_MS = 2_000L
+    private const val MEDALLA_FADE_MS = 600L
+    /** Mismos colores que [DONA_PALETA_PASTEL], mapeados por categoría (en vez de por índice de
+     *  rebanada) para que la insignia por defecto se sienta parte del mismo lenguaje visual del
+     *  video. Solo se usa cuando la medalla no tiene imagen propia. */
+    private val COLOR_INSIGNIA_MEDALLA = mapOf(
+        CategoriaMedallaAutomatica.ASISTENCIA to 0xFFA8E6CF.toInt(),
+        CategoriaMedallaAutomatica.TIEMPO to 0xFFAEC9F0.toInt(),
+        CategoriaMedallaAutomatica.RACHA to 0xFFF6D186.toInt(),
+        CategoriaMedallaAutomatica.ESFUERZO to 0xFFF3A6C1.toInt(),
+        CategoriaMedallaAutomatica.CONSTANCIA to 0xFFCBB7EE.toInt()
+    )
+
     /**
      * Pinta el frame de [tiempoGlobalMs] directamente sobre [canvas] —el de la Surface del
      * codificador— en vez de componerlo en una bitmap intermedia de pantalla completa
@@ -149,6 +163,9 @@ object ResumenFrameRenderer {
         }
         if (escena is EscenaResumen.DiaFavorito) {
             dibujarDonaDiasFavoritos(canvas, ancho, escena.conteoDias, elapsedMs, alpha)
+        }
+        if (escena is EscenaResumen.Medalla) {
+            dibujarMedalla(canvas, ancho, escena, elapsedMs, alpha)
         }
     }
 
@@ -258,6 +275,9 @@ object ResumenFrameRenderer {
                 comparacion(escena.ranking, "¡Vas primero en racha este mes!", "racha"),
                 inicioMs = 2_600, duracionMs = 600, y = 1500f, tamano = 48f, color = Color.LTGRAY, estilo = Typeface.NORMAL
             )
+        )
+        is EscenaResumen.Medalla -> listOf(
+            BloqueTexto("¡Felicidades! Te ganaste:", inicioMs = 0, duracionMs = 1_800, y = 600f, tamano = 56f, color = Color.WHITE, estilo = Typeface.BOLD)
         )
     }
 
@@ -452,6 +472,48 @@ object ResumenFrameRenderer {
             .takeWhile { it <= maximo }
             .take(4)
             .toList()
+    }
+
+    /** Imagen propia de la medalla si la hay (fade-in), o su insignia por defecto si no, con el
+     *  nombre debajo en [DESTACADO]. */
+    private fun dibujarMedalla(canvas: Canvas, ancho: Int, escena: EscenaResumen.Medalla, elapsedMs: Long, alphaEscena: Float) {
+        val progreso = ((elapsedMs - MEDALLA_INICIO_MS).coerceIn(0L, MEDALLA_FADE_MS)).toFloat() / MEDALLA_FADE_MS
+        if (progreso <= 0f) return
+        val alphaAplicado = (255 * progreso * alphaEscena).toInt().coerceIn(0, 255)
+
+        val centroX = ancho / 2f
+        val centroY = 1150f
+        val radio = 220f
+        val bitmap = escena.imagenPersonalizada
+        if (bitmap != null) {
+            val destino = RectF(centroX - radio, centroY - radio, centroX + radio, centroY + radio)
+            val paintImagen = Paint().apply { isAntiAlias = true; alpha = alphaAplicado }
+            canvas.drawBitmap(bitmap, null, destino, paintImagen)
+        } else {
+            dibujarInsigniaMedalla(canvas, centroX, centroY, radio, escena.categoria, alphaAplicado)
+        }
+
+        dibujarTextoCentradoMultilinea(
+            canvas, listOf(escena.nombre), centroX, centroY + radio + 90f,
+            tamano = 44f, color = DESTACADO, alphaAplicado = alphaAplicado
+        )
+    }
+
+    /** Insignia por defecto cuando la medalla no tiene imagen propia: un círculo del color de su
+     *  categoría con su inicial al centro; gris con una estrella si es subjetiva sin imagen. */
+    private fun dibujarInsigniaMedalla(
+        canvas: Canvas, cx: Float, cy: Float, radio: Float,
+        categoria: CategoriaMedallaAutomatica?, alphaAplicado: Int
+    ) {
+        val colorInsignia = categoria?.let { COLOR_INSIGNIA_MEDALLA[it] } ?: 0xFFB0B0B0.toInt()
+        val paintCirculo = Paint().apply { isAntiAlias = true; color = colorInsignia; alpha = alphaAplicado; style = Paint.Style.FILL }
+        canvas.drawCircle(cx, cy, radio, paintCirculo)
+        val glifo = categoria?.name?.first()?.toString() ?: "★"
+        val paintGlifo = Paint().apply {
+            isAntiAlias = true; color = NEGRO; alpha = alphaAplicado; textSize = radio
+            typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD); textAlign = Paint.Align.CENTER
+        }
+        canvas.drawText(glifo, cx, cy + radio * 0.35f, paintGlifo)
     }
 
     /**
