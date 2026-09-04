@@ -15,6 +15,7 @@ import com.osfit.app.domain.ConteoDiaRutina
 import com.osfit.app.domain.PuntoTiempoDiario
 import com.osfit.app.domain.RankingResultado
 import java.time.format.DateTimeFormatter
+import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -74,6 +75,16 @@ object ResumenFrameRenderer {
     /** La dona sola se bajó otro 20% de vuelta (el título no se movió), también a pedido
      *  del trainer — por eso lleva su propio desplazamiento en vez de reusar el de arriba. */
     private const val DESPLAZAMIENTO_ABAJO_DONA_DIA_FAVORITO = ALTO_DEFECTO * 0.20f
+    /** La dona sola se subió otro 10% adicional (el título tampoco se movió con esto),
+     *  también a pedido del trainer. */
+    private const val DESPLAZAMIENTO_ARRIBA_DONA_ADICIONAL = ALTO_DEFECTO * 0.10f
+    /** Las flechas que conectan cada rebanada con su etiqueta se acortaron 20% (de 120px a
+     *  96px), dejando la etiqueta donde estaba antes de ese cambio, también a pedido del
+     *  trainer. */
+    private const val LARGO_FLECHA_ETIQUETA = 120f * 0.8f
+    /** Nombres de día de más de esta longitud (p. ej. "Hombro, bíceps y tríceps") se
+     *  parten en dos renglones para no desbordar el ancho disponible entre rebanadas. */
+    private const val DONA_LARGO_MAXIMO_UNA_LINEA = 12
     /** Paleta pastel para las rebanadas de la dona, asignada en orden fijo (día con más
      *  repeticiones primero): así cada rebanada se distingue por color además de por su
      *  etiqueta directa, en vez del esquema anterior de "favorito destacado vs. resto apagado". */
@@ -348,10 +359,10 @@ object ResumenFrameRenderer {
         if (progreso <= 0f) return
         val alphaAplicado = (255 * progreso * alphaEscena).toInt().coerceIn(0, 255)
 
-        // izquierda queda más adentro que el margen general: entre margen y ella va la
-        // etiqueta vertical del eje Y.
+        // izquierda queda más adentro que el margen general: entre margen y ella van la
+        // etiqueta vertical del eje Y y, más cerca de la gráfica, los valores de referencia.
         val margen = 80f
-        val izquierda = 150f
+        val izquierda = 170f
         val derecha = ancho - margen
         val arriba = 1060f + DESPLAZAMIENTO_GRAFICA
         val abajo = 1380f + DESPLAZAMIENTO_GRAFICA
@@ -366,6 +377,28 @@ object ResumenFrameRenderer {
             strokeWidth = 2f
         }
         canvas.drawLine(izquierda, abajo, derecha, abajo, paintBase)
+
+        // Valores de referencia del eje Y (p.ej. 30/60/120 min): líneas guía tenues más los
+        // minutos exactos a la izquierda, para poder ubicar cualquier punto de la línea sin
+        // tener que adivinar la escala.
+        val paintGuia = Paint().apply {
+            isAntiAlias = true
+            color = Color.WHITE
+            alpha = (alphaAplicado * 0.15f).toInt()
+            strokeWidth = 2f
+        }
+        val paintEtiquetaEje = Paint().apply {
+            isAntiAlias = true
+            color = Color.LTGRAY
+            alpha = alphaAplicado
+            textSize = 22f
+            textAlign = Paint.Align.RIGHT
+        }
+        calcularValoresReferenciaEje(maximo).forEach { minutosReferencia ->
+            val y = puntoY(minutosReferencia)
+            canvas.drawLine(izquierda, y, derecha, y, paintGuia)
+            canvas.drawText("$minutosReferencia min", izquierda - 12f, y + 8f, paintEtiquetaEje)
+        }
 
         val trazo = Path()
         valores.forEachIndexed { indice, punto ->
@@ -395,7 +428,7 @@ object ResumenFrameRenderer {
         }
 
         dibujarTextoVertical(
-            canvas, "Minutos por día", x = 110f, y = (arriba + abajo) / 2f,
+            canvas, "Minutos por día", x = 60f, y = (arriba + abajo) / 2f,
             tamano = 32f, color = Color.LTGRAY, alphaAplicado = alphaAplicado, alineacion = Paint.Align.CENTER
         )
         valores.forEachIndexed { indice, punto ->
@@ -404,6 +437,21 @@ object ResumenFrameRenderer {
                 tamano = 22f, color = Color.LTGRAY, alphaAplicado = alphaAplicado, alineacion = Paint.Align.RIGHT
             )
         }
+    }
+
+    /**
+     * Valores "redondos" (múltiplos de 5, 10, 15, 30 o 60) para usar como referencia en el eje
+     * Y de [dibujarGraficaTiempo], espaciados en pasos regulares desde 0 hasta [maximo]. Con
+     * [maximo] chico da algo como 15/30/45 min; con uno grande, 30/60/120 min.
+     */
+    private fun calcularValoresReferenciaEje(maximo: Int): List<Int> {
+        if (maximo <= 0) return emptyList()
+        val candidatosPaso = listOf(5, 10, 15, 30, 60, 90, 120, 180, 240)
+        val paso = candidatosPaso.firstOrNull { it * 3 >= maximo } ?: candidatosPaso.last()
+        return generateSequence(paso) { it + paso }
+            .takeWhile { it <= maximo }
+            .take(4)
+            .toList()
     }
 
     /**
@@ -423,7 +471,7 @@ object ResumenFrameRenderer {
         val alphaAplicado = (255 * progreso * alphaEscena).toInt().coerceIn(0, 255)
 
         val centroX = ancho / 2f
-        val centroY = 1320f - DESPLAZAMIENTO_ARRIBA_DIA_FAVORITO + DESPLAZAMIENTO_ABAJO_DONA_DIA_FAVORITO
+        val centroY = 1320f - DESPLAZAMIENTO_ARRIBA_DIA_FAVORITO + DESPLAZAMIENTO_ABAJO_DONA_DIA_FAVORITO - DESPLAZAMIENTO_ARRIBA_DONA_ADICIONAL
         val radioExterior = 260f
         val radioInterior = 150f
         val radioMedio = (radioExterior + radioInterior) / 2f
@@ -448,22 +496,79 @@ object ResumenFrameRenderer {
             paintArco.alpha = alphaAplicado
             canvas.drawArc(rect, anguloInicio + gapGrados / 2f, sweepDibujado, false, paintArco)
 
+            // La etiqueta se separó de la rebanada (antes pegada al borde) y se conecta con
+            // una flecha delgada, para que nombres largos ("Hombro, bíceps y tríceps") tengan
+            // espacio y no se encimen entre sí ni con la dona.
             val anguloMedioRad = Math.toRadians((anguloInicio + sweep / 2f).toDouble())
-            val radioEtiqueta = radioExterior + 70f
-            val x = centroX + (radioEtiqueta * cos(anguloMedioRad)).toFloat()
-            val y = centroY + (radioEtiqueta * sin(anguloMedioRad)).toFloat()
-            dibujarTextoCentrado(
-                canvas, "${dia.nombreDia} ×${dia.veces}", x, y, tamano = 30f,
+            val radioEtiqueta = radioExterior + 190f
+            val xEtiqueta = centroX + (radioEtiqueta * cos(anguloMedioRad)).toFloat()
+            val yEtiqueta = centroY + (radioEtiqueta * sin(anguloMedioRad)).toFloat()
+
+            // La flecha se acortó 20% (de 120px a 96px), dejando su punta más lejos de la
+            // etiqueta que antes; la etiqueta no se movió de donde estaba.
+            val radioInicioFlecha = radioExterior + 15f
+            val radioFinFlecha = radioInicioFlecha + LARGO_FLECHA_ETIQUETA
+            dibujarFlechaEtiqueta(
+                canvas,
+                x1 = centroX + (radioInicioFlecha * cos(anguloMedioRad)).toFloat(),
+                y1 = centroY + (radioInicioFlecha * sin(anguloMedioRad)).toFloat(),
+                x2 = centroX + (radioFinFlecha * cos(anguloMedioRad)).toFloat(),
+                y2 = centroY + (radioFinFlecha * sin(anguloMedioRad)).toFloat(),
                 color = color, alphaAplicado = alphaAplicado
             )
+
+            val renglones = partirNombreDia(dia.nombreDia).toMutableList()
+            renglones[renglones.lastIndex] = "${renglones.last()} ×${dia.veces}"
+            dibujarTextoCentradoMultilinea(canvas, renglones, xEtiqueta, yEtiqueta, tamano = 30f, color = color, alphaAplicado = alphaAplicado)
             anguloInicio += sweep
         }
     }
 
-    /** Dibuja [texto] centrado horizontal y verticalmente en ([x], [y]). Usado para las
-     *  etiquetas de las rebanadas de [dibujarDonaDiasFavoritos]. */
-    private fun dibujarTextoCentrado(
-        canvas: Canvas, texto: String, x: Float, y: Float, tamano: Float, color: Int, alphaAplicado: Int
+    /**
+     * Parte [nombreDia] en dos renglones si supera [DONA_LARGO_MAXIMO_UNA_LINEA] caracteres,
+     * cortando por el espacio más cercano a la mitad (o, si no hay espacios, a los
+     * [DONA_LARGO_MAXIMO_UNA_LINEA] caracteres) para no cortar una palabra a la mitad.
+     */
+    private fun partirNombreDia(nombreDia: String): List<String> {
+        if (nombreDia.length <= DONA_LARGO_MAXIMO_UNA_LINEA) return listOf(nombreDia)
+        val medio = nombreDia.length / 2
+        val indiceEspacio = nombreDia.indices
+            .filter { nombreDia[it] == ' ' }
+            .minByOrNull { kotlin.math.abs(it - medio) }
+        return if (indiceEspacio == null) {
+            listOf(nombreDia.substring(0, DONA_LARGO_MAXIMO_UNA_LINEA), nombreDia.substring(DONA_LARGO_MAXIMO_UNA_LINEA))
+        } else {
+            listOf(nombreDia.substring(0, indiceEspacio).trim(), nombreDia.substring(indiceEspacio + 1).trim())
+        }
+    }
+
+    /** Línea delgada de ([x1], [y1]) a ([x2], [y2]) con una punta de flecha leve en el
+     *  extremo de la etiqueta, conectando cada rebanada de [dibujarDonaDiasFavoritos] con
+     *  su nombre ya separado de la dona. */
+    private fun dibujarFlechaEtiqueta(
+        canvas: Canvas, x1: Float, y1: Float, x2: Float, y2: Float, color: Int, alphaAplicado: Int
+    ) {
+        val paint = Paint().apply {
+            isAntiAlias = true
+            this.color = color
+            alpha = alphaAplicado
+            style = Paint.Style.STROKE
+            strokeWidth = 3f
+            strokeCap = Paint.Cap.ROUND
+        }
+        canvas.drawLine(x1, y1, x2, y2, paint)
+        val angulo = atan2(y2 - y1, x2 - x1)
+        val largoPunta = 14f
+        val aberturaPunta = Math.toRadians(25.0)
+        canvas.drawLine(x2, y2, x2 - largoPunta * cos(angulo - aberturaPunta).toFloat(), y2 - largoPunta * sin(angulo - aberturaPunta).toFloat(), paint)
+        canvas.drawLine(x2, y2, x2 - largoPunta * cos(angulo + aberturaPunta).toFloat(), y2 - largoPunta * sin(angulo + aberturaPunta).toFloat(), paint)
+    }
+
+    /** Dibuja [renglones] centrados horizontalmente en [x], apilados y centrados
+     *  verticalmente alrededor de [y]. Usado para las etiquetas de las rebanadas de
+     *  [dibujarDonaDiasFavoritos], que pueden ser uno o dos renglones. */
+    private fun dibujarTextoCentradoMultilinea(
+        canvas: Canvas, renglones: List<String>, x: Float, y: Float, tamano: Float, color: Int, alphaAplicado: Int
     ) {
         val paint = Paint().apply {
             isAntiAlias = true
@@ -473,7 +578,11 @@ object ResumenFrameRenderer {
             typeface = Typeface.DEFAULT
             textAlign = Paint.Align.CENTER
         }
-        canvas.drawText(texto, x, y + tamano * 0.35f, paint)
+        val alturaRenglon = tamano * 1.2f
+        val yPrimero = y - alturaRenglon * (renglones.size - 1) / 2f
+        renglones.forEachIndexed { indice, renglon ->
+            canvas.drawText(renglon, x, yPrimero + alturaRenglon * indice + tamano * 0.35f, paint)
+        }
     }
 
     /** Dibuja [texto] rotado 90° en sentido antihorario (se lee de abajo hacia arriba),
