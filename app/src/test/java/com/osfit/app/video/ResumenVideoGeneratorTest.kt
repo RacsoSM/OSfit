@@ -162,7 +162,7 @@ class ResumenVideoGeneratorTest {
     @Test
     fun `la escena Medalla se agrega justo antes de Despedida cuando se pasa una`() {
         val rango = ResumenClienteCalculator.rangoMensual(YearMonth.of(2024, 3))
-        val medalla = EscenaResumen.Medalla(nombre = "Rey de la asistencia", categoria = CategoriaMedallaAutomatica.ASISTENCIA, imagenPersonalizada = null)
+        val medalla = EscenaResumen.Medalla(nombre = "Rey de la asistencia", categoria = CategoriaMedallaAutomatica.ASISTENCIA, imagenPersonalizada = null, mensaje = "")
         val escenas = ResumenVideoGenerator.construirEscenas(resumen(rango, racha = 5), medalla)
 
         assertEquals(7, escenas.size)

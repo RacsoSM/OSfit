@@ -31,19 +31,27 @@ class MedallaRepository(
         awaitClose { registro.remove() }
     }
 
-    /** Siembra las 5 categorías automáticas con id fijo (su nombre en minúsculas) si todavía
-     *  no existen. Idempotente: nunca pisa una que ya exista, para no perder un nombre o
-     *  imagen que el trainer ya haya editado. */
+    /** Siembra las 5 categorías automáticas con id fijo (su nombre en minúsculas) si todavía no
+     *  existen, y de paso les rellena el mensaje por defecto si vino vacío (campo agregado
+     *  después de la siembra original). Nunca pisa un nombre/imagen/mensaje que el trainer ya
+     *  haya editado. */
     suspend fun asegurarCategoriasAutomaticas() {
-        val existentes = catalogo.get().await().documents.map { it.id }.toSet()
-        val faltantes = CategoriaMedallaAutomatica.entries.filter { it.name.lowercase() !in existentes }
-        if (faltantes.isEmpty()) return
+        val existentes = catalogo.get().await().documents.associateBy { it.id }
         val batch = db.batch()
-        faltantes.forEach { cat ->
-            val medalla = MedallaCatalogo(nombre = nombrePorDefecto(cat), categoria = cat)
-            batch.set(catalogo.document(cat.name.lowercase()), medalla.copy(id = ""))
+        var hayCambios = false
+        CategoriaMedallaAutomatica.entries.forEach { cat ->
+            val id = cat.name.lowercase()
+            val doc = existentes[id]
+            if (doc == null) {
+                val medalla = MedallaCatalogo(nombre = nombrePorDefecto(cat), categoria = cat, mensaje = mensajePorDefecto(cat))
+                batch.set(catalogo.document(id), medalla.copy(id = ""))
+                hayCambios = true
+            } else if (doc.getString("mensaje").isNullOrBlank()) {
+                batch.update(catalogo.document(id), "mensaje", mensajePorDefecto(cat))
+                hayCambios = true
+            }
         }
-        batch.commit().await()
+        if (hayCambios) batch.commit().await()
     }
 
     private fun nombrePorDefecto(categoria: CategoriaMedallaAutomatica): String = when (categoria) {
@@ -52,6 +60,14 @@ class MedallaRepository(
         CategoriaMedallaAutomatica.RACHA -> "Racha imparable"
         CategoriaMedallaAutomatica.ESFUERZO -> "Máquina de entrenar"
         CategoriaMedallaAutomatica.CONSTANCIA -> "El más constante"
+    }
+
+    private fun mensajePorDefecto(categoria: CategoriaMedallaAutomatica): String = when (categoria) {
+        CategoriaMedallaAutomatica.ASISTENCIA -> "Sorprendentemente, tienes el record de asistencia, sigue así, vas excelente!"
+        CategoriaMedallaAutomatica.TIEMPO -> "Eres la persona que más tiempo estuvo en el gimnasio este periodo, se ve que te agrada estar con nosotros, esperamos que sigas así jajajaj"
+        CategoriaMedallaAutomatica.RACHA -> "Lograste mantener la racha más larga de todas en este periodo, Felicidades!"
+        CategoriaMedallaAutomatica.ESFUERZO -> "Eres la persona que más se está esforzando y eso merece mucho reconocimiento, sigue con ese ritmo \$nombrePersona"
+        CategoriaMedallaAutomatica.CONSTANCIA -> "Eres la persona que más está enfocada en el gimnasio, sigue así!"
     }
 
     /** [medalla.id] no puede estar vacío: las 5 automáticas usan su nombre de categoría en

@@ -18,6 +18,8 @@ object ResumenVideoGenerator {
     private const val FPS = 30
     private const val VIDA_UTIL_MS = 60 * 60 * 1000L
     private val FORMATO_DIA_MES = DateTimeFormatter.ofPattern("d 'de' MMMM", Locale("es"))
+    private const val MENSAJE_SIN_MEDALLA =
+        "La verdad es que no hiciste nada muy relevante en este periodo pero no te quise dejar sin medalla así que, te tocó esta."
 
     suspend fun generarYCompartir(
         context: Context,
@@ -30,12 +32,23 @@ object ResumenVideoGenerator {
         val ahora = System.currentTimeMillis()
         val carpeta = File(context.cacheDir, "resumenes")
         val salida = File(carpeta, "${resumen.cliente.id}_${resumen.rango.tipo}_$ahora.mp4")
-        val medallaEscena = medallaOtorgada?.let {
-            EscenaResumen.Medalla(
-                nombre = it.nombre,
-                categoria = it.categoria,
-                imagenPersonalizada = MedallaImagenUtil.cargarBitmapPropio(context, it)
+        val medallaEscena = when {
+            medallaOtorgada != null -> EscenaResumen.Medalla(
+                nombre = medallaOtorgada.nombre,
+                categoria = medallaOtorgada.categoria,
+                imagenPersonalizada = MedallaImagenUtil.cargarBitmapPropio(context, medallaOtorgada),
+                mensaje = personalizarMensaje(medallaOtorgada.mensaje, resumen.cliente.nombre)
             )
+            // Solo la quincena pasa por el flujo de confirmación de medalla (ver
+            // ConfirmarMedallaDialog): semanal y mensual nunca llegan acá con medallaOtorgada
+            // null "a propósito", así que no deben mostrar el mensaje de consuelo.
+            resumen.rango.tipo == TipoResumen.QUINCENAL -> EscenaResumen.Medalla(
+                nombre = null,
+                categoria = null,
+                imagenPersonalizada = null,
+                mensaje = personalizarMensaje(MENSAJE_SIN_MEDALLA, resumen.cliente.nombre)
+            )
+            else -> null
         }
         val timeline = withContext(Dispatchers.Default) {
             borrarResumenesViejos(carpeta, ahora)
@@ -72,6 +85,9 @@ object ResumenVideoGenerator {
             }
         }
     }
+
+    private fun personalizarMensaje(mensaje: String, nombreCliente: String): String =
+        mensaje.replace("\$nombrePersona", nombreCliente)
 
     fun construirEscenas(resumen: ResumenClienteData, medalla: EscenaResumen.Medalla? = null): List<EscenaResumen> {
         val unidad = when (resumen.rango.tipo) {

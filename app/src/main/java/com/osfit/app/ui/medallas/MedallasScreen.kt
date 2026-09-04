@@ -147,6 +147,7 @@ private fun EditarMedallaDialog(
     val context = LocalContext.current
     var nombre by remember { mutableStateOf(medalla.nombre) }
     var imagenArchivo by remember { mutableStateOf(medalla.imagenArchivo) }
+    var mensaje by remember { mutableStateOf(medalla.mensaje) }
 
     val selectorImagen = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
         if (uri != null) {
@@ -161,6 +162,14 @@ private fun EditarMedallaDialog(
         text = {
             Column {
                 OutlinedTextField(value = nombre, onValueChange = { nombre = it }, label = { Text("Nombre") })
+                OutlinedTextField(
+                    value = mensaje,
+                    onValueChange = { mensaje = it },
+                    label = { Text("Mensaje al otorgarla (opcional)") },
+                    placeholder = { Text("Usa \$nombrePersona para el nombre del cliente") },
+                    minLines = 3,
+                    modifier = Modifier.fillMaxWidth().padding(top = 12.dp)
+                )
                 OutlinedButton(
                     onClick = { selectorImagen.launch(arrayOf("image/*")) },
                     modifier = Modifier.fillMaxWidth().padding(top = 12.dp)
@@ -172,7 +181,7 @@ private fun EditarMedallaDialog(
         confirmButton = {
             TextButton(
                 enabled = nombre.isNotBlank(),
-                onClick = { onGuardar(medalla.copy(nombre = nombre.trim(), imagenArchivo = imagenArchivo)) }
+                onClick = { onGuardar(medalla.copy(nombre = nombre.trim(), imagenArchivo = imagenArchivo, mensaje = mensaje.trim())) }
             ) { Text("Guardar") }
         },
         dismissButton = { TextButton(onClick = onCancelar) { Text("Cancelar") } }

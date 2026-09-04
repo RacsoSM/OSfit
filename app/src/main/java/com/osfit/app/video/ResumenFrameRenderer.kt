@@ -164,7 +164,7 @@ object ResumenFrameRenderer {
         if (escena is EscenaResumen.DiaFavorito) {
             dibujarDonaDiasFavoritos(canvas, ancho, escena.conteoDias, elapsedMs, alpha)
         }
-        if (escena is EscenaResumen.Medalla) {
+        if (escena is EscenaResumen.Medalla && escena.nombre != null) {
             dibujarMedalla(canvas, ancho, escena, elapsedMs, alpha)
         }
     }
@@ -276,9 +276,28 @@ object ResumenFrameRenderer {
                 inicioMs = 2_600, duracionMs = 600, y = 1500f, tamano = 48f, color = Color.LTGRAY, estilo = Typeface.NORMAL
             )
         )
-        is EscenaResumen.Medalla -> listOf(
-            BloqueTexto("¡Felicidades! Te ganaste:", inicioMs = 0, duracionMs = 1_800, y = 600f, tamano = 56f, color = Color.WHITE, estilo = Typeface.BOLD)
-        )
+        is EscenaResumen.Medalla -> buildList {
+            if (escena.nombre != null) {
+                add(BloqueTexto("¡Felicidades! Te ganaste:", inicioMs = 0, duracionMs = 1_800, y = 600f, tamano = 56f, color = Color.WHITE, estilo = Typeface.BOLD))
+            }
+            if (escena.mensaje.isNotBlank()) {
+                // Con medalla, el mensaje aparece justo después de que la imagen/insignia
+                // terminó su fade (MEDALLA_INICIO_MS + MEDALLA_FADE_MS); sin medalla, es el
+                // único contenido de la escena y aparece casi de inmediato. duracionMs = 0
+                // lo muestra de golpe (sin máquina de escribir): son mensajes largos y el
+                // efecto letra por letra tardaría más que la escena entera.
+                val inicioMensaje = if (escena.nombre != null) MEDALLA_INICIO_MS + MEDALLA_FADE_MS + 100 else 400L
+                add(
+                    BloqueTexto(
+                        escena.mensaje, inicioMs = inicioMensaje, duracionMs = 0L,
+                        y = if (escena.nombre != null) 1620f else 860f,
+                        tamano = if (escena.nombre != null) 38f else 48f,
+                        color = if (escena.nombre != null) Color.LTGRAY else Color.WHITE,
+                        estilo = Typeface.NORMAL
+                    )
+                )
+            }
+        }
     }
 
     /** Formatea un total de minutos como texto legible: "1h 27min", "1h", "16min", "0min". */
@@ -477,6 +496,7 @@ object ResumenFrameRenderer {
     /** Imagen propia de la medalla si la hay (fade-in), o su insignia por defecto si no, con el
      *  nombre debajo en [DESTACADO]. */
     private fun dibujarMedalla(canvas: Canvas, ancho: Int, escena: EscenaResumen.Medalla, elapsedMs: Long, alphaEscena: Float) {
+        val nombre = escena.nombre ?: return
         val progreso = ((elapsedMs - MEDALLA_INICIO_MS).coerceIn(0L, MEDALLA_FADE_MS)).toFloat() / MEDALLA_FADE_MS
         if (progreso <= 0f) return
         val alphaAplicado = (255 * progreso * alphaEscena).toInt().coerceIn(0, 255)
@@ -494,7 +514,7 @@ object ResumenFrameRenderer {
         }
 
         dibujarTextoCentradoMultilinea(
-            canvas, listOf(escena.nombre), centroX, centroY + radio + 90f,
+            canvas, listOf(nombre), centroX, centroY + radio + 90f,
             tamano = 44f, color = DESTACADO, alphaAplicado = alphaAplicado
         )
     }

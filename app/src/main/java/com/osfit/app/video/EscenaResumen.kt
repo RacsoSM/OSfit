@@ -35,11 +35,16 @@ sealed class EscenaResumen {
     ) : EscenaResumen()
     data class RachaMasLarga(val dias: Int, val ranking: RankingResultado) : EscenaResumen()
     data class Medalla(
-        val nombre: String,
-        // null = medalla subjetiva; usada para elegir el color/glifo de la insignia por
-        // defecto cuando no hay imagenPersonalizada.
+        // null = no se otorgó ninguna medalla ("Sin medalla"): no se dibuja imagen ni nombre,
+        // solo mensaje.
+        val nombre: String?,
+        // null = medalla subjetiva, o no se otorgó ninguna; usada para elegir el color/glifo de
+        // la insignia por defecto cuando no hay imagenPersonalizada.
         val categoria: CategoriaMedallaAutomatica?,
-        val imagenPersonalizada: Bitmap?
+        val imagenPersonalizada: Bitmap?,
+        // Ya con "$nombrePersona" reemplazado por el nombre del cliente. Puede venir vacío si
+        // la medalla no tiene mensaje configurado.
+        val mensaje: String
     ) : EscenaResumen()
     object Despedida : EscenaResumen()
 }

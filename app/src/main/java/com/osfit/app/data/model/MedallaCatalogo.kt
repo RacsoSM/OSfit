@@ -10,5 +10,8 @@ data class MedallaCatalogo(
     // Nombre de archivo en filesDir/medallas/; null = usa la insignia por defecto de la
     // categoría (dibujada por el renderer, no hay imagen empaquetada) o el ícono genérico
     // si es subjetiva sin imagen propia.
-    val imagenArchivo: String? = null
+    val imagenArchivo: String? = null,
+    // Se muestra debajo de la medalla en la escena del video cuando se otorga. "$nombrePersona"
+    // se reemplaza por el nombre del cliente al generar el video.
+    val mensaje: String = ""
 )
