@@ -26,6 +26,7 @@ import androidx.compose.material.icons.filled.Handshake
 import androidx.compose.material.icons.filled.Payments
 import androidx.compose.material.icons.filled.QueryStats
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Videocam
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -219,6 +220,45 @@ fun ClienteDetailScreen(
                                 ) {
                                     Icon(Icons.Filled.Chat, contentDescription = null)
                                     Text("Enviar rutina de hoy por WhatsApp", modifier = Modifier.padding(start = 8.dp))
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            item {
+                var expandidaLogros by remember { mutableStateOf(false) }
+                val logros by viewModel.medallasOtorgadas.collectAsState()
+                Card(modifier = Modifier.fillMaxWidth()) {
+                    Column(modifier = Modifier.padding(12.dp)) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { expandidaLogros = !expandidaLogros },
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text("Logros", style = MaterialTheme.typography.titleSmall)
+                            Icon(
+                                if (expandidaLogros) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
+                                contentDescription = if (expandidaLogros) "Ocultar" else "Mostrar"
+                            )
+                        }
+                        if (expandidaLogros) {
+                            if (logros.isEmpty()) {
+                                Text("Todavía no tiene medallas.", modifier = Modifier.padding(top = 8.dp))
+                            } else {
+                                logros.forEach { logro ->
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Icon(Icons.Filled.Star, contentDescription = null)
+                                        Column(modifier = Modifier.padding(start = 8.dp)) {
+                                            Text(logro.nombreMedalla, style = MaterialTheme.typography.bodyMedium)
+                                            Text(logro.encabezadoRango, style = MaterialTheme.typography.bodySmall)
+                                        }
+                                    }
                                 }
                             }
                         }
