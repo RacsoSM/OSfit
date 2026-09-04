@@ -6,10 +6,12 @@ import com.google.firebase.Timestamp
 import com.osfit.app.data.AppContainer
 import com.osfit.app.data.model.Asistencia
 import com.osfit.app.data.model.Cliente
+import com.osfit.app.data.model.MedallaOtorgada
 import com.osfit.app.data.model.Pago
 import com.osfit.app.data.model.Rutina
 import com.osfit.app.data.repository.AsistenciaRepository
 import com.osfit.app.data.repository.ClienteRepository
+import com.osfit.app.data.repository.MedallaRepository
 import com.osfit.app.data.repository.PagoRepository
 import com.osfit.app.data.repository.RutinaRepository
 import com.osfit.app.domain.RachaCalculator
@@ -29,13 +31,17 @@ class ClienteDetailViewModel(
     private val clienteRepository: ClienteRepository = AppContainer.clienteRepository,
     private val pagoRepository: PagoRepository = AppContainer.pagoRepository,
     private val rutinaRepository: RutinaRepository = AppContainer.rutinaRepository,
-    private val asistenciaRepository: AsistenciaRepository = AppContainer.asistenciaRepository
+    private val asistenciaRepository: AsistenciaRepository = AppContainer.asistenciaRepository,
+    private val medallaRepository: MedallaRepository = AppContainer.medallaRepository
 ) : ViewModel() {
 
     val cliente: StateFlow<Cliente?> = clienteRepository.observarCliente(clienteId)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
     val pagos: StateFlow<List<Pago>> = pagoRepository.observarPagos(clienteId)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val medallasOtorgadas: StateFlow<List<MedallaOtorgada>> = medallaRepository.observarOtorgadas(clienteId)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val plantillasDisponibles: StateFlow<List<Rutina>> = rutinaRepository.observarRutinas()
