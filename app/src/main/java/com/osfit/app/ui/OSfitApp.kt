@@ -99,6 +99,15 @@ private fun OSfitContent() {
                             },
                             modifier = Modifier.padding(12.dp)
                         )
+                        NavigationDrawerItem(
+                            label = { Text("Medallas") },
+                            selected = rutaActual == Screen.Medallas.route,
+                            onClick = {
+                                scope.launch { drawerState.close() }
+                                navController.navigate(Screen.Medallas.route)
+                            },
+                            modifier = Modifier.padding(12.dp)
+                        )
                         if (com.osfit.app.BuildConfig.DEBUG) {
                             NavigationDrawerItem(
                                 label = { Text("Sandbox (prueba)") },
