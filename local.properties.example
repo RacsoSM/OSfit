@@ -1,0 +1,16 @@
+# Copiar este archivo a "local.properties" y completar los valores.
+# local.properties no se versiona (ver .gitignore): cada máquina tiene el suyo.
+
+# Ruta al Android SDK local.
+#   Windows: C:/Users/TU_USUARIO/AppData/Local/Android/Sdk
+#   macOS:   /Users/TU_USUARIO/Library/Android/sdk
+#   Linux:   /home/TU_USUARIO/Android/Sdk
+sdk.dir=
+
+# Credenciales del usuario fijo de Firebase Authentication
+# (proyecto osfit-cccfe -> Authentication -> Users). Se inyectan en BuildConfig
+# y las usa AuthManager para el login silencioso al abrir la app.
+# Deben ser las MISMAS en todas las máquinas desde las que se compile, para que
+# los dos dispositivos vean el mismo Firestore.
+osfit.auth.email=
+osfit.auth.password=

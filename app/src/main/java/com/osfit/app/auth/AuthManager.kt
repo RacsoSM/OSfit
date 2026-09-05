@@ -26,6 +26,18 @@ class AuthManager(
             return
         }
 
+        // Las credenciales entran por BuildConfig desde local.properties, que no se versiona:
+        // en una máquina recién configurada llegan vacías y Firebase revienta con un
+        // IllegalArgumentException que no dice qué falta. Mejor decirlo aquí.
+        if (BuildConfig.AUTH_EMAIL.isBlank() || BuildConfig.AUTH_PASSWORD.isBlank()) {
+            _state.value = AuthState.Error(
+                "Faltan las credenciales de acceso. Agrega osfit.auth.email y " +
+                    "osfit.auth.password a local.properties (ver local.properties.example) " +
+                    "y vuelve a compilar."
+            )
+            return
+        }
+
         auth.signInWithEmailAndPassword(BuildConfig.AUTH_EMAIL, BuildConfig.AUTH_PASSWORD)
             .addOnSuccessListener {
                 _state.value = AuthState.Success
