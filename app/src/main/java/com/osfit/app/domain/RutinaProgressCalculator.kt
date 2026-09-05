@@ -10,6 +10,11 @@ import java.time.LocalDate
  * La fuente de verdad es el historial de asistencias (Calendario-Rutina): el día se
  * deduce del último día registrado, no se guarda en el cliente. "Asignar día" deja un
  * ancla que manda solo mientras no haya asistencias posteriores a su fecha.
+ *
+ * [Cliente.diaAnclaFecha] es **exclusiva**: el historial toma el mando estrictamente
+ * después de ella. Por eso [AsignarDiaManual] fecha el ancla en el día anterior a la
+ * corrección — así la asistencia del mismo día ya cuenta y el ciclo avanza al día
+ * siguiente en vez de quedarse trabado en el día asignado.
  */
 object RutinaProgressCalculator {
 
@@ -23,7 +28,7 @@ object RutinaProgressCalculator {
      */
     const val FECHA_CORTE = "2026-09-01"
 
-    /** Día del ancla y desde cuándo vale, ya resueltos para clientes viejos y nuevos. */
+    /** Día del ancla y la última fecha que cubre (exclusiva), para clientes viejos y nuevos. */
     private data class Ancla(val dia: Int, val fecha: String)
 
     private fun anclaDe(cliente: Cliente): Ancla {

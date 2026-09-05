@@ -15,6 +15,7 @@ import com.osfit.app.data.repository.ClienteRepository
 import com.osfit.app.data.repository.MedallaRepository
 import com.osfit.app.data.repository.PagoRepository
 import com.osfit.app.data.repository.RutinaRepository
+import com.osfit.app.domain.AsignarDiaManual
 import com.osfit.app.domain.RachaCalculator
 import com.osfit.app.domain.RutinaProgressCalculator
 import java.time.LocalDate
@@ -137,7 +138,13 @@ class ClienteDetailViewModel(
 
     fun asignarDiaActual(diaIndex: Int) {
         viewModelScope.launch {
-            clienteRepository.asignarDiaAncla(clienteId, diaIndex, LocalDate.now().toString())
+            AsignarDiaManual.ejecutar(
+                clienteRepository = clienteRepository,
+                asistenciaRepository = asistenciaRepository,
+                clienteId = clienteId,
+                diaIndex = diaIndex,
+                hoy = LocalDate.now().toString()
+            )
         }
     }
 

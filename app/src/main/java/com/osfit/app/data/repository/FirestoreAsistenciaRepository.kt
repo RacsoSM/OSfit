@@ -172,13 +172,9 @@ class FirestoreAsistenciaRepository(
     }
 
     override suspend fun actualizarDiaRealizado(clienteId: String, fecha: String, nuevoDia: Int) {
-        val asistenciaExistente = coleccion
-            .whereEqualTo("clienteId", clienteId)
-            .whereEqualTo("fecha", fecha)
-            .limit(1)
-            .get()
-            .await()
-        val ref = asistenciaExistente.documents.firstOrNull()?.reference ?: return
+        val (ref, existente) = obtenerAsistencia(clienteId, fecha)
+        // Solo tiene sentido corregir el día de una asistencia ya registrada.
+        if (existente == null || !existente.asistio) return
         ref.update("diaRutinaRealizado", nuevoDia).await()
     }
 

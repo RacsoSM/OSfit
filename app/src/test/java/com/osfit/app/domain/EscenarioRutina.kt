@@ -67,9 +67,15 @@ class EscenarioRutina {
         )
     }
 
-    /** Botón "Asignar día": deja el ancla y no toca ningún registro. */
+    /** Botón "Asignar día": ancla el día y alinea el registro de esa fecha si ya existe. */
     suspend fun asignarDia(id: String, dia: Int, fecha: String) =
-        clientes.asignarDiaAncla(id, dia, fecha)
+        AsignarDiaManual.ejecutar(
+            clienteRepository = clientes,
+            asistenciaRepository = asistencias,
+            clienteId = id,
+            diaIndex = dia,
+            hoy = fecha
+        )
 
     /** Corregir el día desde la pestaña Rutina de Calendario. */
     suspend fun corregirDiaEnCalendario(id: String, fecha: String, dia: Int) =

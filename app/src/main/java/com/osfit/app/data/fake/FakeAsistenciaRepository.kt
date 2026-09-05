@@ -108,6 +108,8 @@ class FakeAsistenciaRepository : AsistenciaRepository {
 
     override suspend fun actualizarDiaRealizado(clienteId: String, fecha: String, nuevoDia: Int) {
         val existente = obtenerExistente(clienteId, fecha) ?: return
+        // Solo tiene sentido corregir el día de una asistencia ya registrada.
+        if (!existente.asistio) return
         upsert(existente.copy(diaRutinaRealizado = nuevoDia))
     }
 

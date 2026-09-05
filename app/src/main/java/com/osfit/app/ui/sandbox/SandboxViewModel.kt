@@ -6,6 +6,7 @@ import com.osfit.app.data.fake.FakeAsistenciaRepository
 import com.osfit.app.data.fake.FakeClienteRepository
 import com.osfit.app.data.model.Asistencia
 import com.osfit.app.data.model.Cliente
+import com.osfit.app.domain.AsignarDiaManual
 import com.osfit.app.domain.RutinaProgressCalculator
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -92,10 +93,16 @@ class SandboxViewModel : ViewModel() {
         }
     }
 
-    /** Misma corrección manual que "Asignar día" en Clientes: pisa el día actual y limpia el pendiente. */
+    /** Mismo camino que el botón "Asignar día" en Clientes, contra la fecha simulada. */
     fun asignarDiaActual(cliente: Cliente, diaIndex: Int) {
         viewModelScope.launch {
-            clienteRepository.asignarDiaAncla(cliente.id, diaIndex, _simulatedFecha.value.toString())
+            AsignarDiaManual.ejecutar(
+                clienteRepository = clienteRepository,
+                asistenciaRepository = asistenciaRepository,
+                clienteId = cliente.id,
+                diaIndex = diaIndex,
+                hoy = _simulatedFecha.value.toString()
+            )
         }
     }
 

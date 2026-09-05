@@ -30,6 +30,10 @@ interface AsistenciaRepository {
 
     suspend fun detenerTiempo(clienteId: String, fecha: String)
     suspend fun reiniciarDia(fecha: String)
+    /**
+     * Corrige qué día de la rutina se hizo en [fecha]. Ignora las faltas: un día realizado
+     * sobre una falta no significa nada y ensuciaría las estadísticas.
+     */
     suspend fun actualizarDiaRealizado(clienteId: String, fecha: String, nuevoDia: Int)
 
     /**
