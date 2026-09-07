@@ -39,7 +39,7 @@ import com.osfit.app.data.model.MedallaCatalogo
 import com.osfit.app.data.model.MedallaOtorgada
 
 @Composable
-fun LogrosClienteScreen(clienteId: String) {
+fun MedallasClienteScreen(clienteId: String) {
     val viewModel: ClienteDetailViewModel = viewModel(
         factory = viewModelFactory { initializer { ClienteDetailViewModel(clienteId) } }
     )
@@ -59,12 +59,12 @@ fun LogrosClienteScreen(clienteId: String) {
             modifier = Modifier.fillMaxSize().padding(padding).padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            item { Text("Logros", style = MaterialTheme.typography.headlineSmall) }
+            item { Text("Medallas", style = MaterialTheme.typography.headlineSmall) }
             if (otorgadas.isEmpty()) {
                 item { Text("Todavía no tiene insignias.", style = MaterialTheme.typography.bodyMedium) }
             } else {
                 items(otorgadas, key = { it.rangoInicio }) { otorgada ->
-                    LogroCard(otorgada = otorgada, onQuitar = { viewModel.quitarMedalla(otorgada) })
+                    MedallaCard(otorgada = otorgada, onQuitar = { viewModel.quitarMedalla(otorgada) })
                 }
             }
         }
@@ -83,7 +83,7 @@ fun LogrosClienteScreen(clienteId: String) {
 }
 
 @Composable
-private fun LogroCard(otorgada: MedallaOtorgada, onQuitar: () -> Unit) {
+private fun MedallaCard(otorgada: MedallaOtorgada, onQuitar: () -> Unit) {
     Card(modifier = Modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(12.dp),

@@ -77,7 +77,7 @@ fun ClienteDetailScreen(
     onVerAsistencias: (String) -> Unit,
     onVerPagos: (String) -> Unit,
     onVerEstadisticas: (String) -> Unit,
-    onVerLogros: (String) -> Unit,
+    onVerMedallas: (String) -> Unit,
     onEditarCliente: (String) -> Unit,
     onEliminado: () -> Unit
 ) {
@@ -304,9 +304,9 @@ fun ClienteDetailScreen(
                     )
                     AccionCard(
                         icono = Icons.Filled.EmojiEvents,
-                        texto = "Logros",
+                        texto = "Medallas",
                         modifier = Modifier.weight(1f),
-                        onClick = { onVerLogros(clienteId) }
+                        onClick = { onVerMedallas(clienteId) }
                     )
                 }
             }
