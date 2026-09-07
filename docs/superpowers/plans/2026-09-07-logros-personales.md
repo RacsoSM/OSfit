@@ -99,7 +99,7 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 **Interfaces:**
 - Produces: `LogroPersonalCatalogo(id, nombre, mensaje, imagenArchivo)` y `LogroPersonalOtorgado(id, rangoInicio, logroId, nombreLogro, mensaje, encabezadoRango, orden)` — consumidos por las Tasks 3, 4, 6, 8, 9 y 10.
 
-- [ ] **Step 1: Crear el modelo del catálogo**
+- [x] **Step 1: Crear el modelo del catálogo**
 
 `LogroPersonalCatalogo.kt`:
 
@@ -123,7 +123,7 @@ data class LogroPersonalCatalogo(
 )
 ```
 
-- [ ] **Step 2: Crear el modelo del otorgado**
+- [x] **Step 2: Crear el modelo del otorgado**
 
 `LogroPersonalOtorgado.kt`:
 
@@ -151,12 +151,12 @@ data class LogroPersonalOtorgado(
 )
 ```
 
-- [ ] **Step 3: Verificar que compila**
+- [x] **Step 3: Verificar que compila**
 
 Run: `./gradlew assembleDebug`
 Expected: BUILD SUCCESSFUL
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add app/src/main/java/com/osfit/app/data/model/LogroPersonalCatalogo.kt app/src/main/java/com/osfit/app/data/model/LogroPersonalOtorgado.kt
