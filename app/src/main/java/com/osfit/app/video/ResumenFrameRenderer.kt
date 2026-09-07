@@ -298,6 +298,8 @@ object ResumenFrameRenderer {
                 )
             }
         }
+        // Provisional: la Task 7 la reemplaza por el título y el mensaje reales.
+        is EscenaResumen.LogrosPersonales -> emptyList()
     }
 
     /** Formatea un total de minutos como texto legible: "1h 27min", "1h", "16min", "0min". */

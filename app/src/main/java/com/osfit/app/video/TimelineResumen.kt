@@ -84,6 +84,15 @@ class TimelineResumen(escenas: List<EscenaResumen>) {
         // 6.5s: el título ("¡Felicidades! Te ganaste:") tarda ~1.8s en escribirse, la imagen
         // hace fade 600ms después, y el resto es tiempo para que se lea el nombre de la medalla.
         is EscenaResumen.Medalla -> 6_500L
+        // Escala con la cantidad porque el contenido en pantalla cambia: con 1 logro es el
+        // mismo layout y ritmo que Medalla (título + insignia + mensaje); con 2 o 3 no hay
+        // mensaje que leer, pero sí insignias entrando en cascada (la tercera recién a los
+        // ~3.2s) y varios nombres.
+        is EscenaResumen.LogrosPersonales -> when (escena.logros.size) {
+            1 -> 6_500L
+            2 -> 7_500L
+            else -> 9_000L
+        }
         // "Gracias por confiar en nosotros" a la velocidad del saludo (~155ms/carácter) tarda
         // ~4.8s en escribirse; se deja 1.2s extra de margen para que quede en pantalla ya completa.
         is EscenaResumen.Despedida -> 6_000L

@@ -46,5 +46,19 @@ sealed class EscenaResumen {
         // la medalla no tiene mensaje configurado.
         val mensaje: String
     ) : EscenaResumen()
+
+    /** Un logro personal ya resuelto para dibujar: bitmap decodificado y mensaje con
+     *  "$nombrePersona" reemplazado. */
+    data class LogroEnEscena(
+        val nombre: String,
+        val imagen: Bitmap?,
+        // Sólo se dibuja cuando su escena trae un único logro: con 2 o 3 no cabe legible.
+        val mensaje: String
+    )
+
+    /** Entre 1 y 3 logros personales otorgados en la quincena. Si se otorgaron más, el
+     *  generador arma varias escenas de a 3 (ver ResumenVideoGenerator.construirEscenas). */
+    data class LogrosPersonales(val logros: List<LogroEnEscena>) : EscenaResumen()
+
     object Despedida : EscenaResumen()
 }

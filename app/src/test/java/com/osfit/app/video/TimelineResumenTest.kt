@@ -79,4 +79,15 @@ class TimelineResumenTest {
     fun `no acepta una lista vacia de escenas`() {
         TimelineResumen(emptyList())
     }
+
+    private fun logros(cantidad: Int) = EscenaResumen.LogrosPersonales(
+        (1..cantidad).map { EscenaResumen.LogroEnEscena("Logro $it", null, "mensaje $it") }
+    )
+
+    @Test
+    fun `la escena de logros personales dura mas mientras mas logros trae`() {
+        assertEquals(6_500L, TimelineResumen(listOf(logros(1))).duracionTotalMs)
+        assertEquals(7_500L, TimelineResumen(listOf(logros(2))).duracionTotalMs)
+        assertEquals(9_000L, TimelineResumen(listOf(logros(3))).duracionTotalMs)
+    }
 }
