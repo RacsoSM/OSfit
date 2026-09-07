@@ -167,6 +167,9 @@ object ResumenFrameRenderer {
         if (escena is EscenaResumen.Medalla && escena.nombre != null) {
             dibujarMedalla(canvas, ancho, escena, elapsedMs, alpha)
         }
+        if (escena is EscenaResumen.LogrosPersonales) {
+            dibujarLogrosPersonales(canvas, ancho, escena, elapsedMs, alpha)
+        }
     }
 
     private fun bloquesPara(escena: EscenaResumen): List<BloqueTexto> = when (escena) {
@@ -298,8 +301,22 @@ object ResumenFrameRenderer {
                 )
             }
         }
-        // Provisional: la Task 7 la reemplaza por el título y el mensaje reales.
-        is EscenaResumen.LogrosPersonales -> emptyList()
+        is EscenaResumen.LogrosPersonales -> buildList {
+            add(BloqueTexto("Y contra ti mismo, lograste:", inicioMs = 0, duracionMs = 1_800, y = 600f, tamano = 56f, color = Color.WHITE, estilo = Typeface.BOLD))
+            // El mensaje sólo cabe legible cuando la escena trae un único logro; con 2 o 3
+            // la escena se queda en título + insignias + nombres. Mismo tratamiento que el
+            // mensaje de la medalla: duracionMs = 0 lo muestra de golpe, sin máquina de
+            // escribir, porque son textos largos.
+            val unico = escena.logros.singleOrNull()
+            if (unico != null && unico.mensaje.isNotBlank()) {
+                add(
+                    BloqueTexto(
+                        unico.mensaje, inicioMs = MEDALLA_INICIO_MS + MEDALLA_FADE_MS + 100,
+                        duracionMs = 0L, y = 1620f, tamano = 38f, color = Color.LTGRAY, estilo = Typeface.NORMAL
+                    )
+                )
+            }
+        }
     }
 
     /** Formatea un total de minutos como texto legible: "1h 27min", "1h", "16min", "0min". */
@@ -512,7 +529,12 @@ object ResumenFrameRenderer {
             val paintImagen = Paint().apply { isAntiAlias = true; alpha = alphaAplicado }
             canvas.drawBitmap(bitmap, null, destino, paintImagen)
         } else {
-            dibujarInsigniaMedalla(canvas, centroX, centroY, radio, escena.categoria, alphaAplicado)
+            dibujarInsignia(
+                canvas, centroX, centroY, radio,
+                colorInsignia = escena.categoria?.let { COLOR_INSIGNIA_MEDALLA[it] } ?: 0xFFB0B0B0.toInt(),
+                glifo = escena.categoria?.name?.first()?.toString() ?: "★",
+                alphaAplicado = alphaAplicado
+            )
         }
 
         dibujarTextoCentradoMultilinea(
@@ -521,21 +543,66 @@ object ResumenFrameRenderer {
         )
     }
 
-    /** Insignia por defecto cuando la medalla no tiene imagen propia: un círculo del color de su
-     *  categoría con su inicial al centro; gris con una estrella si es subjetiva sin imagen. */
-    private fun dibujarInsigniaMedalla(
+    /** Insignia por defecto cuando no hay imagen propia: un círculo de [colorInsignia] con
+     *  [glifo] al centro. La medalla pasa el color/inicial de su categoría; los logros
+     *  personales, un color de la paleta pastel y una estrella. */
+    private fun dibujarInsignia(
         canvas: Canvas, cx: Float, cy: Float, radio: Float,
-        categoria: CategoriaMedallaAutomatica?, alphaAplicado: Int
+        colorInsignia: Int, glifo: String, alphaAplicado: Int
     ) {
-        val colorInsignia = categoria?.let { COLOR_INSIGNIA_MEDALLA[it] } ?: 0xFFB0B0B0.toInt()
         val paintCirculo = Paint().apply { isAntiAlias = true; color = colorInsignia; alpha = alphaAplicado; style = Paint.Style.FILL }
         canvas.drawCircle(cx, cy, radio, paintCirculo)
-        val glifo = categoria?.name?.first()?.toString() ?: "★"
         val paintGlifo = Paint().apply {
             isAntiAlias = true; color = NEGRO; alpha = alphaAplicado; textSize = radio
             typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD); textAlign = Paint.Align.CENTER
         }
         canvas.drawText(glifo, cx, cy + radio * 0.35f, paintGlifo)
+    }
+
+    /**
+     * Con un solo logro, mismo layout que la medalla (insignia grande centrada, nombre debajo,
+     * y el mensaje lo dibuja lineasDeEscena, o sea bloquesPara). Con 2 o 3, insignias más
+     * chicas repartidas a lo ancho, cada una entrando 500ms después de la anterior.
+     */
+    private fun dibujarLogrosPersonales(
+        canvas: Canvas, ancho: Int, escena: EscenaResumen.LogrosPersonales,
+        elapsedMs: Long, alphaEscena: Float
+    ) {
+        val cantidad = escena.logros.size
+        if (cantidad == 0) return
+        val unico = cantidad == 1
+        val radio = if (unico) 220f else 130f
+        val centroY = if (unico) 1150f else 1100f
+
+        escena.logros.forEachIndexed { indice, logro ->
+            val inicio = if (unico) MEDALLA_INICIO_MS else 1_200L + indice * 500L
+            val progreso = ((elapsedMs - inicio).coerceIn(0L, MEDALLA_FADE_MS)).toFloat() / MEDALLA_FADE_MS
+            if (progreso <= 0f) return@forEachIndexed
+            val alphaAplicado = (255 * progreso * alphaEscena).toInt().coerceIn(0, 255)
+
+            // Columnas de ancho igual: la insignia i queda en el centro de la columna i.
+            val anchoColumna = ancho.toFloat() / cantidad
+            val centroX = anchoColumna * (indice + 0.5f)
+
+            val bitmap = logro.imagen
+            if (bitmap != null) {
+                val destino = RectF(centroX - radio, centroY - radio, centroX + radio, centroY + radio)
+                val paintImagen = Paint().apply { isAntiAlias = true; alpha = alphaAplicado }
+                canvas.drawBitmap(bitmap, null, destino, paintImagen)
+            } else {
+                dibujarInsignia(
+                    canvas, centroX, centroY, radio,
+                    colorInsignia = DONA_PALETA_PASTEL[indice % DONA_PALETA_PASTEL.size],
+                    glifo = "★",
+                    alphaAplicado = alphaAplicado
+                )
+            }
+
+            dibujarTextoCentradoMultilinea(
+                canvas, listOf(logro.nombre), centroX, centroY + radio + (if (unico) 90f else 60f),
+                tamano = if (unico) 44f else 28f, color = DESTACADO, alphaAplicado = alphaAplicado
+            )
+        }
     }
 
     /**
