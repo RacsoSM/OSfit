@@ -1,11 +1,13 @@
 package com.osfit.app.video
 
 import android.content.Context
+import com.osfit.app.data.model.LogroPersonalCatalogo
 import com.osfit.app.data.model.MedallaCatalogo
 import com.osfit.app.domain.ResumenClienteData
 import com.osfit.app.domain.TipoResumen
 import com.osfit.app.util.CancionUtil
 import com.osfit.app.util.CompartirUtil
+import com.osfit.app.util.LogroPersonalImagenUtil
 import com.osfit.app.util.MedallaImagenUtil
 import java.io.File
 import java.time.format.DateTimeFormatter
@@ -25,6 +27,7 @@ object ResumenVideoGenerator {
         context: Context,
         resumen: ResumenClienteData,
         medallaOtorgada: MedallaCatalogo? = null,
+        logrosOtorgados: List<LogroPersonalCatalogo> = emptyList(),
         onProgreso: (Float) -> Unit = {}
     ) {
         // El timestamp evita que dos generaciones que lleguen a solaparse (por ejemplo una
@@ -50,9 +53,21 @@ object ResumenVideoGenerator {
             )
             else -> null
         }
+        // Los bitmaps se decodifican acá, donde hay Context, y se agrupan de a 3: así el
+        // ResumenFrameRenderer sigue sin depender de Context, igual que con la medalla.
+        val escenasDeLogros = logrosOtorgados
+            .map { logro ->
+                EscenaResumen.LogroEnEscena(
+                    nombre = logro.nombre,
+                    imagen = LogroPersonalImagenUtil.cargarBitmapPropio(context, logro),
+                    mensaje = personalizarMensaje(logro.mensaje, resumen.cliente.nombre)
+                )
+            }
+            .chunked(3)
+            .map { grupo -> EscenaResumen.LogrosPersonales(grupo) }
         val timeline = withContext(Dispatchers.Default) {
             borrarResumenesViejos(carpeta, ahora)
-            TimelineResumen(construirEscenas(resumen, medallaEscena))
+            TimelineResumen(construirEscenas(resumen, medallaEscena, escenasDeLogros))
         }
         // Una instancia de fondo por generación: su bitmap y sus paints son estado mutable,
         // y dos generaciones solapadas se corromperían los frames si lo compartieran.
@@ -89,7 +104,11 @@ object ResumenVideoGenerator {
     private fun personalizarMensaje(mensaje: String, nombreCliente: String): String =
         mensaje.replace("\$nombrePersona", nombreCliente)
 
-    fun construirEscenas(resumen: ResumenClienteData, medalla: EscenaResumen.Medalla? = null): List<EscenaResumen> {
+    fun construirEscenas(
+        resumen: ResumenClienteData,
+        medalla: EscenaResumen.Medalla? = null,
+        logrosPersonales: List<EscenaResumen.LogrosPersonales> = emptyList()
+    ): List<EscenaResumen> {
         val unidad = when (resumen.rango.tipo) {
             TipoResumen.SEMANAL -> "semana"
             TipoResumen.QUINCENAL -> "quincena"
@@ -135,6 +154,9 @@ object ResumenVideoGenerator {
         if (incluyeRacha && racha != null && rankingRacha != null) {
             escenas += EscenaResumen.RachaMasLarga(dias = racha, ranking = rankingRacha)
         }
+        // Primero el reconocimiento personal (contra sí mismo), después la medalla grupal
+        // como cierre. Ya vienen agrupadas de a 3 desde generarYCompartir.
+        escenas += logrosPersonales
         if (medalla != null) escenas += medalla
         escenas += EscenaResumen.Despedida
         return escenas

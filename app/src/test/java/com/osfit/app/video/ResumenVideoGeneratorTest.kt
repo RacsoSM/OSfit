@@ -177,4 +177,57 @@ class ResumenVideoGeneratorTest {
 
         assertTrue(escenas.none { it is EscenaResumen.Medalla })
     }
+
+    private fun logro(nombre: String) = EscenaResumen.LogroEnEscena(nombre, null, "mensaje de $nombre")
+
+    private fun escenasDeLogros(cantidad: Int): List<EscenaResumen.LogrosPersonales> =
+        (1..cantidad).map { logro("Logro $it") }
+            .chunked(3)
+            .map { EscenaResumen.LogrosPersonales(it) }
+
+    @Test
+    fun `sin logros personales no aparece ninguna escena de logros`() {
+        val rango = ResumenClienteCalculator.rangoQuincenal(LocalDate.of(2024, 3, 20))
+        val escenas = ResumenVideoGenerator.construirEscenas(resumen(rango, racha = 4))
+
+        assertTrue(escenas.none { it is EscenaResumen.LogrosPersonales })
+    }
+
+    @Test
+    fun `cuatro logros personales se reparten en dos escenas de 3 y 1`() {
+        val rango = ResumenClienteCalculator.rangoQuincenal(LocalDate.of(2024, 3, 20))
+        val escenas = ResumenVideoGenerator.construirEscenas(
+            resumen(rango, racha = 4),
+            logrosPersonales = escenasDeLogros(4)
+        )
+
+        val deLogros = escenas.filterIsInstance<EscenaResumen.LogrosPersonales>()
+        assertEquals(2, deLogros.size)
+        assertEquals(3, deLogros[0].logros.size)
+        assertEquals(1, deLogros[1].logros.size)
+        assertEquals("Logro 4", deLogros[1].logros[0].nombre)
+    }
+
+    @Test
+    fun `las escenas de logros van despues de RachaMasLarga y antes de Medalla`() {
+        val rango = ResumenClienteCalculator.rangoQuincenal(LocalDate.of(2024, 3, 20))
+        val medalla = EscenaResumen.Medalla(
+            nombre = "Rey de la asistencia",
+            categoria = CategoriaMedallaAutomatica.ASISTENCIA,
+            imagenPersonalizada = null,
+            mensaje = "felicidades"
+        )
+        val escenas = ResumenVideoGenerator.construirEscenas(
+            resumen(rango, racha = 4),
+            medalla = medalla,
+            logrosPersonales = escenasDeLogros(2)
+        )
+
+        val indiceRacha = escenas.indexOfFirst { it is EscenaResumen.RachaMasLarga }
+        val indiceLogros = escenas.indexOfFirst { it is EscenaResumen.LogrosPersonales }
+        val indiceMedalla = escenas.indexOfFirst { it is EscenaResumen.Medalla }
+
+        assertTrue(indiceRacha < indiceLogros)
+        assertTrue(indiceLogros < indiceMedalla)
+    }
 }
