@@ -93,6 +93,9 @@ fun OSfitNavHost(navController: NavHostController, modifier: Modifier = Modifier
         composable(Screen.Medallas.route) {
             com.osfit.app.ui.medallas.MedallasScreen()
         }
+        composable(Screen.LogrosPersonales.route) {
+            com.osfit.app.ui.logros.LogrosPersonalesScreen()
+        }
         composable(
             route = Screen.TomarAsistencia.route,
             arguments = listOf(navArgument("fecha") { type = NavType.StringType })

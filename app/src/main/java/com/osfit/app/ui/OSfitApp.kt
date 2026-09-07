@@ -108,6 +108,15 @@ private fun OSfitContent() {
                             },
                             modifier = Modifier.padding(12.dp)
                         )
+                        NavigationDrawerItem(
+                            label = { Text("Logros personales") },
+                            selected = rutaActual == Screen.LogrosPersonales.route,
+                            onClick = {
+                                scope.launch { drawerState.close() }
+                                navController.navigate(Screen.LogrosPersonales.route)
+                            },
+                            modifier = Modifier.padding(12.dp)
+                        )
                         if (com.osfit.app.BuildConfig.DEBUG) {
                             NavigationDrawerItem(
                                 label = { Text("Sandbox (prueba)") },
