@@ -340,7 +340,7 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 - Consumes: `LogroPersonalCatalogo`, `LogroPersonalOtorgado` (Task 2).
 - Produces: `AppContainer.logroPersonalRepository` con `observarCatalogo(): Flow<List<LogroPersonalCatalogo>>`, `guardarLogro(logro)`, `eliminarLogro(logroId)`, `observarOtorgados(clienteId): Flow<List<LogroPersonalOtorgado>>`, `otorgarLogros(clienteId, rangoInicio, logros)`, `quitarLogro(clienteId, id)` — consumidos por Tasks 8, 9 y 10.
 
-- [ ] **Step 1: Crear el repositorio**
+- [x] **Step 1: Crear el repositorio**
 
 ```kotlin
 package com.osfit.app.data.repository
@@ -446,7 +446,7 @@ class LogroPersonalRepository(
 }
 ```
 
-- [ ] **Step 2: Registrarlo en `AppContainer`**
+- [x] **Step 2: Registrarlo en `AppContainer`**
 
 Agregar el import `com.osfit.app.data.repository.LogroPersonalRepository` y, después de la línea de `medallaRepository`:
 
@@ -454,12 +454,12 @@ Agregar el import `com.osfit.app.data.repository.LogroPersonalRepository` y, des
     val logroPersonalRepository: LogroPersonalRepository by lazy { LogroPersonalRepository() }
 ```
 
-- [ ] **Step 3: Verificar que compila**
+- [x] **Step 3: Verificar que compila**
 
 Run: `./gradlew assembleDebug test`
 Expected: BUILD SUCCESSFUL
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add app/src/main/java/com/osfit/app/data/
