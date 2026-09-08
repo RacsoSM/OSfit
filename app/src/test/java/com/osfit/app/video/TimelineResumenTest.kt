@@ -3,6 +3,7 @@ package com.osfit.app.video
 import com.osfit.app.domain.RankingResultado
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class TimelineResumenTest {
@@ -86,8 +87,44 @@ class TimelineResumenTest {
 
     @Test
     fun `la escena de logros personales dura mas mientras mas logros trae`() {
-        assertEquals(6_500L, TimelineResumen(listOf(logros(1))).duracionTotalMs)
-        assertEquals(7_500L, TimelineResumen(listOf(logros(2))).duracionTotalMs)
-        assertEquals(9_000L, TimelineResumen(listOf(logros(3))).duracionTotalMs)
+        assertEquals(7_500L, TimelineResumen(listOf(logros(1))).duracionTotalMs)
+        assertEquals(8_500L, TimelineResumen(listOf(logros(2))).duracionTotalMs)
+        assertEquals(10_000L, TimelineResumen(listOf(logros(3))).duracionTotalMs)
+    }
+
+    private fun medalla(mensaje: String) = EscenaResumen.Medalla(
+        nombre = "Rey de la asistencia",
+        categoria = null,
+        imagenPersonalizada = null,
+        mensaje = mensaje
+    )
+
+    @Test
+    fun `la racha mas larga dura 5 segundos`() {
+        val escena = EscenaResumen.RachaMasLarga(dias = 4, ranking = ranking)
+
+        assertEquals(5_000L, TimelineResumen(listOf(escena)).duracionTotalMs)
+    }
+
+    @Test
+    fun `sin mensaje la medalla dura lo que tarda en aparecer mas la lectura del nombre`() {
+        assertEquals(5_900L, TimelineResumen(listOf(medalla(""))).duracionTotalMs)
+    }
+
+    @Test
+    fun `con mensaje la medalla crece lo que tarde en escribirse`() {
+        // El mensaje arranca a los 5.9s y se escribe a ~82.76ms por carácter; después queda
+        // 1s en pantalla ya completo. Con 20 caracteres: 5900 + 1655 + 1000.
+        val mensaje = "a".repeat(20)
+
+        assertEquals(8_555L, TimelineResumen(listOf(medalla(mensaje))).duracionTotalMs)
+    }
+
+    @Test
+    fun `un mensaje mas largo alarga mas la escena de la medalla`() {
+        val corta = TimelineResumen(listOf(medalla("a".repeat(20)))).duracionTotalMs
+        val larga = TimelineResumen(listOf(medalla("a".repeat(120)))).duracionTotalMs
+
+        assertTrue(larga > corta)
     }
 }

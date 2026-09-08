@@ -2,6 +2,20 @@ package com.osfit.app.video
 
 private const val CROSSFADE_MS = 600L
 
+/**
+ * Momento en que el mensaje de la medalla empieza a escribirse, al final de su coreografía:
+ * título grupal (0s) → "¡Felicidades! Te ganaste:" (0.5s, tarda ~1.8s) → la medalla entra 1s
+ * después de ese texto (3.3s) y tarda 600ms → 2s de pausa. Debe coincidir con el bloque de
+ * texto que arma ResumenFrameRenderer.
+ */
+internal const val MENSAJE_MEDALLA_INICIO_MS = 5_900L
+
+/** Velocidad de la máquina de escribir del texto destacado, en ms por carácter. */
+private const val MS_POR_CARACTER_MENSAJE = 2_400.0 / 29.0
+
+/** Tiempo que el mensaje queda completo en pantalla antes de que la escena termine. */
+private const val MARGEN_LECTURA_MS = 1_000L
+
 data class TramoEscena(val escena: EscenaResumen, val inicioMs: Long, val duracionMs: Long) {
     val finMs: Long get() = inicioMs + duracionMs
 }
@@ -80,18 +94,29 @@ class TimelineResumen(escenas: List<EscenaResumen>) {
         // escribirse el texto (~2.2s) y necesita quedarse en pantalla un rato para leerse;
         // +2s extra a pedido del trainer sobre los 5s que ya tenía.
         is EscenaResumen.DiaFavorito -> 7_000L
-        is EscenaResumen.RachaMasLarga -> 4_000L
-        // 6.5s: el título ("¡Felicidades! Te ganaste:") tarda ~1.8s en escribirse, la imagen
-        // hace fade 600ms después, y el resto es tiempo para que se lea el nombre de la medalla.
-        is EscenaResumen.Medalla -> 6_500L
+        // 5s y no 4s a pedido del trainer: con 4s la escena cortaba justo cuando la última
+        // animación terminaba de cargar.
+        is EscenaResumen.RachaMasLarga -> 5_000L
+        // Ya no es fija: la escena se estira con el mensaje. La coreografía llega a
+        // MENSAJE_MEDALLA_INICIO_MS (ver ResumenFrameRenderer) y a partir de ahí el mensaje se
+        // escribe letra por letra, así que la duración depende de cuánto texto haya. Sin
+        // mensaje alcanza con el tramo fijo, que ya deja 2s para leer el nombre.
+        is EscenaResumen.Medalla -> if (escena.mensaje.isBlank()) {
+            MENSAJE_MEDALLA_INICIO_MS
+        } else {
+            MENSAJE_MEDALLA_INICIO_MS +
+                (escena.mensaje.length * MS_POR_CARACTER_MENSAJE).toLong() +
+                MARGEN_LECTURA_MS
+        }
         // Escala con la cantidad porque el contenido en pantalla cambia: con 1 logro es el
         // mismo layout y ritmo que Medalla (título + insignia + mensaje); con 2 o 3 no hay
-        // mensaje que leer, pero sí insignias entrando en cascada (la tercera recién a los
-        // ~3.2s) y varios nombres.
+        // mensaje que leer, pero sí insignias entrando en cascada y varios nombres.
+        // Todo corrido 1s respecto de lo que duraba antes: ahora la escena abre con su propio
+        // título ("Logros personales") y recién después entra el resto.
         is EscenaResumen.LogrosPersonales -> when (escena.logros.size) {
-            1 -> 6_500L
-            2 -> 7_500L
-            else -> 9_000L
+            1 -> 7_500L
+            2 -> 8_500L
+            else -> 10_000L
         }
         // "Gracias por confiar en nosotros" a la velocidad del saludo (~155ms/carácter) tarda
         // ~4.8s en escribirse; se deja 1.2s extra de margen para que quede en pantalla ya completa.
