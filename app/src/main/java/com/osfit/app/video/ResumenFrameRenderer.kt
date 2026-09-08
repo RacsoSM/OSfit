@@ -522,7 +522,9 @@ object ResumenFrameRenderer {
 
         val centroX = ancho / 2f
         val centroY = 1150f
-        val radio = 220f
+        // Un 20% más grande que la insignia de los logros personales: la medalla es el premio
+        // de la quincena y tiene la escena para ella sola.
+        val radio = 264f
         val bitmap = escena.imagenPersonalizada
         if (bitmap != null) {
             val destino = RectF(centroX - radio, centroY - radio, centroX + radio, centroY + radio)
