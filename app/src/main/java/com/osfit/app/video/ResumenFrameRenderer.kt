@@ -4,7 +4,9 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Path
+import android.graphics.RadialGradient
 import android.graphics.RectF
+import android.graphics.Shader
 import android.graphics.Typeface
 import android.text.Layout
 import android.text.SpannableStringBuilder
@@ -57,6 +59,15 @@ object ResumenFrameRenderer {
      *  el número grande (900ms de inicio + 2400ms de máquina de escribir). */
     private const val GRAFICA_INICIO_MS = 3_400L
     private const val GRAFICA_FADE_MS = 600L
+
+    /** Toda la escena del Focus (textos y gráfica) sube esto, a pedido del trainer: quedaba
+     *  demasiado abajo en pantalla. */
+    private const val DESPLAZAMIENTO_ARRIBA_TIEMPO = 200f
+
+    /** Referencias fijas del eje Y en minutos, en vez de calcularlas según el máximo del rango:
+     *  así la altura de la línea significa lo mismo en todos los videos. */
+    private val REFERENCIAS_EJE_MINUTOS = listOf(60, 120)
+    private const val REFERENCIA_EJE_MAXIMA = 120
     /** El texto de "en qué lugar quedó" se corrió 15% de la altura del video (1920 * 0.15)
      *  hacia abajo, a pedido del trainer. */
     private const val DESPLAZAMIENTO_ABAJO = ALTO_DEFECTO * 0.15f
@@ -70,6 +81,10 @@ object ResumenFrameRenderer {
      *  su mensaje (2200ms de máquina de escribir). */
     private const val DONA_INICIO_MS = 2_400L
     private const val DONA_FADE_MS = 500L
+
+    /** Ver el uso en [dibujarDonaDiasFavoritos]: encoger la dona es lo que le da espacio a las
+     *  etiquetas de cada rebanada. */
+    private const val FACTOR_DONA = 0.85f
     /** Título y dona de la escena DiaFavorito se subieron 20% de la altura del video
      *  (1920 * 0.20), a pedido del trainer. */
     private const val DESPLAZAMIENTO_ARRIBA_DIA_FAVORITO = ALTO_DEFECTO * 0.20f
@@ -100,6 +115,36 @@ object ResumenFrameRenderer {
 
     private const val MEDALLA_INICIO_MS = 2_000L
     private const val MEDALLA_FADE_MS = 600L
+
+    private const val TITULO_GRUPAL = "Logros grupales"
+    private const val TITULO_PERSONAL = "Logros personales"
+
+    /** Los dos títulos de sección comparten altura para que el corte entre ambas escenas no
+     *  desplace nada: el crossfade los superpone y saltarían si no coincidieran. */
+    private const val TITULO_SECCION_Y = 380f
+
+    /** El "¡Felicidades! Te ganaste:" entra medio segundo después del título de sección. */
+    private const val SUBTITULO_MEDALLA_INICIO_MS = 500L
+
+    /** Todo el contenido de la escena de logros personales se corre 1s: primero se lee el
+     *  título de sección, después entran insignias y textos. */
+    private const val LOGROS_RETRASO_MS = 1_000L
+
+    /** La insignia de la medalla entra 1s después de que el "¡Felicidades!" terminó de
+     *  escribirse (500 + 1800 + 1000). Retrasarla es lo que arma el suspenso. */
+    private const val MEDALLA_INICIO_GRUPAL_MS = 3_300L
+
+    /** Radio del halo respecto del de la insignia, y opacidad máxima de su centro. La medalla
+     *  brilla más que los logros personales: la jerarquía tiene que leerse. */
+    private const val HALO_FACTOR_MEDALLA = 1.9f
+    private const val HALO_ALPHA_MEDALLA = 150
+    private const val HALO_FACTOR_LOGRO = 1.45f
+    private const val HALO_ALPHA_LOGRO = 70
+
+    /** El halo de la medalla sobrepasa su brillo final y recién después se asienta: ese pico
+     *  es el "destello" de victoria. Dura desde que la insignia termina de entrar. */
+    private const val DESTELLO_PICO = 1.7f
+    private const val DESTELLO_MS = 700L
     /** Mismos colores que [DONA_PALETA_PASTEL], mapeados por categoría (en vez de por índice de
      *  rebanada) para que la insignia por defecto se sienta parte del mismo lenguaje visual del
      *  video. Solo se usa cuando la medalla no tiene imagen propia. */
@@ -216,12 +261,12 @@ object ResumenFrameRenderer {
             val horas = escena.minutos / 60
             val minutos = escena.minutos % 60
             listOf(
-                BloqueTexto("Estuviste en el poderoso Focus un total de", inicioMs = 0, duracionMs = 900, y = 500f, tamano = 44f, color = Color.WHITE, estilo = Typeface.NORMAL),
-                BloqueTexto("${horas}h ${minutos}min", inicioMs = 900, duracionMs = 2_400, y = 800f, tamano = 96f, color = DESTACADO, estilo = Typeface.BOLD),
+                BloqueTexto("Estuviste en el poderoso Focus un total de", inicioMs = 0, duracionMs = 900, y = 500f - DESPLAZAMIENTO_ARRIBA_TIEMPO, tamano = 44f, color = Color.WHITE, estilo = Typeface.NORMAL),
+                BloqueTexto("${horas}h ${minutos}min", inicioMs = 900, duracionMs = 2_400, y = 800f - DESPLAZAMIENTO_ARRIBA_TIEMPO, tamano = 96f, color = DESTACADO, estilo = Typeface.BOLD),
                 BloqueTexto(
                     comparacion(escena.ranking, "¡Vas primero en tiempo asistido!", "tiempo asistido"),
                     inicioMs = 4_000, duracionMs = 1_500,
-                    y = 1500f + DESPLAZAMIENTO_ABAJO, tamano = 48f, color = Color.LTGRAY, estilo = Typeface.NORMAL
+                    y = 1500f + DESPLAZAMIENTO_ABAJO - DESPLAZAMIENTO_ARRIBA_TIEMPO, tamano = 48f, color = Color.LTGRAY, estilo = Typeface.NORMAL
                 )
             )
         }
@@ -281,28 +326,31 @@ object ResumenFrameRenderer {
         )
         is EscenaResumen.Medalla -> buildList {
             if (escena.nombre != null) {
-                add(BloqueTexto("¡Felicidades! Te ganaste:", inicioMs = 0, duracionMs = 1_800, y = 600f, tamano = 56f, color = Color.WHITE, estilo = Typeface.BOLD))
+                add(BloqueTexto(TITULO_GRUPAL, inicioMs = 0, duracionMs = 900, y = TITULO_SECCION_Y, tamano = 48f, color = Color.LTGRAY, estilo = Typeface.BOLD))
+                add(BloqueTexto("¡Felicidades! Te ganaste:", inicioMs = SUBTITULO_MEDALLA_INICIO_MS, duracionMs = 1_800, y = 600f, tamano = 56f, color = Color.WHITE, estilo = Typeface.BOLD))
             }
             if (escena.mensaje.isNotBlank()) {
-                // Con medalla, el mensaje aparece justo después de que la imagen/insignia
-                // terminó su fade (MEDALLA_INICIO_MS + MEDALLA_FADE_MS); sin medalla, es el
-                // único contenido de la escena y aparece casi de inmediato. duracionMs = 0
-                // lo muestra de golpe (sin máquina de escribir): son mensajes largos y el
-                // efecto letra por letra tardaría más que la escena entera.
-                val inicioMensaje = if (escena.nombre != null) MEDALLA_INICIO_MS + MEDALLA_FADE_MS + 100 else 400L
+                // Con medalla el mensaje cierra la coreografía: entra 2s después de que la
+                // insignia terminó de aparecer y ahora sí se escribe letra por letra (antes
+                // salía de golpe). TimelineResumen estira la escena con el largo del texto,
+                // así que no se corta. Sin medalla es el único contenido y aparece de una.
+                val conMedalla = escena.nombre != null
                 add(
                     BloqueTexto(
-                        escena.mensaje, inicioMs = inicioMensaje, duracionMs = 0L,
-                        y = if (escena.nombre != null) 1620f else 860f,
-                        tamano = if (escena.nombre != null) 38f else 48f,
-                        color = if (escena.nombre != null) Color.LTGRAY else Color.WHITE,
+                        escena.mensaje,
+                        inicioMs = if (conMedalla) MENSAJE_MEDALLA_INICIO_MS else 400L,
+                        duracionMs = if (conMedalla) (escena.mensaje.length * VELOCIDAD_DESTACADO_MS_POR_CARACTER).toLong() else 0L,
+                        y = if (conMedalla) 1620f else 860f,
+                        tamano = if (conMedalla) 38f else 48f,
+                        color = if (conMedalla) Color.LTGRAY else Color.WHITE,
                         estilo = Typeface.NORMAL
                     )
                 )
             }
         }
         is EscenaResumen.LogrosPersonales -> buildList {
-            add(BloqueTexto("Y contra ti mismo, lograste:", inicioMs = 0, duracionMs = 1_800, y = 600f, tamano = 56f, color = Color.WHITE, estilo = Typeface.BOLD))
+            add(BloqueTexto(TITULO_PERSONAL, inicioMs = 0, duracionMs = 900, y = TITULO_SECCION_Y, tamano = 48f, color = Color.LTGRAY, estilo = Typeface.BOLD))
+            add(BloqueTexto("Y contra ti mismo, lograste:", inicioMs = LOGROS_RETRASO_MS, duracionMs = 1_800, y = 600f, tamano = 56f, color = Color.WHITE, estilo = Typeface.BOLD))
             // El mensaje sólo cabe legible cuando la escena trae un único logro; con 2 o 3
             // la escena se queda en título + insignias + nombres. Mismo tratamiento que el
             // mensaje de la medalla: duracionMs = 0 lo muestra de golpe, sin máquina de
@@ -311,7 +359,7 @@ object ResumenFrameRenderer {
             if (unico != null && unico.mensaje.isNotBlank()) {
                 add(
                     BloqueTexto(
-                        unico.mensaje, inicioMs = MEDALLA_INICIO_MS + MEDALLA_FADE_MS + 100,
+                        unico.mensaje, inicioMs = LOGROS_RETRASO_MS + MEDALLA_INICIO_MS + MEDALLA_FADE_MS + 100,
                         duracionMs = 0L, y = 1620f, tamano = 38f, color = Color.LTGRAY, estilo = Typeface.NORMAL
                     )
                 )
@@ -410,8 +458,12 @@ object ResumenFrameRenderer {
         canvas: Canvas, ancho: Int, valores: List<PuntoTiempoDiario>, elapsedMs: Long, alphaEscena: Float
     ) {
         if (valores.size < 2) return
-        val maximo = valores.maxOf { it.minutos }
-        if (maximo <= 0) return
+        val maximoDatos = valores.maxOf { it.minutos }
+        if (maximoDatos <= 0) return
+        // El eje llega siempre a 120 aunque nadie se acerque, para que las dos referencias
+        // (60 y 120) queden fijas entre videos y se puedan comparar de un vistazo. Sólo crece
+        // por encima si algún día se pasa, y ahí la línea entra igual.
+        val maximo = maxOf(REFERENCIA_EJE_MAXIMA, maximoDatos)
 
         val progreso = ((elapsedMs - GRAFICA_INICIO_MS).coerceIn(0L, GRAFICA_FADE_MS)).toFloat() / GRAFICA_FADE_MS
         if (progreso <= 0f) return
@@ -422,8 +474,8 @@ object ResumenFrameRenderer {
         val margen = 80f
         val izquierda = 170f
         val derecha = ancho - margen
-        val arriba = 1060f + DESPLAZAMIENTO_GRAFICA
-        val abajo = 1380f + DESPLAZAMIENTO_GRAFICA
+        val arriba = 1060f + DESPLAZAMIENTO_GRAFICA - DESPLAZAMIENTO_ARRIBA_TIEMPO
+        val abajo = 1380f + DESPLAZAMIENTO_GRAFICA - DESPLAZAMIENTO_ARRIBA_TIEMPO
         val pasoX = (derecha - izquierda) / (valores.size - 1)
         fun puntoX(indice: Int) = izquierda + pasoX * indice
         fun puntoY(minutos: Int) = abajo - (minutos.toFloat() / maximo) * (abajo - arriba)
@@ -452,7 +504,7 @@ object ResumenFrameRenderer {
             textSize = 22f
             textAlign = Paint.Align.RIGHT
         }
-        calcularValoresReferenciaEje(maximo).forEach { minutosReferencia ->
+        REFERENCIAS_EJE_MINUTOS.forEach { minutosReferencia ->
             val y = puntoY(minutosReferencia)
             canvas.drawLine(izquierda, y, derecha, y, paintGuia)
             canvas.drawText("$minutosReferencia min", izquierda - 12f, y + 8f, paintEtiquetaEje)
@@ -497,26 +549,11 @@ object ResumenFrameRenderer {
         }
     }
 
-    /**
-     * Valores "redondos" (múltiplos de 5, 10, 15, 30 o 60) para usar como referencia en el eje
-     * Y de [dibujarGraficaTiempo], espaciados en pasos regulares desde 0 hasta [maximo]. Con
-     * [maximo] chico da algo como 15/30/45 min; con uno grande, 30/60/120 min.
-     */
-    private fun calcularValoresReferenciaEje(maximo: Int): List<Int> {
-        if (maximo <= 0) return emptyList()
-        val candidatosPaso = listOf(5, 10, 15, 30, 60, 90, 120, 180, 240)
-        val paso = candidatosPaso.firstOrNull { it * 3 >= maximo } ?: candidatosPaso.last()
-        return generateSequence(paso) { it + paso }
-            .takeWhile { it <= maximo }
-            .take(4)
-            .toList()
-    }
-
     /** Imagen propia de la medalla si la hay (fade-in), o su insignia por defecto si no, con el
      *  nombre debajo en [DESTACADO]. */
     private fun dibujarMedalla(canvas: Canvas, ancho: Int, escena: EscenaResumen.Medalla, elapsedMs: Long, alphaEscena: Float) {
         val nombre = escena.nombre ?: return
-        val progreso = ((elapsedMs - MEDALLA_INICIO_MS).coerceIn(0L, MEDALLA_FADE_MS)).toFloat() / MEDALLA_FADE_MS
+        val progreso = ((elapsedMs - MEDALLA_INICIO_GRUPAL_MS).coerceIn(0L, MEDALLA_FADE_MS)).toFloat() / MEDALLA_FADE_MS
         if (progreso <= 0f) return
         val alphaAplicado = (255 * progreso * alphaEscena).toInt().coerceIn(0, 255)
 
@@ -525,6 +562,13 @@ object ResumenFrameRenderer {
         // Un 20% más grande que la insignia de los logros personales: la medalla es el premio
         // de la quincena y tiene la escena para ella sola.
         val radio = 264f
+
+        dibujarHalo(
+            canvas, centroX, centroY, radio,
+            factor = HALO_FACTOR_MEDALLA, alphaMaximo = HALO_ALPHA_MEDALLA,
+            intensidad = intensidadDestello(elapsedMs), alphaAplicado = alphaAplicado
+        )
+
         val bitmap = escena.imagenPersonalizada
         if (bitmap != null) {
             val destino = RectF(centroX - radio, centroY - radio, centroX + radio, centroY + radio)
@@ -543,6 +587,57 @@ object ResumenFrameRenderer {
             canvas, listOf(nombre), centroX, centroY + radio + 90f,
             tamano = 44f, color = DESTACADO, alphaAplicado = alphaAplicado
         )
+    }
+
+    /**
+     * Curva del destello de la medalla: sube hasta [DESTELLO_PICO] mientras la insignia
+     * termina de entrar y después baja a 1f. Es el golpe de luz que da el aire de victoria;
+     * los logros personales no lo usan (su halo es constante y más tenue).
+     */
+    private fun intensidadDestello(elapsedMs: Long): Float {
+        val inicio = MEDALLA_INICIO_GRUPAL_MS + MEDALLA_FADE_MS
+        val transcurrido = elapsedMs - inicio
+        if (transcurrido >= DESTELLO_MS) return 1f
+        if (transcurrido <= -MEDALLA_FADE_MS) return 1f
+        // Antes de aterrizar ya viene creciendo con la insignia; después decae del pico a 1f.
+        if (transcurrido < 0) {
+            val entrada = (transcurrido + MEDALLA_FADE_MS).toFloat() / MEDALLA_FADE_MS
+            return 1f + (DESTELLO_PICO - 1f) * entrada
+        }
+        val caida = transcurrido.toFloat() / DESTELLO_MS
+        return DESTELLO_PICO - (DESTELLO_PICO - 1f) * caida
+    }
+
+    /**
+     * Resplandor detrás de la insignia: un degradado radial que va de blanco en el centro a
+     * transparente en el borde, para que la insignia se recorte contra un halo de luz.
+     *
+     * Se usa RadialGradient y no BlurMaskFilter porque los frames se dibujan sobre la Surface
+     * del codificador, y el blur por máscara no está soportado en canvas acelerado por
+     * hardware: saldría un cuadrado opaco en vez de un halo.
+     */
+    private fun dibujarHalo(
+        canvas: Canvas, cx: Float, cy: Float, radioInsignia: Float,
+        factor: Float, alphaMaximo: Int, intensidad: Float, alphaAplicado: Int
+    ) {
+        val radio = radioInsignia * factor
+        if (radio <= 0f) return
+        val alpha = (alphaMaximo * intensidad * (alphaAplicado / 255f)).toInt().coerceIn(0, 255)
+        if (alpha <= 0) return
+        val paint = Paint().apply {
+            isAntiAlias = true
+            shader = RadialGradient(
+                cx, cy, radio,
+                intArrayOf(
+                    Color.argb(alpha, 255, 255, 255),
+                    Color.argb(alpha / 3, 255, 255, 255),
+                    Color.argb(0, 255, 255, 255)
+                ),
+                floatArrayOf(0f, 0.55f, 1f),
+                Shader.TileMode.CLAMP
+            )
+        }
+        canvas.drawCircle(cx, cy, radio, paint)
     }
 
     /** Insignia por defecto cuando no hay imagen propia: un círculo de [colorInsignia] con
@@ -577,7 +672,7 @@ object ResumenFrameRenderer {
         val centroY = if (unico) 1150f else 1100f
 
         escena.logros.forEachIndexed { indice, logro ->
-            val inicio = if (unico) MEDALLA_INICIO_MS else 1_200L + indice * 500L
+            val inicio = LOGROS_RETRASO_MS + if (unico) MEDALLA_INICIO_MS else 1_200L + indice * 500L
             val progreso = ((elapsedMs - inicio).coerceIn(0L, MEDALLA_FADE_MS)).toFloat() / MEDALLA_FADE_MS
             if (progreso <= 0f) return@forEachIndexed
             val alphaAplicado = (255 * progreso * alphaEscena).toInt().coerceIn(0, 255)
@@ -585,6 +680,12 @@ object ResumenFrameRenderer {
             // Columnas de ancho igual: la insignia i queda en el centro de la columna i.
             val anchoColumna = ancho.toFloat() / cantidad
             val centroX = anchoColumna * (indice + 0.5f)
+
+            dibujarHalo(
+                canvas, centroX, centroY, radio,
+                factor = HALO_FACTOR_LOGRO, alphaMaximo = HALO_ALPHA_LOGRO,
+                intensidad = 1f, alphaAplicado = alphaAplicado
+            )
 
             val bitmap = logro.imagen
             if (bitmap != null) {
@@ -625,8 +726,11 @@ object ResumenFrameRenderer {
 
         val centroX = ancho / 2f
         val centroY = 1320f - DESPLAZAMIENTO_ARRIBA_DIA_FAVORITO + DESPLAZAMIENTO_ABAJO_DONA_DIA_FAVORITO - DESPLAZAMIENTO_ARRIBA_DONA_ADICIONAL
-        val radioExterior = 260f
-        val radioInterior = 150f
+        // 15% más chica a pedido del trainer: las etiquetas de cada rebanada ("Pierna
+        // (cuádriceps) x1") se salían de pantalla en ciertos ángulos, y encogerla es lo que
+        // les deja aire sin tocar el tamaño del texto.
+        val radioExterior = 260f * FACTOR_DONA
+        val radioInterior = 150f * FACTOR_DONA
         val radioMedio = (radioExterior + radioInterior) / 2f
         val grosor = radioExterior - radioInterior
         // Separación visual entre rebanadas (el "surface gap" entre rellenos adyacentes);
