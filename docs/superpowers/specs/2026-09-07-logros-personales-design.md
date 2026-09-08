@@ -188,8 +188,9 @@ igual que la medalla) y se agrupan de tres en tres:
 logrosEscena.chunked(3).forEach { grupo -> escenas += EscenaResumen.LogrosPersonales(grupo) }
 ```
 
-Insertadas **entre `RachaMasLarga` y `Medalla`**: primero el reconocimiento
-personal, después el premio grupal como cierre, después `Despedida`.
+Insertadas **entre `Medalla` y `Despedida`**: primero el premio grupal (cómo le
+fue contra los demás), después el reconocimiento personal como cierre, para que
+el video termine con lo suyo y no con la comparación.
 
 Con 4 logros salen dos escenas (3 + 1); con 6, dos de 3. Así ningún logro
 otorgado se queda fuera del video.

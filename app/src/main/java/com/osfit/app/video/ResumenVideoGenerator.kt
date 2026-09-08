@@ -154,10 +154,11 @@ object ResumenVideoGenerator {
         if (incluyeRacha && racha != null && rankingRacha != null) {
             escenas += EscenaResumen.RachaMasLarga(dias = racha, ranking = rankingRacha)
         }
-        // Primero el reconocimiento personal (contra sí mismo), después la medalla grupal
-        // como cierre. Ya vienen agrupadas de a 3 desde generarYCompartir.
-        escenas += logrosPersonales
+        // Primero la medalla grupal (cómo le fue contra los demás), después el reconocimiento
+        // personal como cierre: el video termina con lo suyo y no con la comparación.
+        // Los logros ya vienen agrupados de a 3 desde generarYCompartir.
         if (medalla != null) escenas += medalla
+        escenas += logrosPersonales
         escenas += EscenaResumen.Despedida
         return escenas
     }

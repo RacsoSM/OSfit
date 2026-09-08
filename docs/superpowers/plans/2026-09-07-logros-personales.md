@@ -1318,7 +1318,7 @@ En el drawer → "Logros personales": crear al menos 4 logros. Al menos uno **co
   base 1530 + una escena de 6500 ms; falta la revisión visual del entrenador)*
 
 Generar el resumen quincenal de un cliente y marcar **un solo** logro. En el video:
-- la escena aparece después de la racha y antes de la medalla;
+- la escena aparece después de la medalla y antes de la despedida;
 - la insignia es grande y centrada, con el nombre debajo;
 - el mensaje se lee completo y `$nombrePersona` salió reemplazado por el nombre del cliente;
 - la escena no se corta antes de terminar de animarse.

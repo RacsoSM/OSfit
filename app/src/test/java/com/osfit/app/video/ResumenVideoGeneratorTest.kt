@@ -160,7 +160,7 @@ class ResumenVideoGeneratorTest {
     }
 
     @Test
-    fun `la escena Medalla se agrega justo antes de Despedida cuando se pasa una`() {
+    fun `la escena Medalla se agrega justo antes de Despedida cuando no hay logros personales`() {
         val rango = ResumenClienteCalculator.rangoMensual(YearMonth.of(2024, 3))
         val medalla = EscenaResumen.Medalla(nombre = "Rey de la asistencia", categoria = CategoriaMedallaAutomatica.ASISTENCIA, imagenPersonalizada = null, mensaje = "")
         val escenas = ResumenVideoGenerator.construirEscenas(resumen(rango, racha = 5), medalla)
@@ -209,7 +209,7 @@ class ResumenVideoGeneratorTest {
     }
 
     @Test
-    fun `las escenas de logros van despues de RachaMasLarga y antes de Medalla`() {
+    fun `las escenas de logros van despues de Medalla, que a su vez va despues de RachaMasLarga`() {
         val rango = ResumenClienteCalculator.rangoQuincenal(LocalDate.of(2024, 3, 20))
         val medalla = EscenaResumen.Medalla(
             nombre = "Rey de la asistencia",
@@ -227,7 +227,7 @@ class ResumenVideoGeneratorTest {
         val indiceLogros = escenas.indexOfFirst { it is EscenaResumen.LogrosPersonales }
         val indiceMedalla = escenas.indexOfFirst { it is EscenaResumen.Medalla }
 
-        assertTrue(indiceRacha < indiceLogros)
-        assertTrue(indiceLogros < indiceMedalla)
+        assertTrue(indiceRacha < indiceMedalla)
+        assertTrue(indiceMedalla < indiceLogros)
     }
 }
