@@ -6,12 +6,15 @@ import com.google.firebase.Timestamp
 import com.osfit.app.data.AppContainer
 import com.osfit.app.data.model.Asistencia
 import com.osfit.app.data.model.Cliente
+import com.osfit.app.data.model.LogroPersonalCatalogo
+import com.osfit.app.data.model.LogroPersonalOtorgado
 import com.osfit.app.data.model.MedallaCatalogo
 import com.osfit.app.data.model.MedallaOtorgada
 import com.osfit.app.data.model.Pago
 import com.osfit.app.data.model.Rutina
 import com.osfit.app.data.repository.AsistenciaRepository
 import com.osfit.app.data.repository.ClienteRepository
+import com.osfit.app.data.repository.LogroPersonalRepository
 import com.osfit.app.data.repository.MedallaRepository
 import com.osfit.app.data.repository.PagoRepository
 import com.osfit.app.data.repository.RutinaRepository
@@ -34,7 +37,8 @@ class ClienteDetailViewModel(
     private val pagoRepository: PagoRepository = AppContainer.pagoRepository,
     private val rutinaRepository: RutinaRepository = AppContainer.rutinaRepository,
     private val asistenciaRepository: AsistenciaRepository = AppContainer.asistenciaRepository,
-    private val medallaRepository: MedallaRepository = AppContainer.medallaRepository
+    private val medallaRepository: MedallaRepository = AppContainer.medallaRepository,
+    private val logroPersonalRepository: LogroPersonalRepository = AppContainer.logroPersonalRepository
 ) : ViewModel() {
 
     init {
@@ -49,6 +53,14 @@ class ClienteDetailViewModel(
 
     val medallasOtorgadas: StateFlow<List<MedallaOtorgada>> = medallaRepository.observarOtorgadas(clienteId)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val catalogoLogrosPersonales: StateFlow<List<LogroPersonalCatalogo>> =
+        logroPersonalRepository.observarCatalogo()
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val logrosPersonalesOtorgados: StateFlow<List<LogroPersonalOtorgado>> =
+        logroPersonalRepository.observarOtorgados(clienteId)
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val pagos: StateFlow<List<Pago>> = pagoRepository.observarPagos(clienteId)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
@@ -182,5 +194,33 @@ class ClienteDetailViewModel(
 
     fun quitarMedalla(otorgada: MedallaOtorgada) {
         viewModelScope.launch { medallaRepository.quitarMedalla(clienteId, otorgada.rangoInicio) }
+    }
+
+    /** Otorga un logro personal fuera del flujo del resumen quincenal. Usa un rangoInicio
+     *  sintético por timestamp para que el doc id compuesto no choque con los de una quincena
+     *  real — mismo recurso que [otorgarMedalla]. */
+    fun otorgarLogroPersonal(logro: LogroPersonalCatalogo) {
+        viewModelScope.launch {
+            val rangoInicio = "manual_${System.currentTimeMillis()}"
+            logroPersonalRepository.otorgarLogros(
+                clienteId,
+                rangoInicio,
+                listOf(
+                    LogroPersonalOtorgado(
+                        id = "${rangoInicio}_${logro.id}",
+                        rangoInicio = rangoInicio,
+                        logroId = logro.id,
+                        nombreLogro = logro.nombre,
+                        mensaje = logro.mensaje,
+                        encabezadoRango = "Otorgado manualmente el ${LocalDate.now()}",
+                        orden = 0
+                    )
+                )
+            )
+        }
+    }
+
+    fun quitarLogroPersonal(otorgado: LogroPersonalOtorgado) {
+        viewModelScope.launch { logroPersonalRepository.quitarLogro(clienteId, otorgado.id) }
     }
 }
