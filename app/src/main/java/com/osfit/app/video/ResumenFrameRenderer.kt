@@ -331,15 +331,15 @@ object ResumenFrameRenderer {
             }
             if (escena.mensaje.isNotBlank()) {
                 // Con medalla el mensaje cierra la coreografía: entra 2s después de que la
-                // insignia terminó de aparecer y ahora sí se escribe letra por letra (antes
-                // salía de golpe). TimelineResumen estira la escena con el largo del texto,
-                // así que no se corta. Sin medalla es el único contenido y aparece de una.
+                // insignia terminó de aparecer y se escribe con máquina de escribir rápida (1s).
+                // Los títulos conservan su estilo lento; este texto corre a su propia velocidad.
+                // Sin medalla es el único contenido y aparece de una.
                 val conMedalla = escena.nombre != null
                 add(
                     BloqueTexto(
                         escena.mensaje,
                         inicioMs = if (conMedalla) MENSAJE_MEDALLA_INICIO_MS else 400L,
-                        duracionMs = if (conMedalla) (escena.mensaje.length * VELOCIDAD_DESTACADO_MS_POR_CARACTER).toLong() else 0L,
+                        duracionMs = if (conMedalla) DURACION_ANIMACION_MENSAJE_MEDALLA_MS else 0L,
                         y = if (conMedalla) 1620f else 860f,
                         tamano = if (conMedalla) 38f else 48f,
                         color = if (conMedalla) Color.LTGRAY else Color.WHITE,

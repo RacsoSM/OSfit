@@ -42,8 +42,7 @@ class InsigniaImagenUtil(private val carpeta: String) {
         val destino = File(carpetaImagenes(context), "$insigniaId.png")
         return runCatching {
             val original = decodificarAcotado(context, uri) ?: return null
-            val cuadrado = encajarEnCuadrado(original)
-            original.recycle()
+            val cuadrado = normalizarYEncajar(original)
             destino.outputStream().use { salida ->
                 cuadrado.compress(Bitmap.CompressFormat.PNG, 100, salida)
             }
@@ -70,6 +69,34 @@ class InsigniaImagenUtil(private val carpeta: String) {
         }
     }
 
+    /**
+     * Recorta los márgenes transparentes vacíos de la imagen para que el contenido visible
+     * ocupe el 100% del área y se escale centrado en un lienzo cuadrado de [LADO_PX].
+     * Esto evita que insignias con franjas vacías alrededor se vean diminutas.
+     */
+    private fun normalizarYEncajar(origen: Bitmap): Bitmap {
+        val recortado = recortarBordesTransparentes(origen)
+        val cuadrado = encajarEnCuadrado(recortado)
+        if (recortado !== origen) recortado.recycle()
+        origen.recycle()
+        return cuadrado
+    }
+
+    private fun recortarBordesTransparentes(origen: Bitmap): Bitmap {
+        val ancho = origen.width
+        val alto = origen.height
+        val pixels = IntArray(ancho * alto)
+        origen.getPixels(pixels, 0, ancho, 0, 0, ancho, alto)
+        val bbox = EncajeInsignia.calcularBoundingBox(pixels, ancho, alto) ?: return origen
+
+        // Si ya ocupa casi todo el bitmap (margen menor a 8px por lado), no hace falta recortar
+        if (bbox.minX <= 8 && bbox.minY <= 8 && bbox.maxX >= ancho - 9 && bbox.maxY >= alto - 9) {
+            return origen
+        }
+
+        return Bitmap.createBitmap(origen, bbox.minX, bbox.minY, bbox.ancho, bbox.alto)
+    }
+
     private fun encajarEnCuadrado(origen: Bitmap): Bitmap {
         val salida = Bitmap.createBitmap(LADO_PX, LADO_PX, Bitmap.Config.ARGB_8888)
         val encaje = EncajeInsignia.calcular(origen.width, origen.height, LADO_PX)
@@ -92,10 +119,12 @@ class InsigniaImagenUtil(private val carpeta: String) {
     }
 
     /** Bitmap del archivo propio de la insignia, o null si no tiene uno: en ese caso quien
-     *  llama dibuja una insignia/ícono por defecto en su lugar. */
+     *  llama dibuja una insignia/ícono por defecto en su lugar. Normaliza recortando bordes
+     *  transparentes para que imágenes con márgenes vacíos se vean del mismo tamaño. */
     fun cargarBitmap(context: Context, imagenArchivo: String?): Bitmap? {
         val archivo = imagenArchivo ?: return null
-        return runCatching { BitmapFactory.decodeFile(archivoImagen(context, archivo).absolutePath) }.getOrNull()
+        val crudo = runCatching { BitmapFactory.decodeFile(archivoImagen(context, archivo).absolutePath) }.getOrNull() ?: return null
+        return normalizarYEncajar(crudo)
     }
 
     private companion object {

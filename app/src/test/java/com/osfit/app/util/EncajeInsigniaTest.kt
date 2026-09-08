@@ -45,4 +45,27 @@ class EncajeInsigniaTest {
         assertEquals(512f, encaje.ancho, 0.01f)
         assertEquals(256f, encaje.alto, 0.01f)
     }
+
+    @Test
+    fun `calcularBoundingBox detecta limites de contenido no transparente con padding`() {
+        val ancho = 10
+        val alto = 10
+        val pixels = IntArray(ancho * alto) { 0 }
+        for (y in 3..6) {
+            for (x in 2..7) {
+                pixels[y * ancho + x] = (0xFF shl 24)
+            }
+        }
+        val bbox = EncajeInsignia.calcularBoundingBox(pixels, ancho, alto)
+        assertEquals(EncajeInsignia.BoundingBox(minX = 2, minY = 3, maxX = 7, maxY = 6), bbox)
+        assertEquals(6, bbox?.ancho)
+        assertEquals(4, bbox?.alto)
+    }
+
+    @Test
+    fun `calcularBoundingBox devuelve null si la imagen es totalmente transparente`() {
+        val pixels = IntArray(25) { 0 }
+        val bbox = EncajeInsignia.calcularBoundingBox(pixels, 5, 5)
+        assertEquals(null, bbox)
+    }
 }

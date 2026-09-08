@@ -311,12 +311,6 @@ fun ClienteDetailScreen(
                     )
                     AccionCard(
                         icono = Icons.Filled.EmojiEvents,
-                        texto = "Medallas",
-                        modifier = Modifier.weight(1f),
-                        onClick = { onVerMedallas(clienteId) }
-                    )
-                    AccionCard(
-                        icono = Icons.Filled.EmojiEvents,
                         texto = "Logros personales",
                         modifier = Modifier.weight(1f),
                         onClick = { onVerLogrosPersonales(clienteId) }
@@ -326,6 +320,12 @@ fun ClienteDetailScreen(
             item {
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     AccionCard(
+                        icono = Icons.Filled.EmojiEvents,
+                        texto = "Medallas",
+                        modifier = Modifier.weight(1f),
+                        onClick = { onVerMedallas(clienteId) }
+                    )
+                    AccionCard(
                         icono = Icons.Filled.Videocam,
                         texto = when {
                             generandoResumen -> "Generando... ${(progresoResumen * 100).toInt()}%"
@@ -334,12 +334,6 @@ fun ClienteDetailScreen(
                         },
                         modifier = Modifier.weight(1f),
                         onClick = { tipoResumenParaFecha = TipoResumen.QUINCENAL }
-                    )
-                    AccionCard(
-                        icono = Icons.Filled.Videocam,
-                        texto = if (generandoResumen) "Generando... ${(progresoResumen * 100).toInt()}%" else "Resumen mensual",
-                        modifier = Modifier.weight(1f),
-                        onClick = { tipoResumenParaFecha = TipoResumen.MENSUAL }
                     )
                 }
             }

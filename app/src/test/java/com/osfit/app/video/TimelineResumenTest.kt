@@ -21,41 +21,41 @@ class TimelineResumenTest {
     fun `arma los tramos como suma acumulada de duraciones, sin huecos`() {
         val timeline = timelineDeDosEscenas()
         assertEquals(0L, timeline.tramos[0].inicioMs)
-        assertEquals(3_000L, timeline.tramos[0].duracionMs)
-        assertEquals(3_000L, timeline.tramos[1].inicioMs)
+        assertEquals(4_000L, timeline.tramos[0].duracionMs)
+        assertEquals(4_000L, timeline.tramos[1].inicioMs)
         assertEquals(6_000L, timeline.tramos[1].duracionMs)
-        assertEquals(9_000L, timeline.duracionTotalMs)
+        assertEquals(10_000L, timeline.duracionTotalMs)
     }
 
     @Test
     fun `tramoActivo se queda en la escena saliente hasta el limite de cursor`() {
         val timeline = timelineDeDosEscenas()
         assertEquals(timeline.tramos[0], timeline.tramoActivo(0))
-        assertEquals(timeline.tramos[0], timeline.tramoActivo(2_999))
-        assertEquals(timeline.tramos[1], timeline.tramoActivo(3_000))
-        assertEquals(timeline.tramos[1], timeline.tramoActivo(8_999))
+        assertEquals(timeline.tramos[0], timeline.tramoActivo(3_999))
+        assertEquals(timeline.tramos[1], timeline.tramoActivo(4_000))
+        assertEquals(timeline.tramos[1], timeline.tramoActivo(9_999))
     }
 
     @Test
     fun `tramoEntrante solo es no-nulo en los 600ms previos al cambio de escena`() {
         val timeline = timelineDeDosEscenas()
-        assertNull(timeline.tramoEntrante(2_399))
-        assertEquals(timeline.tramos[1], timeline.tramoEntrante(2_400))
-        assertEquals(timeline.tramos[1], timeline.tramoEntrante(2_999))
+        assertNull(timeline.tramoEntrante(3_399))
+        assertEquals(timeline.tramos[1], timeline.tramoEntrante(3_400))
+        assertEquals(timeline.tramos[1], timeline.tramoEntrante(3_999))
     }
 
     @Test
     fun `la ultima escena nunca tiene tramoEntrante`() {
         val timeline = timelineDeDosEscenas()
-        assertNull(timeline.tramoEntrante(8_999))
+        assertNull(timeline.tramoEntrante(9_999))
     }
 
     @Test
     fun `alphaEntrante crece de 0 a casi 1 a lo largo de la ventana de crossfade`() {
         val timeline = timelineDeDosEscenas()
-        assertEquals(0f, timeline.alphaEntrante(2_400), 0.001f)
-        assertEquals(0.5f, timeline.alphaEntrante(2_700), 0.001f)
-        assertEquals(599f / 600f, timeline.alphaEntrante(2_999), 0.001f)
+        assertEquals(0f, timeline.alphaEntrante(3_400), 0.001f)
+        assertEquals(0.5f, timeline.alphaEntrante(3_700), 0.001f)
+        assertEquals(599f / 600f, timeline.alphaEntrante(3_999), 0.001f)
     }
 
     @Test
@@ -63,17 +63,17 @@ class TimelineResumenTest {
         val timeline = timelineDeDosEscenas()
         val primero = timeline.tramos[0]
         assertEquals(0L, timeline.elapsedEnTramo(primero, 0))
-        assertEquals(2_999L, timeline.elapsedEnTramo(primero, 2_999))
-        assertEquals(3_000L, timeline.elapsedEnTramo(primero, 3_000))
+        assertEquals(3_999L, timeline.elapsedEnTramo(primero, 3_999))
+        assertEquals(4_000L, timeline.elapsedEnTramo(primero, 4_000))
     }
 
     @Test
     fun `elapsedEnTramo de la segunda escena arranca 600ms antes de su cursor y es continuo`() {
         val timeline = timelineDeDosEscenas()
         val segundo = timeline.tramos[1]
-        assertEquals(0L, timeline.elapsedEnTramo(segundo, 2_400))
-        assertEquals(600L, timeline.elapsedEnTramo(segundo, 3_000))
-        assertEquals(6_000L, timeline.elapsedEnTramo(segundo, 9_000))
+        assertEquals(0L, timeline.elapsedEnTramo(segundo, 3_400))
+        assertEquals(600L, timeline.elapsedEnTramo(segundo, 4_000))
+        assertEquals(6_000L, timeline.elapsedEnTramo(segundo, 10_000))
     }
 
     @Test(expected = IllegalArgumentException::class)
@@ -112,19 +112,20 @@ class TimelineResumenTest {
     }
 
     @Test
-    fun `con mensaje la medalla crece lo que tarde en escribirse`() {
-        // El mensaje arranca a los 5.9s y se escribe a ~82.76ms por carácter; después queda
-        // 1s en pantalla ya completo. Con 20 caracteres: 5900 + 1655 + 1000.
+    fun `con mensaje la medalla dura el inicio mas dos segundos de animacion mas margen de lectura`() {
+        // El mensaje arranca a los 5.9s y la animación dura 2s fijo; después queda
+        // 2s en pantalla ya completo. 5900 + 2000 + 2000 = 9900.
         val mensaje = "a".repeat(20)
 
-        assertEquals(8_555L, TimelineResumen(listOf(medalla(mensaje))).duracionTotalMs)
+        assertEquals(9_900L, TimelineResumen(listOf(medalla(mensaje))).duracionTotalMs)
     }
 
     @Test
-    fun `un mensaje mas largo alarga mas la escena de la medalla`() {
+    fun `la duracion con mensaje es de 9900ms sin importar la longitud del texto`() {
         val corta = TimelineResumen(listOf(medalla("a".repeat(20)))).duracionTotalMs
         val larga = TimelineResumen(listOf(medalla("a".repeat(120)))).duracionTotalMs
 
-        assertTrue(larga > corta)
+        assertEquals(9_900L, corta)
+        assertEquals(9_900L, larga)
     }
 }

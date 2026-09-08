@@ -144,13 +144,24 @@ object ResumenClienteCalculator {
      * Cuántas veces se hizo cada día de la rutina actual en [asistencias], de mayor a menor.
      * Los índices de [Asistencia.diaRutinaRealizado] que ya no existen en [nombresDias]
      * (rutina reasignada a media semana) se descartan.
+     * Si varios días de la rutina tienen el mismo nombre (ej. "Pecho, hombro y tríceps"
+     * como día 1 y día 4), se agrupan y suman sus ocurrencias.
      */
     fun conteoDiasEnRango(asistencias: List<Asistencia>, nombresDias: List<String>): List<ConteoDiaRutina> {
-        val conteo = asistencias.mapNotNull { it.diaRutinaRealizado }
+        val conteoPorIndice = asistencias.mapNotNull { it.diaRutinaRealizado }
             .groupingBy { it }
             .eachCount()
-        return conteo.entries
-            .mapNotNull { (indice, veces) -> nombresDias.getOrNull(indice)?.let { ConteoDiaRutina(it, veces) } }
+        val nombresConVeces = conteoPorIndice.entries
+            .mapNotNull { (indice, veces) ->
+                nombresDias.getOrNull(indice)?.takeIf { it.isNotBlank() }?.let { it to veces }
+            }
+        return nombresConVeces
+            .groupBy { (nombre, _) -> nombre.trim().lowercase() }
+            .map { (_, pares) ->
+                val nombreOriginal = pares.first().first.trim()
+                val totalVeces = pares.sumOf { it.second }
+                ConteoDiaRutina(nombreOriginal, totalVeces)
+            }
             .sortedByDescending { it.veces }
     }
 

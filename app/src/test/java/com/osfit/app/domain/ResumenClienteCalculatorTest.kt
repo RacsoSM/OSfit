@@ -199,6 +199,27 @@ class ResumenClienteCalculatorTest {
     }
 
     @Test
+    fun `conteoDiasEnRango agrupa y suma dias con el mismo nombre aunque esten en indices distintos`() {
+        val dias = listOf("Pecho, hombro y tríceps", "Espalda y bíceps", "Pierna", "Pecho, hombro y tríceps", "Espalda y bíceps")
+        val asistencias = listOf(
+            Asistencia(diaRutinaRealizado = 0),
+            Asistencia(diaRutinaRealizado = 0),
+            Asistencia(diaRutinaRealizado = 3),
+            Asistencia(diaRutinaRealizado = 3),
+            Asistencia(diaRutinaRealizado = 1),
+            Asistencia(diaRutinaRealizado = 4)
+        )
+        val resultado = ResumenClienteCalculator.conteoDiasEnRango(asistencias, dias)
+        assertEquals(
+            listOf(
+                ConteoDiaRutina("Pecho, hombro y tríceps", 4),
+                ConteoDiaRutina("Espalda y bíceps", 2)
+            ),
+            resultado
+        )
+    }
+
+    @Test
     fun `diaFavoritoEnRango sin asistencias devuelve null`() {
         assertEquals(null, ResumenClienteCalculator.diaFavoritoEnRango(emptyList(), listOf("Pecho")))
     }

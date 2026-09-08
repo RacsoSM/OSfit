@@ -10,11 +10,11 @@ private const val CROSSFADE_MS = 600L
  */
 internal const val MENSAJE_MEDALLA_INICIO_MS = 5_900L
 
-/** Velocidad de la máquina de escribir del texto destacado, en ms por carácter. */
-private const val MS_POR_CARACTER_MENSAJE = 2_400.0 / 29.0
+/** Duración de la animación de máquina de escribir del mensaje personalizado de la medalla (2 segundos). */
+internal const val DURACION_ANIMACION_MENSAJE_MEDALLA_MS = 2_000L
 
 /** Tiempo que el mensaje queda completo en pantalla antes de que la escena termine. */
-private const val MARGEN_LECTURA_MS = 1_000L
+private const val MARGEN_LECTURA_MS = 2_000L
 
 data class TramoEscena(val escena: EscenaResumen, val inicioMs: Long, val duracionMs: Long) {
     val finMs: Long get() = inicioMs + duracionMs
@@ -80,7 +80,7 @@ class TimelineResumen(escenas: List<EscenaResumen>) {
     }
 
     private fun duracionParaTipo(escena: EscenaResumen): Long = when (escena) {
-        is EscenaResumen.Saludo -> 3_000L
+        is EscenaResumen.Saludo -> 4_000L
         is EscenaResumen.Asistencia -> 6_000L
         // 8s y no 6s como Asistencia: su frase de entrada es larga y la línea de ranking
         // ("...solamente detrás de: <nombres>") necesita más tiempo en pantalla para leerse.
@@ -97,15 +97,13 @@ class TimelineResumen(escenas: List<EscenaResumen>) {
         // 5s y no 4s a pedido del trainer: con 4s la escena cortaba justo cuando la última
         // animación terminaba de cargar.
         is EscenaResumen.RachaMasLarga -> 5_000L
-        // Ya no es fija: la escena se estira con el mensaje. La coreografía llega a
-        // MENSAJE_MEDALLA_INICIO_MS (ver ResumenFrameRenderer) y a partir de ahí el mensaje se
-        // escribe letra por letra, así que la duración depende de cuánto texto haya. Sin
-        // mensaje alcanza con el tramo fijo, que ya deja 2s para leer el nombre.
+        // Sin mensaje alcanza con MENSAJE_MEDALLA_INICIO_MS (que ya deja 2s para leer el nombre).
+        // Con mensaje, se suman 2s de animación de máquina de escribir y 2s de margen de lectura.
         is EscenaResumen.Medalla -> if (escena.mensaje.isBlank()) {
             MENSAJE_MEDALLA_INICIO_MS
         } else {
             MENSAJE_MEDALLA_INICIO_MS +
-                (escena.mensaje.length * MS_POR_CARACTER_MENSAJE).toLong() +
+                DURACION_ANIMACION_MENSAJE_MEDALLA_MS +
                 MARGEN_LECTURA_MS
         }
         // Escala con la cantidad porque el contenido en pantalla cambia: con 1 logro es el
