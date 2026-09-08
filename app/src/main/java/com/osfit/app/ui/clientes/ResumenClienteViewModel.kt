@@ -5,10 +5,13 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.osfit.app.data.AppContainer
+import com.osfit.app.data.model.LogroPersonalCatalogo
+import com.osfit.app.data.model.LogroPersonalOtorgado
 import com.osfit.app.data.model.MedallaCatalogo
 import com.osfit.app.data.model.MedallaOtorgada
 import com.osfit.app.data.repository.AsistenciaRepository
 import com.osfit.app.data.repository.ClienteRepository
+import com.osfit.app.data.repository.LogroPersonalRepository
 import com.osfit.app.data.repository.MedallaRepository
 import com.osfit.app.domain.MedallaCalculator
 import com.osfit.app.domain.RangoResumen
@@ -29,7 +32,8 @@ class ResumenClienteViewModel(
     private val clienteId: String,
     private val clienteRepository: ClienteRepository = AppContainer.clienteRepository,
     private val asistenciaRepository: AsistenciaRepository = AppContainer.asistenciaRepository,
-    private val medallaRepository: MedallaRepository = AppContainer.medallaRepository
+    private val medallaRepository: MedallaRepository = AppContainer.medallaRepository,
+    private val logroPersonalRepository: LogroPersonalRepository = AppContainer.logroPersonalRepository
 ) : ViewModel() {
 
     private val _generando = MutableStateFlow(false)
@@ -109,10 +113,11 @@ class ResumenClienteViewModel(
     suspend fun calcularResumenMensual(mes: YearMonth = YearMonth.now()): ResumenClienteData? =
         calcularResumen(ResumenClienteCalculator.rangoMensual(mes))
 
-    data class PreparacionMedalla(
+    data class PreparacionResumenQuincenal(
         val resumen: ResumenClienteData,
         val sugerencia: MedallaCatalogo?,
-        val catalogo: List<MedallaCatalogo>
+        val catalogo: List<MedallaCatalogo>,
+        val catalogoLogros: List<LogroPersonalCatalogo>
     )
 
     /** Calcula el resumen quincenal y, con él, la categoría automática sugerida (si hay), ya
@@ -120,22 +125,30 @@ class ResumenClienteViewModel(
      *  solo viaje. Lee el catálogo directo del repositorio (no del StateFlow ya cacheado de
      *  MedallasViewModel, que esta pantalla no comparte) para no depender de que algo más lo
      *  haya suscrito antes. */
-    suspend fun prepararConfirmacionMedalla(fechaReferencia: LocalDate = LocalDate.now()): PreparacionMedalla? {
+    suspend fun prepararConfirmacionQuincenal(
+        fechaReferencia: LocalDate = LocalDate.now()
+    ): PreparacionResumenQuincenal? {
         val resumen = calcularResumenQuincenal(fechaReferencia) ?: return null
         val catalogoActual = medallaRepository.observarCatalogo().first()
+        val catalogoLogros = logroPersonalRepository.observarCatalogo().first()
         val categoriaSugerida = MedallaCalculator.sugerirCategoria(resumen)
         val sugerencia = categoriaSugerida?.let { cat -> catalogoActual.firstOrNull { it.categoria == cat } }
-        return PreparacionMedalla(resumen, sugerencia, catalogoActual)
+        return PreparacionResumenQuincenal(resumen, sugerencia, catalogoActual, catalogoLogros)
     }
 
     /**
      * Duplica parte del try/catch/finally de [generarYCompartir] a propósito: ese helper genérico
      * recalcula el resumen desde una lambda y no conoce medallas, y este flujo ya trae el resumen
-     * calculado (de [prepararConfirmacionMedalla]) más el efecto secundario de otorgar la medalla
+     * calculado (de [prepararConfirmacionQuincenal]) más el efecto secundario de otorgar la medalla
      * antes de generar — meter eso en el helper genérico lo complicaría para las otras 2 llamadas
      * (semanal/mensual) que nunca lo necesitan.
      */
-    fun confirmarYGenerarQuincenal(context: Context, preparacion: PreparacionMedalla, elegida: MedallaCatalogo?) {
+    fun confirmarYGenerarQuincenal(
+        context: Context,
+        preparacion: PreparacionResumenQuincenal,
+        elegida: MedallaCatalogo?,
+        logrosElegidos: List<LogroPersonalCatalogo> = emptyList()
+    ) {
         if (_generando.value) return
         _generando.value = true
         _progreso.value = 0f
@@ -154,9 +167,27 @@ class ResumenClienteViewModel(
                         )
                     )
                 }
-                ResumenVideoGenerator.generarYCompartir(contextoApp, preparacion.resumen, elegida) { fraccion ->
-                    _progreso.value = fraccion
-                }
+                val rangoInicio = preparacion.resumen.rango.inicio.toString()
+                // Siempre se llama, incluso con lista vacía: así limpia los logros de una
+                // generación anterior de la misma quincena (ver LogroPersonalRepository).
+                logroPersonalRepository.otorgarLogros(
+                    preparacion.resumen.cliente.id,
+                    rangoInicio,
+                    logrosElegidos.mapIndexed { indice, logro ->
+                        LogroPersonalOtorgado(
+                            id = "${rangoInicio}_${logro.id}",
+                            rangoInicio = rangoInicio,
+                            logroId = logro.id,
+                            nombreLogro = logro.nombre,
+                            mensaje = logro.mensaje,
+                            encabezadoRango = preparacion.resumen.rango.encabezado,
+                            orden = indice
+                        )
+                    }
+                )
+                ResumenVideoGenerator.generarYCompartir(
+                    contextoApp, preparacion.resumen, elegida, logrosElegidos
+                ) { fraccion -> _progreso.value = fraccion }
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Throwable) {

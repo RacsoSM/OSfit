@@ -54,6 +54,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import com.osfit.app.data.model.MedallaCatalogo
 import com.osfit.app.data.model.Rutina
 import com.osfit.app.domain.RangoResumen
 import com.osfit.app.domain.ResumenClienteCalculator
@@ -112,7 +113,12 @@ fun ClienteDetailScreen(
     // en SeleccionarRangoResumenDialog; null = el diálogo está cerrado.
     var tipoResumenParaFecha by remember { mutableStateOf<TipoResumen?>(null) }
     var cargandoMedalla by remember { mutableStateOf(false) }
-    var preparacionMedalla by remember { mutableStateOf<ResumenClienteViewModel.PreparacionMedalla?>(null) }
+    var preparacionQuincenal by remember {
+        mutableStateOf<ResumenClienteViewModel.PreparacionResumenQuincenal?>(null)
+    }
+    // Elección del primer diálogo, retenida mientras se muestra el segundo.
+    var medallaConfirmada by remember { mutableStateOf<MedallaCatalogo?>(null) }
+    var eligiendoLogros by remember { mutableStateOf(false) }
 
     androidx.compose.runtime.LaunchedEffect(eliminado) {
         if (eliminado) onEliminado()
@@ -421,7 +427,7 @@ fun ClienteDetailScreen(
                     TipoResumen.QUINCENAL -> {
                         cargandoMedalla = true
                         scope.launch {
-                            preparacionMedalla = resumenViewModel.prepararConfirmacionMedalla(fecha)
+                            preparacionQuincenal = resumenViewModel.prepararConfirmacionQuincenal(fecha)
                             cargandoMedalla = false
                         }
                     }
@@ -432,16 +438,45 @@ fun ClienteDetailScreen(
         )
     }
 
-    preparacionMedalla?.let { prep ->
-        ConfirmarMedallaDialog(
-            sugerencia = prep.sugerencia,
-            catalogo = prep.catalogo,
-            onConfirmar = { elegida ->
-                resumenViewModel.confirmarYGenerarQuincenal(context, prep, elegida)
-                preparacionMedalla = null
-            },
-            onCancelar = { preparacionMedalla = null }
-        )
+    preparacionQuincenal?.let { prep ->
+        if (!eligiendoLogros) {
+            ConfirmarMedallaDialog(
+                sugerencia = prep.sugerencia,
+                catalogo = prep.catalogo,
+                onConfirmar = { elegida ->
+                    medallaConfirmada = elegida
+                    if (prep.catalogoLogros.isEmpty()) {
+                        // Sin catálogo de logros no tiene sentido un diálogo sin opciones.
+                        resumenViewModel.confirmarYGenerarQuincenal(context, prep, elegida, emptyList())
+                        preparacionQuincenal = null
+                        medallaConfirmada = null
+                    } else {
+                        eligiendoLogros = true
+                    }
+                },
+                onCancelar = {
+                    preparacionQuincenal = null
+                    medallaConfirmada = null
+                }
+            )
+        } else {
+            ConfirmarLogrosDialog(
+                catalogo = prep.catalogoLogros,
+                onConfirmar = { logros ->
+                    resumenViewModel.confirmarYGenerarQuincenal(context, prep, medallaConfirmada, logros)
+                    preparacionQuincenal = null
+                    medallaConfirmada = null
+                    eligiendoLogros = false
+                },
+                // Cancelar acá aborta toda la generación: tampoco se otorga la medalla, así
+                // que el entrenador vuelve al perfil sin efectos secundarios.
+                onCancelar = {
+                    preparacionQuincenal = null
+                    medallaConfirmada = null
+                    eligiendoLogros = false
+                }
+            )
+        }
     }
 }
 
