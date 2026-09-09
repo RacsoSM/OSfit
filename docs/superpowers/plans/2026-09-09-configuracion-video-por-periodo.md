@@ -1069,7 +1069,7 @@ El resto del plan verifica lógica. Los colores y el tamaño de los blobs sólo 
 - Consumes: todo lo anterior.
 - Produces: confirmación visual, o ajustes a los hex de `PaletasVideo` y a los radios/blur de la Task 2.
 
-- [ ] **Step 1: Build and install**
+- [x] **Step 1: Build and install**
 
 ```bash
 ./gradlew.bat :app:assembleDebug
