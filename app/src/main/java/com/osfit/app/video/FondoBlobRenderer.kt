@@ -28,7 +28,7 @@ import android.graphics.RectF
  * generación de video, se usa desde el único hilo de su bucle de frames, y se descarta con
  * ella —lo que además evita retener la bitmap de ~518 KB durante toda la vida del proceso.
  */
-class FondoBlobRenderer {
+class FondoBlobRenderer(private val paleta: PaletaVideo) {
 
     /** La capa y su canvas viven juntos: no hay estado a medio publicar ni `!!` que sostener. */
     private class Capa(val bitmap: Bitmap) {
@@ -64,7 +64,7 @@ class FondoBlobRenderer {
 
         // La capa se reutiliza entre frames: hay que borrarla entera antes de repintarla.
         capaActual.bitmap.eraseColor(Color.TRANSPARENT)
-        BlobsGeometria.blobs.forEach { blob ->
+        BlobsGeometria.blobs(paleta).forEach { blob ->
             val centro = BlobsGeometria.posicionEn(blob, tiempoGlobalMs)
             paintBlob.color = blob.colorArgb
             capaActual.canvas.drawCircle(
@@ -82,7 +82,9 @@ class FondoBlobRenderer {
     }
 
     private companion object {
-        const val RADIO_BLUR_PX = 80f
+        /** Blur corto a propósito: con radios chicos, desenfocar 80px devolvía los blobs a
+         *  una nube sin forma. 45px deja el borde suave pero legible como figura. */
+        const val RADIO_BLUR_PX = 45f
 
         /** Reducción de la capa de blobs: 1080x1920 se dibuja como 270x480. */
         const val FACTOR_ESCALA = 4

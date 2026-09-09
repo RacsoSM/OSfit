@@ -6,15 +6,17 @@ import org.junit.Test
 
 class BlobsGeometriaTest {
 
+    private val blobs = BlobsGeometria.blobs(PaletasVideo.porDefecto)
+
     @Test
     fun `posicionEn es determinista para el mismo tiempo`() {
-        val blob = BlobsGeometria.blobs.first()
+        val blob = blobs.first()
         assertEquals(BlobsGeometria.posicionEn(blob, 12_345L), BlobsGeometria.posicionEn(blob, 12_345L))
     }
 
     @Test
     fun `posicionEn se mantiene dentro de la amplitud declarada del blob a lo largo de un periodo`() {
-        val blob = BlobsGeometria.blobs.first()
+        val blob = blobs.first()
         var t = 0L
         while (t < blob.periodoMs) {
             val p = BlobsGeometria.posicionEn(blob, t)
@@ -25,13 +27,50 @@ class BlobsGeometriaTest {
     }
 
     @Test
-    fun `hay blobs magenta, cian y purpura`() {
-        val colores = BlobsGeometria.blobs.map { it.colorArgb }.toSet()
-        assertEquals(3, colores.size)
+    fun `hay al menos 4 blobs y tres matices distintos`() {
+        assertTrue(blobs.size >= 4)
+        assertEquals(3, blobs.map { it.colorArgb }.toSet().size)
+    }
+
+    /** El corazón del cambio: la geometría es una sola, los colores los pone la paleta. */
+    @Test
+    fun `los colores salen de la paleta recibida`() {
+        val paleta = PaletasVideo.porId("atardecer")
+        val colores = BlobsGeometria.blobs(paleta).map { it.colorArgb }.toSet()
+        assertEquals(setOf(paleta.blobA, paleta.blobB, paleta.blobC), colores)
     }
 
     @Test
-    fun `hay al menos 4 blobs`() {
-        assertTrue(BlobsGeometria.blobs.size >= 4)
+    fun `la geometria no depende de la paleta`() {
+        PaletasVideo.disponibles.forEach { paleta ->
+            val conPaleta = BlobsGeometria.blobs(paleta)
+            assertEquals(blobs.size, conPaleta.size)
+            conPaleta.forEachIndexed { i, blob ->
+                val esperado = blobs[i]
+                assertEquals(esperado.radio, blob.radio, 0f)
+                assertEquals(esperado.centroBaseX, blob.centroBaseX, 0f)
+                assertEquals(esperado.centroBaseY, blob.centroBaseY, 0f)
+                assertEquals(esperado.amplitudX, blob.amplitudX, 0f)
+                assertEquals(esperado.amplitudY, blob.amplitudY, 0f)
+                assertEquals(esperado.periodoMs, blob.periodoMs)
+                assertEquals(esperado.faseMs, blob.faseMs)
+            }
+        }
+    }
+
+    /** Los blobs se achicaron a propósito (antes 0.24..0.34): este test es lo que evita que
+     *  alguien los devuelva al tamaño viejo sin darse cuenta. */
+    @Test
+    fun `los blobs son mas chicos que el diseno original`() {
+        blobs.forEach { assertTrue("radio inesperado: ${it.radio}", it.radio <= 0.25f) }
+    }
+
+    /** Aun achicados siguen sin salirse del canvas al oscilar: centro ± amplitud ± radio. */
+    @Test
+    fun `ningun blob se aleja tanto del canvas como para desaparecer`() {
+        blobs.forEach { blob ->
+            assertTrue(blob.centroBaseX + blob.amplitudX - blob.radio < 1f)
+            assertTrue(blob.centroBaseX - blob.amplitudX + blob.radio > 0f)
+        }
     }
 }
