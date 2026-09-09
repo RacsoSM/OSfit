@@ -21,13 +21,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.osfit.app.data.model.LogroPersonalCatalogo
 
+/** Máximo de logros personales otorgables en un mismo periodo: la escena del video los
+ *  acomoda en triángulo (3), en pareja (2) o centrado (1) — no hay layout para más. */
+private const val MAXIMO_LOGROS_PERSONALES = 3
+
 /**
- * Selección múltiple de logros personales para la quincena. A diferencia de
- * [ConfirmarMedallaDialog] no hay sugerencia que preseleccionar: arranca vacío y el entrenador
- * marca los que quiera (o ninguno).
- *
- * El orden de marcado es el orden en que salen en el video, y define cómo se agrupan de a 3:
- * por eso la selección se guarda en una lista y no en un set.
+ * Selección múltiple de logros personales para la quincena, hasta [MAXIMO_LOGROS_PERSONALES].
+ * A diferencia de [ConfirmarMedallaDialog] no hay sugerencia que preseleccionar: arranca vacío
+ * y el entrenador marca los que quiera (o ninguno).
  */
 @Composable
 fun ConfirmarLogrosDialog(
@@ -36,7 +37,6 @@ fun ConfirmarLogrosDialog(
     onCancelar: () -> Unit
 ) {
     val seleccionados = remember { mutableStateListOf<LogroPersonalCatalogo>() }
-    val escenas = if (seleccionados.isEmpty()) 0 else (seleccionados.size + 2) / 3
 
     AlertDialog(
         onDismissRequest = onCancelar,
@@ -44,10 +44,10 @@ fun ConfirmarLogrosDialog(
         text = {
             Column {
                 Text(
-                    when {
-                        seleccionados.isEmpty() -> "Ninguno seleccionado: no se agrega escena al video."
-                        escenas == 1 -> "${seleccionados.size} logro(s) — salen en 1 escena."
-                        else -> "${seleccionados.size} logros — salen en $escenas escenas."
+                    if (seleccionados.isEmpty()) {
+                        "Ninguno seleccionado: no se agrega escena al video."
+                    } else {
+                        "${seleccionados.size} de $MAXIMO_LOGROS_PERSONALES seleccionados."
                     },
                     style = MaterialTheme.typography.bodySmall,
                     modifier = Modifier.padding(bottom = 12.dp)
@@ -55,23 +55,19 @@ fun ConfirmarLogrosDialog(
                 LazyColumn(modifier = Modifier.height(320.dp)) {
                     items(catalogo, key = { it.id }) { logro ->
                         val marcado = seleccionados.any { it.id == logro.id }
+                        val puedeMarcar = marcado || seleccionados.size < MAXIMO_LOGROS_PERSONALES
+                        fun alternar() {
+                            if (marcado) seleccionados.removeAll { it.id == logro.id }
+                            else if (puedeMarcar) seleccionados.add(logro)
+                        }
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clickable {
-                                    if (marcado) seleccionados.removeAll { it.id == logro.id }
-                                    else seleccionados.add(logro)
-                                }
+                                .clickable(enabled = puedeMarcar) { alternar() }
                                 .padding(vertical = 4.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Checkbox(
-                                checked = marcado,
-                                onCheckedChange = {
-                                    if (marcado) seleccionados.removeAll { it.id == logro.id }
-                                    else seleccionados.add(logro)
-                                }
-                            )
+                            Checkbox(checked = marcado, enabled = puedeMarcar, onCheckedChange = { alternar() })
                             Text(logro.nombre)
                         }
                     }

@@ -107,10 +107,10 @@ class TimelineResumen(escenas: List<EscenaResumen>) {
                 MARGEN_LECTURA_MS
         }
         // Escala con la cantidad porque el contenido en pantalla cambia: con 1 logro es el
-        // mismo layout y ritmo que Medalla (título + insignia + mensaje); con 2 o 3 no hay
-        // mensaje que leer, pero sí insignias entrando en cascada y varios nombres.
-        // Todo corrido 1s respecto de lo que duraba antes: ahora la escena abre con su propio
-        // título ("Logros personales") y recién después entra el resto.
+        // mismo layout y ritmo que Medalla (título + insignia + mensaje); con 2 o 3, insignias
+        // entrando en cascada, cada una con su propio nombre y mensaje (más chicos, pero ya no
+        // se omiten). Todo corrido 1s respecto de lo que duraba antes: ahora la escena abre con
+        // su propio título ("Logros personales") y recién después entra el resto.
         is EscenaResumen.LogrosPersonales -> when (escena.logros.size) {
             1 -> 7_500L
             2 -> 8_500L

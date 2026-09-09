@@ -348,23 +348,13 @@ object ResumenFrameRenderer {
                 )
             }
         }
-        is EscenaResumen.LogrosPersonales -> buildList {
-            add(BloqueTexto(TITULO_PERSONAL, inicioMs = 0, duracionMs = 900, y = TITULO_SECCION_Y, tamano = 48f, color = Color.LTGRAY, estilo = Typeface.BOLD))
-            add(BloqueTexto("Y contra ti mismo, lograste:", inicioMs = LOGROS_RETRASO_MS, duracionMs = 1_800, y = 600f, tamano = 56f, color = Color.WHITE, estilo = Typeface.BOLD))
-            // El mensaje sólo cabe legible cuando la escena trae un único logro; con 2 o 3
-            // la escena se queda en título + insignias + nombres. Mismo tratamiento que el
-            // mensaje de la medalla: duracionMs = 0 lo muestra de golpe, sin máquina de
-            // escribir, porque son textos largos.
-            val unico = escena.logros.singleOrNull()
-            if (unico != null && unico.mensaje.isNotBlank()) {
-                add(
-                    BloqueTexto(
-                        unico.mensaje, inicioMs = LOGROS_RETRASO_MS + MEDALLA_INICIO_MS + MEDALLA_FADE_MS + 100,
-                        duracionMs = 0L, y = 1620f, tamano = 38f, color = Color.LTGRAY, estilo = Typeface.NORMAL
-                    )
-                )
-            }
-        }
+        is EscenaResumen.LogrosPersonales -> listOf(
+            BloqueTexto(TITULO_PERSONAL, inicioMs = 0, duracionMs = 900, y = TITULO_SECCION_Y, tamano = 48f, color = Color.LTGRAY, estilo = Typeface.BOLD),
+            BloqueTexto("Y contra ti mismo, lograste:", inicioMs = LOGROS_RETRASO_MS, duracionMs = 1_800, y = 600f, tamano = 56f, color = Color.WHITE, estilo = Typeface.BOLD)
+            // El nombre y el mensaje de cada logro se dibujan en dibujarLogrosPersonales (no
+            // acá): con 2 o 3 logros cada uno necesita su propia posición X y su propio ancho
+            // de párrafo, algo que este bloque de texto centrado a todo el ancho no soporta.
+        )
     }
 
     /** Formatea un total de minutos como texto legible: "1h 27min", "1h", "16min", "0min". */
@@ -656,11 +646,38 @@ object ResumenFrameRenderer {
         canvas.drawText(glifo, cx, cy + radio * 0.35f, paintGlifo)
     }
 
+    /** Posición y tamaño de la insignia número [indice] de [cantidad] en la escena de logros
+     *  personales, más el ancho de párrafo disponible para su mensaje. */
+    private data class PosicionLogro(val cx: Float, val cy: Float, val radio: Float, val anchoTexto: Int)
+
     /**
-     * Con un solo logro, mismo layout que la medalla (insignia grande centrada, nombre debajo,
-     * y el mensaje lo dibuja lineasDeEscena, o sea bloquesPara). Con 2 o 3, insignias más
-     * chicas repartidas a lo ancho, cada una entrando 500ms después de la anterior.
+     * 1 logro: centrado, mismo layout grande que la medalla. 2: uno al lado del otro. 3: en
+     * triángulo, 2 arriba y 1 abajo (a pedido del trainer, en vez de los 3 en fila que tenía
+     * antes). El ancho de párrafo de cada uno es el de su columna, para que el mensaje se
+     * ajuste de línea sin invadir al logro vecino.
      */
+    private fun posicionesLogros(cantidad: Int, ancho: Int): List<PosicionLogro> = when (cantidad) {
+        1 -> listOf(PosicionLogro(ancho / 2f, 1150f, 220f, ancho - 160))
+        2 -> {
+            val anchoColumna = ancho / 2f
+            listOf(
+                PosicionLogro(anchoColumna * 0.5f, 1100f, 150f, (anchoColumna - 100f).toInt()),
+                PosicionLogro(anchoColumna * 1.5f, 1100f, 150f, (anchoColumna - 100f).toInt())
+            )
+        }
+        else -> {
+            val anchoColumna = ancho / 2f
+            listOf(
+                PosicionLogro(anchoColumna * 0.5f, 880f, 130f, (anchoColumna - 100f).toInt()),
+                PosicionLogro(anchoColumna * 1.5f, 880f, 130f, (anchoColumna - 100f).toInt()),
+                PosicionLogro(ancho / 2f, 1420f, 130f, ancho - 320)
+            )
+        }
+    }
+
+    /** Insignias entrando en cascada (cada una 500ms después de la anterior, salvo con una
+     *  sola, que sigue el mismo ritmo que la medalla), cada una con su nombre y su propio
+     *  mensaje debajo — ya no se omite con 2 o 3 logros, solo se dibuja más chico. */
     private fun dibujarLogrosPersonales(
         canvas: Canvas, ancho: Int, escena: EscenaResumen.LogrosPersonales,
         elapsedMs: Long, alphaEscena: Float
@@ -668,44 +685,77 @@ object ResumenFrameRenderer {
         val cantidad = escena.logros.size
         if (cantidad == 0) return
         val unico = cantidad == 1
-        val radio = if (unico) 220f else 130f
-        val centroY = if (unico) 1150f else 1100f
+        val posiciones = posicionesLogros(cantidad, ancho)
 
         escena.logros.forEachIndexed { indice, logro ->
+            val pos = posiciones[indice]
             val inicio = LOGROS_RETRASO_MS + if (unico) MEDALLA_INICIO_MS else 1_200L + indice * 500L
             val progreso = ((elapsedMs - inicio).coerceIn(0L, MEDALLA_FADE_MS)).toFloat() / MEDALLA_FADE_MS
             if (progreso <= 0f) return@forEachIndexed
             val alphaAplicado = (255 * progreso * alphaEscena).toInt().coerceIn(0, 255)
 
-            // Columnas de ancho igual: la insignia i queda en el centro de la columna i.
-            val anchoColumna = ancho.toFloat() / cantidad
-            val centroX = anchoColumna * (indice + 0.5f)
-
             dibujarHalo(
-                canvas, centroX, centroY, radio,
+                canvas, pos.cx, pos.cy, pos.radio,
                 factor = HALO_FACTOR_LOGRO, alphaMaximo = HALO_ALPHA_LOGRO,
                 intensidad = 1f, alphaAplicado = alphaAplicado
             )
 
             val bitmap = logro.imagen
             if (bitmap != null) {
-                val destino = RectF(centroX - radio, centroY - radio, centroX + radio, centroY + radio)
+                val destino = RectF(pos.cx - pos.radio, pos.cy - pos.radio, pos.cx + pos.radio, pos.cy + pos.radio)
                 val paintImagen = Paint().apply { isAntiAlias = true; alpha = alphaAplicado }
                 canvas.drawBitmap(bitmap, null, destino, paintImagen)
             } else {
                 dibujarInsignia(
-                    canvas, centroX, centroY, radio,
+                    canvas, pos.cx, pos.cy, pos.radio,
                     colorInsignia = DONA_PALETA_PASTEL[indice % DONA_PALETA_PASTEL.size],
                     glifo = "★",
                     alphaAplicado = alphaAplicado
                 )
             }
 
+            val tamanoNombre = if (unico) 44f else 30f
+            val yNombre = pos.cy + pos.radio + (if (unico) 90f else 60f)
             dibujarTextoCentradoMultilinea(
-                canvas, listOf(logro.nombre), centroX, centroY + radio + (if (unico) 90f else 60f),
-                tamano = if (unico) 44f else 28f, color = DESTACADO, alphaAplicado = alphaAplicado
+                canvas, listOf(logro.nombre), pos.cx, yNombre,
+                tamano = tamanoNombre, color = DESTACADO, alphaAplicado = alphaAplicado
             )
+
+            if (logro.mensaje.isNotBlank()) {
+                val tamanoMensaje = if (unico) 38f else 26f
+                val yMensaje = yNombre + (if (unico) 60f else 45f)
+                dibujarTextoEnvueltoCentrado(
+                    canvas, logro.mensaje, pos.cx, yMensaje, pos.anchoTexto,
+                    tamanoMensaje, Color.LTGRAY, alphaAplicado
+                )
+            }
         }
+    }
+
+    /** Como [dibujarTexto] pero centrado en [xCentro] con su propio [anchoDisponible], en vez
+     *  de usar siempre el ancho completo del canvas: lo necesitan los mensajes de
+     *  [dibujarLogrosPersonales], que con 2 o 3 logros deben quedar dentro de su propia
+     *  columna sin invadir la del vecino. */
+    private fun dibujarTextoEnvueltoCentrado(
+        canvas: Canvas, texto: String, xCentro: Float, y: Float, anchoDisponible: Int,
+        tamano: Float, color: Int, alphaAplicado: Int
+    ) {
+        val paint = TextPaint().apply {
+            isAntiAlias = true
+            this.color = color
+            alpha = alphaAplicado
+            textSize = tamano
+            typeface = Typeface.DEFAULT
+        }
+        val ancho = anchoDisponible.coerceAtLeast(1)
+        val layout = StaticLayout.Builder
+            .obtain(texto, 0, texto.length, paint, ancho)
+            .setAlignment(Layout.Alignment.ALIGN_CENTER)
+            .build()
+        canvas.save()
+        canvas.translate(xCentro - ancho / 2f, y)
+        layout.draw(canvas)
+        canvas.restore()
     }
 
     /**
