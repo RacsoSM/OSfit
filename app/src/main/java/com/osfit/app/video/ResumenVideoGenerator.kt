@@ -1,6 +1,7 @@
 package com.osfit.app.video
 
 import android.content.Context
+import com.osfit.app.data.AppContainer
 import com.osfit.app.data.model.LogroPersonalCatalogo
 import com.osfit.app.data.model.MedallaCatalogo
 import com.osfit.app.domain.ResumenClienteData
@@ -69,9 +70,12 @@ object ResumenVideoGenerator {
             borrarResumenesViejos(carpeta, ahora)
             TimelineResumen(construirEscenas(resumen, medallaEscena, escenasDeLogros))
         }
+        // Una sola lectura por video, no una por frame: la paleta es del periodo y no cambia
+        // mientras se genera.
+        val paleta = AppContainer.configVideoRepository.paletaDe(resumen.rango.inicio.toString())
         // Una instancia de fondo por generación: su bitmap y sus paints son estado mutable,
         // y dos generaciones solapadas se corromperían los frames si lo compartieran.
-        val fondo = FondoBlobRenderer()
+        val fondo = FondoBlobRenderer(paleta)
         val cancionArchivo = resumen.cliente.cancionArchivo
         ResumenVideoEncoder.generar(
             duracionTotalMs = timeline.duracionTotalMs,
@@ -82,7 +86,7 @@ object ResumenVideoGenerator {
             inicioMusicaSegundos = resumen.cliente.cancionInicioSegundos ?: 0,
             onProgreso = onProgreso
         ) { canvas, tiempoMs ->
-            ResumenFrameRenderer.dibujarFrame(canvas, timeline, fondo, tiempoMs)
+            ResumenFrameRenderer.dibujarFrame(canvas, timeline, fondo, tiempoMs, paleta)
         }
         CompartirUtil.compartirVideo(context, salida)
     }
