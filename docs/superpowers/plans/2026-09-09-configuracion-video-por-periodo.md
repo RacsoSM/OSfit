@@ -37,7 +37,7 @@ Crea el modelo de paleta y la lista de presets. Es pura lógica de datos, sin An
   - `data class PaletaVideo(val id: String, val nombre: String, val blobA: Int, val blobB: Int, val blobC: Int, val destacado: Int)`
   - `object PaletasVideo` con `val disponibles: List<PaletaVideo>`, `val porDefecto: PaletaVideo`, `fun porId(id: String?): PaletaVideo`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Crear `app/src/test/java/com/osfit/app/video/PaletasVideoTest.kt`:
 
@@ -128,13 +128,13 @@ class PaletasVideoTest {
 }
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `./gradlew.bat :app:testDebugUnitTest --tests "com.osfit.app.video.PaletasVideoTest"`
 
 Expected: FAIL — no compila, `PaletasVideo` / `PaletaVideo` no existen (`Unresolved reference`).
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 Crear `app/src/main/java/com/osfit/app/video/PaletaVideo.kt`:
 
@@ -222,13 +222,13 @@ object PaletasVideo {
 }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `./gradlew.bat :app:testDebugUnitTest --tests "com.osfit.app.video.PaletasVideoTest"`
 
 Expected: PASS, 9 tests.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add app/src/main/java/com/osfit/app/video/PaletaVideo.kt app/src/test/java/com/osfit/app/video/PaletasVideoTest.kt
@@ -253,7 +253,7 @@ git commit -m "feat: add the video color palette presets"
   - `BlobsGeometria.posicionEn(blob, tiempoGlobalMs)` sigue igual.
   - `FondoBlobRenderer(paleta: PaletaVideo)` — el constructor pasa a tomar la paleta. `dibujar(canvas, ancho, alto, tiempoGlobalMs)` no cambia de firma.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Reemplazar el contenido completo de `app/src/test/java/com/osfit/app/video/BlobsGeometriaTest.kt`. Los dos primeros tests son los existentes adaptados a la firma nueva; el resto es cobertura nueva.
 
@@ -336,13 +336,13 @@ class BlobsGeometriaTest {
 }
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `./gradlew.bat :app:testDebugUnitTest --tests "com.osfit.app.video.BlobsGeometriaTest"`
 
 Expected: FAIL — no compila: `blobs` sigue siendo `val`, no se puede invocar con un argumento.
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 En `app/src/main/java/com/osfit/app/video/BlobsGeometria.kt`, reemplazar el bloque de constantes de color y la `val blobs` (líneas 22–36, desde el comentario `// Tonos apagados…` hasta el cierre del `listOf`) por:
 
@@ -384,7 +384,7 @@ class FondoBlobRenderer(private val paleta: PaletaVideo) {
 
 3. En `dibujar`, cambiar `BlobsGeometria.blobs.forEach` por `BlobsGeometria.blobs(paleta).forEach`.
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `./gradlew.bat :app:testDebugUnitTest --tests "com.osfit.app.video.BlobsGeometriaTest"`
 
@@ -392,7 +392,7 @@ Expected: PASS, 7 tests.
 
 Nota: `./gradlew.bat :app:compileDebugKotlin` todavía va a fallar en `ResumenVideoGenerator.kt` porque ahí se construye `FondoBlobRenderer()` sin argumento. Se arregla en la Task 5; no lo arregles acá con un valor por defecto en el constructor — la paleta debe venir siempre del periodo, y un default la haría fácil de olvidar.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add app/src/main/java/com/osfit/app/video/BlobsGeometria.kt app/src/main/java/com/osfit/app/video/FondoBlobRenderer.kt app/src/test/java/com/osfit/app/video/BlobsGeometriaTest.kt
@@ -412,7 +412,7 @@ git commit -m "feat: take blob colors from a palette and make the blobs smaller 
 - Consumes: `PaletaVideo` (Task 1), `FondoBlobRenderer(paleta)` (Task 2).
 - Produces: `ResumenFrameRenderer.dibujarFrame(canvas, timeline, fondo, tiempoGlobalMs, paleta, ancho = ANCHO_DEFECTO, alto = ALTO_DEFECTO)` — `paleta: PaletaVideo` va después de `tiempoGlobalMs` y antes de los parámetros con valor por defecto.
 
-- [ ] **Step 1: Cambiar la firma de `dibujarFrame` y bajar la paleta**
+- [x] **Step 1: Cambiar la firma de `dibujarFrame` y bajar la paleta**
 
 No hay test unitario nuevo en esta tarea: `ResumenFrameRenderer` dibuja sobre un `android.graphics.Canvas` real, que no existe en tests JVM (es la razón por la que hoy no tiene test propio). La verificación es la compilación más el video real de la Task 7.
 
@@ -465,19 +465,19 @@ Son ocho usos dentro de esta función (líneas ~227, 250, 252, 265, 292, 295, 29
 
 8. Actualizar los dos comentarios KDoc que mencionan `[DESTACADO]` (líneas ~440 y ~543) para que digan `el destacado de la paleta` en vez de referenciar la constante borrada — si no, el KDoc queda apuntando a un símbolo inexistente.
 
-- [ ] **Step 2: Verificar que ya no queda ningún uso de la constante**
+- [x] **Step 2: Verificar que ya no queda ningún uso de la constante**
 
 Run: `grep -n "DESTACADO" app/src/main/java/com/osfit/app/video/ResumenFrameRenderer.kt`
 
 Expected: sólo dos líneas, ambas de `VELOCIDAD_DESTACADO_MS_POR_CARACTER` (su declaración y sus usos). Ninguna referencia a `DESTACADO` a secas.
 
-- [ ] **Step 3: Verificar que la dona quedó intacta**
+- [x] **Step 3: Verificar que la dona quedó intacta**
 
 Run: `grep -n "DONA_PALETA_PASTEL\|COLOR_INSIGNIA_MEDALLA" app/src/main/java/com/osfit/app/video/ResumenFrameRenderer.kt`
 
 Expected: los mismos usos que antes del cambio (declaraciones más los usos en `dibujarDonaDiasFavoritos`, `dibujarLogrosPersonales` y `dibujarMedalla`). Ninguno reemplazado por la paleta.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 `compileDebugKotlin` todavía falla en `ResumenVideoGenerator.kt` (no pasa `paleta` ni construye `FondoBlobRenderer` con argumento): se cierra en la Task 5. Commitear igual — el árbol queda coherente aunque no compile de punta a punta.
 
@@ -505,7 +505,7 @@ git commit -m "feat: take the highlight color from the video palette"
     - `suspend fun guardar(rangoInicio: String, paletaId: String)`
   - `AppContainer.configVideoRepository: ConfigVideoRepository`
 
-- [ ] **Step 1: Crear el modelo**
+- [x] **Step 1: Crear el modelo**
 
 Sin test: es un data class de datos puros para Firestore, sin lógica. La lógica de fallback ya está testeada en `PaletasVideoTest` (Task 1), que es exactamente lo que el repositorio delega.
 
@@ -529,7 +529,7 @@ data class ConfigVideoPeriodo(
 )
 ```
 
-- [ ] **Step 2: Crear el repositorio**
+- [x] **Step 2: Crear el repositorio**
 
 Crear `app/src/main/java/com/osfit/app/data/repository/ConfigVideoRepository.kt`, siguiendo el patrón de `MedallaRepository` (callbackFlow + addSnapshotListener, `.await()` para lecturas puntuales):
 
@@ -585,7 +585,7 @@ class ConfigVideoRepository(
 }
 ```
 
-- [ ] **Step 3: Registrar el repositorio en AppContainer**
+- [x] **Step 3: Registrar el repositorio en AppContainer**
 
 En `app/src/main/java/com/osfit/app/data/AppContainer.kt`, agregar el import `com.osfit.app.data.repository.ConfigVideoRepository` (en orden alfabético, va antes de `FirestoreAsistenciaRepository`) y la propiedad dentro del object:
 
@@ -593,13 +593,13 @@ En `app/src/main/java/com/osfit/app/data/AppContainer.kt`, agregar el import `co
     val configVideoRepository: ConfigVideoRepository by lazy { ConfigVideoRepository() }
 ```
 
-- [ ] **Step 4: Verificar que compila lo nuevo**
+- [x] **Step 4: Verificar que compila lo nuevo**
 
 Run: `./gradlew.bat :app:compileDebugKotlin`
 
 Expected: sigue fallando **sólo** en `ResumenVideoGenerator.kt` (arrastre de las tasks 2 y 3). Ningún error debe apuntar a `ConfigVideoRepository.kt`, `ConfigVideoPeriodo.kt` ni `AppContainer.kt`. Si aparece un error en esos tres archivos, arreglarlo antes de commitear.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add app/src/main/java/com/osfit/app/data/model/ConfigVideoPeriodo.kt app/src/main/java/com/osfit/app/data/repository/ConfigVideoRepository.kt app/src/main/java/com/osfit/app/data/AppContainer.kt
@@ -619,7 +619,7 @@ Cierra la cadena: acá el proyecto vuelve a compilar de punta a punta.
 - Consumes: `FondoBlobRenderer(paleta)` (Task 2), `dibujarFrame(..., paleta, ...)` (Task 3), `AppContainer.configVideoRepository.paletaDe(rangoInicio)` (Task 4).
 - Produces: `ResumenVideoGenerator.generarYCompartir(...)` mantiene su firma pública actual — resuelve la paleta internamente, así que ningún llamador cambia.
 
-- [ ] **Step 1: Resolver la paleta y pasarla al renderer**
+- [x] **Step 1: Resolver la paleta y pasarla al renderer**
 
 En `app/src/main/java/com/osfit/app/video/ResumenVideoGenerator.kt`:
 
@@ -652,19 +652,19 @@ por:
         }
 ```
 
-- [ ] **Step 2: Verificar que compila todo**
+- [x] **Step 2: Verificar que compila todo**
 
 Run: `./gradlew.bat :app:compileDebugKotlin`
 
 Expected: BUILD SUCCESSFUL. Es el primer punto del plan en que el proyecto compila entero desde la Task 2.
 
-- [ ] **Step 3: Correr toda la suite de tests**
+- [x] **Step 3: Correr toda la suite de tests**
 
 Run: `./gradlew.bat :app:testDebugUnitTest`
 
 Expected: BUILD SUCCESSFUL, todos en verde — incluidos `ResumenVideoGeneratorTest` y `TimelineResumenTest`, que no deberían haberse visto afectados.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add app/src/main/java/com/osfit/app/video/ResumenVideoGenerator.kt
@@ -693,7 +693,7 @@ git commit -m "feat: render each video with its period's palette"
   - `class ConfigVideoViewModel` con `val periodos: StateFlow<List<PeriodoConPaleta>>` y `fun asignar(rangoInicio: String, paletaId: String)`
   - `@Composable fun ConfigVideoScreen(viewModel: ConfigVideoViewModel = viewModel())`
 
-- [ ] **Step 1: Write the failing test for the period list**
+- [x] **Step 1: Write the failing test for the period list**
 
 La lista de quincenas es lógica pura de calendario, así que se testea sola. Crear `app/src/test/java/com/osfit/app/domain/PeriodosQuincenalesTest.kt`:
 
@@ -771,13 +771,13 @@ class PeriodosQuincenalesTest {
 }
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `./gradlew.bat :app:testDebugUnitTest --tests "com.osfit.app.domain.PeriodosQuincenalesTest"`
 
 Expected: FAIL — `Unresolved reference: PeriodosQuincenales`.
 
-- [ ] **Step 3: Implement the period list**
+- [x] **Step 3: Implement the period list**
 
 Crear `app/src/main/java/com/osfit/app/domain/PeriodosQuincenales.kt`:
 
@@ -814,13 +814,13 @@ object PeriodosQuincenales {
 }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `./gradlew.bat :app:testDebugUnitTest --tests "com.osfit.app.domain.PeriodosQuincenalesTest"`
 
 Expected: PASS, 8 tests.
 
-- [ ] **Step 5: Write the ViewModel**
+- [x] **Step 5: Write the ViewModel**
 
 Crear `app/src/main/java/com/osfit/app/ui/configvideo/ConfigVideoViewModel.kt`. Sigue el patrón de `LogrosPersonalesViewModel` (repositorio por defecto desde `AppContainer`, `stateIn` con `WhileSubscribed(5000)`):
 
@@ -880,7 +880,7 @@ class ConfigVideoViewModel(
 }
 ```
 
-- [ ] **Step 6: Write the screen**
+- [x] **Step 6: Write the screen**
 
 Crear `app/src/main/java/com/osfit/app/ui/configvideo/ConfigVideoScreen.kt`:
 
@@ -1014,7 +1014,7 @@ private fun MuestrasPaleta(paleta: PaletaVideo) {
 }
 ```
 
-- [ ] **Step 7: Wire the route and the drawer entry**
+- [x] **Step 7: Wire the route and the drawer entry**
 
 En `app/src/main/java/com/osfit/app/ui/navigation/Screen.kt`, agregar dentro del `sealed class Screen`, después de `LogrosPersonalesCliente`:
 
@@ -1044,13 +1044,13 @@ En `app/src/main/java/com/osfit/app/ui/OSfitApp.kt`, dentro del `ModalDrawerShee
                         )
 ```
 
-- [ ] **Step 8: Verify build and full test suite**
+- [x] **Step 8: Verify build and full test suite**
 
 Run: `./gradlew.bat :app:compileDebugKotlin :app:testDebugUnitTest`
 
 Expected: BUILD SUCCESSFUL, todos los tests en verde.
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```bash
 git add app/src/main/java/com/osfit/app/domain/PeriodosQuincenales.kt app/src/test/java/com/osfit/app/domain/PeriodosQuincenalesTest.kt app/src/main/java/com/osfit/app/ui/configvideo/ app/src/main/java/com/osfit/app/ui/navigation/Screen.kt app/src/main/java/com/osfit/app/ui/navigation/OSfitNavHost.kt app/src/main/java/com/osfit/app/ui/OSfitApp.kt
