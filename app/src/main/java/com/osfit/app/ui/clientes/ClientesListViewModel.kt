@@ -6,7 +6,6 @@ import com.osfit.app.data.AppContainer
 import com.osfit.app.data.model.Cliente
 import com.osfit.app.data.repository.AsistenciaRepository
 import com.osfit.app.data.repository.ClienteRepository
-import com.osfit.app.domain.RachaCalculator
 import com.osfit.app.domain.RutinaProgressCalculator
 import java.time.LocalDate
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -38,17 +37,6 @@ class ClientesListViewModel(
                 )
             }
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyMap())
-
-    val rachasPorCliente: StateFlow<Map<String, Int>> = asistenciaRepository.observarTodasAsistencias()
-        .map { asistencias ->
-            val hoy = LocalDate.now()
-            asistencias
-                .groupBy { it.clienteId }
-                .mapValues { (_, lista) ->
-                    RachaCalculator.calcularRachaActual(RachaCalculator.fechasQueCuentan(lista), hoy)
-                }
-        }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyMap())
 
     private val _errorValidacion = MutableStateFlow<String?>(null)
     val errorValidacion: StateFlow<String?> = _errorValidacion.asStateFlow()

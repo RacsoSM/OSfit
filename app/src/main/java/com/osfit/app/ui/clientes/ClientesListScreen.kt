@@ -41,7 +41,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.osfit.app.data.model.Cliente
 import com.osfit.app.domain.PagoCalculator
 import com.osfit.app.domain.RutinaProgressCalculator
-import com.osfit.app.ui.common.RachaBadge
 import com.osfit.app.ui.common.TextoMaquinaEscribir
 import com.osfit.app.ui.common.rememberFechaActual
 import com.osfit.app.ui.theme.ColoresAvatar
@@ -55,7 +54,6 @@ fun ClientesListScreen(
     viewModel: ClientesListViewModel = viewModel()
 ) {
     val clientes by viewModel.clientes.collectAsState()
-    val rachasPorCliente by viewModel.rachasPorCliente.collectAsState()
     val diaQueTocaPorCliente by viewModel.diaQueTocaPorCliente.collectAsState()
     val errorValidacion by viewModel.errorValidacion.collectAsState()
     val hoy by rememberFechaActual()
@@ -83,7 +81,6 @@ fun ClientesListScreen(
                 items(clientes, key = { it.id }) { cliente ->
                     ClienteItem(
                         cliente = cliente,
-                        racha = rachasPorCliente[cliente.id] ?: 0,
                         diaQueToca = diaQueTocaPorCliente[cliente.id] ?: 0,
                         onClick = { onClienteClick(cliente.id) }
                     )
@@ -141,7 +138,7 @@ private fun EncabezadoSaludo() {
 private val GrisInactivo = Color(0xFF5A5A5A)
 
 @Composable
-private fun ClienteItem(cliente: Cliente, racha: Int, diaQueToca: Int, onClick: () -> Unit) {
+private fun ClienteItem(cliente: Cliente, diaQueToca: Int, onClick: () -> Unit) {
     val nombreDia = cliente.rutinaAsignada?.dias?.getOrNull(diaQueToca)?.nombreDia
         ?: "Sin rutina asignada"
     val diasParaPago = PagoCalculator.diasParaProximoPago(cliente)
@@ -155,7 +152,7 @@ private fun ClienteItem(cliente: Cliente, racha: Int, diaQueToca: Int, onClick: 
         Box(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 20.dp)
         ) {
-            // Se dibuja primero para que, si el nombre es muy largo, la fila de avatar+racha
+            // Se dibuja primero para que, si el nombre es muy largo, la fila de avatar+nombre
             // (compuesta después) quede encima y lo tape, en vez de truncar el nombre.
             Text(
                 nombreDia,
@@ -170,18 +167,13 @@ private fun ClienteItem(cliente: Cliente, racha: Int, diaQueToca: Int, onClick: 
             ) {
                 AvatarCliente(nombre = cliente.nombre, activo = cliente.activo)
                 Column(modifier = Modifier.padding(start = 12.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            cliente.nombre,
-                            style = MaterialTheme.typography.titleMedium,
-                            color = colorTexto,
-                            textDecoration = if (cliente.activo) null else TextDecoration.LineThrough,
-                            maxLines = 1
-                        )
-                        if (racha > 0) {
-                            RachaBadge(racha = racha)
-                        }
-                    }
+                    Text(
+                        cliente.nombre,
+                        style = MaterialTheme.typography.titleMedium,
+                        color = colorTexto,
+                        textDecoration = if (cliente.activo) null else TextDecoration.LineThrough,
+                        maxLines = 1
+                    )
                 }
             }
         }
