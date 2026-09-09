@@ -1076,13 +1076,13 @@ El resto del plan verifica lógica. Los colores y el tamaño de los blobs sólo 
 "$LOCALAPPDATA/Android/Sdk/platform-tools/adb.exe" install -r app/build/outputs/apk/debug/app-debug.apk
 ```
 
-- [ ] **Step 2: Asignar una paleta al periodo de prueba**
+- [x] **Step 2: Asignar una paleta al periodo de prueba**
 
 En el dispositivo: abrir el drawer → "Configuración de video" → tocar la quincena actual → elegir "Atardecer".
 
 Verificar: el renglón de la quincena actual muestra ahora "Atardecer" y sus cuatro muestras de color, y dice "(actual)".
 
-- [ ] **Step 3: Generar un video del periodo configurado**
+- [x] **Step 3: Generar un video del periodo configurado**
 
 Abrir un cliente de prueba (Estela) → "Resumen quincenal" → elegir el periodo actual → confirmar medalla → confirmar logros → Generar. Abrir el preview de WhatsApp **sin enviarlo a nadie**.
 
@@ -1093,19 +1093,19 @@ Verificar:
 - La dona de días favoritos conserva sus colores pastel de siempre.
 - La música del cliente suena igual que antes.
 
-- [ ] **Step 4: Generar un video de un periodo sin configurar**
+- [x] **Step 4: Generar un video de un periodo sin configurar**
 
 Repetir con una quincena anterior a la que no se le asignó paleta.
 
 Verificar: el video sale con los colores originales (magenta/cian/púrpura, destacado verde aqua). Es la comprobación de que nada cambió para lo no configurado.
 
-- [ ] **Step 5: Ajustar si hace falta**
+- [x] **Step 5: Ajustar si hace falta**
 
 Si algún preset no contrasta bien, o los blobs quedaron demasiado chicos o demasiado duros, ajustar los hex en `PaletaVideo.kt` y/o los radios en `BlobsGeometria.kt` y `RADIO_BLUR_PX` en `FondoBlobRenderer.kt`, y repetir desde el Step 1.
 
 Si se cambiaron radios, correr `./gradlew.bat :app:testDebugUnitTest --tests "com.osfit.app.video.BlobsGeometriaTest"` — el test `los blobs son mas chicos que el diseno original` fija el techo en `0.25f`.
 
-- [ ] **Step 6: Commit de los ajustes**
+- [x] **Step 6: Commit de los ajustes**
 
 Sólo si el Step 5 cambió algo:
 
