@@ -43,9 +43,6 @@ private data class BloqueTexto(
 object ResumenFrameRenderer {
 
     private const val NEGRO = 0xFF000000.toInt()
-    /** Color del dato destacado de cada escena. Verde aqua fuerte: se distingue bien del fondo
-     *  negro con blobs apagados y del magenta/púrpura del fondo, sin ser tan agresivo como el rojo. */
-    private const val DESTACADO = 0xFF00E6A8.toInt()
     /** Velocidad de máquina de escribir de los textos destacados grandes (Asistencia y Esfuerzo):
      *  ambos deben "sentirse" igual de rápidos aunque su longitud de texto varíe. */
     private const val VELOCIDAD_DESTACADO_MS_POR_CARACTER = 2_400.0 / 29.0
@@ -174,6 +171,7 @@ object ResumenFrameRenderer {
         timeline: TimelineResumen,
         fondo: FondoBlobRenderer,
         tiempoGlobalMs: Long,
+        paleta: PaletaVideo,
         ancho: Int = ANCHO_DEFECTO,
         alto: Int = ALTO_DEFECTO
     ) {
@@ -184,15 +182,15 @@ object ResumenFrameRenderer {
         val entrante = timeline.tramoEntrante(tiempoGlobalMs)
         if (entrante != null) {
             val alphaEntrante = timeline.alphaEntrante(tiempoGlobalMs)
-            dibujarEscena(canvas, ancho, activo.escena, timeline.elapsedEnTramo(activo, tiempoGlobalMs), alpha = 1f - alphaEntrante)
-            dibujarEscena(canvas, ancho, entrante.escena, timeline.elapsedEnTramo(entrante, tiempoGlobalMs), alpha = alphaEntrante)
+            dibujarEscena(canvas, ancho, paleta, activo.escena, timeline.elapsedEnTramo(activo, tiempoGlobalMs), alpha = 1f - alphaEntrante)
+            dibujarEscena(canvas, ancho, paleta, entrante.escena, timeline.elapsedEnTramo(entrante, tiempoGlobalMs), alpha = alphaEntrante)
         } else {
-            dibujarEscena(canvas, ancho, activo.escena, timeline.elapsedEnTramo(activo, tiempoGlobalMs), alpha = 1f)
+            dibujarEscena(canvas, ancho, paleta, activo.escena, timeline.elapsedEnTramo(activo, tiempoGlobalMs), alpha = 1f)
         }
     }
 
-    private fun dibujarEscena(canvas: Canvas, ancho: Int, escena: EscenaResumen, elapsedMs: Long, alpha: Float) {
-        bloquesPara(escena).forEach { bloque ->
+    private fun dibujarEscena(canvas: Canvas, ancho: Int, paleta: PaletaVideo, escena: EscenaResumen, elapsedMs: Long, alpha: Float) {
+        bloquesPara(escena, paleta).forEach { bloque ->
             val texto = MaquinaEscribir.textoVisible(bloque.texto, elapsedMs - bloque.inicioMs, bloque.duracionMs)
             if (texto.isNotEmpty()) {
                 val resaltadosVisibles = bloque.resaltados.mapNotNull { resaltado ->
@@ -204,27 +202,27 @@ object ResumenFrameRenderer {
             }
         }
         if (escena is EscenaResumen.Tiempo) {
-            dibujarGraficaTiempo(canvas, ancho, escena.tiempoPorDia, elapsedMs, alpha)
+            dibujarGraficaTiempo(canvas, ancho, paleta, escena.tiempoPorDia, elapsedMs, alpha)
         }
         if (escena is EscenaResumen.DiaFavorito) {
             dibujarDonaDiasFavoritos(canvas, ancho, escena.conteoDias, elapsedMs, alpha)
         }
         if (escena is EscenaResumen.Medalla && escena.nombre != null) {
-            dibujarMedalla(canvas, ancho, escena, elapsedMs, alpha)
+            dibujarMedalla(canvas, ancho, paleta, escena, elapsedMs, alpha)
         }
         if (escena is EscenaResumen.LogrosPersonales) {
-            dibujarLogrosPersonales(canvas, ancho, escena, elapsedMs, alpha)
+            dibujarLogrosPersonales(canvas, ancho, paleta, escena, elapsedMs, alpha)
         }
     }
 
-    private fun bloquesPara(escena: EscenaResumen): List<BloqueTexto> = when (escena) {
+    private fun bloquesPara(escena: EscenaResumen, paleta: PaletaVideo): List<BloqueTexto> = when (escena) {
         is EscenaResumen.Saludo -> {
             val prefijo = "Hola, "
             val texto = prefijo + escena.nombreCliente
             listOf(
                 BloqueTexto(
                     texto, inicioMs = 0, duracionMs = 2_000, y = 880f, tamano = 76f, color = Color.WHITE, estilo = Typeface.BOLD,
-                    resaltados = listOf(Resaltado(prefijo.length until texto.length, DESTACADO))
+                    resaltados = listOf(Resaltado(prefijo.length until texto.length, paleta.destacado))
                 )
             )
         }
@@ -249,7 +247,7 @@ object ResumenFrameRenderer {
                     inicioMs = 400,
                     duracionMs = (texto.length * VELOCIDAD_DESTACADO_MS_POR_CARACTER).toLong(),
                     y = 700f, tamano = 84f, color = Color.WHITE, estilo = Typeface.BOLD,
-                    resaltados = listOf(Resaltado(prefijo.length until texto.length, DESTACADO))
+                    resaltados = listOf(Resaltado(prefijo.length until texto.length, paleta.destacado))
                 ),
                 BloqueTexto(
                     comparacion(escena.ranking, "¡Vas primero en asistencias ${determinante(escena.unidad)} ${escena.unidad}!", "asistencias"),
@@ -262,7 +260,7 @@ object ResumenFrameRenderer {
             val minutos = escena.minutos % 60
             listOf(
                 BloqueTexto("Estuviste en el poderoso Focus un total de", inicioMs = 0, duracionMs = 900, y = 500f - DESPLAZAMIENTO_ARRIBA_TIEMPO, tamano = 44f, color = Color.WHITE, estilo = Typeface.NORMAL),
-                BloqueTexto("${horas}h ${minutos}min", inicioMs = 900, duracionMs = 2_400, y = 800f - DESPLAZAMIENTO_ARRIBA_TIEMPO, tamano = 96f, color = DESTACADO, estilo = Typeface.BOLD),
+                BloqueTexto("${horas}h ${minutos}min", inicioMs = 900, duracionMs = 2_400, y = 800f - DESPLAZAMIENTO_ARRIBA_TIEMPO, tamano = 96f, color = paleta.destacado, estilo = Typeface.BOLD),
                 BloqueTexto(
                     comparacion(escena.ranking, "¡Vas primero en tiempo asistido!", "tiempo asistido"),
                     inicioMs = 4_000, duracionMs = 1_500,
@@ -292,8 +290,8 @@ object ResumenFrameRenderer {
                     duracionMs = (texto.length * VELOCIDAD_DESTACADO_MS_POR_CARACTER).toLong(),
                     y = 760f, tamano = 72f, color = Color.WHITE, estilo = Typeface.BOLD,
                     resaltados = listOf(
-                        Resaltado(inicioEntrenando until finEntrenando, DESTACADO),
-                        Resaltado(inicioDescansando until texto.length, DESTACADO)
+                        Resaltado(inicioEntrenando until finEntrenando, paleta.destacado),
+                        Resaltado(inicioDescansando until texto.length, paleta.destacado)
                     )
                 ),
                 BloqueTexto(
@@ -318,7 +316,7 @@ object ResumenFrameRenderer {
         )
         is EscenaResumen.RachaMasLarga -> listOf(
             BloqueTexto("Tu racha más larga fue de", inicioMs = 0, duracionMs = 300, y = 700f, tamano = 44f, color = Color.WHITE, estilo = Typeface.NORMAL),
-            BloqueTexto("${escena.dias} días seguidos", inicioMs = 300, duracionMs = 1_900, y = 1000f, tamano = 88f, color = DESTACADO, estilo = Typeface.BOLD),
+            BloqueTexto("${escena.dias} días seguidos", inicioMs = 300, duracionMs = 1_900, y = 1000f, tamano = 88f, color = paleta.destacado, estilo = Typeface.BOLD),
             BloqueTexto(
                 comparacion(escena.ranking, "¡Vas primero en racha este mes!", "racha"),
                 inicioMs = 2_600, duracionMs = 600, y = 1500f, tamano = 48f, color = Color.LTGRAY, estilo = Typeface.NORMAL
@@ -437,7 +435,7 @@ object ResumenFrameRenderer {
     }
 
     /**
-     * Línea de minutos por día del rango. Un solo trazo, un solo color —el mismo [DESTACADO]
+     * Línea de minutos por día del rango. Un solo trazo, un solo color —el destacado de la paleta
      * del número grande de arriba, para que se lea como parte del mismo dato—, con puntos
      * solo en los días con asistencia real. Eje Y a la izquierda ("Minutos por día", vertical)
      * y eje X abajo con la fecha de cada día en formato dd/MM, también vertical: a esta escala
@@ -445,7 +443,7 @@ object ResumenFrameRenderer {
      * la siguiente.
      */
     private fun dibujarGraficaTiempo(
-        canvas: Canvas, ancho: Int, valores: List<PuntoTiempoDiario>, elapsedMs: Long, alphaEscena: Float
+        canvas: Canvas, ancho: Int, paleta: PaletaVideo, valores: List<PuntoTiempoDiario>, elapsedMs: Long, alphaEscena: Float
     ) {
         if (valores.size < 2) return
         val maximoDatos = valores.maxOf { it.minutos }
@@ -508,7 +506,7 @@ object ResumenFrameRenderer {
         }
         val paintLinea = Paint().apply {
             isAntiAlias = true
-            color = DESTACADO
+            color = paleta.destacado
             alpha = alphaAplicado
             style = Paint.Style.STROKE
             strokeWidth = 5f
@@ -519,7 +517,7 @@ object ResumenFrameRenderer {
 
         val paintPunto = Paint().apply {
             isAntiAlias = true
-            color = DESTACADO
+            color = paleta.destacado
             alpha = alphaAplicado
             style = Paint.Style.FILL
         }
@@ -540,8 +538,8 @@ object ResumenFrameRenderer {
     }
 
     /** Imagen propia de la medalla si la hay (fade-in), o su insignia por defecto si no, con el
-     *  nombre debajo en [DESTACADO]. */
-    private fun dibujarMedalla(canvas: Canvas, ancho: Int, escena: EscenaResumen.Medalla, elapsedMs: Long, alphaEscena: Float) {
+     *  nombre debajo en el destacado de la paleta. */
+    private fun dibujarMedalla(canvas: Canvas, ancho: Int, paleta: PaletaVideo, escena: EscenaResumen.Medalla, elapsedMs: Long, alphaEscena: Float) {
         val nombre = escena.nombre ?: return
         val progreso = ((elapsedMs - MEDALLA_INICIO_GRUPAL_MS).coerceIn(0L, MEDALLA_FADE_MS)).toFloat() / MEDALLA_FADE_MS
         if (progreso <= 0f) return
@@ -575,7 +573,7 @@ object ResumenFrameRenderer {
 
         dibujarTextoCentradoMultilinea(
             canvas, listOf(nombre), centroX, centroY + radio + 90f,
-            tamano = 44f, color = DESTACADO, alphaAplicado = alphaAplicado
+            tamano = 44f, color = paleta.destacado, alphaAplicado = alphaAplicado
         )
     }
 
@@ -679,7 +677,7 @@ object ResumenFrameRenderer {
      *  sola, que sigue el mismo ritmo que la medalla), cada una con su nombre y su propio
      *  mensaje debajo — ya no se omite con 2 o 3 logros, solo se dibuja más chico. */
     private fun dibujarLogrosPersonales(
-        canvas: Canvas, ancho: Int, escena: EscenaResumen.LogrosPersonales,
+        canvas: Canvas, ancho: Int, paleta: PaletaVideo, escena: EscenaResumen.LogrosPersonales,
         elapsedMs: Long, alphaEscena: Float
     ) {
         val cantidad = escena.logros.size
@@ -718,7 +716,7 @@ object ResumenFrameRenderer {
             val yNombre = pos.cy + pos.radio + (if (unico) 90f else 60f)
             dibujarTextoCentradoMultilinea(
                 canvas, listOf(logro.nombre), pos.cx, yNombre,
-                tamano = tamanoNombre, color = DESTACADO, alphaAplicado = alphaAplicado
+                tamano = tamanoNombre, color = paleta.destacado, alphaAplicado = alphaAplicado
             )
 
             if (logro.mensaje.isNotBlank()) {
