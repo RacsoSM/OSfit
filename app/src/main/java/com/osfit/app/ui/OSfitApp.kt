@@ -117,6 +117,15 @@ private fun OSfitContent() {
                             },
                             modifier = Modifier.padding(12.dp)
                         )
+                        NavigationDrawerItem(
+                            label = { Text("Configuración de video") },
+                            selected = rutaActual == Screen.ConfigVideo.route,
+                            onClick = {
+                                scope.launch { drawerState.close() }
+                                navController.navigate(Screen.ConfigVideo.route)
+                            },
+                            modifier = Modifier.padding(12.dp)
+                        )
                         if (com.osfit.app.BuildConfig.DEBUG) {
                             NavigationDrawerItem(
                                 label = { Text("Sandbox (prueba)") },

@@ -51,6 +51,8 @@ sealed class Screen(val route: String) {
     data object LogrosPersonalesCliente : Screen("logros_personales/{clienteId}") {
         fun crearRuta(clienteId: String) = "logros_personales/$clienteId"
     }
+
+    data object ConfigVideo : Screen("config_video")
 }
 
 val screensConBarraInferior = listOf(Screen.Clientes, Screen.Calendario, Screen.Rutinas)
