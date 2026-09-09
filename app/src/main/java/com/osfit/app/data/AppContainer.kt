@@ -2,6 +2,7 @@ package com.osfit.app.data
 
 import com.osfit.app.data.repository.AsistenciaRepository
 import com.osfit.app.data.repository.ClienteRepository
+import com.osfit.app.data.repository.ConfigVideoRepository
 import com.osfit.app.data.repository.FirestoreAsistenciaRepository
 import com.osfit.app.data.repository.FirestoreClienteRepository
 import com.osfit.app.data.repository.LogroPersonalRepository
@@ -18,4 +19,5 @@ object AppContainer {
     val recordPersonalRepository: RecordPersonalRepository by lazy { RecordPersonalRepository() }
     val medallaRepository: MedallaRepository by lazy { MedallaRepository() }
     val logroPersonalRepository: LogroPersonalRepository by lazy { LogroPersonalRepository() }
+    val configVideoRepository: ConfigVideoRepository by lazy { ConfigVideoRepository() }
 }
