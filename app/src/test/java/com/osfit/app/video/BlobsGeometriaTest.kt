@@ -58,11 +58,9 @@ class BlobsGeometriaTest {
         }
     }
 
-    /** Los blobs se achicaron a propósito (antes 0.24..0.34): este test es lo que evita que
-     *  alguien los devuelva al tamaño viejo sin darse cuenta. */
     @Test
-    fun `los blobs son mas chicos que el diseno original`() {
-        blobs.forEach { assertTrue("radio inesperado: ${it.radio}", it.radio <= 0.25f) }
+    fun `los blobs conservan el tamano original`() {
+        blobs.forEach { assertTrue("radio inesperado: ${it.radio}", it.radio in 0.24f..0.35f) }
     }
 
     /** Aun achicados siguen sin salirse del canvas al oscilar: centro ± amplitud ± radio. */

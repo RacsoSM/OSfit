@@ -82,9 +82,7 @@ class FondoBlobRenderer(private val paleta: PaletaVideo) {
     }
 
     private companion object {
-        /** Blur corto a propósito: con radios chicos, desenfocar 80px devolvía los blobs a
-         *  una nube sin forma. 45px deja el borde suave pero legible como figura. */
-        const val RADIO_BLUR_PX = 45f
+        const val RADIO_BLUR_PX = 80f
 
         /** Reducción de la capa de blobs: 1080x1920 se dibuja como 270x480. */
         const val FACTOR_ESCALA = 4
