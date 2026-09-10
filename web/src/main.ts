@@ -1,7 +1,9 @@
-import { observarCliente } from "./datos";
+import { observarCliente, observarAsistencias } from "./datos";
+import type { Cliente, Asistencia } from "./datos";
 import { hoyEnMazatlan } from "./fecha";
 import { iniciarSesion } from "./firebase";
 import { escapar, tarjetaDia } from "./ui/tarjetaDia";
+import { tarjetasStats } from "./ui/tarjetasStats";
 
 const app = document.querySelector<HTMLElement>("#app")!;
 
@@ -32,7 +34,11 @@ async function arrancar(): Promise<void> {
     return;
   }
   const hoy = hoyEnMazatlan();
-  observarCliente(clienteId, (cliente) => {
+
+  let cliente: Cliente | null = null;
+  let asistencias: Asistencia[] = [];
+
+  function pintar(): void {
     if (!cliente) {
       app.innerHTML = `<div class="tarjeta vacio"><p>No encontramos tus datos.</p></div>`;
       return;
@@ -40,8 +46,12 @@ async function arrancar(): Promise<void> {
     app.innerHTML = `
       <h1 style="font-size:20px;margin:4px 2px 14px">Hola, ${escapar(cliente.nombre)} 👋</h1>
       ${tarjetaDia(cliente, hoy)}
+      ${tarjetasStats(asistencias, hoy)}
     `;
-  });
+  }
+
+  observarCliente(clienteId, (c) => { cliente = c; pintar(); });
+  observarAsistencias(clienteId, (a) => { asistencias = a; pintar(); });
 }
 
 arrancar();
