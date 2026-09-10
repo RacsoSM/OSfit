@@ -3,6 +3,7 @@ package com.osfit.app.data.repository
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.FirebaseFirestore
 import com.osfit.app.data.model.Cliente
+import com.osfit.app.data.model.DiaDenormalizado
 import com.osfit.app.data.model.Rutina
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -112,6 +113,20 @@ class FirestoreClienteRepository(
 
     override suspend fun actualizarDiaFavorito(clienteId: String, diaIndex: Int) {
         coleccion.document(clienteId).update("diaFavoritoIndex", diaIndex).await()
+    }
+
+    override suspend fun actualizarDiaDenormalizado(clienteId: String, valor: DiaDenormalizado) {
+        coleccion.document(clienteId).update(
+            mapOf(
+                "ultimoDia" to valor.dia,
+                "ultimoDiaFecha" to valor.fecha,
+                "ultimoDiaEsAncla" to valor.esAncla
+            )
+        ).await()
+    }
+
+    override suspend fun actualizarTieneAccesoWeb(clienteId: String, tiene: Boolean) {
+        coleccion.document(clienteId).update("tieneAccesoWeb", tiene).await()
     }
 
     override suspend fun eliminarCliente(clienteId: String) {

@@ -2,6 +2,7 @@ package com.osfit.app.data.repository
 
 import com.google.firebase.Timestamp
 import com.osfit.app.data.model.Cliente
+import com.osfit.app.data.model.DiaDenormalizado
 import com.osfit.app.data.model.Rutina
 import kotlinx.coroutines.flow.Flow
 
@@ -28,5 +29,8 @@ interface ClienteRepository {
     suspend fun actualizarFechaIngreso(clienteId: String, fecha: Timestamp)
     suspend fun actualizarEjercicioFavorito(clienteId: String, diaIndex: Int, ejercicio: String)
     suspend fun actualizarDiaFavorito(clienteId: String, diaIndex: Int)
+    /** Refresca el día denormalizado que consume la web. Lo llama SincronizadorDiaWeb. */
+    suspend fun actualizarDiaDenormalizado(clienteId: String, valor: DiaDenormalizado)
+    suspend fun actualizarTieneAccesoWeb(clienteId: String, tiene: Boolean)
     suspend fun eliminarCliente(clienteId: String)
 }

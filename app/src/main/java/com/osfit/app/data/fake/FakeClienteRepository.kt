@@ -2,6 +2,7 @@ package com.osfit.app.data.fake
 
 import com.google.firebase.Timestamp
 import com.osfit.app.data.model.Cliente
+import com.osfit.app.data.model.DiaDenormalizado
 import com.osfit.app.data.model.DiaRutina
 import com.osfit.app.data.model.Ejercicio
 import com.osfit.app.data.model.Rutina
@@ -185,6 +186,20 @@ class FakeClienteRepository : ClienteRepository {
 
     override suspend fun actualizarDiaFavorito(clienteId: String, diaIndex: Int) {
         actualizarCliente(clienteId) { it.copy(diaFavoritoIndex = diaIndex) }
+    }
+
+    override suspend fun actualizarDiaDenormalizado(clienteId: String, valor: DiaDenormalizado) {
+        actualizarCliente(clienteId) {
+            it.copy(
+                ultimoDia = valor.dia,
+                ultimoDiaFecha = valor.fecha,
+                ultimoDiaEsAncla = valor.esAncla
+            )
+        }
+    }
+
+    override suspend fun actualizarTieneAccesoWeb(clienteId: String, tiene: Boolean) {
+        actualizarCliente(clienteId) { it.copy(tieneAccesoWeb = tiene) }
     }
 
     override suspend fun eliminarCliente(clienteId: String) {

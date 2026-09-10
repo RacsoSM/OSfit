@@ -33,5 +33,14 @@ data class Cliente(
     // Nombre del archivo dentro de filesDir/canciones/ (no la URI original: se copia al
     // elegirla para no depender de un permiso de content:// que puede revocarse).
     val cancionArchivo: String? = null,
-    val cancionInicioSegundos: Int? = null
+    val cancionInicioSegundos: Int? = null,
+    // Resultado denormalizado de RutinaProgressCalculator.denormalizar(), solo para que la
+    // web no reimplemente el cálculo. La app **no** lee estos campos: sigue llamando al
+    // calculador. Así un valor viejo degrada la web pero no puede corromper nada.
+    val ultimoDia: Int? = null,
+    val ultimoDiaFecha: String? = null,
+    val ultimoDiaEsAncla: Boolean = false,
+    // Comodidad de UI: si está desincronizado, la ficha ofrece "Compartir" en vez de
+    // "Copiar link". La verdad sobre el acceso vive en la colección accesosWeb.
+    val tieneAccesoWeb: Boolean = false
 )
