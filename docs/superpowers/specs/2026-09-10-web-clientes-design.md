@@ -116,8 +116,25 @@ function esCliente(cid) {
 El cliente **no necesita permiso sobre `rutinas`**: su rutina viene embebida en
 `Cliente.rutinaAsignada`. Es una superficie menos que exponer.
 
-`UID_ENTRENADOR` es el UID del usuario fijo de Firebase Authentication. Se
-puede leer una vez desde la consola y dejarlo literal en las reglas.
+`UID_ENTRENADOR` es el UID del usuario fijo de Firebase Authentication, y va
+literal en las reglas:
+
+```javascript
+function esEntrenador() {
+  return request.auth != null &&
+         request.auth.uid == 'G8lW4rIgXhZrswQXJ84pT1StFx82';
+}
+```
+
+No es un secreto: es un identificador, no una credencial. Las reglas comparan
+contra `request.auth.uid`, que sale de un token firmado por Firebase después de
+un login real — no se puede reclamar un UID, hay que probarlo. La credencial de
+verdad es `osfit.auth.password`, que vive en `local.properties` y no se
+versiona.
+
+Si algún día hay un segundo entrenador, esto se reemplaza por un custom claim
+(`entrenador: true`) para no tener que editar las reglas por cada persona. Con
+un solo entrenador el literal es más simple y se ve de un vistazo.
 
 ### Reglas de Storage
 
