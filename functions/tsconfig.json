@@ -3,6 +3,7 @@
     "module": "commonjs",
     "target": "ES2022",
     "outDir": "lib",
+    "rootDir": "./src",
     "strict": true,
     "skipLibCheck": true,
     "esModuleInterop": true
