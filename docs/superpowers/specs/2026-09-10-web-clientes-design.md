@@ -202,10 +202,11 @@ peor que pasa es que la app ofrezca "compartir" en vez de "copiar link".
 
 ```kotlin
 /** La justificó el cliente desde la web (no el entrenador). Solo estas cuentan para el cupo. */
-val justificadaPorCliente: Boolean = false,
-/** Motivo que eligió el cliente. Vacío si la justificó el entrenador. */
-val motivoAusencia: String = ""
+val justificadaPorCliente: Boolean = false
 ```
+
+No hay campo de motivo. Faltar no se justifica ante la página: el cliente avisa
+y se acabó (ver "Faltar no pide explicaciones").
 
 La distinción es necesaria: el "soborno" que otorga el entrenador **no debe
 gastar** el cupo del cliente.
@@ -303,15 +304,16 @@ asistencia registrada hoy. Después escribe `cambiosDia/{clienteId}_{fecha}`.
 No hay límite de uso. Si el cliente cambia dos veces el mismo día, la segunda
 pisa a la primera.
 
-### `revivirRacha(fecha, motivo)`
+### `revivirRacha(fecha)`
+
+No recibe motivo.
 
 1. Verifica que `fecha` sea **hoy** o **la falta que rompió la racha** (ver
    abajo). Cualquier otra fecha se rechaza.
 2. Cuenta el cupo del mes. Si ya hay 3, rechaza.
 3. Escribe la asistencia: si el documento existe y es falta, la marca
-   `justificada = true, justificadaPorCliente = true, motivoAusencia = motivo`.
-   Si no existe (el caso de avisar por adelantado), lo crea con
-   `asistio = false` y los mismos campos.
+   `justificada = true, justificadaPorCliente = true`. Si no existe (el caso de
+   avisar por adelantado), lo crea con `asistio = false` y los mismos campos.
 
 El caso de crear el documento por adelantado funciona sin coordinación con la
 app porque `registrarAsistencia()` **ya conserva** `justificada` al remarcar una
@@ -388,9 +390,7 @@ encabezado del rango y la duración.
   quedan deshabilitadas. Su historial es suyo; cambiar una rutina que no está
   haciendo, no.
 
-### Motivos
-
-Cambio de día:
+### Motivos del cambio de día
 
 1. "Hoy es lunes y quiero iniciar con algo que me guste" — **solo los lunes**
 2. "Tengo más de dos días sin venir y quiero iniciar con lo que yo quiera" —
@@ -405,18 +405,34 @@ es lunes" ofrecido un miércoles es absurdo, y ofrecerlo igual enseña que las
 opciones no significan nada. La web filtra con datos que ya tiene (la fecha y
 el historial de asistencias).
 
-Ausencia:
+El motivo se guarda en `CambioDiaWeb.motivo` y el entrenador lo ve en su
+indicador del calendario.
 
-1. "Estoy enfermo"
-2. "Tengo trabajo o escuela"
-3. "Estoy fuera de la ciudad"
-4. "Me lesioné"
-5. "Asunto familiar"
-6. "La neta no te quiero decir"
-7. "Otro (describe el motivo)"
+### Faltar no pide explicaciones
 
-El motivo se guarda en `motivoAusencia` / `CambioDiaWeb.motivo` y el entrenador
-lo ve en su indicador.
+**"Hoy no voy a poder ir" y "Revivir mi racha" no piden motivo.** No hay lista,
+no hay texto libre, no se guarda nada.
+
+Antes de gastar el revive se confirma, porque son 3 al mes y el cliente no debe
+descubrir que gastó uno por un toque accidental:
+
+> **¿Usar uno de tus 3 revives?**
+> Te quedan 2 este mes.
+> [ Cancelar ] [ Sí, usar uno ]
+
+Y al confirmar, la página responde:
+
+> **Esperamos que todo esté bien, te vemos mañana si Dios quiere!**
+
+Es asimétrico respecto del cambio de día, y a propósito. Cambiar de día es una
+decisión de entrenamiento sobre la que el entrenador quiere contexto — por eso
+tiene motivos, y por eso algunos son chistosos. Faltar es otra cosa: pedirle a
+alguien enfermo que elija de una lista por qué no puede ir convierte un aviso
+en un trámite. El cliente avisa, la página le desea que esté bien, y listo.
+
+Consecuencia práctica: el indicador del entrenador dice *que* el cliente avisó,
+nunca *por qué*. Si quiere saberlo, le pregunta — que es exactamente lo que
+haría de todos modos.
 
 ## Cambios en la app Android
 
@@ -437,7 +453,8 @@ lo ve en su indicador.
    todo lo que pase de los 6 más recientes.
 
 4. **Indicadores en el calendario.** Junto a cada cliente del día, una marca si
-   avisó que no viene o si cambió su día, con el motivo que eligió. Lee
+   avisó que no viene, o si cambió su día — en ese caso con el motivo que
+   eligió; el aviso de ausencia no lleva motivo. Lee
    `cambiosDia` del día y las asistencias con `justificadaPorCliente`. Ambas
    colecciones ya se observan en tiempo real; no hay plumbing nuevo.
 
