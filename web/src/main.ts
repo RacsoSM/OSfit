@@ -4,6 +4,7 @@ import { hoyEnMazatlan } from "./fecha";
 import { iniciarSesion } from "./firebase";
 import { escapar, tarjetaDia } from "./ui/tarjetaDia";
 import { tarjetasStats } from "./ui/tarjetasStats";
+import { calendario, moverMes } from "./ui/calendario";
 
 const app = document.querySelector<HTMLElement>("#app")!;
 
@@ -37,6 +38,7 @@ async function arrancar(): Promise<void> {
 
   let cliente: Cliente | null = null;
   let asistencias: Asistencia[] = [];
+  let mesVisible = hoy.slice(0, 7);
 
   function pintar(): void {
     if (!cliente) {
@@ -47,7 +49,16 @@ async function arrancar(): Promise<void> {
       <h1 style="font-size:20px;margin:4px 2px 14px">Hola, ${escapar(cliente.nombre)} 👋</h1>
       ${tarjetaDia(cliente, hoy)}
       ${tarjetasStats(asistencias, hoy)}
+      ${calendario(asistencias, mesVisible, hoy)}
     `;
+    document.querySelector("#mes-anterior")?.addEventListener("click", () => {
+      mesVisible = moverMes(mesVisible, -1);
+      pintar();
+    });
+    document.querySelector("#mes-siguiente")?.addEventListener("click", () => {
+      mesVisible = moverMes(mesVisible, 1);
+      pintar();
+    });
   }
 
   observarCliente(clienteId, (c) => { cliente = c; pintar(); });

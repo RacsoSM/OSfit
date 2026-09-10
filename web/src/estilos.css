@@ -35,3 +35,24 @@ main { max-width: 480px; margin: 0 auto; padding: 16px 14px 48px; }
 .numero { font-size: 30px; font-weight: 800; line-height: 1; margin: 4px 0; }
 .vacio { text-align: center; padding: 24px 12px; }
 .vacio-emoji { font-size: 40px; }
+.cal-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.cal-nav button {
+  background: var(--superficie-alta); color: var(--texto); border: 0;
+  border-radius: 8px; width: 32px; height: 32px; font-size: 16px; cursor: pointer;
+}
+.cal-nav button:disabled { opacity: 0.3; cursor: default; }
+.cal-dias, .cal { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.cal-dias { font-size: 11px; color: var(--texto-tenue); text-align: center; margin-bottom: 4px; }
+.cal span {
+  aspect-ratio: 1; border-radius: 7px; background: var(--superficie-alta);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; color: var(--texto-tenue);
+}
+.cal span.vacia { background: transparent; }
+.cal span.ok { background: var(--verde); color: #fff; }
+.cal span.no { background: var(--rojo); color: #fff; }
+.cal span.just { background: var(--ambar); color: #2A1A00; }
+.cal span.hoy-celda { outline: 2px solid var(--primario); font-weight: 800; color: var(--texto); }
+.leyenda { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; font-size: 11px; color: var(--texto-tenue); }
+.leyenda span { display: flex; align-items: center; gap: 4px; }
+.punto { width: 9px; height: 9px; border-radius: 3px; display: inline-block; }
