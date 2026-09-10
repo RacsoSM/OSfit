@@ -3,6 +3,7 @@ package com.osfit.app.ui.calendario
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.osfit.app.data.AppContainer
+import com.osfit.app.data.SincronizadorDiaWeb
 import com.osfit.app.data.model.Asistencia
 import com.osfit.app.data.model.Cliente
 import com.osfit.app.data.repository.AsistenciaRepository
@@ -23,7 +24,8 @@ import java.time.LocalDate
 class TomarAsistenciaViewModel(
     private val fecha: String,
     private val clienteRepository: ClienteRepository = AppContainer.clienteRepository,
-    private val asistenciaRepository: AsistenciaRepository = AppContainer.asistenciaRepository
+    private val asistenciaRepository: AsistenciaRepository = AppContainer.asistenciaRepository,
+    private val sincronizadorDiaWeb: SincronizadorDiaWeb = AppContainer.sincronizadorDiaWeb
 ) : ViewModel() {
 
     val esHoy: Boolean = fecha == LocalDate.now().toString()
@@ -96,6 +98,7 @@ class TomarAsistenciaViewModel(
                 fecha = fecha,
                 diaRutinaRealizado = diaQueToca(cliente)
             )
+            sincronizadorDiaWeb.refrescar(cliente.id, fecha)
         }
     }
 
@@ -127,6 +130,7 @@ class TomarAsistenciaViewModel(
                             diaRutinaRealizado = if (asistio) diaQueToca(cliente) else null,
                             nota = ""
                         )
+                        sincronizadorDiaWeb.refrescar(cliente.id, fecha)
                     }
                 }.awaitAll()
             }
@@ -139,6 +143,7 @@ class TomarAsistenciaViewModel(
         viewModelScope.launch {
             _reiniciando.value = true
             asistenciaRepository.reiniciarDia(fecha)
+            sincronizadorDiaWeb.refrescarTodos(fecha)
             cambiosPendientes.value = emptyMap()
             cambiosDiaPendientes.value = emptyMap()
             _reiniciando.value = false
@@ -156,6 +161,7 @@ class TomarAsistenciaViewModel(
                         // Solo se corrige el registro: al ser la fuente de verdad, el día
                         // que le toca al cliente se recalcula solo a partir de él.
                         asistenciaRepository.actualizarDiaRealizado(clienteId, fecha, diaElegido)
+                        sincronizadorDiaWeb.refrescar(clienteId, fecha)
                     }
                 }.awaitAll()
             }

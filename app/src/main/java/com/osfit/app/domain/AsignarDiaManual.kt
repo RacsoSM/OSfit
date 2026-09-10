@@ -1,5 +1,6 @@
 package com.osfit.app.domain
 
+import com.osfit.app.data.SincronizadorDiaWeb
 import com.osfit.app.data.repository.AsistenciaRepository
 import com.osfit.app.data.repository.ClienteRepository
 import java.time.LocalDate
@@ -30,10 +31,14 @@ object AsignarDiaManual {
         asistenciaRepository: AsistenciaRepository,
         clienteId: String,
         diaIndex: Int,
-        hoy: String
+        hoy: String,
+        sincronizador: SincronizadorDiaWeb? = null
     ) {
         val ancla = LocalDate.parse(hoy).minusDays(1).toString()
         clienteRepository.asignarDiaAncla(clienteId, diaIndex, ancla)
         asistenciaRepository.actualizarDiaRealizado(clienteId, hoy, diaIndex)
+        // Se refresca al final, cuando el ancla y el registro ya están escritos: el trío
+        // tiene que reflejar el estado final, no uno intermedio.
+        sincronizador?.refrescar(clienteId, hoy)
     }
 }

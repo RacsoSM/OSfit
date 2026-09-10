@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.Timestamp
 import com.osfit.app.data.AppContainer
+import com.osfit.app.data.SincronizadorDiaWeb
 import com.osfit.app.data.model.Asistencia
 import com.osfit.app.data.model.Cliente
 import com.osfit.app.data.model.LogroPersonalCatalogo
@@ -38,7 +39,8 @@ class ClienteDetailViewModel(
     private val rutinaRepository: RutinaRepository = AppContainer.rutinaRepository,
     private val asistenciaRepository: AsistenciaRepository = AppContainer.asistenciaRepository,
     private val medallaRepository: MedallaRepository = AppContainer.medallaRepository,
-    private val logroPersonalRepository: LogroPersonalRepository = AppContainer.logroPersonalRepository
+    private val logroPersonalRepository: LogroPersonalRepository = AppContainer.logroPersonalRepository,
+    private val sincronizadorDiaWeb: SincronizadorDiaWeb = AppContainer.sincronizadorDiaWeb
 ) : ViewModel() {
 
     init {
@@ -117,6 +119,9 @@ class ClienteDetailViewModel(
     fun asignarRutina(rutina: Rutina) {
         viewModelScope.launch {
             clienteRepository.asignarRutina(clienteId, rutina)
+            // Cambiar de rutina cambia la cantidad de días, así que el día denormalizado
+            // puede quedar fuera de rango.
+            sincronizadorDiaWeb.refrescar(clienteId)
         }
     }
 
@@ -155,7 +160,8 @@ class ClienteDetailViewModel(
                 asistenciaRepository = asistenciaRepository,
                 clienteId = clienteId,
                 diaIndex = diaIndex,
-                hoy = LocalDate.now().toString()
+                hoy = LocalDate.now().toString(),
+                sincronizador = sincronizadorDiaWeb
             )
         }
     }

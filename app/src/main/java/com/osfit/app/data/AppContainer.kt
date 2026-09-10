@@ -20,4 +20,7 @@ object AppContainer {
     val medallaRepository: MedallaRepository by lazy { MedallaRepository() }
     val logroPersonalRepository: LogroPersonalRepository by lazy { LogroPersonalRepository() }
     val configVideoRepository: ConfigVideoRepository by lazy { ConfigVideoRepository() }
+    val sincronizadorDiaWeb: SincronizadorDiaWeb by lazy {
+        SincronizadorDiaWeb(clienteRepository, asistenciaRepository)
+    }
 }
