@@ -1,5 +1,6 @@
 package com.osfit.app.data
 
+import com.osfit.app.data.repository.AccesoWebRepository
 import com.osfit.app.data.repository.AsistenciaRepository
 import com.osfit.app.data.repository.ClienteRepository
 import com.osfit.app.data.repository.ConfigVideoRepository
@@ -20,6 +21,7 @@ object AppContainer {
     val medallaRepository: MedallaRepository by lazy { MedallaRepository() }
     val logroPersonalRepository: LogroPersonalRepository by lazy { LogroPersonalRepository() }
     val configVideoRepository: ConfigVideoRepository by lazy { ConfigVideoRepository() }
+    val accesoWebRepository: AccesoWebRepository by lazy { AccesoWebRepository() }
     val sincronizadorDiaWeb: SincronizadorDiaWeb by lazy {
         SincronizadorDiaWeb(clienteRepository, asistenciaRepository)
     }
