@@ -338,6 +338,59 @@ fun ClienteDetailScreen(
                 }
             }
             item {
+                val acceso by viewModel.accesoWeb.collectAsState()
+                val alcance = rememberCoroutineScope()
+                Spacer(modifier = Modifier.height(12.dp))
+                Card(modifier = Modifier.fillMaxWidth()) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text("Acceso web", style = MaterialTheme.typography.titleMedium)
+                        Text(
+                            if (acceso == null) {
+                                "Todavía no le compartiste su página personal."
+                            } else {
+                                WhatsAppUtil.urlAccesoWeb(acceso!!.token)
+                            },
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.padding(top = 4.dp)
+                        )
+                        if (clienteActual.telefono.isNotBlank()) {
+                            Button(
+                                onClick = {
+                                    alcance.launch {
+                                        val token = viewModel.asegurarAccesoWeb()
+                                        val uri = WhatsAppUtil.crearUriAccesoWeb(
+                                            telefono = clienteActual.telefono,
+                                            nombreCliente = clienteActual.nombre,
+                                            token = token
+                                        )
+                                        try {
+                                            context.startActivity(Intent(Intent.ACTION_VIEW, uri))
+                                        } catch (e: ActivityNotFoundException) {
+                                            Toast.makeText(context, "No se encontró una app para abrir WhatsApp", Toast.LENGTH_SHORT).show()
+                                        }
+                                    }
+                                },
+                                modifier = Modifier.fillMaxWidth().padding(top = 12.dp)
+                            ) {
+                                Icon(Icons.Filled.Chat, contentDescription = null)
+                                Text(
+                                    if (acceso == null) "Compartir acceso web" else "Volver a compartir",
+                                    modifier = Modifier.padding(start = 8.dp)
+                                )
+                            }
+                        }
+                        if (acceso != null) {
+                            TextButton(
+                                onClick = { viewModel.revocarAccesoWeb() },
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text("Revocar acceso", color = MaterialTheme.colorScheme.error)
+                            }
+                        }
+                    }
+                }
+            }
+            item {
                 Spacer(modifier = Modifier.height(12.dp))
                 OutlinedButton(
                     onClick = { mostrarConfirmacionActivo = true },

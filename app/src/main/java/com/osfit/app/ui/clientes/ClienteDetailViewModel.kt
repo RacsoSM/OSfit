@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.google.firebase.Timestamp
 import com.osfit.app.data.AppContainer
 import com.osfit.app.data.SincronizadorDiaWeb
+import com.osfit.app.data.model.AccesoWeb
 import com.osfit.app.data.model.Asistencia
 import com.osfit.app.data.model.Cliente
 import com.osfit.app.data.model.LogroPersonalCatalogo
@@ -13,6 +14,7 @@ import com.osfit.app.data.model.MedallaCatalogo
 import com.osfit.app.data.model.MedallaOtorgada
 import com.osfit.app.data.model.Pago
 import com.osfit.app.data.model.Rutina
+import com.osfit.app.data.repository.AccesoWebRepository
 import com.osfit.app.data.repository.AsistenciaRepository
 import com.osfit.app.data.repository.ClienteRepository
 import com.osfit.app.data.repository.LogroPersonalRepository
@@ -40,7 +42,8 @@ class ClienteDetailViewModel(
     private val asistenciaRepository: AsistenciaRepository = AppContainer.asistenciaRepository,
     private val medallaRepository: MedallaRepository = AppContainer.medallaRepository,
     private val logroPersonalRepository: LogroPersonalRepository = AppContainer.logroPersonalRepository,
-    private val sincronizadorDiaWeb: SincronizadorDiaWeb = AppContainer.sincronizadorDiaWeb
+    private val sincronizadorDiaWeb: SincronizadorDiaWeb = AppContainer.sincronizadorDiaWeb,
+    private val accesoWebRepository: AccesoWebRepository = AppContainer.accesoWebRepository
 ) : ViewModel() {
 
     init {
@@ -228,5 +231,22 @@ class ClienteDetailViewModel(
 
     fun quitarLogroPersonal(otorgado: LogroPersonalOtorgado) {
         viewModelScope.launch { logroPersonalRepository.quitarLogro(clienteId, otorgado.id) }
+    }
+
+    val accesoWeb: StateFlow<AccesoWeb?> = accesoWebRepository.observarAcceso(clienteId)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
+    /** Crea el acceso si hace falta y devuelve el token para compartirlo. Idempotente. */
+    suspend fun asegurarAccesoWeb(): String {
+        val token = accesoWebRepository.crearAcceso(clienteId)
+        clienteRepository.actualizarTieneAccesoWeb(clienteId, true)
+        return token
+    }
+
+    fun revocarAccesoWeb() {
+        viewModelScope.launch {
+            accesoWeb.value?.let { accesoWebRepository.revocarAcceso(it.token) }
+            clienteRepository.actualizarTieneAccesoWeb(clienteId, false)
+        }
     }
 }

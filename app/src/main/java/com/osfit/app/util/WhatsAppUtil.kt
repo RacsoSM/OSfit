@@ -6,6 +6,20 @@ import java.net.URLEncoder
 
 object WhatsAppUtil {
 
+    /** Dominio gratuito del proyecto. Si algún día hay dominio propio, se cambia solo acá. */
+    private const val DOMINIO_WEB = "https://osfit-cccfe.web.app"
+
+    fun urlAccesoWeb(token: String): String = "$DOMINIO_WEB/c/$token"
+
+    fun crearUriAccesoWeb(telefono: String, nombreCliente: String, token: String): Uri {
+        val numero = normalizarTelefonoMx(telefono)
+        val mensaje = "Hola, *$nombreCliente*, aqui tienes tu acceso personal a OSfit. " +
+            "Ahi puedes ver el dia que te toca, tu calendario de asistencias, tu racha y tus " +
+            "logros:\n\n${urlAccesoWeb(token)}\n\nEs solo tuyo, no lo compartas."
+        val mensajeCodificado = URLEncoder.encode(mensaje, "UTF-8")
+        return Uri.parse("https://wa.me/$numero?text=$mensajeCodificado")
+    }
+
     fun normalizarTelefonoMx(telefono: String): String {
         val soloDigitos = telefono.filter { it.isDigit() }
         return if (soloDigitos.length == 10) "52$soloDigitos" else soloDigitos
