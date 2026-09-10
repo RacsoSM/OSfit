@@ -1,4 +1,7 @@
+import { observarCliente } from "./datos";
+import { hoyEnMazatlan } from "./fecha";
 import { iniciarSesion } from "./firebase";
+import { escapar, tarjetaDia } from "./ui/tarjetaDia";
 
 const app = document.querySelector<HTMLElement>("#app")!;
 
@@ -28,7 +31,17 @@ async function arrancar(): Promise<void> {
     mostrarEnlaceInvalido();
     return;
   }
-  app.innerHTML = `<p class="cargando">Sesión iniciada: ${clienteId}</p>`;
+  const hoy = hoyEnMazatlan();
+  observarCliente(clienteId, (cliente) => {
+    if (!cliente) {
+      app.innerHTML = `<div class="tarjeta vacio"><p>No encontramos tus datos.</p></div>`;
+      return;
+    }
+    app.innerHTML = `
+      <h1 style="font-size:20px;margin:4px 2px 14px">Hola, ${escapar(cliente.nombre)} 👋</h1>
+      ${tarjetaDia(cliente, hoy)}
+    `;
+  });
 }
 
 arrancar();
