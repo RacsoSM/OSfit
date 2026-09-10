@@ -1,8 +1,69 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /{document=**} {
-      allow read, write: if request.auth != null;
+
+    // El entrenador es un UID literal. Con un solo entrenador es más simple y se audita de
+    // un vistazo; si algún día hay dos, esto pasa a ser un custom claim.
+    function esEntrenador() {
+      return request.auth != null &&
+             request.auth.uid == 'G8lW4rIgXhZrswQXJ84pT1StFx82';
     }
+
+    // El claim lo pone la función `sesion` al canjear el token del link. No se puede
+    // falsificar: viaja dentro de un token firmado por Firebase.
+    function esCliente(cid) {
+      return request.auth != null &&
+             request.auth.token.clienteId == cid;
+    }
+
+    match /clientes/{cid} {
+      allow read: if esEntrenador() || esCliente(cid);
+      allow write: if esEntrenador();
+
+      // Los pagos quedan fuera del alcance del cliente a propósito.
+      match /pagos/{doc} {
+        allow read, write: if esEntrenador();
+      }
+      match /medallas/{doc} {
+        allow read: if esEntrenador() || esCliente(cid);
+        allow write: if esEntrenador();
+      }
+      match /logrosPersonales/{doc} {
+        allow read: if esEntrenador() || esCliente(cid);
+        allow write: if esEntrenador();
+      }
+      match /videos/{doc} {
+        allow read: if esEntrenador() || esCliente(cid);
+        allow write: if esEntrenador();
+      }
+      match /personal_records/{doc} {
+        allow read, write: if esEntrenador();
+      }
+    }
+
+    match /asistencias/{doc} {
+      allow read: if esEntrenador() ||
+                     resource.data.clienteId == request.auth.token.clienteId;
+      allow write: if esEntrenador();
+    }
+
+    match /cambiosDia/{doc} {
+      allow read: if esEntrenador() ||
+                     resource.data.clienteId == request.auth.token.clienteId;
+      allow write: if esEntrenador();
+    }
+
+    // El token de acceso nunca se expone al navegador: solo lo lee el Admin SDK, que no
+    // pasa por estas reglas.
+    match /accesosWeb/{token} {
+      allow read, write: if esEntrenador();
+    }
+
+    // Catálogos y configuración: el cliente no los necesita. Su rutina viaja embebida en su
+    // propio documento, así que `rutinas` tampoco hace falta abrirla.
+    match /rutinas/{doc} { allow read, write: if esEntrenador(); }
+    match /medallas/{doc} { allow read, write: if esEntrenador(); }
+    match /logrosPersonales/{doc} { allow read, write: if esEntrenador(); }
+    match /configVideo/{doc} { allow read, write: if esEntrenador(); }
   }
 }
