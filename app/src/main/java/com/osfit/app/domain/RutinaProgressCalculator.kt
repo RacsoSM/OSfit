@@ -2,6 +2,7 @@ package com.osfit.app.domain
 
 import com.osfit.app.data.model.Asistencia
 import com.osfit.app.data.model.Cliente
+import com.osfit.app.data.model.DiaDenormalizado
 import java.time.LocalDate
 
 /**
@@ -92,6 +93,60 @@ object RutinaProgressCalculator {
     /** Versión de conveniencia para "hoy" real. */
     fun diaQueToca(cliente: Cliente, asistenciasDelCliente: List<Asistencia>): Int =
         diaQueToca(cliente, asistenciasDelCliente, LocalDate.now().toString())
+
+    /**
+     * Comprime el estado del cliente en el trío que la web interpreta, para que no tenga que
+     * reimplementar [diaQueToca] en TypeScript. Vive en este archivo, y no en una clase
+     * aparte, para que comparta [anclaDe] con el cálculo real: es lo que hace estructuralmente
+     * imposible que las dos versiones se separen.
+     *
+     * Contrato, verificado en `DiaDenormalizadoTest`: para toda fecha `d >= hoy`,
+     * `interpretar(denormalizar(c, a, hoy), totalDias, d) == diaQueToca(c, a, d)`, mientras no
+     * haya asistencias posteriores a [hoy] ni escrituras nuevas.
+     *
+     * Las asistencias posteriores a [hoy] se ignoran igual que en [diaQueToca]. Si el
+     * entrenador registra una fecha futura, el trío no la refleja hasta la siguiente
+     * escritura — la web muestra un día viejo, nunca uno inventado.
+     */
+    fun denormalizar(
+        cliente: Cliente,
+        asistenciasDelCliente: List<Asistencia>,
+        hoy: String
+    ): DiaDenormalizado {
+        val totalDias = cliente.rutinaAsignada?.dias?.size ?: 0
+        if (totalDias <= 0) return DiaDenormalizado()
+
+        val ancla = anclaDe(cliente)
+
+        val ultima = asistenciasDelCliente
+            .filter { it.clienteId == cliente.id || cliente.id.isEmpty() }
+            .filter { it.asistio && it.diaRutinaRealizado != null }
+            .filter { it.fecha > ancla.fecha && it.fecha <= hoy }
+            .maxByOrNull { it.fecha }
+            ?: return DiaDenormalizado(
+                dia = ancla.dia.coerceIn(0, totalDias - 1),
+                fecha = ancla.fecha,
+                esAncla = true
+            )
+
+        return DiaDenormalizado(
+            dia = ultima.diaRutinaRealizado!!.coerceIn(0, totalDias - 1),
+            fecha = ultima.fecha,
+            esAncla = false
+        )
+    }
+
+    /**
+     * Interpreta el trío de [denormalizar]. Es la referencia de las tres líneas que corre la
+     * web: si cambia acá, hay que cambiar `web/src/dia.ts`.
+     */
+    fun interpretar(valor: DiaDenormalizado, totalDias: Int, fecha: String): Int {
+        val dia = valor.dia ?: return 0
+        if (totalDias <= 0) return 0
+        val acotado = dia.coerceIn(0, totalDias - 1)
+        if (valor.esAncla) return acotado
+        return if (valor.fecha == fecha) acotado else siguienteDia(acotado, totalDias)
+    }
 
     /** Siguiente día del ciclo, dando la vuelta al llegar al final. */
     fun siguienteDia(diaRealizado: Int, totalDias: Int): Int {
