@@ -38,9 +38,13 @@ Con el teléfono conectado por USB y depuración USB activada
 ./gradlew test
 ```
 
-Cubren `RutinaProgressCalculator`, la función que calcula el siguiente día
-del ciclo de rutina tras marcar asistencia/falta (9 casos, incluyendo la
-vuelta al Día 1 y las anulaciones manuales del día sugerido).
+178 casos en 15 clases, sobre la lógica pura de `domain/` (avance del día del
+ciclo, rachas, períodos quincenales, medallas, tiempo en el gimnasio y armado
+del resumen) y la de `video/` (timeline, escenas, paletas y geometría de los
+blobs).
+
+Los repositorios de Firestore, las pantallas Compose y el render sobre Canvas
+no se testean unitariamente: se verifican en dispositivo.
 
 ## Instalar en el segundo dispositivo (co-gestor)
 
