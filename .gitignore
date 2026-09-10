@@ -11,3 +11,6 @@
 .cxx/
 .worktrees/
 .superpowers/
+node_modules/
+web/dist/
+functions/lib/
