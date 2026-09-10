@@ -278,25 +278,60 @@ funciones, en vez de razonar sobre qué zona tiene cada teléfono.
 El sitio nunca llama a `new Date()` para obtener la fecha de hoy sin pasar por
 esa constante.
 
-## El día que le toca: la duplicación riesgosa
+## El día que le toca: la app escribe la respuesta
 
-`RutinaProgressCalculator` decide qué día del ciclo le toca a un cliente, y la
-web necesita esa misma respuesta. Es lógica Kotlin pura y no hay forma de
-compartirla con JavaScript.
+`RutinaProgressCalculator` decide qué día del ciclo le toca a un cliente. Es la
+lógica más sutil del repo — ancla, filtrado del historial, vuelta al día 1, y
+la rama legacy de `FECHA_CORTE` para los clientes anteriores al 2026-09-01 —
+y por eso tiene 21 casos de prueba.
 
-**Decisión: se porta a TypeScript, y el port lleva los mismos casos de prueba
-que el original.**
+La web necesita esa misma respuesta y no puede correr Kotlin.
 
-Es la duplicación más peligrosa de todo este diseño. Si las dos
-implementaciones se separan, el cliente ve un día distinto del que ve el
-entrenador — el peor error posible para esta feature, y además silencioso.
-Mitigación:
+**Decisión: la web no recalcula nada. La app denormaliza el resultado.**
 
-- El port incluye **la rama legacy** (`FECHA_CORTE`, clientes sin
-  `diaAnclaFecha`). Omitirla rompería a los clientes anteriores al 2026-09-01.
-- Los 9 casos del test de Kotlin se replican uno a uno en el test de TS.
-- El archivo lleva un comentario en ambos lados apuntando al otro, para que
-  quien toque uno sepa que existe el gemelo.
+Se rechazó portar el algoritmo a TypeScript. Habría dejado la misma regla de
+negocio escrita **dos veces en dos lenguajes**, sincronizadas solo por memoria.
+El día que alguien cambie la regla en Kotlin y olvide el gemelo en TS, el
+cliente ve un día distinto del que ve el entrenador, **sin que nada falle**:
+los dos programas funcionan perfecto, simplemente no coinciden. Una regla de
+Firestore mal escrita niega el acceso a gritos; esto susurra. Y es lógica que
+ya cambió una vez — `FECHA_CORTE` existe justamente por eso.
+
+Campos nuevos en `Cliente`, escritos por la app:
+
+```kotlin
+/**
+ * Resultado denormalizado de RutinaProgressCalculator, para que la web no tenga que
+ * recalcularlo. Se refresca en **cada** camino que toca el historial: registrar
+ * asistencia, borrarla (reiniciarDia), asignar día, y cambiar la rutina asignada.
+ */
+val ultimoDia: Int? = null,
+val ultimoDiaFecha: String? = null,
+/** true si [ultimoDia] viene del ancla y no de una asistencia; cambia cómo se interpreta. */
+val ultimoDiaEsAncla: Boolean = false
+```
+
+Con eso, toda la lógica de la web son tres líneas:
+
+```
+si ultimoDiaEsAncla        -> ultimoDia
+si ultimoDiaFecha == hoy   -> ultimoDia          (es el día que está haciendo hoy)
+si no                      -> siguienteDia(ultimoDia)
+```
+
+El caso `ultimoDia == null` (cliente sin rutina o sin historial) muestra el
+estado vacío.
+
+**El riesgo no desaparece, cambia de forma.** Antes era "dos algoritmos que se
+separan"; ahora es "un camino de escritura que olvidó refrescar el campo". Se
+elige este porque es una pregunta que se responde leyendo código de un solo
+lenguaje, y porque el conjunto de caminos que escriben asistencias es chico,
+conocido y está todo en `FirestoreAsistenciaRepository` y `AsignarDiaManual`.
+
+La app **no** lee estos campos: sigue llamando a `RutinaProgressCalculator`
+como hoy. Son solo para la web. Así el cálculo real nunca depende de que la
+denormalización esté fresca, y un campo viejo degrada la web sin poder
+corromper los datos del entrenador.
 
 ## Los tres endpoints
 
@@ -492,14 +527,21 @@ backticks, y verificación en dispositivo para todo lo demás.
   ignora fines de semana; ignora faltas ya justificadas.
 - `MotivosCambioDia`: filtra el motivo del lunes cuando no es lunes; filtra el
   de "más de dos días" cuando asistió ayer.
+- `DiaDenormalizado`: dado un cliente y su historial, produce el trío
+  (`ultimoDia`, `ultimoDiaFecha`, `ultimoDiaEsAncla`) que la web va a
+  interpretar. **Se prueba contra `RutinaProgressCalculator`**: para cada uno
+  de los 21 casos del test existente, interpretar el trío tiene que dar el
+  mismo día que `diaQueToca`. Esa equivalencia es la red de seguridad de todo
+  el mecanismo — si alguien cambia el calculador y no la denormalización, este
+  test falla.
 
 **TypeScript, en la web:**
 
-- El port de `RutinaProgressCalculator`, con **los mismos 9 casos** que
-  `RutinaProgressCalculatorTest`. Es la única prueba de que el port no se
-  separó del original.
+- La interpretación de tres líneas del trío denormalizado: caso ancla, caso
+  fecha igual a hoy, caso fecha anterior, vuelta al día 1, y `ultimoDia` nulo.
 - `CupoRevivesCalculator` y `FaltaQueRompioLaRacha` portados, con los mismos
-  casos que sus gemelos de Kotlin.
+  casos que sus gemelos de Kotlin. Estos sí se duplican: son cortos y no
+  dependen del historial completo.
 
 **En dispositivo:** las pantallas Compose nuevas, la subida a Storage, la
 página web completa, y el flujo del link de punta a punta (compartir, abrir,
@@ -518,13 +560,19 @@ implementa en tres etapas, y **cada una deja algo funcionando y verificable en
 dispositivo**.
 
 **Etapa 1 — Acceso y lectura.** Reglas de Firestore nuevas, `accesosWeb`,
-endpoint `sesion`, botón de compartir y revocar en la app, y la página en modo
-solo lectura: día de hoy, racha, promedio, calendario. Sin acciones, sin
-insignias, sin videos.
+endpoint `sesion`, botón de compartir y revocar en la app, la denormalización
+del día en todos sus caminos de escritura, y la página en modo solo lectura:
+día de hoy, racha, promedio, calendario. Sin acciones, sin insignias, sin
+videos.
 
 Al terminar esta etapa el cliente ya tiene algo útil, y lo más riesgoso del
-diseño — las reglas y el port de `RutinaProgressCalculator` — ya está probado
-contra datos reales.
+diseño — las reglas y la denormalización del día — ya está probado contra
+datos reales.
+
+La denormalización va en esta etapa y no después a propósito: al escribirla
+hay que recorrer cada camino que toca el historial, y ese recorrido es más
+barato de hacer una vez, antes de que existan más escritores, que de auditar
+más tarde.
 
 **Etapa 2 — Las dos acciones.** `cambiarDia`, `revivirRacha`, los cálculos de
 cupo y de falta que rompió la racha en ambos lenguajes, los motivos, y los
