@@ -8,15 +8,15 @@ import {
 import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
-  apiKey: "PEGAR_DESDE_LA_CONSOLA",
+  apiKey: "AIzaSyD-VnmxHFK1ptLWFKgAd80caa7EkiD0PZA",
   authDomain: "osfit-cccfe.firebaseapp.com",
   projectId: "osfit-cccfe",
   storageBucket: "osfit-cccfe.firebasestorage.app",
-  messagingSenderId: "PEGAR_DESDE_LA_CONSOLA",
-  appId: "PEGAR_DESDE_LA_CONSOLA",
+  messagingSenderId: "754891137796",
+  appId: "1:754891137796:web:79f6422b58e8217de82651",
 };
 
-const URL_SESION = "PEGAR_LA_URL_DE_LA_FUNCION_SESION";
+const URL_SESION = "https://sesion-cuzhc6pwiq-uw.a.run.app";
 
 export const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app);

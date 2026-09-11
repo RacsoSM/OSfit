@@ -57,6 +57,6 @@ export function tarjetaDia(cliente: Cliente, hoy: string): string {
   return `
     <div class="tarjeta hoy">
       <p class="tarjeta-titulo">Hoy te toca</p>
-      <p class="hoy-dia">Día ${indice + 1}<br>${escapar(dias[indice].nombreDia)}</p>
+      <p class="hoy-dia">Día ${indice + 1}<br>${escapar(dias[indice]?.nombreDia ?? "")}</p>
     </div>`;
 }

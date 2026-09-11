@@ -238,6 +238,10 @@ class ClienteDetailViewModel(
 
     /** Crea el acceso si hace falta y devuelve el token para compartirlo. Idempotente. */
     suspend fun asegurarAccesoWeb(): String {
+        // Antes de nada, garantizar que el día denormalizado exista: un cliente dado de alta
+        // antes de esta función no tiene los campos escritos, y la web no los puede calcular.
+        // Compartir es justo el momento en que hacen falta, y refrescar es idempotente.
+        sincronizadorDiaWeb.refrescar(clienteId)
         val token = accesoWebRepository.crearAcceso(clienteId)
         clienteRepository.actualizarTieneAccesoWeb(clienteId, true)
         return token

@@ -14,3 +14,4 @@
 node_modules/
 web/dist/
 functions/lib/
+.firebase/

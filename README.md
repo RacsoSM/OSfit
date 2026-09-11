@@ -55,6 +55,26 @@ credenciales de `osfit.auth.email`/`osfit.auth.password`) y el mismo
 Firestore y sincronizan en tiempo real: un cambio hecho en un teléfono
 aparece en el otro en cuanto haya conexión a internet.
 
+## Web para clientes
+
+Cada cliente tiene una página de solo lectura en `https://osfit-cccfe.web.app`, a la que
+entra por un link personal que se comparte desde su ficha ("Compartir acceso web").
+Muestra el día que le toca, su racha, su promedio por sesión y su calendario.
+
+- `web/` — sitio estático (Vite + TypeScript). `npm run dev` para desarrollo,
+  `npm run build` para compilar.
+- `functions/` — Cloud Functions. `sesion` canjea el token del link por una sesión de
+  Firebase acotada a ese cliente.
+
+Desplegar: `firebase deploy --only hosting,functions,firestore:rules`
+
+El día de rutina **no** se recalcula en la web: la app lo denormaliza en
+`Cliente.ultimoDia` / `ultimoDiaFecha` / `ultimoDiaEsAncla` (ver
+`RutinaProgressCalculator.denormalizar`), y la web solo lo interpreta en `web/src/dia.ts`.
+
+Diseño completo en
+[docs/superpowers/specs/2026-09-10-web-clientes-design.md](docs/superpowers/specs/2026-09-10-web-clientes-design.md).
+
 ## Estructura del proyecto
 
 - `app/src/main/java/com/osfit/app/domain/` — lógica de negocio pura
