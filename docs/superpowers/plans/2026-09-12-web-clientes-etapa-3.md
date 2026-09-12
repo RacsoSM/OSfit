@@ -125,17 +125,38 @@ necesita dos sesiones de clienta y va en el Task 10, Step 5.
 valores fijos ("medallas", "logrosPersonales"). Un typo ahí no da error de compilación, deja un
 blob en una carpeta inventada. Se reconsidera en el Task 3, cuando existan los dos llamadores.
 
-### Task 3: Subir la insignia al crear o editar
+### Task 3: Subir la insignia al crear o editar — ✅ HECHO (2026-09-12)
 
 **Files:**
 - Modify: las pantallas y ViewModels de `ui/medallas/` y `ui/logros/`, y `MedallaRepository` / `LogroPersonalRepository`.
 
-- [ ] **Step 1: Al guardar una medalla con imagen nueva**, subirla y guardar `imagenUrl` junto al resto.
-- [ ] **Step 2: Lo mismo para un logro personal.**
-- [ ] **Step 3: Copiar `imagenUrl` al otorgar**, en los dos caminos, junto a la copia del nombre que ya se hace.
-- [ ] **Step 4: Qué pasa si la subida falla.** La medalla se guarda igual, sin `imagenUrl`: el entrenador no se puede quedar sin poder crear una medalla porque el wifi del gimnasio se cayó. Ese caso lo recoge el botón del Task 4.
-- [ ] **Step 5: Compilar y correr la suite.**
-- [ ] **Step 6: Commit.**
+- [x] **Step 1: Al guardar una medalla con imagen nueva**, subirla y guardar `imagenUrl` junto al resto.
+- [x] **Step 2: Lo mismo para un logro personal.**
+- [x] **Step 3: Copiar `imagenUrl` al otorgar**, en los dos caminos, junto a la copia del nombre que ya se hace.
+- [x] **Step 4: Qué pasa si la subida falla.** La medalla se guarda igual, sin `imagenUrl`: el entrenador no se puede quedar sin poder crear una medalla porque el wifi del gimnasio se cayó. Ese caso lo recoge el botón del Task 4.
+- [x] **Step 5: Compilar y correr la suite.**
+- [x] **Step 6: Commit.**
+
+**El camino de "otorgar" no estaba donde este plan suponía.** `ConfirmarMedallaDialog` y
+`ConfirmarLogrosDialog` solo seleccionan, no escriben. Las escrituras están en **dos**
+ViewModels y son **cuatro** sitios: `ResumenClienteViewModel.confirmarYGenerarQuincenal` (el
+flujo quincenal con video) y `ClienteDetailViewModel.otorgarMedalla` / `otorgarLogroPersonal`
+(el camino manual desde las pantallas del cliente, que este plan no mencionaba). Los cuatro
+copian ya `imagenUrl`; quedarse solo con el del resumen habría dejado sin imagen todo lo
+otorgado a mano.
+
+**Step 0 resuelto con dos métodos, no un enum:** `subirMedalla` / `subirLogro`, con `subir`
+privada. El repo ya tiene ese patrón para la misma pareja de carpetas (`InsigniaImagenUtil`
+envuelto por `MedallaImagenUtil` y `LogroPersonalImagenUtil`).
+
+**Se sube siempre que haya imagen, sin detectar "imagen nueva".** No se puede detectar:
+`InsigniaImagenUtil.copiarImagen` siempre escribe `<id>.png`, así que el nombre guardado en
+`imagenArchivo` es idéntico antes y después de cambiar el dibujo. Son unos KB por guardado.
+
+**Ojo con el Step 4:** `.set().await()` sin red **no falla, no completa**. El documento queda
+escrito en local por la persistencia de Firestore y se sincroniza solo, pero la subida no se
+intenta hasta que vuelva la red. O sea que la red de seguridad real de ese caso es el botón
+del Task 4, no este código.
 
 ### Task 4: Botón "Subir insignias" para las que ya existen
 
@@ -146,20 +167,34 @@ Se toca una vez y sube las que no tengan URL (spec, punto 2 de "Cambios en la ap
 - [ ] **Step 3: Reportar cuántas subió y cuántas fallaron**, sin cortar el recorrido en la primera que falle.
 - [ ] **Step 4: Compilar. Commit.**
 
-### Task 5: Medallas y logros en la página
+### Task 5: Medallas y logros en la página — ✅ HECHO (2026-09-12)
 
 **Files:**
 - Modify: `web/src/datos.ts`, `web/src/main.ts`
 - Create: `web/src/ui/tarjetaInsignias.ts` (+ su test)
 
-- [ ] **Step 1: Observar `clientes/{cid}/medallas` y `/logrosPersonales`.** Las reglas ya lo permiten desde la Etapa 1; no hay nada que desplegar de reglas.
-- [ ] **Step 2: Pintar las dos secciones.** Medalla: imagen y nombre. Logro: nombre y encabezado del período. Sin `imagenUrl`, la insignia genérica.
-- [ ] **Step 3: Tests de Vitest** del armado del HTML, incluidos los casos sin imagen y sin nada otorgado.
-- [ ] **Step 4: Compilar, desplegar hosting, verificar con `curl.exe`. Commit.**
+- [x] **Step 1: Observar `clientes/{cid}/medallas` y `/logrosPersonales`.** Las reglas ya lo permiten desde la Etapa 1; no hay nada que desplegar de reglas.
+- [x] **Step 2: Pintar las dos secciones.** Medalla: imagen y nombre. Logro: nombre y encabezado del período. Sin `imagenUrl`, la insignia genérica.
+- [x] **Step 3: Tests de Vitest** del armado del HTML, incluidos los casos sin imagen y sin nada otorgado.
+- [x] **Step 4: Compilar, desplegar hosting, verificar con `curl.exe`. Commit.**
 
 ---
 
 ## Bloque B — Videos
+
+**`escapar()` cambió, y toca a toda la página.** Estaba implementado con un `<div>` de usar y
+tirar y `textContent`, que no corre sin DOM —los tests van en Node— y que además **no escapa
+comillas**. Eso era inofensivo mientras el texto escapado solo caía en cuerpo de HTML, pero
+ahora también va dentro de atributos (`src`, `alt`) de la insignia, donde una comilla se sale
+del valor. Pasó a reemplazos de string, con `&` primero. Hay un test que fija ese caso.
+
+**Lo que el spec no dice y se decidió acá:** los logros muestran nombre y encabezado, no
+`mensaje` (el spec no lo pide; si era para la clienta, falta decirlo). Dentro de la misma
+quincena los logros desempatan por `orden` ascendente, que es el que eligió el entrenador; el
+spec solo pedía `rangoInicio` descendente.
+
+**Los estados vacíos son provisionales**, con textos escritos por el agente y cubiertos por
+tests. El Task 9 los formaliza junto con los de videos.
 
 ### Task 6: `VideoPublicado` y su repositorio
 
