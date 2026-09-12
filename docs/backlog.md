@@ -187,3 +187,30 @@ mano con "Asignar día" cuando lo ve. Es una mejora del cálculo, no un fallo.
   como ya se hizo con `FECHA_CORTE`.
 - Y si la regla debe saltarse un día o reordenar el ciclo. No es lo mismo: saltar pierde ese
   entrenamiento, reordenar lo retrasa.
+
+---
+
+## 6. El saludo de la página merece más cariño
+
+**Detectado:** 2026-09-14, mirando la página ya terminada.
+
+El "Hola, {nombre} 👋" es lo primero que ve el cliente y hoy es la línea más sosa de la
+página: aparece de golpe, sin animación, y el nombre va del mismo color que el resto del
+texto.
+
+**Qué se quiere:**
+
+- Una animación de entrada para el saludo.
+- El nombre del cliente en otro color, destacado del resto de la línea.
+- Idea a explorar: usar **el color propio del cliente**. La app ya le asigna uno a cada quien
+  para el círculo de la lista de clientes (Estela turquesa, Brianda morado, Carito rojo…), así
+  que la página podría saludar con ese mismo color y de paso hacer que se sienta suya.
+
+**Por qué no corre prisa:** es puramente estético, no cambia ningún dato.
+
+**Qué habría que mirar antes:** de dónde sale hoy ese color en la app y si está guardado en
+el documento del cliente o se calcula a partir del nombre o del id. Si se calcula, hay que
+portar el mismo cálculo a la web o denormalizarlo, porque si cada lado lo calcula a su manera
+el cliente se ve de un color en la app y de otro en su página. Ojo también con el contraste:
+algunos de esos colores sobre el fondo oscuro se leen mal, así que puede hacer falta aclararlos
+para texto.
