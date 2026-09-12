@@ -116,8 +116,13 @@ function hoja(cliente: Cliente): string {
  * No se muestra el fin de semana — no hay día que cambiar — ni sin rutina asignada. Con el
  * cliente inactivo la acción queda deshabilitada: su historial es suyo, cambiar una rutina
  * que no está haciendo no.
+ *
+ * `yaAsistioHoy` la deshabilita también: con la asistencia de hoy ya marcada el día está
+ * hecho, y cambiarlo entonces no movería el entrenamiento que acaba de hacer, solo
+ * desordenaría el ciclo. El servidor rechaza el caso igual, por si alguien llama a la
+ * función a mano.
  */
-export function accionDia(cliente: Cliente, hoy: string): string {
+export function accionDia(cliente: Cliente, hoy: string, yaAsistioHoy: boolean): string {
   const dias = cliente.rutinaAsignada?.dias ?? [];
   if (dias.length === 0 || esFinDeSemana(hoy)) return "";
 
@@ -125,6 +130,14 @@ export function accionDia(cliente: Cliente, hoy: string): string {
     return `
       <button class="boton" disabled>Quiero cambiar el día que me toca</button>
       <p class="accion-nota">Tu cuenta está pausada. Habla con tu entrenador.</p>`;
+  }
+
+  // Deshabilitado y no escondido: la nota explica por qué, y un botón que desaparece sin
+  // decir nada se lee como que la página se rompió.
+  if (yaAsistioHoy) {
+    return `
+      <button class="boton" disabled>Quiero cambiar el día que me toca</button>
+      <p class="accion-nota">Ya registraste tu asistencia de hoy.</p>`;
   }
 
   // Sin esta línea el cliente no sabe si el toque funcionó y vuelve a tocar (spec, "Tarjeta

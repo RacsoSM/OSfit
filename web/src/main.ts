@@ -72,7 +72,7 @@ async function arrancar(): Promise<void> {
     // Cada acción vive junto al dato del que habla: cambiar el día y avisar que hoy no se
     // puede van dentro de la tarjeta del día; revivir la racha va debajo de la racha.
     const accionesDelDia = `
-      ${accionDia(cliente, hoy)}
+      ${accionDia(cliente, hoy, asistencias.some((a) => a.fecha === hoy && a.asistio))}
       ${hojaDeMotivosAbierta() ? "" : accionHoyNoPuedo(cliente, hoy, yaAviso)}`;
 
     contenido.innerHTML = `

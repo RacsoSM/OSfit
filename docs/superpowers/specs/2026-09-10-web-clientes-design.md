@@ -349,9 +349,20 @@ al azar. Si existe, mintea un custom token con `{ clienteId }` como claim.
 Valida que `diaIndex` esté dentro del rango de días de la rutina asignada, y
 que `motivo` sea uno de los válidos (o texto libre si eligió "Otro").
 
-Aplica exactamente lo que hace `AsignarDiaManual.ejecutar`: escribe el ancla
-fechada **el día anterior** a hoy, y corrige `diaRutinaRealizado` si ya hay una
-asistencia registrada hoy. Después escribe `cambiosDia/{clienteId}_{fecha}`.
+**Rechaza el cambio si el cliente ya tiene asistencia marcada hoy**
+(`failed-precondition`, `ya_asistio_hoy`). Desde el 2026-09-12: con la
+asistencia dentro el día ya está hecho, y cambiarlo entonces no movería el
+entrenamiento que acaba de hacer, solo desordenaría el ciclo. La página
+deshabilita el botón en ese caso y explica por qué, pero la regla vive en el
+servidor: esconder el botón sería cosmético.
+
+Solo bloquea `asistio = true`. Un registro de hoy marcado como falta no es una
+rutina hecha, así que ese caso sigue pudiendo cambiar de día.
+
+Aplica lo que hace `AsignarDiaManual.ejecutar`: escribe el ancla fechada **el
+día anterior** a hoy y después `cambiosDia/{clienteId}_{fecha}`. Ya no corrige
+`diaRutinaRealizado`, porque el caso que lo necesitaba —asistencia de hoy ya
+registrada— es justo el que ahora se rechaza.
 
 No hay límite de uso. Si el cliente cambia dos veces el mismo día, la segunda
 pisa a la primera.
@@ -382,6 +393,17 @@ La falta hábil más reciente, estrictamente anterior a hoy, con
 `asistio = false` y `justificada = false`, que además sea **posterior** a la
 última fecha que sí cuenta para la racha. Si no hay ninguna, la racha no está
 rota y la web no ofrece el botón.
+
+**La ventana son 48 horas de gimnasio abierto**: los 2 días **hábiles**
+anteriores a hoy. Una rotura más vieja ya no se puede revivir.
+
+Hábiles y no horas de reloj, y no es un detalle: el 2026-09-12 se probó
+contarlas naturales y se revirtió el mismo día. Con días naturales el sábado y
+el domingo gastan plazo aunque el gimnasio esté cerrado, así que **una falta
+del viernes no se podría revivir nunca** —el lunes quedaría a tres días, y en
+fin de semana la página no dibuja acciones— y los lunes no habría nunca nada
+que ofrecer. Contando hábiles, el lunes el viernes sigue siendo "el día hábil
+anterior" y todavía se repara, que es el comportamiento que se quiere.
 
 Esta función es lógica pura y va a `domain/` en Kotlin (la app la necesita para
 mostrar el cupo) y a TS en la web.

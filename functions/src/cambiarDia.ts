@@ -43,16 +43,22 @@ export const cambiarDia = onCall({ region: REGION }, async (request) => {
   ancla.setUTCDate(ancla.getUTCDate() - 1);
   const anclaFecha = ancla.toISOString().slice(0, 10);
 
-  // Se consulta ANTES de armar el lote: de si hay asistencia hoy depende no solo la
-  // correccion del dia realizado, sino tambien la forma del trio denormalizado.
+  // Si el entrenador ya le marco la asistencia de hoy, el dia esta hecho y no hay nada que
+  // cambiar: la rutina ya se realizo. Se revisa en el servidor y no solo en la pagina porque
+  // esconder el boton seria cosmetico — cualquiera podria llamar a esta funcion desde la
+  // consola del navegador despues de entrenar.
+  //
+  // Solo bloquea `asistio === true`. Un registro de hoy marcado como falta no es una rutina
+  // hecha, asi que ese caso sigue pudiendo cambiar de dia.
   const deHoy = await firestore
     .collection("asistencias")
     .where("clienteId", "==", clienteId)
     .where("fecha", "==", hoy)
     .limit(1)
     .get();
-  const asistenciaHoy = deHoy.docs[0];
-  const vinoHoy = asistenciaHoy?.get("asistio") === true;
+  if (deHoy.docs[0]?.get("asistio") === true) {
+    throw new HttpsError("failed-precondition", "ya_asistio_hoy");
+  }
 
   const lote = firestore.batch();
 
@@ -65,21 +71,15 @@ export const cambiarDia = onCall({ region: REGION }, async (request) => {
     // El trio denormalizado se escribe a mano, en el mismo lote que el ancla, para que no
     // exista un instante con el ancla nueva y el trio viejo.
     //
-    // Las dos formas son las mismas dos que produce `denormalizar()`, y hay que elegir
-    // igual que ella: el ancla se fecha AYER, asi que una asistencia de hoy cae dentro de
-    // su ventana (`fecha > ancla && fecha <= hoy`) y gana. Escribir el trio de ancla
-    // cuando el cliente ya vino hoy lo dejaria trabado en este dia manana, que es
-    // exactamente la regresion del commit d424286.
-    ...(vinoHoy
-      ? { ultimoDia: diaIndex, ultimoDiaFecha: hoy, ultimoDiaEsAncla: false }
-      : { ultimoDia: diaIndex, ultimoDiaFecha: anclaFecha, ultimoDiaEsAncla: true }),
+    // Una sola forma, la de ancla, porque el caso de "ya vino hoy" ya se rechazo arriba.
+    // `denormalizar()` produce dos y habia que elegir: el ancla se fecha AYER, asi que una
+    // asistencia de hoy caeria dentro de su ventana (`fecha > ancla && fecha <= hoy`) y
+    // ganaria, dejando al cliente trabado en este dia manana — la regresion del commit
+    // d424286. Sin asistencia de hoy esa ventana esta vacia y el ancla manda.
+    ultimoDia: diaIndex,
+    ultimoDiaFecha: anclaFecha,
+    ultimoDiaEsAncla: true,
   });
-
-  // Si ya hay asistencia de hoy, el historial pisaria la correccion al instante. Mismo
-  // motivo que el paso 2 de `AsignarDiaManual`.
-  if (vinoHoy) {
-    lote.update(asistenciaHoy.ref, { diaRutinaRealizado: diaIndex });
-  }
 
   lote.set(firestore.collection("cambiosDia").doc(`${clienteId}_${hoy}`), {
     clienteId,
