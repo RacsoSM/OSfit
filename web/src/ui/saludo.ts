@@ -8,7 +8,10 @@ import { escapar } from "./tarjetaDia";
  */
 
 /** Lo que tarda la animación completa, de la primera letra a la última. */
-const DURACION_MS = 1500;
+const DURACION_MS = 2000;
+
+/** Lo que el cursor sigue parpadeando después de la última letra, antes de irse. */
+const CURSOR_EXTRA_MS = 3000;
 
 /**
  * La animación corre UNA vez por carga, no una por repintado.
@@ -58,10 +61,17 @@ export function conectarSaludo(): void {
   el.style.setProperty("--letras-saludo", `${letras}`);
   el.style.setProperty("--duracion-saludo", `${DURACION_MS}ms`);
   el.classList.add("escribiendo");
-  // Al terminar se quita el recorte: si la ventana cambia de ancho después, el texto no debe
-  // quedarse cortado al ancho que se midió al abrir.
-  el.addEventListener("animationend", () => {
+  el.addEventListener("animationend", (evento) => {
+    // Solo interesa el fin de la escritura. El parpadeo del cursor es infinito y no termina,
+    // pero si algún día dejara de serlo, este guardia evita que lo apague antes de tiempo.
+    if ((evento as AnimationEvent).animationName !== "escribir") return;
+    // Se quita el recorte: si la ventana cambia de ancho después, el texto no debe quedarse
+    // cortado al ancho que se midió al abrir. El cursor se queda parpadeando un rato más.
     el.classList.remove("escribiendo");
-    el.classList.add("escrito");
+    el.classList.add("parpadeando");
+    setTimeout(() => {
+      el.classList.remove("parpadeando");
+      el.classList.add("escrito");
+    }, CURSOR_EXTRA_MS);
   });
 }

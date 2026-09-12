@@ -25,7 +25,7 @@ main { max-width: 480px; margin: 0 auto; padding: 16px 14px 48px; }
 /* El saludo. El nombre lleva el mismo degradado morado que la tarjeta del día, recortado
    sobre el texto, para que la página salude con el color de su propia identidad. */
 .saludo {
-  font-size: 20px; margin: 4px 2px 14px; white-space: nowrap;
+  font-size: 26px; margin: 4px 2px 14px; white-space: nowrap;
   display: inline-block; max-width: 100%;
 }
 .saludo-hola { color: var(--texto); }
@@ -43,11 +43,19 @@ main { max-width: 480px; margin: 0 auto; padding: 16px 14px 48px; }
     escribir var(--duracion-saludo, 1500ms) steps(var(--letras-saludo, 20), end) forwards,
     cursor 500ms steps(1, end) infinite;
 }
+/* Terminada la escritura el cursor se queda un rato parpadeando, ya sin recortar el texto:
+   deja la sensación de que la línea sigue viva en vez de cortarse en seco. */
+.saludo.parpadeando {
+  border-right: 2px solid var(--primario);
+  animation: cursor 500ms steps(1, end) infinite;
+}
 .saludo.escrito { border-right: 0; }
 @keyframes escribir { to { width: var(--ancho-saludo, 100%); } }
 @keyframes cursor { 50% { border-right-color: transparent; } }
 @media (prefers-reduced-motion: reduce) {
-  .saludo.escribiendo { animation: none; width: auto; overflow: visible; border-right: 0; }
+  .saludo.escribiendo, .saludo.parpadeando {
+    animation: none; width: auto; overflow: visible; border-right: 0;
+  }
 }
 .tarjeta { background: var(--superficie); border-radius: 16px; padding: 14px 16px; margin-bottom: 12px; }
 .tarjeta-titulo {
