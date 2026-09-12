@@ -155,3 +155,35 @@ archivo sin seguimiento en `git status` y no debería versionarse.
 
 **Qué haría falta:** añadir `.firebase/` a `.gitignore`. Es una línea; está aquí para que no
 se cuele en un commit por descuido.
+
+---
+
+## 5. La rutina no debería repetir pierna cuando la semana queda incompleta
+
+**Detectado:** 2026-09-14, viendo el comportamiento del ciclo con clientas que no completan
+la semana.
+
+Hoy el día que toca sale de avanzar el ciclo un paso por cada asistencia, sin mirar qué día
+fue el anterior. Cuando una clienta no viene los 5 días seguidos de la semana, el ciclo se
+desfasa respecto de la semana y puede tocarle **pierna dos veces seguidas** — que es
+justamente lo que el orden de la rutina existe para evitar.
+
+**Por qué no corre prisa:** no rompe nada ni pierde datos, y el entrenador ya lo corrige a
+mano con "Asignar día" cuando lo ve. Es una mejora del cálculo, no un fallo.
+
+**Qué haría falta pensar antes de tocar código:**
+
+- Qué es "pierna" para el calculador. Hoy un día de rutina es un nombre libre
+  (`DiaRutina.nombreDia`), así que no hay forma de saber que dos días entrenan lo mismo sin
+  marcarlo: o se etiqueta el grupo muscular en el día, o se marca cuáles no pueden ir
+  seguidos. Adivinarlo por el nombre ("Pierna", "Pierna completa", "Pierna (Cuádriceps)")
+  funcionaría hoy y se rompería el día que alguien renombre un día.
+- Dónde va la regla. `RutinaProgressCalculator.diaQueToca` es la única implementación real y
+  la web solo interpreta lo que la app denormaliza, así que la regla va en Kotlin y la web se
+  entera sola. Ojo: si cambia el día que toca, hay que refrescar el trío denormalizado por
+  los caminos que ya usa `SincronizadorDiaWeb`.
+- Qué pasa con el histórico. Cambiar el cálculo cambia el día que ve todo el mundo, no solo
+  quien tenga la semana incompleta; conviene decidir si aplica desde una fecha de corte,
+  como ya se hizo con `FECHA_CORTE`.
+- Y si la regla debe saltarse un día o reordenar el ciclo. No es lo mismo: saltar pierde ese
+  entrenamiento, reordenar lo retrasa.
