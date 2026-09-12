@@ -21,19 +21,26 @@ La Etapa 2 está implementada y commiteada entera (Tasks 1-12), con las suites e
 tests de Kotlin y 39 de TypeScript. Lo que falta es el Task 13, y el sábado no se puede
 hacer. Queda esto pendiente, en este orden.
 
-**1. Desplegar. Bloqueado ahora mismo:** la CLI de Firebase de esta máquina no está
-autenticada (`Failed to authenticate, have you run firebase login?`), y `firebase login` abre
-un navegador, así que lo tiene que correr una persona. Después:
+**1. Desplegar: ya está hecho.** El 2026-09-12 quedaron desplegados el índice compuesto, las
+tres functions (`cambiarDia` y `revivirRacha` nuevas, `sesion` actualizada sin cambio de
+comportamiento) y el hosting con la página nueva. Verificado desde fuera: las dos llamables
+responden `{"error":{"message":"sesion_invalida","status":"UNAUTHENTICATED"}}` sin sesión, que
+es el `clienteDeLaSesion` propio corriendo, y con un bearer basura responden `Unauthenticated`
+desde el SDK. La URL de `sesion` no cambió, así que el enlace que tiene `web/src/firebase.ts`
+sigue siendo el bueno.
 
-```bash
-firebase deploy --only firestore:indexes
-firebase deploy --only functions,hosting
-```
+Dos notas para cuando toque desplegar otra vez desde esta máquina:
 
-El índice tarda en quedar `Enabled`; conviene verlo en la consola antes de tocar un revive, o
-`revivirRacha` falla con `FAILED_PRECONDITION`. Ojo: desplegar `functions` también actualiza
-`sesion`, que cambió de forma pero no de comportamiento (el `initializeApp()` se movió a
-`comun.ts`). Y desplegar `hosting` pone la página nueva delante de todos los clientes reales.
+- El descubrimiento de functions se queda corto con su timeout de 10 s y falla con
+  `Cannot determine backend specification`. Va con `FUNCTIONS_DISCOVERY_TIMEOUT=120`.
+- `firebase.json` no tiene hooks de `predeploy`, así que **hay que compilar a mano antes**
+  (`npm run build` en `functions/` y en `web/`). Sin eso se sube un paquete cuyo `main`
+  apunta a un `lib/` que no existe.
+
+**Medir con `curl.exe`, no con `Invoke-WebRequest`.** PowerShell se traga el cuerpo de las
+respuestas de error, y un 401 con cuerpo vacío parece un rechazo de Cloud Run por IAM cuando
+en realidad es la función contestando con su propio JSON. Esa confusión ya costó un
+diagnóstico equivocado y un despliegue de más el sábado.
 
 **2. Por qué el lunes y no el sábado.** Las dos acciones no se dibujan en fin de semana, y
 está bien que así sea (spec, "Estados vacíos y de excepción": *"Sábado o domingo… Sin botones
@@ -61,9 +68,12 @@ de acción"*). Con el teléfono en sábado no hay nada que tocar aunque esté to
 - **Los indicadores del entrenador** en Tomar Asistencia, una vez que haya datos de verdad
   que mostrar.
 
-**4. Lo que ya quedó verificado en dispositivo el sábado:** el cupo en la ficha del cliente
-("Revives: 3 de 3 disponibles este mes", correcto para Brianda) y que las pantallas de
-Clientes, Calendario y Tomar Asistencia siguen sin romperse con los campos nuevos.
+**4. Lo que ya quedó verificado el sábado:** el cupo en la ficha del cliente ("Revives: 3 de 3
+disponibles este mes", correcto para Brianda); que las pantallas de Clientes, Calendario y
+Tomar Asistencia siguen sin romperse con los campos nuevos; que las dos llamables rechazan a
+quien no trae sesión; y que la página desplegada se sigue viendo igual que antes para un
+cliente real —día, racha, promedio y calendario intactos, sin botones de acción porque es
+sábado—, que era el riesgo de poner el bundle nuevo delante de todos.
 
 **5. Aviso sobre los datos.** La verificación se acordó hacer contra la cuenta real de
 Brianda. Un revive gasta uno de sus 3 del mes y un cambio de día le mueve la rutina de
