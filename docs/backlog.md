@@ -167,9 +167,14 @@ se cuele en un commit por descuido.
 
 ---
 
-## 6. Saludo de la página
+## 6. Saludo de la página — ✅ HECHO (2026-09-14)
 
 **Detectado:** 2026-09-14.
 
 > change the animation for the Hola, $nombrePersona, and the color of $nombrePersona, maybe
 > the color of the font of the client
+
+Hecho el mismo día: fuera el emoji de la mano, efecto de máquina de escribir de segundo y
+medio, y el nombre con el degradado morado de la tarjeta del día. Lo del color propio de cada
+cliente (el del círculo de la lista) se quedó sin hacer — el degradado es el de la tarjeta,
+igual para todos.

@@ -118,7 +118,7 @@ export function tarjetaRevivir(
       : estado.exito === "revivir"
         ? ACUSE
         : `<button id="falta-revivir" class="boton secundario" ${bloqueado ? "disabled" : ""}>
-             Revivir mi racha
+             💔 Revivir mi racha
            </button>
            <p class="accion-nota">Repara tu falta del ${escapar(enPalabras(rota as string))}.</p>
            ${

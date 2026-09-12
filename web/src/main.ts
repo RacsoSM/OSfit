@@ -2,7 +2,8 @@ import { observarCliente, observarAsistencias } from "./datos";
 import type { Cliente, Asistencia } from "./datos";
 import { hoyEnMazatlan } from "./fecha";
 import { iniciarSesion } from "./firebase";
-import { escapar, tarjetaDia } from "./ui/tarjetaDia";
+import { tarjetaDia } from "./ui/tarjetaDia";
+import { saludo, conectarSaludo } from "./ui/saludo";
 import { tarjetasStats } from "./ui/tarjetasStats";
 import { accionDia, conectarAccionDia, hojaDeMotivosAbierta } from "./ui/accionDia";
 import { accionHoyNoPuedo, tarjetaRevivir, conectarAccionFalta } from "./ui/accionFalta";
@@ -54,7 +55,7 @@ async function arrancar(): Promise<void> {
       ${hojaDeMotivosAbierta() ? "" : accionHoyNoPuedo(cliente, hoy, asistencias)}`;
 
     app.innerHTML = `
-      <h1 style="font-size:20px;margin:4px 2px 14px">Hola, ${escapar(cliente.nombre)} 👋</h1>
+      ${saludo(cliente.nombre)}
       ${tarjetaDia(cliente, hoy, accionesDelDia)}
       ${tarjetasStats(asistencias, hoy)}
       ${tarjetaRevivir(cliente, hoy, asistencias)}
@@ -63,6 +64,7 @@ async function arrancar(): Promise<void> {
     // Los listeners se vuelven a colgar en cada repintado: `innerHTML` tira los anteriores
     // junto con los elementos. El estado de las dos acciones no vive acá, sino dentro de sus
     // módulos, justo para que un snapshot a destiempo no lo borre.
+    conectarSaludo();
     conectarAccionDia(pintar);
     conectarAccionFalta(hoy, asistencias, pintar);
     document.querySelector("#mes-anterior")?.addEventListener("click", () => {
