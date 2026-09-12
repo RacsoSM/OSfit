@@ -178,3 +178,12 @@ Hecho el mismo día: fuera el emoji de la mano, efecto de máquina de escribir d
 medio, y el nombre con el degradado morado de la tarjeta del día. Lo del color propio de cada
 cliente (el del círculo de la lista) se quedó sin hacer — el degradado es el de la tarjeta,
 igual para todos.
+
+---
+
+## 7. Paleta de la web desde la app
+
+**Detectado:** 2026-09-14.
+
+> feature: a button on the OSfit app that can change the whole color palette of the web osfit,
+> like the palettes of the quincenales videos
