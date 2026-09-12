@@ -10,7 +10,8 @@ import java.time.LocalDate
  * Acotarlo a una sola fecha es lo que impide que revivir la racha sea "justificar cualquier
  * día de mi historial": se repara la rotura más reciente o no se repara nada.
  *
- * GEMELO: `web/src/faltaRompio.ts`. Si cambia acá, cambia allá.
+ * GEMELOS: `web/src/faltaRompio.ts` y `functions/src/faltaRompio.ts`. Son tres copias del mismo
+ * algoritmo: si cambia acá, cambia en las otras dos.
  */
 object FaltaQueRompioLaRacha {
 
