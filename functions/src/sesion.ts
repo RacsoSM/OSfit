@@ -1,9 +1,6 @@
 import { onRequest } from "firebase-functions/v2/https";
-import { initializeApp } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
-import { getFirestore } from "firebase-admin/firestore";
-
-initializeApp();
+import { REGION, db } from "./comun";
 
 /**
  * Canjea el token del link magico por un custom token de Firebase con el claim `clienteId`.
@@ -13,7 +10,7 @@ initializeApp();
  * falsificarlo.
  */
 export const sesion = onRequest(
-  { region: "us-west1", cors: true },
+  { region: REGION, cors: true },
   async (req, res) => {
     if (req.method !== "POST") {
       res.status(405).json({ error: "metodo_no_permitido" });
@@ -26,7 +23,7 @@ export const sesion = onRequest(
       return;
     }
 
-    const doc = await getFirestore().collection("accesosWeb").doc(token).get();
+    const doc = await db().collection("accesosWeb").doc(token).get();
 
     // 404 generico a proposito: no distingue "nunca existio" de "revocado", para no
     // confirmarle nada a quien pruebe tokens al azar.
