@@ -159,3 +159,18 @@ main { max-width: 480px; margin: 0 auto; padding: 16px 14px 48px; }
 .leyenda { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; font-size: 11px; color: var(--texto-tenue); }
 .leyenda span { display: flex; align-items: center; gap: 4px; }
 .punto { width: 9px; height: 9px; border-radius: 3px; display: inline-block; }
+/* Medallas y logros. Rejilla de tres en tres: entran de un vistazo en un teléfono y una
+   quincena floja no deja la tarjeta con un solo elemento perdido a la izquierda. */
+.insignias { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px 8px; }
+.insignia { text-align: center; }
+.insignia-img {
+  width: 100%; aspect-ratio: 1; object-fit: contain;
+  display: flex; align-items: center; justify-content: center;
+}
+/* La genérica, para lo otorgado antes de que las insignias tuvieran imagen. Disco hundido con
+   el emoji encima: ocupa el mismo hueco que una imagen real, así la rejilla no se descuadra. */
+.insignia-img.generica {
+  background: var(--superficie-alta); border-radius: 50%; font-size: 28px;
+}
+.insignia-nombre { font-size: 12px; font-weight: 700; margin: 6px 0 0; line-height: 1.25; }
+.insignia-rango { font-size: 11px; color: var(--texto-tenue); margin: 2px 0 0; line-height: 1.2; }

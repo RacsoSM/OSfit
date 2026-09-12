@@ -1,5 +1,11 @@
-import { observarCliente, observarAsistencias, observarAvisoFalta } from "./datos";
-import type { Cliente, Asistencia } from "./datos";
+import {
+  observarCliente,
+  observarAsistencias,
+  observarAvisoFalta,
+  observarMedallas,
+  observarLogrosPersonales,
+} from "./datos";
+import type { Cliente, Asistencia, MedallaOtorgada, LogroPersonalOtorgado } from "./datos";
 import { hoyEnMazatlan } from "./fecha";
 import { iniciarSesion } from "./firebase";
 import { tarjetaDia } from "./ui/tarjetaDia";
@@ -8,6 +14,7 @@ import { tarjetasStats } from "./ui/tarjetasStats";
 import { accionDia, conectarAccionDia, hojaDeMotivosAbierta } from "./ui/accionDia";
 import { accionHoyNoPuedo, tarjetaRevivir, conectarAccionFalta } from "./ui/accionFalta";
 import { calendario, moverMes } from "./ui/calendario";
+import { tarjetaMedallas, tarjetaLogrosPersonales } from "./ui/tarjetaInsignias";
 
 const app = document.querySelector<HTMLElement>("#app")!;
 
@@ -43,6 +50,8 @@ async function arrancar(): Promise<void> {
   let asistencias: Asistencia[] = [];
   let mesVisible = hoy.slice(0, 7);
   let yaAviso = false;
+  let medallas: MedallaOtorgada[] = [];
+  let logros: LogroPersonalOtorgado[] = [];
 
   /**
    * El saludo vive FUERA de lo que se repinta, y no es un capricho de orden.
@@ -80,6 +89,8 @@ async function arrancar(): Promise<void> {
       ${tarjetasStats(asistencias, hoy)}
       ${tarjetaRevivir(cliente, hoy, asistencias)}
       ${calendario(asistencias, mesVisible, hoy)}
+      ${tarjetaMedallas(medallas)}
+      ${tarjetaLogrosPersonales(logros)}
     `;
     // Los listeners se vuelven a colgar en cada repintado: `innerHTML` tira los anteriores
     // junto con los elementos. El estado de las dos acciones no vive acá, sino dentro de sus
@@ -99,6 +110,8 @@ async function arrancar(): Promise<void> {
   observarCliente(clienteId, (c) => { cliente = c; pintar(); });
   observarAsistencias(clienteId, (a) => { asistencias = a; pintar(); });
   observarAvisoFalta(clienteId, hoy, (a) => { yaAviso = a; pintar(); });
+  observarMedallas(clienteId, (m) => { medallas = m; pintar(); });
+  observarLogrosPersonales(clienteId, (l) => { logros = l; pintar(); });
 }
 
 arrancar();

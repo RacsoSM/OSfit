@@ -59,3 +59,44 @@ export function observarAvisoFalta(
     alCambiar(snap.exists());
   });
 }
+
+/**
+ * Lo que ya se le otorgó, no el catálogo: el catálogo es solo del entrenador y ahí vive la
+ * imagen original. Por eso `imagenUrl` viaja copiada dentro de cada otorgada, igual que el
+ * nombre, y es opcional: lo otorgado antes de que existieran las insignias llega sin campo.
+ */
+export interface MedallaOtorgada {
+  rangoInicio: string;
+  medallaId: string;
+  nombreMedalla: string;
+  encabezadoRango: string;
+  fueAjustadaManualmente: boolean;
+  imagenUrl?: string | null;
+}
+
+export interface LogroPersonalOtorgado {
+  id: string;
+  rangoInicio: string;
+  logroId: string;
+  nombreLogro: string;
+  mensaje: string;
+  encabezadoRango: string;
+  orden: number;
+  imagenUrl?: string | null;
+}
+
+export function observarMedallas(clienteId: string, alCambiar: (m: MedallaOtorgada[]) => void) {
+  return onSnapshot(collection(db, "clientes", clienteId, "medallas"), (snap) => {
+    alCambiar(snap.docs.map((d) => d.data() as MedallaOtorgada));
+  });
+}
+
+export function observarLogrosPersonales(
+  clienteId: string,
+  alCambiar: (l: LogroPersonalOtorgado[]) => void
+) {
+  return onSnapshot(collection(db, "clientes", clienteId, "logrosPersonales"), (snap) => {
+    // El id no se guarda dentro del documento; se rellena al leer, como en la app.
+    alCambiar(snap.docs.map((d) => ({ ...(d.data() as LogroPersonalOtorgado), id: d.id })));
+  });
+}

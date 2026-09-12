@@ -8,10 +8,18 @@ export function esFinDeSemana(fecha: string): boolean {
   return dia === 0 || dia === 6;
 }
 
+/**
+ * Escapa a mano y no con un `<div>` de usar y tirar por dos razones: los tests corren sin DOM,
+ * y el truco del `textContent` deja las comillas intactas — inofensivas en texto, pero esto
+ * también termina dentro de atributos (`src`, `alt`) donde una comilla sí escapa del valor.
+ */
 export function escapar(texto: string): string {
-  const div = document.createElement("div");
-  div.textContent = texto;
-  return div.innerHTML;
+  return texto
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 }
 
 /**
