@@ -27,6 +27,15 @@ export function saludo(nombre: string): string {
     </h1>`;
 }
 
+/**
+ * Refresca el nombre sin volver a animar, por si el entrenador lo cambia con la página
+ * abierta. Se toca solo el texto: rehacer el elemento reiniciaría la máquina de escribir.
+ */
+export function actualizarNombre(nombre: string): void {
+  const el = document.querySelector<HTMLElement>(".saludo-nombre");
+  if (el && el.textContent !== nombre) el.textContent = nombre;
+}
+
 /** Se llama tras cada repintado; solo hace algo la primera vez. */
 export function conectarSaludo(): void {
   const el = document.querySelector<HTMLElement>("#saludo");
