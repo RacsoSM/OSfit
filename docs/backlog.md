@@ -4,8 +4,71 @@ Cosas detectadas que **no** son urgentes y que no bloquean el flujo principal. C
 dice qué pasa, por qué no corre prisa, y qué habría que hacer. Se revisa cuando haya hueco,
 no en mitad de otra cosa.
 
+Lo que sí corre prisa va arriba, en su propia sección, y se borra igual cuando se hace.
+
 Convención: una entrada se borra de aquí cuando se arregla, y el arreglo se explica en el
 commit — no se marca "hecho" y se deja.
+
+---
+
+# URGENTE
+
+## U1. Terminar la verificación de la Etapa 2 el lunes
+
+**Detectado:** 2026-09-12 (sábado), intentando verificar la Etapa 2 en dispositivo.
+
+La Etapa 2 está implementada y commiteada entera (Tasks 1-12), con las suites en verde: 210
+tests de Kotlin y 39 de TypeScript. Lo que falta es el Task 13, y el sábado no se puede
+hacer. Queda esto pendiente, en este orden.
+
+**1. Desplegar. Bloqueado ahora mismo:** la CLI de Firebase de esta máquina no está
+autenticada (`Failed to authenticate, have you run firebase login?`), y `firebase login` abre
+un navegador, así que lo tiene que correr una persona. Después:
+
+```bash
+firebase deploy --only firestore:indexes
+firebase deploy --only functions,hosting
+```
+
+El índice tarda en quedar `Enabled`; conviene verlo en la consola antes de tocar un revive, o
+`revivirRacha` falla con `FAILED_PRECONDITION`. Ojo: desplegar `functions` también actualiza
+`sesion`, que cambió de forma pero no de comportamiento (el `initializeApp()` se movió a
+`comun.ts`). Y desplegar `hosting` pone la página nueva delante de todos los clientes reales.
+
+**2. Por qué el lunes y no el sábado.** Las dos acciones no se dibujan en fin de semana, y
+está bien que así sea (spec, "Estados vacíos y de excepción": *"Sábado o domingo… Sin botones
+de acción"*). Con el teléfono en sábado no hay nada que tocar aunque esté todo desplegado.
+
+**3. Lo que hay que verificar, y lo que no se puede saltar.**
+
+- **El test negativo, primero.** Con la página abierta como cliente, desde la consola del
+  navegador: `updateDoc` sobre su propio documento de `clientes`, y lo mismo sobre
+  `asistencias` y `cambiosDia`. Los tres tienen que dar error de permisos. Todo el diseño se
+  apoya en que el cliente siga siendo de solo lectura en Firestore y que las dos acciones
+  pasen por functions. Si esto falla, no se sigue.
+- **`cambiarDia` con asistencia ya marcada hoy, y mirarlo AL DÍA SIGUIENTE.** Es la rama
+  `vinoHoy` del trío denormalizado y equivocarla no se nota hoy, solo mañana: el ciclo tiene
+  que **avanzar**. Contrastar con un cliente que cambió el día **sin** haber venido, que sí
+  debe seguir mañana en el mismo día. Es letra por letra la regresión de `d424286`.
+- **`revivirRacha`.** Con los datos de Brianda del 2026-09-12, su falta reparable es el
+  **viernes 2026-09-04** (vino del 7 al 11, faltó el 4), así que el botón debe ofrecer
+  exactamente esa fecha y ninguna otra. Probar también: avisar por adelantado sin registro
+  previo, gastar los 3 del mes, y que al desmarcar el entrenador una justificada **el cupo se
+  devuelva solo**.
+- **Intentar justificar una fecha arbitraria** llamando al callable a mano desde la consola.
+  Tiene que responder `failed-precondition`. Es lo que impide que revivir sea "justificar
+  cualquier día de mi historial".
+- **Los indicadores del entrenador** en Tomar Asistencia, una vez que haya datos de verdad
+  que mostrar.
+
+**4. Lo que ya quedó verificado en dispositivo el sábado:** el cupo en la ficha del cliente
+("Revives: 3 de 3 disponibles este mes", correcto para Brianda) y que las pantallas de
+Clientes, Calendario y Tomar Asistencia siguen sin romperse con los campos nuevos.
+
+**5. Aviso sobre los datos.** La verificación se acordó hacer contra la cuenta real de
+Brianda. Un revive gasta uno de sus 3 del mes y un cambio de día le mueve la rutina de
+verdad; las dos cosas se deshacen desde la app, pero conviene dejarla como estaba al
+terminar.
 
 ---
 
