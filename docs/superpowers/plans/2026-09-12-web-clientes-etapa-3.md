@@ -105,7 +105,7 @@ credenciales de `local.properties`:
 Falta la rama de aislamiento entre clientas (que una no pueda pedir el video de otra), que
 necesita dos sesiones de clienta y va en el Task 10, Step 5.
 
-### Task 2: `imagenUrl` en los cuatro modelos, y el repositorio de subida
+### Task 2: `imagenUrl` en los cuatro modelos, y el repositorio de subida — ✅ HECHO (2026-09-12)
 
 **Files:**
 - Modify: `MedallaCatalogo.kt`, `LogroPersonalCatalogo.kt`, `MedallaOtorgada.kt`, `LogroPersonalOtorgado.kt`
@@ -115,11 +115,15 @@ necesita dos sesiones de clienta y va en el Task 10, Step 5.
 **Interfaces:**
 - Produces: `InsigniaStorageRepository.subir(carpeta: String, id: String, archivo: File): String` — sube y devuelve la URL de descarga.
 
-- [ ] **Step 1: Agregar `imagenUrl: String? = null`** a los dos catálogos y a las dos otorgadas, cada uno con el comentario de por qué se copia (decisión 1).
-- [ ] **Step 2: Escribir `InsigniaStorageRepository`**, que sube a `insignias/<carpeta>/<id>.png` y devuelve `getDownloadUrl()`. `imagenArchivo` **no se toca**: el generador de video sigue leyendo de `filesDir`, y la subida es un agregado, no un reemplazo.
-- [ ] **Step 3: Registrarlo en `AppContainer`.**
-- [ ] **Step 4: Compilar.**
-- [ ] **Step 5: Commit.**
+- [x] **Step 1: Agregar `imagenUrl: String? = null`** a los dos catálogos y a las dos otorgadas, cada uno con el comentario de por qué se copia (decisión 1).
+- [x] **Step 2: Escribir `InsigniaStorageRepository`**, que sube a `insignias/<carpeta>/<id>.png` y devuelve `getDownloadUrl()`. `imagenArchivo` **no se toca**: el generador de video sigue leyendo de `filesDir`, y la subida es un agregado, no un reemplazo.
+- [x] **Step 3: Registrarlo en `AppContainer`.**
+- [x] **Step 4: Compilar.**
+- [x] **Step 5: Commit.**
+
+**Pendiente que dejó esta tarea:** `subir(carpeta: String, ...)` recibe texto libre para dos
+valores fijos ("medallas", "logrosPersonales"). Un typo ahí no da error de compilación, deja un
+blob en una carpeta inventada. Se reconsidera en el Task 3, cuando existan los dos llamadores.
 
 ### Task 3: Subir la insignia al crear o editar
 
