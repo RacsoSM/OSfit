@@ -3,7 +3,7 @@ import { interpretar } from "../dia";
 
 /** Sábado y domingo no cuentan para la racha, así que la página lo dice en vez de mostrar
  *  un día de rutina que nadie va a hacer. */
-function esFinDeSemana(fecha: string): boolean {
+export function esFinDeSemana(fecha: string): boolean {
   const dia = new Date(`${fecha}T12:00:00`).getUTCDay();
   return dia === 0 || dia === 6;
 }

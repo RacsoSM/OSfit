@@ -4,6 +4,8 @@ import { hoyEnMazatlan } from "./fecha";
 import { iniciarSesion } from "./firebase";
 import { escapar, tarjetaDia } from "./ui/tarjetaDia";
 import { tarjetasStats } from "./ui/tarjetasStats";
+import { accionDia, conectarAccionDia } from "./ui/accionDia";
+import { accionFalta, conectarAccionFalta } from "./ui/accionFalta";
 import { calendario, moverMes } from "./ui/calendario";
 
 const app = document.querySelector<HTMLElement>("#app")!;
@@ -49,8 +51,15 @@ async function arrancar(): Promise<void> {
       <h1 style="font-size:20px;margin:4px 2px 14px">Hola, ${escapar(cliente.nombre)} 👋</h1>
       ${tarjetaDia(cliente, hoy)}
       ${tarjetasStats(asistencias, hoy)}
+      ${accionDia(cliente, hoy, asistencias)}
+      ${accionFalta(cliente, hoy, asistencias)}
       ${calendario(asistencias, mesVisible, hoy)}
     `;
+    // Los listeners se vuelven a colgar en cada repintado: `innerHTML` tira los anteriores
+    // junto con los elementos. El estado de las dos acciones no vive acá, sino dentro de sus
+    // módulos, justo para que un snapshot a destiempo no lo borre.
+    conectarAccionDia(pintar);
+    conectarAccionFalta(hoy, asistencias, pintar);
     document.querySelector("#mes-anterior")?.addEventListener("click", () => {
       mesVisible = moverMes(mesVisible, -1);
       pintar();

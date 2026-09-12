@@ -6,6 +6,7 @@ import {
   signInWithCustomToken,
 } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
+import { getFunctions } from "firebase/functions";
 
 const firebaseConfig = {
   apiKey: "AIzaSyD-VnmxHFK1ptLWFKgAd80caa7EkiD0PZA",
@@ -20,6 +21,14 @@ const URL_SESION = "https://sesion-cuzhc6pwiq-uw.a.run.app";
 
 export const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app);
+
+/**
+ * La región tiene que ser la misma con la que se desplegaron las funciones (`REGION` en
+ * `functions/src/comun.ts`). Si no coincide, el callable le pega a un endpoint que no existe
+ * y el error que ve el cliente es un CORS incomprensible en vez de un fallo de la acción.
+ */
+export const functions = getFunctions(app, "us-west1");
+
 const auth = getAuth(app);
 
 /**
