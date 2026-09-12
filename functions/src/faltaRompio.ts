@@ -17,8 +17,19 @@ export interface AsistenciaParaRacha {
   justificada: boolean;
 }
 
-/** Tope de seguridad: sin el, un dato raro haria girar el bucle para siempre. */
-const MAXIMO_DIAS_HACIA_ATRAS = 3650;
+/**
+ * Ventana de reparacion: los 2 dias **habiles** anteriores a hoy. Una rotura mas vieja ya no
+ * se puede revivir.
+ *
+ * Habiles y no 48 horas de reloj: la pagina no dibuja acciones en fin de semana, asi que con
+ * horas una falta del viernes venceria el domingo sin que el cliente hubiera tenido nunca un
+ * boton que tocar. Contando habiles, el lunes el viernes sigue siendo reparable.
+ *
+ * El servidor lo aplica igual que la pagina y no confia en ella: si solo lo hiciera la web,
+ * esconder el boton seria cosmetico y cualquiera podria revivir una rotura vieja desde la
+ * consola del navegador.
+ */
+const DIAS_HABILES_REPARABLES = 2;
 
 /**
  * Las fechas se manejan como strings ISO y se pasan por un Date fijado al mediodia UTC solo
@@ -67,11 +78,13 @@ export function faltaQueRompioLaRacha(
   // Empezar en ayer y no en hoy es lo que hace que hoy nunca se devuelva: hoy se justifica por
   // el otro camino, el de "hoy no voy a poder ir".
   let fecha = restarUnDia(hoy);
-  let vueltas = 0;
-  while (fecha >= primerRegistro && vueltas < MAXIMO_DIAS_HACIA_ATRAS) {
-    if (esDiaHabil(fecha) && !cuentan.has(fecha)) return fecha;
+  let habilesExaminados = 0;
+  while (habilesExaminados < DIAS_HABILES_REPARABLES && fecha >= primerRegistro) {
+    if (esDiaHabil(fecha)) {
+      habilesExaminados++;
+      if (!cuentan.has(fecha)) return fecha;
+    }
     fecha = restarUnDia(fecha);
-    vueltas++;
   }
   return null;
 }

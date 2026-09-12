@@ -43,6 +43,15 @@ const estado: Estado = {
  */
 let motivosVisibles: Motivo[] = [];
 
+/**
+ * Si la hoja de motivos está abierta. Mientras lo esté, la tarjeta del día no dibuja el otro
+ * botón: el cliente está en mitad de elegir día y motivo, y un "Hoy no voy a poder ir" colgado
+ * debajo de Cancelar/Cambiar se lee como una tercera opción del formulario.
+ */
+export function hojaDeMotivosAbierta(): boolean {
+  return estado.abierta;
+}
+
 /** El motivo que se va a mandar: el texto libre si eligió "Otro", si no el del catálogo. */
 function motivoAEnviar(): string {
   return estado.motivoId === "otro" ? estado.textoLibre.trim() : estado.motivoTexto;
@@ -122,10 +131,8 @@ export function accionDia(cliente: Cliente, hoy: string, asistencias: Asistencia
 
   if (!cliente.activo) {
     return `
-      <div class="tarjeta">
-        <button class="boton" disabled>Quiero cambiar el día que me toca</button>
-        <p class="accion-nota">Tu cuenta está pausada. Habla con tu entrenador.</p>
-      </div>`;
+      <button class="boton" disabled>Quiero cambiar el día que me toca</button>
+      <p class="accion-nota">Tu cuenta está pausada. Habla con tu entrenador.</p>`;
   }
 
   // Sin esta línea el cliente no sabe si el toque funcionó y vuelve a tocar (spec, "Tarjeta
@@ -142,7 +149,8 @@ export function accionDia(cliente: Cliente, hoy: string, asistencias: Asistencia
     : `<button id="abrir-cambio-dia" class="boton">Quiero cambiar el día que me toca</button>
        ${estado.error ? `<p class="aviso-error">${escapar(estado.error)}</p>` : ""}`;
 
-  return `<div class="tarjeta">${confirmacion}${cuerpo}</div>`;
+  // Sin envoltorio de tarjeta: esto se pinta dentro de la tarjeta del día.
+  return `${confirmacion}${cuerpo}`;
 }
 
 /** Se vuelve a llamar en cada repintado, porque `innerHTML` tira los listeners anteriores. */

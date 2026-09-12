@@ -30,6 +30,25 @@ main { max-width: 480px; margin: 0 auto; padding: 16px 14px 48px; }
 .hoy { background: linear-gradient(150deg, var(--primario-oscuro), var(--primario)); color: #fff; }
 .hoy .tarjeta-titulo { color: rgba(255, 255, 255, 0.82); }
 .hoy-dia { font-size: 26px; font-weight: 800; margin: 2px 0 4px; line-height: 1.15; }
+/* Las acciones dentro de la tarjeta del día. Separadas por una línea tenue para que el día
+   siga leyéndose de un vistazo y los botones no compitan con él. */
+.hoy-acciones { margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(255, 255, 255, 0.22); }
+/* Sobre el degradado morado los botones normales desaparecen, así que acá van traslúcidos
+   sobre el propio fondo de la tarjeta, con borde para que se sigan leyendo como botones. */
+.hoy-acciones .boton {
+  background: rgba(255, 255, 255, 0.16); color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+}
+.hoy-acciones .boton.secundario { background: rgba(0, 0, 0, 0.18); color: #fff; }
+.hoy-acciones .opcion { background: rgba(255, 255, 255, 0.12); color: #fff; border-color: rgba(255, 255, 255, 0.2); }
+.hoy-acciones .opcion.elegida { background: #fff; color: var(--primario-oscuro); border-color: #fff; }
+.hoy-acciones .accion-nota,
+.hoy-acciones .accion-subtitulo { color: rgba(255, 255, 255, 0.78); }
+.hoy-acciones .confirmar-titulo { color: #fff; }
+.hoy-acciones .campo-libre {
+  background: rgba(0, 0, 0, 0.22); color: #fff; border-color: rgba(255, 255, 255, 0.28);
+}
+.hoy-acciones .aviso-ok, .hoy-acciones .aviso-error { background: rgba(0, 0, 0, 0.22); color: #fff; }
 .fila { display: flex; gap: 12px; }
 .fila > * { flex: 1; }
 .numero { font-size: 30px; font-weight: 800; line-height: 1; margin: 4px 0; }

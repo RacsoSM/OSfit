@@ -4,8 +4,8 @@ import { hoyEnMazatlan } from "./fecha";
 import { iniciarSesion } from "./firebase";
 import { escapar, tarjetaDia } from "./ui/tarjetaDia";
 import { tarjetasStats } from "./ui/tarjetasStats";
-import { accionDia, conectarAccionDia } from "./ui/accionDia";
-import { accionFalta, conectarAccionFalta } from "./ui/accionFalta";
+import { accionDia, conectarAccionDia, hojaDeMotivosAbierta } from "./ui/accionDia";
+import { accionHoyNoPuedo, tarjetaRevivir, conectarAccionFalta } from "./ui/accionFalta";
 import { calendario, moverMes } from "./ui/calendario";
 
 const app = document.querySelector<HTMLElement>("#app")!;
@@ -47,12 +47,17 @@ async function arrancar(): Promise<void> {
       app.innerHTML = `<div class="tarjeta vacio"><p>No encontramos tus datos.</p></div>`;
       return;
     }
+    // Cada acción vive junto al dato del que habla: cambiar el día y avisar que hoy no se
+    // puede van dentro de la tarjeta del día; revivir la racha va debajo de la racha.
+    const accionesDelDia = `
+      ${accionDia(cliente, hoy, asistencias)}
+      ${hojaDeMotivosAbierta() ? "" : accionHoyNoPuedo(cliente, hoy, asistencias)}`;
+
     app.innerHTML = `
       <h1 style="font-size:20px;margin:4px 2px 14px">Hola, ${escapar(cliente.nombre)} 👋</h1>
-      ${tarjetaDia(cliente, hoy)}
+      ${tarjetaDia(cliente, hoy, accionesDelDia)}
       ${tarjetasStats(asistencias, hoy)}
-      ${accionDia(cliente, hoy, asistencias)}
-      ${accionFalta(cliente, hoy, asistencias)}
+      ${tarjetaRevivir(cliente, hoy, asistencias)}
       ${calendario(asistencias, mesVisible, hoy)}
     `;
     // Los listeners se vuelven a colgar en cada repintado: `innerHTML` tira los anteriores

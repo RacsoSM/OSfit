@@ -9,8 +9,16 @@ import type { Asistencia } from "./datos";
  * día de mi historial": se repara la rotura más reciente o no se repara nada.
  */
 
-/** Tope de seguridad: sin él, un dato raro haría girar el bucle para siempre. */
-const MAXIMO_DIAS_HACIA_ATRAS = 3650;
+/**
+ * Ventana de reparación: los 2 días **hábiles** anteriores a hoy. Una rotura más vieja ya no
+ * se puede revivir.
+ *
+ * Hábiles y no 48 horas de reloj, y la diferencia importa justo en el caso más común. La
+ * página no dibuja acciones en fin de semana, así que con horas de reloj una falta del viernes
+ * vencería el domingo — sin que el cliente hubiera tenido nunca un botón que tocar. Contando
+ * hábiles, el lunes el viernes sigue siendo "el día hábil anterior" y todavía se repara.
+ */
+const DIAS_HABILES_REPARABLES = 2;
 
 function esDiaHabil(fecha: string): boolean {
   const dia = new Date(`${fecha}T12:00:00`).getUTCDay();
@@ -40,19 +48,21 @@ export function faltaQueRompioLaRacha(asistencias: Asistencia[], hoy: string): s
   );
   const cuentan = fechasQueCuentan(asistencias);
 
-  // Se camina hacia atrás desde ayer, saltando fines de semana, hasta el primer día hábil
-  // que no cuenta: ése es el que cortó la racha. Se sigue caminando por encima de los días
-  // que sí cuentan porque la racha viva puede haber arrancado DESPUÉS de la rotura — el caso
-  // normal, de hecho: el cliente falta un día y vuelve al siguiente.
+  // Se camina hacia atrás desde ayer, saltando fines de semana, y se miran solo los
+  // DIAS_HABILES_REPARABLES más recientes. El primero de ellos que no cuente es el que cortó
+  // la racha y es el reparable; si los dos cuentan, o si la rotura quedó más atrás, no hay
+  // nada que ofrecer.
   //
   // Empezar en ayer y no en hoy es lo que hace que hoy nunca se devuelva: hoy se justifica
   // por el otro camino, el de "hoy no voy a poder ir".
   let fecha = restarUnDia(hoy);
-  let vueltas = 0;
-  while (fecha >= primerRegistro && vueltas < MAXIMO_DIAS_HACIA_ATRAS) {
-    if (esDiaHabil(fecha) && !cuentan.has(fecha)) return fecha;
+  let habilesExaminados = 0;
+  while (habilesExaminados < DIAS_HABILES_REPARABLES && fecha >= primerRegistro) {
+    if (esDiaHabil(fecha)) {
+      habilesExaminados++;
+      if (!cuentan.has(fecha)) return fecha;
+    }
     fecha = restarUnDia(fecha);
-    vueltas++;
   }
   return null;
 }

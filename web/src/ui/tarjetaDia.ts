@@ -20,7 +20,7 @@ export function escapar(texto: string): string {
  * acto suyo y no un autoservicio. Ver el spec, sección "Por qué la página no muestra los
  * ejercicios".
  */
-export function tarjetaDia(cliente: Cliente, hoy: string): string {
+export function tarjetaDia(cliente: Cliente, hoy: string, acciones = ""): string {
   const dias = cliente.rutinaAsignada?.dias ?? [];
 
   if (dias.length === 0) {
@@ -54,9 +54,12 @@ export function tarjetaDia(cliente: Cliente, hoy: string): string {
 
   if (indice === null) return "";
 
+  // Las acciones van DENTRO de esta tarjeta, no en una aparte: las dos hablan del día que le
+  // toca hoy — cambiarlo o avisar que no viene — así que se leen junto al día del que hablan.
   return `
     <div class="tarjeta hoy">
       <p class="tarjeta-titulo">Hoy te toca</p>
       <p class="hoy-dia">Día ${indice + 1}<br>${escapar(dias[indice]?.nombreDia ?? "")}</p>
+      ${acciones ? `<div class="hoy-acciones">${acciones}</div>` : ""}
     </div>`;
 }
