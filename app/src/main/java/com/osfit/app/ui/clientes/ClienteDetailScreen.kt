@@ -56,6 +56,7 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.osfit.app.data.model.MedallaCatalogo
 import com.osfit.app.data.model.Rutina
+import com.osfit.app.domain.CupoRevivesCalculator
 import com.osfit.app.domain.RangoResumen
 import com.osfit.app.domain.ResumenClienteCalculator
 import com.osfit.app.domain.RutinaProgressCalculator
@@ -339,6 +340,7 @@ fun ClienteDetailScreen(
             }
             item {
                 val acceso by viewModel.accesoWeb.collectAsState()
+                val revivesDisponibles by viewModel.revivesDisponibles.collectAsState()
                 val alcance = rememberCoroutineScope()
                 Spacer(modifier = Modifier.height(12.dp))
                 Card(modifier = Modifier.fillMaxWidth()) {
@@ -352,6 +354,11 @@ fun ClienteDetailScreen(
                             },
                             style = MaterialTheme.typography.bodySmall,
                             modifier = Modifier.padding(top = 4.dp)
+                        )
+                        Text(
+                            "Revives: $revivesDisponibles de ${CupoRevivesCalculator.MAXIMO_POR_MES} disponibles este mes",
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.padding(top = 8.dp)
                         )
                         if (clienteActual.telefono.isNotBlank()) {
                             Button(

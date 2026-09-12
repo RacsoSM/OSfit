@@ -22,6 +22,7 @@ import com.osfit.app.data.repository.MedallaRepository
 import com.osfit.app.data.repository.PagoRepository
 import com.osfit.app.data.repository.RutinaRepository
 import com.osfit.app.domain.AsignarDiaManual
+import com.osfit.app.domain.CupoRevivesCalculator
 import com.osfit.app.domain.RachaCalculator
 import com.osfit.app.domain.RutinaProgressCalculator
 import java.time.LocalDate
@@ -90,6 +91,22 @@ class ClienteDetailViewModel(
     val faltas: StateFlow<List<Asistencia>> = asistenciasDelCliente
         .map { asistencias -> asistencias.filterNot { it.asistio }.sortedByDescending { it.fecha } }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    /**
+     * Revives que le quedan al cliente este mes. El mes sale de la zona del gimnasio y no del
+     * dispositivo: la Cloud Function cuenta el cupo en esa zona, y si el entrenador contara en
+     * otro mes vería un número distinto al de la página del cliente — justo la discusión que
+     * este dato existe para zanjar.
+     */
+    val revivesDisponibles: StateFlow<Int> = asistenciasDelCliente
+        .map { asistencias ->
+            CupoRevivesCalculator.disponiblesEnElMes(asistencias, SincronizadorDiaWeb.hoy().substring(0, 7))
+        }
+        .stateIn(
+            viewModelScope,
+            SharingStarted.WhileSubscribed(5000),
+            CupoRevivesCalculator.MAXIMO_POR_MES
+        )
 
     /** Soborno: marca o desmarca una falta como justificada. */
     fun alternarSoborno(asistencia: Asistencia) {
