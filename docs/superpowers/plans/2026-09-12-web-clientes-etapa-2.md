@@ -120,7 +120,7 @@ El cupo se cuenta, nunca se guarda (spec, "El cupo se cuenta, no se guarda"). Es
 **Interfaces:**
 - Consumes: `Asistencia` (con el campo `justificadaPorCliente` de la Task 3 — esta tarea se escribe **después** de la 3 si se ejecuta en orden estricto; ver nota abajo).
 - Produces:
-  - `const val MAXIMO_REVIVES_POR_MES = 3`
+  - `const val MAXIMO_POR_MES = 3`
   - `fun gastadosEnElMes(asistencias: List<Asistencia>, mes: String): Int`
   - `fun disponiblesEnElMes(asistencias: List<Asistencia>, mes: String): Int`
 
@@ -206,7 +206,7 @@ class CupoRevivesCalculatorTest {
 - [ ] **Step 2: Correr el test y verificar que falla**
 
 ```bash
-./gradlew test --tests "com.osfit.app.domain.CupoRevivesCalculatorTest"
+./gradlew :app:testDebugUnitTest --tests "com.osfit.app.domain.CupoRevivesCalculatorTest"
 ```
 Expected: no compila — `CupoRevivesCalculator` no existe.
 
@@ -254,7 +254,7 @@ object CupoRevivesCalculator {
 - [ ] **Step 4: Correr el test y verificar que pasa**
 
 ```bash
-./gradlew test --tests "com.osfit.app.domain.CupoRevivesCalculatorTest"
+./gradlew :app:testDebugUnitTest --tests "com.osfit.app.domain.CupoRevivesCalculatorTest"
 ```
 Expected: PASS (6 tests).
 
@@ -367,7 +367,7 @@ class FaltaQueRompioLaRachaTest {
 - [ ] **Step 2: Correr el test y verificar que falla**
 
 ```bash
-./gradlew test --tests "com.osfit.app.domain.FaltaQueRompioLaRachaTest"
+./gradlew :app:testDebugUnitTest --tests "com.osfit.app.domain.FaltaQueRompioLaRachaTest"
 ```
 Expected: no compila.
 
@@ -399,29 +399,44 @@ object FaltaQueRompioLaRacha {
         fecha.dayOfWeek != DayOfWeek.SATURDAY && fecha.dayOfWeek != DayOfWeek.SUNDAY
 
     fun calcular(asistencias: List<Asistencia>, hoy: String): String? {
+        // El primer registro es el piso del historial: antes de él el cliente no existía para
+        // el gimnasio, así que un día hábil sin registro anterior a esa fecha no es una falta
+        // suya y no hay nada que reparar. Sin este piso, un cliente nuevo vería como "falta"
+        // el día hábil anterior a su alta.
+        val primerRegistro = asistencias.minOfOrNull { LocalDate.parse(it.fecha) } ?: return null
         val cuentan = RachaCalculator.fechasQueCuentan(asistencias)
 
-        // Se camina hacia atrás desde ayer: el primer día hábil que no cuenta es, por
-        // definición, el que cortó la racha — todo lo posterior a él ya cuenta. Empezar en
-        // ayer y no en hoy es lo que hace que hoy nunca se devuelva: hoy se justifica por el
-        // otro camino, el de "hoy no voy a poder ir".
+        // Se camina hacia atrás desde ayer, saltando fines de semana, hasta el primer día
+        // hábil que no cuenta: ése es el que cortó la racha. Se sigue caminando por encima de
+        // los días que sí cuentan porque la racha viva puede haber arrancado DESPUÉS de la
+        // rotura — el caso normal, de hecho: el cliente falta un día y vuelve al siguiente.
+        //
+        // Empezar en ayer y no en hoy es lo que hace que hoy nunca se devuelva: hoy se
+        // justifica por el otro camino, el de "hoy no voy a poder ir".
         var fecha = LocalDate.parse(hoy).minusDays(1)
-        repeat(MAXIMO_DIAS_HACIA_ATRAS) {
+        var vueltas = 0
+        while (!fecha.isBefore(primerRegistro) && vueltas < MAXIMO_DIAS_HACIA_ATRAS) {
             if (esDiaHabil(fecha) && fecha !in cuentan) return fecha.toString()
-            if (esDiaHabil(fecha)) return null
             fecha = fecha.minusDays(1)
+            vueltas++
         }
         return null
     }
 }
 ```
 
-> El bucle sale en el **primer** día hábil que sí cuenta: si el día hábil más reciente ya está cubierto, la racha no está rota y no hay nada que reparar. Eso hace innecesario buscar "la última fecha que cuenta" por separado, que es como el spec lo describe en prosa.
+> **Dos cosas que es fácil escribir mal, y que la primera versión de este plan escribió mal. Los gemelos de las Tasks 8 y 9 tienen que portar ESTA versión, no aquélla.**
+>
+> **No se puede cortar en el primer día hábil que sí cuenta.** La tentación es salir con `null` en cuanto aparece un día cubierto, razonando que "si ayer cuenta, la racha está viva". Es falso, y falso justo en el caso normal: el cliente falta un día y vuelve al siguiente. Ahí la racha viva arrancó **después** de la rotura, y cortar temprano hace que la falta reparable no se encuentre nunca. Hacía fallar `encuentra la falta que rompio la racha` y `un dia habil sin registro alguno cuenta como falta`.
+>
+> **Hay que ponerle piso al historial.** Sin `primerRegistro`, un cliente sin asistencias hace que el bucle camine hacia atrás por días hábiles que nunca tuvieron registro y devuelva ayer como "falta". Hacía fallar `sin historial no hay nada que reparar`.
+>
+> La redacción del spec — "posterior a la última fecha que sí cuenta para la racha" — describe el mismo resultado por otro camino, pero se presta a la lectura equivocada de arriba. El contrato que manda es el de los siete tests.
 
 - [ ] **Step 4: Correr el test y verificar que pasa**
 
 ```bash
-./gradlew test --tests "com.osfit.app.domain.FaltaQueRompioLaRachaTest"
+./gradlew :app:testDebugUnitTest --tests "com.osfit.app.domain.FaltaQueRompioLaRachaTest"
 ```
 Expected: PASS (7 tests).
 
