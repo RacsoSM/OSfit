@@ -158,59 +158,18 @@ se cuele en un commit por descuido.
 
 ---
 
-## 5. La rutina no debería repetir pierna cuando la semana queda incompleta
+## 5. Rutina y semana incompleta
 
-**Detectado:** 2026-09-14, viendo el comportamiento del ciclo con clientas que no completan
-la semana.
+**Detectado:** 2026-09-14.
 
-Hoy el día que toca sale de avanzar el ciclo un paso por cada asistencia, sin mirar qué día
-fue el anterior. Cuando una clienta no viene los 5 días seguidos de la semana, el ciclo se
-desfasa respecto de la semana y puede tocarle **pierna dos veces seguidas** — que es
-justamente lo que el orden de la rutina existe para evitar.
-
-**Por qué no corre prisa:** no rompe nada ni pierde datos, y el entrenador ya lo corrige a
-mano con "Asignar día" cuando lo ve. Es una mejora del cálculo, no un fallo.
-
-**Qué haría falta pensar antes de tocar código:**
-
-- Qué es "pierna" para el calculador. Hoy un día de rutina es un nombre libre
-  (`DiaRutina.nombreDia`), así que no hay forma de saber que dos días entrenan lo mismo sin
-  marcarlo: o se etiqueta el grupo muscular en el día, o se marca cuáles no pueden ir
-  seguidos. Adivinarlo por el nombre ("Pierna", "Pierna completa", "Pierna (Cuádriceps)")
-  funcionaría hoy y se rompería el día que alguien renombre un día.
-- Dónde va la regla. `RutinaProgressCalculator.diaQueToca` es la única implementación real y
-  la web solo interpreta lo que la app denormaliza, así que la regla va en Kotlin y la web se
-  entera sola. Ojo: si cambia el día que toca, hay que refrescar el trío denormalizado por
-  los caminos que ya usa `SincronizadorDiaWeb`.
-- Qué pasa con el histórico. Cambiar el cálculo cambia el día que ve todo el mundo, no solo
-  quien tenga la semana incompleta; conviene decidir si aplica desde una fecha de corte,
-  como ya se hizo con `FECHA_CORTE`.
-- Y si la regla debe saltarse un día o reordenar el ciclo. No es lo mismo: saltar pierde ese
-  entrenamiento, reordenar lo retrasa.
+> if a woman dont go the 5 days of a week in a row, the routine should change looking that
+> they dont do legs two times in a row
 
 ---
 
-## 6. El saludo de la página merece más cariño
+## 6. Saludo de la página
 
-**Detectado:** 2026-09-14, mirando la página ya terminada.
+**Detectado:** 2026-09-14.
 
-El "Hola, {nombre} 👋" es lo primero que ve el cliente y hoy es la línea más sosa de la
-página: aparece de golpe, sin animación, y el nombre va del mismo color que el resto del
-texto.
-
-**Qué se quiere:**
-
-- Una animación de entrada para el saludo.
-- El nombre del cliente en otro color, destacado del resto de la línea.
-- Idea a explorar: usar **el color propio del cliente**. La app ya le asigna uno a cada quien
-  para el círculo de la lista de clientes (Estela turquesa, Brianda morado, Carito rojo…), así
-  que la página podría saludar con ese mismo color y de paso hacer que se sienta suya.
-
-**Por qué no corre prisa:** es puramente estético, no cambia ningún dato.
-
-**Qué habría que mirar antes:** de dónde sale hoy ese color en la app y si está guardado en
-el documento del cliente o se calcula a partir del nombre o del id. Si se calcula, hay que
-portar el mismo cálculo a la web o denormalizarlo, porque si cada lado lo calcula a su manera
-el cliente se ve de un color en la app y de otro en su página. Ojo también con el contraste:
-algunos de esos colores sobre el fondo oscuro se leen mal, así que puede hacer falta aclararlos
-para texto.
+> change the animation for the Hola, $nombrePersona, and the color of $nombrePersona, maybe
+> the color of the font of the client
