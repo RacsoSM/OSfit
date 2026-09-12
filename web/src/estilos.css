@@ -21,6 +21,12 @@ body {
   line-height: 1.45;
 }
 main { max-width: 480px; margin: 0 auto; padding: 16px 14px 48px; }
+/* El fondo pintado, clavado al viewport y detrás de todo. `fixed` y no `absolute` para que
+   no crezca con la página ni se repita al hacer scroll: es una sola pintura, no un patrón. */
+.fondo {
+  position: fixed; inset: 0; width: 100%; height: 100%;
+  z-index: -1; pointer-events: none;
+}
 .cargando { color: var(--texto-tenue); text-align: center; padding: 40px 0; }
 /* El saludo. El nombre lleva el mismo degradado morado que la tarjeta del día, recortado
    sobre el texto, para que la página salude con el color de su propia identidad. */
