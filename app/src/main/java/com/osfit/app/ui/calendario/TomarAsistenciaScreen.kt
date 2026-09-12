@@ -49,6 +49,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
@@ -75,6 +76,8 @@ fun TomarAsistenciaScreen(fecha: String, onGuardado: () -> Unit = {}) {
     val estadoPorCliente by viewModel.estadoPorCliente.collectAsState()
     val diaRealizadoPorCliente by viewModel.diaRealizadoPorCliente.collectAsState()
     val asistenciasDelDia by viewModel.asistenciasDelDia.collectAsState()
+    val cambioDiaPorCliente by viewModel.cambioDiaPorCliente.collectAsState()
+    val avisoAusenciaPorCliente by viewModel.avisoAusenciaPorCliente.collectAsState()
     val guardando by viewModel.guardando.collectAsState()
     val guardandoDia by viewModel.guardandoDia.collectAsState()
     val reiniciando by viewModel.reiniciando.collectAsState()
@@ -149,7 +152,9 @@ fun TomarAsistenciaScreen(fecha: String, onGuardado: () -> Unit = {}) {
                             mostrarCronometro = viewModel.esHoy,
                             asistencia = tiempoPorCliente[cliente.id],
                             onIniciarTiempo = { viewModel.iniciarTiempo(cliente) },
-                            onDetenerTiempo = { viewModel.detenerTiempo(cliente) }
+                            onDetenerTiempo = { viewModel.detenerTiempo(cliente) },
+                            avisoAusencia = cliente.id in avisoAusenciaPorCliente,
+                            motivoCambioDia = cambioDiaPorCliente[cliente.id]
                         )
                     }
                     item {
@@ -211,7 +216,9 @@ private fun ClienteAsistenciaRow(
     mostrarCronometro: Boolean,
     asistencia: Asistencia?,
     onIniciarTiempo: () -> Unit,
-    onDetenerTiempo: () -> Unit
+    onDetenerTiempo: () -> Unit,
+    avisoAusencia: Boolean,
+    motivoCambioDia: String?
 ) {
     // El color de fondo es solo indicativo (asistió/faltó); el toggle real vive en el
     // segmento de la derecha para no competir con el botón del cronómetro dentro del card.
@@ -242,6 +249,30 @@ private fun ClienteAsistenciaRow(
                         else -> "Faltó"
                     }
                     Text(estado, style = MaterialTheme.typography.bodyMedium)
+                    if (avisoAusencia) {
+                        // Solo dice *que* avisó: el motivo de una falta no se pide ni se muestra.
+                        Text(
+                            "🔔 Avisó que no viene",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    if (motivoCambioDia != null) {
+                        // El motivo es texto libre del cliente en el caso "Otro": se muestra
+                        // tal cual, recortado, para que no desarme la fila.
+                        val texto = if (motivoCambioDia.isBlank()) {
+                            "🔄 Cambió su día"
+                        } else {
+                            "🔄 Cambió su día: $motivoCambioDia"
+                        }
+                        Text(
+                            texto,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
                 }
                 SegmentoAsistencia(
                     checked = asistio,

@@ -7,6 +7,7 @@ import com.osfit.app.data.SincronizadorDiaWeb
 import com.osfit.app.data.model.Asistencia
 import com.osfit.app.data.model.Cliente
 import com.osfit.app.data.repository.AsistenciaRepository
+import com.osfit.app.data.repository.CambioDiaWebRepository
 import com.osfit.app.data.repository.ClienteRepository
 import com.osfit.app.domain.RutinaProgressCalculator
 import kotlinx.coroutines.async
@@ -25,7 +26,8 @@ class TomarAsistenciaViewModel(
     private val fecha: String,
     private val clienteRepository: ClienteRepository = AppContainer.clienteRepository,
     private val asistenciaRepository: AsistenciaRepository = AppContainer.asistenciaRepository,
-    private val sincronizadorDiaWeb: SincronizadorDiaWeb = AppContainer.sincronizadorDiaWeb
+    private val sincronizadorDiaWeb: SincronizadorDiaWeb = AppContainer.sincronizadorDiaWeb,
+    private val cambioDiaWebRepository: CambioDiaWebRepository = AppContainer.cambioDiaWebRepository
 ) : ViewModel() {
 
     val esHoy: Boolean = fecha == LocalDate.now().toString()
@@ -53,6 +55,23 @@ class TomarAsistenciaViewModel(
                 )
             }
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyMap())
+
+    /** clienteId → motivo que eligió al cambiar su día hoy. */
+    val cambioDiaPorCliente: StateFlow<Map<String, String>> =
+        cambioDiaWebRepository.observarPorFecha(fecha)
+            // El doc id es "<clienteId>_<fecha>", así que no puede haber dos por cliente;
+            // aun así se asocia por clienteId para que la última lectura mande.
+            .map { cambios -> cambios.associate { it.clienteId to it.motivo } }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyMap())
+
+    /** clienteIds que avisaron que no vienen hoy. */
+    val avisoAusenciaPorCliente: StateFlow<Set<String>> = asistenciasDelDia
+        .map { asistencias ->
+            asistencias.filter { it.justificadaPorCliente && !it.asistio }
+                .map { it.clienteId }
+                .toSet()
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptySet())
 
     private fun diaQueToca(cliente: Cliente): Int = RutinaProgressCalculator.diaQueToca(
         cliente, todasAsistencias.value.filter { it.clienteId == cliente.id }, fecha
