@@ -11,7 +11,7 @@ import { escapar } from "./tarjetaDia";
 const DURACION_MS = 2000;
 
 /** Lo que el cursor sigue parpadeando después de la última letra, antes de irse. */
-const CURSOR_EXTRA_MS = 3000;
+const CURSOR_EXTRA_MS = 5000;
 
 /**
  * La animación corre UNA vez por carga, no una por repintado.

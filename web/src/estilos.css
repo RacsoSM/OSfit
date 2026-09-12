@@ -28,6 +28,10 @@ main { max-width: 480px; margin: 0 auto; padding: 16px 14px 48px; }
   font-size: 26px; margin: 4px 2px 14px; white-space: nowrap;
   display: inline-block; max-width: 100%;
 }
+/* Periodo del parpadeo del cursor: medio segundo encendido, medio apagado. Es el ritmo al que
+   parpadea un cursor de texto de verdad; más rápido se nota nervioso y distrae de lo que se
+   está escribiendo. */
+.saludo { --parpadeo: 1100ms; }
 .saludo-hola { color: var(--texto); }
 .saludo-nombre {
   background: linear-gradient(100deg, var(--primario) 0%, #E3D2FF 100%);
@@ -40,14 +44,14 @@ main { max-width: 480px; margin: 0 auto; padding: 16px 14px 48px; }
   overflow: hidden; width: 0;
   border-right: 2px solid var(--primario);
   animation:
-    escribir var(--duracion-saludo, 1500ms) steps(var(--letras-saludo, 20), end) forwards,
-    cursor 500ms steps(1, end) infinite;
+    escribir var(--duracion-saludo, 2000ms) steps(var(--letras-saludo, 20), end) forwards,
+    cursor var(--parpadeo) steps(1, end) infinite;
 }
 /* Terminada la escritura el cursor se queda un rato parpadeando, ya sin recortar el texto:
    deja la sensación de que la línea sigue viva en vez de cortarse en seco. */
 .saludo.parpadeando {
   border-right: 2px solid var(--primario);
-  animation: cursor 500ms steps(1, end) infinite;
+  animation: cursor var(--parpadeo) steps(1, end) infinite;
 }
 .saludo.escrito { border-right: 0; }
 @keyframes escribir { to { width: var(--ancho-saludo, 100%); } }
