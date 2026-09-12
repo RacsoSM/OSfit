@@ -18,6 +18,13 @@ export interface Asistencia {
   fecha: string;
   asistio: boolean;
   justificada: boolean;
+  /**
+   * La justificó el cliente desde la web. Solo estas gastan su cupo mensual.
+   *
+   * Opcional a propósito: Firestore omite los campos que nunca se escribieron, así que
+   * toda asistencia anterior a esta etapa llega sin él. Ver el commit bf5463c.
+   */
+  justificadaPorCliente?: boolean;
   duracionMinutos: number | null;
 }
 
