@@ -1,4 +1,4 @@
-import { observarCliente, observarAsistencias } from "./datos";
+import { observarCliente, observarAsistencias, observarAvisoFalta } from "./datos";
 import type { Cliente, Asistencia } from "./datos";
 import { hoyEnMazatlan } from "./fecha";
 import { iniciarSesion } from "./firebase";
@@ -42,6 +42,7 @@ async function arrancar(): Promise<void> {
   let cliente: Cliente | null = null;
   let asistencias: Asistencia[] = [];
   let mesVisible = hoy.slice(0, 7);
+  let yaAviso = false;
 
   /**
    * El saludo vive FUERA de lo que se repinta, y no es un capricho de orden.
@@ -71,8 +72,8 @@ async function arrancar(): Promise<void> {
     // Cada acción vive junto al dato del que habla: cambiar el día y avisar que hoy no se
     // puede van dentro de la tarjeta del día; revivir la racha va debajo de la racha.
     const accionesDelDia = `
-      ${accionDia(cliente, hoy, asistencias)}
-      ${hojaDeMotivosAbierta() ? "" : accionHoyNoPuedo(cliente, hoy, asistencias)}`;
+      ${accionDia(cliente, hoy)}
+      ${hojaDeMotivosAbierta() ? "" : accionHoyNoPuedo(cliente, hoy, yaAviso)}`;
 
     contenido.innerHTML = `
       ${tarjetaDia(cliente, hoy, accionesDelDia)}
@@ -97,6 +98,7 @@ async function arrancar(): Promise<void> {
 
   observarCliente(clienteId, (c) => { cliente = c; pintar(); });
   observarAsistencias(clienteId, (a) => { asistencias = a; pintar(); });
+  observarAvisoFalta(clienteId, hoy, (a) => { yaAviso = a; pintar(); });
 }
 
 arrancar();

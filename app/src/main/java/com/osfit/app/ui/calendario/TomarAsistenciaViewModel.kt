@@ -7,6 +7,7 @@ import com.osfit.app.data.SincronizadorDiaWeb
 import com.osfit.app.data.model.Asistencia
 import com.osfit.app.data.model.Cliente
 import com.osfit.app.data.repository.AsistenciaRepository
+import com.osfit.app.data.repository.AvisoFaltaWebRepository
 import com.osfit.app.data.repository.CambioDiaWebRepository
 import com.osfit.app.data.repository.ClienteRepository
 import com.osfit.app.domain.RutinaProgressCalculator
@@ -27,7 +28,8 @@ class TomarAsistenciaViewModel(
     private val clienteRepository: ClienteRepository = AppContainer.clienteRepository,
     private val asistenciaRepository: AsistenciaRepository = AppContainer.asistenciaRepository,
     private val sincronizadorDiaWeb: SincronizadorDiaWeb = AppContainer.sincronizadorDiaWeb,
-    private val cambioDiaWebRepository: CambioDiaWebRepository = AppContainer.cambioDiaWebRepository
+    private val cambioDiaWebRepository: CambioDiaWebRepository = AppContainer.cambioDiaWebRepository,
+    private val avisoFaltaWebRepository: AvisoFaltaWebRepository = AppContainer.avisoFaltaWebRepository
 ) : ViewModel() {
 
     val esHoy: Boolean = fecha == LocalDate.now().toString()
@@ -64,14 +66,23 @@ class TomarAsistenciaViewModel(
             .map { cambios -> cambios.associate { it.clienteId to it.motivo } }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyMap())
 
-    /** clienteIds que avisaron que no vienen hoy. */
-    val avisoAusenciaPorCliente: StateFlow<Set<String>> = asistenciasDelDia
-        .map { asistencias ->
-            asistencias.filter { it.justificadaPorCliente && !it.asistio }
-                .map { it.clienteId }
-                .toSet()
-        }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptySet())
+    /**
+     * clienteIds que avisaron que no vienen hoy.
+     *
+     * Son DOS fuentes unidas, y hacen falta las dos. `avisosFalta` es la de ahora: avisar es
+     * gratis y se guarda ahí. La derivada de `justificadaPorCliente` es la de antes, cuando
+     * el botón de avisar gastaba un revive, y se conserva para que los avisos ya registrados
+     * de ese modo —y las faltas que el cliente justifique desde "Revivir mi racha"— sigan
+     * apareciendo en la fila.
+     */
+    val avisoAusenciaPorCliente: StateFlow<Set<String>> = combine(
+        asistenciasDelDia,
+        avisoFaltaWebRepository.observarPorFecha(fecha)
+    ) { asistencias, avisos ->
+        asistencias.filter { it.justificadaPorCliente && !it.asistio }
+            .map { it.clienteId }
+            .toSet() + avisos.map { it.clienteId }.toSet()
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptySet())
 
     private fun diaQueToca(cliente: Cliente): Int = RutinaProgressCalculator.diaQueToca(
         cliente, todasAsistencias.value.filter { it.clienteId == cliente.id }, fecha

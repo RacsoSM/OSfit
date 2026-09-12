@@ -1,5 +1,5 @@
-import type { Asistencia, Cliente } from "../datos";
-import { motivosDisponibles, type Motivo } from "../motivos";
+import type { Cliente } from "../datos";
+import { MOTIVOS, motivosPara } from "../motivos";
 import { cambiarDia } from "../acciones";
 import { horaEnMazatlan } from "../fecha";
 import { escapar, esFinDeSemana } from "./tarjetaDia";
@@ -37,13 +37,6 @@ const estado: Estado = {
 };
 
 /**
- * Los motivos que se están ofreciendo ahora mismo. Se guardan al pintar para que el listener
- * pueda resolver el texto del que se eligió sin volver a filtrar el catálogo — y, sobre todo,
- * para no tener que meter ese texto en un atributo `data-`, que `escapar()` no cubre.
- */
-let motivosVisibles: Motivo[] = [];
-
-/**
  * Si la hoja de motivos está abierta. Mientras lo esté, la tarjeta del día no dibuja el otro
  * botón: el cliente está en mitad de elegir día y motivo, y un "Hoy no voy a poder ir" colgado
  * debajo de Cancelar/Cambiar se lee como una tercera opción del formulario.
@@ -67,9 +60,8 @@ function listoParaEnviar(): boolean {
   );
 }
 
-function hoja(cliente: Cliente, hoy: string, asistencias: Asistencia[]): string {
+function hoja(cliente: Cliente): string {
   const dias = cliente.rutinaAsignada?.dias ?? [];
-  motivosVisibles = motivosDisponibles(hoy, asistencias);
 
   const opcionesDia = dias
     .map(
@@ -81,7 +73,7 @@ function hoja(cliente: Cliente, hoy: string, asistencias: Asistencia[]): string 
     )
     .join("");
 
-  const opcionesMotivo = motivosVisibles
+  const opcionesMotivo = motivosPara(cliente.nombre)
     .map(
       (motivo) => `
         <button class="opcion ${estado.motivoId === motivo.id ? "elegida" : ""}"
@@ -125,7 +117,7 @@ function hoja(cliente: Cliente, hoy: string, asistencias: Asistencia[]): string 
  * cliente inactivo la acción queda deshabilitada: su historial es suyo, cambiar una rutina
  * que no está haciendo no.
  */
-export function accionDia(cliente: Cliente, hoy: string, asistencias: Asistencia[]): string {
+export function accionDia(cliente: Cliente, hoy: string): string {
   const dias = cliente.rutinaAsignada?.dias ?? [];
   if (dias.length === 0 || esFinDeSemana(hoy)) return "";
 
@@ -145,7 +137,7 @@ export function accionDia(cliente: Cliente, hoy: string, asistencias: Asistencia
     : "";
 
   const cuerpo = estado.abierta
-    ? hoja(cliente, hoy, asistencias)
+    ? hoja(cliente)
     : `<button id="abrir-cambio-dia" class="boton">Quiero cambiar el día que me toca</button>
        ${estado.error ? `<p class="aviso-error">${escapar(estado.error)}</p>` : ""}`;
 
@@ -177,7 +169,7 @@ export function conectarAccionDia(repintar: () => void): void {
   document.querySelectorAll<HTMLElement>("[data-motivo]").forEach((boton) => {
     boton.addEventListener("click", () => {
       estado.motivoId = boton.dataset.motivo ?? null;
-      estado.motivoTexto = motivosVisibles.find((m) => m.id === estado.motivoId)?.texto ?? "";
+      estado.motivoTexto = MOTIVOS.find((m) => m.id === estado.motivoId)?.texto ?? "";
       repintar();
     });
   });

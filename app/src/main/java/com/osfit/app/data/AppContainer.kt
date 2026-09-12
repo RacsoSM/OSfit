@@ -2,6 +2,7 @@ package com.osfit.app.data
 
 import com.osfit.app.data.repository.AccesoWebRepository
 import com.osfit.app.data.repository.AsistenciaRepository
+import com.osfit.app.data.repository.AvisoFaltaWebRepository
 import com.osfit.app.data.repository.CambioDiaWebRepository
 import com.osfit.app.data.repository.ClienteRepository
 import com.osfit.app.data.repository.ConfigVideoRepository
@@ -24,6 +25,8 @@ object AppContainer {
     val configVideoRepository: ConfigVideoRepository by lazy { ConfigVideoRepository() }
     val accesoWebRepository: AccesoWebRepository by lazy { AccesoWebRepository() }
     val cambioDiaWebRepository: CambioDiaWebRepository by lazy { CambioDiaWebRepository() }
+
+    val avisoFaltaWebRepository: AvisoFaltaWebRepository by lazy { AvisoFaltaWebRepository() }
     val sincronizadorDiaWeb: SincronizadorDiaWeb by lazy {
         SincronizadorDiaWeb(clienteRepository, asistenciaRepository)
     }

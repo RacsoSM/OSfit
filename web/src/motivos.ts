@@ -1,11 +1,13 @@
-import type { Asistencia } from "./datos";
-
 /**
  * Catálogo de motivos del cambio de día (spec, "Motivos del cambio de día").
  *
- * Los dos primeros son condicionales porque son afirmaciones sobre hechos: "hoy es lunes"
- * ofrecido un miércoles es absurdo, y ofrecerlo igual enseña que las opciones no significan
- * nada. Se filtran con datos que la página ya tiene: la fecha y el historial de asistencias.
+ * Los dos primeros nacieron condicionales —"hoy es lunes" solo los lunes, "más de dos días
+ * sin venir" solo tras la ausencia— y se quitó el filtro a petición del entrenador: el motivo
+ * lo lee una persona que ya conoce a la clienta, y que alguien diga "es lunes" un miércoles
+ * dice más de cómo se siente que de qué día es.
+ *
+ * El único condicional que queda es "Soy una perra frágil", y no depende de la fecha sino de
+ * quién mira: ver `NOMBRES_CON_FRAGIL`.
  */
 export interface Motivo {
   id: string;
@@ -14,7 +16,7 @@ export interface Motivo {
   libre?: boolean;
 }
 
-const CATALOGO: Motivo[] = [
+export const MOTIVOS: Motivo[] = [
   { id: "lunes", texto: "Hoy es lunes y quiero iniciar con algo que me guste" },
   { id: "ausencia", texto: "Tengo más de dos días sin venir y quiero iniciar con lo que yo quiera" },
   { id: "adelantar", texto: "Quiero adelantar el día" },
@@ -23,60 +25,42 @@ const CATALOGO: Motivo[] = [
   { id: "otro", texto: "Otro (describe el motivo)", libre: true },
 ];
 
-/** Cuántos días hábiles hacia atrás se miran para decidir si lleva "más de dos días sin venir". */
-const DIAS_HABILES_DE_AUSENCIA = 2;
+/**
+ * Las únicas clientas a las que se les ofrece "Soy una perra frágil". Es una broma entre el
+ * entrenador y ellas: a quien no está en la confianza no le hace gracia, le ofende.
+ *
+ * Se compara contra `Cliente.nombre` porque la web no tiene a mano otra cosa —el claim trae
+ * el id, pero esta lista la escribe una persona y un id no se lee—. Basta con el nombre de
+ * pila: "Estela" casa con "Estela Ramírez". Los nombres compuestos de la lista ("Brianda
+ * tics", "Jose Jaime") están enteros a propósito, para distinguirlos de otra Brianda o de
+ * otro Jaime que no están invitados a la broma.
+ */
+const NOMBRES_CON_FRAGIL = ["Estela", "Dulce", "Brianda tics", "Jaime", "Carito", "Jose Jaime"];
 
-function esDiaHabil(fecha: string): boolean {
-  const dia = new Date(`${fecha}T12:00:00`).getUTCDay();
-  return dia !== 0 && dia !== 6;
-}
-
-function restarUnDia(fecha: string): string {
-  const d = new Date(`${fecha}T12:00:00`);
-  d.setUTCDate(d.getUTCDate() - 1);
-  return d.toISOString().slice(0, 10);
-}
-
-function esLunes(fecha: string): boolean {
-  return new Date(`${fecha}T12:00:00`).getUTCDay() === 1;
+/** Sin acentos, sin mayúsculas y sin espacios de más: el nombre lo teclea una persona. */
+function normalizar(nombre: string): string {
+  return nombre
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 /**
- * Ventana de la ausencia: hoy más los 2 días **hábiles** anteriores.
- *
- * Hábiles y no naturales: el gimnasio no abre sábado ni domingo, así que un lunes el viernes
- * es "ayer". Contar días naturales haría que todos los lunes el cliente pudiera afirmar que
- * lleva más de dos días sin venir aunque hubiera venido el viernes, que es justo la mentira
- * que el filtro existe para evitar.
- *
- * Hoy entra en la ventana porque si ya vino hoy tampoco es cierto que lleve días sin venir.
+ * Casa por **prefijo de palabra completa**, no por substring. "Jaime" casa con "Jaime Ruiz"
+ * pero no con "Jose Jaime Ruiz", que es justo lo que permite tener a los dos en la lista sin
+ * que uno se coma al otro. Un apellido que contenga el nombre de otra tampoco cuela.
  */
-function ventanaDeAusencia(hoy: string): string[] {
-  const ventana = [hoy];
-  let fecha = restarUnDia(hoy);
-  // Tope de seguridad: sin él, un dato raro colgaría la pestaña del cliente.
-  for (let i = 0; i < 30 && ventana.length <= DIAS_HABILES_DE_AUSENCIA; i++) {
-    if (esDiaHabil(fecha)) ventana.push(fecha);
-    fecha = restarUnDia(fecha);
-  }
-  return ventana;
-}
-
-/**
- * Solo `asistio`: una falta justificada no es haber venido. Para la racha el soborno vale,
- * pero este motivo afirma un hecho físico — el cliente no pisó el gimnasio — y justificar
- * la falta no lo cambia.
- */
-function vinoEnLaVentana(asistencias: Asistencia[], hoy: string): boolean {
-  const ventana = new Set(ventanaDeAusencia(hoy));
-  return asistencias.some((a) => a.asistio && ventana.has(a.fecha));
-}
-
-export function motivosDisponibles(hoy: string, asistencias: Asistencia[]): Motivo[] {
-  const hayAusencia = !vinoEnLaVentana(asistencias, hoy);
-  return CATALOGO.filter((m) => {
-    if (m.id === "lunes") return esLunes(hoy);
-    if (m.id === "ausencia") return hayAusencia;
-    return true;
+function leTocaFragil(nombre: string): boolean {
+  const suyo = normalizar(nombre);
+  return NOMBRES_CON_FRAGIL.some((listado) => {
+    const n = normalizar(listado);
+    return suyo === n || suyo.startsWith(`${n} `);
   });
+}
+
+/** El catálogo que le toca ver a esta clienta. */
+export function motivosPara(nombre: string): Motivo[] {
+  return MOTIVOS.filter((m) => m.id !== "fragil" || leTocaFragil(nombre));
 }

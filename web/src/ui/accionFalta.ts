@@ -1,7 +1,7 @@
 import type { Asistencia, Cliente } from "../datos";
 import { MAXIMO_POR_MES, disponiblesEnElMes } from "../cupo";
 import { faltaQueRompioLaRacha } from "../faltaRompio";
-import { revivirRacha } from "../acciones";
+import { avisarFalta, revivirRacha } from "../acciones";
 import { escapar, esFinDeSemana } from "./tarjetaDia";
 
 /**
@@ -14,10 +14,19 @@ import { escapar, esFinDeSemana } from "./tarjetaDia";
  * Ninguna pide motivo — no hay lista, no hay texto libre, no se guarda nada (spec, "Faltar no
  * pide explicaciones"). Pedirle a alguien enfermo que elija de una lista por qué no puede ir
  * convierte un aviso en un trámite.
+ *
+ * Las dos llaman a endpoints DISTINTOS, y esa es la diferencia que importa:
+ *
+ *  - "Hoy no voy a poder ir" → `avisarFalta`. Gratis. Solo le dice al entrenador que hoy no
+ *    va, y el botón se va el resto del día.
+ *  - "Revivir mi racha" → `revivirRacha`. Cuesta uno de los 3 del mes, y por eso se confirma.
+ *
+ * Hasta el 2026-09-12 las dos llamaban a `revivirRacha`: avisar con educación cobraba un
+ * revive sin que nadie lo hubiera pedido. Ver `docs/backlog.md`.
  */
 
-/** Qué se está confirmando y desde dónde, para pintar el diálogo donde se pidió. */
-type Pendiente = { fecha: string; origen: "hoy" | "revivir" } | null;
+/** La fecha que se está por revivir. Solo "Revivir mi racha" confirma: avisar no cuesta nada. */
+type Pendiente = { fecha: string } | null;
 
 interface Estado {
   pendiente: Pendiente;
@@ -61,34 +70,38 @@ function confirmacion(disponibles: number): string {
     </div>`;
 }
 
-const ACUSE = `<p class="aviso-ok">Esperamos que todo esté bien, te vemos mañana si Dios quiere!</p>`;
+/** Lo que ve quien revive su racha. */
+const ACUSE_REVIVIR = `<p class="aviso-ok">Esperamos que todo esté bien, te vemos mañana si Dios quiere!</p>`;
 
-/** "Hoy no voy a poder ir". Se pinta dentro de la tarjeta del día, sin envoltorio propio. */
-export function accionHoyNoPuedo(
-  cliente: Cliente,
-  hoy: string,
-  asistencias: Asistencia[]
-): string {
+/** Lo que ve quien avisa que hoy no puede. No menciona rachas: no se gastó nada. */
+const ACUSE_AVISO = `<p class="aviso-ok">Entendido, esperamos que todo esté bien, nos vemos pronto!</p>`;
+
+/**
+ * "Hoy no voy a poder ir". Se pinta dentro de la tarjeta del día, sin envoltorio propio.
+ *
+ * `yaAviso` viene de Firestore y no de `estado`: el botón tiene que seguir escondido el resto
+ * del día aunque el cliente recargue o abra la página en otro teléfono. `estado.exito` es
+ * solo el adelanto local, para que el acuse salga en el mismo instante en que toca y no
+ * cuando llegue el snapshot.
+ */
+export function accionHoyNoPuedo(cliente: Cliente, hoy: string, yaAviso: boolean): string {
   if (esFinDeSemana(hoy)) return "";
 
-  const disponibles = disponiblesEnElMes(asistencias, hoy.slice(0, 7));
-  const sinCupo = disponibles === 0;
-  const bloqueado = !cliente.activo || sinCupo || estado.enVuelo;
-
-  if (estado.pendiente?.origen === "hoy") return confirmacion(disponibles);
-
-  const aviso = estado.exito === "hoy" ? ACUSE : "";
   const error =
     estado.error?.origen === "hoy"
       ? `<p class="aviso-error">${escapar(estado.error.texto)}</p>`
       : "";
 
+  // Ya avisó: el acuse ocupa el lugar del botón, no se suma debajo. Volver a ofrecerlo
+  // después de decir "nos vemos pronto" invita a tocarlo otra vez sin que signifique nada.
+  if (yaAviso || estado.exito === "hoy") return `${error}${ACUSE_AVISO}`;
+
   return `
-    ${aviso}${error}
-    <button id="falta-hoy" class="boton secundario" ${bloqueado ? "disabled" : ""}>
-      Hoy no voy a poder ir
-    </button>
-    ${sinCupo && cliente.activo ? `<p class="accion-nota">Ya usaste tus ${MAXIMO_POR_MES} revives de este mes.</p>` : ""}`;
+    ${error}
+    <button id="falta-hoy" class="boton secundario"
+            ${!cliente.activo || estado.enVuelo ? "disabled" : ""}>
+      ${estado.enVuelo && estado.pendiente === null ? "Avisando…" : "Hoy no voy a poder ir"}
+    </button>`;
 }
 
 /**
@@ -113,10 +126,10 @@ export function tarjetaRevivir(
   const bloqueado = !cliente.activo || sinCupo || estado.enVuelo;
 
   const cuerpo =
-    estado.pendiente?.origen === "revivir"
+    estado.pendiente !== null
       ? confirmacion(disponibles)
       : estado.exito === "revivir"
-        ? ACUSE
+        ? ACUSE_REVIVIR
         : `<button id="falta-revivir" class="boton secundario" ${bloqueado ? "disabled" : ""}>
              💔 Revivir mi racha
            </button>
@@ -143,20 +156,37 @@ export function conectarAccionFalta(
   asistencias: Asistencia[],
   repintar: () => void
 ): void {
-  function pedirConfirmacion(fecha: string, origen: "hoy" | "revivir"): void {
-    estado.pendiente = { fecha, origen };
+  // Avisar no se confirma: no cuesta nada y confirmarlo solo estorbaría a quien ya decidió
+  // que hoy no puede. Lo que sí hace falta es que un doble toque no mande dos llamadas.
+  document.querySelector("#falta-hoy")?.addEventListener("click", async () => {
+    if (estado.enVuelo) return;
+    estado.enVuelo = true;
     estado.error = null;
-    estado.exito = null;
     repintar();
-  }
-
-  document
-    .querySelector("#falta-hoy")
-    ?.addEventListener("click", () => pedirConfirmacion(hoy, "hoy"));
+    try {
+      await avisarFalta({});
+      estado.exito = "hoy";
+    } catch {
+      // Avisar no tiene errores propios que valga la pena distinguir: no hay cupo que se
+      // agote ni fecha que revalidar, así que cualquier fallo es "no llegó, vuelve a
+      // intentar" y el botón se queda donde estaba.
+      estado.error = {
+        origen: "hoy",
+        texto: "No pudimos registrar tu aviso. Inténtalo otra vez en un momento.",
+      };
+    } finally {
+      estado.enVuelo = false;
+      repintar();
+    }
+  });
 
   document.querySelector("#falta-revivir")?.addEventListener("click", () => {
     const rota = faltaQueRompioLaRacha(asistencias, hoy);
-    if (rota !== null) pedirConfirmacion(rota, "revivir");
+    if (rota === null) return;
+    estado.pendiente = { fecha: rota };
+    estado.error = null;
+    estado.exito = null;
+    repintar();
   });
 
   document.querySelector("#falta-cancelar")?.addEventListener("click", () => {
@@ -172,14 +202,14 @@ export function conectarAccionFalta(
     repintar();
     try {
       await revivirRacha({ fecha: pendiente.fecha });
-      estado.exito = pendiente.origen;
+      estado.exito = "revivir";
       estado.pendiente = null;
     } catch (error) {
       // El cupo agotado no es un error genérico: el cliente necesita saber que ya gastó los
       // tres del mes, no que "algo falló". El código viene de la `HttpsError` de la función.
       const codigo = (error as { code?: string }).code;
       estado.error = {
-        origen: pendiente.origen,
+        origen: "revivir",
         texto:
           codigo === "functions/resource-exhausted"
             ? `Ya usaste tus ${MAXIMO_POR_MES} revives de este mes.`

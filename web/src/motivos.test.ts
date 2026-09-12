@@ -1,39 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { motivosDisponibles } from "./motivos";
+import { MOTIVOS, motivosPara } from "./motivos";
 
-/**
- * 2026-09-14 es lunes, 15 martes, 16 miércoles; 11 viernes y 10 jueves.
- */
-const vino = (fecha: string) => ({
-  fecha,
-  asistio: true,
-  justificada: false,
-  duracionMinutos: null,
-});
+const ids = (nombre: string) => motivosPara(nombre).map((m) => m.id);
 
-const justificada = (fecha: string) => ({
-  fecha,
-  asistio: false,
-  justificada: true,
-  duracionMinutos: null,
-});
-
-const ids = (hoy: string, asistencias: Parameters<typeof motivosDisponibles>[1]) =>
-  motivosDisponibles(hoy, asistencias).map((m) => m.id);
-
-describe("motivosDisponibles", () => {
-  it("filtra el motivo del lunes cuando no es lunes", () => {
-    expect(ids("2026-09-16", [])).not.toContain("lunes");
-  });
-
-  it("filtra el de mas de dos dias cuando asistio ayer", () => {
-    expect(ids("2026-09-16", [vino("2026-09-15")])).not.toContain("ausencia");
-  });
-
-  it("un lunes con mas de dos dias sin venir ofrece los seis", () => {
-    // Último rastro el miércoles 9: el jueves 10 y el viernes 11, los dos días hábiles
-    // previos al lunes, están vacíos.
-    expect(ids("2026-09-14", [vino("2026-09-09")])).toEqual([
+describe("MOTIVOS", () => {
+  it("el catalogo tiene los seis motivos", () => {
+    expect(MOTIVOS.map((m) => m.id)).toEqual([
       "lunes",
       "ausencia",
       "adelantar",
@@ -43,33 +15,50 @@ describe("motivosDisponibles", () => {
     ]);
   });
 
-  it("el fin de semana no cuenta como dia sin venir", () => {
-    // Un lunes, haber venido el viernes es haber venido hace un día hábil.
-    expect(ids("2026-09-14", [vino("2026-09-11")])).not.toContain("ausencia");
-  });
-
-  it("una falta justificada no es haber venido", () => {
-    // Para la racha el soborno vale; para "tengo más de dos días sin venir" no, porque el
-    // motivo afirma un hecho físico: el cliente no pisó el gimnasio.
-    expect(ids("2026-09-16", [justificada("2026-09-15")])).toContain("ausencia");
-  });
-
-  it("haber venido hoy no ofrece el de la ausencia", () => {
-    expect(ids("2026-09-16", [vino("2026-09-16")])).not.toContain("ausencia");
-  });
-
-  it("un miercoles sin venir en dos dias habiles ofrece cinco", () => {
-    expect(ids("2026-09-16", [vino("2026-09-11")])).toEqual([
-      "ausencia",
-      "adelantar",
-      "reservado",
-      "fragil",
-      "otro",
-    ]);
-  });
-
   it("solo el de texto libre habilita el campo", () => {
-    const libres = motivosDisponibles("2026-09-14", []).filter((m) => m.libre).map((m) => m.id);
-    expect(libres).toEqual(["otro"]);
+    expect(MOTIVOS.filter((m) => m.libre).map((m) => m.id)).toEqual(["otro"]);
+  });
+});
+
+describe("motivosPara", () => {
+  it("los cinco motivos generales no dependen de quien mire", () => {
+    // Ni la fecha ni el historial los filtran ya: el único condicional es el de la broma.
+    expect(ids("Quien Sea")).toEqual(["lunes", "ausencia", "adelantar", "reservado", "otro"]);
+  });
+
+  it("ofrece el de la broma a quien esta en la lista", () => {
+    expect(ids("Estela")).toContain("fragil");
+    expect(ids("Dulce")).toContain("fragil");
+    expect(ids("Carito")).toContain("fragil");
+  });
+
+  it("basta el nombre de pila: casa con el apellido detras", () => {
+    expect(ids("Estela Ramírez")).toContain("fragil");
+  });
+
+  it("no lo ofrece a quien no esta en la lista", () => {
+    expect(ids("Marisol")).not.toContain("fragil");
+  });
+
+  it("ignora acentos, mayusculas y espacios de mas", () => {
+    expect(ids("  JOSÉ   JAIME  ")).toContain("fragil");
+  });
+
+  it("un nombre compuesto de la lista no lo hereda quien solo comparte la primera parte", () => {
+    // "Brianda tics" está entera en la lista justamente para que la otra Brianda no la vea.
+    expect(ids("Brianda Tics")).toContain("fragil");
+    expect(ids("Brianda Gómez")).not.toContain("fragil");
+  });
+
+  it("Jaime no se come a Jose Jaime ni al reves", () => {
+    // Casa por prefijo de palabra completa, no por substring: los dos están invitados por
+    // separado y ninguno entra por arrastre del otro.
+    expect(ids("Jaime Ruiz")).toContain("fragil");
+    expect(ids("Jose Jaime Ruiz")).toContain("fragil");
+  });
+
+  it("el nombre listado no cuela metido dentro de otro nombre", () => {
+    expect(ids("Ana Dulce")).not.toContain("fragil");
+    expect(ids("Dulcinea")).not.toContain("fragil");
   });
 });

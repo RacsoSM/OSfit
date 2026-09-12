@@ -44,3 +44,18 @@ export function observarAsistencias(clienteId: string, alCambiar: (a: Asistencia
     alCambiar(snap.docs.map((d) => d.data() as Asistencia));
   });
 }
+
+/**
+ * Si el cliente ya avisó que hoy no viene. Se observa en vez de guardarse solo en memoria
+ * para que el botón siga escondido si recarga la página o la abre en otro dispositivo: el
+ * aviso es del día, no de la pestaña.
+ */
+export function observarAvisoFalta(
+  clienteId: string,
+  hoy: string,
+  alCambiar: (yaAviso: boolean) => void
+) {
+  return onSnapshot(doc(db, "avisosFalta", `${clienteId}_${hoy}`), (snap) => {
+    alCambiar(snap.exists());
+  });
+}

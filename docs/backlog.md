@@ -187,3 +187,46 @@ igual para todos.
 
 > feature: a button on the OSfit app that can change the whole color palette of the web osfit,
 > like the palettes of the quincenales videos
+
+---
+
+## 8. Regenerar el grafo de graphify
+
+**Detectado:** 2026-09-12.
+
+> regenerate the graphify, only can do it in the cesavesin laptop
+
+El `graphify-out/` del repo es del 2026-08-20: 242 nodos, 443 aristas, 48 archivos. Desde
+entonces van 122 commits sobre `app/`, `web/` y `functions/` (139 archivos, +19.274 líneas),
+así que el grafo no refleja el proyecto actual — `web/` casi no aparece.
+
+No se actualiza solo: graphify es un CLI que hay que correr a mano, no hay hook ni nada que
+lo dispare. Y `graphify-out/.graphify_root` apunta a `C:\Users\SISTEMAS-03\Desktop\OSfit` con
+su propio Python de `uv`, que es la otra laptop; en esta máquina no está instalado.
+
+**Qué haría falta:** correrlo en esa laptop y commitear el `graphify-out/` nuevo. El
+`manifest.json` guarda `mtime` y `ast_hash` por archivo y hay caché de AST, así que la
+regeneración es incremental y solo reprocesa lo que cambió.
+
+---
+
+## 9. Notificación al entrenador cuando alguien avisa que no viene
+
+**Detectado:** 2026-09-12.
+
+> that should mark something in the OSfit app and if its possibly, turn on a notification,
+> but the notification can go to the backlog.md
+
+Lo de marcarlo en la app ya está hecho: "Hoy no voy a poder ir" escribe en `avisosFalta` y
+Tomar Asistencia pinta "🔔 Avisó que no viene" en la fila de la clienta. Lo que falta es que
+el entrenador **se entere sin abrir la app**.
+
+**Qué haría falta:** una función `onDocumentCreated` sobre `avisosFalta/{doc}` que mande un
+push por FCM al teléfono del entrenador. Hoy la app no tiene nada de FCM, así que hay que
+montarlo entero: dependencia, `FirebaseMessagingService`, permiso `POST_NOTIFICATIONS`
+(Android 13+ lo pide en tiempo de ejecución), canal de notificación, y guardar el token del
+dispositivo en algún lado que la función pueda leer.
+
+**Por qué no es urgente:** el aviso no se pierde — queda en Firestore y se ve en Tomar
+Asistencia, que es la pantalla que el entrenador abre igual todos los días. La notificación
+adelanta el momento en que se entera, no cambia lo que sabe.

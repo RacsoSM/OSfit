@@ -444,18 +444,29 @@ encabezado del rango y la duración.
 
 ### Motivos del cambio de día
 
-1. "Hoy es lunes y quiero iniciar con algo que me guste" — **solo los lunes**
-2. "Tengo más de dos días sin venir y quiero iniciar con lo que yo quiera" —
-   **solo si lleva más de 2 días hábiles sin asistir**
+1. "Hoy es lunes y quiero iniciar con algo que me guste"
+2. "Tengo más de dos días sin venir y quiero iniciar con lo que yo quiera"
 3. "Quiero adelantar el día"
 4. "La neta no te quiero decir, solo no quiero hacerlo"
-5. "Soy una perra frágil"
+5. "Soy una perra frágil" — **solo a las clientas de la lista**
 6. "Otro (describe el motivo)" — habilita texto libre
 
-Los dos primeros son condicionales porque son afirmaciones sobre hechos: "hoy
-es lunes" ofrecido un miércoles es absurdo, y ofrecerlo igual enseña que las
-opciones no significan nada. La web filtra con datos que ya tiene (la fecha y
-el historial de asistencias).
+**El 5 es una broma entre el entrenador y unas pocas clientas**, y a quien no
+está en esa confianza no le hace gracia: le ofende. Desde el 2026-09-12 solo se
+le ofrece a las que estén en `NOMBRES_CON_FRAGIL` (`web/src/motivos.ts`).
+La lista se compara contra `Cliente.nombre` por prefijo de palabra completa
+—basta el nombre de pila— sin distinguir acentos ni mayúsculas. Los nombres
+compuestos van enteros en la lista para que otra clienta con el mismo nombre de
+pila no herede la broma.
+
+**Los otros cinco se ofrecen siempre.** Los dos primeros fueron condicionales al
+principio —el 1 solo los lunes, el 2 solo tras dos días hábiles sin asistir—
+porque son afirmaciones sobre hechos y ofrecerlas cuando no se cumplen parecía
+enseñar que las opciones no significan nada. El 2026-09-12 el entrenador pidió
+quitar el filtro: el motivo lo lee una persona que ya conoce a la clienta, y
+que alguien elija "es lunes" un miércoles dice más de cómo se siente que de qué
+día es. El catálogo pasó a ser una constante y la web ya no mira la fecha ni el
+historial para pintarlo.
 
 El motivo se guarda en `CambioDiaWeb.motivo` y el entrenador lo ve en su
 indicador del calendario.
@@ -463,7 +474,22 @@ indicador del calendario.
 ### Faltar no pide explicaciones
 
 **"Hoy no voy a poder ir" y "Revivir mi racha" no piden motivo.** No hay lista,
-no hay texto libre, no se guarda nada.
+no hay texto libre, no se guarda ningún motivo.
+
+**Son dos acciones distintas y cuestan distinto.** Desde el 2026-09-12:
+
+- **"Hoy no voy a poder ir"** llama a `avisarFalta`, es **gratis** y no toca
+  `asistencias`. Escribe `avisosFalta/{clienteId}_{fecha}`, responde
+  *"Entendido, esperamos que todo esté bien, nos vemos pronto!"* y **el botón
+  desaparece el resto del día** — la página lee esa colección, así que sigue
+  escondido aunque recargue o entre desde otro teléfono. No se confirma: no
+  cuesta nada que confirmar.
+- **"Revivir mi racha"** llama a `revivirRacha`, cuesta uno de los 3 del mes y
+  por eso sí se confirma.
+
+Antes las dos llamaban a `revivirRacha`: avisar con educación gastaba un revive
+sin que nadie lo hubiera pedido. Avisar y justificar no son lo mismo, y ahora
+el cliente puede hacer lo primero sin pagar lo segundo.
 
 Antes de gastar el revive se confirma, porque son 3 al mes y el cliente no debe
 descubrir que gastó uno por un toque accidental:
