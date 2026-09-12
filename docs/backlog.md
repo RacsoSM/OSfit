@@ -48,25 +48,33 @@ de acción"*). Con el teléfono en sábado no hay nada que tocar aunque esté to
 
 **3. Lo que hay que verificar, y lo que no se puede saltar.**
 
-- **El test negativo, primero.** Con la página abierta como cliente, desde la consola del
-  navegador: `updateDoc` sobre su propio documento de `clientes`, y lo mismo sobre
-  `asistencias` y `cambiosDia`. Los tres tienen que dar error de permisos. Todo el diseño se
-  apoya en que el cliente siga siendo de solo lectura en Firestore y que las dos acciones
-  pasen por functions. Si esto falla, no se sigue.
-- **`cambiarDia` con asistencia ya marcada hoy, y mirarlo AL DÍA SIGUIENTE.** Es la rama
-  `vinoHoy` del trío denormalizado y equivocarla no se nota hoy, solo mañana: el ciclo tiene
-  que **avanzar**. Contrastar con un cliente que cambió el día **sin** haber venido, que sí
-  debe seguir mañana en el mismo día. Es letra por letra la regresión de `d424286`.
-- **`revivirRacha`.** Con los datos de Brianda del 2026-09-12, su falta reparable es el
-  **viernes 2026-09-04** (vino del 7 al 11, faltó el 4), así que el botón debe ofrecer
-  exactamente esa fecha y ninguna otra. Probar también: avisar por adelantado sin registro
-  previo, gastar los 3 del mes, y que al desmarcar el entrenador una justificada **el cupo se
-  devuelva solo**.
+- **`revivirRacha`.** Probar: avisar por adelantado sin registro previo, gastar los 3 del
+  mes, y que al desmarcar el entrenador una justificada **el cupo se devuelva solo**.
+
+  Ojo con qué fecha se espera. El 2026-09-12 Brianda tiene una falta el **viernes
+  2026-09-04** y vino del 7 al 11, y la página **no le ofrece revivir nada**. Eso es
+  correcto, está confirmado con el entrenador y no hay que "arreglarlo": la ventana son los
+  2 días hábiles anteriores a hoy, y una rotura de hace más de una semana quedó fuera hace
+  rato. Verificado en su página el 2026-09-12: no aparece la tarjeta de revivir.
 - **Intentar justificar una fecha arbitraria** llamando al callable a mano desde la consola.
   Tiene que responder `failed-precondition`. Es lo que impide que revivir sea "justificar
   cualquier día de mi historial".
-- **Los indicadores del entrenador** en Tomar Asistencia, una vez que haya datos de verdad
-  que mostrar.
+- **Los indicadores del entrenador**, que no se han visto nunca dibujados porque solo
+  aparecen cuando una clienta hace algo desde la web **ese mismo día**. Son tres, y ninguno
+  lo cubren los tests (son Compose, y la suite solo prueba `domain/`):
+  - "🔄 Cambió su día: <motivo>" en Tomar Asistencia, de `cambiosDia`.
+  - "🔔 Avisó que no viene" en Tomar Asistencia, de `avisosFalta`.
+  - La tarjeta amarilla en Clientes, de `avisosFalta`.
+
+  Para verlos hace falta que alguien toque el botón de verdad desde su página. **No se
+  pueden ver con la fecha del teléfono movida**: la app consulta por la fecha del
+  dispositivo y las functions escriben con la de Mazatlán, así que si no coinciden el
+  indicador busca un día en el que no hay nada escrito.
+- **Lo que cambió el 2026-09-12 y no estaba en esta lista:** que "Hoy no voy a poder ir" no
+  gasta revive y que el botón no vuelve en todo el día ni recargando; que "Quiero cambiar el
+  día" sale deshabilitado si ya tiene asistencia marcada, y que el callable responde
+  `ya_asistio_hoy` si se le llama a mano; que "Soy una perra frágil" solo aparece para las
+  seis de la lista; y que los seis motivos se ofrecen siempre.
 
 **4. Lo que ya quedó verificado el sábado:** el cupo en la ficha del cliente ("Revives: 3 de 3
 disponibles este mes", correcto para Brianda); que las pantallas de Clientes, Calendario y
@@ -74,6 +82,18 @@ Tomar Asistencia siguen sin romperse con los campos nuevos; que las dos llamable
 quien no trae sesión; y que la página desplegada se sigue viendo igual que antes para un
 cliente real —día, racha, promedio y calendario intactos, sin botones de acción porque es
 sábado—, que era el riesgo de poner el bundle nuevo delante de todos.
+
+**El test negativo también, y ya no hace falta repetirlo.** El 2026-09-12 se corrió contra la
+cuenta real de Brianda con Playwright sobre la API REST de Firestore, usando el token de su
+propia sesión. Cinco pruebas, cinco como se esperaban: leer su documento de `clientes` da 200,
+y escribir en `clientes`, `asistencias`, `cambiosDia` y `avisosFalta` da 403. Se le mandaron
+sus mismos valores a propósito, para que si una regla hubiera fallado el write no le cambiara
+nada. De paso quedó visto que el link canjea y reemplaza la URL por `/mi`.
+
+El script está en el scratchpad de esa sesión, no en el repo. Si hay que repetirlo: abrir el
+link con Playwright, sacar el token de `localStorage` (`firebase:authUser:<apiKey>:[DEFAULT]`)
+y pegarle a `firestore.googleapis.com` con ese bearer. Navegar con `domcontentloaded`, no con
+`networkidle`: los listeners de Firestore dejan la conexión abierta y el `goto` nunca vuelve.
 
 **5. Aviso sobre los datos.** La verificación se acordó hacer contra la cuenta real de
 Brianda. Un revive gasta uno de sus 3 del mes y un cambio de día le mueve la rutina de
@@ -125,24 +145,6 @@ fallara, el peor caso es una tarjeta fea o ausente, no una fuga ni un dato incor
 **Qué haría falta:** un cliente de prueba sin rutina asignada, compartirle acceso y abrir su
 página. Alternativa sin tocar datos: un test de `tarjetaDia()` con `rutinaAsignada: null`,
 que además dejaría la rama cubierta para siempre en vez de una sola vez a mano.
-
----
-
-## 3. Verificar el estado "hoy toca descansar" (fin de semana)
-
-**Detectado:** 2026-09-11, Step 5 del Task 13. Quedó sin ejecutar.
-
-Sábado y domingo la página debe mostrar "Hoy toca descansar" y adelantar cuál toca el lunes,
-en vez de un día de rutina que nadie va a hacer. Implementado en `esFinDeSemana()` de
-`web/src/ui/tarjetaDia.ts`, sin verificar contra un sábado real.
-
-**Por qué no es urgente:** mismo motivo que el anterior, y además se verifica solo cada
-sábado en cuanto haya un cliente con la página abierta.
-
-**Qué haría falta:** esperar al sábado, o cambiar la fecha del teléfono (invasivo). Lo
-sensato es un test de `tarjetaDia()` con una fecha de sábado, que no depende del calendario
-ni de tocar el dispositivo. Ojo con la zona horaria: `esFinDeSemana` construye la fecha con
-`T12:00:00` y lee `getUTCDay()`, y eso conviene fijarlo en el test.
 
 ---
 
