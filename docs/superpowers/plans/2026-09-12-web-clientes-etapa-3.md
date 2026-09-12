@@ -70,7 +70,7 @@ Se prefiere el fallo visible. Borrar blob, después documento.
 
 ## Bloque A — Insignias
 
-### Task 1: Storage en el proyecto
+### Task 1: Storage en el proyecto — ✅ HECHO (2026-09-12)
 
 No hay nada montado: ni dependencia en la app, ni `storage.rules`, ni sección `storage` en `firebase.json`. El bucket sí existe (responde 403, no 404).
 
@@ -78,12 +78,32 @@ No hay nada montado: ni dependencia en la app, ni `storage.rules`, ni sección `
 - Create: `storage.rules`
 - Modify: `firebase.json`, `app/build.gradle.kts`
 
-- [ ] **Step 1: Comprobar qué reglas tiene el bucket HOY, antes de pisarlas.** Si sigue en las de por defecto y ya hay algo subido, conviene saberlo antes de desplegar encima.
-- [ ] **Step 2: Escribir `storage.rules`** con las del spec: `insignias/**` legible por cualquier sesión, `resumenes/{clienteId}/**` legible por el entrenador o por el dueño del claim, escritura solo entrenador en ambos.
-- [ ] **Step 3: Apuntar `firebase.json` al archivo** con `"storage": { "rules": "storage.rules" }`.
-- [ ] **Step 4: Agregar `firebase-storage-ktx`** al bloque de dependencias, dentro del BOM que ya está.
-- [ ] **Step 5: Desplegar** `firebase deploy --only storage` y compilar la app.
-- [ ] **Step 6: Commit.**
+- [x] **Step 1: Comprobar qué reglas tiene el bucket HOY, antes de pisarlas.** Si sigue en las de por defecto y ya hay algo subido, conviene saberlo antes de desplegar encima.
+- [x] **Step 2: Escribir `storage.rules`** con las del spec: `insignias/**` legible por cualquier sesión, `resumenes/{clienteId}/**` legible por el entrenador o por el dueño del claim, escritura solo entrenador en ambos.
+- [x] **Step 3: Apuntar `firebase.json` al archivo** con `"storage": { "rules": "storage.rules" }`.
+- [x] **Step 4: Agregar `firebase-storage-ktx`** al bloque de dependencias, dentro del BOM que ya está.
+- [x] **Step 5: Desplegar** `firebase deploy --only storage` y compilar la app.
+- [x] **Step 6: Commit.**
+
+**Cómo quedó el Step 1.** Listar la raíz del bucket da 403 aunque las reglas sean permisivas
+—`{allPaths=**}` no autoriza listar el prefijo raíz—, así que ese 403 no dice nada. Lo que sí
+distingue es pedir un objeto concreto: con reglas abiertas, uno que no existe da 404; con el
+bucket cerrado, da 403. Como entrenador autenticado daban **403 las tres rutas probadas**, o
+sea que el bucket estaba cerrado (`if false`, el default moderno). Nada podía leerse ni
+escribirse, así que nada dependía de él.
+
+**Verificado después de desplegar**, con la sesión del entrenador sacada por REST con las
+credenciales de `local.properties`:
+
+| prueba | resultado | qué prueba |
+|---|---|---|
+| entrenador → ruta fuera de las dos | 403 | no se abrió nada de más |
+| entrenador → `insignias/…` | 404 | puede leer; el objeto no existe |
+| entrenador → `resumenes/…` | 404 | puede leer |
+| sin sesión → `insignias/…` | 403 | sigue cerrado sin sesión |
+
+Falta la rama de aislamiento entre clientas (que una no pueda pedir el video de otra), que
+necesita dos sesiones de clienta y va en el Task 10, Step 5.
 
 ### Task 2: `imagenUrl` en los cuatro modelos, y el repositorio de subida
 
