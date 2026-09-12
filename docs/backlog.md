@@ -6,8 +6,11 @@ no en mitad de otra cosa.
 
 Lo que sí corre prisa va arriba, en su propia sección, y se borra igual cuando se hace.
 
-Convención: una entrada se borra de aquí cuando se arregla, y el arreglo se explica en el
-commit — no se marca "hecho" y se deja.
+Convención: una entrada **nunca se borra**. Cuando se completa se marca en su encabezado
+—`## N. Título — ✅ HECHO (fecha)`— y se le añade debajo qué se verificó y cuándo. El
+backlog no es solo la lista de pendientes: es el registro de qué se revisó y cómo quedó, y
+borrar una entrada tira la explicación de por qué existía. El arreglo se explica igual en el
+commit.
 
 ---
 
@@ -59,22 +62,32 @@ de acción"*). Con el teléfono en sábado no hay nada que tocar aunque esté to
 - **Intentar justificar una fecha arbitraria** llamando al callable a mano desde la consola.
   Tiene que responder `failed-precondition`. Es lo que impide que revivir sea "justificar
   cualquier día de mi historial".
-- **Los indicadores del entrenador**, que no se han visto nunca dibujados porque solo
-  aparecen cuando una clienta hace algo desde la web **ese mismo día**. Son tres, y ninguno
-  lo cubren los tests (son Compose, y la suite solo prueba `domain/`):
-  - "🔄 Cambió su día: <motivo>" en Tomar Asistencia, de `cambiosDia`.
-  - "🔔 Avisó que no viene" en Tomar Asistencia, de `avisosFalta`.
-  - La tarjeta amarilla en Clientes, de `avisosFalta`.
+- ✅ **Los indicadores del aviso de falta: HECHO (2026-09-12).** El entrenador verificó a
+  mano que al tocar "Hoy no voy a poder ir" la clienta se pinta de amarillo en Clientes, y
+  que sale el aviso en Tomar Asistencia. Los dos caminos de `avisosFalta` funcionan.
+- **Falta ver el indicador del cambio de día**, el único de los tres que sigue sin verse:
+  "🔄 Cambió su día: <motivo>" en Tomar Asistencia, de `cambiosDia`. No lo cubren los tests
+  (es Compose, y la suite solo prueba `domain/`) y solo se dibuja el mismo día en que la
+  clienta cambia su día desde su página.
+- **Se espera al lunes para el cambio de día.** Acordado con el entrenador el 2026-09-12.
+  Hay que probar, con una clienta de verdad y en un día hábil:
+  - Que al cambiar el día aparece "🔄 Cambió su día: <motivo>" en Tomar Asistencia, con el
+    motivo que eligió.
+  - Que **al día siguiente el ciclo avanza** en vez de quedarse trabado en el día asignado.
+    Es lo que queda de la regresión de `d424286`: el ancla se fecha ayer a propósito, y
+    equivocarse no se nota hoy, solo mañana.
+  - Que con la asistencia de hoy ya marcada el botón sale **deshabilitado** con la nota "Ya
+    registraste tu asistencia de hoy", y que llamando al callable a mano responde
+    `ya_asistio_hoy`.
 
-  Para verlos hace falta que alguien toque el botón de verdad desde su página. **No se
-  pueden ver con la fecha del teléfono movida**: la app consulta por la fecha del
+  **Con la fecha del teléfono movida no se puede probar**: la app consulta por la fecha del
   dispositivo y las functions escriben con la de Mazatlán, así que si no coinciden el
-  indicador busca un día en el que no hay nada escrito.
-- **Lo que cambió el 2026-09-12 y no estaba en esta lista:** que "Hoy no voy a poder ir" no
-  gasta revive y que el botón no vuelve en todo el día ni recargando; que "Quiero cambiar el
-  día" sale deshabilitado si ya tiene asistencia marcada, y que el callable responde
-  `ya_asistio_hoy` si se le llama a mano; que "Soy una perra frágil" solo aparece para las
-  seis de la lista; y que los seis motivos se ofrecen siempre.
+  indicador busca un día en el que no hay nada escrito. Devolver el teléfono a su fecha
+  antes de intentarlo.
+- **Lo demás que cambió el 2026-09-12 y no estaba en esta lista:** que "Hoy no voy a poder
+  ir" no gasta revive y que el botón no vuelve en todo el día ni recargando; que "Soy una
+  perra frágil" solo aparece para las seis de la lista; y que los seis motivos se ofrecen
+  siempre.
 
 **4. Lo que ya quedó verificado el sábado:** el cupo en la ficha del cliente ("Revives: 3 de 3
 disponibles este mes", correcto para Brianda); que las pantallas de Clientes, Calendario y
@@ -145,6 +158,28 @@ fallara, el peor caso es una tarjeta fea o ausente, no una fuga ni un dato incor
 **Qué haría falta:** un cliente de prueba sin rutina asignada, compartirle acceso y abrir su
 página. Alternativa sin tocar datos: un test de `tarjetaDia()` con `rutinaAsignada: null`,
 que además dejaría la rama cubierta para siempre en vez de una sola vez a mano.
+
+---
+
+## 3. Verificar el estado "hoy toca descansar" (fin de semana) — ✅ HECHO (2026-09-12)
+
+**Detectado:** 2026-09-11, Step 5 del Task 13. Quedó sin ejecutar.
+
+Sábado y domingo la página debe mostrar "Hoy toca descansar" y adelantar cuál toca el lunes,
+en vez de un día de rutina que nadie va a hacer. Implementado en `esFinDeSemana()` de
+`web/src/ui/tarjetaDia.ts`, sin verificar contra un sábado real.
+
+**Por qué no es urgente:** mismo motivo que el anterior, y además se verifica solo cada
+sábado en cuanto haya un cliente con la página abierta.
+
+**Qué haría falta:** esperar al sábado, o cambiar la fecha del teléfono (invasivo). Lo
+sensato es un test de `tarjetaDia()` con una fecha de sábado, que no depende del calendario
+ni de tocar el dispositivo. Ojo con la zona horaria: `esFinDeSemana` construye la fecha con
+`T12:00:00` y lee `getUTCDay()`, y eso conviene fijarlo en el test.
+
+**Hecho:** verificado el sábado 2026-09-12 contra un sábado real, en la página de Brianda.
+Muestra "Hoy toca descansar" y "El lunes te toca Pierna (Cuádriceps)", sin botones de acción.
+No hizo falta tocar la fecha del teléfono ni escribir el test: cayó en sábado de verdad.
 
 ---
 
