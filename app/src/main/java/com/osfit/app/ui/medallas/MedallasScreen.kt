@@ -48,7 +48,13 @@ import java.util.UUID
 
 @Composable
 fun MedallasScreen(viewModel: MedallasViewModel = viewModel()) {
+    val context = LocalContext.current
     val medallas by viewModel.medallas.collectAsState()
+
+    // El archivo de filesDir se resuelve acá y se le pasa al ViewModel, que así no necesita
+    // un Context para subir la insignia a Storage.
+    fun archivoDe(medalla: MedallaCatalogo) =
+        medalla.imagenArchivo?.let { MedallaImagenUtil.archivoImagen(context, it) }
     var medallaEnEdicion by remember { mutableStateOf<MedallaCatalogo?>(null) }
     var mostrarNueva by remember { mutableStateOf(false) }
     var medallaAEliminar by remember { mutableStateOf<MedallaCatalogo?>(null) }
@@ -79,7 +85,7 @@ fun MedallasScreen(viewModel: MedallasViewModel = viewModel()) {
     medallaEnEdicion?.let { medalla ->
         EditarMedallaDialog(
             medalla = medalla,
-            onGuardar = { actualizada -> viewModel.guardar(actualizada); medallaEnEdicion = null },
+            onGuardar = { actualizada -> viewModel.guardar(actualizada, archivoDe(actualizada)); medallaEnEdicion = null },
             onCancelar = { medallaEnEdicion = null }
         )
     }
@@ -88,7 +94,7 @@ fun MedallasScreen(viewModel: MedallasViewModel = viewModel()) {
         // filesDir/medallas/<id> antes de guardar el documento; ver MedallaRepository.guardarMedalla.
         EditarMedallaDialog(
             medalla = MedallaCatalogo(id = UUID.randomUUID().toString()),
-            onGuardar = { nueva -> viewModel.guardar(nueva); mostrarNueva = false },
+            onGuardar = { nueva -> viewModel.guardar(nueva, archivoDe(nueva)); mostrarNueva = false },
             onCancelar = { mostrarNueva = false }
         )
     }

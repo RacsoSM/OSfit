@@ -211,6 +211,7 @@ class ClienteDetailViewModel(
                     rangoInicio = "manual_${System.currentTimeMillis()}",
                     medallaId = medalla.id,
                     nombreMedalla = medalla.nombre,
+                    imagenUrl = medalla.imagenUrl,
                     encabezadoRango = "Otorgada manualmente el ${LocalDate.now()}",
                     fueAjustadaManualmente = true
                 )
@@ -237,6 +238,7 @@ class ClienteDetailViewModel(
                         rangoInicio = rangoInicio,
                         logroId = logro.id,
                         nombreLogro = logro.nombre,
+                        imagenUrl = logro.imagenUrl,
                         mensaje = logro.mensaje,
                         encabezadoRango = "Otorgado manualmente el ${LocalDate.now()}",
                         orden = 0

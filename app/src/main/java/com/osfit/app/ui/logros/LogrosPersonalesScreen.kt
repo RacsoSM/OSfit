@@ -48,7 +48,12 @@ import java.util.UUID
 
 @Composable
 fun LogrosPersonalesScreen(viewModel: LogrosPersonalesViewModel = viewModel()) {
+    val context = LocalContext.current
     val logros by viewModel.logros.collectAsState()
+
+    // Ver MedallasScreen: el ViewModel recibe el archivo ya resuelto, no un Context.
+    fun archivoDe(logro: LogroPersonalCatalogo) =
+        logro.imagenArchivo?.let { LogroPersonalImagenUtil.archivoImagen(context, it) }
     var logroEnEdicion by remember { mutableStateOf<LogroPersonalCatalogo?>(null) }
     var mostrarNuevo by remember { mutableStateOf(false) }
     var logroAEliminar by remember { mutableStateOf<LogroPersonalCatalogo?>(null) }
@@ -74,7 +79,7 @@ fun LogrosPersonalesScreen(viewModel: LogrosPersonalesViewModel = viewModel()) {
     logroEnEdicion?.let { logro ->
         EditarLogroDialog(
             logro = logro,
-            onGuardar = { actualizado -> viewModel.guardar(actualizado); logroEnEdicion = null },
+            onGuardar = { actualizado -> viewModel.guardar(actualizado, archivoDe(actualizado)); logroEnEdicion = null },
             onCancelar = { logroEnEdicion = null }
         )
     }
@@ -84,12 +89,11 @@ fun LogrosPersonalesScreen(viewModel: LogrosPersonalesViewModel = viewModel()) {
         // LogroPersonalRepository.guardarLogro.
         EditarLogroDialog(
             logro = LogroPersonalCatalogo(id = UUID.randomUUID().toString()),
-            onGuardar = { nuevo -> viewModel.guardar(nuevo); mostrarNuevo = false },
+            onGuardar = { nuevo -> viewModel.guardar(nuevo, archivoDe(nuevo)); mostrarNuevo = false },
             onCancelar = { mostrarNuevo = false }
         )
     }
     logroAEliminar?.let { logro ->
-        val context = LocalContext.current
         AlertDialog(
             onDismissRequest = { logroAEliminar = null },
             title = { Text("¿Borrar \"${logro.nombre}\"?") },

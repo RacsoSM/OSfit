@@ -79,6 +79,13 @@ class MedallaRepository(
         catalogo.document(medalla.id).set(medalla.copy(id = "")).await()
     }
 
+    /** Escritura puntual de la URL de Storage, separada de [guardarMedalla] porque la subida
+     *  ocurre después de que la medalla ya quedó guardada: así un fallo de red deja la medalla
+     *  escrita sin URL en vez de perderla entera. */
+    suspend fun actualizarImagenUrl(medallaId: String, imagenUrl: String) {
+        catalogo.document(medallaId).update("imagenUrl", imagenUrl).await()
+    }
+
     /** Lanza [IllegalArgumentException] si [medalla] es una de las 5 automáticas: no son
      *  borrables, solo editables (nombre/imagen). */
     suspend fun eliminarMedalla(medalla: MedallaCatalogo) {

@@ -162,6 +162,7 @@ class ResumenClienteViewModel(
                             rangoInicio = preparacion.resumen.rango.inicio.toString(),
                             medallaId = elegida.id,
                             nombreMedalla = elegida.nombre,
+                            imagenUrl = elegida.imagenUrl,
                             encabezadoRango = preparacion.resumen.rango.encabezado,
                             fueAjustadaManualmente = elegida.id != preparacion.sugerencia?.id
                         )
@@ -179,6 +180,7 @@ class ResumenClienteViewModel(
                             rangoInicio = rangoInicio,
                             logroId = logro.id,
                             nombreLogro = logro.nombre,
+                            imagenUrl = logro.imagenUrl,
                             mensaje = logro.mensaje,
                             encabezadoRango = preparacion.resumen.rango.encabezado,
                             orden = indice
