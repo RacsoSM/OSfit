@@ -23,6 +23,13 @@ interface ClienteRepository {
     )
     suspend fun actualizarActivo(clienteId: String, activo: Boolean)
     suspend fun actualizarCancion(clienteId: String, archivo: String?, ruta: String?, inicioSegundos: Int?)
+    /**
+     * Escribe SÓLO `cancionRuta`. Lo usa el respaldo cuando la subida termina, que puede ser
+     * después de que el entrenador ya guardó y se fue de la pantalla: escribir ahí el resto de
+     * los campos pisaría con datos viejos el `cancionArchivo` y el `cancionInicioSegundos` que
+     * ese guardado acaba de dejar.
+     */
+    suspend fun actualizarCancionRuta(clienteId: String, ruta: String?)
     /** "Asignar día": deja el ancla manual. No toca ningún registro de asistencia. */
     suspend fun asignarDiaAncla(clienteId: String, diaIndex: Int, fecha: String)
     suspend fun actualizarProximoPago(clienteId: String, fecha: Timestamp)

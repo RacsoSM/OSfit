@@ -173,6 +173,10 @@ class FakeClienteRepository : ClienteRepository {
         }
     }
 
+    override suspend fun actualizarCancionRuta(clienteId: String, ruta: String?) {
+        actualizarCliente(clienteId) { it.copy(cancionRuta = ruta) }
+    }
+
     override suspend fun asignarDiaAncla(clienteId: String, diaIndex: Int, fecha: String) {
         actualizarCliente(clienteId) {
             it.copy(diaActualIndex = diaIndex, diaAnclaFecha = fecha)

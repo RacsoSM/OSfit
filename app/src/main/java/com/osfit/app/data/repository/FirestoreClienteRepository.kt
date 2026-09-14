@@ -99,6 +99,10 @@ class FirestoreClienteRepository(
         ).await()
     }
 
+    override suspend fun actualizarCancionRuta(clienteId: String, ruta: String?) {
+        coleccion.document(clienteId).update("cancionRuta", ruta).await()
+    }
+
     override suspend fun asignarDiaAncla(clienteId: String, diaIndex: Int, fecha: String) {
         coleccion.document(clienteId).update(
             mapOf("diaActualIndex" to diaIndex, "diaAnclaFecha" to fecha)

@@ -32,7 +32,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -42,11 +41,9 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
-import com.osfit.app.data.AppContainer
 import com.osfit.app.util.CancionUtil
 import java.io.File
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 
 /** Cuánto suena la canción al tocar reproducir en el preview: suficiente para ubicar el
  *  fragmento por oído sin tener que escuchar la canción completa. */
@@ -74,7 +71,14 @@ fun ClienteEditarScreen(
     var cancionArchivo by remember { mutableStateOf(clienteActual.cancionArchivo) }
     var cancionRuta by remember { mutableStateOf(clienteActual.cancionRuta) }
     var inicioSegundos by remember { mutableStateOf(clienteActual.cancionInicioSegundos ?: 0) }
-    val alcance = rememberCoroutineScope()
+
+    // La subida vive en el ViewModel y escribe `cancionRuta` sola. Acá se recoge nada más para
+    // que el guardado mande la ruta nueva y no la nula que quedó al elegir la canción: si no,
+    // Guardar pisaría con null un respaldo que ya existe.
+    val rutaRespaldada by viewModel.cancionRutaRespaldada.collectAsState()
+    LaunchedEffect(rutaRespaldada) {
+        rutaRespaldada?.let { cancionRuta = it }
+    }
 
     val selectorCancion = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri != null) {
@@ -88,19 +92,14 @@ fun ClienteEditarScreen(
                 }
                 cancionArchivo = nuevoArchivo
                 inicioSegundos = 0
-                // La copia local ya está hecha y el video funciona con ella. El respaldo se
-                // intenta después: si falla, la ruta se queda nula y esta canción se reintenta
-                // la próxima vez que se elija. Nada más se rompe mientras tanto.
+                // La copia local ya está hecha y el video funciona con ella. La ruta vieja se
+                // invalida acá y no se deduce del nombre: con la misma extensión, el nombre es
+                // el mismo y apuntaría a los bytes de la canción anterior.
                 cancionRuta = null
-                alcance.launch {
-                    val subida = runCatching {
-                        AppContainer.cancionStorageRepository.subir(
-                            clienteId,
-                            CancionUtil.archivoCancion(context, nuevoArchivo)
-                        )
-                    }.getOrNull()
-                    if (subida != null) cancionRuta = subida
-                }
+                // El respaldo se intenta después, desde el ViewModel, que sobrevive a que esta
+                // pantalla se vaya: si falla, la ruta se queda nula y esta canción se reintenta
+                // la próxima vez que se elija. Nada más se rompe mientras tanto.
+                viewModel.respaldarCancion(CancionUtil.archivoCancion(context, nuevoArchivo))
             }
         }
     }
