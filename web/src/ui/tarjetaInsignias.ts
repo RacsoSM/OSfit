@@ -22,7 +22,7 @@ function insignia(imagenUrl: string | null | undefined, respaldo: string): strin
     : `<div class="insignia-img generica">${respaldo}</div>`;
 }
 
-function seccionVacia(titulo: string, emoji: string, que: string, quien: string): string {
+export function seccionVacia(titulo: string, emoji: string, que: string, quien: string): string {
   return `
     <div class="tarjeta">
       <p class="tarjeta-titulo">${titulo}</p>

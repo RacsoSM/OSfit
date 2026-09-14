@@ -85,6 +85,24 @@ export interface LogroPersonalOtorgado {
   imagenUrl?: string | null;
 }
 
+/**
+ * El video de resumen de una quincena. Guarda la RUTA en Storage, no la URL: a diferencia
+ * de las insignias, el video es personal, así que la URL de descarga se pide al SDK recién
+ * al pintar (ver `tarjetaVideos`), y solo la sesión de esa clienta puede pedirla.
+ */
+export interface VideoResumen {
+  rangoInicio: string;
+  encabezadoRango: string;
+  rutaStorage: string;
+  duracionSegundos: number;
+}
+
+export function observarVideos(clienteId: string, alCambiar: (v: VideoResumen[]) => void) {
+  return onSnapshot(collection(db, "clientes", clienteId, "videos"), (snap) => {
+    alCambiar(snap.docs.map((d) => d.data() as VideoResumen));
+  });
+}
+
 export function observarMedallas(clienteId: string, alCambiar: (m: MedallaOtorgada[]) => void) {
   return onSnapshot(collection(db, "clientes", clienteId, "medallas"), (snap) => {
     alCambiar(snap.docs.map((d) => d.data() as MedallaOtorgada));

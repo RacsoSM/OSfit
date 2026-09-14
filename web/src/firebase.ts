@@ -7,6 +7,7 @@ import {
 } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getFunctions } from "firebase/functions";
+import { getStorage } from "firebase/storage";
 
 const firebaseConfig = {
   apiKey: "AIzaSyD-VnmxHFK1ptLWFKgAd80caa7EkiD0PZA",
@@ -21,6 +22,7 @@ const URL_SESION = "https://sesion-cuzhc6pwiq-uw.a.run.app";
 
 export const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app);
+export const storage = getStorage(app);
 
 /**
  * La región tiene que ser la misma con la que se desplegaron las funciones (`REGION` en

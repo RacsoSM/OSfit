@@ -1,13 +1,21 @@
+import { getDownloadURL, ref } from "firebase/storage";
 import {
   observarCliente,
   observarAsistencias,
   observarAvisoFalta,
   observarMedallas,
   observarLogrosPersonales,
+  observarVideos,
 } from "./datos";
-import type { Cliente, Asistencia, MedallaOtorgada, LogroPersonalOtorgado } from "./datos";
+import type {
+  Cliente,
+  Asistencia,
+  MedallaOtorgada,
+  LogroPersonalOtorgado,
+  VideoResumen,
+} from "./datos";
 import { hoyEnMazatlan } from "./fecha";
-import { iniciarSesion } from "./firebase";
+import { iniciarSesion, storage } from "./firebase";
 import { tarjetaDia } from "./ui/tarjetaDia";
 import { saludo, conectarSaludo, actualizarNombre } from "./ui/saludo";
 import { tarjetasStats } from "./ui/tarjetasStats";
@@ -15,6 +23,8 @@ import { accionDia, conectarAccionDia, hojaDeMotivosAbierta } from "./ui/accionD
 import { accionHoyNoPuedo, tarjetaRevivir, conectarAccionFalta } from "./ui/accionFalta";
 import { calendario, moverMes } from "./ui/calendario";
 import { tarjetaMedallas, tarjetaLogrosPersonales } from "./ui/tarjetaInsignias";
+import { tarjetaVideos, ultimosRangoDescendente, MAXIMO_VIDEOS } from "./ui/tarjetaVideos";
+import type { VideoConUrl } from "./ui/tarjetaVideos";
 
 const app = document.querySelector<HTMLElement>("#app")!;
 
@@ -52,6 +62,29 @@ async function arrancar(): Promise<void> {
   let yaAviso = false;
   let medallas: MedallaOtorgada[] = [];
   let logros: LogroPersonalOtorgado[] = [];
+  let videos: VideoConUrl[] = [];
+
+  /**
+   * Resuelve la URL de cada video ANTES de pintar (decisión del brief): así el HTML se arma
+   * síncrono y puro. Se limita a los últimos `MAXIMO_VIDEOS` antes de pedirle nada a Storage,
+   * no después, para no gastar una llamada por cada quincena del historial. Un `getDownloadURL`
+   * que falla (blob borrado, retención a medias) no tumba a los demás: cada uno atrapa su
+   * propio error y esa tarjeta queda con `url: null`.
+   */
+  async function resolverVideos(crudos: VideoResumen[]): Promise<void> {
+    const recientes = ultimosRangoDescendente(crudos, MAXIMO_VIDEOS);
+    videos = await Promise.all(
+      recientes.map(async (v) => {
+        try {
+          const url = await getDownloadURL(ref(storage, v.rutaStorage));
+          return { ...v, url };
+        } catch {
+          return { ...v, url: null };
+        }
+      })
+    );
+    pintar();
+  }
 
   /**
    * El saludo vive FUERA de lo que se repinta, y no es un capricho de orden.
@@ -89,6 +122,7 @@ async function arrancar(): Promise<void> {
       ${tarjetasStats(asistencias, hoy)}
       ${tarjetaRevivir(cliente, hoy, asistencias)}
       ${calendario(asistencias, mesVisible, hoy)}
+      ${tarjetaVideos(videos)}
       ${tarjetaMedallas(medallas)}
       ${tarjetaLogrosPersonales(logros)}
     `;
@@ -112,6 +146,7 @@ async function arrancar(): Promise<void> {
   observarAvisoFalta(clienteId, hoy, (a) => { yaAviso = a; pintar(); });
   observarMedallas(clienteId, (m) => { medallas = m; pintar(); });
   observarLogrosPersonales(clienteId, (l) => { logros = l; pintar(); });
+  observarVideos(clienteId, (v) => { resolverVideos(v); });
 }
 
 arrancar();
