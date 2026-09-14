@@ -1,5 +1,6 @@
 package com.osfit.app.ui.medallas
 
+import android.content.Context
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -7,8 +8,11 @@ import com.osfit.app.data.AppContainer
 import com.osfit.app.data.model.MedallaCatalogo
 import com.osfit.app.data.repository.InsigniaStorageRepository
 import com.osfit.app.data.repository.MedallaRepository
+import com.osfit.app.util.MedallaImagenUtil
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.io.File
@@ -24,6 +28,19 @@ class MedallasViewModel(
 
     val medallas: StateFlow<List<MedallaCatalogo>> = medallaRepository.observarCatalogo()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    /** true mientras corre el lote de "Subir insignias"; deshabilita el botón para que no se
+     *  lance dos veces en paralelo. */
+    private val _subiendoPendientes = MutableStateFlow(false)
+    val subiendoPendientes: StateFlow<Boolean> = _subiendoPendientes
+
+    /** Mensaje para mostrarle al entrenador (Toast); la pantalla lo limpia al consumirlo. */
+    private val _mensaje = MutableStateFlow<String?>(null)
+    val mensaje: StateFlow<String?> = _mensaje
+
+    fun limpiarMensaje() {
+        _mensaje.value = null
+    }
 
     /**
      * [imagen] es el PNG ya copiado a filesDir por la pantalla; se sube a Storage **después**
@@ -47,6 +64,42 @@ class MedallasViewModel(
 
     fun eliminar(medalla: MedallaCatalogo) {
         viewModelScope.launch { medallaRepository.eliminarMedalla(medalla) }
+    }
+
+    /**
+     * Red de seguridad de [guardar]: sube las medallas que se quedaron con imagen local pero
+     * sin `imagenUrl` (por ejemplo, porque la subida de [guardar] falló por falta de red).
+     *
+     * No corta en el primer fallo — cada medalla se sube con su propio `runCatching` — porque
+     * el objetivo es dejar el catálogo lo más completo posible en una sola pasada, no abortar
+     * ante la primera insignia problemática.
+     */
+    fun subirPendientes(context: Context) {
+        if (_subiendoPendientes.value) return
+        _subiendoPendientes.value = true
+        viewModelScope.launch {
+            val pendientes = medallaRepository.observarCatalogo().first()
+                .filter { it.imagenArchivo != null && it.imagenUrl == null }
+            var subidas = 0
+            var fallidas = 0
+            for (medalla in pendientes) {
+                val archivo = MedallaImagenUtil.archivoImagen(context, medalla.imagenArchivo!!)
+                runCatching {
+                    val url = insigniaStorageRepository.subirMedalla(medalla.id, archivo)
+                    medallaRepository.actualizarImagenUrl(medalla.id, url)
+                }.onSuccess { subidas++ }
+                    .onFailure {
+                        fallidas++
+                        Log.w(TAG, "No se pudo subir la insignia pendiente de la medalla ${medalla.id}", it)
+                    }
+            }
+            _mensaje.value = when {
+                pendientes.isEmpty() -> "No hay insignias pendientes de subir"
+                fallidas == 0 -> "Se subieron $subidas insignias"
+                else -> "Se subieron $subidas insignias, $fallidas fallaron"
+            }
+            _subiendoPendientes.value = false
+        }
     }
 
     private companion object {

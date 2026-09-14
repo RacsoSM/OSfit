@@ -1,6 +1,7 @@
 package com.osfit.app.ui.medallas
 
 import android.net.Uri
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
@@ -16,6 +17,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.AlertDialog
@@ -30,6 +32,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -50,6 +53,8 @@ import java.util.UUID
 fun MedallasScreen(viewModel: MedallasViewModel = viewModel()) {
     val context = LocalContext.current
     val medallas by viewModel.medallas.collectAsState()
+    val subiendoPendientes by viewModel.subiendoPendientes.collectAsState()
+    val mensaje by viewModel.mensaje.collectAsState()
 
     // El archivo de filesDir se resuelve acá y se le pasa al ViewModel, que así no necesita
     // un Context para subir la insignia a Storage.
@@ -64,6 +69,12 @@ fun MedallasScreen(viewModel: MedallasViewModel = viewModel()) {
         medallas.sortedWith(compareBy({ it.categoria == null }, { it.categoria?.ordinal ?: 0 }))
     }
 
+    LaunchedEffect(mensaje) {
+        val texto = mensaje ?: return@LaunchedEffect
+        Toast.makeText(context, texto, Toast.LENGTH_LONG).show()
+        viewModel.limpiarMensaje()
+    }
+
     Scaffold(
         floatingActionButton = {
             FloatingActionButton(onClick = { mostrarNueva = true }) {
@@ -72,6 +83,19 @@ fun MedallasScreen(viewModel: MedallasViewModel = viewModel()) {
         }
     ) { padding ->
         LazyColumn(modifier = Modifier.fillMaxSize().padding(padding).padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            item {
+                OutlinedButton(
+                    onClick = { viewModel.subirPendientes(context) },
+                    enabled = !subiendoPendientes,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(Icons.Filled.CloudUpload, contentDescription = null)
+                    Text(
+                        if (subiendoPendientes) "Subiendo insignias..." else "Subir insignias",
+                        modifier = Modifier.padding(start = 8.dp)
+                    )
+                }
+            }
             items(ordenadas, key = { it.id }) { medalla ->
                 MedallaItem(
                     medalla = medalla,
