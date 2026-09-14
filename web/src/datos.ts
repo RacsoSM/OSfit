@@ -1,5 +1,6 @@
 import { collection, doc, onSnapshot, query, where } from "firebase/firestore";
 import { db } from "./firebase";
+import type { PaletaWeb } from "./paleta";
 
 export interface Ejercicio { nombre: string; series: number; repeticiones: string; pesoONota: string; }
 export interface DiaRutina { nombreDia: string; ejercicios: Ejercicio[]; }
@@ -12,6 +13,11 @@ export interface Cliente {
   ultimoDia: number | null;
   ultimoDiaFecha: string | null;
   ultimoDiaEsAncla: boolean;
+  /**
+   * La paleta que el entrenador le eligió desde la app. Opcional: una clienta a la que nunca
+   * se le asignó una no tiene el campo, y entonces la página se queda con el morado de :root.
+   */
+  paletaWeb?: PaletaWeb;
 }
 
 export interface Asistencia {

@@ -16,6 +16,7 @@ import type {
 } from "./datos";
 import { hoyEnMazatlan } from "./fecha";
 import { iniciarSesion, storage } from "./firebase";
+import { aplicarPaleta } from "./paleta";
 import { tarjetaDia } from "./ui/tarjetaDia";
 import { saludo, conectarSaludo, actualizarNombre } from "./ui/saludo";
 import { tarjetasStats } from "./ui/tarjetasStats";
@@ -165,7 +166,13 @@ async function arrancar(): Promise<void> {
     });
   }
 
-  observarCliente(clienteId, (c) => { cliente = c; pintar(); });
+  observarCliente(clienteId, (c) => {
+    cliente = c;
+    // Antes de pintar: así el primer repintado ya sale con los colores buenos y la página no
+    // parpadea de morado al color de la clienta.
+    aplicarPaleta(c?.paletaWeb, document.documentElement);
+    pintar();
+  });
   observarAsistencias(clienteId, (a) => { asistencias = a; pintar(); });
   observarAvisoFalta(clienteId, hoy, (a) => { yaAviso = a; pintar(); });
   observarMedallas(clienteId, (m) => { medallas = m; pintar(); });

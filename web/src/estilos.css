@@ -7,6 +7,7 @@
   --primario: #B388FF;
   --sobre-primario: #2A0064;
   --primario-oscuro: #6A1B9A;
+  --primario-claro: #E3D2FF;
   --verde: #2E9E4F;
   --rojo: #C4453D;
   --ambar: #C99A2E;
@@ -40,7 +41,7 @@ main { max-width: 480px; margin: 0 auto; padding: 16px 14px 48px; }
 .saludo { --parpadeo: 1100ms; }
 .saludo-hola { color: var(--texto); }
 .saludo-nombre {
-  background: linear-gradient(100deg, var(--primario) 0%, #E3D2FF 100%);
+  background: linear-gradient(100deg, var(--primario) 0%, var(--primario-claro) 100%);
   -webkit-background-clip: text; background-clip: text; color: transparent;
   font-weight: 800;
 }

@@ -19,12 +19,12 @@
           <feGaussianBlur stdDeviation="9" />
         </filter>
         <radialGradient id="halo-claro">
-          <stop offset="0%" stop-color="#B388FF" stop-opacity="0.10" />
-          <stop offset="100%" stop-color="#B388FF" stop-opacity="0" />
+          <stop offset="0%" stop-color="var(--primario)" stop-opacity="0.10" />
+          <stop offset="100%" stop-color="var(--primario)" stop-opacity="0" />
         </radialGradient>
         <radialGradient id="halo-hondo">
-          <stop offset="0%" stop-color="#6A1B9A" stop-opacity="0.14" />
-          <stop offset="100%" stop-color="#6A1B9A" stop-opacity="0" />
+          <stop offset="0%" stop-color="var(--primario-oscuro)" stop-opacity="0.14" />
+          <stop offset="100%" stop-color="var(--primario-oscuro)" stop-opacity="0" />
         </radialGradient>
       </defs>
 
@@ -34,7 +34,7 @@
       <ellipse cx="360" cy="790" rx="200" ry="170" fill="url(#halo-claro)" />
 
       <!-- Líneas deformes, cruzando de lado a lado y saliéndose del marco. -->
-      <g fill="none" stroke="#B388FF" filter="url(#f-suave)" stroke-linecap="round">
+      <g fill="none" stroke="var(--primario)" filter="url(#f-suave)" stroke-linecap="round">
         <path d="M -50 200 C 80 130, 170 300, 300 215 S 420 110, 460 180" stroke-width="2.4" stroke-opacity="0.13" />
         <path d="M -40 300 C 120 250, 140 400, 290 340 S 400 250, 450 300" stroke-width="1.6" stroke-opacity="0.08" />
         <path d="M -30 630 C 110 700, 190 510, 330 590 S 420 690, 470 620" stroke-width="2.2" stroke-opacity="0.10" />
