@@ -1,18 +1,14 @@
 package com.osfit.app.ui.configvideo
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
@@ -27,12 +23,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.osfit.app.paletas.Paleta
 import com.osfit.app.paletas.Paletas
+import com.osfit.app.ui.common.MuestrasPaletaVideo
 
 @Composable
 fun ConfigVideoScreen(viewModel: ConfigVideoViewModel = viewModel()) {
@@ -68,7 +62,7 @@ fun ConfigVideoScreen(viewModel: ConfigVideoViewModel = viewModel()) {
                         )
                         Text(periodo.paleta.nombre, style = MaterialTheme.typography.bodySmall)
                     }
-                    MuestrasPaleta(periodo.paleta)
+                    MuestrasPaletaVideo(periodo.paleta)
                 }
             }
         }
@@ -99,7 +93,7 @@ fun ConfigVideoScreen(viewModel: ConfigVideoViewModel = viewModel()) {
                                 }
                             )
                             Text(paleta.nombre, modifier = Modifier.weight(1f))
-                            MuestrasPaleta(paleta)
+                            MuestrasPaletaVideo(paleta)
                         }
                     }
                 }
@@ -108,20 +102,5 @@ fun ConfigVideoScreen(viewModel: ConfigVideoViewModel = viewModel()) {
                 TextButton(onClick = { periodoEnEdicion = null }) { Text("Cerrar") }
             }
         )
-    }
-}
-
-/** Los tres blobs y el destacado, para poder comparar paletas de un vistazo. */
-@Composable
-private fun MuestrasPaleta(paleta: Paleta) {
-    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-        listOf(paleta.blobA, paleta.blobB, paleta.blobC, paleta.destacado).forEach { color ->
-            Box(
-                modifier = Modifier
-                    .size(20.dp)
-                    .clip(CircleShape)
-                    .background(Color(color))
-            )
-        }
     }
 }
