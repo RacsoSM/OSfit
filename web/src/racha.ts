@@ -41,9 +41,12 @@ export function rachaActual(asistencias: Asistencia[], hoy: string): number {
 }
 
 export function promedioMinutos(asistencias: Asistencia[]): number | null {
+  // Se exige que sea un numero, no solo que no sea null: las asistencias anteriores al
+  // cronometro llegan sin el campo (Firestore omite lo que nunca se escribio, igual que con
+  // `justificadaPorCliente`), y `undefined` pasaba el filtro y volvia NaN todo el promedio.
   const duraciones = asistencias
-    .filter((a) => a.asistio && a.duracionMinutos !== null)
-    .map((a) => a.duracionMinutos as number);
+    .map((a) => (a.asistio ? a.duracionMinutos : null))
+    .filter((d): d is number => typeof d === "number" && Number.isFinite(d));
   if (duraciones.length === 0) return null;
   return Math.round(duraciones.reduce((s, d) => s + d, 0) / duraciones.length);
 }

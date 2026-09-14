@@ -45,4 +45,19 @@ describe("promedioMinutos", () => {
   it("sin duraciones devuelve null", () => {
     expect(promedioMinutos([vino("2026-09-08")])).toBeNull();
   });
+
+  // Las asistencias anteriores al cronometro (commit 473220e) llegan SIN el campo, no con
+  // null: Firestore omite lo que nunca se escribio. Sumarlas daba NaN en la tarjeta.
+  it("ignora las asistencias viejas que no traen el campo", () => {
+    expect(promedioMinutos([
+      { fecha: "2026-09-08", asistio: true, justificada: false } as never,
+      { fecha: "2026-09-09", asistio: true, justificada: false, duracionMinutos: 50 },
+    ])).toBe(50);
+  });
+
+  it("si ninguna trae el campo devuelve null, no NaN", () => {
+    expect(promedioMinutos([
+      { fecha: "2026-09-08", asistio: true, justificada: false } as never,
+    ])).toBeNull();
+  });
 });

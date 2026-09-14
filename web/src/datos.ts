@@ -31,7 +31,11 @@ export interface Asistencia {
    * toda asistencia anterior a esta etapa llega sin él. Ver el commit bf5463c.
    */
   justificadaPorCliente?: boolean;
-  duracionMinutos: number | null;
+  /**
+   * Opcional por la misma razon que `justificadaPorCliente`: las asistencias anteriores al
+   * cronometro (commit 473220e) nunca lo escribieron y llegan sin el campo.
+   */
+  duracionMinutos?: number | null;
 }
 
 export function observarCliente(clienteId: string, alCambiar: (c: Cliente | null) => void) {
