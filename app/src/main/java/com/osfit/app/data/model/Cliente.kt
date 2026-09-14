@@ -33,6 +33,11 @@ data class Cliente(
     // Nombre del archivo dentro de filesDir/canciones/ (no la URI original: se copia al
     // elegirla para no depender de un permiso de content:// que puede revocarse).
     val cancionArchivo: String? = null,
+    // Ruta del respaldo en Storage, `canciones/<clienteId>.<ext>`. Se guarda la ruta y no la
+    // URL de descarga por el mismo motivo que los resúmenes: una URL permanente dentro del
+    // documento vale sin sesión. null = clienta anterior a este campo, o subida que falló;
+    // en los dos casos no hay nada que restaurar.
+    val cancionRuta: String? = null,
     val cancionInicioSegundos: Int? = null,
     // Resultado denormalizado de RutinaProgressCalculator.denormalizar(), solo para que la
     // web no reimplemente el cálculo. La app **no** lee estos campos: sigue llamando al
