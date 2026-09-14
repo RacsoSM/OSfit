@@ -16,6 +16,15 @@ class InsigniaStorageRepository(
     suspend fun subirLogro(id: String, archivo: File): String = subir("logrosPersonales", id, archivo)
 
     /**
+     * Baja una insignia del catálogo a [destino]. La ruta la arma quien llama con el id y la
+     * carpeta (ver `ArchivosQueFaltan.esperadosDe`), no se saca de `imagenUrl`.
+     */
+    suspend fun bajar(ruta: String, destino: File) {
+        destino.parentFile?.mkdirs()
+        storage.reference.child(ruta).getFile(destino).await()
+    }
+
+    /**
      * Devuelve la URL de descarga y no la ruta porque la página pinta las insignias con un
      * `<img src>` pelado, sin cargar el SDK de Storage. Que esa URL lleve el token dentro y
      * funcione sin sesión no molesta: el catálogo de insignias no es dato personal. Con los

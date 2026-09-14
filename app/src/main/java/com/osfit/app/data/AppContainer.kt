@@ -4,6 +4,7 @@ import com.osfit.app.data.repository.AccesoWebRepository
 import com.osfit.app.data.repository.AsistenciaRepository
 import com.osfit.app.data.repository.AvisoFaltaWebRepository
 import com.osfit.app.data.repository.CambioDiaWebRepository
+import com.osfit.app.data.repository.CancionStorageRepository
 import com.osfit.app.data.repository.ClienteRepository
 import com.osfit.app.data.repository.ConfigVideoRepository
 import com.osfit.app.data.repository.FirestoreAsistenciaRepository
@@ -26,6 +27,7 @@ object AppContainer {
     val medallaRepository: MedallaRepository by lazy { MedallaRepository() }
     val logroPersonalRepository: LogroPersonalRepository by lazy { LogroPersonalRepository() }
     val insigniaStorageRepository: InsigniaStorageRepository by lazy { InsigniaStorageRepository() }
+    val cancionStorageRepository: CancionStorageRepository by lazy { CancionStorageRepository() }
     val configVideoRepository: ConfigVideoRepository by lazy { ConfigVideoRepository() }
     val accesoWebRepository: AccesoWebRepository by lazy { AccesoWebRepository() }
     val cambioDiaWebRepository: CambioDiaWebRepository by lazy { CambioDiaWebRepository() }
