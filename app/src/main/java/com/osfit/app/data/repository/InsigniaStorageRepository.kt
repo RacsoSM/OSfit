@@ -2,6 +2,7 @@ package com.osfit.app.data.repository
 
 import android.net.Uri
 import com.google.firebase.storage.FirebaseStorage
+import com.osfit.app.domain.DescargaAtomica
 import kotlinx.coroutines.tasks.await
 import java.io.File
 
@@ -18,10 +19,14 @@ class InsigniaStorageRepository(
     /**
      * Baja una insignia del catálogo a [destino]. La ruta la arma quien llama con el id y la
      * carpeta (ver `ArchivosQueFaltan.esperadosDe`), no se saca de `imagenUrl`.
+     *
+     * Pasa por un temporal (ver [DescargaAtomica]) por el mismo motivo que las canciones: un
+     * PNG truncado en la ruta buena contaría como restaurado y no se reintentaría nunca.
      */
     suspend fun bajar(ruta: String, destino: File) {
-        destino.parentFile?.mkdirs()
-        storage.reference.child(ruta).getFile(destino).await()
+        DescargaAtomica.aArchivo(destino) { temporal ->
+            storage.reference.child(ruta).getFile(temporal).await()
+        }
     }
 
     /**

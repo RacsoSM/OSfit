@@ -2,6 +2,7 @@ package com.osfit.app.data.repository
 
 import android.net.Uri
 import com.google.firebase.storage.FirebaseStorage
+import com.osfit.app.domain.DescargaAtomica
 import java.io.File
 import kotlinx.coroutines.tasks.await
 
@@ -27,8 +28,14 @@ class CancionStorageRepository(
         return ruta
     }
 
+    /**
+     * Baja la canción a [destino] pasando por un temporal (ver [DescargaAtomica]): una bajada
+     * cortada no debe dejar un archivo truncado en la ruta buena, porque el restaurador lo
+     * daría por restaurado para siempre.
+     */
     suspend fun bajar(ruta: String, destino: File) {
-        destino.parentFile?.mkdirs()
-        storage.reference.child(ruta).getFile(destino).await()
+        DescargaAtomica.aArchivo(destino) { temporal ->
+            storage.reference.child(ruta).getFile(temporal).await()
+        }
     }
 }
