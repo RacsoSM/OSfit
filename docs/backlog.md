@@ -267,3 +267,23 @@ dispositivo en algún lado que la función pueda leer.
 **Por qué no es urgente:** el aviso no se pierde — queda en Firestore y se ve en Tomar
 Asistencia, que es la pantalla que el entrenador abre igual todos los días. La notificación
 adelanta el momento en que se entera, no cambia lo que sabe.
+
+---
+
+## 10. `rutaStorage` en blanco bloquearía la retención de videos para siempre
+
+**Detectado:** 2026-09-13, en la re-revisión de los arreglos de la Etapa 3.
+
+`VideoPublicado.rutaStorage` tiene `""` por defecto, como exige la convención de Firestore.
+Si un documento llegara sin ese campo, `storage.reference.child("")` lanza
+`IllegalArgumentException` —no `StorageException`—, el `runCatching` de `limpiarSobrantes` se
+la traga, y ese documento no se borra nunca. Es la misma clase de bug que se acaba de arreglar
+(el `object-not-found` que abortaba el borrado del documento), entrando por otra puerta.
+
+**Por qué no corre prisa:** no hay ningún dato vivo afectado. Todos los documentos de
+`clientes/{id}/videos` los escribe `publicarEnLaWeb` con la ruta que devuelve `subir()`, que
+nunca es vacía. Hace falta un documento escrito a mano o una migración futura para llegar ahí.
+
+**Qué haría falta:** una línea, tratando la ruta en blanco como "nada que borrar" —
+`video.rutaStorage.ifBlank { null } ?: return@forEach`, o el mismo criterio dentro de
+`ResumenStorageRepository.borrar`.

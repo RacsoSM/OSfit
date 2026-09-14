@@ -158,14 +158,27 @@ escrito en local por la persistencia de Firestore y se sincroniza solo, pero la 
 intenta hasta que vuelva la red. O sea que la red de seguridad real de ese caso es el botón
 del Task 4, no este código.
 
-### Task 4: Botón "Subir insignias" para las que ya existen
+### Task 4: Botón "Subir insignias" para las que ya existen — ✅ HECHO (2026-09-13)
 
 Se toca una vez y sube las que no tengan URL (spec, punto 2 de "Cambios en la app Android"). También es la red de seguridad del Step 4 anterior.
 
-- [ ] **Step 1: Añadir el botón** en la pantalla del catálogo de medallas y en la de logros.
-- [ ] **Step 2: Recorrer las que tengan `imagenArchivo != null && imagenUrl == null`**, subir y actualizar.
-- [ ] **Step 3: Reportar cuántas subió y cuántas fallaron**, sin cortar el recorrido en la primera que falle.
-- [ ] **Step 4: Compilar. Commit.**
+- [x] **Step 1: Añadir el botón** en la pantalla del catálogo de medallas y en la de logros.
+- [x] **Step 2: Recorrer las que tengan `imagenArchivo != null && imagenUrl == null`**, subir y actualizar.
+- [x] **Step 3: Reportar cuántas subió y cuántas fallaron**, sin cortar el recorrido en la primera que falle.
+- [x] **Step 4: Compilar. Commit.**
+
+**El botón llegó tarde para lo que se suponía que iba a rescatar.** Para cuando se implementó,
+el entrenador ya había resubido las medallas a mano desde la app, y no se había otorgado nada
+antes de esta etapa, así que no quedaba nada viejo que rellenar. Sigue valiendo como la red de
+seguridad del Task 3 Step 4 —la subida que no completa por falta de red— y como el camino
+para los logros personales, que no se resubieron.
+
+**La primera versión dejaba el botón muerto para siempre.** `_subiendoPendientes` se apagaba
+al final del `launch`, sin `finally`, y `observarCatalogo()` es un `callbackFlow` que hace
+`close(error)`: cualquier fallo de lectura mataba la corrutina con la bandera en `true`, y el
+botón se quedaba deshabilitado diciendo "Subiendo insignias..." sin ningún aviso. Lo detectó
+la revisión final de la etapa. Ahora va con `try/finally` y mensaje de error, y lee el
+`StateFlow` ya vivo en vez de abrir un listener de Firestore por toque.
 
 ### Task 5: Medallas y logros en la página — ✅ HECHO (2026-09-12)
 
@@ -196,46 +209,116 @@ spec solo pedía `rangoInicio` descendente.
 **Los estados vacíos son provisionales**, con textos escritos por el agente y cubiertos por
 tests. El Task 9 los formaliza junto con los de videos.
 
-### Task 6: `VideoPublicado` y su repositorio
+### Task 6: `VideoPublicado` y su repositorio — ✅ HECHO (2026-09-13)
 
 **Files:**
-- Create: `app/src/main/java/com/osfit/app/data/model/VideoPublicado.kt`, `.../repository/VideoPublicadoRepository.kt`
+- Create: `app/src/main/java/com/osfit/app/data/model/VideoPublicado.kt`, `.../repository/VideoPublicadoRepository.kt`, `.../repository/ResumenStorageRepository.kt`
 - Modify: `AppContainer.kt`
 
-- [ ] **Step 1: Crear el modelo** con los campos del spec: `id`, `rangoInicio`, `encabezadoRango`, `rutaStorage`, `duracionSegundos`, `creado`.
-- [ ] **Step 2: El repositorio**, con `publicar()`, `observarDe(clienteId)` y `borrar()`.
-- [ ] **Step 3: Registrar. Compilar. Commit.**
+- [x] **Step 1: Crear el modelo** con los campos del spec: `id`, `rangoInicio`, `encabezadoRango`, `rutaStorage`, `duracionSegundos`, `creado`.
+- [x] **Step 2: El repositorio**, con `publicar()`, `observarDe(clienteId)` y `borrar()`.
+- [x] **Step 3: Registrar. Compilar. Commit.**
 
-### Task 7: "Publicar en la web" y la retención de 6
+**El plan pedía un repositorio donde hacían falta dos.** Ni esta tarea ni el Task 7 decían
+quién sube y quién borra el **blob**: el repositorio que se enumera acá es de Firestore. Se
+partió en dos, `VideoPublicadoRepository` (Firestore) y `ResumenStorageRepository` (Storage),
+que es el patrón que `InsigniaStorageRepository` ya había fijado en esta misma etapa. La
+separación no es cosmética: es lo que permite que la retención elija el orden de borrado.
+
+**El doc id es el `rangoInicio` ISO, y el plan no lo fijaba.** El Step 4 del Task 7 exige que
+republicar la misma quincena pise a la anterior, y un upsert necesita un id determinista. Es
+de donde ya se deriva `rutaStorage`, y sigue el precedente de `CambioDiaWeb`.
+
+**`referencia.path` no sirve para guardar la ruta.** El SDK de Android puede devolver ahí un
+slash inicial, y el spec fija el literal `resumenes/<clienteId>/<rangoInicio>.mp4`, que es el
+string que la web le pasa a `ref(storage, ...)`. Se construye a mano. Un slash de más se
+habría visto como "video no disponible" sin ninguna pista de por qué.
+
+### Task 7: "Publicar en la web" y la retención de 6 — ✅ HECHO (2026-09-13)
 
 **Files:**
 - Modify: `ResumenClienteViewModel.kt` y la pantalla del resumen.
 
-- [ ] **Step 1: Botón "Publicar en la web"** junto a la acción de compartir que ya existe. Compartir **no cambia**: publicar es otra cosa, no un reemplazo.
-- [ ] **Step 2: Subir el mp4** a `resumenes/<clienteId>/<rangoInicio>.mp4` y escribir el documento.
-- [ ] **Step 3: Retención.** Ordenar por `rangoInicio` descendente y, de la séptima en adelante, **borrar el blob y después el documento** (decisión 4).
-- [ ] **Step 4: Republicar la misma quincena** pisa la anterior: la ruta se deriva de `rangoInicio`, así que el blob se sobreescribe y el documento es un upsert.
-- [ ] **Step 5: Compilar. Commit.**
+- [x] **Step 1: Botón "Publicar en la web"** junto a la acción de compartir que ya existe. Compartir **no cambia**: publicar es otra cosa, no un reemplazo.
+- [x] **Step 2: Subir el mp4** a `resumenes/<clienteId>/<rangoInicio>.mp4` y escribir el documento.
+- [x] **Step 3: Retención.** Ordenar por `rangoInicio` descendente y, de la séptima en adelante, **borrar el blob y después el documento** (decisión 4).
+- [x] **Step 4: Republicar la misma quincena** pisa la anterior: la ruta se deriva de `rangoInicio`, así que el blob se sobreescribe y el documento es un upsert.
+- [x] **Step 5: Compilar. Commit.**
 
-### Task 8: Videos en la página
+**No había ningún mp4 que publicar.** El plan da por supuesto que hay un video a mano, pero
+`generarYCompartir` devolvía `Unit`: generaba, lanzaba el share sheet y soltaba la referencia,
+y el archivo vive en `cacheDir/resumenes` con borrado a la hora. Pasó a devolver el `File` y
+la duración. Regenerarlo habría costado una codificación entera y podría dar un video distinto
+del que el entrenador acaba de ver — y el spec dice "un video **ya generado**".
 
-- [ ] **Step 1: Meter el SDK de Storage en la web** y observar `clientes/{cid}/videos`.
-- [ ] **Step 2: Los últimos 6, más reciente primero**, con encabezado del rango y duración.
-- [ ] **Step 3: Resolver cada `rutaStorage` con `getDownloadURL()`** al pintar (decisión 2). Si falla —blob borrado, retención a medias—, la tarjeta dice "video no disponible" en vez de dejar un reproductor roto.
-- [ ] **Step 4: Tests. Desplegar. Commit.**
+**La regla de los 6 salió a `domain/RetencionVideos.kt`.** Dentro del ViewModel no la podía
+cubrir ningún test: la convención del proyecto solo permite tests Kotlin en `domain/` y
+`video/`. Como función pura tiene cuatro casos cubiertos.
+
+**La decisión 4 estaba bien razonada y mal implementada, y no se notaba.** `borrar()` hacía un
+`.delete().await()` pelado, así que cuando el blob ya estaba borrado y el documento no —el
+caso exacto que la decisión elige como "el fallo bueno, se reintenta"— el siguiente publicar
+recibía `object-not-found`, la excepción salía **antes** del borrado del documento y el
+documento quedaba para siempre: "Video no disponible" permanente y la retención rota en
+silencio. El reintento es la mitad que hace aceptable borrar el blob primero, y no existía.
+Lo encontró la revisión final. Ahora `object-not-found` cuenta como éxito.
+
+**Fallar al limpiar no es fallar al publicar.** La primera versión reportaba "No se pudo
+publicar el video en la web" cuando lo que había fallado era el borrado de un sobrante, con el
+video ya publicado y visible. El entrenador habría republicado creyendo que no quedó.
+
+### Task 8: Videos en la página — ✅ HECHO (2026-09-13)
+
+- [x] **Step 1: Meter el SDK de Storage en la web** y observar `clientes/{cid}/videos`.
+- [x] **Step 2: Los últimos 6, más reciente primero**, con encabezado del rango y duración.
+- [x] **Step 3: Resolver cada `rutaStorage` con `getDownloadURL()`** al pintar (decisión 2). Si falla —blob borrado, retención a medias—, la tarjeta dice "video no disponible" en vez de dejar un reproductor roto.
+- [x] **Step 4: Tests. Desplegar. Commit.**
+
+**La resolución de URLs se hace antes de armar el HTML, no dentro.** Los tests corren en Node
+sin DOM, así que la función que construye la tarjeta es síncrona y pura y recibe la URL ya
+resuelta (o `null` si falló). Cada `getDownloadURL()` va en su propio `try/catch` dentro del
+`map`, para que un blob que falta no tumbe el resto de la lista.
+
+**El `<video>` es el primer elemento de la página con estado propio, y el repintado lo
+mataba.** `main.ts` repinta con `contenido.innerHTML`, lo que destruía y recreaba el
+reproductor: cortaba la reproducción y forzaba una recarga desde la red —dato móvil— cada vez
+que el entrenador marcaba una asistencia o ella cambiaba de mes. Y eso pasa justo en el
+gimnasio, que es donde ella lo está viendo. Los videos salieron a un `<div>` hermano que solo
+se repinta si su contenido cambió de verdad, que es lo mismo que ya se había hecho con el
+saludo.
+
+**El orden de las secciones se había ido.** Se pintaban los videos antes de medallas y logros;
+el spec fija calendario → medallas → logros → videos, y explica que el orden va por urgencia.
+Lo encontró la revisión final.
 
 ---
 
 ## Cierre
 
-### Task 9: Estados vacíos de las tres secciones
+### Task 9: Estados vacíos de las tres secciones — ✅ HECHO (2026-09-13)
 
 Spec, "Estados vacíos y de excepción": *"cada sección dice qué falta y quién lo resuelve. Ninguna sección queda en blanco."*
 
-- [ ] **Step 1: Sin medallas, sin logros, sin videos**, cada una con su texto.
-- [ ] **Step 2: Tests. Desplegar. Commit.**
+- [x] **Step 1: Sin medallas, sin logros, sin videos**, cada una con su texto.
+- [x] **Step 2: Tests. Desplegar. Commit.**
 
-### Task 10: Verificación en dispositivo
+**Las tres secciones que nombra el título ya cumplían; las que faltaban eran otras dos.** La
+auditoría contra la regla —decir *qué falta* **y** *quién lo resuelve*— dejó medallas, logros
+y videos intactos. Los que fallaban la segunda mitad eran el calendario y las tarjetas de
+racha y promedio: una clienta recién dada de alta veía una rejilla vacía y un cero sin ninguna
+explicación, que es exactamente lo que la regla prohíbe. El spec ya los nombraba ("sin
+asistencias") y el plan los había dejado fuera del título.
+
+Los textos de "sin rutina" y de fin de semana no se tocaron: los dicta el spec literalmente y
+ya estaban verificados en producción.
+
+### Task 10: Verificación en dispositivo — ⏳ ÚNICO PENDIENTE DE LA ETAPA
+
+Las Tasks 4, 6, 7, 8 y 9 están implementadas, revisadas y desplegadas (2026-09-13). Todo lo
+que queda de la Etapa 3 es esto, que necesita un teléfono y dos sesiones de clienta reales.
+El Step 5 es el que no se puede sustituir leyendo código: que las reglas estén bien escritas
+no es lo mismo que estén bien desplegadas.
+
 
 - [ ] **Step 1: Subir las insignias existentes** con el botón del Task 4 y confirmar que aparecen en la página de una clienta de verdad.
 - [ ] **Step 2: Otorgar una medalla nueva** y ver que llega con su imagen.
