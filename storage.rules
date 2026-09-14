@@ -34,5 +34,12 @@ service firebase.storage {
       allow read: if esEntrenador() || esCliente(clienteId);
       allow write: if esEntrenador();
     }
+
+    // Las canciones son el respaldo de filesDir/canciones/, y sólo las usa el generador de
+    // video del entrenador. La web no las necesita: la música ya va dentro del mp4 generado,
+    // no como archivo aparte. Por eso acá no hay esCliente() y en resumenes/ sí.
+    match /canciones/{archivo} {
+      allow read, write: if esEntrenador();
+    }
   }
 }
