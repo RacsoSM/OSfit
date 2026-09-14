@@ -69,7 +69,16 @@ fun ClienteEditarScreen(
     var segundosPorEjercicio by remember { mutableStateOf(clienteActual.segundosPorEjercicio?.toString() ?: "") }
     var minutosDescanso by remember { mutableStateOf(clienteActual.minutosDescanso?.toString() ?: "") }
     var cancionArchivo by remember { mutableStateOf(clienteActual.cancionArchivo) }
+    var cancionRuta by remember { mutableStateOf(clienteActual.cancionRuta) }
     var inicioSegundos by remember { mutableStateOf(clienteActual.cancionInicioSegundos ?: 0) }
+
+    // La subida vive en el ViewModel y escribe `cancionRuta` sola. Acá se recoge nada más para
+    // que el guardado mande la ruta nueva y no la nula que quedó al elegir la canción: si no,
+    // Guardar pisaría con null un respaldo que ya existe.
+    val rutaRespaldada by viewModel.cancionRutaRespaldada.collectAsState()
+    LaunchedEffect(rutaRespaldada) {
+        rutaRespaldada?.let { cancionRuta = it }
+    }
 
     val selectorCancion = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri != null) {
@@ -83,6 +92,14 @@ fun ClienteEditarScreen(
                 }
                 cancionArchivo = nuevoArchivo
                 inicioSegundos = 0
+                // La copia local ya está hecha y el video funciona con ella. La ruta vieja se
+                // invalida acá y no se deduce del nombre: con la misma extensión, el nombre es
+                // el mismo y apuntaría a los bytes de la canción anterior.
+                cancionRuta = null
+                // El respaldo se intenta después, desde el ViewModel, que sobrevive a que esta
+                // pantalla se vaya: si falla, la ruta se queda nula y esta canción se reintenta
+                // la próxima vez que se elija. Nada más se rompe mientras tanto.
+                viewModel.respaldarCancion(CancionUtil.archivoCancion(context, nuevoArchivo))
             }
         }
     }
@@ -104,6 +121,7 @@ fun ClienteEditarScreen(
                     )
                     viewModel.actualizarCancion(
                         archivo = cancionArchivo,
+                        ruta = cancionArchivo?.let { cancionRuta },
                         inicioSegundos = cancionArchivo?.let { inicioSegundos }
                     )
                     onGuardado()

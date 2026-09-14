@@ -18,6 +18,7 @@ import com.osfit.app.data.model.Rutina
 import com.osfit.app.data.model.VideoPublicado
 import com.osfit.app.data.repository.AccesoWebRepository
 import com.osfit.app.data.repository.AsistenciaRepository
+import com.osfit.app.data.repository.CancionStorageRepository
 import com.osfit.app.data.repository.ClienteRepository
 import com.osfit.app.data.repository.LogroPersonalRepository
 import com.osfit.app.data.repository.MedallaRepository
@@ -29,6 +30,7 @@ import com.osfit.app.domain.AsignarDiaManual
 import com.osfit.app.domain.CupoRevivesCalculator
 import com.osfit.app.domain.RachaCalculator
 import com.osfit.app.domain.RutinaProgressCalculator
+import java.io.File
 import java.time.LocalDate
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -51,7 +53,8 @@ class ClienteDetailViewModel(
     private val sincronizadorDiaWeb: SincronizadorDiaWeb = AppContainer.sincronizadorDiaWeb,
     private val accesoWebRepository: AccesoWebRepository = AppContainer.accesoWebRepository,
     private val videoPublicadoRepository: VideoPublicadoRepository = AppContainer.videoPublicadoRepository,
-    private val resumenStorageRepository: ResumenStorageRepository = AppContainer.resumenStorageRepository
+    private val resumenStorageRepository: ResumenStorageRepository = AppContainer.resumenStorageRepository,
+    private val cancionStorageRepository: CancionStorageRepository = AppContainer.cancionStorageRepository
 ) : ViewModel() {
 
     init {
@@ -174,9 +177,44 @@ class ClienteDetailViewModel(
         }
     }
 
-    fun actualizarCancion(archivo: String?, inicioSegundos: Int?) {
+    fun actualizarCancion(archivo: String?, ruta: String?, inicioSegundos: Int?) {
         viewModelScope.launch {
-            clienteRepository.actualizarCancion(clienteId, archivo, inicioSegundos)
+            clienteRepository.actualizarCancion(clienteId, archivo, ruta, inicioSegundos)
+        }
+    }
+
+    /**
+     * Ruta del último respaldo que terminó bien, para que la pantalla de edición la mande en
+     * el guardado si el entrenador sigue ahí. Que valga null no significa "sin respaldo": es
+     * "todavía no subió nada en esta sesión".
+     */
+    private val _cancionRutaRespaldada = MutableStateFlow<String?>(null)
+    val cancionRutaRespaldada: StateFlow<String?> = _cancionRutaRespaldada.asStateFlow()
+
+    /**
+     * Sube la copia local a Storage y guarda la ruta.
+     *
+     * Corre en [viewModelScope] y no en el `rememberCoroutineScope` de la pantalla: allí,
+     * guardar y salir cancelaba el alcance con la subida en vuelo, y esa subida podía llegar
+     * igual a Storage mientras el documento quedaba con `cancionRuta` nula — un respaldo que
+     * existe y que el restaurador nunca iría a buscar. Escribir la ruta desde acá deja de
+     * depender de que la pantalla siga viva.
+     *
+     * Se escribe sólo `cancionRuta` porque es el único campo que este camino posee: el nombre
+     * del archivo y el inicio son del botón Guardar, y esta escritura puede caer después.
+     *
+     * Si la subida falla se registra y ya: la copia local está y el video funciona. Esa
+     * canción se queda sin respaldo hasta que se vuelva a elegir, que es lo que dice el spec.
+     */
+    fun respaldarCancion(archivo: File) {
+        viewModelScope.launch {
+            runCatching { cancionStorageRepository.subir(clienteId, archivo) }
+                .onSuccess { ruta ->
+                    _cancionRutaRespaldada.value = ruta
+                    runCatching { clienteRepository.actualizarCancionRuta(clienteId, ruta) }
+                        .onFailure { Log.w(TAG, "No se pudo guardar la ruta de la canción", it) }
+                }
+                .onFailure { Log.w(TAG, "No se pudo respaldar la canción de $clienteId", it) }
         }
     }
 
