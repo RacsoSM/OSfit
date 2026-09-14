@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.VideoLibrary
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -22,17 +23,17 @@ import com.osfit.app.ui.common.AccionCard
 /**
  * Agrupa todo lo que el entrenador administra de la página web de una clienta.
  *
- * Hoy contiene una sola tarjeta, y ésa es la intención: la ficha de la clienta ya tiene una
- * rejilla larga de acciones, así que lo de la web entra por aquí y no por ahí. Cuando haya
- * que administrar algo más de la web, se agrega un elemento a [seccionesWeb] y la ficha no
- * se toca. Por eso este nivel intermedio no sobra aunque ahora parezca un paso de más.
+ * La ficha de la clienta ya tiene una rejilla larga de acciones, así que lo de la web entra
+ * por aquí y no por ahí. Cuando haya que administrar algo más de la web, se agrega un elemento
+ * a [seccionesWeb] y la ficha no se toca — que es exactamente como entró la paleta.
  */
 @Composable
 fun WebClienteScreen(
     clienteId: String,
-    onVerVideosWeb: (String) -> Unit
+    onVerVideosWeb: (String) -> Unit,
+    onVerPaletaWeb: (String) -> Unit
 ) {
-    val secciones = seccionesWeb(onVerVideosWeb = onVerVideosWeb)
+    val secciones = seccionesWeb(onVerVideosWeb = onVerVideosWeb, onVerPaletaWeb = onVerPaletaWeb)
     Scaffold { padding ->
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(padding).padding(16.dp),
@@ -64,10 +65,18 @@ private class SeccionWeb(
     val alAbrir: (String) -> Unit
 )
 
-private fun seccionesWeb(onVerVideosWeb: (String) -> Unit) = listOf(
+private fun seccionesWeb(
+    onVerVideosWeb: (String) -> Unit,
+    onVerPaletaWeb: (String) -> Unit
+) = listOf(
     SeccionWeb(
         icono = Icons.Filled.VideoLibrary,
         texto = "Videos en la web",
         alAbrir = onVerVideosWeb
+    ),
+    SeccionWeb(
+        icono = Icons.Filled.Palette,
+        texto = "Paleta de colores",
+        alAbrir = onVerPaletaWeb
     )
 )
