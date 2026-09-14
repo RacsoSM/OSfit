@@ -31,8 +31,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.osfit.app.video.PaletaVideo
-import com.osfit.app.video.PaletasVideo
+import com.osfit.app.paletas.Paleta
+import com.osfit.app.paletas.Paletas
 
 @Composable
 fun ConfigVideoScreen(viewModel: ConfigVideoViewModel = viewModel()) {
@@ -80,7 +80,7 @@ fun ConfigVideoScreen(viewModel: ConfigVideoViewModel = viewModel()) {
             title = { Text(periodo.encabezado) },
             text = {
                 Column {
-                    PaletasVideo.disponibles.forEach { paleta ->
+                    Paletas.disponibles.forEach { paleta ->
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -113,7 +113,7 @@ fun ConfigVideoScreen(viewModel: ConfigVideoViewModel = viewModel()) {
 
 /** Los tres blobs y el destacado, para poder comparar paletas de un vistazo. */
 @Composable
-private fun MuestrasPaleta(paleta: PaletaVideo) {
+private fun MuestrasPaleta(paleta: Paleta) {
     Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
         listOf(paleta.blobA, paleta.blobB, paleta.blobC, paleta.destacado).forEach { color ->
             Box(

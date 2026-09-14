@@ -6,7 +6,7 @@ package com.osfit.app.data.model
  * que ya usan MedallaOtorgada y LogroPersonalOtorgado.
  *
  * Sólo se guarda el id del preset, no sus colores: los presets viven en el código
- * (ver PaletasVideo), así que ajustar un color se hace una vez y aplica a todos los periodos
+ * (ver Paletas), así que ajustar un color se hace una vez y aplica a todos los periodos
  * que lo usan.
  */
 data class ConfigVideoPeriodo(

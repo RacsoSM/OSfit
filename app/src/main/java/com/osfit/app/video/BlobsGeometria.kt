@@ -1,5 +1,7 @@
 package com.osfit.app.video
 
+import com.osfit.app.paletas.Paleta
+
 data class Punto(val x: Float, val y: Float)
 
 /**
@@ -24,7 +26,7 @@ object BlobsGeometria {
      * Geometría fija de los cuatro blobs; los colores los pone [paleta]. El primero y el
      * cuarto comparten matiz a propósito: repetir un tono ata la composición.
      */
-    fun blobs(paleta: PaletaVideo): List<BlobSpec> = listOf(
+    fun blobs(paleta: Paleta): List<BlobSpec> = listOf(
         BlobSpec(colorArgb = paleta.blobA, radio = 0.32f, centroBaseX = 0.28f, centroBaseY = 0.22f, amplitudX = 0.10f, amplitudY = 0.07f, periodoMs = 11_000L, faseMs = 0L),
         BlobSpec(colorArgb = paleta.blobB, radio = 0.30f, centroBaseX = 0.74f, centroBaseY = 0.40f, amplitudX = 0.08f, amplitudY = 0.12f, periodoMs = 13_500L, faseMs = 2_500L),
         BlobSpec(colorArgb = paleta.blobC, radio = 0.34f, centroBaseX = 0.42f, centroBaseY = 0.72f, amplitudX = 0.12f, amplitudY = 0.09f, periodoMs = 9_500L, faseMs = 5_000L),

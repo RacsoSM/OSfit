@@ -1,4 +1,4 @@
-package com.osfit.app.video
+package com.osfit.app.paletas
 
 /**
  * Paleta de color de un video de resumen: los tres matices del fondo y el color del dato
@@ -12,7 +12,7 @@ package com.osfit.app.video
  * Son tres matices y no cuatro aunque haya cuatro blobs en pantalla: el primero y el cuarto
  * comparten matiz (ver BlobsGeometria), y esa repetición es parte de la composición.
  */
-data class PaletaVideo(
+data class Paleta(
     val id: String,
     val nombre: String,
     val blobA: Int,
@@ -21,11 +21,11 @@ data class PaletaVideo(
     val destacado: Int
 )
 
-object PaletasVideo {
+object Paletas {
 
     /** Los colores originales del video, antes de que las paletas existieran. Es la paleta que
      *  usa todo periodo sin configurar, así que la app sin tocar nada se ve igual que siempre. */
-    private val AQUA_NOCHE = PaletaVideo(
+    private val AQUA_NOCHE = Paleta(
         id = "aqua_noche",
         nombre = "Aqua noche",
         blobA = 0xB37B1575.toInt(),
@@ -34,7 +34,7 @@ object PaletasVideo {
         destacado = 0xFF00E6A8.toInt()
     )
 
-    private val ATARDECER = PaletaVideo(
+    private val ATARDECER = Paleta(
         id = "atardecer",
         nombre = "Atardecer",
         blobA = 0xB3B35A15.toInt(),
@@ -43,7 +43,7 @@ object PaletasVideo {
         destacado = 0xFFFFC24D.toInt()
     )
 
-    private val BOSQUE = PaletaVideo(
+    private val BOSQUE = Paleta(
         id = "bosque",
         nombre = "Bosque",
         blobA = 0xB3156B3A.toInt(),
@@ -52,7 +52,7 @@ object PaletasVideo {
         destacado = 0xFFB6E62E.toInt()
     )
 
-    private val ULTRAVIOLETA = PaletaVideo(
+    private val ULTRAVIOLETA = Paleta(
         id = "ultravioleta",
         nombre = "Ultravioleta",
         blobA = 0xB32E1F8A.toInt(),
@@ -61,7 +61,7 @@ object PaletasVideo {
         destacado = 0xFF3DE0FF.toInt()
     )
 
-    private val BRASA = PaletaVideo(
+    private val BRASA = Paleta(
         id = "brasa",
         nombre = "Brasa",
         blobA = 0xB38A1F15.toInt(),
@@ -70,12 +70,12 @@ object PaletasVideo {
         destacado = 0xFFFFD93D.toInt()
     )
 
-    val disponibles: List<PaletaVideo> = listOf(AQUA_NOCHE, ATARDECER, BOSQUE, ULTRAVIOLETA, BRASA)
+    val disponibles: List<Paleta> = listOf(AQUA_NOCHE, ATARDECER, BOSQUE, ULTRAVIOLETA, BRASA)
 
-    val porDefecto: PaletaVideo = AQUA_NOCHE
+    val porDefectoVideo: Paleta = AQUA_NOCHE
 
     /** Tolera ids nulos, vacíos y desconocidos: un periodo puede no estar configurado, o tener
      *  guardado un preset que después se quitó del código. */
-    fun porId(id: String?): PaletaVideo =
-        disponibles.firstOrNull { it.id == id } ?: porDefecto
+    fun porIdVideo(id: String?): Paleta =
+        disponibles.firstOrNull { it.id == id } ?: porDefectoVideo
 }

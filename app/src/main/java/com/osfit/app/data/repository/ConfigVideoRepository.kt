@@ -1,8 +1,8 @@
 package com.osfit.app.data.repository
 
 import com.google.firebase.firestore.FirebaseFirestore
-import com.osfit.app.video.PaletaVideo
-import com.osfit.app.video.PaletasVideo
+import com.osfit.app.paletas.Paleta
+import com.osfit.app.paletas.Paletas
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -34,11 +34,11 @@ class ConfigVideoRepository(
      * preset que ya no existe en el código— cae en la paleta por defecto, que son los colores
      * originales del video.
      */
-    suspend fun paletaDe(rangoInicio: String): PaletaVideo {
+    suspend fun paletaDe(rangoInicio: String): Paleta {
         val id = runCatching {
             configs.document(rangoInicio).get().await().getString("paletaId")
         }.getOrNull()
-        return PaletasVideo.porId(id)
+        return Paletas.porIdVideo(id)
     }
 
     /** Upsert por periodo: el id del documento es el rangoInicio, así que reasignar la paleta
