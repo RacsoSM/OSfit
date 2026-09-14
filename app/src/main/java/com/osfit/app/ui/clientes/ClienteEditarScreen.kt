@@ -32,6 +32,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -41,9 +42,11 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import com.osfit.app.data.AppContainer
 import com.osfit.app.util.CancionUtil
 import java.io.File
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 /** Cuánto suena la canción al tocar reproducir en el preview: suficiente para ubicar el
  *  fragmento por oído sin tener que escuchar la canción completa. */
@@ -69,7 +72,9 @@ fun ClienteEditarScreen(
     var segundosPorEjercicio by remember { mutableStateOf(clienteActual.segundosPorEjercicio?.toString() ?: "") }
     var minutosDescanso by remember { mutableStateOf(clienteActual.minutosDescanso?.toString() ?: "") }
     var cancionArchivo by remember { mutableStateOf(clienteActual.cancionArchivo) }
+    var cancionRuta by remember { mutableStateOf(clienteActual.cancionRuta) }
     var inicioSegundos by remember { mutableStateOf(clienteActual.cancionInicioSegundos ?: 0) }
+    val alcance = rememberCoroutineScope()
 
     val selectorCancion = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri != null) {
@@ -83,6 +88,19 @@ fun ClienteEditarScreen(
                 }
                 cancionArchivo = nuevoArchivo
                 inicioSegundos = 0
+                // La copia local ya está hecha y el video funciona con ella. El respaldo se
+                // intenta después: si falla, la ruta se queda nula y esta canción se reintenta
+                // la próxima vez que se elija. Nada más se rompe mientras tanto.
+                cancionRuta = null
+                alcance.launch {
+                    val subida = runCatching {
+                        AppContainer.cancionStorageRepository.subir(
+                            clienteId,
+                            CancionUtil.archivoCancion(context, nuevoArchivo)
+                        )
+                    }.getOrNull()
+                    if (subida != null) cancionRuta = subida
+                }
             }
         }
     }
@@ -104,6 +122,7 @@ fun ClienteEditarScreen(
                     )
                     viewModel.actualizarCancion(
                         archivo = cancionArchivo,
+                        ruta = cancionArchivo?.let { cancionRuta },
                         inicioSegundos = cancionArchivo?.let { inicioSegundos }
                     )
                     onGuardado()

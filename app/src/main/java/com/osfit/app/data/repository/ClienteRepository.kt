@@ -22,7 +22,7 @@ interface ClienteRepository {
         minutosDescanso: Double?
     )
     suspend fun actualizarActivo(clienteId: String, activo: Boolean)
-    suspend fun actualizarCancion(clienteId: String, archivo: String?, inicioSegundos: Int?)
+    suspend fun actualizarCancion(clienteId: String, archivo: String?, ruta: String?, inicioSegundos: Int?)
     /** "Asignar día": deja el ancla manual. No toca ningún registro de asistencia. */
     suspend fun asignarDiaAncla(clienteId: String, diaIndex: Int, fecha: String)
     suspend fun actualizarProximoPago(clienteId: String, fecha: Timestamp)

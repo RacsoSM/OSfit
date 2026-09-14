@@ -174,9 +174,9 @@ class ClienteDetailViewModel(
         }
     }
 
-    fun actualizarCancion(archivo: String?, inicioSegundos: Int?) {
+    fun actualizarCancion(archivo: String?, ruta: String?, inicioSegundos: Int?) {
         viewModelScope.launch {
-            clienteRepository.actualizarCancion(clienteId, archivo, inicioSegundos)
+            clienteRepository.actualizarCancion(clienteId, archivo, ruta, inicioSegundos)
         }
     }
 

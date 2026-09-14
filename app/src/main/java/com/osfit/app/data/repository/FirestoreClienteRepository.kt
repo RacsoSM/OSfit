@@ -84,10 +84,16 @@ class FirestoreClienteRepository(
         coleccion.document(clienteId).update("activo", activo).await()
     }
 
-    override suspend fun actualizarCancion(clienteId: String, archivo: String?, inicioSegundos: Int?) {
+    override suspend fun actualizarCancion(
+        clienteId: String,
+        archivo: String?,
+        ruta: String?,
+        inicioSegundos: Int?
+    ) {
         coleccion.document(clienteId).update(
             mapOf(
                 "cancionArchivo" to archivo,
+                "cancionRuta" to ruta,
                 "cancionInicioSegundos" to inicioSegundos
             )
         ).await()
