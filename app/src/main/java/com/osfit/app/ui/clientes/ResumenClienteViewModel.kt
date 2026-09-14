@@ -105,8 +105,13 @@ class ResumenClienteViewModel(
                         duracionSegundos = listo.duracionSegundos
                     )
                 )
-                aplicarRetencion()
+                // Con el blob subido y el documento escrito la publicación ya está hecha y se
+                // avisa acá: publicar y limpiar son dos cosas distintas y sólo la primera es
+                // lo que el entrenador pidió. Si después falla la limpieza, decirle "no se
+                // pudo publicar" sería mentira — el video está visible en la página — y lo
+                // llevaría a republicar creyendo que no quedó.
                 _mensaje.value = "Video publicado en la página de la clienta"
+                limpiarSobrantes()
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Throwable) {
@@ -125,13 +130,21 @@ class ResumenClienteViewModel(
      * paga todos los meses. En este orden, si falla el documento queda un registro apuntando a
      * un archivo que no está: eso se ve, la página lo resuelve como "video no disponible" y el
      * próximo publicar lo reintenta. Se prefiere el fallo visible.
+     *
+     * Ningún fallo de acá aborta ni revierte lo ya publicado: cada sobrante va con su propio
+     * `runCatching` para que uno problemático no impida limpiar los demás (igual que el lote
+     * de "Subir insignias"), y lo que no se pueda borrar queda para el próximo publicar.
      */
-    private suspend fun aplicarRetencion() {
-        val publicados = videoPublicadoRepository.observarDe(clienteId).first()
-        RetencionVideos.sobrantes(publicados).forEach { video ->
-            resumenStorageRepository.borrar(clienteId, video.rangoInicio)
-            videoPublicadoRepository.borrar(clienteId, video.rangoInicio)
-        }
+    private suspend fun limpiarSobrantes() {
+        runCatching {
+            val publicados = videoPublicadoRepository.observarDe(clienteId).first()
+            RetencionVideos.sobrantes(publicados).forEach { video ->
+                runCatching {
+                    resumenStorageRepository.borrar(clienteId, video.rangoInicio)
+                    videoPublicadoRepository.borrar(clienteId, video.rangoInicio)
+                }.onFailure { Log.w(TAG_RESUMEN, "No se pudo borrar el video ${video.rangoInicio}", it) }
+            }
+        }.onFailure { Log.w(TAG_RESUMEN, "No se pudo aplicar la retención de videos publicados", it) }
     }
 
     fun generarResumenSemanal(context: Context, fechaReferencia: LocalDate = LocalDate.now()) {
