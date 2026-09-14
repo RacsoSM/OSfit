@@ -14,13 +14,16 @@ import com.osfit.app.data.model.MedallaCatalogo
 import com.osfit.app.data.model.MedallaOtorgada
 import com.osfit.app.data.model.Pago
 import com.osfit.app.data.model.Rutina
+import com.osfit.app.data.model.VideoPublicado
 import com.osfit.app.data.repository.AccesoWebRepository
 import com.osfit.app.data.repository.AsistenciaRepository
 import com.osfit.app.data.repository.ClienteRepository
 import com.osfit.app.data.repository.LogroPersonalRepository
 import com.osfit.app.data.repository.MedallaRepository
 import com.osfit.app.data.repository.PagoRepository
+import com.osfit.app.data.repository.ResumenStorageRepository
 import com.osfit.app.data.repository.RutinaRepository
+import com.osfit.app.data.repository.VideoPublicadoRepository
 import com.osfit.app.domain.AsignarDiaManual
 import com.osfit.app.domain.CupoRevivesCalculator
 import com.osfit.app.domain.RachaCalculator
@@ -44,7 +47,9 @@ class ClienteDetailViewModel(
     private val medallaRepository: MedallaRepository = AppContainer.medallaRepository,
     private val logroPersonalRepository: LogroPersonalRepository = AppContainer.logroPersonalRepository,
     private val sincronizadorDiaWeb: SincronizadorDiaWeb = AppContainer.sincronizadorDiaWeb,
-    private val accesoWebRepository: AccesoWebRepository = AppContainer.accesoWebRepository
+    private val accesoWebRepository: AccesoWebRepository = AppContainer.accesoWebRepository,
+    private val videoPublicadoRepository: VideoPublicadoRepository = AppContainer.videoPublicadoRepository,
+    private val resumenStorageRepository: ResumenStorageRepository = AppContainer.resumenStorageRepository
 ) : ViewModel() {
 
     init {
@@ -250,6 +255,42 @@ class ClienteDetailViewModel(
 
     fun quitarLogroPersonal(otorgado: LogroPersonalOtorgado) {
         viewModelScope.launch { logroPersonalRepository.quitarLogro(clienteId, otorgado.id) }
+    }
+
+    /** Lo que la clienta ve publicado en su página, ya ordenado de la quincena más reciente
+     *  a la más vieja por el repositorio. */
+    val videosPublicados: StateFlow<List<VideoPublicado>> =
+        videoPublicadoRepository.observarDe(clienteId)
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    /**
+     * Borra primero el blob de Storage y recién después el documento de Firestore, igual que
+     * la retención automática en `ResumenClienteViewModel.limpiarSobrantes`: el borrado no es
+     * atómico entre los dos, así que hay que elegir cuál falla mejor. Al revés, si fallara el
+     * blob quedaría un mp4 huérfano que nadie ve, nadie encuentra y se paga todos los meses.
+     * En este orden, si falla el documento queda un registro apuntando a un archivo que no
+     * está: eso se ve, la página lo resuelve como "video no disponible" y el próximo publicar
+     * lo reintenta. Se prefiere el fallo visible.
+     *
+     * Se usa `video.rutaStorage` y no una ruta rearmada con `clienteId` + `rangoInicio`: eso
+     * borraría la ruta que la convención dice hoy, no la que realmente se subió.
+     */
+    fun quitarVideoPublicado(video: VideoPublicado) {
+        viewModelScope.launch {
+            runCatching {
+                resumenStorageRepository.borrar(video.rutaStorage)
+                videoPublicadoRepository.borrar(clienteId, video.rangoInicio)
+            }.onFailure {
+                _errorVideo.value = "No se pudo quitar el video de la web"
+            }
+        }
+    }
+
+    private val _errorVideo = MutableStateFlow<String?>(null)
+    val errorVideo: StateFlow<String?> = _errorVideo.asStateFlow()
+
+    fun limpiarErrorVideo() {
+        _errorVideo.value = null
     }
 
     val accesoWeb: StateFlow<AccesoWeb?> = accesoWebRepository.observarAcceso(clienteId)

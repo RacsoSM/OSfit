@@ -29,6 +29,7 @@ import androidx.compose.material.icons.filled.Payments
 import androidx.compose.material.icons.filled.QueryStats
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Videocam
+import androidx.compose.material.icons.filled.VideoLibrary
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -81,6 +82,7 @@ fun ClienteDetailScreen(
     onVerPagos: (String) -> Unit,
     onVerEstadisticas: (String) -> Unit,
     onVerMedallas: (String) -> Unit,
+    onVerVideosWeb: (String) -> Unit,
     onVerLogrosPersonales: (String) -> Unit,
     onEditarCliente: (String) -> Unit,
     onEliminado: () -> Unit
@@ -331,6 +333,16 @@ fun ClienteDetailScreen(
                         modifier = Modifier.weight(1f),
                         onClick = { onVerMedallas(clienteId) }
                     )
+                    AccionCard(
+                        icono = Icons.Filled.VideoLibrary,
+                        texto = "Videos en la web",
+                        modifier = Modifier.weight(1f),
+                        onClick = { onVerVideosWeb(clienteId) }
+                    )
+                }
+            }
+            item {
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     AccionCard(
                         icono = Icons.Filled.Videocam,
                         texto = when {

@@ -322,7 +322,7 @@ firmar con `apksigner` y después `adb shell cmd package compile -m speed -f com
 
 ---
 
-## 12. Elegir qué videos se suben a la web, y poder quitarlos
+## 12. Elegir qué videos se suben a la web, y poder quitarlos — ✅ HECHO (2026-09-13)
 
 **Detectado:** 2026-09-13.
 
@@ -339,3 +339,25 @@ borra es la retención automática, que elimina todo lo que pase de los 6 más r
 Además, la tarjeta de publicar sólo existe en memoria justo después de generar: si el
 entrenador sale de la pantalla, desaparece y hay que volver a generar el video para poder
 publicarlo.
+
+**Alcance acotado por el entrenador el 2026-09-13**, después de explicarle cómo funciona hoy:
+
+> lo de elegir entre varios no es necesario, pero lo que si quiero hacer es lo de la pantalla
+> de videos de la web por clienta
+
+Eso descarta la única parte que no tenía solución clara. Elegir entre varias versiones de la
+misma quincena obligaba a decidir dónde guardarlas, porque el generador borra del caché del
+teléfono todo lo que pase de una hora; sin esa parte, no hace falta conservar nada nuevo.
+
+Queda una pantalla que sólo lee lo ya publicado y permite quitarlo: listar
+`clientes/{id}/videos` y, por cada uno, borrarlo. Las piezas de datos ya existen
+(`VideoPublicadoRepository.observarDe` y `.borrar`, `ResumenStorageRepository.borrar`), y el
+borrado debe seguir el mismo orden que la retención —primero el blob, después el documento—
+por el mismo motivo: un blob huérfano no se ve y se paga, un documento sin blob se ve y se
+reintenta.
+
+**Hecho (2026-09-13):** pantalla "Videos en la web" por clienta, con la misma forma que
+"Medallas": lista lo publicado (encabezado del rango y duración en mm:ss) y lo quita con la
+papelera, detrás de un `AlertDialog` de confirmación porque republicar obliga a regenerar el
+video. Se borra primero el blob de Storage y después el documento, con `video.rutaStorage`.
+Falta verificarlo en el dispositivo.
