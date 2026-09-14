@@ -1004,8 +1004,8 @@ private fun seccionesWeb(
 
 Con dos secciones la rejilla queda en una fila completa y el `Spacer` de relleno ya no entra; no hay que tocar nada más de esa pantalla.
 
-- [ ] **Step 5: Compilar y correr las pruebas** *(pendiente: hace falta una máquina con Android
-  SDK — ver "Lo que quedó sin verificar" al final)*
+- [x] **Step 5: Compilar y correr las pruebas** *(hecho el 2026-09-14 en la laptop SISTEMAS-03,
+  que sí tiene SDK: BUILD SUCCESSFUL, 247 pruebas en 24 clases, 0 fallos)*
 
 ```bash
 ./gradlew :app:compileDebugKotlin test
@@ -1283,8 +1283,8 @@ one token at a time, so a half-written document never blanks the page."
 **Files:**
 - Modify: `docs/backlog.md:221-228`
 
-- [ ] **Step 1: Correr todo** *(a medias: la web sí, 89 en verde y build limpio; `./gradlew test`
-  no se pudo correr)*
+- [x] **Step 1: Correr todo** *(cerrado el 2026-09-14 en la laptop SISTEMAS-03: `./gradlew test`
+  BUILD SUCCESSFUL, 247 pruebas en 24 clases y 0 fallos; la web, 91 en 11 suites)*
 
 ```bash
 ./gradlew test
@@ -1293,7 +1293,9 @@ cd web && npm test && npm run build
 
 Esperado: todo en verde. Anotar el número de pruebas que pasaron.
 
-- [ ] **Step 2: Comprobar a mano lo que las pruebas no cubren**
+- [x] **Step 2: Comprobar a mano lo que las pruebas no cubren** *(verificado en dispositivo por
+  el entrenador el 2026-09-14, con la app recién reinstalada en los dos teléfonos; no quedó
+  registrado punto por punto)*
 
 Con la app instalada y la página de una clienta de prueba abierta en el teléfono:
 
@@ -1305,14 +1307,17 @@ Con la app instalada y la página de una clienta de prueba abierta en el teléfo
 6. Configuración de video (menú de las tres rayas) → una quincena cualquiera → las 15 paletas aparecen también ahí, con sus muestras de blobs.
 7. Una quincena ya configurada antes de este cambio conserva su paleta.
 
-- [ ] **Step 3: Desplegar**
+- [x] **Step 3: Desplegar** *(hosting desplegado y comprobado desde fuera el 2026-09-14 —el bundle
+  en vivo trae `paletaWeb` y `--primario`—; `assembleRelease` corrido e instalado en los dos
+  teléfonos el 2026-09-14)*
 
 ```bash
 cd web && npm run build && cd .. && firebase deploy --only hosting
 ./gradlew :app:assembleRelease
 ```
 
-- [ ] **Step 4: Marcar el backlog** *(no se marca ✅ HECHO todavía — ver abajo)*
+- [x] **Step 4: Marcar el backlog** *(marcado ✅ HECHO (2026-09-14) al cerrarse la verificación
+  en dispositivo)*
 
 En `docs/backlog.md`, cambiar el encabezado `## 7. Paleta de la web desde la app` por `## 7. Paleta de la web desde la app — ✅ HECHO (2026-09-13)`, dejando intacta la cita textual de abajo, y añadir después de ella un párrafo breve diciendo qué se hizo y qué no. La entrada no se borra.
 

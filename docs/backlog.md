@@ -189,7 +189,7 @@ igual para todos.
 
 ---
 
-## 7. Paleta de la web desde la app
+## 7. Paleta de la web desde la app — ✅ HECHO (2026-09-14)
 
 **Detectado:** 2026-09-14.
 
@@ -224,10 +224,20 @@ faltaba, y el Step 3 a medias.
   `--primario`; el `index.html` servido trae las tres `var(--primario)` del SVG del fondo.
 - **`:app:assembleRelease`: BUILD SUCCESSFUL**, `app-release-unsigned.apk` de 14,8 MB.
 
-**Sigue sin verificarse en dispositivo, y está bloqueado** — ver la entrada 11: la APK firmada
-con el keystore de esta máquina no se puede instalar encima de la que trae el teléfono. Los
-siete puntos del Step 2 quedan pendientes, los cuatro de la app porque no hay app nueva que
-abrir, y los tres de la página porque la paleta sólo se puede cambiar desde la app.
+**Cerrado el 2026-09-14.** El bloqueo de arriba —no poder instalar una APK nueva— era de la
+laptop CESAVESIN, no de todas: desde SISTEMAS-03 el `debug.keystore` sí coincide con el de los
+teléfonos, y la release que se instaló ahí para la entrada 9 llevaba dentro esta paleta, porque
+el código entró en `dea6967` y estaba en `main`. O sea que se desbloqueó de rebote, sin trabajo
+extra. **El entrenador verificó los siete puntos del Step 2 en dispositivo** y confirmó que
+está bien; no quedó anotado punto por punto, así que si algún día falla alguno, el registro no
+dice cuál se miró con más calma.
+
+Lo que sí quedó medido ese día, y cierra el Step 1 que estaba a medias: `./gradlew test`
+BUILD SUCCESSFUL con **247 pruebas en 24 clases y 0 fallos** —la primera vez que la app se
+compila y se prueba entera desde que entraron las Tasks 1 a 5— y la web con **91 pruebas en 11
+suites**. El hosting ya estaba desplegado y comprobado desde fuera.
+
+El plan `2026-09-13-paleta-web-cliente.md` queda con todos sus pasos marcados.
 
 Un detalle que sí se verificó y valía la pena: los atributos de presentación del SVG del fondo
 aceptan `var(--primario)`. Comprobado en Chromium sobre el `dist/` construido, los `stop` y el
@@ -433,6 +443,14 @@ perderían dos cosas que viven sólo en el teléfono:
   (`MedallasViewModel:85`), pero **ninguno que lo vuelva a bajar** desde `imagenUrl`. O sea
   que la web seguiría viéndose bien y el video se quedaría sin las imágenes, sin forma de
   recuperarlas desde la app.
+
+**Al día 2026-09-14: el bloqueo era sólo de CESAVESIN.** Desde SISTEMAS-03 el
+`debug.keystore` **sí** coincide con el de los dos teléfonos (SHA-256 `3226:5063:6a9c…`,
+comprobado con `apksigner verify --print-certs` sobre la APK sacada con `adb pull`), así que
+desde ahí se actualiza con `adb install -r` sin desinstalar y sin perder nada. Eso desbloqueó
+de rebote la entrada 7. Lo que sigue abierto de esta entrada es la causa de fondo: sin
+`signingConfigs` en `app/build.gradle.kts`, cada release hay que firmarla a mano y acordarse
+del `cmd package compile -m speed -f` después de instalar, o el video vuelve a los 35 minutos.
 
 **La salida barata es copiar el `~/.android/debug.keystore` de la otra laptop a ésta** — con
 el mismo certificado, `install -r` funciona y no se pierde nada. La salida definitiva sigue
