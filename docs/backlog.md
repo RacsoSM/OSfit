@@ -475,3 +475,61 @@ se promedia el resto; si ninguna lo trae devuelve `null`, no `NaN`), 91/91 en ve
 `tsc && vite build` limpio. Desplegado a hosting el mismo día, y el entrenador
 confirmó ese mismo día que la página de Dulce y de Carito ya muestra el número de minutos.
 Cerrado.
+
+---
+
+## 14. Los archivos locales sobreviven a una desinstalación — ✅ HECHO (2026-09-14)
+
+**Detectado:** 2026-09-14, al chocar con la entrada 11.
+
+> para que cada vez que yo lo suba se suba a algun lugar y que no se borren cada vez que yo
+> desinstale
+
+Antes de esto, `filesDir` era el único sitio donde vivían las canciones de cada clienta y los
+PNG de las insignias, y el generador de video los lee de ahí. Desinstalar los borraba: las
+insignias tenían copia en Storage pero **nada las volvía a bajar**, y las canciones no tenían
+copia en ninguna parte.
+
+Ahora la nube es **respaldo, no fuente**. `CancionUtil.copiarCancion` sigue copiando primero a
+`filesDir` —su motivo documentado sigue siendo válido— y además se sube a
+`canciones/<clienteId>.<ext>`, guardando la **ruta** (no la URL de descarga) en
+`Cliente.cancionRuta`, por la misma razón que los resúmenes. Al arrancar,
+`RestauradorDeArchivos` —con la forma de `SincronizadorDiaWeb`, y por el mismo motivo de
+concentrar la respuesta a "¿quién restaura?"— baja **sólo lo que falta en disco**.
+
+Spec: `docs/superpowers/specs/2026-09-14-archivos-locales-en-la-nube-design.md`.
+Plan: `docs/superpowers/plans/2026-09-14-archivos-locales-en-la-nube.md`.
+
+**Verificado en dispositivo el 2026-09-14**, con la app release firmada y AOT-compilada
+(`status=speed`, sin `DEBUGGABLE`):
+
+- Instalación limpia: la app se autentica sola y carga clientes.
+- **Las imágenes de medallas volvieron solas** tras una instalación limpia — se dibujan con sus
+  PNG propios, que sólo pueden estar ahí porque el restaurador los bajó de Storage.
+- **El viaje completo de una canción**: se eligió una para Estela, se desinstaló, se reinstaló
+  y volvió sola. La evidencia fina está en que antes del ciclo su pantalla mostraba el inicio
+  del fragmento **sin duración ni barra** (archivo ausente) y después mostraba **duración y
+  barra**, o sea que la app leyó el audio real de `filesDir`.
+
+**Lo que costó, y conviene no repetir:** una revisión de toda la rama encontró que el
+restaurador se lanzaba **antes** de que la app se autenticara. Como la sesión se inicia desde
+dentro de la composición, en el arranque de después de reinstalar —el único que de verdad
+tiene algo que restaurar— los listeners de Firestore salían denegados y la restauración entera
+se perdía en silencio. Era el único consumidor de Firestore fuera de la rama
+`AuthState.Success`. También se arregló que una descarga cortada dejaba un archivo truncado
+que contaba como "presente" para siempre: ahora se baja a un temporal y se renombra al
+terminar (`DescargaAtomica`).
+
+**Lo que este cambio NO hace, a propósito:** no rescata lo que ya estaba en el teléfono. Las
+canciones anteriores se perdieron al reinstalar y hay que volver a elegirlas — acordado así.
+Tampoco borra de la nube cuando se borra en local, así que cambiar la extensión de una canción
+deja un huérfano en `canciones/`. Hay uno ahora mismo, de la prueba.
+
+**Orden obligatorio al desplegar:** las reglas de Storage **antes** que la APK. Si la app llega
+primero, toda canción elegida en esa ventana se rechaza en silencio y se queda sin respaldo,
+sin aviso en la interfaz y sin reparación posterior.
+
+**Nota de instalación:** en este teléfono `adb install` falla con
+`INSTALL_FAILED_USER_RESTRICTED` (restricción de MIUI, distinta del problema de firma de la
+entrada 11). Se rodea empujando la APK a `/data/local/tmp` y usando `adb shell pm install`.
+Desde Git Bash no funciona —convierte la ruta a Windows—: hay que hacerlo desde PowerShell.
