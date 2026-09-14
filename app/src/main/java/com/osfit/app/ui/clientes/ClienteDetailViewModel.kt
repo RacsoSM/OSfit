@@ -1,5 +1,6 @@
 package com.osfit.app.ui.clientes
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.Timestamp
@@ -29,6 +30,7 @@ import com.osfit.app.domain.CupoRevivesCalculator
 import com.osfit.app.domain.RachaCalculator
 import com.osfit.app.domain.RutinaProgressCalculator
 import java.time.LocalDate
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -277,10 +279,16 @@ class ClienteDetailViewModel(
      */
     fun quitarVideoPublicado(video: VideoPublicado) {
         viewModelScope.launch {
-            runCatching {
+            try {
                 resumenStorageRepository.borrar(video.rutaStorage)
                 videoPublicadoRepository.borrar(clienteId, video.rangoInicio)
-            }.onFailure {
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Throwable) {
+                // Acá el fallo sí se le reporta al entrenador, al revés que en la retención de
+                // `ResumenClienteViewModel.limpiarSobrantes`: allí limpiar es secundario a
+                // publicar, acá quitar es justo lo que pidió.
+                Log.w(TAG, "No se pudo quitar el video ${video.rangoInicio}", e)
                 _errorVideo.value = "No se pudo quitar el video de la web"
             }
         }
@@ -312,5 +320,9 @@ class ClienteDetailViewModel(
             accesoWeb.value?.let { accesoWebRepository.revocarAcceso(it.token) }
             clienteRepository.actualizarTieneAccesoWeb(clienteId, false)
         }
+    }
+
+    private companion object {
+        const val TAG = "ClienteDetailViewModel"
     }
 }

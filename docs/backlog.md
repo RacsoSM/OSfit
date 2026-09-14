@@ -270,7 +270,7 @@ adelanta el momento en que se entera, no cambia lo que sabe.
 
 ---
 
-## 10. `rutaStorage` en blanco bloquearía la retención de videos para siempre
+## 10. `rutaStorage` en blanco bloquearía la retención de videos para siempre — ✅ HECHO (2026-09-13)
 
 **Detectado:** 2026-09-13, en la re-revisión de los arreglos de la Etapa 3.
 
@@ -287,6 +287,13 @@ nunca es vacía. Hace falta un documento escrito a mano o una migración futura 
 **Qué haría falta:** una línea, tratando la ruta en blanco como "nada que borrar" —
 `video.rutaStorage.ifBlank { null } ?: return@forEach`, o el mismo criterio dentro de
 `ResumenStorageRepository.borrar`.
+
+**Hecho (2026-09-13):** un `if (ruta.isBlank()) return` al principio de
+`ResumenStorageRepository.borrar`, que es el segundo de los dos sitios propuestos: puesto ahí
+cierra el agujero para todos los que llaman y no sólo para la retención. Lo adelantó la
+pantalla "Videos en la web" (entrada 12), que es una segunda puerta al mismo bug y donde
+además era bloqueante: allí quitar el video es la acción principal, así que la excepción
+dejaba al entrenador sin ninguna forma de quitar ese documento.
 
 ---
 

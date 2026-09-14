@@ -35,8 +35,15 @@ class ResumenStorageRepository(
      * que quedó a medias (blob borrado, documento vivo) volvía a fallar en cada intento
      * posterior y el documento quedaba para siempre, con la página diciendo "Video no
      * disponible".
+     *
+     * Por el mismo criterio, una ruta en blanco es éxito y no fallo: significa que no hay blob
+     * que borrar. Además de ser lo correcto, evita un bloqueo — `child("")` lanza
+     * `IllegalArgumentException`, que no es `StorageException`, así que subiría por encima de
+     * quien llama e impediría borrar el documento para siempre; el registro quedaría visible
+     * en la página de la clienta sin forma de quitarlo.
      */
     suspend fun borrar(ruta: String) {
+        if (ruta.isBlank()) return
         try {
             storage.reference.child(ruta).delete().await()
         } catch (e: StorageException) {
