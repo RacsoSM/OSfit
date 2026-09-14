@@ -225,6 +225,27 @@ igual para todos.
 > feature: a button on the OSfit app that can change the whole color palette of the web osfit,
 > like the palettes of the quincenales videos
 
+**Avance (2026-09-14):** implementado entero, sin verificar en dispositivo ni desplegar, así
+que la entrada sigue abierta. Plan: `docs/superpowers/plans/2026-09-13-paleta-web-cliente.md`.
+
+Está el catálogo compartido en `paletas/Paleta.kt` con las 15 paletas y sus cuatro colores de
+web; las muestras compartidas entre Configuración de video y la pantalla nueva; la pantalla
+"Paleta de colores" en la card de Web de cada clienta, que guarda al tocar; y la web pintando
+los hex que recibe como variables CSS, fondo SVG incluido. Los dos por defecto siguen siendo
+distintos —aqua para el video, morado para la web—, así que nada cambia de aspecto solo.
+
+**Lo que falta, y es lo único:** compilar la app. Se escribió en una máquina sin Android SDK
+(ni `local.properties`, ni `google-services.json`, y sin alcance al repo de Google para el
+Android Gradle Plugin), así que de la app no se compiló ni corrió una sola prueba — tampoco
+las de las Tasks 1 a 4, que ya venían en `dea6967` sin marcar. De la web sí: 89 pruebas en
+verde y build limpio. Después de compilar quedan la verificación en dispositivo (los siete
+puntos del Task 7 Step 2 del plan) y el despliegue.
+
+Un detalle que sí se verificó y valía la pena: los atributos de presentación del SVG del fondo
+aceptan `var(--primario)`. Comprobado en Chromium sobre el `dist/` construido, los `stop` y el
+`stroke` siguieron a la variable. Si no lo hubieran hecho, el fondo se habría quedado morado
+para todas y sólo se habría notado con el teléfono en la mano.
+
 ---
 
 ## 8. Regenerar el grafo de graphify

@@ -1,6 +1,6 @@
 # Paleta de la web del cliente: plan de implementación
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Que el entrenador elija, desde la app, la paleta de colores de la página web de cada clienta, con el mismo catálogo que ya usan los videos y diez paletas nuevas.
 
@@ -44,7 +44,7 @@ Renombrado mecánico, sin ningún cambio de comportamiento ni de color. Se hace 
 - Consumes: nada.
 - Produces: `com.osfit.app.paletas.Paleta` (data class con `id: String`, `nombre: String`, `blobA: Int`, `blobB: Int`, `blobC: Int`, `destacado: Int`); `com.osfit.app.paletas.Paletas` con `disponibles: List<Paleta>`, `porDefectoVideo: Paleta`, `porIdVideo(id: String?): Paleta`.
 
-- [ ] **Step 1: Mover el archivo conservando el historial**
+- [x] **Step 1: Mover el archivo conservando el historial**
 
 ```bash
 mkdir -p app/src/main/java/com/osfit/app/paletas
@@ -53,7 +53,7 @@ mkdir -p app/src/test/java/com/osfit/app/paletas
 git mv app/src/test/java/com/osfit/app/video/PaletasVideoTest.kt app/src/test/java/com/osfit/app/paletas/PaletasTest.kt
 ```
 
-- [ ] **Step 2: Renombrar dentro de `Paleta.kt`**
+- [x] **Step 2: Renombrar dentro de `Paleta.kt`**
 
 Cambios exactos en `app/src/main/java/com/osfit/app/paletas/Paleta.kt`:
 
@@ -68,7 +68,7 @@ Cambios exactos en `app/src/main/java/com/osfit/app/paletas/Paleta.kt`:
 
 El KDoc de la clase menciona "video" en todas sus frases y sigue siendo correcto en esta tarea: los campos que describe sí son los del video. La Task 2 lo reescribe cuando deje de serlo.
 
-- [ ] **Step 3: Actualizar los consumidores**
+- [x] **Step 3: Actualizar los consumidores**
 
 En los seis archivos de `main` listados arriba: sustituir `PaletaVideo` por `Paleta` y `PaletasVideo` por `Paletas`, y cambiar los imports `com.osfit.app.video.PaletaVideo` / `com.osfit.app.video.PaletasVideo` por `com.osfit.app.paletas.Paleta` / `com.osfit.app.paletas.Paletas`.
 
@@ -80,13 +80,13 @@ Dos llamadas cambian de nombre, no solo de tipo:
 
 En `ConfigVideoPeriodo.kt:9` hay un comentario que dice "ver PaletasVideo"; cambiarlo a "ver Paletas".
 
-- [ ] **Step 4: Actualizar las pruebas**
+- [x] **Step 4: Actualizar las pruebas**
 
 En `app/src/test/java/com/osfit/app/paletas/PaletasTest.kt`: `package com.osfit.app.video` → `package com.osfit.app.paletas`, `class PaletasVideoTest` → `class PaletasTest`, todo `PaletasVideo.` → `Paletas.`, y `porDefecto` → `porDefectoVideo` y `porId(` → `porIdVideo(` en los cinco tests que los usan.
 
 En `app/src/test/java/com/osfit/app/video/BlobsGeometriaTest.kt`: añadir `import com.osfit.app.paletas.Paletas`, y cambiar `PaletasVideo.porDefecto` → `Paletas.porDefectoVideo`, `PaletasVideo.porId("atardecer")` → `Paletas.porIdVideo("atardecer")`, `PaletasVideo.disponibles` → `Paletas.disponibles`.
 
-- [ ] **Step 5: Comprobar que nada quedó colgando**
+- [x] **Step 5: Comprobar que nada quedó colgando**
 
 ```bash
 grep -rn "PaletaVideo\|PaletasVideo" app/src
@@ -94,7 +94,7 @@ grep -rn "PaletaVideo\|PaletasVideo" app/src
 
 Esperado: sin resultados.
 
-- [ ] **Step 6: Compilar y correr las pruebas**
+- [x] **Step 6: Compilar y correr las pruebas**
 
 ```bash
 ./gradlew :app:compileDebugKotlin test
@@ -102,7 +102,7 @@ Esperado: sin resultados.
 
 Esperado: BUILD SUCCESSFUL. Las pruebas de `PaletasTest` y `BlobsGeometriaTest` pasan exactamente como antes — este renombrado no cambia ningún comportamiento, así que una prueba roja aquí significa que se tocó algo de más.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add -A app/src
@@ -124,7 +124,7 @@ from video/ would not explain itself."
 - Consumes: `Paleta`, `Paletas` de la Task 1.
 - Produces: `Paleta` con cuatro campos más — `webPrimario: Int`, `webPrimarioOscuro: Int`, `webPrimarioClaro: Int`, `webSobrePrimario: Int`; `Paletas.porDefectoWeb: Paleta`; `Paletas.porIdWeb(id: String?): Paleta`. `Paletas.disponibles` pasa a tener 15 elementos, con `AQUA_NOCHE` primero.
 
-- [ ] **Step 1: Escribir las pruebas que fallan**
+- [x] **Step 1: Escribir las pruebas que fallan**
 
 Añadir a `app/src/test/java/com/osfit/app/paletas/PaletasTest.kt`, dentro de la clase:
 
@@ -236,7 +236,7 @@ Añadir a `app/src/test/java/com/osfit/app/paletas/PaletasTest.kt`, dentro de la
     }
 ```
 
-- [ ] **Step 2: Correr las pruebas para verlas fallar**
+- [x] **Step 2: Correr las pruebas para verlas fallar**
 
 ```bash
 ./gradlew :app:testDebugUnitTest --tests "com.osfit.app.paletas.PaletasTest"
@@ -244,7 +244,7 @@ Añadir a `app/src/test/java/com/osfit/app/paletas/PaletasTest.kt`, dentro de la
 
 Esperado: error de compilación — `Unresolved reference: webPrimario`, `porDefectoWeb`, `porIdWeb`. Es el fallo correcto: los campos todavía no existen.
 
-- [ ] **Step 3: Extender la data class**
+- [x] **Step 3: Extender la data class**
 
 En `app/src/main/java/com/osfit/app/paletas/Paleta.kt`, sustituir el KDoc de la clase y la clase por:
 
@@ -280,7 +280,7 @@ data class Paleta(
 )
 ```
 
-- [ ] **Step 4: Añadir los cuatro colores de web a las cinco paletas existentes**
+- [x] **Step 4: Añadir los cuatro colores de web a las cinco paletas existentes**
 
 Sin tocar sus colores de video. Añadir a cada constructor, después de `destacado`:
 
@@ -316,7 +316,7 @@ Sin tocar sus colores de video. Añadir a cada constructor, después de `destaca
     webSobrePrimario = 0xFF2B0C04.toInt()
 ```
 
-- [ ] **Step 5: Añadir las diez paletas nuevas**
+- [x] **Step 5: Añadir las diez paletas nuevas**
 
 Después de `BRASA` y antes de `disponibles`:
 
@@ -455,7 +455,7 @@ Después de `BRASA` y antes de `disponibles`:
     )
 ```
 
-- [ ] **Step 6: Actualizar la lista y los dos por defecto**
+- [x] **Step 6: Actualizar la lista y los dos por defecto**
 
 Sustituir el bloque final del `object Paletas` por:
 
@@ -486,7 +486,7 @@ Sustituir el bloque final del `object Paletas` por:
         disponibles.firstOrNull { it.id == id } ?: porDefectoWeb
 ```
 
-- [ ] **Step 7: Correr las pruebas**
+- [x] **Step 7: Correr las pruebas**
 
 ```bash
 ./gradlew :app:testDebugUnitTest --tests "com.osfit.app.paletas.PaletasTest" --tests "com.osfit.app.video.BlobsGeometriaTest"
@@ -494,7 +494,7 @@ Sustituir el bloque final del `object Paletas` por:
 
 Esperado: PASS. `PaletasTest` queda con 18 pruebas — las 9 que ya tenía más las 9 de esta tarea — y `BlobsGeometriaTest` sigue verde sin haberla tocado. Si falla `el primario de web de toda paleta contrasta con el fondo oscuro`, el mensaje dice qué paleta y con qué ratio — hay que aclarar ese `webPrimario`, no bajar el umbral.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add app/src/main/java/com/osfit/app/paletas/Paleta.kt app/src/test/java/com/osfit/app/paletas/PaletasTest.kt
@@ -517,7 +517,7 @@ than derived. A test holds every palette to 4.5:1 against the page background."
 - Consumes: `Paleta` de la Task 2.
 - Produces: `com.osfit.app.ui.common.MuestrasPaletaVideo(paleta: Paleta, modifier: Modifier = Modifier)` y `com.osfit.app.ui.common.MuestrasPaletaWeb(paleta: Paleta, modifier: Modifier = Modifier)`, ambos `@Composable`.
 
-- [ ] **Step 1: Crear el componente compartido**
+- [x] **Step 1: Crear el componente compartido**
 
 `app/src/main/java/com/osfit/app/ui/common/MuestrasPaleta.kt`:
 
@@ -572,7 +572,7 @@ private fun Muestras(colores: List<Int>, modifier: Modifier) {
 }
 ```
 
-- [ ] **Step 2: Hacer que `ConfigVideoScreen` use el compartido**
+- [x] **Step 2: Hacer que `ConfigVideoScreen` use el compartido**
 
 En `app/src/main/java/com/osfit/app/ui/configvideo/ConfigVideoScreen.kt`:
 
@@ -583,7 +583,7 @@ En `app/src/main/java/com/osfit/app/ui/configvideo/ConfigVideoScreen.kt`:
 
 El aspecto de Configuración de video no cambia: son los mismos cuatro círculos de 20dp, en el mismo orden.
 
-- [ ] **Step 3: Compilar**
+- [x] **Step 3: Compilar**
 
 ```bash
 ./gradlew :app:compileDebugKotlin
@@ -591,7 +591,7 @@ El aspecto de Configuración de video no cambia: son los mismos cuatro círculos
 
 Esperado: BUILD SUCCESSFUL, sin warnings de import sin usar en `ConfigVideoScreen.kt`.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add app/src/main/java/com/osfit/app/ui/common/MuestrasPaleta.kt app/src/main/java/com/osfit/app/ui/configvideo/ConfigVideoScreen.kt
@@ -616,7 +616,7 @@ El repositorio no lleva prueba: habla con Firestore, y en este proyecto ningún 
 - Consumes: `Paleta`, `Paletas` de la Task 2.
 - Produces: `com.osfit.app.paletas.aHexWeb(color: Int): String`; `com.osfit.app.paletas.camposFirestore(paleta: Paleta): Map<String, Any>`; `com.osfit.app.data.repository.PaletaWebRepository` con `fun observarPaletaId(clienteId: String): Flow<String?>` y `suspend fun guardar(clienteId: String, paleta: Paleta)`.
 
-- [ ] **Step 1: Escribir las pruebas que fallan**
+- [x] **Step 1: Escribir las pruebas que fallan**
 
 `app/src/test/java/com/osfit/app/paletas/PaletaWebFirestoreTest.kt`:
 
@@ -681,7 +681,7 @@ class PaletaWebFirestoreTest {
 }
 ```
 
-- [ ] **Step 2: Correr las pruebas para verlas fallar**
+- [x] **Step 2: Correr las pruebas para verlas fallar**
 
 ```bash
 ./gradlew :app:testDebugUnitTest --tests "com.osfit.app.paletas.PaletaWebFirestoreTest"
@@ -689,7 +689,7 @@ class PaletaWebFirestoreTest {
 
 Esperado: error de compilación — `Unresolved reference: aHexWeb`.
 
-- [ ] **Step 3: Escribir la conversión**
+- [x] **Step 3: Escribir la conversión**
 
 `app/src/main/java/com/osfit/app/paletas/PaletaWebFirestore.kt`:
 
@@ -719,7 +719,7 @@ fun camposFirestore(paleta: Paleta): Map<String, Any> = mapOf(
 )
 ```
 
-- [ ] **Step 4: Correr las pruebas**
+- [x] **Step 4: Correr las pruebas**
 
 ```bash
 ./gradlew :app:testDebugUnitTest --tests "com.osfit.app.paletas.PaletaWebFirestoreTest"
@@ -727,7 +727,7 @@ fun camposFirestore(paleta: Paleta): Map<String, Any> = mapOf(
 
 Esperado: PASS, las cinco.
 
-- [ ] **Step 5: Escribir el repositorio**
+- [x] **Step 5: Escribir el repositorio**
 
 `app/src/main/java/com/osfit/app/data/repository/PaletaWebRepository.kt`:
 
@@ -780,7 +780,7 @@ class PaletaWebRepository(
 }
 ```
 
-- [ ] **Step 6: Compilar**
+- [x] **Step 6: Compilar**
 
 ```bash
 ./gradlew :app:compileDebugKotlin test
@@ -788,7 +788,7 @@ class PaletaWebRepository(
 
 Esperado: BUILD SUCCESSFUL y todas las pruebas en verde.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add app/src/main/java/com/osfit/app/paletas/PaletaWebFirestore.kt app/src/main/java/com/osfit/app/data/repository/PaletaWebRepository.kt app/src/test/java/com/osfit/app/paletas/PaletaWebFirestoreTest.kt
@@ -812,7 +812,7 @@ the page reads colours and applies them, with no second copy of the list."
 - Consumes: `Paletas`, `MuestrasPaletaWeb`, `PaletaWebRepository`.
 - Produces: `PaletaWebClienteScreen(clienteId: String)`; `Screen.PaletaWebCliente` con `crearRuta(clienteId: String)`; `WebClienteScreen` pasa a recibir también `onVerPaletaWeb: (String) -> Unit`.
 
-- [ ] **Step 1: Escribir el ViewModel y la pantalla**
+- [x] **Step 1: Escribir el ViewModel y la pantalla**
 
 `app/src/main/java/com/osfit/app/ui/clientes/PaletaWebClienteScreen.kt`:
 
@@ -932,7 +932,7 @@ fun PaletaWebClienteScreen(clienteId: String) {
 }
 ```
 
-- [ ] **Step 2: Añadir la ruta**
+- [x] **Step 2: Añadir la ruta**
 
 En `app/src/main/java/com/osfit/app/ui/navigation/Screen.kt`, justo después del bloque `VideosWebCliente`:
 
@@ -942,7 +942,7 @@ En `app/src/main/java/com/osfit/app/ui/navigation/Screen.kt`, justo después del
     }
 ```
 
-- [ ] **Step 3: Conectar la navegación**
+- [x] **Step 3: Conectar la navegación**
 
 En `app/src/main/java/com/osfit/app/ui/navigation/OSfitNavHost.kt`, dentro del `composable` de `Screen.WebCliente` (líneas 92-101), añadir el parámetro nuevo a la llamada:
 
@@ -966,7 +966,7 @@ Y después del `composable` de `Screen.VideosWebCliente` (que termina en la lín
         }
 ```
 
-- [ ] **Step 4: Añadir la tarjeta a la pantalla de Web**
+- [x] **Step 4: Añadir la tarjeta a la pantalla de Web**
 
 En `app/src/main/java/com/osfit/app/ui/clientes/WebClienteScreen.kt`:
 
@@ -1004,7 +1004,8 @@ private fun seccionesWeb(
 
 Con dos secciones la rejilla queda en una fila completa y el `Spacer` de relleno ya no entra; no hay que tocar nada más de esa pantalla.
 
-- [ ] **Step 5: Compilar y correr las pruebas**
+- [ ] **Step 5: Compilar y correr las pruebas** *(pendiente: hace falta una máquina con Android
+  SDK — ver "Lo que quedó sin verificar" al final)*
 
 ```bash
 ./gradlew :app:compileDebugKotlin test
@@ -1012,7 +1013,10 @@ Con dos secciones la rejilla queda en una fila completa y el `Spacer` de relleno
 
 Esperado: BUILD SUCCESSFUL. Si `Icons.Filled.Palette` no resuelve, es que el proyecto usa el set de iconos básico; en ese caso usar `Icons.Filled.ColorLens`, que está en el mismo set que `VideoLibrary`.
 
-- [ ] **Step 6: Commit**
+`material-icons-extended` está en `app/build.gradle.kts:75`, así que `Icons.Filled.Palette`
+debería resolver sin el respaldo de `ColorLens`. Queda por confirmar al compilar.
+
+- [x] **Step 6: Commit**
 
 ```bash
 git add app/src/main/java/com/osfit/app/ui/clientes/PaletaWebClienteScreen.kt app/src/main/java/com/osfit/app/ui/clientes/WebClienteScreen.kt app/src/main/java/com/osfit/app/ui/navigation/Screen.kt app/src/main/java/com/osfit/app/ui/navigation/OSfitNavHost.kt
@@ -1035,7 +1039,7 @@ git commit -m "feat: pick a client's web palette from the Web card"
 - Consumes: los campos que la Task 4 escribe en `clientes/{cid}.paletaWeb`.
 - Produces: `export interface PaletaWeb { id: string; primario: string; primarioOscuro: string; primarioClaro: string; sobrePrimario: string }` y `export function aplicarPaleta(paleta: PaletaWeb | null | undefined, raiz: HTMLElement): void`.
 
-- [ ] **Step 1: Escribir las pruebas que fallan**
+- [x] **Step 1: Escribir las pruebas que fallan**
 
 `web/src/paleta.test.ts`. La raíz llega como parámetro y no desde `document` porque Vitest corre en Node sin jsdom: no hay DOM que tomar.
 
@@ -1110,7 +1114,7 @@ describe("aplicarPaleta", () => {
 });
 ```
 
-- [ ] **Step 2: Correr las pruebas para verlas fallar**
+- [x] **Step 2: Correr las pruebas para verlas fallar**
 
 ```bash
 cd web && npm test
@@ -1118,7 +1122,7 @@ cd web && npm test
 
 Esperado: falla al resolver `./paleta` — el módulo todavía no existe.
 
-- [ ] **Step 3: Escribir el módulo**
+- [x] **Step 3: Escribir el módulo**
 
 `web/src/paleta.ts`:
 
@@ -1166,7 +1170,7 @@ export function aplicarPaleta(paleta: PaletaWeb | null | undefined, raiz: HTMLEl
 }
 ```
 
-- [ ] **Step 4: Correr las pruebas**
+- [x] **Step 4: Correr las pruebas**
 
 ```bash
 cd web && npm test
@@ -1174,7 +1178,7 @@ cd web && npm test
 
 Esperado: PASS, las cinco de `aplicarPaleta`, y el resto de la suite sigue en verde.
 
-- [ ] **Step 5: Declarar el campo en el modelo de la clienta**
+- [x] **Step 5: Declarar el campo en el modelo de la clienta**
 
 En `web/src/datos.ts`, añadir el import al principio del archivo:
 
@@ -1192,7 +1196,7 @@ y el campo dentro de `interface Cliente`, después de `ultimoDiaEsAncla`:
   paletaWeb?: PaletaWeb;
 ```
 
-- [ ] **Step 6: Aplicarla al llegar la clienta**
+- [x] **Step 6: Aplicarla al llegar la clienta**
 
 En `web/src/main.ts`:
 
@@ -1214,7 +1218,7 @@ import { aplicarPaleta } from "./paleta";
   });
 ```
 
-- [ ] **Step 7: Añadir el token que falta y quitar el hex quemado**
+- [x] **Step 7: Añadir el token que falta y quitar el hex quemado**
 
 En `web/src/estilos.css`, dentro de `:root`, después de `--primario-oscuro`:
 
@@ -1228,7 +1232,7 @@ Y en la regla `.saludo-nombre`, cambiar la línea del degradado:
   background: linear-gradient(100deg, var(--primario) 0%, var(--primario-claro) 100%);
 ```
 
-- [ ] **Step 8: Hacer que el fondo pintado siga la paleta**
+- [x] **Step 8: Hacer que el fondo pintado siga la paleta**
 
 En `web/index.html`, dentro del `<svg class="fondo">`, sustituir los cinco literales:
 
@@ -1238,7 +1242,7 @@ En `web/index.html`, dentro del `<svg class="fondo">`, sustituir los cinco liter
 
 El SVG es inline en el documento, así que hereda las variables de `:root` sin nada más. `<meta name="theme-color" content="#121212">` se queda como está: el fondo oscuro no cambia con la paleta.
 
-- [ ] **Step 9: Comprobar que no queda ningún color quemado**
+- [x] **Step 9: Comprobar que no queda ningún color quemado**
 
 ```bash
 grep -rn "B388FF\|6A1B9A\|E3D2FF\|2A0064" web/src web/index.html
@@ -1246,7 +1250,8 @@ grep -rn "B388FF\|6A1B9A\|E3D2FF\|2A0064" web/src web/index.html
 
 Esperado: sólo las cuatro definiciones de `:root` en `web/src/estilos.css`. Cualquier otra coincidencia es un color que no seguirá a la paleta.
 
-- [ ] **Step 10: Compilar la web y correr las pruebas**
+- [x] **Step 10: Compilar la web y correr las pruebas** *(89 en verde —las 84 de antes más las 5
+  de `aplicarPaleta`— y `tsc && vite build` sin errores)*
 
 ```bash
 cd web && npm test && npm run build
@@ -1254,7 +1259,13 @@ cd web && npm test && npm run build
 
 Esperado: pruebas en verde y build sin errores de TypeScript.
 
-- [ ] **Step 11: Commit**
+De paso se comprobó en Chromium lo único de esta tarea que ninguna prueba cubre: que un
+atributo de presentación de SVG (`stop-color`, `stroke`) acepta `var(--primario)`. Sirviendo
+`dist/` y cambiando la variable en `documentElement`, los dos `stop` y el `stroke` del fondo
+pasaron de `rgb(179, 136, 255)` a `rgb(107, 182, 255)`. Sin eso, el fondo se habría quedado
+morado para todas y sólo se habría notado en el teléfono.
+
+- [x] **Step 11: Commit**
 
 ```bash
 git add web/src/paleta.ts web/src/paleta.test.ts web/src/datos.ts web/src/main.ts web/src/estilos.css web/index.html
@@ -1272,7 +1283,8 @@ one token at a time, so a half-written document never blanks the page."
 **Files:**
 - Modify: `docs/backlog.md:221-228`
 
-- [ ] **Step 1: Correr todo**
+- [ ] **Step 1: Correr todo** *(a medias: la web sí, 89 en verde y build limpio; `./gradlew test`
+  no se pudo correr)*
 
 ```bash
 ./gradlew test
@@ -1300,15 +1312,20 @@ cd web && npm run build && cd .. && firebase deploy --only hosting
 ./gradlew :app:assembleRelease
 ```
 
-- [ ] **Step 4: Marcar el backlog**
+- [ ] **Step 4: Marcar el backlog** *(no se marca ✅ HECHO todavía — ver abajo)*
 
 En `docs/backlog.md`, cambiar el encabezado `## 7. Paleta de la web desde la app` por `## 7. Paleta de la web desde la app — ✅ HECHO (2026-09-13)`, dejando intacta la cita textual de abajo, y añadir después de ella un párrafo breve diciendo qué se hizo y qué no. La entrada no se borra.
 
-- [ ] **Step 5: Commit**
+El encabezado se deja **sin** el ✅ a propósito: con los Steps 1 a 3 pendientes, marcarlo
+hecho diría que esto ya está en el teléfono de la entrenadora y en la página de las clientas,
+y no lo está. En su lugar se anotó el avance debajo de la cita, que es lo que el backlog
+pide de todos modos ("qué se hizo y qué no"). El ✅ lo pone quien cierre la verificación.
+
+- [x] **Step 5: Commit**
 
 ```bash
 git add docs/backlog.md
-git commit -m "docs: mark the web palette backlog item as done"
+git commit -m "docs: record the web palette progress in the backlog"
 ```
 
 ---
@@ -1318,3 +1335,27 @@ git commit -m "docs: mark the web palette backlog item as done"
 - **El orden importa.** La Task 2 no compila sin la 1, la 5 no sin la 3 y la 4, y la 6 depende de que la 4 esté definiendo bien los campos de Firestore.
 - **Las tareas 1 a 5 son de la app y la 6 es de la web**, sin solaparse en ningún archivo: si se reparten, ese es el corte.
 - **Nunca afirmar que algo pasa sin haber corrido el comando y visto la salida.** Los pasos dicen qué se espera precisamente para que la comparación sea posible.
+
+---
+
+## Lo que quedó sin verificar (2026-09-14)
+
+Las Tasks 1 a 4 ya venían hechas en el código —entraron en `dea6967`, "refactor: cambios
+pendientes", sin que se marcaran los checkboxes— y aquí se completaron la 5 y la 6.
+
+De la 5 falta **compilar**. Se intentó y no se pudo: la máquina donde se escribió no tiene
+Android SDK, ni `local.properties`, ni `app/google-services.json`, y encima su red no alcanza
+el repositorio de Google, así que Gradle ni siquiera resuelve el Android Gradle Plugin
+(`Plugin [id: 'com.android.application', version: '8.6.1'] was not found`). O sea que de la
+app **no se compiló ni corrió una sola prueba**: ni lo nuevo de la Task 5, ni lo que ya estaba
+de las Tasks 1 a 4. Lo primero que hay que hacer en una máquina con SDK es:
+
+```bash
+./gradlew :app:compileDebugKotlin test
+```
+
+La 6 sí está verificada entera: 89 pruebas en verde, `tsc && vite build` limpio, y el fondo
+SVG comprobado en un navegador de verdad (ver la nota del Step 10).
+
+Pendientes, en orden: el compilado de arriba, la verificación en dispositivo (Task 7 Step 2,
+los siete puntos), el despliegue (Step 3) y, sólo entonces, el ✅ del backlog (Step 4).
