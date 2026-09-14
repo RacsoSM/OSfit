@@ -272,7 +272,7 @@ Dos cosas que conviene saber la próxima vez:
 
 ---
 
-## 9. Notificación al entrenador cuando alguien avisa que no viene
+## 9. Notificación al entrenador cuando alguien avisa que no viene — ✅ HECHO (2026-09-14)
 
 **Detectado:** 2026-09-12.
 
@@ -292,6 +292,63 @@ dispositivo en algún lado que la función pueda leer.
 **Por qué no es urgente:** el aviso no se pierde — queda en Firestore y se ve en Tomar
 Asistencia, que es la pantalla que el entrenador abre igual todos los días. La notificación
 adelanta el momento en que se entera, no cambia lo que sabe.
+
+**Hecho y verificado el 2026-09-14**: el entrenador confirmó que la notificación llega a los
+teléfonos. Lo que se comprobó por separado antes de esa prueba: `tsc --noEmit` limpio en
+`functions`, `assembleRelease` y `test` en verde, y **en los dos teléfonos** —el personal
+(`peridot`) y el Samsung (`SM-S908U`, Android 16)— permiso `POST_NOTIFICATIONS` concedido,
+canal `avisos_falta` creado con importancia 4, y la app en release firmada con `status=speed`.
+
+Lo que **no** se comprobó de una en una, por si algún día falla algo de esto: que llegue con
+la pantalla bloqueada, que llegue con la app en primer plano (el camino que pasa por
+`OSfitMessagingService`, distinto del de la app cerrada), y que un doble toque en el botón no
+mande dos avisos.
+
+Se hizo más simple de lo que decía el plan de arriba, en dos puntos:
+
+- **No hay `onDocumentCreated`.** El push lo manda la propia `avisarFalta` después de escribir
+  el aviso. Un disparador aparte era una pieza más para ver lo mismo que la función ya tiene
+  delante. Comprueba si el documento existía **antes** de escribir, para que un doble toque no
+  mande dos notificaciones; el envío va en un `try/catch` que sólo loguea, porque la fuente de
+  verdad es el documento y el botón de la clienta no puede fallar porque FCM esté caído.
+- **No se guardan tokens.** Va por el tema de FCM `entrenador`, al que la app se suscribe sola
+  en cada arranque. Los dos teléfonos comparten cuenta y quieren el mismo aviso, así que una
+  colección de tokens sólo habría añadido tokens muertos que limpiar.
+
+Lo demás sí fue como se preveía: dependencia `firebase-messaging-ktx`, `OSfitMessagingService`
+(sólo hace falta para mostrar el aviso con la app **abierta**; cerrada lo pinta el SDK),
+permiso `POST_NOTIFICATIONS` pedido en el arranque, y canal `avisos_falta`. Hizo falta además
+un `ic_notificacion.xml` propio: Android pinta el icono pequeño como silueta, y el
+`ic_launcher_foreground.png` a color habría salido como una mancha blanca.
+
+Verificado hasta donde se puede sin dispositivo: `tsc --noEmit` limpio en `functions`,
+`assembleDebug` y `test` en verde, y el manifest fusionado con el permiso, el servicio y el
+canal. **Queda por comprobar en el teléfono:** que llegue con la pantalla bloqueada, que llegue
+también con la app abierta, y que tocar el botón dos veces no mande dos.
+
+**Dos cosas que costaron y conviene no repetir:**
+
+- **`lintVitalRelease` tumba la build de release** por las APIs de ActivityResult: algo arrastra
+  `androidx.fragment:1.1.0` y hacen falta 1.3.0 o más. Se subió a 1.8.5 en
+  `app/build.gradle.kts`. **El build de debug no lo detecta** —ese lint solo corre en release—,
+  así que quedarse en `installDebug` esconde el problema hasta el peor momento.
+- **Reinstalar es obligatorio** en cada teléfono: con una versión anterior a ésta no está
+  suscrito al tema y no le llega nada. Se pudo actualizar sin desinstalar porque el
+  `debug.keystore` de esta laptop resultó ser el mismo con el que se firmó lo que tenían los
+  dos teléfonos (SHA-256 `3226:5063:6a9c…`, comprobado con `apksigner verify --print-certs`
+  sobre la APK sacada con `adb pull`). El choque de firmas de la entrada 11 era desde la otra
+  máquina. **Comprobarlo siempre antes de instalar**: `install -r` falla limpio, pero
+  desinstalar para salir del paso es lo que la entrada 11 explica que no es gratis.
+
+**Desplegado** con `firebase deploy --only functions:avisarFalta` —solo esa, para no tocar
+`sesion`, `cambiarDia` ni `revivirRacha`, que las clientas estaban usando en ese momento— y
+tras reinstalar en ambos teléfonos y dejarlos en `status=speed` con
+`cmd package compile -m speed -f`.
+
+**Dónde mirar si un día deja de llegar:** `firebase functions:log --only avisarFalta`. El envío
+va en un `try/catch` que sólo loguea, así que un fallo de FCM no se ve en ningún otro sitio. Ese
+silencio es a propósito —el botón de la clienta no puede fallar porque FCM esté caído—, pero
+significa que el log es la única pista.
 
 ---
 
@@ -533,3 +590,40 @@ sin aviso en la interfaz y sin reparación posterior.
 `INSTALL_FAILED_USER_RESTRICTED` (restricción de MIUI, distinta del problema de firma de la
 entrada 11). Se rodea empujando la APK a `/data/local/tmp` y usando `adb shell pm install`.
 Desde Git Bash no funciona —convierte la ruta a Windows—: hay que hacerlo desde PowerShell.
+
+---
+
+## 15. Cambiar las fotos de los logros personales
+
+**Detectado:** 2026-09-14.
+
+> agrega al backlog modificar las fotos de los logros personales
+
+Sin concretar todavía **qué** cambia: si es sustituir las imágenes que ya están por otras, o
+poder cambiarlas desde la app sin recompilar. Preguntarlo antes de tocar nada.
+
+Dónde vive: las imágenes de logros y medallas se suben a Storage y se restauran solas
+(`InsigniaStorageRepository`, `RestauradorDeArchivos`), y el catálogo es
+`LogroPersonalCatalogo`. O sea que cambiar una foto es cambiar el archivo, no el código — lo
+que apunta a que esto puede acabar siendo una tarea de contenido y no de programación.
+
+**Por qué no corre prisa:** los logros se ven y funcionan; es cuestión de que se vean mejor.
+
+---
+
+## 16. Exagerar la animación de cuando se gana una medalla
+
+**Detectado:** 2026-09-14.
+
+> exagerar mas la ganada de medallas en cuestion de animacion
+
+Ahora mismo ganar una medalla se celebra poco para lo que es. La idea es que se note: que el
+momento se sienta como un premio y no como un cambio de estado.
+
+**Lo primero que hay que decidir es dónde**, porque hay dos sitios y la frase vale para los
+dos: la tarjeta de insignias de la web (`web/src/ui/tarjetaInsignias.ts`) y el vídeo resumen
+(`video/EscenaResumen.kt`, `TimelineResumen.kt`). No empezar sin aclararlo — son dos trabajos
+distintos, con dos técnicas distintas.
+
+**Por qué no corre prisa:** es puro adorno. La medalla se otorga y se ve igual de bien o de
+mal que hoy.

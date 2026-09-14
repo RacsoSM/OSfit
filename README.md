@@ -68,6 +68,21 @@ Muestra el día que le toca, su racha, su promedio por sesión y su calendario.
 
 Desplegar: `firebase deploy --only hosting,functions,firestore:rules`
 
+### Aviso al teléfono cuando una clienta no va
+
+Cuando una clienta toca "hoy no voy a poder ir", además de pintarse su nombre de amarillo
+en la lista, llega una notificación a los teléfonos que tengan OSfit instalada. La manda la
+función `avisarFalta` al tema de FCM `entrenador`, al que la app se suscribe sola en cada
+arranque (`app/.../notificaciones/Notificaciones.kt`).
+
+- Un teléfono solo empieza a recibirlas después de **reinstalar** la app: con una versión
+  anterior a esto no está suscrito al tema.
+- Si el push falla, el aviso queda escrito igual. La fuente de verdad es `avisosFalta`, no
+  la notificación.
+- El tema es público dentro del proyecto Firebase: quien tuviera el `google-services.json`
+  de la app podría suscribirse y leer los nombres. Si el APK deja de estar solo en los
+  teléfonos propios, esto tiene que pasar a tokens por dispositivo.
+
 El día de rutina **no** se recalcula en la web: la app lo denormaliza en
 `Cliente.ultimoDia` / `ultimoDiaFecha` / `ultimoDiaEsAncla` (ver
 `RutinaProgressCalculator.denormalizar`), y la web solo lo interpreta en `web/src/dia.ts`.

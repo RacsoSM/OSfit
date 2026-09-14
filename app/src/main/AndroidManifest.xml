@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <!-- Desde Android 13 el usuario tiene que concederlo; se pide al arrancar. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
@@ -17,6 +20,27 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!--
+            Recibe los avisos de "hoy no voy a poder ir" que manda la función `avisarFalta`.
+            Solo hace falta para mostrarlos con la app abierta; con la app cerrada los pinta
+            el SDK de Firebase por su cuenta.
+        -->
+        <service
+            android:name=".notificaciones.OSfitMessagingService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
+
+        <!--
+            Canal de respaldo para los avisos que arma el SDK con la app cerrada. El mensaje ya
+            trae el canal, pero si algún día llegara uno sin él, sin esto Android lo tiraría.
+        -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="avisos_falta" />
 
         <provider
             android:name="androidx.core.content.FileProvider"

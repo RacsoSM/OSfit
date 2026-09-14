@@ -78,11 +78,17 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
     implementation("androidx.navigation:navigation-compose:2.8.3")
     implementation("androidx.core:core-ktx:1.13.1")
+    // No se usa directamente: sube la que llega arrastrada, que era la 1.1.0. Las APIs de
+    // ActivityResult —las que piden el permiso de notificaciones— exigen fragment 1.3.0 o
+    // mayor, porque las anteriores no llamaban a super.onRequestPermissionsResult(). Sin esto
+    // `lintVitalRelease` tumba la build de release.
+    implementation("androidx.fragment:fragment:1.8.5")
 
     implementation(platform("com.google.firebase:firebase-bom:33.5.1"))
     implementation("com.google.firebase:firebase-auth-ktx")
     implementation("com.google.firebase:firebase-firestore-ktx")
     implementation("com.google.firebase:firebase-storage-ktx")
+    implementation("com.google.firebase:firebase-messaging-ktx")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.9.0")
 
     testImplementation("junit:junit:4.13.2")
