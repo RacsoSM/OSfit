@@ -472,6 +472,6 @@ declarado `?: number | null` en `datos.ts`, con la nota de por qué.
 
 **Verificado:** dos tests nuevos en `racha.test.ts` (una asistencia sin el campo se ignora y
 se promedia el resto; si ninguna lo trae devuelve `null`, no `NaN`), 91/91 en verde y
-`tsc && vite build` limpio. Desplegado a hosting el mismo día. Falta que el entrenador
-confirme en la página de Dulce y de Carito que sale el número: ambas tienen sesiones
-medidas, así que deberían ver un promedio real y no el guión.
+`tsc && vite build` limpio. Desplegado a hosting el mismo día, y el entrenador
+confirmó ese mismo día que la página de Dulce y de Carito ya muestra el número de minutos.
+Cerrado.
