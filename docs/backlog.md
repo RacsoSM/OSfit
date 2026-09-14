@@ -426,7 +426,7 @@ Falta verificarlo en el dispositivo.
 
 ---
 
-## 13. El promedio de entrenamiento sale `NaN` en la web
+## 13. El promedio de entrenamiento sale `NaN` en la web — ✅ HECHO (2026-09-14)
 
 **Detectado:** 2026-09-14. Lo vio el entrenador: a **Dulce** y a **Carito** la página les
 muestra el promedio como `NaN` en vez de un número de minutos.
@@ -461,3 +461,17 @@ así que tampoco conviene dejarlo mucho.
 asistencias a mano pasando `duracionMinutos: null` explícito (`racha.test.ts:4-6`,
 `cupo.test.ts:16`, `faltaRompio.test.ts:18`). Ninguna omite el campo, que es justo el caso
 real. El arreglo tiene que traer un test que construya la asistencia **sin** la propiedad.
+
+**Hecho (2026-09-14, commit `cceb013`).** El diagnóstico de arriba era correcto y se confirmó
+reproduciéndolo con un test antes de tocar nada: una asistencia construida **sin** la
+propiedad daba `NaN`, tal como decía la nota. Se arregló un punto más estricto de lo
+propuesto: en vez de `!= null`, el filtro exige `typeof d === "number" && Number.isFinite(d)`,
+que además tapa el caso de que el campo llegue con algo que no sea un número —el
+`snap.data() as Asistencia` sigue siendo un cast sin validar—. `duracionMinutos` quedó
+declarado `?: number | null` en `datos.ts`, con la nota de por qué.
+
+**Verificado:** dos tests nuevos en `racha.test.ts` (una asistencia sin el campo se ignora y
+se promedia el resto; si ninguna lo trae devuelve `null`, no `NaN`), 91/91 en verde y
+`tsc && vite build` limpio. Desplegado a hosting el mismo día. Falta que el entrenador
+confirme en la página de Dulce y de Carito que sale el número: ambas tienen sesiones
+medidas, así que deberían ver un promedio real y no el guión.
