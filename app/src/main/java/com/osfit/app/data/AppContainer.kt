@@ -38,4 +38,13 @@ object AppContainer {
     val sincronizadorDiaWeb: SincronizadorDiaWeb by lazy {
         SincronizadorDiaWeb(clienteRepository, asistenciaRepository)
     }
+    val restauradorDeArchivos: RestauradorDeArchivos by lazy {
+        RestauradorDeArchivos(
+            clienteRepository,
+            medallaRepository,
+            logroPersonalRepository,
+            cancionStorageRepository,
+            insigniaStorageRepository
+        )
+    }
 }
