@@ -319,3 +319,23 @@ firmar y no se puede instalar. Añadir una configuración de firma (aunque sea c
 de depuración: firmar y ser `debuggable` son cosas distintas) dejaría un
 `./gradlew installRelease` en un paso. Mientras tanto, el camino manual es `assembleRelease`,
 firmar con `apksigner` y después `adb shell cmd package compile -m speed -f com.osfit.app`.
+
+---
+
+## 12. Elegir qué videos se suben a la web, y poder quitarlos
+
+**Detectado:** 2026-09-13.
+
+> investigar como funciona la subida de un video a la web, si genero varios de una misma
+> persona, como decido cual se sube y cual no, debe haber un boton para subir o quitar videos
+> de la web de las personas
+
+Cómo funciona hoy, para que la investigación arranque con esto ya sabido: "Publicar en la web"
+sube el mp4 que se acaba de generar y escribe el documento en `clientes/{id}/videos` con el
+`rangoInicio` como id, así que **republicar la misma quincena pisa la anterior**. No hay forma
+de elegir entre varios videos de la misma quincena ni de quitar uno ya publicado: lo único que
+borra es la retención automática, que elimina todo lo que pase de los 6 más recientes.
+
+Además, la tarjeta de publicar sólo existe en memoria justo después de generar: si el
+entrenador sale de la pantalla, desaparece y hay que volver a generar el video para poder
+publicarlo.
