@@ -144,23 +144,6 @@ Encaja mejor en la Etapa 2 que como parche suelto: toca reglas, función y UI a 
 
 ---
 
-## 2. Verificar el estado vacío "cliente sin rutina"
-
-**Detectado:** 2026-09-11, Step 5 del Task 13. Quedó sin ejecutar.
-
-La página debe mostrar "Todavía no tienes rutina" cuando el cliente no tiene rutina
-asignada. El camino está implementado en `web/src/ui/tarjetaDia.ts` (rama `dias.length === 0`)
-pero **no se ha visto funcionando contra datos reales**.
-
-**Por qué no es urgente:** es una rama de presentación, no de datos ni de permisos. Si
-fallara, el peor caso es una tarjeta fea o ausente, no una fuga ni un dato incorrecto.
-
-**Qué haría falta:** un cliente de prueba sin rutina asignada, compartirle acceso y abrir su
-página. Alternativa sin tocar datos: un test de `tarjetaDia()` con `rutinaAsignada: null`,
-que además dejaría la rama cubierta para siempre en vez de una sola vez a mano.
-
----
-
 ## 3. Verificar el estado "hoy toca descansar" (fin de semana) — ✅ HECHO (2026-09-12)
 
 **Detectado:** 2026-09-11, Step 5 del Task 13. Quedó sin ejecutar.
@@ -180,18 +163,6 @@ ni de tocar el dispositivo. Ojo con la zona horaria: `esFinDeSemana` construye l
 **Hecho:** verificado el sábado 2026-09-12 contra un sábado real, en la página de Brianda.
 Muestra "Hoy toca descansar" y "El lunes te toca Pierna (Cuádriceps)", sin botones de acción.
 No hizo falta tocar la fecha del teléfono ni escribir el test: cayó en sábado de verdad.
-
----
-
-## 4. `.firebase/` sin ignorar
-
-**Detectado:** 2026-09-11, tras el primer `firebase deploy`.
-
-El despliegue genera un directorio `.firebase/` con la caché de hosting. Aparece como
-archivo sin seguimiento en `git status` y no debería versionarse.
-
-**Qué haría falta:** añadir `.firebase/` a `.gitignore`. Es una línea; está aquí para que no
-se cuele en un commit por descuido.
 
 ---
 
@@ -240,6 +211,23 @@ Android Gradle Plugin), así que de la app no se compiló ni corrió una sola pr
 las de las Tasks 1 a 4, que ya venían en `dea6967` sin marcar. De la web sí: 89 pruebas en
 verde y build limpio. Después de compilar quedan la verificación en dispositivo (los siete
 puntos del Task 7 Step 2 del plan) y el despliegue.
+
+**Avance (2026-09-14), en la laptop CESAVESIN:** se cerró el Step 1 entero, que era lo que
+faltaba, y el Step 3 a medias.
+
+- **`./gradlew :app:compileDebugKotlin test`: BUILD SUCCESSFUL en 2m 33s, 232 pruebas de
+  Kotlin en verde** (22 clases, 0 fallos). Es la primera vez que la app se compila y se prueba
+  desde que entraron las Tasks 1 a 5; sólo salieron avisos de deprecación que ya existían.
+- **La web, reproducida aquí:** 89 pruebas en verde (11 suites) y `tsc && vite build` limpio.
+- **Hosting desplegado** y comprobado desde fuera, no sólo por el "Deploy complete": el bundle
+  en vivo es `index-Dw4Dlv2j.js`, el mismo que salió del build, y contiene `paletaWeb` y
+  `--primario`; el `index.html` servido trae las tres `var(--primario)` del SVG del fondo.
+- **`:app:assembleRelease`: BUILD SUCCESSFUL**, `app-release-unsigned.apk` de 14,8 MB.
+
+**Sigue sin verificarse en dispositivo, y está bloqueado** — ver la entrada 11: la APK firmada
+con el keystore de esta máquina no se puede instalar encima de la que trae el teléfono. Los
+siete puntos del Step 2 quedan pendientes, los cuatro de la app porque no hay app nueva que
+abrir, y los tres de la página porque la paleta sólo se puede cambiar desde la app.
 
 Un detalle que sí se verificó y valía la pena: los atributos de presentación del SVG del fondo
 aceptan `var(--primario)`. Comprobado en Chromium sobre el `dist/` construido, los `stop` y el
@@ -364,6 +352,36 @@ de depuración: firmar y ser `debuggable` son cosas distintas) dejaría un
 `./gradlew installRelease` en un paso. Mientras tanto, el camino manual es `assembleRelease`,
 firmar con `apksigner` y después `adb shell cmd package compile -m speed -f com.osfit.app`.
 
+**Hallazgo del 2026-09-14, y ahora además bloquea:** el camino manual se intentó desde la
+laptop CESAVESIN y `adb install -r` falló con
+
+```
+INSTALL_FAILED_UPDATE_INCOMPATIBLE: Existing package com.osfit.app signatures do not match
+```
+
+La app que trae el teléfono se firmó en **la otra máquina**: los keystores de depuración son
+por máquina, y en ésta sólo existe `~/.android/debug.keystore`, que es otro. No se instaló
+nada y no se perdió nada —`install -r` falla limpio, no desinstala—, pero **desde esta laptop
+no se puede actualizar la app**, y eso deja la Task 7 Step 2 de la entrada 7 sin poder
+hacerse.
+
+**Desinstalar para salir del paso no es gratis, y conviene que quede escrito por qué.** Se
+perderían dos cosas que viven sólo en el teléfono:
+
+- `filesDir/canciones/<clienteId>.<ext>` — las canciones de cada clienta, que el entrenador
+  eligió a mano desde el almacenamiento del teléfono (`CancionUtil.copiarCancion`).
+- Los PNG de las medallas en `filesDir`. Éstos **sí** están además en Storage, pero
+  `MedallaCatalogo.kt:15-16` lo dice explícitamente: *"No reemplaza a `imagenArchivo`: el
+  generador de video sigue leyendo el PNG de `filesDir`"*. Hay código que sube el que falte
+  (`MedallasViewModel:85`), pero **ninguno que lo vuelva a bajar** desde `imagenUrl`. O sea
+  que la web seguiría viéndose bien y el video se quedaría sin las imágenes, sin forma de
+  recuperarlas desde la app.
+
+**La salida barata es copiar el `~/.android/debug.keystore` de la otra laptop a ésta** — con
+el mismo certificado, `install -r` funciona y no se pierde nada. La salida definitiva sigue
+siendo la de arriba: meter `signingConfigs` en `app/build.gradle.kts` con un keystore del
+repo, para que deje de depender de en qué máquina se compiló.
+
 ---
 
 ## 12. Elegir qué videos se suben a la web, y poder quitarlos — ✅ HECHO (2026-09-13)
@@ -405,3 +423,41 @@ reintenta.
 papelera, detrás de un `AlertDialog` de confirmación porque republicar obliga a regenerar el
 video. Se borra primero el blob de Storage y después el documento, con `video.rutaStorage`.
 Falta verificarlo en el dispositivo.
+
+---
+
+## 13. El promedio de entrenamiento sale `NaN` en la web
+
+**Detectado:** 2026-09-14. Lo vio el entrenador: a **Dulce** y a **Carito** la página les
+muestra el promedio como `NaN` en vez de un número de minutos.
+
+La causa está localizada y es de tipos, no de datos corruptos. `promedioMinutos()` en
+`web/src/racha.ts:43-49` filtra con `a.duracionMinutos !== null` y después castea con
+`as number`. Pero Firestore **omite los campos que nunca se escribieron**, así que una
+asistencia vieja no llega con `duracionMinutos: null`: llega **sin el campo**, o sea
+`undefined`. `undefined !== null` es `true`, el filtro lo deja pasar, el `as number` calla a
+TypeScript, y el `reduce` suma `undefined` → `NaN`.
+
+Le pasa a Dulce y a Carito y no a las demás porque son las que tienen asistencias anteriores
+a que se empezara a escribir la duración, o registradas sin cronómetro.
+
+El mismo archivo `web/src/datos.ts:27-34` ya documenta este riesgo exacto para
+`justificadaPorCliente` ("Opcional a propósito: Firestore omite los campos que nunca se
+escribieron... Ver el commit `bf5463c`"). `duracionMinutos` quedó declarado
+`number | null` —no opcional—, así que el mismo peligro entró por la puerta que sí estaba
+señalada, sólo que en el campo de al lado. El `snap.data() as Asistencia` de `observarAsistencias`
+es un cast sin validar: la forma que promete el tipo no es la que Firestore entrega.
+
+**Por qué no es urgente:** no corrompe nada ni pierde datos, y no afecta la racha ni el
+calendario; es una cifra fea en una tarjeta. Pero se la ve la clienta en su propia página,
+así que tampoco conviene dejarlo mucho.
+
+**Qué haría falta:** aceptar `undefined` en el filtro —
+`.filter((a) => a.asistio && a.duracionMinutos != null)` con `!=` en vez de `!==`, que cubre
+`null` y `undefined` de una vez— y declarar el campo `duracionMinutos?: number | null` en
+`datos.ts` para que el tipo diga la verdad sobre lo que Firestore manda.
+
+**Ojo con los tests:** las 89 pruebas pasan y no lo detectan porque todas construyen las
+asistencias a mano pasando `duracionMinutos: null` explícito (`racha.test.ts:4-6`,
+`cupo.test.ts:16`, `faltaRompio.test.ts:18`). Ninguna omite el campo, que es justo el caso
+real. El arreglo tiene que traer un test que construya la asistencia **sin** la propiedad.
