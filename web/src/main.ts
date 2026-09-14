@@ -23,7 +23,7 @@ import { accionDia, conectarAccionDia, hojaDeMotivosAbierta } from "./ui/accionD
 import { accionHoyNoPuedo, tarjetaRevivir, conectarAccionFalta } from "./ui/accionFalta";
 import { calendario, moverMes } from "./ui/calendario";
 import { tarjetaMedallas, tarjetaLogrosPersonales } from "./ui/tarjetaInsignias";
-import { tarjetaVideos, ultimosRangoDescendente, MAXIMO_VIDEOS } from "./ui/tarjetaVideos";
+import { tarjetaVideos, ultimosRangoDescendente, firmaVideos, MAXIMO_VIDEOS } from "./ui/tarjetaVideos";
 import type { VideoConUrl } from "./ui/tarjetaVideos";
 
 const app = document.querySelector<HTMLElement>("#app")!;
@@ -97,13 +97,37 @@ async function arrancar(): Promise<void> {
    */
   function prepararEstructura(nombre: string): void {
     if (document.querySelector("#contenido")) return;
-    app.innerHTML = `${saludo(nombre)}<div id="contenido"></div>`;
+    app.innerHTML = `${saludo(nombre)}<div id="contenido"></div><div id="videos"></div>`;
     conectarSaludo();
+  }
+
+  /** Lo último que se pintó en `#videos`; `null` mientras no se pintó nada. */
+  let firmaPintada: string | null = null;
+
+  /**
+   * Los videos van FUERA de lo que se repinta, por lo mismo que el saludo: el `<video>` tiene
+   * estado propio (posición, buffer ya descargado) y `innerHTML` lo destruye. Con seis
+   * listeners vivos más los dos botones de mes, basta con que el entrenador marque una
+   * asistencia o que ella cambie de mes para que el video que está viendo vuelva a empezar y
+   * se recargue con dato móvil.
+   *
+   * Va después de `#contenido` porque el spec fija el orden de la página: calendario,
+   * medallas, logros, videos.
+   */
+  function pintarVideos(): void {
+    const caja = document.querySelector<HTMLElement>("#videos");
+    if (!caja) return;
+    const firma = firmaVideos(videos);
+    if (firma === firmaPintada) return;
+    firmaPintada = firma;
+    caja.innerHTML = tarjetaVideos(videos);
   }
 
   function pintar(): void {
     if (!cliente) {
       app.innerHTML = `<div class="tarjeta vacio"><p>No encontramos tus datos.</p></div>`;
+      // Se tira la estructura entera, así que la firma de los videos deja de describir nada.
+      firmaPintada = null;
       return;
     }
     prepararEstructura(cliente.nombre);
@@ -122,10 +146,10 @@ async function arrancar(): Promise<void> {
       ${tarjetasStats(asistencias, hoy)}
       ${tarjetaRevivir(cliente, hoy, asistencias)}
       ${calendario(asistencias, mesVisible, hoy)}
-      ${tarjetaVideos(videos)}
       ${tarjetaMedallas(medallas)}
       ${tarjetaLogrosPersonales(logros)}
     `;
+    pintarVideos();
     // Los listeners se vuelven a colgar en cada repintado: `innerHTML` tira los anteriores
     // junto con los elementos. El estado de las dos acciones no vive acá, sino dentro de sus
     // módulos, justo para que un snapshot a destiempo no lo borre.
