@@ -18,6 +18,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Chat
+import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.EditCalendar
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.ExpandLess
@@ -101,6 +102,10 @@ fun ClienteDetailScreen(
     val generandoResumen by resumenViewModel.generando.collectAsState()
     val progresoResumen by resumenViewModel.progreso.collectAsState()
     val mensajeResumen by resumenViewModel.mensaje.collectAsState()
+    // Sólo hay algo que publicar después de generar un resumen quincenal: publicar reusa ese
+    // mp4 y no vuelve a codificarlo.
+    val videoListo by resumenViewModel.videoListo.collectAsState()
+    val publicandoVideo by resumenViewModel.publicando.collectAsState()
     val hoy by rememberFechaActual()
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -335,6 +340,22 @@ fun ClienteDetailScreen(
                         },
                         modifier = Modifier.weight(1f),
                         onClick = { tipoResumenParaFecha = TipoResumen.QUINCENAL }
+                    )
+                }
+            }
+            videoListo?.let { listo ->
+                item {
+                    // Acción aparte de compartir, no un reemplazo: compartir por WhatsApp sigue
+                    // pasando siempre al terminar de generar.
+                    AccionCard(
+                        icono = Icons.Filled.CloudUpload,
+                        texto = if (publicandoVideo) {
+                            "Publicando..."
+                        } else {
+                            "Publicar en la web (${listo.encabezadoRango})"
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        onClick = { resumenViewModel.publicarEnLaWeb() }
                     )
                 }
             }

@@ -15,16 +15,18 @@ class ResumenStorageRepository(
      * autenticación a un video de alguien dando vueltas en el documento.
      */
     suspend fun subir(clienteId: String, rangoInicio: String, archivo: File): String {
-        val referencia = referencia(clienteId, rangoInicio)
-        referencia.putFile(Uri.fromFile(archivo)).await()
-        return referencia.path
+        val ruta = ruta(clienteId, rangoInicio)
+        storage.reference.child(ruta).putFile(Uri.fromFile(archivo)).await()
+        // Se devuelve la ruta armada acá y no `referencia.path`: el SDK puede anteponerle un
+        // slash ("/resumenes/...") y la web hace `ref(storage, rutaStorage)` con este string
+        // tal cual, que con slash inicial no resuelve el mismo objeto.
+        return ruta
     }
 
     /** Borra el blob del resumen; el documento en Firestore se borra aparte, en `VideoPublicadoRepository`. */
     suspend fun borrar(clienteId: String, rangoInicio: String) {
-        referencia(clienteId, rangoInicio).delete().await()
+        storage.reference.child(ruta(clienteId, rangoInicio)).delete().await()
     }
 
-    private fun referencia(clienteId: String, rangoInicio: String) =
-        storage.reference.child("resumenes/$clienteId/$rangoInicio.mp4")
+    private fun ruta(clienteId: String, rangoInicio: String) = "resumenes/$clienteId/$rangoInicio.mp4"
 }

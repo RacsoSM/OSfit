@@ -9,15 +9,20 @@ import com.osfit.app.data.model.LogroPersonalCatalogo
 import com.osfit.app.data.model.LogroPersonalOtorgado
 import com.osfit.app.data.model.MedallaCatalogo
 import com.osfit.app.data.model.MedallaOtorgada
+import com.osfit.app.data.model.VideoPublicado
 import com.osfit.app.data.repository.AsistenciaRepository
 import com.osfit.app.data.repository.ClienteRepository
 import com.osfit.app.data.repository.LogroPersonalRepository
 import com.osfit.app.data.repository.MedallaRepository
+import com.osfit.app.data.repository.ResumenStorageRepository
+import com.osfit.app.data.repository.VideoPublicadoRepository
 import com.osfit.app.domain.MedallaCalculator
 import com.osfit.app.domain.RangoResumen
 import com.osfit.app.domain.ResumenClienteCalculator
 import com.osfit.app.domain.ResumenClienteData
+import com.osfit.app.domain.RetencionVideos
 import com.osfit.app.video.ResumenVideoGenerator
+import java.io.File
 import java.time.LocalDate
 import java.time.YearMonth
 import kotlinx.coroutines.CancellationException
@@ -33,7 +38,9 @@ class ResumenClienteViewModel(
     private val clienteRepository: ClienteRepository = AppContainer.clienteRepository,
     private val asistenciaRepository: AsistenciaRepository = AppContainer.asistenciaRepository,
     private val medallaRepository: MedallaRepository = AppContainer.medallaRepository,
-    private val logroPersonalRepository: LogroPersonalRepository = AppContainer.logroPersonalRepository
+    private val logroPersonalRepository: LogroPersonalRepository = AppContainer.logroPersonalRepository,
+    private val videoPublicadoRepository: VideoPublicadoRepository = AppContainer.videoPublicadoRepository,
+    private val resumenStorageRepository: ResumenStorageRepository = AppContainer.resumenStorageRepository
 ) : ViewModel() {
 
     private val _generando = MutableStateFlow(false)
@@ -50,6 +57,81 @@ class ResumenClienteViewModel(
 
     fun limpiarMensaje() {
         _mensaje.value = null
+    }
+
+    /**
+     * El mp4 quincenal que se acaba de generar, listo para publicarse en la web sin volver a
+     * codificarlo. Sólo la quincena llega acá: es la única que tiene `rangoInicio` y
+     * `encabezadoRango` de quincena, que son la clave y el rótulo del video en la web.
+     */
+    data class VideoQuincenalListo(
+        val archivo: File,
+        val rangoInicio: String,
+        val encabezadoRango: String,
+        val duracionSegundos: Int
+    )
+
+    private val _videoListo = MutableStateFlow<VideoQuincenalListo?>(null)
+    val videoListo: StateFlow<VideoQuincenalListo?> = _videoListo
+
+    private val _publicando = MutableStateFlow(false)
+    val publicando: StateFlow<Boolean> = _publicando
+
+    /**
+     * Sube el mp4 y escribe su documento; después aplica la retención de
+     * [RetencionVideos.MAXIMO]. Republicar la misma quincena pisa lo anterior: la ruta sale de
+     * `rangoInicio` (se sobreescribe el blob) y el documento usa ese mismo id (upsert).
+     */
+    fun publicarEnLaWeb() {
+        val listo = _videoListo.value ?: return
+        if (_publicando.value) return
+        // El generador borra del caché los resúmenes de más de una hora, así que el archivo
+        // puede haber desaparecido si la pantalla quedó abierta mucho rato.
+        if (!listo.archivo.exists()) {
+            _videoListo.value = null
+            _mensaje.value = "El video ya no está en el teléfono; vuelve a generarlo para publicarlo"
+            return
+        }
+        _publicando.value = true
+        viewModelScope.launch {
+            try {
+                val rutaStorage = resumenStorageRepository.subir(clienteId, listo.rangoInicio, listo.archivo)
+                videoPublicadoRepository.publicar(
+                    clienteId,
+                    VideoPublicado(
+                        rangoInicio = listo.rangoInicio,
+                        encabezadoRango = listo.encabezadoRango,
+                        rutaStorage = rutaStorage,
+                        duracionSegundos = listo.duracionSegundos
+                    )
+                )
+                aplicarRetencion()
+                _mensaje.value = "Video publicado en la página de la clienta"
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Throwable) {
+                Log.w(TAG_RESUMEN, "Falló la publicación del resumen en la web", e)
+                _mensaje.value = "No se pudo publicar el video en la web"
+            } finally {
+                _publicando.value = false
+            }
+        }
+    }
+
+    /**
+     * Borra primero el blob de Storage y recién después el documento de Firestore: el borrado
+     * no es atómico entre los dos, así que hay que elegir cuál falla mejor. Si se fuera al
+     * revés y fallara el blob, quedaría un mp4 huérfano que nadie ve, nadie encuentra y se
+     * paga todos los meses. En este orden, si falla el documento queda un registro apuntando a
+     * un archivo que no está: eso se ve, la página lo resuelve como "video no disponible" y el
+     * próximo publicar lo reintenta. Se prefiere el fallo visible.
+     */
+    private suspend fun aplicarRetencion() {
+        val publicados = videoPublicadoRepository.observarDe(clienteId).first()
+        RetencionVideos.sobrantes(publicados).forEach { video ->
+            resumenStorageRepository.borrar(clienteId, video.rangoInicio)
+            videoPublicadoRepository.borrar(clienteId, video.rangoInicio)
+        }
     }
 
     fun generarResumenSemanal(context: Context, fechaReferencia: LocalDate = LocalDate.now()) {
@@ -187,9 +269,17 @@ class ResumenClienteViewModel(
                         )
                     }
                 )
-                ResumenVideoGenerator.generarYCompartir(
+                val generado = ResumenVideoGenerator.generarYCompartir(
                     contextoApp, preparacion.resumen, elegida, logrosElegidos
                 ) { fraccion -> _progreso.value = fraccion }
+                // Se guarda el mp4 recién hecho para que "Publicar en la web" suba exactamente
+                // el video que el entrenador acaba de compartir, sin regenerarlo.
+                _videoListo.value = VideoQuincenalListo(
+                    archivo = generado.archivo,
+                    rangoInicio = rangoInicio,
+                    encabezadoRango = preparacion.resumen.rango.encabezado,
+                    duracionSegundos = generado.duracionSegundos
+                )
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Throwable) {
