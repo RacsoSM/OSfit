@@ -13,7 +13,9 @@ import com.osfit.app.data.repository.LogroPersonalRepository
 import com.osfit.app.data.repository.MedallaRepository
 import com.osfit.app.data.repository.PagoRepository
 import com.osfit.app.data.repository.RecordPersonalRepository
+import com.osfit.app.data.repository.ResumenStorageRepository
 import com.osfit.app.data.repository.RutinaRepository
+import com.osfit.app.data.repository.VideoPublicadoRepository
 
 object AppContainer {
     val rutinaRepository: RutinaRepository by lazy { RutinaRepository() }
@@ -29,6 +31,8 @@ object AppContainer {
     val cambioDiaWebRepository: CambioDiaWebRepository by lazy { CambioDiaWebRepository() }
 
     val avisoFaltaWebRepository: AvisoFaltaWebRepository by lazy { AvisoFaltaWebRepository() }
+    val videoPublicadoRepository: VideoPublicadoRepository by lazy { VideoPublicadoRepository() }
+    val resumenStorageRepository: ResumenStorageRepository by lazy { ResumenStorageRepository() }
     val sincronizadorDiaWeb: SincronizadorDiaWeb by lazy {
         SincronizadorDiaWeb(clienteRepository, asistenciaRepository)
     }
