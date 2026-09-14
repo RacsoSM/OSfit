@@ -9,10 +9,10 @@ import com.osfit.app.data.model.LogroPersonalCatalogo
 import com.osfit.app.data.repository.InsigniaStorageRepository
 import com.osfit.app.data.repository.LogroPersonalRepository
 import com.osfit.app.util.LogroPersonalImagenUtil
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.io.File
@@ -58,32 +58,40 @@ class LogrosPersonalesViewModel(
     }
 
     /** Espejo de MedallasViewModel.subirPendientes: ver ahí el porqué de no cortar en el
-     *  primer fallo. */
+     *  primer fallo, de leer del StateFlow y del `finally`. */
     fun subirPendientes(context: Context) {
         if (_subiendoPendientes.value) return
         _subiendoPendientes.value = true
         viewModelScope.launch {
-            val pendientes = repositorio.observarCatalogo().first()
-                .filter { it.imagenArchivo != null && it.imagenUrl == null }
-            var subidas = 0
-            var fallidas = 0
-            for (logro in pendientes) {
-                val archivo = LogroPersonalImagenUtil.archivoImagen(context, logro.imagenArchivo!!)
-                runCatching {
-                    val url = insigniaStorageRepository.subirLogro(logro.id, archivo)
-                    repositorio.actualizarImagenUrl(logro.id, url)
-                }.onSuccess { subidas++ }
-                    .onFailure {
-                        fallidas++
-                        Log.w(TAG, "No se pudo subir la insignia pendiente del logro ${logro.id}", it)
-                    }
+            try {
+                val pendientes = logros.value
+                    .filter { it.imagenArchivo != null && it.imagenUrl == null }
+                var subidas = 0
+                var fallidas = 0
+                for (logro in pendientes) {
+                    val archivo = LogroPersonalImagenUtil.archivoImagen(context, logro.imagenArchivo!!)
+                    runCatching {
+                        val url = insigniaStorageRepository.subirLogro(logro.id, archivo)
+                        repositorio.actualizarImagenUrl(logro.id, url)
+                    }.onSuccess { subidas++ }
+                        .onFailure {
+                            fallidas++
+                            Log.w(TAG, "No se pudo subir la insignia pendiente del logro ${logro.id}", it)
+                        }
+                }
+                _mensaje.value = when {
+                    pendientes.isEmpty() -> "No hay insignias pendientes de subir"
+                    fallidas == 0 -> "Se subieron $subidas insignias"
+                    else -> "Se subieron $subidas insignias, $fallidas fallaron"
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Throwable) {
+                Log.w(TAG, "Falló el lote de subida de insignias pendientes", e)
+                _mensaje.value = "No se pudieron subir las insignias pendientes"
+            } finally {
+                _subiendoPendientes.value = false
             }
-            _mensaje.value = when {
-                pendientes.isEmpty() -> "No hay insignias pendientes de subir"
-                fallidas == 0 -> "Se subieron $subidas insignias"
-                else -> "Se subieron $subidas insignias, $fallidas fallaron"
-            }
-            _subiendoPendientes.value = false
         }
     }
 

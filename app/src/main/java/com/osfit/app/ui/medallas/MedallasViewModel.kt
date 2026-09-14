@@ -9,10 +9,10 @@ import com.osfit.app.data.model.MedallaCatalogo
 import com.osfit.app.data.repository.InsigniaStorageRepository
 import com.osfit.app.data.repository.MedallaRepository
 import com.osfit.app.util.MedallaImagenUtil
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.io.File
@@ -78,27 +78,39 @@ class MedallasViewModel(
         if (_subiendoPendientes.value) return
         _subiendoPendientes.value = true
         viewModelScope.launch {
-            val pendientes = medallaRepository.observarCatalogo().first()
-                .filter { it.imagenArchivo != null && it.imagenUrl == null }
-            var subidas = 0
-            var fallidas = 0
-            for (medalla in pendientes) {
-                val archivo = MedallaImagenUtil.archivoImagen(context, medalla.imagenArchivo!!)
-                runCatching {
-                    val url = insigniaStorageRepository.subirMedalla(medalla.id, archivo)
-                    medallaRepository.actualizarImagenUrl(medalla.id, url)
-                }.onSuccess { subidas++ }
-                    .onFailure {
-                        fallidas++
-                        Log.w(TAG, "No se pudo subir la insignia pendiente de la medalla ${medalla.id}", it)
-                    }
+            try {
+                // Se lee del StateFlow que este ViewModel ya mantiene vivo en vez de volver a
+                // suscribirse al catálogo: un listener de Firestore de más por cada toque.
+                val pendientes = medallas.value
+                    .filter { it.imagenArchivo != null && it.imagenUrl == null }
+                var subidas = 0
+                var fallidas = 0
+                for (medalla in pendientes) {
+                    val archivo = MedallaImagenUtil.archivoImagen(context, medalla.imagenArchivo!!)
+                    runCatching {
+                        val url = insigniaStorageRepository.subirMedalla(medalla.id, archivo)
+                        medallaRepository.actualizarImagenUrl(medalla.id, url)
+                    }.onSuccess { subidas++ }
+                        .onFailure {
+                            fallidas++
+                            Log.w(TAG, "No se pudo subir la insignia pendiente de la medalla ${medalla.id}", it)
+                        }
+                }
+                _mensaje.value = when {
+                    pendientes.isEmpty() -> "No hay insignias pendientes de subir"
+                    fallidas == 0 -> "Se subieron $subidas insignias"
+                    else -> "Se subieron $subidas insignias, $fallidas fallaron"
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Throwable) {
+                Log.w(TAG, "Falló el lote de subida de insignias pendientes", e)
+                _mensaje.value = "No se pudieron subir las insignias pendientes"
+            } finally {
+                // En `finally` para que el botón no quede trabado en "Subiendo insignias..."
+                // para siempre si algo lanza antes de llegar al final.
+                _subiendoPendientes.value = false
             }
-            _mensaje.value = when {
-                pendientes.isEmpty() -> "No hay insignias pendientes de subir"
-                fallidas == 0 -> "Se subieron $subidas insignias"
-                else -> "Se subieron $subidas insignias, $fallidas fallaron"
-            }
-            _subiendoPendientes.value = false
         }
     }
 

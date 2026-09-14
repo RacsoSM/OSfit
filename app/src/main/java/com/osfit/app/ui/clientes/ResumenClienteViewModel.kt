@@ -111,6 +111,10 @@ class ResumenClienteViewModel(
                 // pudo publicar" sería mentira — el video está visible en la página — y lo
                 // llevaría a republicar creyendo que no quedó.
                 _mensaje.value = "Video publicado en la página de la clienta"
+                // Se suelta el mp4 ya publicado: si no, un segundo toque lo resube y, pasada
+                // la hora de vida del caché, contesta "el video ya no está en el teléfono",
+                // que después de un éxito se lee como si algo hubiera fallado.
+                _videoListo.value = null
                 limpiarSobrantes()
             } catch (e: CancellationException) {
                 throw e
@@ -140,7 +144,7 @@ class ResumenClienteViewModel(
             val publicados = videoPublicadoRepository.observarDe(clienteId).first()
             RetencionVideos.sobrantes(publicados).forEach { video ->
                 runCatching {
-                    resumenStorageRepository.borrar(clienteId, video.rangoInicio)
+                    resumenStorageRepository.borrar(video.rutaStorage)
                     videoPublicadoRepository.borrar(clienteId, video.rangoInicio)
                 }.onFailure { Log.w(TAG_RESUMEN, "No se pudo borrar el video ${video.rangoInicio}", it) }
             }
@@ -247,6 +251,10 @@ class ResumenClienteViewModel(
         if (_generando.value) return
         _generando.value = true
         _progreso.value = 0f
+        // El mp4 de la generación anterior deja de valer apenas arranca una nueva: si esta
+        // falla, la tarjeta no debe seguir ofreciendo publicar la quincena vieja con su
+        // encabezado viejo.
+        _videoListo.value = null
         val contextoApp = context.applicationContext
         viewModelScope.launch {
             try {

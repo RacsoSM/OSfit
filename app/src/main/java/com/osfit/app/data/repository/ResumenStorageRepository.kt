@@ -2,6 +2,7 @@ package com.osfit.app.data.repository
 
 import android.net.Uri
 import com.google.firebase.storage.FirebaseStorage
+import com.google.firebase.storage.StorageException
 import kotlinx.coroutines.tasks.await
 import java.io.File
 
@@ -23,9 +24,24 @@ class ResumenStorageRepository(
         return ruta
     }
 
-    /** Borra el blob del resumen; el documento en Firestore se borra aparte, en `VideoPublicadoRepository`. */
-    suspend fun borrar(clienteId: String, rangoInicio: String) {
-        storage.reference.child(ruta(clienteId, rangoInicio)).delete().await()
+    /**
+     * Borra el blob del resumen; el documento en Firestore se borra aparte, en
+     * `VideoPublicadoRepository`. Recibe la ruta guardada en el documento y no `clienteId` +
+     * `rangoInicio`: rearmarla acá borraría la ruta que la convención dice hoy, no la que
+     * realmente se subió.
+     *
+     * Que el objeto ya no exista cuenta como éxito, no como fallo: lo que pide quien llama es
+     * que el blob no esté, y ya no está. Tratarlo como error rompía la retención — un borrado
+     * que quedó a medias (blob borrado, documento vivo) volvía a fallar en cada intento
+     * posterior y el documento quedaba para siempre, con la página diciendo "Video no
+     * disponible".
+     */
+    suspend fun borrar(ruta: String) {
+        try {
+            storage.reference.child(ruta).delete().await()
+        } catch (e: StorageException) {
+            if (e.errorCode != StorageException.ERROR_OBJECT_NOT_FOUND) throw e
+        }
     }
 
     private fun ruta(clienteId: String, rangoInicio: String) = "resumenes/$clienteId/$rangoInicio.mp4"
