@@ -287,3 +287,35 @@ nunca es vacía. Hace falta un documento escrito a mano o una migración futura 
 **Qué haría falta:** una línea, tratando la ruta en blanco como "nada que borrar" —
 `video.rutaStorage.ifBlank { null } ?: return@forEach`, o el mismo criterio dentro de
 `ResumenStorageRepository.borrar`.
+
+---
+
+## 11. Instalar una build `debuggable` hace el video 25 veces más lento
+
+**Detectado:** 2026-09-13, verificando la Etapa 3 en dispositivo. Lo notó el entrenador:
+"antes tardaba máximo minuto y medio por video, ahora va súper lento".
+
+Android **nunca compila AOT una app marcada `debuggable`**: el modo depuración exige código
+sin optimizar, así que ART la deja corriendo interpretada. Medido en el teléfono:
+
+| build | estado en `dumpsys package` | ritmo |
+|---|---|---|
+| `installDebug` | `status=run-from-apk`, y `compile -m speed` solo llega a `verify` | 1% cada ~23 s (≈35 min por video) |
+| release firmada + `compile -m speed` | `status=speed` | **86 segundos por video** |
+
+El generador es el peor caso posible para esa diferencia: dibuja frame a frame en la CPU, con
+blur real (`BlurMaskFilter`), a 1080×1920 y 30 fps. Son entre 930 y 2.300 frames por video
+según cuántas escenas entren.
+
+Síntoma secundario que confunde el diagnóstico: en el logcat aparece
+`bbq.waitForFreeSlotThenRelock timeout -1` con `acqCount=16, mMaxAcq=16`. Parece un bloqueo
+del codificador, pero es consecuencia de lo lento que va el productor, no la causa.
+
+**Por qué no corre prisa:** no es un bug del código —`ResumenVideoEncoder` no cambió en toda
+la Etapa 3— sino de qué APK queda instalada. Se arregla instalando una release.
+
+**Qué haría falta:** el proyecto no tiene `signingConfigs`, así que `assembleRelease` sale sin
+firmar y no se puede instalar. Añadir una configuración de firma (aunque sea con el keystore
+de depuración: firmar y ser `debuggable` son cosas distintas) dejaría un
+`./gradlew installRelease` en un paso. Mientras tanto, el camino manual es `assembleRelease`,
+firmar con `apksigner` y después `adb shell cmd package compile -m speed -f com.osfit.app`.
