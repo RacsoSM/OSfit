@@ -248,7 +248,7 @@ para todas y sólo se habría notado con el teléfono en la mano.
 
 ---
 
-## 8. Regenerar el grafo de graphify
+## 8. Regenerar el grafo de graphify — ✅ HECHO (2026-09-14)
 
 **Detectado:** 2026-09-12.
 
@@ -265,6 +265,22 @@ su propio Python de `uv`, que es la otra laptop; en esta máquina no está insta
 **Qué haría falta:** correrlo en esa laptop y commitear el `graphify-out/` nuevo. El
 `manifest.json` guarda `mtime` y `ast_hash` por archivo y hay caché de AST, así que la
 regeneración es incremental y solo reprocesa lo que cambió.
+
+**Hecho (2026-09-14):** corrido en la laptop CESAVESIN, que sí tiene graphify instalado —
+lo de "en esta máquina no está instalado" se escribió desde la otra. Incremental, como decía
+la entrada: 188 archivos cambiados, 166 de código por AST (gratis, sin LLM) y 22 documentos
+por dos subagentes (264.847 tokens). El grafo pasó de **242 nodos / 443 aristas** a **1587
+nodos / 3067 aristas**, en 108 comunidades, y `web/` ya aparece entero. El diagnóstico de
+integridad salió limpio: sin aristas colgantes, sin extremos ausentes, sin colapsos.
+
+Dos cosas que conviene saber la próxima vez:
+
+- **La extracción paralela de AST falla en Windows** y cae sola a secuencial
+  (`BrokenProcessPool`, por el `<stdin>` sin guarda `if __name__ == "__main__"`). Termina
+  bien, sólo más lento; no es un error que haya que arreglar para que corra.
+- **Sin `GEMINI_API_KEY` la extracción semántica la hace el agente anfitrión** con
+  subagentes, no se detiene ni pide ninguna llave. Los 22 documentos quedaron cacheados, así
+  que la próxima corrida no los vuelve a pagar si no cambian.
 
 ---
 

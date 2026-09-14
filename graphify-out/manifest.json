@@ -1,9 +1,9 @@
 {
   "app/build.gradle.kts": {
-    "mtime": 1787153437.5832024,
-    "seen": 1787249825.5361993,
-    "ast_hash": "da196af28012f7fe2a9ffccb7abcc547",
-    "semantic_hash": "da196af28012f7fe2a9ffccb7abcc547"
+    "mtime": 1789411483.4102197,
+    "seen": 1789411810.3451192,
+    "ast_hash": "d404e95f87d441cc01fc95a78e731e76",
+    "semantic_hash": "d404e95f87d441cc01fc95a78e731e76"
   },
   "app/src/main/java/com/osfit/app/MainActivity.kt": {
     "mtime": 1787154520.4254668,
@@ -12,28 +12,28 @@
     "semantic_hash": "3a97814fb4d05a05024a01112c69d127"
   },
   "app/src/main/java/com/osfit/app/auth/AuthManager.kt": {
-    "mtime": 1787154389.5950685,
-    "seen": 1787249825.5361993,
-    "ast_hash": "c2ecc092108c7b70a2209c87b5743267",
-    "semantic_hash": "c2ecc092108c7b70a2209c87b5743267"
+    "mtime": 1788891616.8471744,
+    "seen": 1789411810.3451192,
+    "ast_hash": "24e154e4c75f535a7d2510f0c3f7c8d6",
+    "semantic_hash": "24e154e4c75f535a7d2510f0c3f7c8d6"
   },
   "app/src/main/java/com/osfit/app/data/AppContainer.kt": {
-    "mtime": 1787154428.2056072,
-    "seen": 1787249825.5361993,
-    "ast_hash": "b855eda169b240228511a9602805a1de",
-    "semantic_hash": "b855eda169b240228511a9602805a1de"
+    "mtime": 1789411483.4108205,
+    "seen": 1789411810.3451192,
+    "ast_hash": "9663c3b2e73f09f7d2cf8a75c97ee917",
+    "semantic_hash": "9663c3b2e73f09f7d2cf8a75c97ee917"
   },
   "app/src/main/java/com/osfit/app/data/model/Asistencia.kt": {
-    "mtime": 1787154383.4989529,
-    "seen": 1787249825.5361993,
-    "ast_hash": "6ad81495f0a9968f4cc8aeee46c0a106",
-    "semantic_hash": "6ad81495f0a9968f4cc8aeee46c0a106"
+    "mtime": 1789411483.41163,
+    "seen": 1789411810.3451192,
+    "ast_hash": "7e48a7e736b0bc9adc200bd98167a40e",
+    "semantic_hash": "7e48a7e736b0bc9adc200bd98167a40e"
   },
   "app/src/main/java/com/osfit/app/data/model/Cliente.kt": {
-    "mtime": 1787241474.15686,
-    "seen": 1787249825.5361993,
-    "ast_hash": "cafc61a421325db4700bb52e1700a8c2",
-    "semantic_hash": "cafc61a421325db4700bb52e1700a8c2"
+    "mtime": 1789074068.527828,
+    "seen": 1789411810.3451192,
+    "ast_hash": "9fd603916a6ef1226ab2fb7f1fcf7631",
+    "semantic_hash": "9fd603916a6ef1226ab2fb7f1fcf7631"
   },
   "app/src/main/java/com/osfit/app/data/model/DiaRutina.kt": {
     "mtime": 1787154361.8612185,
@@ -60,16 +60,16 @@
     "semantic_hash": "91f10de09d93c016344572b3cac73974"
   },
   "app/src/main/java/com/osfit/app/data/repository/AsistenciaRepository.kt": {
-    "mtime": 1787241538.3716097,
-    "seen": 1787249825.5361993,
-    "ast_hash": "5b5bc62445a13d6d3df6f2455b39a18c",
-    "semantic_hash": "5b5bc62445a13d6d3df6f2455b39a18c"
+    "mtime": 1788891616.85697,
+    "seen": 1789411810.3451192,
+    "ast_hash": "6d93b5782febc867eeb10bfc15b113ab",
+    "semantic_hash": "6d93b5782febc867eeb10bfc15b113ab"
   },
   "app/src/main/java/com/osfit/app/data/repository/ClienteRepository.kt": {
-    "mtime": 1787241516.0064206,
-    "seen": 1787249825.5361993,
-    "ast_hash": "a8c0d5596f44a2a7524409f8de698f17",
-    "semantic_hash": "a8c0d5596f44a2a7524409f8de698f17"
+    "mtime": 1789074068.5307763,
+    "seen": 1789411810.3451192,
+    "ast_hash": "59a8e7fb664f5b01d46da8b4f54ecbf8",
+    "semantic_hash": "59a8e7fb664f5b01d46da8b4f54ecbf8"
   },
   "app/src/main/java/com/osfit/app/data/repository/PagoRepository.kt": {
     "mtime": 1787154413.324749,
@@ -90,16 +90,16 @@
     "semantic_hash": "70d908c986493bbf2956bf2e8482d291"
   },
   "app/src/main/java/com/osfit/app/domain/RutinaProgressCalculator.kt": {
-    "mtime": 1787241483.3177185,
-    "seen": 1787249825.5361993,
-    "ast_hash": "35c6534659b5788c45c0b0e93a9e5ae5",
-    "semantic_hash": "35c6534659b5788c45c0b0e93a9e5ae5"
+    "mtime": 1789074068.5347245,
+    "seen": 1789411810.3461144,
+    "ast_hash": "caeada4d7a25dee0a6b38d2d58616573",
+    "semantic_hash": "caeada4d7a25dee0a6b38d2d58616573"
   },
   "app/src/main/java/com/osfit/app/ui/OSfitApp.kt": {
-    "mtime": 1787243715.1498075,
-    "seen": 1787249825.5361993,
-    "ast_hash": "8eeeef65ad4f2545897403ad093b72b3",
-    "semantic_hash": "8eeeef65ad4f2545897403ad093b72b3"
+    "mtime": 1788985803.2801812,
+    "seen": 1789411810.3461144,
+    "ast_hash": "199655d32e4c1a4b1c79d25fececcd57",
+    "semantic_hash": "199655d32e4c1a4b1c79d25fececcd57"
   },
   "app/src/main/java/com/osfit/app/ui/calendario/CalendarioScreen.kt": {
     "mtime": 1787165553.1130981,
@@ -114,58 +114,58 @@
     "semantic_hash": "3857719e6e779f4c0ce50a9bfa318e13"
   },
   "app/src/main/java/com/osfit/app/ui/calendario/TomarAsistenciaScreen.kt": {
-    "mtime": 1787241606.309861,
-    "seen": 1787249825.5361993,
-    "ast_hash": "44c4f0f900e6c94bada1dd6b1401ebf4",
-    "semantic_hash": "44c4f0f900e6c94bada1dd6b1401ebf4"
+    "mtime": 1789411483.422682,
+    "seen": 1789411810.3461144,
+    "ast_hash": "1f4dd2600e6741f9c17d267a7b59a540",
+    "semantic_hash": "1f4dd2600e6741f9c17d267a7b59a540"
   },
   "app/src/main/java/com/osfit/app/ui/calendario/TomarAsistenciaViewModel.kt": {
-    "mtime": 1787241556.722672,
-    "seen": 1787249825.5361993,
-    "ast_hash": "4c94fef0fb47f4821f252536f08464b7",
-    "semantic_hash": "4c94fef0fb47f4821f252536f08464b7"
+    "mtime": 1789411483.422682,
+    "seen": 1789411810.3461144,
+    "ast_hash": "a543c175436889bf1805539e096799fa",
+    "semantic_hash": "a543c175436889bf1805539e096799fa"
   },
   "app/src/main/java/com/osfit/app/ui/clientes/ClienteAsistenciaScreen.kt": {
-    "mtime": 1787156789.359868,
-    "seen": 1787249825.5361993,
-    "ast_hash": "2054cc8573094dc073e637ae9e66e43d",
-    "semantic_hash": "2054cc8573094dc073e637ae9e66e43d"
+    "mtime": 1788385854.6758833,
+    "seen": 1789411810.3461144,
+    "ast_hash": "918774a179ea1775fd7a98bbb6191bb2",
+    "semantic_hash": "918774a179ea1775fd7a98bbb6191bb2"
   },
   "app/src/main/java/com/osfit/app/ui/clientes/ClienteAsistenciaViewModel.kt": {
-    "mtime": 1787156771.7734237,
-    "seen": 1787249825.5361993,
-    "ast_hash": "d99a06978315fd0b7ffefb331fa45b41",
-    "semantic_hash": "d99a06978315fd0b7ffefb331fa45b41"
+    "mtime": 1787687097.0475826,
+    "seen": 1789411810.3461144,
+    "ast_hash": "36843ae3186e3ffa18d28b2303ab15d2",
+    "semantic_hash": "36843ae3186e3ffa18d28b2303ab15d2"
   },
   "app/src/main/java/com/osfit/app/ui/clientes/ClienteDetailScreen.kt": {
-    "mtime": 1787242028.6951344,
-    "seen": 1787249825.5361993,
-    "ast_hash": "94f1bddc80d693c53e0f4e63052a8cb9",
-    "semantic_hash": "94f1bddc80d693c53e0f4e63052a8cb9"
+    "mtime": 1789411483.423682,
+    "seen": 1789411810.3461144,
+    "ast_hash": "20742ca99f0a9a3faf829a95fd61d2e1",
+    "semantic_hash": "20742ca99f0a9a3faf829a95fd61d2e1"
   },
   "app/src/main/java/com/osfit/app/ui/clientes/ClienteDetailViewModel.kt": {
-    "mtime": 1787163461.405356,
-    "seen": 1787249825.5361993,
-    "ast_hash": "dbcfc415b18d6998940d882dbd065d12",
-    "semantic_hash": "dbcfc415b18d6998940d882dbd065d12"
+    "mtime": 1789411483.423682,
+    "seen": 1789411810.3461144,
+    "ast_hash": "e535064edb14f635cb1cf025acde31b5",
+    "semantic_hash": "e535064edb14f635cb1cf025acde31b5"
   },
   "app/src/main/java/com/osfit/app/ui/clientes/ClientePagosScreen.kt": {
-    "mtime": 1787242075.3021865,
-    "seen": 1787249825.5361993,
-    "ast_hash": "750a88d317f4d22b437aadde374abd57",
-    "semantic_hash": "750a88d317f4d22b437aadde374abd57"
+    "mtime": 1787685989.6327543,
+    "seen": 1789411810.3461144,
+    "ast_hash": "cd231434a8b4f3e49e63fe5681f9bae3",
+    "semantic_hash": "cd231434a8b4f3e49e63fe5681f9bae3"
   },
   "app/src/main/java/com/osfit/app/ui/clientes/ClientesListScreen.kt": {
-    "mtime": 1787241628.0241613,
-    "seen": 1787249825.5361993,
-    "ast_hash": "4da1d95727d1d86a0f978aad1ce1b362",
-    "semantic_hash": "4da1d95727d1d86a0f978aad1ce1b362"
+    "mtime": 1789411483.424682,
+    "seen": 1789411810.3461144,
+    "ast_hash": "e3f3b2a04f483a38d8bd8113bf30ea8d",
+    "semantic_hash": "e3f3b2a04f483a38d8bd8113bf30ea8d"
   },
   "app/src/main/java/com/osfit/app/ui/clientes/ClientesListViewModel.kt": {
-    "mtime": 1787159106.116023,
-    "seen": 1787249825.5361993,
-    "ast_hash": "41cb5a851b5c7e33f97164cf13c0fad9",
-    "semantic_hash": "41cb5a851b5c7e33f97164cf13c0fad9"
+    "mtime": 1789411483.424682,
+    "seen": 1789411810.3461144,
+    "ast_hash": "a366d8718508a2c35d430cf416a6bc91",
+    "semantic_hash": "a366d8718508a2c35d430cf416a6bc91"
   },
   "app/src/main/java/com/osfit/app/ui/common/AccionCard.kt": {
     "mtime": 1787241849.9028122,
@@ -198,16 +198,16 @@
     "semantic_hash": "3fe6b274c300c7fbd822113d6d543b44"
   },
   "app/src/main/java/com/osfit/app/ui/navigation/OSfitNavHost.kt": {
-    "mtime": 1787242051.6394393,
-    "seen": 1787249825.5361993,
-    "ast_hash": "5bfa61d254fb2ced1f1e1648c1219fa8",
-    "semantic_hash": "5bfa61d254fb2ced1f1e1648c1219fa8"
+    "mtime": 1789411483.42868,
+    "seen": 1789411810.3461144,
+    "ast_hash": "bc800c0a4cae321589c8b45013c9549b",
+    "semantic_hash": "bc800c0a4cae321589c8b45013c9549b"
   },
   "app/src/main/java/com/osfit/app/ui/navigation/Screen.kt": {
-    "mtime": 1787241803.1965313,
-    "seen": 1787249825.5361993,
-    "ast_hash": "82b56463f0b0d7afc5fac94f5b5ee19a",
-    "semantic_hash": "82b56463f0b0d7afc5fac94f5b5ee19a"
+    "mtime": 1789411483.42868,
+    "seen": 1789411810.3461144,
+    "ast_hash": "58e8619101c1594a78144f0d897f2899",
+    "semantic_hash": "58e8619101c1594a78144f0d897f2899"
   },
   "app/src/main/java/com/osfit/app/ui/rutinas/RutinaEditorScreen.kt": {
     "mtime": 1787154717.337922,
@@ -240,10 +240,10 @@
     "semantic_hash": "745ed72486f9a2f316b0c8c7995c8b77"
   },
   "app/src/test/java/com/osfit/app/domain/RutinaProgressCalculatorTest.kt": {
-    "mtime": 1787241500.3018618,
-    "seen": 1787249825.5361993,
-    "ast_hash": "0a2ea95cb54270f130853bd2d767201f",
-    "semantic_hash": "0a2ea95cb54270f130853bd2d767201f"
+    "mtime": 1788384289.2824016,
+    "seen": 1789411810.3461144,
+    "ast_hash": "49138642d27501ed9386ff4200a8178e",
+    "semantic_hash": "49138642d27501ed9386ff4200a8178e"
   },
   "build.gradle.kts": {
     "mtime": 1787153422.3832417,
@@ -264,10 +264,10 @@
     "semantic_hash": "584e5bbc2df0fe2b883fd8418468c89a"
   },
   "README.md": {
-    "mtime": 1787156084.6027598,
-    "seen": 1787249825.5361993,
-    "ast_hash": "e9f7b55bc2067cfcc3f0bd7b20e3bad4",
-    "semantic_hash": "e9f7b55bc2067cfcc3f0bd7b20e3bad4"
+    "mtime": 1789159817.4310951,
+    "seen": 1789411810.3461144,
+    "ast_hash": "5ec566f0a01f25e2c5a887c5dd968352",
+    "semantic_hash": "5ec566f0a01f25e2c5a887c5dd968352"
   },
   "docs/superpowers/plans/2026-08-18-osfit-implementation.md": {
     "mtime": 1787155825.8537927,
@@ -286,5 +286,1001 @@
     "seen": 1787249825.5361993,
     "ast_hash": "a912daff6711554b8d2b92ea662a6024",
     "semantic_hash": "a912daff6711554b8d2b92ea662a6024"
+  },
+  "app/src/main/java/com/osfit/app/data/SincronizadorDiaWeb.kt": {
+    "mtime": 1789074068.5244384,
+    "seen": 1789411810.3451192,
+    "ast_hash": "b1651f90998bd1b96030a5d79eacb5eb",
+    "semantic_hash": "b1651f90998bd1b96030a5d79eacb5eb"
+  },
+  "app/src/main/java/com/osfit/app/data/fake/FakeAsistenciaRepository.kt": {
+    "mtime": 1788891616.8549035,
+    "seen": 1789411810.3451192,
+    "ast_hash": "678800de4ed8840467a41be5280605ee",
+    "semantic_hash": "678800de4ed8840467a41be5280605ee"
+  },
+  "app/src/main/java/com/osfit/app/data/fake/FakeClienteRepository.kt": {
+    "mtime": 1789074068.525458,
+    "seen": 1789411810.3451192,
+    "ast_hash": "057a7b3c6efe02154dae570caf54da30",
+    "semantic_hash": "057a7b3c6efe02154dae570caf54da30"
+  },
+  "app/src/main/java/com/osfit/app/data/model/AccesoWeb.kt": {
+    "mtime": 1789074068.52676,
+    "seen": 1789411810.3451192,
+    "ast_hash": "7da21bc336090dabb23f88157b52a011",
+    "semantic_hash": "7da21bc336090dabb23f88157b52a011"
+  },
+  "app/src/main/java/com/osfit/app/data/model/AvisoFaltaWeb.kt": {
+    "mtime": 1789411483.412686,
+    "seen": 1789411810.3451192,
+    "ast_hash": "dba1a8410ed21fa064e1f8bc671ecfd1",
+    "semantic_hash": "dba1a8410ed21fa064e1f8bc671ecfd1"
+  },
+  "app/src/main/java/com/osfit/app/data/model/CambioDiaWeb.kt": {
+    "mtime": 1789411483.412686,
+    "seen": 1789411810.3451192,
+    "ast_hash": "ff62685f22be672766e545186eb8691f",
+    "semantic_hash": "ff62685f22be672766e545186eb8691f"
+  },
+  "app/src/main/java/com/osfit/app/data/model/ConfigVideoPeriodo.kt": {
+    "mtime": 1789411483.413682,
+    "seen": 1789411810.3451192,
+    "ast_hash": "129a91f72a7791e747e576ec57e2bf09",
+    "semantic_hash": "129a91f72a7791e747e576ec57e2bf09"
+  },
+  "app/src/main/java/com/osfit/app/data/model/DiaDenormalizado.kt": {
+    "mtime": 1789074068.527828,
+    "seen": 1789411810.3451192,
+    "ast_hash": "dd1ea87cdb96dd9b053775a030dab022",
+    "semantic_hash": "dd1ea87cdb96dd9b053775a030dab022"
+  },
+  "app/src/main/java/com/osfit/app/data/model/LogroPersonalCatalogo.kt": {
+    "mtime": 1789411483.413682,
+    "seen": 1789411810.3451192,
+    "ast_hash": "d1c809ad318508f036f391e8e64df21a",
+    "semantic_hash": "d1c809ad318508f036f391e8e64df21a"
+  },
+  "app/src/main/java/com/osfit/app/data/model/LogroPersonalOtorgado.kt": {
+    "mtime": 1789411483.414682,
+    "seen": 1789411810.3451192,
+    "ast_hash": "33d9f9cc5d15daf9d2a0ace40d34df82",
+    "semantic_hash": "33d9f9cc5d15daf9d2a0ace40d34df82"
+  },
+  "app/src/main/java/com/osfit/app/data/model/MedallaCatalogo.kt": {
+    "mtime": 1789411483.414682,
+    "seen": 1789411810.3451192,
+    "ast_hash": "b1817c4f98bbae955712449d1a4424d4",
+    "semantic_hash": "b1817c4f98bbae955712449d1a4424d4"
+  },
+  "app/src/main/java/com/osfit/app/data/model/MedallaOtorgada.kt": {
+    "mtime": 1789411483.4156823,
+    "seen": 1789411810.3451192,
+    "ast_hash": "241f3ebf527fe7895e73a1da1571ea3d",
+    "semantic_hash": "241f3ebf527fe7895e73a1da1571ea3d"
+  },
+  "app/src/main/java/com/osfit/app/data/model/RecordPersonal.kt": {
+    "mtime": 1787328290.634751,
+    "seen": 1789411810.3451192,
+    "ast_hash": "b1c99351dd1dd31b9674f076db997259",
+    "semantic_hash": "b1c99351dd1dd31b9674f076db997259"
+  },
+  "app/src/main/java/com/osfit/app/data/model/VideoPublicado.kt": {
+    "mtime": 1789411483.4156823,
+    "seen": 1789411810.3451192,
+    "ast_hash": "3477bf502621bff1de63da98f94764ef",
+    "semantic_hash": "3477bf502621bff1de63da98f94764ef"
+  },
+  "app/src/main/java/com/osfit/app/data/repository/AccesoWebRepository.kt": {
+    "mtime": 1789074068.5292945,
+    "seen": 1789411810.3451192,
+    "ast_hash": "b8668a7f95b40e81fa3c9a7ce4c92f10",
+    "semantic_hash": "b8668a7f95b40e81fa3c9a7ce4c92f10"
+  },
+  "app/src/main/java/com/osfit/app/data/repository/AvisoFaltaWebRepository.kt": {
+    "mtime": 1789411483.4156823,
+    "seen": 1789411810.3451192,
+    "ast_hash": "04c2ceced6f4144edaa99c842fcc64c2",
+    "semantic_hash": "04c2ceced6f4144edaa99c842fcc64c2"
+  },
+  "app/src/main/java/com/osfit/app/data/repository/CambioDiaWebRepository.kt": {
+    "mtime": 1789411483.4166827,
+    "seen": 1789411810.3451192,
+    "ast_hash": "34390091d097fe5c7ed35bb550627262",
+    "semantic_hash": "34390091d097fe5c7ed35bb550627262"
+  },
+  "app/src/main/java/com/osfit/app/data/repository/ConfigVideoRepository.kt": {
+    "mtime": 1789411483.4166827,
+    "seen": 1789411810.3451192,
+    "ast_hash": "3d4793e6371043ae904565de93c1f230",
+    "semantic_hash": "3d4793e6371043ae904565de93c1f230"
+  },
+  "app/src/main/java/com/osfit/app/data/repository/FirestoreAsistenciaRepository.kt": {
+    "mtime": 1789411483.4166827,
+    "seen": 1789411810.3451192,
+    "ast_hash": "2b3713103cdd46780d512355477195b4",
+    "semantic_hash": "2b3713103cdd46780d512355477195b4"
+  },
+  "app/src/main/java/com/osfit/app/data/repository/FirestoreClienteRepository.kt": {
+    "mtime": 1789074068.5322413,
+    "seen": 1789411810.3451192,
+    "ast_hash": "9ce6bce07410768f4f39e75a6f387d41",
+    "semantic_hash": "9ce6bce07410768f4f39e75a6f387d41"
+  },
+  "app/src/main/java/com/osfit/app/data/repository/InsigniaStorageRepository.kt": {
+    "mtime": 1789411483.417682,
+    "seen": 1789411810.3451192,
+    "ast_hash": "be12bca7de581417a54178e4693f9c44",
+    "semantic_hash": "be12bca7de581417a54178e4693f9c44"
+  },
+  "app/src/main/java/com/osfit/app/data/repository/LogroPersonalRepository.kt": {
+    "mtime": 1789411483.417682,
+    "seen": 1789411810.3451192,
+    "ast_hash": "198bc11c870b9dff91ee60eb1e9b3ada",
+    "semantic_hash": "198bc11c870b9dff91ee60eb1e9b3ada"
+  },
+  "app/src/main/java/com/osfit/app/data/repository/MedallaRepository.kt": {
+    "mtime": 1789411483.418682,
+    "seen": 1789411810.3451192,
+    "ast_hash": "efabf59008952d6539998cb8027cf1d4",
+    "semantic_hash": "efabf59008952d6539998cb8027cf1d4"
+  },
+  "app/src/main/java/com/osfit/app/data/repository/PaletaWebRepository.kt": {
+    "mtime": 1789411483.418682,
+    "seen": 1789411810.3451192,
+    "ast_hash": "dfdbc99e3e4a65e1fad07dbca36d565b",
+    "semantic_hash": "dfdbc99e3e4a65e1fad07dbca36d565b"
+  },
+  "app/src/main/java/com/osfit/app/data/repository/RecordPersonalRepository.kt": {
+    "mtime": 1787328298.6559072,
+    "seen": 1789411810.3451192,
+    "ast_hash": "56d6fde6ba384630ac94492607ac5004",
+    "semantic_hash": "56d6fde6ba384630ac94492607ac5004"
+  },
+  "app/src/main/java/com/osfit/app/data/repository/ResumenStorageRepository.kt": {
+    "mtime": 1789411483.418682,
+    "seen": 1789411810.3451192,
+    "ast_hash": "5a78c314523693fb01fdf7a6540f856a",
+    "semantic_hash": "5a78c314523693fb01fdf7a6540f856a"
+  },
+  "app/src/main/java/com/osfit/app/data/repository/VideoPublicadoRepository.kt": {
+    "mtime": 1789411483.4196813,
+    "seen": 1789411810.3451192,
+    "ast_hash": "32de498b7aaceb37f36fda387bbfc642",
+    "semantic_hash": "32de498b7aaceb37f36fda387bbfc642"
+  },
+  "app/src/main/java/com/osfit/app/domain/AsignarDiaManual.kt": {
+    "mtime": 1789074068.5332072,
+    "seen": 1789411810.3451192,
+    "ast_hash": "923af3918ec3f09f4871a7100f75d3fe",
+    "semantic_hash": "923af3918ec3f09f4871a7100f75d3fe"
+  },
+  "app/src/main/java/com/osfit/app/domain/CupoRevivesCalculator.kt": {
+    "mtime": 1789411483.4196813,
+    "seen": 1789411810.3451192,
+    "ast_hash": "f64f63ea59cc57d6521e1ea907d86b0d",
+    "semantic_hash": "f64f63ea59cc57d6521e1ea907d86b0d"
+  },
+  "app/src/main/java/com/osfit/app/domain/FaltaQueRompioLaRacha.kt": {
+    "mtime": 1789411483.4206817,
+    "seen": 1789411810.3451192,
+    "ast_hash": "b9a7b44d01f876f449bf548df25dccd7",
+    "semantic_hash": "b9a7b44d01f876f449bf548df25dccd7"
+  },
+  "app/src/main/java/com/osfit/app/domain/MedallaCalculator.kt": {
+    "mtime": 1788554392.899982,
+    "seen": 1789411810.3451192,
+    "ast_hash": "375aed452322f1add09f9198e9b73d82",
+    "semantic_hash": "375aed452322f1add09f9198e9b73d82"
+  },
+  "app/src/main/java/com/osfit/app/domain/PeriodosQuincenales.kt": {
+    "mtime": 1788985726.341549,
+    "seen": 1789411810.3451192,
+    "ast_hash": "a8cdcd4d6623972e33c0062f0a36d45e",
+    "semantic_hash": "a8cdcd4d6623972e33c0062f0a36d45e"
+  },
+  "app/src/main/java/com/osfit/app/domain/RachaCalculator.kt": {
+    "mtime": 1788385854.6733968,
+    "seen": 1789411810.3451192,
+    "ast_hash": "9f9b07f3f43e14e6203efd957cc72452",
+    "semantic_hash": "9f9b07f3f43e14e6203efd957cc72452"
+  },
+  "app/src/main/java/com/osfit/app/domain/ResumenClienteCalculator.kt": {
+    "mtime": 1788903560.950185,
+    "seen": 1789411810.3451192,
+    "ast_hash": "c7bf30e60d3757d3c38ef95dd13e3177",
+    "semantic_hash": "c7bf30e60d3757d3c38ef95dd13e3177"
+  },
+  "app/src/main/java/com/osfit/app/domain/RetencionVideos.kt": {
+    "mtime": 1789411483.4206817,
+    "seen": 1789411810.3451192,
+    "ast_hash": "0b6dcfc4f5126ec9c2a08b03a95d6430",
+    "semantic_hash": "0b6dcfc4f5126ec9c2a08b03a95d6430"
+  },
+  "app/src/main/java/com/osfit/app/domain/TiempoGymCalculator.kt": {
+    "mtime": 1787772824.098108,
+    "seen": 1789411810.3461144,
+    "ast_hash": "4a7e81625233771c13147c7e7dfef7c1",
+    "semantic_hash": "4a7e81625233771c13147c7e7dfef7c1"
+  },
+  "app/src/main/java/com/osfit/app/paletas/Paleta.kt": {
+    "mtime": 1789411483.4216816,
+    "seen": 1789411810.3461144,
+    "ast_hash": "6d42de3521c523ea6b857875891ddc7a",
+    "semantic_hash": "6d42de3521c523ea6b857875891ddc7a"
+  },
+  "app/src/main/java/com/osfit/app/paletas/PaletaWebFirestore.kt": {
+    "mtime": 1789411483.4216816,
+    "seen": 1789411810.3461144,
+    "ast_hash": "652f1f15f4f5a01ca6d4c5eafcec78f2",
+    "semantic_hash": "652f1f15f4f5a01ca6d4c5eafcec78f2"
+  },
+  "app/src/main/java/com/osfit/app/ui/clientes/ClienteEditarScreen.kt": {
+    "mtime": 1788462208.737581,
+    "seen": 1789411810.3461144,
+    "ast_hash": "d64aeb1b8dd4569f6c8196eda80b48a2",
+    "semantic_hash": "d64aeb1b8dd4569f6c8196eda80b48a2"
+  },
+  "app/src/main/java/com/osfit/app/ui/clientes/ConfirmarLogrosDialog.kt": {
+    "mtime": 1788978717.1630795,
+    "seen": 1789411810.3461144,
+    "ast_hash": "5a1325806329c723f9bce17a2b52c1ba",
+    "semantic_hash": "5a1325806329c723f9bce17a2b52c1ba"
+  },
+  "app/src/main/java/com/osfit/app/ui/clientes/ConfirmarMedallaDialog.kt": {
+    "mtime": 1788554392.9207993,
+    "seen": 1789411810.3461144,
+    "ast_hash": "f41856706a07b33f56a10224756569c2",
+    "semantic_hash": "f41856706a07b33f56a10224756569c2"
+  },
+  "app/src/main/java/com/osfit/app/ui/clientes/EstadisticasScreen.kt": {
+    "mtime": 1787331042.8741906,
+    "seen": 1789411810.3461144,
+    "ast_hash": "51273d5451f828747bcd86e62d2657e3",
+    "semantic_hash": "51273d5451f828747bcd86e62d2657e3"
+  },
+  "app/src/main/java/com/osfit/app/ui/clientes/EstadisticasViewModel.kt": {
+    "mtime": 1788385854.6814353,
+    "seen": 1789411810.3461144,
+    "ast_hash": "844a3eac43904b8dbb7ffe2b6ec7a391",
+    "semantic_hash": "844a3eac43904b8dbb7ffe2b6ec7a391"
+  },
+  "app/src/main/java/com/osfit/app/ui/clientes/LogrosPersonalesClienteScreen.kt": {
+    "mtime": 1788891688.7205877,
+    "seen": 1789411810.3461144,
+    "ast_hash": "2fd13db5913b276471c5fc5d5b395dc1",
+    "semantic_hash": "2fd13db5913b276471c5fc5d5b395dc1"
+  },
+  "app/src/main/java/com/osfit/app/ui/clientes/MedallasClienteScreen.kt": {
+    "mtime": 1788891675.3380008,
+    "seen": 1789411810.3461144,
+    "ast_hash": "6b871cc120fd7efad56d46a1e6c88f01",
+    "semantic_hash": "6b871cc120fd7efad56d46a1e6c88f01"
+  },
+  "app/src/main/java/com/osfit/app/ui/clientes/PaletaWebClienteScreen.kt": {
+    "mtime": 1789411483.4256818,
+    "seen": 1789411810.3461144,
+    "ast_hash": "14dbe1bd27c4644c66abbb3cc055da4b",
+    "semantic_hash": "14dbe1bd27c4644c66abbb3cc055da4b"
+  },
+  "app/src/main/java/com/osfit/app/ui/clientes/ResumenClienteViewModel.kt": {
+    "mtime": 1789411483.4256818,
+    "seen": 1789411810.3461144,
+    "ast_hash": "08c62455597b944a192d978c6fe93375",
+    "semantic_hash": "08c62455597b944a192d978c6fe93375"
+  },
+  "app/src/main/java/com/osfit/app/ui/clientes/SobornoDialog.kt": {
+    "mtime": 1788385854.6814353,
+    "seen": 1789411810.3461144,
+    "ast_hash": "f952b8b5b397055d055e4fa6ff1f027d",
+    "semantic_hash": "f952b8b5b397055d055e4fa6ff1f027d"
+  },
+  "app/src/main/java/com/osfit/app/ui/clientes/VideosWebClienteScreen.kt": {
+    "mtime": 1789411483.4266815,
+    "seen": 1789411810.3461144,
+    "ast_hash": "c34ebce2c1bec3170009297eb354f5aa",
+    "semantic_hash": "c34ebce2c1bec3170009297eb354f5aa"
+  },
+  "app/src/main/java/com/osfit/app/ui/clientes/WebClienteScreen.kt": {
+    "mtime": 1789411483.4266815,
+    "seen": 1789411810.3461144,
+    "ast_hash": "9e722c9c4c91f570fce89377cddce626",
+    "semantic_hash": "9e722c9c4c91f570fce89377cddce626"
+  },
+  "app/src/main/java/com/osfit/app/ui/common/AsignarDiaDialog.kt": {
+    "mtime": 1788383331.3097973,
+    "seen": 1789411810.3461144,
+    "ast_hash": "edaa2d193ea64aaddf83205bb10ffb96",
+    "semantic_hash": "edaa2d193ea64aaddf83205bb10ffb96"
+  },
+  "app/src/main/java/com/osfit/app/ui/common/FechaActual.kt": {
+    "mtime": 1787859384.5221395,
+    "seen": 1789411810.3461144,
+    "ast_hash": "4996ff9161b1cde0016a6f1e5f4c5016",
+    "semantic_hash": "4996ff9161b1cde0016a6f1e5f4c5016"
+  },
+  "app/src/main/java/com/osfit/app/ui/common/MuestrasPaleta.kt": {
+    "mtime": 1789411483.4266815,
+    "seen": 1789411810.3461144,
+    "ast_hash": "ec376a554efd5ad63123fcdd10294290",
+    "semantic_hash": "ec376a554efd5ad63123fcdd10294290"
+  },
+  "app/src/main/java/com/osfit/app/ui/common/RachaBadge.kt": {
+    "mtime": 1787330220.5203612,
+    "seen": 1789411810.3461144,
+    "ast_hash": "8e9f68c6315e46f4f07a45b1c034154e",
+    "semantic_hash": "8e9f68c6315e46f4f07a45b1c034154e"
+  },
+  "app/src/main/java/com/osfit/app/ui/configvideo/ConfigVideoScreen.kt": {
+    "mtime": 1789411483.42768,
+    "seen": 1789411810.3461144,
+    "ast_hash": "1abc576082ad8cbc610f4aa592944a69",
+    "semantic_hash": "1abc576082ad8cbc610f4aa592944a69"
+  },
+  "app/src/main/java/com/osfit/app/ui/configvideo/ConfigVideoViewModel.kt": {
+    "mtime": 1789411483.42768,
+    "seen": 1789411810.3461144,
+    "ast_hash": "67b82a600ca43dbe9f8804752796b11e",
+    "semantic_hash": "67b82a600ca43dbe9f8804752796b11e"
+  },
+  "app/src/main/java/com/osfit/app/ui/logros/LogrosPersonalesScreen.kt": {
+    "mtime": 1789411483.42868,
+    "seen": 1789411810.3461144,
+    "ast_hash": "6bf4f67c1a0080c832b04a2bdd6c745c",
+    "semantic_hash": "6bf4f67c1a0080c832b04a2bdd6c745c"
+  },
+  "app/src/main/java/com/osfit/app/ui/logros/LogrosPersonalesViewModel.kt": {
+    "mtime": 1789411483.42868,
+    "seen": 1789411810.3461144,
+    "ast_hash": "d8c871a437793b5c26597d5374474bd3",
+    "semantic_hash": "d8c871a437793b5c26597d5374474bd3"
+  },
+  "app/src/main/java/com/osfit/app/ui/medallas/MedallasScreen.kt": {
+    "mtime": 1789411483.42868,
+    "seen": 1789411810.3461144,
+    "ast_hash": "3bcacac6488276085af637a9e5809c23",
+    "semantic_hash": "3bcacac6488276085af637a9e5809c23"
+  },
+  "app/src/main/java/com/osfit/app/ui/medallas/MedallasViewModel.kt": {
+    "mtime": 1789411483.42868,
+    "seen": 1789411810.3461144,
+    "ast_hash": "ba04fc2ae96629581ed2f252543cd53e",
+    "semantic_hash": "ba04fc2ae96629581ed2f252543cd53e"
+  },
+  "app/src/main/java/com/osfit/app/ui/sandbox/SandboxScreen.kt": {
+    "mtime": 1788384191.5788498,
+    "seen": 1789411810.3461144,
+    "ast_hash": "b9c5e5cb898ad5e4630b96952914febe",
+    "semantic_hash": "b9c5e5cb898ad5e4630b96952914febe"
+  },
+  "app/src/main/java/com/osfit/app/ui/sandbox/SandboxViewModel.kt": {
+    "mtime": 1788891616.8602004,
+    "seen": 1789411810.3461144,
+    "ast_hash": "747b62f55bc904a07b2aa2429d7594f7",
+    "semantic_hash": "747b62f55bc904a07b2aa2429d7594f7"
+  },
+  "app/src/main/java/com/osfit/app/ui/top/TopScreen.kt": {
+    "mtime": 1787333063.7299685,
+    "seen": 1789411810.3461144,
+    "ast_hash": "9eacf9d3d4d60e49a934f1b9f2371d7f",
+    "semantic_hash": "9eacf9d3d4d60e49a934f1b9f2371d7f"
+  },
+  "app/src/main/java/com/osfit/app/ui/top/TopViewModel.kt": {
+    "mtime": 1788385854.6824534,
+    "seen": 1789411810.3461144,
+    "ast_hash": "a12a6c84ada17ecd6a87407d2f3f8134",
+    "semantic_hash": "a12a6c84ada17ecd6a87407d2f3f8134"
+  },
+  "app/src/main/java/com/osfit/app/util/CancionUtil.kt": {
+    "mtime": 1788461005.489666,
+    "seen": 1789411810.3461144,
+    "ast_hash": "29f2798e9c4c55a47133a5dd7ff3b754",
+    "semantic_hash": "29f2798e9c4c55a47133a5dd7ff3b754"
+  },
+  "app/src/main/java/com/osfit/app/util/CompartirUtil.kt": {
+    "mtime": 1787858036.1783402,
+    "seen": 1789411810.3461144,
+    "ast_hash": "cd8620cb854c8e4cbb05b7e4b43f7e13",
+    "semantic_hash": "cd8620cb854c8e4cbb05b7e4b43f7e13"
+  },
+  "app/src/main/java/com/osfit/app/util/EncajeInsignia.kt": {
+    "mtime": 1788904178.571505,
+    "seen": 1789411810.3461144,
+    "ast_hash": "eb70f0fe6833bce8200c5c2f9c2deb47",
+    "semantic_hash": "eb70f0fe6833bce8200c5c2f9c2deb47"
+  },
+  "app/src/main/java/com/osfit/app/util/InsigniaImagenUtil.kt": {
+    "mtime": 1788904178.571505,
+    "seen": 1789411810.3461144,
+    "ast_hash": "f1a809336a8b689a809d9c3537c200ad",
+    "semantic_hash": "f1a809336a8b689a809d9c3537c200ad"
+  },
+  "app/src/main/java/com/osfit/app/util/LogroPersonalImagenUtil.kt": {
+    "mtime": 1788891675.3380008,
+    "seen": 1789411810.3461144,
+    "ast_hash": "138ba5547fb1ffeef33cfa635530aec1",
+    "semantic_hash": "138ba5547fb1ffeef33cfa635530aec1"
+  },
+  "app/src/main/java/com/osfit/app/util/MedallaImagenUtil.kt": {
+    "mtime": 1788891675.3380008,
+    "seen": 1789411810.3461144,
+    "ast_hash": "c88c9934eef1f897bbf4146f69e180e4",
+    "semantic_hash": "c88c9934eef1f897bbf4146f69e180e4"
+  },
+  "app/src/main/java/com/osfit/app/util/WhatsAppUtil.kt": {
+    "mtime": 1789074068.5401003,
+    "seen": 1789411810.3461144,
+    "ast_hash": "d9e87ac482e42d826b0f4b4b0c93bd55",
+    "semantic_hash": "d9e87ac482e42d826b0f4b4b0c93bd55"
+  },
+  "app/src/main/java/com/osfit/app/video/BlobsGeometria.kt": {
+    "mtime": 1789411483.42868,
+    "seen": 1789411810.3461144,
+    "ast_hash": "2283015574e14ee752ec4f6f64966d52",
+    "semantic_hash": "2283015574e14ee752ec4f6f64966d52"
+  },
+  "app/src/main/java/com/osfit/app/video/EscenaResumen.kt": {
+    "mtime": 1788891675.3380008,
+    "seen": 1789411810.3461144,
+    "ast_hash": "8031789cadf1f6bde9d8d4157a630fa6",
+    "semantic_hash": "8031789cadf1f6bde9d8d4157a630fa6"
+  },
+  "app/src/main/java/com/osfit/app/video/FondoBlobRenderer.kt": {
+    "mtime": 1789411483.42868,
+    "seen": 1789411810.3461144,
+    "ast_hash": "41a981543c7d2043faa20fb7e761f65a",
+    "semantic_hash": "41a981543c7d2043faa20fb7e761f65a"
+  },
+  "app/src/main/java/com/osfit/app/video/MaquinaEscribir.kt": {
+    "mtime": 1788458593.3655436,
+    "seen": 1789411810.3461144,
+    "ast_hash": "e3eae730dc1c05e24165454114133526",
+    "semantic_hash": "e3eae730dc1c05e24165454114133526"
+  },
+  "app/src/main/java/com/osfit/app/video/ResumenFrameRenderer.kt": {
+    "mtime": 1789411483.42868,
+    "seen": 1789411810.3461144,
+    "ast_hash": "c582ed74ad6afb84761a04a16789e766",
+    "semantic_hash": "c582ed74ad6afb84761a04a16789e766"
+  },
+  "app/src/main/java/com/osfit/app/video/ResumenVideoEncoder.kt": {
+    "mtime": 1789411483.433952,
+    "seen": 1789411810.3461144,
+    "ast_hash": "15af5f10310a14e5cf7a397b1cc7128d",
+    "semantic_hash": "15af5f10310a14e5cf7a397b1cc7128d"
+  },
+  "app/src/main/java/com/osfit/app/video/ResumenVideoGenerator.kt": {
+    "mtime": 1789411483.433952,
+    "seen": 1789411810.3461144,
+    "ast_hash": "df6d096ddade3de1be440f6eba486c06",
+    "semantic_hash": "df6d096ddade3de1be440f6eba486c06"
+  },
+  "app/src/main/java/com/osfit/app/video/TimelineResumen.kt": {
+    "mtime": 1788978680.047366,
+    "seen": 1789411810.3461144,
+    "ast_hash": "323d6df75ff392ab15705122d9534592",
+    "semantic_hash": "323d6df75ff392ab15705122d9534592"
+  },
+  "app/src/test/java/com/osfit/app/domain/AsignarDiaInteraccionTest.kt": {
+    "mtime": 1788891616.8602004,
+    "seen": 1789411810.3461144,
+    "ast_hash": "43a4aed137a15d670c60f788c6a69901",
+    "semantic_hash": "43a4aed137a15d670c60f788c6a69901"
+  },
+  "app/src/test/java/com/osfit/app/domain/AvanceDiaSecuenciaTest.kt": {
+    "mtime": 1788384318.7760634,
+    "seen": 1789411810.3461144,
+    "ast_hash": "ebd012bc810ee49055aa28f49a9c54ab",
+    "semantic_hash": "ebd012bc810ee49055aa28f49a9c54ab"
+  },
+  "app/src/test/java/com/osfit/app/domain/CorregirDiaRealizadoTest.kt": {
+    "mtime": 1788384365.5767255,
+    "seen": 1789411810.3461144,
+    "ast_hash": "2e54ed47b5c5d1ce84b39b16ff38d85e",
+    "semantic_hash": "2e54ed47b5c5d1ce84b39b16ff38d85e"
+  },
+  "app/src/test/java/com/osfit/app/domain/CupoRevivesCalculatorTest.kt": {
+    "mtime": 1789411483.433952,
+    "seen": 1789411810.3461144,
+    "ast_hash": "11a33423840050e024edc998309c2eab",
+    "semantic_hash": "11a33423840050e024edc998309c2eab"
+  },
+  "app/src/test/java/com/osfit/app/domain/DiaDenormalizadoTest.kt": {
+    "mtime": 1789074068.5416274,
+    "seen": 1789411810.3461144,
+    "ast_hash": "4b7dda61063be014cc9a788849dbdf75",
+    "semantic_hash": "4b7dda61063be014cc9a788849dbdf75"
+  },
+  "app/src/test/java/com/osfit/app/domain/EscenarioRutina.kt": {
+    "mtime": 1788891616.8602004,
+    "seen": 1789411810.3461144,
+    "ast_hash": "745f17fa8912df458d017773b8066f14",
+    "semantic_hash": "745f17fa8912df458d017773b8066f14"
+  },
+  "app/src/test/java/com/osfit/app/domain/FaltaQueRompioLaRachaTest.kt": {
+    "mtime": 1789411483.433952,
+    "seen": 1789411810.3461144,
+    "ast_hash": "ed71b2036acb6196469e1accc9391238",
+    "semantic_hash": "ed71b2036acb6196469e1accc9391238"
+  },
+  "app/src/test/java/com/osfit/app/domain/MedallaCalculatorTest.kt": {
+    "mtime": 1788554392.990156,
+    "seen": 1789411810.3461144,
+    "ast_hash": "9b735be6e222d2d9cd1cc8575d577aa9",
+    "semantic_hash": "9b735be6e222d2d9cd1cc8575d577aa9"
+  },
+  "app/src/test/java/com/osfit/app/domain/PeriodosQuincenalesTest.kt": {
+    "mtime": 1788985718.201637,
+    "seen": 1789411810.3461144,
+    "ast_hash": "bca140d78bbda1176d3b2d6f3e1fc1b6",
+    "semantic_hash": "bca140d78bbda1176d3b2d6f3e1fc1b6"
+  },
+  "app/src/test/java/com/osfit/app/domain/RachaCalculatorTest.kt": {
+    "mtime": 1788385854.6839497,
+    "seen": 1789411810.3461144,
+    "ast_hash": "fa1d5aa64421ffbb2f5c8dddcf63d41c",
+    "semantic_hash": "fa1d5aa64421ffbb2f5c8dddcf63d41c"
+  },
+  "app/src/test/java/com/osfit/app/domain/ResumenClienteCalculatorTest.kt": {
+    "mtime": 1788903560.9561875,
+    "seen": 1789411810.3461144,
+    "ast_hash": "6ae26db0bcb2c22eab2cc5ce89d35549",
+    "semantic_hash": "6ae26db0bcb2c22eab2cc5ce89d35549"
+  },
+  "app/src/test/java/com/osfit/app/domain/RetencionVideosTest.kt": {
+    "mtime": 1789411483.433952,
+    "seen": 1789411810.3461144,
+    "ast_hash": "a378a72df5f4294f36909b48838cc531",
+    "semantic_hash": "a378a72df5f4294f36909b48838cc531"
+  },
+  "app/src/test/java/com/osfit/app/domain/SincronizadorDiaWebTest.kt": {
+    "mtime": 1789074068.5426452,
+    "seen": 1789411810.3461144,
+    "ast_hash": "8bb27123e8c31f2248042584652d3b01",
+    "semantic_hash": "8bb27123e8c31f2248042584652d3b01"
+  },
+  "app/src/test/java/com/osfit/app/domain/TiempoGymCalculatorTest.kt": {
+    "mtime": 1787772831.1594076,
+    "seen": 1789411810.3461144,
+    "ast_hash": "d78e9a9d01f23ee90d9a4a40353839cd",
+    "semantic_hash": "d78e9a9d01f23ee90d9a4a40353839cd"
+  },
+  "app/src/test/java/com/osfit/app/paletas/PaletaWebFirestoreTest.kt": {
+    "mtime": 1789411483.4359589,
+    "seen": 1789411810.3461144,
+    "ast_hash": "b08b3968687484de9c543dabcdcc1769",
+    "semantic_hash": "b08b3968687484de9c543dabcdcc1769"
+  },
+  "app/src/test/java/com/osfit/app/paletas/PaletasTest.kt": {
+    "mtime": 1789411483.4359589,
+    "seen": 1789411810.3461144,
+    "ast_hash": "c3512e0eed13e55bf261c4ded65709d5",
+    "semantic_hash": "c3512e0eed13e55bf261c4ded65709d5"
+  },
+  "app/src/test/java/com/osfit/app/util/EncajeInsigniaTest.kt": {
+    "mtime": 1788904178.571505,
+    "seen": 1789411810.3461144,
+    "ast_hash": "6ae7e13f2cc1291774a861c44f4e7868",
+    "semantic_hash": "6ae7e13f2cc1291774a861c44f4e7868"
+  },
+  "app/src/test/java/com/osfit/app/util/WhatsAppUtilTest.kt": {
+    "mtime": 1789074068.5436459,
+    "seen": 1789411810.3461144,
+    "ast_hash": "ea1d3cc2307d6de7f59cef91fd5beb2c",
+    "semantic_hash": "ea1d3cc2307d6de7f59cef91fd5beb2c"
+  },
+  "app/src/test/java/com/osfit/app/video/BlobsGeometriaTest.kt": {
+    "mtime": 1789411483.4359589,
+    "seen": 1789411810.3461144,
+    "ast_hash": "0c262b96f17c37c457183ab78e199f2c",
+    "semantic_hash": "0c262b96f17c37c457183ab78e199f2c"
+  },
+  "app/src/test/java/com/osfit/app/video/MaquinaEscribirTest.kt": {
+    "mtime": 1788458593.3741064,
+    "seen": 1789411810.3461144,
+    "ast_hash": "326e480fe4209a93e1eb559c1bcd9bdb",
+    "semantic_hash": "326e480fe4209a93e1eb559c1bcd9bdb"
+  },
+  "app/src/test/java/com/osfit/app/video/ResumenVideoGeneratorTest.kt": {
+    "mtime": 1788895436.3899667,
+    "seen": 1789411810.3461144,
+    "ast_hash": "10679234f100dd4462b89a04d8981aac",
+    "semantic_hash": "10679234f100dd4462b89a04d8981aac"
+  },
+  "app/src/test/java/com/osfit/app/video/TimelineResumenTest.kt": {
+    "mtime": 1788903561.021915,
+    "seen": 1789411810.3461144,
+    "ast_hash": "8187f293222bca8077a749d4320a717b",
+    "semantic_hash": "8187f293222bca8077a749d4320a717b"
+  },
+  "firebase.json": {
+    "mtime": 1789411483.4399729,
+    "seen": 1789411810.3461144,
+    "ast_hash": "870bc3db54c781a138cfda98cfb77210",
+    "semantic_hash": "870bc3db54c781a138cfda98cfb77210"
+  },
+  "firestore.indexes.json": {
+    "mtime": 1789411483.4399729,
+    "seen": 1789411810.3461144,
+    "ast_hash": "7f3291de23937b16c39bce8cd59ae34a",
+    "semantic_hash": "7f3291de23937b16c39bce8cd59ae34a"
+  },
+  "functions/package.json": {
+    "mtime": 1789076221.3615866,
+    "seen": 1789411810.3461144,
+    "ast_hash": "4a9702b81ef856ac8cbeda07e8514178",
+    "semantic_hash": "4a9702b81ef856ac8cbeda07e8514178"
+  },
+  "functions/src/avisarFalta.ts": {
+    "mtime": 1789411483.4419794,
+    "seen": 1789411810.3461144,
+    "ast_hash": "74e39a1e16275cb5c7b45332f058b040",
+    "semantic_hash": "74e39a1e16275cb5c7b45332f058b040"
+  },
+  "functions/src/cambiarDia.ts": {
+    "mtime": 1789411483.4419794,
+    "seen": 1789411810.3461144,
+    "ast_hash": "cc37f7d70d6af5fe5bf3a0d738e77a43",
+    "semantic_hash": "cc37f7d70d6af5fe5bf3a0d738e77a43"
+  },
+  "functions/src/comun.ts": {
+    "mtime": 1789411483.4419794,
+    "seen": 1789411810.3461144,
+    "ast_hash": "27cbde4eb0beafb396194330ffb2a87e",
+    "semantic_hash": "27cbde4eb0beafb396194330ffb2a87e"
+  },
+  "functions/src/faltaRompio.ts": {
+    "mtime": 1789411483.4419794,
+    "seen": 1789411810.3461144,
+    "ast_hash": "8d8d0f6d1c0595e95ce8f2e196ceeb25",
+    "semantic_hash": "8d8d0f6d1c0595e95ce8f2e196ceeb25"
+  },
+  "functions/src/index.ts": {
+    "mtime": 1789411483.4419794,
+    "seen": 1789411810.3461144,
+    "ast_hash": "5bb83bcff3e1961c6e9fb97e9387609b",
+    "semantic_hash": "5bb83bcff3e1961c6e9fb97e9387609b"
+  },
+  "functions/src/revivirRacha.ts": {
+    "mtime": 1789411483.4419794,
+    "seen": 1789411810.3461144,
+    "ast_hash": "2412a91f8c914d29a3a4877d1a26555d",
+    "semantic_hash": "2412a91f8c914d29a3a4877d1a26555d"
+  },
+  "functions/src/sesion.ts": {
+    "mtime": 1789411483.4447458,
+    "seen": 1789411810.3461144,
+    "ast_hash": "951de500d59c29194e8694cff2c049eb",
+    "semantic_hash": "951de500d59c29194e8694cff2c049eb"
+  },
+  "functions/tsconfig.json": {
+    "mtime": 1789074068.5607865,
+    "seen": 1789411810.3461144,
+    "ast_hash": "3c483738e037dbd428f15cf1666f1e8e",
+    "semantic_hash": "3c483738e037dbd428f15cf1666f1e8e"
+  },
+  "web/package.json": {
+    "mtime": 1789074068.5646946,
+    "seen": 1789411810.3461144,
+    "ast_hash": "fe42a2110168a09765ca3d3f5f024ec7",
+    "semantic_hash": "fe42a2110168a09765ca3d3f5f024ec7"
+  },
+  "web/src/acciones.ts": {
+    "mtime": 1789411483.4447458,
+    "seen": 1789411810.3461144,
+    "ast_hash": "1a9043927906a74a0713315772677618",
+    "semantic_hash": "1a9043927906a74a0713315772677618"
+  },
+  "web/src/cupo.test.ts": {
+    "mtime": 1789411483.4447458,
+    "seen": 1789411810.3461144,
+    "ast_hash": "98d04c5aa7d227a2b84c5682488d3232",
+    "semantic_hash": "98d04c5aa7d227a2b84c5682488d3232"
+  },
+  "web/src/cupo.ts": {
+    "mtime": 1789411483.4447458,
+    "seen": 1789411810.3461144,
+    "ast_hash": "ea19d7e6d8c874c757bfad309034a495",
+    "semantic_hash": "ea19d7e6d8c874c757bfad309034a495"
+  },
+  "web/src/datos.ts": {
+    "mtime": 1789411483.4469893,
+    "seen": 1789411810.3461144,
+    "ast_hash": "963caf8cabc875d75e4f3afc16bdf596",
+    "semantic_hash": "963caf8cabc875d75e4f3afc16bdf596"
+  },
+  "web/src/dia.test.ts": {
+    "mtime": 1789159817.4343064,
+    "seen": 1789411810.3461144,
+    "ast_hash": "5e900b1bb073eed4bbc10523b12ece47",
+    "semantic_hash": "5e900b1bb073eed4bbc10523b12ece47"
+  },
+  "web/src/dia.ts": {
+    "mtime": 1789159817.4343064,
+    "seen": 1789411810.3461144,
+    "ast_hash": "badc23c351d79e11e2a3fb5979195965",
+    "semantic_hash": "badc23c351d79e11e2a3fb5979195965"
+  },
+  "web/src/faltaRompio.test.ts": {
+    "mtime": 1789411483.4469893,
+    "seen": 1789411810.3461144,
+    "ast_hash": "efcf26dd8ddb46ca0e5eacf7af4641ed",
+    "semantic_hash": "efcf26dd8ddb46ca0e5eacf7af4641ed"
+  },
+  "web/src/faltaRompio.ts": {
+    "mtime": 1789411483.4469893,
+    "seen": 1789411810.3461144,
+    "ast_hash": "8c1b47da8e25e9a1b0398abee2936f2a",
+    "semantic_hash": "8c1b47da8e25e9a1b0398abee2936f2a"
+  },
+  "web/src/fecha.ts": {
+    "mtime": 1789411483.4469893,
+    "seen": 1789411810.3461144,
+    "ast_hash": "c9c3445524dc261a91802e32cb0ab5a3",
+    "semantic_hash": "c9c3445524dc261a91802e32cb0ab5a3"
+  },
+  "web/src/firebase.ts": {
+    "mtime": 1789411483.4469893,
+    "seen": 1789411810.3461144,
+    "ast_hash": "300789dd74f1301847704ea6746dbead",
+    "semantic_hash": "300789dd74f1301847704ea6746dbead"
+  },
+  "web/src/main.ts": {
+    "mtime": 1789411483.4469893,
+    "seen": 1789411810.3461144,
+    "ast_hash": "f3e96bd1d1f11a2a12ebd3dd7ac3ba44",
+    "semantic_hash": "f3e96bd1d1f11a2a12ebd3dd7ac3ba44"
+  },
+  "web/src/motivos.test.ts": {
+    "mtime": 1789411483.4469893,
+    "seen": 1789411810.3461144,
+    "ast_hash": "22105e79e2092c966e2655f10293443b",
+    "semantic_hash": "22105e79e2092c966e2655f10293443b"
+  },
+  "web/src/motivos.ts": {
+    "mtime": 1789411483.4498942,
+    "seen": 1789411810.3461144,
+    "ast_hash": "d6886d6d88426e32f649eadf6bcb863d",
+    "semantic_hash": "d6886d6d88426e32f649eadf6bcb863d"
+  },
+  "web/src/ordenSecciones.test.ts": {
+    "mtime": 1789411483.4498942,
+    "seen": 1789411810.3461144,
+    "ast_hash": "cb678dd3b9c48661bb54dd83f20e8f86",
+    "semantic_hash": "cb678dd3b9c48661bb54dd83f20e8f86"
+  },
+  "web/src/paleta.test.ts": {
+    "mtime": 1789411483.4498942,
+    "seen": 1789411810.3461144,
+    "ast_hash": "5febfa0fec6bbe623c5af6d388de604d",
+    "semantic_hash": "5febfa0fec6bbe623c5af6d388de604d"
+  },
+  "web/src/paleta.ts": {
+    "mtime": 1789411483.4498942,
+    "seen": 1789411810.3461144,
+    "ast_hash": "962cf73a638d76710ef2e4bfd7ba7731",
+    "semantic_hash": "962cf73a638d76710ef2e4bfd7ba7731"
+  },
+  "web/src/racha.test.ts": {
+    "mtime": 1789074068.575992,
+    "seen": 1789411810.3461144,
+    "ast_hash": "65c4f69fa5867f1e4bcb8f389d802b9f",
+    "semantic_hash": "65c4f69fa5867f1e4bcb8f389d802b9f"
+  },
+  "web/src/racha.ts": {
+    "mtime": 1789074068.5774,
+    "seen": 1789411810.3461144,
+    "ast_hash": "da23b397a3d01e7019c27b441df855e8",
+    "semantic_hash": "da23b397a3d01e7019c27b441df855e8"
+  },
+  "web/src/ui/accionDia.ts": {
+    "mtime": 1789411483.4498942,
+    "seen": 1789411810.3461144,
+    "ast_hash": "687525640d8e49fe239e27fdf33dbb72",
+    "semantic_hash": "687525640d8e49fe239e27fdf33dbb72"
+  },
+  "web/src/ui/accionFalta.ts": {
+    "mtime": 1789411483.4498942,
+    "seen": 1789411810.3461144,
+    "ast_hash": "4e926af8b38fa4788a71d7f876361204",
+    "semantic_hash": "4e926af8b38fa4788a71d7f876361204"
+  },
+  "web/src/ui/calendario.test.ts": {
+    "mtime": 1789411483.4498942,
+    "seen": 1789411810.3461144,
+    "ast_hash": "78b5ec874b57cfed67921b39fe54cdd6",
+    "semantic_hash": "78b5ec874b57cfed67921b39fe54cdd6"
+  },
+  "web/src/ui/calendario.ts": {
+    "mtime": 1789411483.4498942,
+    "seen": 1789411810.3461144,
+    "ast_hash": "ab637f141cfc71be7ed7f0c1e8f035aa",
+    "semantic_hash": "ab637f141cfc71be7ed7f0c1e8f035aa"
+  },
+  "web/src/ui/saludo.ts": {
+    "mtime": 1789411483.4498942,
+    "seen": 1789411810.3461144,
+    "ast_hash": "08758d1dcda287a9363c7bb4f9cb67b6",
+    "semantic_hash": "08758d1dcda287a9363c7bb4f9cb67b6"
+  },
+  "web/src/ui/tarjetaDia.ts": {
+    "mtime": 1789411483.4530694,
+    "seen": 1789411810.3461144,
+    "ast_hash": "6ac1cd947d2d2eb463e74b02299f1595",
+    "semantic_hash": "6ac1cd947d2d2eb463e74b02299f1595"
+  },
+  "web/src/ui/tarjetaInsignias.test.ts": {
+    "mtime": 1789411483.4530694,
+    "seen": 1789411810.3461144,
+    "ast_hash": "ffd65614f7d4b93244949f8b96ece758",
+    "semantic_hash": "ffd65614f7d4b93244949f8b96ece758"
+  },
+  "web/src/ui/tarjetaInsignias.ts": {
+    "mtime": 1789411483.4530694,
+    "seen": 1789411810.3461144,
+    "ast_hash": "c4a05bcaf2e59f0c3d84156f51c8683b",
+    "semantic_hash": "c4a05bcaf2e59f0c3d84156f51c8683b"
+  },
+  "web/src/ui/tarjetaVideos.test.ts": {
+    "mtime": 1789411483.4530694,
+    "seen": 1789411810.3461144,
+    "ast_hash": "d1193959218797df9fc81d9fe8b39bc3",
+    "semantic_hash": "d1193959218797df9fc81d9fe8b39bc3"
+  },
+  "web/src/ui/tarjetaVideos.ts": {
+    "mtime": 1789411483.4530694,
+    "seen": 1789411810.3461144,
+    "ast_hash": "b2d9168d7d7509f83bc533cf0fc9bbf2",
+    "semantic_hash": "b2d9168d7d7509f83bc533cf0fc9bbf2"
+  },
+  "web/src/ui/tarjetasStats.test.ts": {
+    "mtime": 1789411483.4530694,
+    "seen": 1789411810.3461144,
+    "ast_hash": "8cf21e7eacecab73c22ac017e3e48262",
+    "semantic_hash": "8cf21e7eacecab73c22ac017e3e48262"
+  },
+  "web/src/ui/tarjetasStats.ts": {
+    "mtime": 1789411483.4530694,
+    "seen": 1789411810.3461144,
+    "ast_hash": "b6a562f49f49c7631d503b1fbcc55082",
+    "semantic_hash": "b6a562f49f49c7631d503b1fbcc55082"
+  },
+  "web/src/vite-env.d.ts": {
+    "mtime": 1789411483.4530694,
+    "seen": 1789411810.3461144,
+    "ast_hash": "8f68c27c3fc38817b2726b20e2d4f1ee",
+    "semantic_hash": "8f68c27c3fc38817b2726b20e2d4f1ee"
+  },
+  "web/tsconfig.json": {
+    "mtime": 1789074068.58105,
+    "seen": 1789411810.3461144,
+    "ast_hash": "84cb6e3ade101aa3fc6f59b672ec31dc",
+    "semantic_hash": "84cb6e3ade101aa3fc6f59b672ec31dc"
+  },
+  "GEMINI.md": {
+    "mtime": 1788891675.3380008,
+    "seen": 1789411810.3461144,
+    "ast_hash": "9eb6f4b85fe0f65aa1ca9491230f0876",
+    "semantic_hash": "9eb6f4b85fe0f65aa1ca9491230f0876"
+  },
+  "docs/backlog.md": {
+    "mtime": 1789411483.4359589,
+    "seen": 1789411810.3461144,
+    "ast_hash": "4ff16d212cf4dbb906e287f94f7c6d24",
+    "semantic_hash": "4ff16d212cf4dbb906e287f94f7c6d24"
+  },
+  "docs/superpowers/plans/2026-08-26-resumen-cliente-video.md": {
+    "mtime": 1787776550.2500844,
+    "seen": 1789411810.3461144,
+    "ast_hash": "dbbc2e6514cc0b56fa38c39230d04e18",
+    "semantic_hash": "dbbc2e6514cc0b56fa38c39230d04e18"
+  },
+  "docs/superpowers/plans/2026-08-27-resumen-cliente-video-animado.md": {
+    "mtime": 1788458593.3784356,
+    "seen": 1789411810.3461144,
+    "ast_hash": "e6643617409ce8d6548af7f07afb614d",
+    "semantic_hash": "e6643617409ce8d6548af7f07afb614d"
+  },
+  "docs/superpowers/plans/2026-09-04-medallas-logros-clientes.md": {
+    "mtime": 1788549867.6928468,
+    "seen": 1789411810.3461144,
+    "ast_hash": "be14c6e383ead19a52273e1aa128bd0d",
+    "semantic_hash": "be14c6e383ead19a52273e1aa128bd0d"
+  },
+  "docs/superpowers/plans/2026-09-07-logros-personales.md": {
+    "mtime": 1788895603.0773802,
+    "seen": 1789411810.3461144,
+    "ast_hash": "eb22d81a429e628e0d5f6bc234d12af7",
+    "semantic_hash": "eb22d81a429e628e0d5f6bc234d12af7"
+  },
+  "docs/superpowers/plans/2026-09-09-configuracion-video-por-periodo.md": {
+    "mtime": 1788986277.9809122,
+    "seen": 1789411810.3461144,
+    "ast_hash": "1d6dc3fd7e2e0f868956ba5fc8c1c655",
+    "semantic_hash": "1d6dc3fd7e2e0f868956ba5fc8c1c655"
+  },
+  "docs/superpowers/plans/2026-09-10-web-clientes-etapa-1.md": {
+    "mtime": 1789074068.5466485,
+    "seen": 1789411810.3461144,
+    "ast_hash": "73d94af26b770b1b428a79d51dd04b89",
+    "semantic_hash": "73d94af26b770b1b428a79d51dd04b89"
+  },
+  "docs/superpowers/plans/2026-09-11-web-clientes-etapa-2.md": {
+    "mtime": 1789160837.9062278,
+    "seen": 1789411810.3461144,
+    "ast_hash": "51948aa7a2e5b897db4d8b149beb62d9",
+    "semantic_hash": "51948aa7a2e5b897db4d8b149beb62d9"
+  },
+  "docs/superpowers/plans/2026-09-12-web-clientes-etapa-2.md": {
+    "mtime": 1789411483.4379663,
+    "seen": 1789411810.3461144,
+    "ast_hash": "db5684ea58b839c16d194e3c4ea1b472",
+    "semantic_hash": "db5684ea58b839c16d194e3c4ea1b472"
+  },
+  "docs/superpowers/plans/2026-09-12-web-clientes-etapa-3.md": {
+    "mtime": 1789411483.4379663,
+    "seen": 1789411810.3461144,
+    "ast_hash": "75c62e22d60f60c4b9aa0f9656658767",
+    "semantic_hash": "75c62e22d60f60c4b9aa0f9656658767"
+  },
+  "docs/superpowers/plans/2026-09-13-paleta-web-cliente.md": {
+    "mtime": 1789411483.4379663,
+    "seen": 1789411810.3461144,
+    "ast_hash": "241678de9a9002c24bf808a158347f65",
+    "semantic_hash": "241678de9a9002c24bf808a158347f65"
+  },
+  "docs/superpowers/specs/2026-08-26-resumen-cliente-video-design.md": {
+    "mtime": 1787775825.1658041,
+    "seen": 1789411810.3461144,
+    "ast_hash": "99a3e8c335b670d55ccd0d80728d38a2",
+    "semantic_hash": "99a3e8c335b670d55ccd0d80728d38a2"
+  },
+  "docs/superpowers/specs/2026-08-27-resumen-cliente-video-animado-design.md": {
+    "mtime": 1787861616.314242,
+    "seen": 1789411810.3461144,
+    "ast_hash": "649b878186e1f4f9df591febd89f32d3",
+    "semantic_hash": "649b878186e1f4f9df591febd89f32d3"
+  },
+  "docs/superpowers/specs/2026-09-02-calendario-rutina-como-ley-design.md": {
+    "mtime": 1788383909.620527,
+    "seen": 1789411810.3461144,
+    "ast_hash": "4ef55863dab18e005e8afde05a32a5e3",
+    "semantic_hash": "4ef55863dab18e005e8afde05a32a5e3"
+  },
+  "docs/superpowers/specs/2026-09-04-medallas-logros-design.md": {
+    "mtime": 1788548849.0564518,
+    "seen": 1789411810.3461144,
+    "ast_hash": "47bd751c32bab115ad42796689ea04d6",
+    "semantic_hash": "47bd751c32bab115ad42796689ea04d6"
+  },
+  "docs/superpowers/specs/2026-09-07-logros-personales-design.md": {
+    "mtime": 1788895582.3942802,
+    "seen": 1789411810.3461144,
+    "ast_hash": "67e123b2888a94a13e34baf8d19c14c1",
+    "semantic_hash": "67e123b2888a94a13e34baf8d19c14c1"
+  },
+  "docs/superpowers/specs/2026-09-09-configuracion-video-por-periodo-design.md": {
+    "mtime": 1788983670.144961,
+    "seen": 1789411810.3461144,
+    "ast_hash": "d144786fd3ca0715df847a8948964e57",
+    "semantic_hash": "d144786fd3ca0715df847a8948964e57"
+  },
+  "docs/superpowers/specs/2026-09-10-web-clientes-design.md": {
+    "mtime": 1789411483.4399729,
+    "seen": 1789411810.3461144,
+    "ast_hash": "916c9916f8fad1802c38cffbe7793ef8",
+    "semantic_hash": "916c9916f8fad1802c38cffbe7793ef8"
+  },
+  "docs/superpowers/specs/2026-09-13-paleta-web-cliente-design.md": {
+    "mtime": 1789411483.4399729,
+    "seen": 1789411810.3461144,
+    "ast_hash": "17ad2624c6d42748427e7c45b4c91a08",
+    "semantic_hash": "17ad2624c6d42748427e7c45b4c91a08"
+  },
+  "web/index.html": {
+    "mtime": 1789411483.4447458,
+    "seen": 1789411810.3461144,
+    "ast_hash": "c91003a31d989e9660dbe5d82869b174",
+    "semantic_hash": "c91003a31d989e9660dbe5d82869b174"
   }
 }
