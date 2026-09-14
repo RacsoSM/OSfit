@@ -17,6 +17,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -25,6 +26,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -56,7 +58,12 @@ fun ClientesListScreen(
     val clientes by viewModel.clientes.collectAsState()
     val diaQueTocaPorCliente by viewModel.diaQueTocaPorCliente.collectAsState()
     val errorValidacion by viewModel.errorValidacion.collectAsState()
+    val avisaronQueNoVienen by viewModel.avisaronQueNoVienen.collectAsState()
     val hoy by rememberFechaActual()
+
+    // `rememberFechaActual()` despierta sola a medianoche; el ViewModel se entera por aquí y
+    // vuelve a consultar los avisos del día nuevo.
+    LaunchedEffect(hoy) { viewModel.fijarFecha(hoy.toString()) }
     var mostrarDialogo by remember { mutableStateOf(false) }
 
     Scaffold(
@@ -82,6 +89,7 @@ fun ClientesListScreen(
                     ClienteItem(
                         cliente = cliente,
                         diaQueToca = diaQueTocaPorCliente[cliente.id] ?: 0,
+                        avisoNoViene = cliente.id in avisaronQueNoVienen,
                         onClick = { onClienteClick(cliente.id) }
                     )
                 }
@@ -137,18 +145,43 @@ private fun EncabezadoSaludo() {
 
 private val GrisInactivo = Color(0xFF5A5A5A)
 
+/**
+ * El amarillo de "avisó que no viene". Es el mismo tono que los días de asistencia media en
+ * el calendario: la app ya tiene un amarillo y no le hace falta un segundo.
+ */
+private val AmarilloAviso = Color(0xFFDBD74B)
+
 @Composable
-private fun ClienteItem(cliente: Cliente, diaQueToca: Int, onClick: () -> Unit) {
+private fun ClienteItem(
+    cliente: Cliente,
+    diaQueToca: Int,
+    avisoNoViene: Boolean,
+    onClick: () -> Unit
+) {
     val nombreDia = cliente.rutinaAsignada?.dias?.getOrNull(diaQueToca)?.nombreDia
         ?: "Sin rutina asignada"
     val diasParaPago = PagoCalculator.diasParaProximoPago(cliente)
     val pagoProximo = diasParaPago != null && diasParaPago < 3
     val colorTexto = when {
         !cliente.activo -> GrisInactivo
+        // El aviso gana al rojo del pago porque habla de hoy y porque la tarjeta ya está
+        // amarilla: un nombre rojo encima de un fondo amarillo no se lee como advertencia,
+        // se lee como un error de pintado. El pago sigue avisando al abrir la ficha.
+        avisoNoViene -> AmarilloAviso
         pagoProximo -> lerp(MaterialTheme.colorScheme.onSurface, MaterialTheme.colorScheme.error, 0.55f)
         else -> Color.Unspecified
     }
-    Card(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
+    // Alpha baja y no el amarillo puro: la tarjeta tiene que cantar entre las demás sin
+    // deslumbrar en un tema oscuro, igual que el rojo y el verde de Tomar Asistencia.
+    //
+    // Sin aviso se pasan los colores por defecto tal cual, en vez de un `Color.Unspecified`
+    // como containerColor: según la versión de Material 3 eso deja la tarjeta transparente.
+    val colores = if (avisoNoViene) {
+        CardDefaults.cardColors(containerColor = AmarilloAviso.copy(alpha = 0.20f))
+    } else {
+        CardDefaults.cardColors()
+    }
+    Card(onClick = onClick, modifier = Modifier.fillMaxWidth(), colors = colores) {
         Box(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 20.dp)
         ) {

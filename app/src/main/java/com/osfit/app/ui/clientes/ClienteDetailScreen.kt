@@ -18,12 +18,14 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Chat
+import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.EditCalendar
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.Handshake
+import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Payments
 import androidx.compose.material.icons.filled.QueryStats
 import androidx.compose.material.icons.filled.Settings
@@ -56,6 +58,7 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.osfit.app.data.model.MedallaCatalogo
 import com.osfit.app.data.model.Rutina
+import com.osfit.app.domain.CupoRevivesCalculator
 import com.osfit.app.domain.RangoResumen
 import com.osfit.app.domain.ResumenClienteCalculator
 import com.osfit.app.domain.RutinaProgressCalculator
@@ -79,6 +82,7 @@ fun ClienteDetailScreen(
     onVerPagos: (String) -> Unit,
     onVerEstadisticas: (String) -> Unit,
     onVerMedallas: (String) -> Unit,
+    onVerWeb: (String) -> Unit,
     onVerLogrosPersonales: (String) -> Unit,
     onEditarCliente: (String) -> Unit,
     onEliminado: () -> Unit
@@ -100,6 +104,10 @@ fun ClienteDetailScreen(
     val generandoResumen by resumenViewModel.generando.collectAsState()
     val progresoResumen by resumenViewModel.progreso.collectAsState()
     val mensajeResumen by resumenViewModel.mensaje.collectAsState()
+    // Sólo hay algo que publicar después de generar un resumen quincenal: publicar reusa ese
+    // mp4 y no vuelve a codificarlo.
+    val videoListo by resumenViewModel.videoListo.collectAsState()
+    val publicandoVideo by resumenViewModel.publicando.collectAsState()
     val hoy by rememberFechaActual()
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -326,6 +334,16 @@ fun ClienteDetailScreen(
                         onClick = { onVerMedallas(clienteId) }
                     )
                     AccionCard(
+                        icono = Icons.Filled.Language,
+                        texto = "Web",
+                        modifier = Modifier.weight(1f),
+                        onClick = { onVerWeb(clienteId) }
+                    )
+                }
+            }
+            item {
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    AccionCard(
                         icono = Icons.Filled.Videocam,
                         texto = when {
                             generandoResumen -> "Generando... ${(progresoResumen * 100).toInt()}%"
@@ -337,8 +355,25 @@ fun ClienteDetailScreen(
                     )
                 }
             }
+            videoListo?.let { listo ->
+                item {
+                    // Acción aparte de compartir, no un reemplazo: compartir por WhatsApp sigue
+                    // pasando siempre al terminar de generar.
+                    AccionCard(
+                        icono = Icons.Filled.CloudUpload,
+                        texto = if (publicandoVideo) {
+                            "Publicando..."
+                        } else {
+                            "Publicar en la web (${listo.encabezadoRango})"
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        onClick = { resumenViewModel.publicarEnLaWeb() }
+                    )
+                }
+            }
             item {
                 val acceso by viewModel.accesoWeb.collectAsState()
+                val revivesDisponibles by viewModel.revivesDisponibles.collectAsState()
                 val alcance = rememberCoroutineScope()
                 Spacer(modifier = Modifier.height(12.dp))
                 Card(modifier = Modifier.fillMaxWidth()) {
@@ -352,6 +387,11 @@ fun ClienteDetailScreen(
                             },
                             style = MaterialTheme.typography.bodySmall,
                             modifier = Modifier.padding(top = 4.dp)
+                        )
+                        Text(
+                            "Revives: $revivesDisponibles de ${CupoRevivesCalculator.MAXIMO_POR_MES} disponibles este mes",
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.padding(top = 8.dp)
                         )
                         if (clienteActual.telefono.isNotBlank()) {
                             Button(

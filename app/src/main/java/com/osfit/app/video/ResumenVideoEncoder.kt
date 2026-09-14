@@ -227,6 +227,14 @@ object ResumenVideoEncoder {
             // Con finalDeFlujo=false nunca se usa: el primer INFO_TRY_AGAIN_LATER ya
             // devuelve el control al bucle de frames.
             var inicioInactividadNs = System.nanoTime()
+            // Ojo con bajar TIMEOUT_US a 0 en el sondeo por frame: parece desperdicio —son
+            // ~11,5 ms por frame, 19,5 s de los 71 s de un video— pero NO lo es. Medido en
+            // dispositivo con el sondeo a 0: el drenaje baja a 0,4 ms por frame y la espera en
+            // `lockCanvas` sube de 0,1 a 61 ms, con el tramo de 100 frames pasando de 4,4 a
+            // 7,6 s. Ese rato es el que el codificador usa para consumir frames y liberar
+            // buffers de entrada; quitarlo sólo mueve la espera a `lockCanvas`, y encima sale
+            // más caro. El límite real es que el codificador no da 30 fps a 1080x1920 mientras
+            // la CPU dibuja, y eso no se arregla desde acá.
             while (true) {
                 val indiceSalida = enc.dequeueOutputBuffer(bufferInfo, TIMEOUT_US)
                 val inactividadMs = (System.nanoTime() - inicioInactividadNs) / 1_000_000L
@@ -316,6 +324,21 @@ object ResumenVideoEncoder {
             surface = sfc
             enc.start()
 
+            // Reparto del tiempo de cada frame entre las cuatro cosas que puede estar haciendo.
+            // Existe porque desde fuera "va lento" no distingue dos causas opuestas: que pintar
+            // cueste caro (nsDibujo alto) o que el codificador no consuma y `lockCanvas` se
+            // quede esperando un buffer de entrada libre (nsEspera alto). Diagnosticar eso a
+            // ojo costó una tarde entera y cuatro conclusiones equivocadas.
+            var nsEspera = 0L
+            var nsDibujo = 0L
+            var nsPost = 0L
+            var nsDrenaje = 0L
+            var nsEsperaPrevio = 0L
+            var nsDibujoPrevio = 0L
+            var nsPostPrevio = 0L
+            var nsDrenajePrevio = 0L
+            var inicioTramoNs = System.nanoTime()
+
             for (indiceFrame in 0 until totalFrames) {
                 // Un frame es el grano de cancelación: si se canceló, se sale aquí (a lo sumo
                 // un frame tarde) y el finally libera códec y Surface.
@@ -323,15 +346,50 @@ object ResumenVideoEncoder {
                 val tiempoMs = indiceFrame * 1000L / fps
                 // Se pinta directo sobre el canvas de la Surface: sin bitmap intermedia de
                 // pantalla completa por frame y sin el blit posterior.
+                val antesDeEsperar = System.nanoTime()
                 val canvas = sfc.lockCanvas(null)
+                val antesDeDibujar = System.nanoTime()
+                nsEspera += antesDeDibujar - antesDeEsperar
                 try {
                     dibujarFrame(canvas, tiempoMs)
                 } finally {
+                    val antesDePostear = System.nanoTime()
+                    nsDibujo += antesDePostear - antesDeDibujar
                     sfc.unlockCanvasAndPost(canvas)
+                    nsPost += System.nanoTime() - antesDePostear
                 }
+                val antesDeDrenar = System.nanoTime()
                 drenar(enc, finalDeFlujo = false)
+                nsDrenaje += System.nanoTime() - antesDeDrenar
                 onProgreso((indiceFrame + 1).toFloat() / totalFrames)
+
+                // Se informa por tramos y no acumulado: lo que importa es si el ritmo se
+                // degrada según avanza el video, y un acumulado esconde justamente eso.
+                if ((indiceFrame + 1) % 100 == 0) {
+                    val ahoraNs = System.nanoTime()
+                    val msTramo = (ahoraNs - inicioTramoNs) / 1_000_000L
+                    Log.i(
+                        TAG,
+                        "frames ${indiceFrame + 1 - 99}-${indiceFrame + 1} de $totalFrames en " +
+                            "$msTramo ms: espera=${(nsEspera - nsEsperaPrevio) / 1_000_000L} ms, " +
+                            "dibujo=${(nsDibujo - nsDibujoPrevio) / 1_000_000L} ms, " +
+                            "post=${(nsPost - nsPostPrevio) / 1_000_000L} ms, " +
+                            "drenaje=${(nsDrenaje - nsDrenajePrevio) / 1_000_000L} ms, " +
+                            "muestras=${muestras.size}"
+                    )
+                    nsEsperaPrevio = nsEspera
+                    nsDibujoPrevio = nsDibujo
+                    nsPostPrevio = nsPost
+                    nsDrenajePrevio = nsDrenaje
+                    inicioTramoNs = ahoraNs
+                }
             }
+            Log.i(
+                TAG,
+                "Reparto del video: espera=${nsEspera / 1_000_000L} ms, " +
+                    "dibujo=${nsDibujo / 1_000_000L} ms, post=${nsPost / 1_000_000L} ms, " +
+                    "drenaje=${nsDrenaje / 1_000_000L} ms"
+            )
             // Drenaje extra antes de señalar el fin de flujo: el pipeline interno del
             // codificador con entrada por Surface tiene latencia (el propio códec reporta
             // `latency = 4` en este dispositivo), así que el último unlockCanvasAndPost()

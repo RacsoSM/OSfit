@@ -53,6 +53,14 @@ export function calendario(asistencias: Asistencia[], mes: string, hoy: string):
         <span><i class="punto" style="background: var(--rojo)"></i>Faltaste</span>
         <span><i class="punto" style="background: var(--ambar)"></i>Justificada</span>
       </div>
+      ${
+        asistencias.length === 0
+          ? `<p class="accion-nota" style="text-align: center">
+               Todavía no tienes asistencias registradas · tu entrenador las anota después de
+               cada sesión.
+             </p>`
+          : ""
+      }
     </div>`;
 }
 

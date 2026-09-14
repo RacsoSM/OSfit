@@ -15,6 +15,9 @@ data class LogroPersonalOtorgado(
     // historial no cambia retroactivamente (mismo criterio que MedallaOtorgada).
     val nombreLogro: String = "",
     val mensaje: String = "",
+    // También la insignia: si el entrenador le cambia el dibujo al logro, el que ya se ganó
+    // tiene que seguir viéndose como se veía. null = la web dibuja la genérica.
+    val imagenUrl: String? = null,
     val encabezadoRango: String = "", // "2da quincena de agosto"
     // Orden de selección del entrenador; define el orden en el video y en qué grupo de 3 cae.
     val orden: Int = 0

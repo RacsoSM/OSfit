@@ -16,6 +16,13 @@ import java.util.Locale
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
+/**
+ * El mp4 recién generado y su duración. Se devuelve para que publicar en la web reuse este
+ * mismo archivo en vez de volver a codificarlo: regenerar cuesta una codificación entera y
+ * podría dar un video distinto del que el entrenador acaba de ver al compartirlo.
+ */
+data class ResumenGenerado(val archivo: File, val duracionSegundos: Int)
+
 object ResumenVideoGenerator {
 
     private const val FPS = 30
@@ -30,7 +37,7 @@ object ResumenVideoGenerator {
         medallaOtorgada: MedallaCatalogo? = null,
         logrosOtorgados: List<LogroPersonalCatalogo> = emptyList(),
         onProgreso: (Float) -> Unit = {}
-    ) {
+    ): ResumenGenerado {
         // El timestamp evita que dos generaciones que lleguen a solaparse (por ejemplo una
         // huérfana que siga corriendo) escriban el mismo archivo con dos MediaMuxer a la vez.
         val ahora = System.currentTimeMillis()
@@ -89,6 +96,10 @@ object ResumenVideoGenerator {
             ResumenFrameRenderer.dibujarFrame(canvas, timeline, fondo, tiempoMs, paleta)
         }
         CompartirUtil.compartirVideo(context, salida)
+        // Se redondea hacia arriba: la duración sólo rotula el video en la web y truncar
+        // dejaría el último segundo empezado fuera de la cuenta.
+        val duracionSegundos = ((timeline.duracionTotalMs + 999) / 1000).toInt()
+        return ResumenGenerado(salida, duracionSegundos)
     }
 
     /**

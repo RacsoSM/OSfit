@@ -1,0 +1,38 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // Mismo UID literal que en firestore.rules, y por el mismo motivo: con un solo
+    // entrenador se audita de un vistazo. Si algún día hay dos, los dos archivos pasan a
+    // un custom claim a la vez.
+    function esEntrenador() {
+      return request.auth != null &&
+             request.auth.uid == 'G8lW4rIgXhZrswQXJ84pT1StFx82';
+    }
+
+    // El claim lo pone la función `sesion` al canjear el token del link. Es el mismo que
+    // autoriza Firestore: esa es la razón de fondo para haber elegido Firebase Storage y no
+    // un bucket de otro proveedor — no hacen falta URLs firmadas ni código aparte.
+    function esCliente(cid) {
+      return request.auth != null &&
+             request.auth.token.clienteId == cid;
+    }
+
+    // Catálogo de insignias: no es dato personal, así que lo lee cualquier sesión. Ojo con
+    // lo que esta regla NO hace: la página las pinta con la URL de descarga guardada en
+    // `imagenUrl`, y esa URL lleva su propio token y funciona sin sesión. La regla gobierna
+    // el acceso por SDK, no el `<img src>`.
+    match /insignias/{allPaths=**} {
+      allow read: if request.auth != null;
+      allow write: if esEntrenador();
+    }
+
+    // Los resúmenes sí son personales. Acá la regla es la que manda de verdad: el documento
+    // en Firestore guarda la RUTA, no una URL, así que para ver un video hay que pedirle la
+    // URL al SDK — y eso pasa por esta regla. Sin el claim de esa clienta, no hay URL.
+    match /resumenes/{clienteId}/{archivo} {
+      allow read: if esEntrenador() || esCliente(clienteId);
+      allow write: if esEntrenador();
+    }
+  }
+}

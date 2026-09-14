@@ -1,5 +1,7 @@
 package com.osfit.app.video
 
+import com.osfit.app.paletas.Paleta
+
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
@@ -171,7 +173,7 @@ object ResumenFrameRenderer {
         timeline: TimelineResumen,
         fondo: FondoBlobRenderer,
         tiempoGlobalMs: Long,
-        paleta: PaletaVideo,
+        paleta: Paleta,
         ancho: Int = ANCHO_DEFECTO,
         alto: Int = ALTO_DEFECTO
     ) {
@@ -189,7 +191,7 @@ object ResumenFrameRenderer {
         }
     }
 
-    private fun dibujarEscena(canvas: Canvas, ancho: Int, paleta: PaletaVideo, escena: EscenaResumen, elapsedMs: Long, alpha: Float) {
+    private fun dibujarEscena(canvas: Canvas, ancho: Int, paleta: Paleta, escena: EscenaResumen, elapsedMs: Long, alpha: Float) {
         bloquesPara(escena, paleta).forEach { bloque ->
             val texto = MaquinaEscribir.textoVisible(bloque.texto, elapsedMs - bloque.inicioMs, bloque.duracionMs)
             if (texto.isNotEmpty()) {
@@ -215,7 +217,7 @@ object ResumenFrameRenderer {
         }
     }
 
-    private fun bloquesPara(escena: EscenaResumen, paleta: PaletaVideo): List<BloqueTexto> = when (escena) {
+    private fun bloquesPara(escena: EscenaResumen, paleta: Paleta): List<BloqueTexto> = when (escena) {
         is EscenaResumen.Saludo -> {
             val prefijo = "Hola, "
             val texto = prefijo + escena.nombreCliente
@@ -443,7 +445,7 @@ object ResumenFrameRenderer {
      * la siguiente.
      */
     private fun dibujarGraficaTiempo(
-        canvas: Canvas, ancho: Int, paleta: PaletaVideo, valores: List<PuntoTiempoDiario>, elapsedMs: Long, alphaEscena: Float
+        canvas: Canvas, ancho: Int, paleta: Paleta, valores: List<PuntoTiempoDiario>, elapsedMs: Long, alphaEscena: Float
     ) {
         if (valores.size < 2) return
         val maximoDatos = valores.maxOf { it.minutos }
@@ -539,7 +541,7 @@ object ResumenFrameRenderer {
 
     /** Imagen propia de la medalla si la hay (fade-in), o su insignia por defecto si no, con el
      *  nombre debajo en el destacado de la paleta. */
-    private fun dibujarMedalla(canvas: Canvas, ancho: Int, paleta: PaletaVideo, escena: EscenaResumen.Medalla, elapsedMs: Long, alphaEscena: Float) {
+    private fun dibujarMedalla(canvas: Canvas, ancho: Int, paleta: Paleta, escena: EscenaResumen.Medalla, elapsedMs: Long, alphaEscena: Float) {
         val nombre = escena.nombre ?: return
         val progreso = ((elapsedMs - MEDALLA_INICIO_GRUPAL_MS).coerceIn(0L, MEDALLA_FADE_MS)).toFloat() / MEDALLA_FADE_MS
         if (progreso <= 0f) return
@@ -677,7 +679,7 @@ object ResumenFrameRenderer {
      *  sola, que sigue el mismo ritmo que la medalla), cada una con su nombre y su propio
      *  mensaje debajo — ya no se omite con 2 o 3 logros, solo se dibuja más chico. */
     private fun dibujarLogrosPersonales(
-        canvas: Canvas, ancho: Int, paleta: PaletaVideo, escena: EscenaResumen.LogrosPersonales,
+        canvas: Canvas, ancho: Int, paleta: Paleta, escena: EscenaResumen.LogrosPersonales,
         elapsedMs: Long, alphaEscena: Float
     ) {
         val cantidad = escena.logros.size

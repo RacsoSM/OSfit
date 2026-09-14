@@ -53,6 +53,15 @@ service cloud.firestore {
       allow write: if esEntrenador();
     }
 
+    // "Hoy no voy a poder ir". El cliente lee el suyo para saber si ya avisó hoy —es lo que
+    // mantiene el botón escondido el resto del día aunque recargue—, pero escribir solo lo
+    // hace la función `avisarFalta` con el Admin SDK, que no pasa por estas reglas.
+    match /avisosFalta/{doc} {
+      allow read: if esEntrenador() ||
+                     resource.data.clienteId == request.auth.token.clienteId;
+      allow write: if esEntrenador();
+    }
+
     // El token de acceso nunca se expone al navegador: solo lo lee el Admin SDK, que no
     // pasa por estas reglas.
     match /accesosWeb/{token} {

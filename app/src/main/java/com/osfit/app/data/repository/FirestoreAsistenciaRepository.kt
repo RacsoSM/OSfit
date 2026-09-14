@@ -109,6 +109,9 @@ class FirestoreAsistenciaRepository(
             // Al marcar asistencia deja de haber falta que justificar; al remarcar una
             // falta se conserva el soborno que ya se le haya dado.
             justificada = !asistio && existente?.justificada == true,
+            // Misma razón que la línea de arriba: este set() borra lo que no se nombre, y
+            // perder esta bandera le regalaría al cliente el revive que ya gastó.
+            justificadaPorCliente = !asistio && existente?.justificadaPorCliente == true,
             diaRutinaRealizado = if (asistio) diaRutinaRealizado else null,
             nota = nota,
             horaLlegada = existente?.horaLlegada,
@@ -138,6 +141,7 @@ class FirestoreAsistenciaRepository(
             id = "",
             asistio = true,
             justificada = false,
+            justificadaPorCliente = false,
             diaRutinaRealizado = dia,
             horaLlegada = Timestamp.now(),
             horaSalida = null,

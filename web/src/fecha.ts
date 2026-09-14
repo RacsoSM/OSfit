@@ -16,3 +16,17 @@ export function hoyEnMazatlan(): string {
     day: "2-digit",
   }).format(new Date());
 }
+
+/**
+ * Hora actual (HH:MM) en la zona del gimnasio. La usa la línea de confirmación del cambio de
+ * día: si mostrara la hora del dispositivo, un cliente de viaje vería una hora que no
+ * corresponde con el día que acaba de cambiar.
+ */
+export function horaEnMazatlan(): string {
+  return new Intl.DateTimeFormat("es-MX", {
+    timeZone: ZONA,
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).format(new Date());
+}

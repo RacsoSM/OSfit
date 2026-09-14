@@ -9,6 +9,8 @@ data class Asistencia(
     val asistio: Boolean = false,
     /** Falta justificada ("soborno"): no asistió, pero cuenta para la racha. */
     val justificada: Boolean = false,
+    /** La justificó el cliente desde la web (no el entrenador). Solo estas gastan su cupo. */
+    val justificadaPorCliente: Boolean = false,
     val diaRutinaRealizado: Int? = null,
     val nota: String = "",
     val horaLlegada: Timestamp? = null,

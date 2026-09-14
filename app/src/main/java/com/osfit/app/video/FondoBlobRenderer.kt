@@ -1,5 +1,7 @@
 package com.osfit.app.video
 
+import com.osfit.app.paletas.Paleta
+
 import android.graphics.Bitmap
 import android.graphics.BlurMaskFilter
 import android.graphics.Canvas
@@ -28,7 +30,7 @@ import android.graphics.RectF
  * generación de video, se usa desde el único hilo de su bucle de frames, y se descarta con
  * ella —lo que además evita retener la bitmap de ~518 KB durante toda la vida del proceso.
  */
-class FondoBlobRenderer(private val paleta: PaletaVideo) {
+class FondoBlobRenderer(private val paleta: Paleta) {
 
     /** La capa y su canvas viven juntos: no hay estado a medio publicar ni `!!` que sostener. */
     private class Capa(val bitmap: Bitmap) {

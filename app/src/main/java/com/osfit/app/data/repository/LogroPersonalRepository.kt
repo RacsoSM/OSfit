@@ -37,6 +37,13 @@ class LogroPersonalRepository(
         catalogo.document(logro.id).set(logro.copy(id = "")).await()
     }
 
+    /** Escritura puntual de la URL de Storage, separada de [guardarLogro] por el mismo motivo
+     *  que en MedallaRepository: la subida va después de guardar, y si falla el logro ya quedó
+     *  escrito sin URL. */
+    suspend fun actualizarImagenUrl(logroId: String, imagenUrl: String) {
+        catalogo.document(logroId).update("imagenUrl", imagenUrl).await()
+    }
+
     /** Todos los logros personales son borrables: no hay categorías fijas como en medallas. */
     suspend fun eliminarLogro(logroId: String) {
         catalogo.document(logroId).delete().await()

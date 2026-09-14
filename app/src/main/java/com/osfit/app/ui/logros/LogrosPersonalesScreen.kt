@@ -1,6 +1,7 @@
 package com.osfit.app.ui.logros
 
 import android.net.Uri
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
@@ -16,6 +17,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.AlertDialog
@@ -30,6 +32,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -48,10 +51,23 @@ import java.util.UUID
 
 @Composable
 fun LogrosPersonalesScreen(viewModel: LogrosPersonalesViewModel = viewModel()) {
+    val context = LocalContext.current
     val logros by viewModel.logros.collectAsState()
+    val subiendoPendientes by viewModel.subiendoPendientes.collectAsState()
+    val mensaje by viewModel.mensaje.collectAsState()
+
+    // Ver MedallasScreen: el ViewModel recibe el archivo ya resuelto, no un Context.
+    fun archivoDe(logro: LogroPersonalCatalogo) =
+        logro.imagenArchivo?.let { LogroPersonalImagenUtil.archivoImagen(context, it) }
     var logroEnEdicion by remember { mutableStateOf<LogroPersonalCatalogo?>(null) }
     var mostrarNuevo by remember { mutableStateOf(false) }
     var logroAEliminar by remember { mutableStateOf<LogroPersonalCatalogo?>(null) }
+
+    LaunchedEffect(mensaje) {
+        val texto = mensaje ?: return@LaunchedEffect
+        Toast.makeText(context, texto, Toast.LENGTH_LONG).show()
+        viewModel.limpiarMensaje()
+    }
 
     Scaffold(
         floatingActionButton = {
@@ -61,6 +77,19 @@ fun LogrosPersonalesScreen(viewModel: LogrosPersonalesViewModel = viewModel()) {
         }
     ) { padding ->
         LazyColumn(modifier = Modifier.fillMaxSize().padding(padding).padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            item {
+                OutlinedButton(
+                    onClick = { viewModel.subirPendientes(context) },
+                    enabled = !subiendoPendientes,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(Icons.Filled.CloudUpload, contentDescription = null)
+                    Text(
+                        if (subiendoPendientes) "Subiendo insignias..." else "Subir insignias",
+                        modifier = Modifier.padding(start = 8.dp)
+                    )
+                }
+            }
             items(logros, key = { it.id }) { logro ->
                 LogroItem(
                     logro = logro,
@@ -74,7 +103,7 @@ fun LogrosPersonalesScreen(viewModel: LogrosPersonalesViewModel = viewModel()) {
     logroEnEdicion?.let { logro ->
         EditarLogroDialog(
             logro = logro,
-            onGuardar = { actualizado -> viewModel.guardar(actualizado); logroEnEdicion = null },
+            onGuardar = { actualizado -> viewModel.guardar(actualizado, archivoDe(actualizado)); logroEnEdicion = null },
             onCancelar = { logroEnEdicion = null }
         )
     }
@@ -84,12 +113,11 @@ fun LogrosPersonalesScreen(viewModel: LogrosPersonalesViewModel = viewModel()) {
         // LogroPersonalRepository.guardarLogro.
         EditarLogroDialog(
             logro = LogroPersonalCatalogo(id = UUID.randomUUID().toString()),
-            onGuardar = { nuevo -> viewModel.guardar(nuevo); mostrarNuevo = false },
+            onGuardar = { nuevo -> viewModel.guardar(nuevo, archivoDe(nuevo)); mostrarNuevo = false },
             onCancelar = { mostrarNuevo = false }
         )
     }
     logroAEliminar?.let { logro ->
-        val context = LocalContext.current
         AlertDialog(
             onDismissRequest = { logroAEliminar = null },
             title = { Text("¿Borrar \"${logro.nombre}\"?") },

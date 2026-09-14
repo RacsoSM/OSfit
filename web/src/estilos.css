@@ -7,6 +7,7 @@
   --primario: #B388FF;
   --sobre-primario: #2A0064;
   --primario-oscuro: #6A1B9A;
+  --primario-claro: #E3D2FF;
   --verde: #2E9E4F;
   --rojo: #C4453D;
   --ambar: #C99A2E;
@@ -21,7 +22,52 @@ body {
   line-height: 1.45;
 }
 main { max-width: 480px; margin: 0 auto; padding: 16px 14px 48px; }
+/* El fondo pintado, clavado al viewport y detrás de todo. `fixed` y no `absolute` para que
+   no crezca con la página ni se repita al hacer scroll: es una sola pintura, no un patrón. */
+.fondo {
+  position: fixed; inset: 0; width: 100%; height: 100%;
+  z-index: -1; pointer-events: none;
+}
 .cargando { color: var(--texto-tenue); text-align: center; padding: 40px 0; }
+/* El saludo. El nombre lleva el mismo degradado morado que la tarjeta del día, recortado
+   sobre el texto, para que la página salude con el color de su propia identidad. */
+.saludo {
+  font-size: 26px; margin: 4px 2px 14px; white-space: nowrap;
+  display: inline-block; max-width: 100%;
+}
+/* Periodo del parpadeo del cursor: medio segundo encendido, medio apagado. Es el ritmo al que
+   parpadea un cursor de texto de verdad; más rápido se nota nervioso y distrae de lo que se
+   está escribiendo. */
+.saludo { --parpadeo: 1100ms; }
+.saludo-hola { color: var(--texto); }
+.saludo-nombre {
+  background: linear-gradient(100deg, var(--primario) 0%, var(--primario-claro) 100%);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  font-weight: 800;
+}
+/* Mientras escribe se recorta el ancho; el borde derecho hace de cursor. El degradado no se
+   mueve porque el nombre ya tiene su ancho final: lo que crece es el recorte, no el texto. */
+.saludo.escribiendo {
+  overflow: hidden; width: 0;
+  border-right: 2px solid var(--primario);
+  animation:
+    escribir var(--duracion-saludo, 2000ms) steps(var(--letras-saludo, 20), end) forwards,
+    cursor var(--parpadeo) steps(1, end) infinite;
+}
+/* Terminada la escritura el cursor se queda un rato parpadeando, ya sin recortar el texto:
+   deja la sensación de que la línea sigue viva en vez de cortarse en seco. */
+.saludo.parpadeando {
+  border-right: 2px solid var(--primario);
+  animation: cursor var(--parpadeo) steps(1, end) infinite;
+}
+.saludo.escrito { border-right: 0; }
+@keyframes escribir { to { width: var(--ancho-saludo, 100%); } }
+@keyframes cursor { 50% { border-right-color: transparent; } }
+@media (prefers-reduced-motion: reduce) {
+  .saludo.escribiendo, .saludo.parpadeando {
+    animation: none; width: auto; overflow: visible; border-right: 0;
+  }
+}
 .tarjeta { background: var(--superficie); border-radius: 16px; padding: 14px 16px; margin-bottom: 12px; }
 .tarjeta-titulo {
   font-size: 11px; text-transform: uppercase; letter-spacing: 1px;
@@ -30,11 +76,69 @@ main { max-width: 480px; margin: 0 auto; padding: 16px 14px 48px; }
 .hoy { background: linear-gradient(150deg, var(--primario-oscuro), var(--primario)); color: #fff; }
 .hoy .tarjeta-titulo { color: rgba(255, 255, 255, 0.82); }
 .hoy-dia { font-size: 26px; font-weight: 800; margin: 2px 0 4px; line-height: 1.15; }
+/* Las acciones dentro de la tarjeta del día. Separadas por una línea tenue para que el día
+   siga leyéndose de un vistazo y los botones no compitan con él. */
+.hoy-acciones { margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(255, 255, 255, 0.22); }
+/* Sobre el degradado morado los botones normales desaparecen, así que acá van traslúcidos
+   sobre el propio fondo de la tarjeta, con borde para que se sigan leyendo como botones. */
+.hoy-acciones .boton {
+  background: rgba(255, 255, 255, 0.16); color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+}
+.hoy-acciones .boton.secundario { background: rgba(0, 0, 0, 0.18); color: #fff; }
+.hoy-acciones .opcion { background: rgba(255, 255, 255, 0.12); color: #fff; border-color: rgba(255, 255, 255, 0.2); }
+.hoy-acciones .opcion.elegida { background: #fff; color: var(--primario-oscuro); border-color: #fff; }
+.hoy-acciones .accion-nota,
+.hoy-acciones .accion-subtitulo { color: rgba(255, 255, 255, 0.78); }
+.hoy-acciones .confirmar-titulo { color: #fff; }
+.hoy-acciones .campo-libre {
+  background: rgba(0, 0, 0, 0.22); color: #fff; border-color: rgba(255, 255, 255, 0.28);
+}
+.hoy-acciones .aviso-ok, .hoy-acciones .aviso-error { background: rgba(0, 0, 0, 0.22); color: #fff; }
 .fila { display: flex; gap: 12px; }
 .fila > * { flex: 1; }
 .numero { font-size: 30px; font-weight: 800; line-height: 1; margin: 4px 0; }
 .vacio { text-align: center; padding: 24px 12px; }
 .vacio-emoji { font-size: 40px; }
+/* Las dos acciones. Botones de ancho completo y alto cómodo: el cliente abre esto desde un
+   link de WhatsApp, parado en el gimnasio y con una sola mano. */
+.boton {
+  width: 100%; display: block; border: 0; border-radius: 12px;
+  padding: 13px 14px; font-size: 15px; font-weight: 700; font-family: inherit;
+  background: var(--primario); color: var(--sobre-primario); cursor: pointer;
+}
+.boton.secundario { background: var(--superficie-alta); color: var(--texto); }
+.boton:disabled { opacity: 0.45; cursor: default; }
+.boton + .boton { margin-top: 8px; }
+.fila-botones { display: flex; gap: 10px; margin-top: 12px; }
+.fila-botones .boton { margin-top: 0; }
+.accion-nota { color: var(--texto-tenue); font-size: 12px; margin: 8px 2px 0; }
+.accion-subtitulo {
+  font-size: 12px; color: var(--texto-tenue); margin: 14px 2px 6px;
+}
+.accion-subtitulo:first-child { margin-top: 0; }
+.opciones { display: flex; flex-direction: column; gap: 6px; }
+.opcion {
+  width: 100%; text-align: left; border: 1px solid transparent; border-radius: 10px;
+  padding: 10px 12px; font-size: 14px; font-family: inherit; line-height: 1.3;
+  background: var(--superficie-alta); color: var(--texto); cursor: pointer;
+}
+.opcion.elegida { border-color: var(--primario); color: var(--primario); font-weight: 700; }
+.opcion:disabled { opacity: 0.45; cursor: default; }
+.campo-libre {
+  width: 100%; margin-top: 8px; border-radius: 10px; border: 1px solid var(--superficie-alta);
+  background: var(--fondo); color: var(--texto); font-family: inherit; font-size: 14px;
+  padding: 10px 12px; resize: vertical;
+}
+.confirmar-titulo { font-size: 16px; font-weight: 800; margin: 0; }
+.aviso-ok {
+  background: var(--superficie-alta); border-left: 3px solid var(--verde);
+  border-radius: 8px; padding: 10px 12px; margin: 0 0 12px; font-size: 14px;
+}
+.aviso-error {
+  background: var(--superficie-alta); border-left: 3px solid var(--rojo);
+  border-radius: 8px; padding: 10px 12px; margin: 12px 0 0; font-size: 14px;
+}
 .cal-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
 .cal-nav button {
   background: var(--superficie-alta); color: var(--texto); border: 0;
@@ -56,3 +160,28 @@ main { max-width: 480px; margin: 0 auto; padding: 16px 14px 48px; }
 .leyenda { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; font-size: 11px; color: var(--texto-tenue); }
 .leyenda span { display: flex; align-items: center; gap: 4px; }
 .punto { width: 9px; height: 9px; border-radius: 3px; display: inline-block; }
+/* Medallas y logros. Rejilla de tres en tres: entran de un vistazo en un teléfono y una
+   quincena floja no deja la tarjeta con un solo elemento perdido a la izquierda. */
+.insignias { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px 8px; }
+.insignia { text-align: center; }
+.insignia-img {
+  width: 100%; aspect-ratio: 1; object-fit: contain;
+  display: flex; align-items: center; justify-content: center;
+}
+/* La genérica, para lo otorgado antes de que las insignias tuvieran imagen. Disco hundido con
+   el emoji encima: ocupa el mismo hueco que una imagen real, así la rejilla no se descuadra. */
+.insignia-img.generica {
+  background: var(--superficie-alta); border-radius: 50%; font-size: 28px;
+}
+.insignia-nombre { font-size: 12px; font-weight: 700; margin: 6px 0 0; line-height: 1.25; }
+.insignia-rango { font-size: 11px; color: var(--texto-tenue); margin: 2px 0 0; line-height: 1.2; }
+/* Videos de resumen. Uno debajo de otro: a diferencia de la rejilla de insignias, cada uno
+   necesita ancho completo para que los controles del reproductor no queden apretados. */
+.videos { display: flex; flex-direction: column; gap: 16px; }
+.video-rango { font-size: 13px; font-weight: 700; margin: 0; }
+.video-duracion { font-size: 11px; color: var(--texto-tenue); margin: 2px 0 6px; }
+.video-resumen { width: 100%; border-radius: 10px; background: #000; }
+.video-no-disponible {
+  padding: 24px 8px; text-align: center; border-radius: 10px;
+  background: var(--superficie-alta); color: var(--texto-tenue); font-size: 13px;
+}

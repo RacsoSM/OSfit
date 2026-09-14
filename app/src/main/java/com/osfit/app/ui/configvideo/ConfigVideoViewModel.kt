@@ -6,8 +6,8 @@ import com.osfit.app.data.AppContainer
 import com.osfit.app.data.repository.ConfigVideoRepository
 import com.osfit.app.domain.PeriodosQuincenales
 import com.osfit.app.domain.ResumenClienteCalculator
-import com.osfit.app.video.PaletaVideo
-import com.osfit.app.video.PaletasVideo
+import com.osfit.app.paletas.Paleta
+import com.osfit.app.paletas.Paletas
 import java.time.LocalDate
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -19,7 +19,7 @@ import kotlinx.coroutines.launch
 data class PeriodoConPaleta(
     val rangoInicio: String,
     val encabezado: String,
-    val paleta: PaletaVideo,
+    val paleta: Paleta,
     val esActual: Boolean
 )
 
@@ -46,7 +46,7 @@ class ConfigVideoViewModel(
             PeriodoConPaleta(
                 rangoInicio = rangoInicio,
                 encabezado = rango.encabezado,
-                paleta = PaletasVideo.porId(paletasPorPeriodo[rangoInicio]),
+                paleta = Paletas.porIdVideo(paletasPorPeriodo[rangoInicio]),
                 esActual = rangoInicio == periodoActual
             )
         }

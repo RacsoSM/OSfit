@@ -1,5 +1,6 @@
 package com.osfit.app.ui.clientes
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.Timestamp
@@ -14,17 +15,22 @@ import com.osfit.app.data.model.MedallaCatalogo
 import com.osfit.app.data.model.MedallaOtorgada
 import com.osfit.app.data.model.Pago
 import com.osfit.app.data.model.Rutina
+import com.osfit.app.data.model.VideoPublicado
 import com.osfit.app.data.repository.AccesoWebRepository
 import com.osfit.app.data.repository.AsistenciaRepository
 import com.osfit.app.data.repository.ClienteRepository
 import com.osfit.app.data.repository.LogroPersonalRepository
 import com.osfit.app.data.repository.MedallaRepository
 import com.osfit.app.data.repository.PagoRepository
+import com.osfit.app.data.repository.ResumenStorageRepository
 import com.osfit.app.data.repository.RutinaRepository
+import com.osfit.app.data.repository.VideoPublicadoRepository
 import com.osfit.app.domain.AsignarDiaManual
+import com.osfit.app.domain.CupoRevivesCalculator
 import com.osfit.app.domain.RachaCalculator
 import com.osfit.app.domain.RutinaProgressCalculator
 import java.time.LocalDate
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -43,7 +49,9 @@ class ClienteDetailViewModel(
     private val medallaRepository: MedallaRepository = AppContainer.medallaRepository,
     private val logroPersonalRepository: LogroPersonalRepository = AppContainer.logroPersonalRepository,
     private val sincronizadorDiaWeb: SincronizadorDiaWeb = AppContainer.sincronizadorDiaWeb,
-    private val accesoWebRepository: AccesoWebRepository = AppContainer.accesoWebRepository
+    private val accesoWebRepository: AccesoWebRepository = AppContainer.accesoWebRepository,
+    private val videoPublicadoRepository: VideoPublicadoRepository = AppContainer.videoPublicadoRepository,
+    private val resumenStorageRepository: ResumenStorageRepository = AppContainer.resumenStorageRepository
 ) : ViewModel() {
 
     init {
@@ -90,6 +98,22 @@ class ClienteDetailViewModel(
     val faltas: StateFlow<List<Asistencia>> = asistenciasDelCliente
         .map { asistencias -> asistencias.filterNot { it.asistio }.sortedByDescending { it.fecha } }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    /**
+     * Revives que le quedan al cliente este mes. El mes sale de la zona del gimnasio y no del
+     * dispositivo: la Cloud Function cuenta el cupo en esa zona, y si el entrenador contara en
+     * otro mes vería un número distinto al de la página del cliente — justo la discusión que
+     * este dato existe para zanjar.
+     */
+    val revivesDisponibles: StateFlow<Int> = asistenciasDelCliente
+        .map { asistencias ->
+            CupoRevivesCalculator.disponiblesEnElMes(asistencias, SincronizadorDiaWeb.hoy().substring(0, 7))
+        }
+        .stateIn(
+            viewModelScope,
+            SharingStarted.WhileSubscribed(5000),
+            CupoRevivesCalculator.MAXIMO_POR_MES
+        )
 
     /** Soborno: marca o desmarca una falta como justificada. */
     fun alternarSoborno(asistencia: Asistencia) {
@@ -194,6 +218,7 @@ class ClienteDetailViewModel(
                     rangoInicio = "manual_${System.currentTimeMillis()}",
                     medallaId = medalla.id,
                     nombreMedalla = medalla.nombre,
+                    imagenUrl = medalla.imagenUrl,
                     encabezadoRango = "Otorgada manualmente el ${LocalDate.now()}",
                     fueAjustadaManualmente = true
                 )
@@ -220,6 +245,7 @@ class ClienteDetailViewModel(
                         rangoInicio = rangoInicio,
                         logroId = logro.id,
                         nombreLogro = logro.nombre,
+                        imagenUrl = logro.imagenUrl,
                         mensaje = logro.mensaje,
                         encabezadoRango = "Otorgado manualmente el ${LocalDate.now()}",
                         orden = 0
@@ -231,6 +257,48 @@ class ClienteDetailViewModel(
 
     fun quitarLogroPersonal(otorgado: LogroPersonalOtorgado) {
         viewModelScope.launch { logroPersonalRepository.quitarLogro(clienteId, otorgado.id) }
+    }
+
+    /** Lo que la clienta ve publicado en su página, ya ordenado de la quincena más reciente
+     *  a la más vieja por el repositorio. */
+    val videosPublicados: StateFlow<List<VideoPublicado>> =
+        videoPublicadoRepository.observarDe(clienteId)
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    /**
+     * Borra primero el blob de Storage y recién después el documento de Firestore, igual que
+     * la retención automática en `ResumenClienteViewModel.limpiarSobrantes`: el borrado no es
+     * atómico entre los dos, así que hay que elegir cuál falla mejor. Al revés, si fallara el
+     * blob quedaría un mp4 huérfano que nadie ve, nadie encuentra y se paga todos los meses.
+     * En este orden, si falla el documento queda un registro apuntando a un archivo que no
+     * está: eso se ve, la página lo resuelve como "video no disponible" y el próximo publicar
+     * lo reintenta. Se prefiere el fallo visible.
+     *
+     * Se usa `video.rutaStorage` y no una ruta rearmada con `clienteId` + `rangoInicio`: eso
+     * borraría la ruta que la convención dice hoy, no la que realmente se subió.
+     */
+    fun quitarVideoPublicado(video: VideoPublicado) {
+        viewModelScope.launch {
+            try {
+                resumenStorageRepository.borrar(video.rutaStorage)
+                videoPublicadoRepository.borrar(clienteId, video.rangoInicio)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Throwable) {
+                // Acá el fallo sí se le reporta al entrenador, al revés que en la retención de
+                // `ResumenClienteViewModel.limpiarSobrantes`: allí limpiar es secundario a
+                // publicar, acá quitar es justo lo que pidió.
+                Log.w(TAG, "No se pudo quitar el video ${video.rangoInicio}", e)
+                _errorVideo.value = "No se pudo quitar el video de la web"
+            }
+        }
+    }
+
+    private val _errorVideo = MutableStateFlow<String?>(null)
+    val errorVideo: StateFlow<String?> = _errorVideo.asStateFlow()
+
+    fun limpiarErrorVideo() {
+        _errorVideo.value = null
     }
 
     val accesoWeb: StateFlow<AccesoWeb?> = accesoWebRepository.observarAcceso(clienteId)
@@ -252,5 +320,9 @@ class ClienteDetailViewModel(
             accesoWeb.value?.let { accesoWebRepository.revocarAcceso(it.token) }
             clienteRepository.actualizarTieneAccesoWeb(clienteId, false)
         }
+    }
+
+    private companion object {
+        const val TAG = "ClienteDetailViewModel"
     }
 }

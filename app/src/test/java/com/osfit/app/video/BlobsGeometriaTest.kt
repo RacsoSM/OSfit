@@ -1,12 +1,14 @@
 package com.osfit.app.video
 
+import com.osfit.app.paletas.Paletas
+
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class BlobsGeometriaTest {
 
-    private val blobs = BlobsGeometria.blobs(PaletasVideo.porDefecto)
+    private val blobs = BlobsGeometria.blobs(Paletas.porDefectoVideo)
 
     @Test
     fun `posicionEn es determinista para el mismo tiempo`() {
@@ -35,14 +37,14 @@ class BlobsGeometriaTest {
     /** El corazón del cambio: la geometría es una sola, los colores los pone la paleta. */
     @Test
     fun `los colores salen de la paleta recibida`() {
-        val paleta = PaletasVideo.porId("atardecer")
+        val paleta = Paletas.porIdVideo("atardecer")
         val colores = BlobsGeometria.blobs(paleta).map { it.colorArgb }.toSet()
         assertEquals(setOf(paleta.blobA, paleta.blobB, paleta.blobC), colores)
     }
 
     @Test
     fun `la geometria no depende de la paleta`() {
-        PaletasVideo.disponibles.forEach { paleta ->
+        Paletas.disponibles.forEach { paleta ->
             val conPaleta = BlobsGeometria.blobs(paleta)
             assertEquals(blobs.size, conPaleta.size)
             conPaleta.forEachIndexed { i, blob ->

@@ -1,5 +1,6 @@
 import { collection, doc, onSnapshot, query, where } from "firebase/firestore";
 import { db } from "./firebase";
+import type { PaletaWeb } from "./paleta";
 
 export interface Ejercicio { nombre: string; series: number; repeticiones: string; pesoONota: string; }
 export interface DiaRutina { nombreDia: string; ejercicios: Ejercicio[]; }
@@ -12,12 +13,24 @@ export interface Cliente {
   ultimoDia: number | null;
   ultimoDiaFecha: string | null;
   ultimoDiaEsAncla: boolean;
+  /**
+   * La paleta que el entrenador le eligió desde la app. Opcional: una clienta a la que nunca
+   * se le asignó una no tiene el campo, y entonces la página se queda con el morado de :root.
+   */
+  paletaWeb?: PaletaWeb;
 }
 
 export interface Asistencia {
   fecha: string;
   asistio: boolean;
   justificada: boolean;
+  /**
+   * La justificó el cliente desde la web. Solo estas gastan su cupo mensual.
+   *
+   * Opcional a propósito: Firestore omite los campos que nunca se escribieron, así que
+   * toda asistencia anterior a esta etapa llega sin él. Ver el commit bf5463c.
+   */
+  justificadaPorCliente?: boolean;
   duracionMinutos: number | null;
 }
 
@@ -35,5 +48,79 @@ export function observarAsistencias(clienteId: string, alCambiar: (a: Asistencia
   const consulta = query(collection(db, "asistencias"), where("clienteId", "==", clienteId));
   return onSnapshot(consulta, (snap) => {
     alCambiar(snap.docs.map((d) => d.data() as Asistencia));
+  });
+}
+
+/**
+ * Si el cliente ya avisó que hoy no viene. Se observa en vez de guardarse solo en memoria
+ * para que el botón siga escondido si recarga la página o la abre en otro dispositivo: el
+ * aviso es del día, no de la pestaña.
+ */
+export function observarAvisoFalta(
+  clienteId: string,
+  hoy: string,
+  alCambiar: (yaAviso: boolean) => void
+) {
+  return onSnapshot(doc(db, "avisosFalta", `${clienteId}_${hoy}`), (snap) => {
+    alCambiar(snap.exists());
+  });
+}
+
+/**
+ * Lo que ya se le otorgó, no el catálogo: el catálogo es solo del entrenador y ahí vive la
+ * imagen original. Por eso `imagenUrl` viaja copiada dentro de cada otorgada, igual que el
+ * nombre, y es opcional: lo otorgado antes de que existieran las insignias llega sin campo.
+ */
+export interface MedallaOtorgada {
+  rangoInicio: string;
+  medallaId: string;
+  nombreMedalla: string;
+  encabezadoRango: string;
+  fueAjustadaManualmente: boolean;
+  imagenUrl?: string | null;
+}
+
+export interface LogroPersonalOtorgado {
+  id: string;
+  rangoInicio: string;
+  logroId: string;
+  nombreLogro: string;
+  mensaje: string;
+  encabezadoRango: string;
+  orden: number;
+  imagenUrl?: string | null;
+}
+
+/**
+ * El video de resumen de una quincena. Guarda la RUTA en Storage, no la URL: a diferencia
+ * de las insignias, el video es personal, así que la URL de descarga se pide al SDK recién
+ * al pintar (ver `tarjetaVideos`), y solo la sesión de esa clienta puede pedirla.
+ */
+export interface VideoResumen {
+  rangoInicio: string;
+  encabezadoRango: string;
+  rutaStorage: string;
+  duracionSegundos: number;
+}
+
+export function observarVideos(clienteId: string, alCambiar: (v: VideoResumen[]) => void) {
+  return onSnapshot(collection(db, "clientes", clienteId, "videos"), (snap) => {
+    alCambiar(snap.docs.map((d) => d.data() as VideoResumen));
+  });
+}
+
+export function observarMedallas(clienteId: string, alCambiar: (m: MedallaOtorgada[]) => void) {
+  return onSnapshot(collection(db, "clientes", clienteId, "medallas"), (snap) => {
+    alCambiar(snap.docs.map((d) => d.data() as MedallaOtorgada));
+  });
+}
+
+export function observarLogrosPersonales(
+  clienteId: string,
+  alCambiar: (l: LogroPersonalOtorgado[]) => void
+) {
+  return onSnapshot(collection(db, "clientes", clienteId, "logrosPersonales"), (snap) => {
+    // El id no se guarda dentro del documento; se rellena al leer, como en la app.
+    alCambiar(snap.docs.map((d) => ({ ...(d.data() as LogroPersonalOtorgado), id: d.id })));
   });
 }
