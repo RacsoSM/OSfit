@@ -1,6 +1,7 @@
 package com.osfit.app.data
 
 import android.content.Context
+import android.util.Log
 import com.osfit.app.data.repository.CancionStorageRepository
 import com.osfit.app.data.repository.ClienteRepository
 import com.osfit.app.data.repository.InsigniaStorageRepository
@@ -9,6 +10,7 @@ import com.osfit.app.data.repository.MedallaRepository
 import com.osfit.app.domain.ArchivoEsperado
 import com.osfit.app.domain.ArchivosQueFaltan
 import java.io.File
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.first
 
 /**
@@ -29,10 +31,13 @@ class RestauradorDeArchivos(
     private val insigniaStorageRepository: InsigniaStorageRepository
 ) {
     suspend fun restaurar(context: Context) {
+        // Cada fuente se lee por separado: un listener denegado o un flujo cerrado cuesta
+        // sólo su grupo. Juntas en una sola expresión, una lista que no se pudo leer dejaba
+        // sin restaurar también las otras dos.
         val esperados = ArchivosQueFaltan.esperadosDe(
-            clientes = clienteRepository.observarClientes().first(),
-            medallas = medallaRepository.observarCatalogo().first(),
-            logros = logroPersonalRepository.observarCatalogo().first()
+            clientes = leerOVacio { clienteRepository.observarClientes().first() },
+            medallas = leerOVacio { medallaRepository.observarCatalogo().first() },
+            logros = leerOVacio { logroPersonalRepository.observarCatalogo().first() }
         )
         val faltantes = ArchivosQueFaltan.calcular(esperados) { archivoDe(context, it).exists() }
 
@@ -52,10 +57,22 @@ class RestauradorDeArchivos(
         }
     }
 
+    /** Una fuente que no se pudo leer se trata como "nada que esperar de este grupo". */
+    private suspend fun <T> leerOVacio(leer: suspend () -> List<T>): List<T> =
+        try {
+            leer()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Throwable) {
+            Log.w(TAG, "No se pudo leer una de las fuentes a restaurar", e)
+            emptyList()
+        }
+
     private fun archivoDe(context: Context, esperado: ArchivoEsperado): File =
         File(File(context.filesDir, esperado.carpeta), esperado.nombreLocal)
 
     private companion object {
         const val CARPETA_CANCIONES = "canciones"
+        const val TAG = "RestauradorDeArchivos"
     }
 }
