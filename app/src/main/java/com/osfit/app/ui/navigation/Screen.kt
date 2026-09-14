@@ -29,6 +29,10 @@ sealed class Screen(val route: String) {
         fun crearRuta(clienteId: String) = "medallas_cliente/$clienteId"
     }
 
+    data object WebCliente : Screen("web_cliente/{clienteId}") {
+        fun crearRuta(clienteId: String) = "web_cliente/$clienteId"
+    }
+
     data object VideosWebCliente : Screen("videos_web_cliente/{clienteId}") {
         fun crearRuta(clienteId: String) = "videos_web_cliente/$clienteId"
     }

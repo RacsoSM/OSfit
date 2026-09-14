@@ -45,7 +45,7 @@ fun OSfitNavHost(navController: NavHostController, modifier: Modifier = Modifier
                 onVerPagos = { id -> navController.navigate(Screen.ClientePagos.crearRuta(id)) },
                 onVerEstadisticas = { id -> navController.navigate(Screen.Estadisticas.crearRuta(id)) },
                 onVerMedallas = { id -> navController.navigate(Screen.MedallasCliente.crearRuta(id)) },
-                onVerVideosWeb = { id -> navController.navigate(Screen.VideosWebCliente.crearRuta(id)) },
+                onVerWeb = { id -> navController.navigate(Screen.WebCliente.crearRuta(id)) },
                 onVerLogrosPersonales = { id -> navController.navigate(Screen.LogrosPersonalesCliente.crearRuta(id)) },
                 onEditarCliente = { id -> navController.navigate(Screen.ClienteEditar.crearRuta(id)) },
                 onEliminado = { navController.popBackStack() }
@@ -88,6 +88,16 @@ fun OSfitNavHost(navController: NavHostController, modifier: Modifier = Modifier
         ) { backStackEntry ->
             val clienteId = backStackEntry.arguments?.getString("clienteId") ?: return@composable
             com.osfit.app.ui.clientes.MedallasClienteScreen(clienteId = clienteId)
+        }
+        composable(
+            route = Screen.WebCliente.route,
+            arguments = listOf(navArgument("clienteId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val clienteId = backStackEntry.arguments?.getString("clienteId") ?: return@composable
+            com.osfit.app.ui.clientes.WebClienteScreen(
+                clienteId = clienteId,
+                onVerVideosWeb = { id -> navController.navigate(Screen.VideosWebCliente.crearRuta(id)) }
+            )
         }
         composable(
             route = Screen.VideosWebCliente.route,

@@ -25,11 +25,11 @@ import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.Handshake
+import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Payments
 import androidx.compose.material.icons.filled.QueryStats
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Videocam
-import androidx.compose.material.icons.filled.VideoLibrary
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -82,7 +82,7 @@ fun ClienteDetailScreen(
     onVerPagos: (String) -> Unit,
     onVerEstadisticas: (String) -> Unit,
     onVerMedallas: (String) -> Unit,
-    onVerVideosWeb: (String) -> Unit,
+    onVerWeb: (String) -> Unit,
     onVerLogrosPersonales: (String) -> Unit,
     onEditarCliente: (String) -> Unit,
     onEliminado: () -> Unit
@@ -334,10 +334,10 @@ fun ClienteDetailScreen(
                         onClick = { onVerMedallas(clienteId) }
                     )
                     AccionCard(
-                        icono = Icons.Filled.VideoLibrary,
-                        texto = "Videos en la web",
+                        icono = Icons.Filled.Language,
+                        texto = "Web",
                         modifier = Modifier.weight(1f),
-                        onClick = { onVerVideosWeb(clienteId) }
+                        onClick = { onVerWeb(clienteId) }
                     )
                 }
             }
