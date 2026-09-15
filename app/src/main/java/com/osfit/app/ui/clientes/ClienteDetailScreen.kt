@@ -33,6 +33,7 @@ import androidx.compose.material.icons.filled.Videocam
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -56,6 +57,9 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import com.osfit.app.data.model.Cliente
+import com.osfit.app.data.model.DiaRutina
+import com.osfit.app.data.model.Ejercicio
 import com.osfit.app.data.model.MedallaCatalogo
 import com.osfit.app.data.model.Rutina
 import com.osfit.app.domain.CupoRevivesCalculator
@@ -393,6 +397,12 @@ fun ClienteDetailScreen(
                             style = MaterialTheme.typography.bodySmall,
                             modifier = Modifier.padding(top = 8.dp)
                         )
+                        HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
+                        SeccionRutinaWeb(
+                            origen = origenRutinaDe(clienteActual, plantillas),
+                            dias = diasQueVeLaClienta(clienteActual, plantillas),
+                            diaQueToca = diaQueToca
+                        )
                         if (clienteActual.telefono.isNotBlank()) {
                             Button(
                                 onClick = {
@@ -564,6 +574,147 @@ fun ClienteDetailScreen(
                 }
             )
         }
+    }
+}
+
+/**
+ * De dónde sale la rutina que la clienta ve en su página. No hay campo de modo:
+ * `plantillaOrigenId` es lo único que lo discrimina, y sus dos casos "sin plantilla viva"
+ * hasta ahora se veían iguales —rutina propia y plantilla borrada—. Acá se separan porque uno
+ * es normal y el otro es un aviso.
+ */
+private sealed interface OrigenRutina {
+    object Propia : OrigenRutina
+    data class SiguePlantilla(val nombre: String) : OrigenRutina
+    object PlantillaBorrada : OrigenRutina
+}
+
+private fun origenRutinaDe(cliente: Cliente, plantillas: List<Rutina>): OrigenRutina = when {
+    cliente.plantillaOrigenId.isBlank() -> OrigenRutina.Propia
+    else -> plantillas.firstOrNull { it.id == cliente.plantillaOrigenId }
+        ?.let { OrigenRutina.SiguePlantilla(it.nombre) }
+        ?: OrigenRutina.PlantillaBorrada
+}
+
+/**
+ * Los días que realmente ve la clienta: la plantilla viva si todavía existe, y si no la copia
+ * congelada en el cliente. Es el mismo `?:` que usa la tarjeta "Rutina asignada", para que las
+ * dos muestren lo mismo.
+ */
+private fun diasQueVeLaClienta(cliente: Cliente, plantillas: List<Rutina>): List<DiaRutina> =
+    (
+        plantillas.firstOrNull { it.id == cliente.plantillaOrigenId }?.dias
+            ?: cliente.rutinaAsignada?.dias
+        ).orEmpty()
+
+/**
+ * La rutina dentro de la tarjeta "Acceso web". Va ahí y no en una tarjeta propia porque el
+ * criterio de esa tarjeta es *todo lo que la clienta ve en su página*, y desde el 2026-09-15 la
+ * página lista los ejercicios del día (spec `2026-09-15-rutinas-en-la-web-design.md`).
+ *
+ * No duplica la tarjeta "Rutina asignada": aquélla responde qué rutina tiene y qué día le toca,
+ * ésta responde qué ejercicios ve la clienta.
+ */
+@Composable
+private fun SeccionRutinaWeb(
+    origen: OrigenRutina,
+    dias: List<DiaRutina>,
+    diaQueToca: Int
+) {
+    Text("Rutina", style = MaterialTheme.typography.titleSmall)
+    when (origen) {
+        OrigenRutina.Propia -> Text(
+            "Rutina propia",
+            style = MaterialTheme.typography.bodySmall,
+            modifier = Modifier.padding(top = 4.dp)
+        )
+        is OrigenRutina.SiguePlantilla -> Text(
+            "Sigue la plantilla «${origen.nombre}»",
+            style = MaterialTheme.typography.bodySmall,
+            modifier = Modifier.padding(top = 4.dp)
+        )
+        OrigenRutina.PlantillaBorrada -> Text(
+            "⚠ La plantilla que seguía ya no existe. Está usando la última copia.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.error,
+            modifier = Modifier.padding(top = 4.dp)
+        )
+    }
+    if (dias.isEmpty()) {
+        Text(
+            "Todavía no tiene rutina: su página no muestra ejercicios.",
+            style = MaterialTheme.typography.bodySmall,
+            modifier = Modifier.padding(top = 8.dp)
+        )
+        return
+    }
+    dias.forEachIndexed { indice, dia ->
+        DiaRutinaPlegable(indice = indice, dia = dia, esElDeHoy = indice == diaQueToca)
+    }
+}
+
+@Composable
+private fun DiaRutinaPlegable(indice: Int, dia: DiaRutina, esElDeHoy: Boolean) {
+    // El de hoy arranca abierto porque es el que el entrenador viene a mirar; se recuerda por
+    // `esElDeHoy` para que al avanzar el día del ciclo se abra el nuevo y se cierre el viejo.
+    var expandido by remember(esElDeHoy) { mutableStateOf(esElDeHoy) }
+    Column(modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth().clickable { expandido = !expandido },
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                if (esElDeHoy) {
+                    "Día ${indice + 1}: ${dia.nombreDia} · hoy"
+                } else {
+                    "Día ${indice + 1}: ${dia.nombreDia}"
+                },
+                style = MaterialTheme.typography.bodyMedium,
+                color = if (esElDeHoy) {
+                    MaterialTheme.colorScheme.primary
+                } else {
+                    MaterialTheme.colorScheme.onSurface
+                },
+                modifier = Modifier.weight(1f)
+            )
+            Icon(
+                if (expandido) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
+                contentDescription = if (expandido) "Ocultar" else "Mostrar"
+            )
+        }
+        if (expandido) {
+            if (dia.ejercicios.isEmpty()) {
+                Text(
+                    "Sin ejercicios cargados: su página muestra sólo el nombre del día.",
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(start = 8.dp, top = 4.dp)
+                )
+            } else {
+                dia.ejercicios.forEach { ejercicio ->
+                    Text(
+                        textoEjercicio(ejercicio),
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.padding(start = 8.dp, top = 4.dp)
+                    )
+                }
+            }
+        }
+    }
+}
+
+/** Los mismos campos que lista la página de la clienta, para que el entrenador vea lo que ella
+ *  ve — `pesoONota` incluido, que dejó de ser privado el 2026-09-15. */
+private fun textoEjercicio(ejercicio: Ejercicio): String {
+    val detalles = listOfNotNull(
+        ejercicio.series.takeIf { it > 0 }?.let { "$it series" },
+        ejercicio.repeticiones.takeIf { it.isNotBlank() }?.let { "$it reps" },
+        ejercicio.pesoONota.takeIf { it.isNotBlank() }
+    )
+    return if (detalles.isEmpty()) {
+        ejercicio.nombre
+    } else {
+        "${ejercicio.nombre} — ${detalles.joinToString(" · ")}"
     }
 }
 
