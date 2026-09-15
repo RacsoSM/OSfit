@@ -121,6 +121,10 @@ fun ClienteDetailScreen(
     val scope = rememberCoroutineScope()
 
     var mostrarDialogoRutina by remember { mutableStateOf(false) }
+
+    // La plantilla que el entrenador eligió y todavía no confirmó, cuando el cliente
+    // tiene rutina propia y asignarla le borraría lo suyo.
+    var plantillaPorConfirmar by remember { mutableStateOf<Rutina?>(null) }
     var mostrarDialogoAsignarDia by remember { mutableStateOf(false) }
     var mostrarDialogoSoborno by remember { mutableStateOf(false) }
     var mostrarConfirmacionActivo by remember { mutableStateOf(false) }
@@ -481,10 +485,48 @@ fun ClienteDetailScreen(
         AsignarRutinaDialog(
             plantillas = plantillas,
             onSeleccionar = { rutina ->
-                viewModel.asignarRutina(rutina)
+                // Asignar una plantilla sobreescribe `rutinaAsignada` entero: a quien tiene
+                // rutina propia le borra sus ejercicios personalizados y sus variaciones, sin
+                // vuelta atrás. Se confirma sólo en ese caso; a quien ya sigue una plantilla no
+                // hay nada que quitarle y no se le agrega fricción.
+                if (clienteActual.plantillaOrigenId.isBlank() &&
+                    clienteActual.rutinaAsignada != null
+                ) {
+                    plantillaPorConfirmar = rutina
+                } else {
+                    viewModel.asignarRutina(rutina)
+                }
                 mostrarDialogoRutina = false
             },
             onCancelar = { mostrarDialogoRutina = false }
+        )
+    }
+
+    val plantillaElegida = plantillaPorConfirmar
+    if (plantillaElegida != null) {
+        AlertDialog(
+            onDismissRequest = { plantillaPorConfirmar = null },
+            title = { Text("Reemplazar la rutina propia") },
+            text = {
+                Text(
+                    "${clienteActual.nombre} tiene rutina propia. Asignarle la plantilla " +
+                        "«${plantillaElegida.nombre}» borra los ejercicios y las variaciones que " +
+                        "le hayas puesto, y no se pueden recuperar."
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.asignarRutina(plantillaElegida)
+                        plantillaPorConfirmar = null
+                    }
+                ) {
+                    Text("Reemplazar")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { plantillaPorConfirmar = null }) { Text("Cancelar") }
+            }
         )
     }
 

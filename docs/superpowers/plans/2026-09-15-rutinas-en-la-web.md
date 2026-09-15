@@ -134,9 +134,9 @@ Solo lectura en esta tarea. Editar viene en la siguiente.
 
 **Archivos:** `ClienteDetailScreen.kt`
 
-- [ ] `asignarRutina` sobreescribe `rutinaAsignada` entero y resetea `diaActualIndex`/`diaAnclaFecha`. Asignarle una plantilla a alguien con rutina propia **le borra sus ejercicios personalizados y, más adelante, sus variaciones, sin vuelta atrás.** Hoy no confirma nada porque no había nada que perder.
-- [ ] Pedir confirmación **solo** cuando `plantillaOrigenId` está vacío. Para todos los demás el flujo se queda exactamente como está: no se le agrega fricción al caso normal.
-- [ ] Compilar. Commit.
+- [x] `asignarRutina` sobreescribe `rutinaAsignada` entero y resetea `diaActualIndex`/`diaAnclaFecha`. Asignarle una plantilla a alguien con rutina propia **le borra sus ejercicios personalizados y, más adelante, sus variaciones, sin vuelta atrás.** Hoy no confirma nada porque no había nada que perder.
+- [x] Pedir confirmación **solo** cuando `plantillaOrigenId` está vacío. Para todos los demás el flujo se queda exactamente como está: no se le agrega fricción al caso normal.
+- [x] Compilar. Commit.
 
 ---
 
