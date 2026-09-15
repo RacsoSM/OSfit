@@ -1077,3 +1077,64 @@ distinguirlos (una serie de calentamiento y otra pesada del mismo movimiento), l
 es la misma de arriba.
 
 ---
+
+---
+
+## 23. `avisosFalta` deniega la lectura mientras el documento no existe
+
+**Detectado:** 2026-09-15, verificando U1 en la página de una clienta de pruebas.
+
+La consola de la página tira un error en cada carga, antes de que la clienta avise:
+
+```
+@firebase/firestore: Uncaught Error in snapshot listener:
+FirebaseError: [code=permission-denied]: Missing or insufficient permissions.
+```
+
+**La causa.** `firestore.rules` protege la colección así:
+
+```
+match /avisosFalta/{doc} {
+  allow read: if esEntrenador() ||
+                 resource.data.clienteId == request.auth.token.clienteId;
+}
+```
+
+y `observarAvisoFalta` escucha `avisosFalta/{clienteId}_{hoy}`, un documento que **no existe
+hasta que la clienta avisa**. Con el documento ausente `resource` es `null`, así que
+`resource.data.clienteId` no se puede evaluar y la lectura se deniega. Es la trampa clásica de
+las reglas de Firestore: una regla que mira `resource.data` no deja leer lo que no existe.
+
+**Qué rompe, medido y no supuesto.** Menos de lo que parece, y conviene dejarlo escrito para
+que nadie lo persiga como si fuera urgente:
+
+- El botón **sí** se esconde tras avisar, y **sigue escondido al recargar**: verificado el
+  2026-09-15 en la clienta de pruebas. Para entonces el documento ya existe y la lectura pasa.
+- Lo que se pierde es el listener de **esa** carga: muere al primer error. Si la clienta tiene
+  la página abierta y avisa desde otro dispositivo, esta pestaña no se entera hasta recargar —
+  justo el caso que el comentario de la regla dice querer cubrir.
+- Y el ruido: un `permission-denied` en consola en cada visita de cada clienta que todavía no
+  ha avisado, o sea casi todas, casi siempre. Eso es lo peor de la entrada, porque **tapa
+  errores de verdad**: cualquiera que abra la consola a diagnosticar otra cosa se encuentra
+  esto primero.
+
+**El arreglo.** Autorizar por el id del documento, que ya lleva dentro el `clienteId`, en vez
+de por el contenido:
+
+```
+match /avisosFalta/{doc} {
+  allow read: if esEntrenador() ||
+                 doc.split('_')[0] == request.auth.token.clienteId;
+}
+```
+
+Funciona con el documento ausente porque no toca `resource`. Los ids de cliente son
+autogenerados por Firestore (alfanuméricos, sin guión bajo), así que partir por `_` es seguro.
+
+**No vale** relajarlo a `resource == null`: dejaría que cualquier sesión comprobara la
+existencia de los avisos de cualquier otra clienta probando ids.
+
+**Por qué no corre prisa:** nadie ve nada roto. Pero es un cambio de tres líneas en las reglas
+y requiere `firebase deploy --only firestore:rules`, que hasta hoy esta feature no ha tocado.
+
+---
