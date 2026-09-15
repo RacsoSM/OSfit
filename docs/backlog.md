@@ -791,13 +791,20 @@ Spec y plan escritos y commiteados, sin una sola línea de código todavía:
 El plan son 13 tareas en tres bloques. **El orden es por qué se puede desplegar solo, no por
 dependencia técnica**, así que se pueden hacer en sesiones distintas y cortar por donde sea:
 
-- [ ] **Bloque A (Tasks 1-2) — Los ejercicios en la página.** Sirve tal cual, sin nada de lo
-  demás: las clientas que ya tienen ejercicios cargados en su plantilla los verían el mismo
-  día. Es lo más barato de todo el plan y lo único que se despliega.
+- [ ] **Bloque A (Tasks 1-2) — Los ejercicios en la página. 🚧 BLOQUEADO, ver entrada 20.**
+  Sirve tal cual, sin nada de lo demás: las clientas que ya tienen ejercicios cargados en su
+  plantilla los verían el mismo día. Es lo más barato de todo el plan y lo único que se
+  despliega. No se pudo empezar el 2026-09-15 porque la máquina `DESKTOP-DA82BC2` no tiene
+  Node ni npm.
 - [ ] **Bloque B (Tasks 3-5) — Rutina propia y edición por cliente.** Solo app: no toca la
   web y no necesita despliegue.
 - [ ] **Bloque C (Tasks 6-12) — Variaciones que rotan solas.** Lo caro. Si hay que cortar
-  algo, se corta esto y los bloques A y B siguen en pie.
+  algo, se corta esto y los bloques A y B siguen en pie. Las Tasks 6-10 son Kotlin y sí se
+  pueden hacer aquí; la **Task 11** (el gemelo `web/src/variacion.ts`) y la **Task 12** (el
+  despliegue) están 🚧 **BLOQUEADAS por la entrada 20**. Ojo con el orden que eso deja: la
+  app escribiría `variacionRealizada` y rotaría bien, pero **la página seguiría mostrando
+  siempre la primera variación** hasta que la Task 11 se haga. No es un estado roto, pero sí
+  uno a medias, y conviene no enseñarlo como terminado.
 - [ ] **Task 13 — Verificación en dispositivo.** No se puede cubrir con tests: la rotación
   depende de asistencias reales en días reales y la UI es Compose, que la suite no prueba.
 
@@ -832,3 +839,51 @@ sin desplegar de la entrada 17 (el esqueleto de carga y el caché persistente, q
 `main` desde el 2026-09-15 sin subir). No es un problema —son cambios de `web/` igual— pero
 conviene verificar los dos en la misma pasada en vez de creer que el despliegue hizo solo una
 cosa.
+
+---
+
+## 20. Esta máquina no tiene Node, npm ni firebase CLI — y eso bloquea todo lo de `web/`
+
+**Detectado:** 2026-09-15, al arrancar la implementación de la entrada 19.
+
+La máquina **`DESKTOP-DA82BC2`** —una tercera, que el backlog no conocía: hasta ahora solo
+aparecían CESAVESIN y SISTEMAS-03— tiene Java 17 y Gradle funcionando, pero **no tiene Node,
+ni npm, ni la CLI de Firebase**. Comprobado buscando también en las rutas habituales
+(`Program Files\nodejs`, `%APPDATA%\npm`, nvm, scoop): no está en ningún lado, no es que
+falte del PATH.
+
+Consecuencia: desde aquí **no se puede tocar nada de `web/` ni desplegar**. En concreto queda
+bloqueado:
+
+- **El despliegue pendiente de la entrada 17**, que dice ser "lo primero que hay que hacer en
+  la próxima sesión". El esqueleto de carga y el caché persistente siguen sin llegarle a las
+  clientas, y `cd web && npm ci && npm run build` + `firebase deploy --only hosting` no corre
+  en esta máquina. **Si esa entrada lleva días parada, ésta puede ser la razón.**
+- **El Bloque A de la entrada 19** (Tasks 1-2), que es 100% TypeScript en `web/`.
+- **La Task 11** de la entrada 19, el gemelo `web/src/variacion.ts`.
+- **La Task 12**, el despliegue del Bloque C.
+
+No se escribió el TypeScript "a ciegas" a propósito. El plan exige el ciclo test-primero con
+"Expected: FAIL" confirmado antes de implementar, y las Global Constraints lo repiten; escribir
+TS que nunca se ejecuta es justo lo que esas convenciones prohíben, y dejaría código sin probar
+en la única parte del sistema que ven las clientas directamente.
+
+**Qué hacer, en orden de preferencia:**
+
+1. **Instalar Node LTS en esta máquina** (`winget install OpenJS.NodeJS.LTS`) y la CLI de
+   Firebase (`npm i -g firebase-tools`). Es lo que desbloquea todo de una y no depende de
+   volver a sentarse en otra laptop. No se hizo sin preguntar: es una máquina de trabajo y
+   nadie lo pidió.
+2. **Hacer lo de `web/` desde la máquina donde sí esté** (probablemente aquella desde la que
+   se escribió la entrada 17, que sí desplegó el 2026-09-12). Funciona, pero deja el trabajo
+   partido entre dos sitios y es como se llegó a esto.
+
+**Por qué no corre prisa:** lo de Kotlin —que es la mayor parte de la entrada 19— sí se puede
+hacer aquí y se hizo. Pero **ojo**: el Bloque A es la parte que de verdad ven las clientas, y
+es la más barata del plan. Que esté bloqueada por una herramienta que falta, y no por una
+decisión de diseño, es el peor motivo posible para que se quede parada.
+
+**Relacionado:** la entrada 11 ya documenta que los keystores de depuración difieren por
+máquina y que desde CESAVESIN no se puede actualizar la app del teléfono. El proyecto está
+repartido entre al menos tres máquinas con capacidades distintas, y conviene tenerlo presente
+antes de planear una sesión: preguntar primero "¿desde cuál?" ahorra descubrirlo a medias.
