@@ -69,17 +69,17 @@ El repositorio no conoce la rutina del cliente ni su historial, y darle acceso l
 
 **Archivos:** `web/src/ui/tarjetaDia.ts`, `web/src/ui/tarjetaDia.test.ts` (nuevo), `web/src/estilos.css`
 
-- [ ] **Borrar el comentario de las líneas 24-29.** Dice hoy exactamente lo contrario de lo que la función va a hacer (*"muestra solo el nombre del día, nunca los ejercicios... Ver el spec, sección 'Por qué la página no muestra los ejercicios'"*). Reemplazarlo por uno que apunte a `docs/superpowers/specs/2026-09-15-rutinas-en-la-web-design.md` y diga que esa decisión fue revertida el 2026-09-15. Si se deja, el siguiente que lo lea va a quitar la lista creyendo que es un error.
-- [ ] Escribir los tests primero, en `tarjetaDia.test.ts`. Cuatro estados, en este orden de precedencia (el spec los fija):
+- [x] **Borrar el comentario de las líneas 24-29.** Dice hoy exactamente lo contrario de lo que la función va a hacer (*"muestra solo el nombre del día, nunca los ejercicios... Ver el spec, sección 'Por qué la página no muestra los ejercicios'"*). Reemplazarlo por uno que apunte a `docs/superpowers/specs/2026-09-15-rutinas-en-la-web-design.md` y diga que esa decisión fue revertida el 2026-09-15. Si se deja, el siguiente que lo lea va a quitar la lista creyendo que es un error.
+- [x] Escribir los tests primero, en `tarjetaDia.test.ts`. Cuatro estados, en este orden de precedencia (el spec los fija):
   - `` `fin de semana no lista ejercicios aunque el día los tenga` `` — el estado "hoy toca descansar" manda.
   - `` `sin rutina asignada sigue mostrando la tarjeta de siembra` `` — el 🌱 actual, sin cambios.
   - `` `día sin ejercicios explica que el entrenador no los cargó` `` — el caso mayoritario: la mayoría de las rutinas hoy no traen ejercicios. Texto: "Tu entrenador todavía no cargó los ejercicios de este día."
   - `` `día con ejercicios los lista con series, repeticiones y nota` `` — los cuatro campos.
   - `` `el texto del ejercicio se escapa` `` — meter `<script>` y comillas en `nombre` y en `pesoONota`, verificar que sale escapado.
-- [ ] **Expected: FAIL.** Correr `npm test` dentro de `web/` y confirmarlo antes de implementar.
-- [ ] Implementar. De cada ejercicio se muestran **nombre, series, repeticiones y `pesoONota`** (decisión del entrenador el 2026-09-15). Todo pasa por `escapar()`, que ya está en ese archivo: `pesoONota` es texto libre y termina dentro del HTML.
-- [ ] Estilos en `estilos.css`, usando las variables de la paleta que ya existen (`--texto-tenue` y compañía). Nada de colores fijos: la paleta se la asigna el entrenador por clienta.
-- [ ] `npm test` en verde. Commit.
+- [x] **Expected: FAIL.** Correr `npm test` dentro de `web/` y confirmarlo antes de implementar.
+- [x] Implementar. De cada ejercicio se muestran **nombre, series, repeticiones y `pesoONota`** (decisión del entrenador el 2026-09-15). Todo pasa por `escapar()`, que ya está en ese archivo: `pesoONota` es texto libre y termina dentro del HTML.
+- [x] Estilos en `estilos.css`, usando las variables de la paleta que ya existen (`--texto-tenue` y compañía). Nada de colores fijos: la paleta se la asigna el entrenador por clienta.
+- [x] `npm test` en verde. Commit.
 
 **No toca `datos.ts`:** `Ejercicio`, `DiaRutina` y `Rutina` ya están declarados ahí con los cuatro campos, y `Cliente.rutinaAsignada` ya se lee. No hay nada que agregar a la capa de datos.
 
@@ -102,41 +102,41 @@ El repositorio no conoce la rutina del cliente ni su historial, y darle acceso l
 
 Solo lectura en esta tarea. Editar viene en la siguiente.
 
-- [ ] Dentro de la tarjeta **Acceso web** (arranca en la línea 375), agregar una sección **Rutina**. El criterio de qué va en esta tarjeta es *todo lo que la clienta ve en su página*, y la rutina ahora lo es.
-- [ ] Mostrar de dónde sale la rutina, con los **tres** estados que el spec separa:
+- [x] Dentro de la tarjeta **Acceso web** (arranca en la línea 375), agregar una sección **Rutina**. El criterio de qué va en esta tarjeta es *todo lo que la clienta ve en su página*, y la rutina ahora lo es.
+- [x] Mostrar de dónde sale la rutina, con los **tres** estados que el spec separa:
   - `plantillaOrigenId` vacío → "Rutina propia".
   - Con valor y la plantilla existe → "Sigue la plantilla «Fuerza 3 días»".
   - Con valor y la plantilla **no** existe → "⚠ La plantilla que seguía ya no existe. Está usando la última copia."
   
   Hoy los dos últimos casos se ven igual, porque `plantillas.firstOrNull { it.id == plantillaOrigenId }` (línea 188) devuelve `null` en ambos y el `?:` cae a la copia sin decir nada. Con esta feature la diferencia importa: uno es normal y el otro es un aviso.
-- [ ] Listar los días del ciclo, plegables, con el de hoy marcado, y dentro de cada uno sus ejercicios.
-- [ ] **No duplicar la tarjeta "Rutina asignada"** que ya existe en la línea 182. Esa responde *qué rutina tiene y qué día le toca*; ésta responde *qué ejercicios ve la clienta*. Las dos se quedan, y el botón de WhatsApp de la vieja también — sigue sirviendo para quien pide la rutina sin abrir la página.
-- [ ] Compilar (`./gradlew assembleDebug`). Commit.
+- [x] Listar los días del ciclo, plegables, con el de hoy marcado, y dentro de cada uno sus ejercicios.
+- [x] **No duplicar la tarjeta "Rutina asignada"** que ya existe en la línea 182. Esa responde *qué rutina tiene y qué día le toca*; ésta responde *qué ejercicios ve la clienta*. Las dos se quedan, y el botón de WhatsApp de la vieja también — sigue sirviendo para quien pide la rutina sin abrir la página.
+- [x] Compilar (`./gradlew assembleDebug`). Commit.
 
 ### Task 4: Editar los ejercicios de un cliente, y desprenderse de la plantilla
 
 **Archivos:** `ClienteDetailScreen.kt`, `ClienteDetailViewModel.kt`, `FirestoreClienteRepository.kt`, `ClienteRepository.kt`, `FakeClienteRepository.kt`, `ui/rutinas/RutinaEditorScreen.kt`
 
-- [ ] **Extraer `EjercicioRow`** de `RutinaEditorScreen.kt:102` a un componente compartido (p. ej. `ui/common/EjercicioRow.kt`) y dejar de tenerlo `private`. Es exactamente el editor de ejercicio que hace falta acá y reescribirlo sería tener dos que se separan con el tiempo.
-- [ ] Botón **Editar** por día en la sección Rutina: agregar, quitar, reordenar y modificar ejercicios.
-- [ ] **El diálogo de desprenderse.** Si el cliente sigue una plantilla, antes de guardar la primera edición:
+- [x] **Extraer `EjercicioRow`** de `RutinaEditorScreen.kt:102` a un componente compartido (p. ej. `ui/common/EjercicioRow.kt`) y dejar de tenerlo `private`. Es exactamente el editor de ejercicio que hace falta acá y reescribirlo sería tener dos que se separan con el tiempo.
+- [x] Botón **Editar** por día en la sección Rutina: agregar, quitar, reordenar y modificar ejercicios.
+- [x] **El diálogo de desprenderse.** Si el cliente sigue una plantilla, antes de guardar la primera edición:
 
   > Jaime va a dejar de seguir la plantilla «Fuerza 3 días». Los cambios que le hagas a la plantilla ya no le van a llegar.
   > `[Cancelar]` `[Entiendo]`
 
   Va antes y no callado porque el efecto no se nota hasta semanas después, cuando el entrenador edite la plantilla y se pregunte por qué a Jaime no le llegó.
-- [ ] Al aceptar: congelar **la plantilla viva** en `rutinaAsignada` (la viva, no la copia guardada, que puede tener meses) y **borrar `plantillaOrigenId`**. Nada más.
-- [ ] **No se agrega ningún campo de "modo".** `plantillaOrigenId` ya discrimina los dos casos y un booleano aparte sería una segunda fuente de verdad capaz de contradecir a la primera. El `?:` de la línea 188 ya cae a `rutinaAsignada` cuando el campo está vacío, así que el camino de lectura ya hace lo correcto sin tocarlo.
-- [ ] **No tocar `diaActualIndex` ni `diaAnclaFecha`.** El día del ciclo y el origen de la rutina son cosas distintas; moverlo acá le cambiaría el día al cliente sin motivo.
-- [ ] Método nuevo en el repositorio (y en el fake). Compilar. Commit.
+- [x] Al aceptar: congelar **la plantilla viva** en `rutinaAsignada` (la viva, no la copia guardada, que puede tener meses) y **borrar `plantillaOrigenId`**. Nada más.
+- [x] **No se agrega ningún campo de "modo".** `plantillaOrigenId` ya discrimina los dos casos y un booleano aparte sería una segunda fuente de verdad capaz de contradecir a la primera. El `?:` de la línea 188 ya cae a `rutinaAsignada` cuando el campo está vacío, así que el camino de lectura ya hace lo correcto sin tocarlo.
+- [x] **No tocar `diaActualIndex` ni `diaAnclaFecha`.** El día del ciclo y el origen de la rutina son cosas distintas; moverlo acá le cambiaría el día al cliente sin motivo.
+- [x] Método nuevo en el repositorio (y en el fake). Compilar. Commit.
 
 ### Task 5: Confirmar antes de reasignar plantilla a quien tiene rutina propia
 
 **Archivos:** `ClienteDetailScreen.kt`
 
-- [ ] `asignarRutina` sobreescribe `rutinaAsignada` entero y resetea `diaActualIndex`/`diaAnclaFecha`. Asignarle una plantilla a alguien con rutina propia **le borra sus ejercicios personalizados y, más adelante, sus variaciones, sin vuelta atrás.** Hoy no confirma nada porque no había nada que perder.
-- [ ] Pedir confirmación **solo** cuando `plantillaOrigenId` está vacío. Para todos los demás el flujo se queda exactamente como está: no se le agrega fricción al caso normal.
-- [ ] Compilar. Commit.
+- [x] `asignarRutina` sobreescribe `rutinaAsignada` entero y resetea `diaActualIndex`/`diaAnclaFecha`. Asignarle una plantilla a alguien con rutina propia **le borra sus ejercicios personalizados y, más adelante, sus variaciones, sin vuelta atrás.** Hoy no confirma nada porque no había nada que perder.
+- [x] Pedir confirmación **solo** cuando `plantillaOrigenId` está vacío. Para todos los demás el flujo se queda exactamente como está: no se le agrega fricción al caso normal.
+- [x] Compilar. Commit.
 
 ---
 
@@ -158,13 +158,13 @@ data class DiaRutina(
 )
 ```
 
-- [ ] `VariacionDia` existe **porque Firestore no admite arreglos anidados**: un `List<List<Ejercicio>>` no se puede guardar. Envolver cada variación en un objeto la convierte en un arreglo de mapas, que sí. Dejarlo escrito en un comentario, o alguien lo va a "simplificar".
-- [ ] Función pura `ejerciciosDe(dia: DiaRutina, variacion: Int): List<Ejercicio>` en `domain/`, que aplica el invariante: `variaciones` vacía → `ejercicios`; si no → `variaciones[variacion]`, acotando el índice.
-- [ ] Tests primero, **Expected: FAIL**, después implementar:
+- [x] `VariacionDia` existe **porque Firestore no admite arreglos anidados**: un `List<List<Ejercicio>>` no se puede guardar. Envolver cada variación en un objeto la convierte en un arreglo de mapas, que sí. Dejarlo escrito en un comentario, o alguien lo va a "simplificar".
+- [x] Función pura `ejerciciosDe(dia: DiaRutina, variacion: Int): List<Ejercicio>` en `domain/`, que aplica el invariante: `variaciones` vacía → `ejercicios`; si no → `variaciones[variacion]`, acotando el índice.
+- [x] Tests primero, **Expected: FAIL**, después implementar:
   - `` `sin variaciones devuelve la lista base` ``
   - `` `con variaciones devuelve la de su índice` ``
   - `` `un índice fuera de rango se acota en vez de reventar` `` — un documento puede quedar con más variaciones de las que tenía cuando se calculó.
-- [ ] `./gradlew test` en verde. Commit.
+- [x] `./gradlew test` en verde. Commit.
 
 **Invariante, y hay que respetarlo al escribir:** exactamente una de las dos listas está llena. Al crear la **primera** variación de un día se mueve `ejercicios` a `variaciones[0]` y se **vacía** `ejercicios`; al borrar la última, el camino inverso. Se vacía en vez de dejarla ahí porque una lista que ya nadie lee se queda vieja en silencio y el siguiente que la mire va a creerle.
 
@@ -172,11 +172,11 @@ data class DiaRutina(
 
 **Archivos:** `data/model/Asistencia.kt`, `data/repository/AsistenciaRepository.kt`, `FirestoreAsistenciaRepository.kt`, `data/fake/FakeAsistenciaRepository.kt`
 
-- [ ] `val variacionRealizada: Int? = null` en `Asistencia`, junto a `diaRutinaRealizado`. Comentario: es el **registro de lo que pasó**, no un contador mutable — la misma naturaleza que `diaRutinaRealizado`, que ya vive ahí.
-- [ ] Los tres caminos, según la tabla de la sección "Tres cosas que el spec no fija" de arriba. **Releerla antes de escribir**: el primero se traga el campo en silencio si se olvida, y el tercero deja la variación de un día pegada a otro.
-- [ ] `actualizarDiaRealizado` gana el parámetro de la variación recalculada.
-- [ ] Actualizar `FakeAsistenciaRepository` con los mismos tres cambios. Si se queda atrás, los tests prueban un comportamiento que la app real no tiene.
-- [ ] Compilar. Commit.
+- [x] `val variacionRealizada: Int? = null` en `Asistencia`, junto a `diaRutinaRealizado`. Comentario: es el **registro de lo que pasó**, no un contador mutable — la misma naturaleza que `diaRutinaRealizado`, que ya vive ahí.
+- [x] Los tres caminos, según la tabla de la sección "Tres cosas que el spec no fija" de arriba. **Releerla antes de escribir**: el primero se traga el campo en silencio si se olvida, y el tercero deja la variación de un día pegada a otro.
+- [x] `actualizarDiaRealizado` gana el parámetro de la variación recalculada.
+- [x] Actualizar `FakeAsistenciaRepository` con los mismos tres cambios. Si se queda atrás, los tests prueban un comportamiento que la app real no tiene.
+- [x] Compilar. Commit.
 
 ### Task 8: `VariacionCalculator`
 
@@ -197,7 +197,7 @@ variacionQueToca(dia, asistencias, hoy, total):
     si no:                   (v + 1) % total
 ```
 
-- [ ] Tests primero, **Expected: FAIL**. Mirar `RutinaProgressCalculatorTest.kt` y `EscenarioRutina.kt` para el estilo y reutilizar los helpers de escenario:
+- [x] Tests primero, **Expected: FAIL**. Mirar `RutinaProgressCalculatorTest.kt` y `EscenarioRutina.kt` para el estilo y reutilizar los helpers de escenario:
   - `` `sin asistencias previas toca la primera variación` ``
   - `` `la siguiente vuelta avanza una posición` ``
   - `` `después de la última vuelve a la primera` ``
@@ -206,7 +206,7 @@ variacionQueToca(dia, asistencias, hoy, total):
   - `` `una asistencia sin variacionRealizada cuenta como la primera` `` — todo lo anterior a esta feature llega sin el campo.
   - `` `cada día del ciclo rota por su cuenta` `` — el Día 1 puede tener 3 variaciones y el Día 2 ninguna.
   - `` `si se quitan variaciones el índice se acota` ``
-- [ ] `./gradlew test` en verde. Commit.
+- [x] `./gradlew test` en verde. Commit.
 
 **Por qué mira la última y no cuenta las ocurrencias** (está argumentado en el spec, resumen para quien implemente): contar rompe si alguien hace la entrada 17c del backlog —acotar `observarAsistencias` a 12 meses le movería la variación a todo el mundo en silencio—, y contar se recorre entero si corriges una asistencia vieja. Mirar la última es inmune a las dos cosas y tiene la misma forma que `diaQueToca`.
 
@@ -214,29 +214,29 @@ variacionQueToca(dia, asistencias, hoy, total):
 
 **Archivos:** los ViewModels que llaman a `registrarAsistencia`, `iniciarTiempo` y `actualizarDiaRealizado`
 
-- [ ] Localizarlos con `grep -rn "registrarAsistencia\|iniciarTiempo\|actualizarDiaRealizado" --include=*.kt app/src/main/java`. Son varios: Tomar Asistencia, el cronómetro y la corrección desde la pestaña Rutina.
-- [ ] Cada uno calcula con `VariacionCalculator.variacionQueToca(...)` **antes** de escribir y pasa el entero. El repositorio no conoce la rutina ni el historial y no debe conocerlos.
-- [ ] Compilar. Commit.
+- [x] Localizarlos con `grep -rn "registrarAsistencia\|iniciarTiempo\|actualizarDiaRealizado" --include=*.kt app/src/main/java`. Son varios: Tomar Asistencia, el cronómetro y la corrección desde la pestaña Rutina.
+- [x] Cada uno calcula con `VariacionCalculator.variacionQueToca(...)` **antes** de escribir y pasa el entero. El repositorio no conoce la rutina ni el historial y no debe conocerlos.
+- [x] Compilar. Commit.
 
 ### Task 10: UI de variaciones en la tarjeta Web
 
 **Archivos:** `ClienteDetailScreen.kt`, `ClienteDetailViewModel.kt`, repositorio de clientes y su fake
 
-- [ ] Dentro de cada día de la sección Rutina, **solo si el cliente está en rutina propia**: sus variaciones con sus ejercicios, y cuál le toca hoy a esta clienta.
-- [ ] Botones **Agregar variación** y **Quitar variación**, aplicando el invariante del Task 6 (la primera mueve `ejercicios` a `variaciones[0]` y vacía `ejercicios`; borrar la última hace el camino inverso).
-- [ ] En modo plantilla compartida, las variaciones **no se ofrecen**. El spec las deja fuera de las plantillas a propósito: con una plantilla compartida habría que decidir si Ana y Jaime rotan juntos o por separado, y las dos respuestas se defienden. El editor de la pestaña Rutinas **no se toca en toda esta feature**.
-- [ ] Compilar. Commit.
+- [x] Dentro de cada día de la sección Rutina, **solo si el cliente está en rutina propia**: sus variaciones con sus ejercicios, y cuál le toca hoy a esta clienta.
+- [x] Botones **Agregar variación** y **Quitar variación**, aplicando el invariante del Task 6 (la primera mueve `ejercicios` a `variaciones[0]` y vacía `ejercicios`; borrar la última hace el camino inverso).
+- [x] En modo plantilla compartida, las variaciones **no se ofrecen**. El spec las deja fuera de las plantillas a propósito: con una plantilla compartida habría que decidir si Ana y Jaime rotan juntos o por separado, y las dos respuestas se defienden. El editor de la pestaña Rutinas **no se toca en toda esta feature**.
+- [x] Compilar. Commit.
 
 ### Task 11: El gemelo en TypeScript, y la variación en la página
 
 **Archivos:** `web/src/variacion.ts` (nuevo), `web/src/variacion.test.ts` (nuevo), `web/src/datos.ts`, `web/src/ui/tarjetaDia.ts`, `web/src/main.ts`
 
-- [ ] `web/src/variacion.ts` con la misma lógica del Task 8 y el comentario **GEMELO** que ya lleva `web/src/dia.ts`: *"Si cambia allá, cambia acá."*
-- [ ] En `datos.ts`: `variaciones?: VariacionDia[]` en `DiaRutina` y `variacionRealizada?: number | null` en `Asistencia`. **Opcionales a propósito**, con el comentario que ese archivo ya usa dos veces: Firestore omite los campos que nunca se escribieron, así que todo lo anterior a esta feature llega con `undefined` y no con `null`. Usar `== null`, no `===`, por la misma razón que está documentada en `dia.ts` (con `===` se coló un `NaN` hasta indexar `dias[NaN]`).
-- [ ] `tarjetaDia` gana el parámetro de asistencias para poder resolver la variación. Actualizar la llamada en `main.ts`.
-- [ ] **Esto no se denormaliza al documento del cliente**, a diferencia del día. El día se denormalizó porque su cálculo es difícil (ancla, `FECHA_CORTE`, clientes viejos) y no valía la pena reescribirlo en la web. La variación es una búsqueda del máximo sobre asistencias que la web **ya tiene descargadas** con `observarAsistencias`, así que denormalizarla solo agregaría un campo capaz de quedar viejo, sin ahorrar nada.
-- [ ] Tests de `variacion.ts` espejo de los del Task 8, más uno de `tarjetaDia` que verifique que lista los ejercicios de la variación que toca y no los de la primera.
-- [ ] `npm test` en verde. Commit.
+- [x] `web/src/variacion.ts` con la misma lógica del Task 8 y el comentario **GEMELO** que ya lleva `web/src/dia.ts`: *"Si cambia allá, cambia acá."*
+- [x] En `datos.ts`: `variaciones?: VariacionDia[]` en `DiaRutina` y `variacionRealizada?: number | null` en `Asistencia`. **Opcionales a propósito**, con el comentario que ese archivo ya usa dos veces: Firestore omite los campos que nunca se escribieron, así que todo lo anterior a esta feature llega con `undefined` y no con `null`. Usar `== null`, no `===`, por la misma razón que está documentada en `dia.ts` (con `===` se coló un `NaN` hasta indexar `dias[NaN]`).
+- [x] `tarjetaDia` gana el parámetro de asistencias para poder resolver la variación. Actualizar la llamada en `main.ts`.
+- [x] **Esto no se denormaliza al documento del cliente**, a diferencia del día. El día se denormalizó porque su cálculo es difícil (ancla, `FECHA_CORTE`, clientes viejos) y no valía la pena reescribirlo en la web. La variación es una búsqueda del máximo sobre asistencias que la web **ya tiene descargadas** con `observarAsistencias`, así que denormalizarla solo agregaría un campo capaz de quedar viejo, sin ahorrar nada.
+- [x] Tests de `variacion.ts` espejo de los del Task 8, más uno de `tarjetaDia` que verifique que lista los ejercicios de la variación que toca y no los de la primera.
+- [x] `npm test` en verde. Commit.
 
 ### Task 12: Desplegar el bloque C
 

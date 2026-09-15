@@ -11,6 +11,17 @@ interface ClienteRepository {
     fun observarCliente(clienteId: String): Flow<Cliente?>
     suspend fun crearCliente(nombre: String, telefono: String): String
     suspend fun asignarRutina(clienteId: String, rutina: Rutina)
+    /**
+     * Deja la rutina como **propia** del cliente: congela `rutina` en `rutinaAsignada` y borra
+     * `plantillaOrigenId`, que es lo único que discrimina los dos modos (spec
+     * `2026-09-15-rutinas-en-la-web-design.md`). No se agrega un campo de "modo" porque serían
+     * dos fuentes de verdad capaces de contradecirse.
+     *
+     * A diferencia de `asignarRutina`, **no toca `diaActualIndex` ni `diaAnclaFecha`**: el día
+     * del ciclo y el origen de la rutina son cosas distintas, y moverlo acá le cambiaría el día
+     * al cliente sin motivo.
+     */
+    suspend fun guardarRutinaPropia(clienteId: String, rutina: Rutina)
     suspend fun actualizarDatosPersonales(
         clienteId: String,
         nombre: String,

@@ -52,7 +52,8 @@ class FakeAsistenciaRepository : AsistenciaRepository {
         fecha: String,
         asistio: Boolean,
         diaRutinaRealizado: Int?,
-        nota: String
+        nota: String,
+        variacionRealizada: Int?
     ) {
         val existente = obtenerExistente(clienteId, fecha)
         // Solo se escribe el registro: el día del cliente se deduce de estos registros.
@@ -63,6 +64,12 @@ class FakeAsistenciaRepository : AsistenciaRepository {
                 asistio = asistio,
                 justificada = !asistio && existente?.justificada == true,
                 diaRutinaRealizado = if (asistio) diaRutinaRealizado else null,
+                // Igual que el real: lo ya guardado manda, o remarcar reiniciaría la rotación.
+                variacionRealizada = if (asistio) {
+                    existente?.variacionRealizada ?: variacionRealizada
+                } else {
+                    null
+                },
                 nota = nota,
                 horaLlegada = existente?.horaLlegada,
                 horaSalida = existente?.horaSalida,
@@ -74,16 +81,19 @@ class FakeAsistenciaRepository : AsistenciaRepository {
     override suspend fun iniciarTiempo(
         clienteId: String,
         fecha: String,
-        diaRutinaRealizado: Int
+        diaRutinaRealizado: Int,
+        variacionRealizada: Int?
     ) {
         val existente = obtenerExistente(clienteId, fecha)
         // Respeta un día ya registrado, para no pisar una corrección hecha en la pestaña Rutina.
         val dia = existente?.diaRutinaRealizado ?: diaRutinaRealizado
+        val variacion = existente?.variacionRealizada ?: variacionRealizada
         upsert(
             (existente ?: Asistencia(clienteId = clienteId, fecha = fecha)).copy(
                 asistio = true,
                 justificada = false,
                 diaRutinaRealizado = dia,
+                variacionRealizada = variacion,
                 horaLlegada = Timestamp.now(),
                 horaSalida = null,
                 duracionMinutos = null
@@ -106,11 +116,22 @@ class FakeAsistenciaRepository : AsistenciaRepository {
         asistenciasFlow.update { lista -> lista.filterNot { it.fecha == fecha } }
     }
 
-    override suspend fun actualizarDiaRealizado(clienteId: String, fecha: String, nuevoDia: Int) {
+    override suspend fun actualizarDiaRealizado(
+        clienteId: String,
+        fecha: String,
+        nuevoDia: Int,
+        variacionRealizada: Int?
+    ) {
         val existente = obtenerExistente(clienteId, fecha) ?: return
         // Solo tiene sentido corregir el día de una asistencia ya registrada.
         if (!existente.asistio) return
-        upsert(existente.copy(diaRutinaRealizado = nuevoDia))
+        // La variación guardada era del día viejo; se reemplaza por la recalculada.
+        upsert(
+            existente.copy(
+                diaRutinaRealizado = nuevoDia,
+                variacionRealizada = variacionRealizada
+            )
+        )
     }
 
     override suspend fun justificarFalta(clienteId: String, fecha: String, justificada: Boolean) {

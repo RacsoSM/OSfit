@@ -131,6 +131,12 @@ class FakeClienteRepository : ClienteRepository {
         }
     }
 
+    override suspend fun guardarRutinaPropia(clienteId: String, rutina: Rutina) {
+        actualizarCliente(clienteId) {
+            it.copy(rutinaAsignada = rutina, plantillaOrigenId = "")
+        }
+    }
+
     override suspend fun actualizarDatosPersonales(
         clienteId: String,
         nombre: String,

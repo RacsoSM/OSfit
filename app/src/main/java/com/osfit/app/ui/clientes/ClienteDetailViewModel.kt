@@ -30,6 +30,8 @@ import com.osfit.app.domain.AsignarDiaManual
 import com.osfit.app.domain.CupoRevivesCalculator
 import com.osfit.app.domain.RachaCalculator
 import com.osfit.app.domain.RutinaProgressCalculator
+import com.osfit.app.domain.VariacionCalculator
+import com.osfit.app.domain.totalVariaciones
 import java.io.File
 import java.time.LocalDate
 import kotlinx.coroutines.CancellationException
@@ -38,6 +40,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -85,6 +88,28 @@ class ClienteDetailViewModel(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     private val asistenciasDelCliente = asistenciaRepository.observarAsistenciasPorCliente(clienteId)
+
+    /**
+     * Índice del ciclo → variación que le toca hoy en ese día. Se calcula para todos los días,
+     * no sólo el de hoy, porque la tarjeta Web los lista todos y el entrenador quiere ver cuál
+     * le va a tocar en cada uno.
+     *
+     * Mira `rutinaAsignada` porque las variaciones sólo existen en rutina propia, y ahí esa
+     * copia es la verdad. Quien sigue una plantilla no tiene ninguna y todo da 0.
+     */
+    val variacionQueTocaPorDia: StateFlow<Map<Int, Int>> =
+        combine(cliente, asistenciasDelCliente) { c, asistencias ->
+            val dias = c?.rutinaAsignada?.dias.orEmpty()
+            val hoy = LocalDate.now().toString()
+            dias.indices.associateWith { indice ->
+                VariacionCalculator.variacionQueToca(
+                    diaDelCiclo = indice,
+                    asistenciasDelCliente = asistencias,
+                    hoy = hoy,
+                    totalVariaciones = totalVariaciones(dias[indice])
+                )
+            }
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyMap())
 
     /** Día del ciclo que le toca, deducido del historial de asistencias. */
     val diaQueToca: StateFlow<Int> = combine(cliente, asistenciasDelCliente) { c, asistencias ->
@@ -155,6 +180,19 @@ class ClienteDetailViewModel(
         }
     }
 
+    /**
+     * Guardar los ejercicios de un día convierte al cliente a rutina propia. La pantalla ya
+     * avisó y el entrenador ya aceptó: acá solo se persiste.
+     *
+     * No se refresca el día denormalizado, a diferencia de `asignarRutina`: la cantidad de días
+     * no cambia al editar los ejercicios de uno, así que el día no puede quedar fuera de rango.
+     */
+    fun guardarRutinaPropia(rutina: Rutina) {
+        viewModelScope.launch {
+            clienteRepository.guardarRutinaPropia(clienteId, rutina)
+        }
+    }
+
     fun actualizarDatosPersonales(
         nombre: String,
         telefono: String,
@@ -220,13 +258,26 @@ class ClienteDetailViewModel(
 
     fun asignarDiaActual(diaIndex: Int) {
         viewModelScope.launch {
+            val hoy = LocalDate.now().toString()
+            // La variación se calcula acá y se pasa: corregir el día deja la guardada apuntando
+            // a la rotación del día viejo. El repositorio no conoce la rutina ni el historial.
+            val clienteActual = cliente.value
+            val variacion = clienteActual?.let { c ->
+                VariacionCalculator.variacionQueToca(
+                    diaDelCiclo = diaIndex,
+                    asistenciasDelCliente = asistenciasDelCliente.first(),
+                    hoy = hoy,
+                    totalVariaciones = totalVariaciones(c.rutinaAsignada?.dias?.getOrNull(diaIndex))
+                )
+            }
             AsignarDiaManual.ejecutar(
                 clienteRepository = clienteRepository,
                 asistenciaRepository = asistenciaRepository,
                 clienteId = clienteId,
                 diaIndex = diaIndex,
-                hoy = LocalDate.now().toString(),
-                sincronizador = sincronizadorDiaWeb
+                hoy = hoy,
+                sincronizador = sincronizadorDiaWeb,
+                variacionRealizada = variacion
             )
         }
     }

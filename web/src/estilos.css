@@ -110,6 +110,24 @@ main { max-width: 480px; margin: 0 auto; padding: 16px 14px 48px; }
 .hoy { background: linear-gradient(150deg, var(--primario-oscuro), var(--primario)); color: #fff; }
 .hoy .tarjeta-titulo { color: rgba(255, 255, 255, 0.82); }
 .hoy-dia { font-size: 26px; font-weight: 800; margin: 2px 0 4px; line-height: 1.15; }
+/* Los ejercicios del día. Van sobre el degradado de la paleta, así que se tiñen con blancos
+   traslúcidos como el resto de `.hoy-*` en vez de con `--texto-tenue`: la paleta se la asigna
+   el entrenador por clienta y un color fijo se pelearía con la que le toque. */
+.hoy-ejercicios { list-style: none; margin: 10px 0 0; padding: 0; }
+.ejercicio {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px;
+  padding: 7px 0; border-top: 1px solid rgba(255, 255, 255, 0.18);
+}
+.ejercicio-nombre { font-size: 15px; font-weight: 600; flex: 1 1 auto; }
+.ejercicio-series {
+  font-size: 13px; font-weight: 700; white-space: nowrap;
+  background: rgba(0, 0, 0, 0.18); border-radius: 999px; padding: 2px 9px;
+}
+/* La nota ocupa su propio renglón: es texto libre y puede ser larga ("bajarle, se lastimó"). */
+.ejercicio-nota { flex: 1 0 100%; font-size: 12px; color: rgba(255, 255, 255, 0.78); }
+.hoy-sin-ejercicios {
+  font-size: 13px; color: rgba(255, 255, 255, 0.78); margin: 8px 0 0;
+}
 /* Las acciones dentro de la tarjeta del día. Separadas por una línea tenue para que el día
    siga leyéndose de un vistazo y los botones no compitan con él. */
 .hoy-acciones { margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(255, 255, 255, 0.22); }

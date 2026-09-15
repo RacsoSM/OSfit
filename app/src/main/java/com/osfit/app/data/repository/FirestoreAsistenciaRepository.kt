@@ -95,7 +95,8 @@ class FirestoreAsistenciaRepository(
         fecha: String,
         asistio: Boolean,
         diaRutinaRealizado: Int?,
-        nota: String
+        nota: String,
+        variacionRealizada: Int?
     ) {
         val (asistenciaRef, existente) = obtenerAsistencia(clienteId, fecha)
 
@@ -113,6 +114,14 @@ class FirestoreAsistenciaRepository(
             // perder esta bandera le regalaría al cliente el revive que ya gastó.
             justificadaPorCliente = !asistio && existente?.justificadaPorCliente == true,
             diaRutinaRealizado = if (asistio) diaRutinaRealizado else null,
+            // Tercera vez que hace falta la misma precaución: este set() borra lo que no se
+            // nombre. Se respeta la variación ya guardada y el parámetro sólo entra si no había
+            // ninguna — si no, remarcar la asistencia del día reiniciaría la rotación sola.
+            variacionRealizada = if (asistio) {
+                existente?.variacionRealizada ?: variacionRealizada
+            } else {
+                null
+            },
             nota = nota,
             horaLlegada = existente?.horaLlegada,
             horaSalida = existente?.horaSalida,
@@ -128,7 +137,8 @@ class FirestoreAsistenciaRepository(
     override suspend fun iniciarTiempo(
         clienteId: String,
         fecha: String,
-        diaRutinaRealizado: Int
+        diaRutinaRealizado: Int,
+        variacionRealizada: Int?
     ) {
         val (ref, existente) = obtenerAsistencia(clienteId, fecha)
 
@@ -136,6 +146,8 @@ class FirestoreAsistenciaRepository(
         // registrado para esta fecha se respeta, para no pisar una corrección manual
         // hecha desde la pestaña Rutina.
         val dia = existente?.diaRutinaRealizado ?: diaRutinaRealizado
+        // Misma regla que el día: lo ya guardado manda, y el parámetro sólo sirve al crear.
+        val variacion = existente?.variacionRealizada ?: variacionRealizada
 
         val asistencia = (existente ?: Asistencia(clienteId = clienteId, fecha = fecha)).copy(
             id = "",
@@ -143,6 +155,7 @@ class FirestoreAsistenciaRepository(
             justificada = false,
             justificadaPorCliente = false,
             diaRutinaRealizado = dia,
+            variacionRealizada = variacion,
             horaLlegada = Timestamp.now(),
             horaSalida = null,
             duracionMinutos = null
@@ -175,11 +188,24 @@ class FirestoreAsistenciaRepository(
         batch.commit().await()
     }
 
-    override suspend fun actualizarDiaRealizado(clienteId: String, fecha: String, nuevoDia: Int) {
+    override suspend fun actualizarDiaRealizado(
+        clienteId: String,
+        fecha: String,
+        nuevoDia: Int,
+        variacionRealizada: Int?
+    ) {
         val (ref, existente) = obtenerAsistencia(clienteId, fecha)
         // Solo tiene sentido corregir el día de una asistencia ya registrada.
         if (existente == null || !existente.asistio) return
-        ref.update("diaRutinaRealizado", nuevoDia).await()
+        // La variación guardada pertenecía al día VIEJO: dejarla ahí desacomoda la rotación de
+        // los dos días. El llamador la recalcula para el día nuevo y la pasa; se escribe siempre,
+        // incluso nula, que es lo correcto para un día sin variaciones.
+        ref.update(
+            mapOf(
+                "diaRutinaRealizado" to nuevoDia,
+                "variacionRealizada" to variacionRealizada
+            )
+        ).await()
     }
 
     override suspend fun justificarFalta(clienteId: String, fecha: String, justificada: Boolean) {

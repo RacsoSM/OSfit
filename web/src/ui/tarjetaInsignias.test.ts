@@ -98,8 +98,10 @@ describe("tarjetaLogrosPersonales", () => {
     expect(html).toContain(`src="https://storage/logro.png"`);
   });
 
-  it("dibuja la insignia generica cuando no tiene imagen", () => {
-    expect(tarjetaLogrosPersonales([logro()])).toContain(`class="insignia-img generica"`);
+  it("pinta la imagen por defecto cuando el logro no tiene una propia", () => {
+    const html = tarjetaLogrosPersonales([logro({ imagenUrl: null })]);
+    expect(html).toContain(`src="/logroPersonalDefault.png"`);
+    expect(html).not.toContain("generica");
   });
 
   it("ordena por periodo descendente y dentro del periodo por orden", () => {

@@ -18,14 +18,16 @@ interface AsistenciaRepository {
         fecha: String,
         asistio: Boolean,
         diaRutinaRealizado: Int?,
-        nota: String
+        nota: String,
+        variacionRealizada: Int? = null
     )
 
     /** Iniciar el cronómetro equivale a marcar asistencia del [diaRutinaRealizado] dado. */
     suspend fun iniciarTiempo(
         clienteId: String,
         fecha: String,
-        diaRutinaRealizado: Int
+        diaRutinaRealizado: Int,
+        variacionRealizada: Int? = null
     )
 
     suspend fun detenerTiempo(clienteId: String, fecha: String)
@@ -34,7 +36,12 @@ interface AsistenciaRepository {
      * Corrige qué día de la rutina se hizo en [fecha]. Ignora las faltas: un día realizado
      * sobre una falta no significa nada y ensuciaría las estadísticas.
      */
-    suspend fun actualizarDiaRealizado(clienteId: String, fecha: String, nuevoDia: Int)
+    suspend fun actualizarDiaRealizado(
+        clienteId: String,
+        fecha: String,
+        nuevoDia: Int,
+        variacionRealizada: Int? = null
+    )
 
     /**
      * Marca (o desmarca) una falta como justificada. Una falta justificada sigue
