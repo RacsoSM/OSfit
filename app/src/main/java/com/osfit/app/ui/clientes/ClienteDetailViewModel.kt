@@ -89,6 +89,28 @@ class ClienteDetailViewModel(
 
     private val asistenciasDelCliente = asistenciaRepository.observarAsistenciasPorCliente(clienteId)
 
+    /**
+     * Índice del ciclo → variación que le toca hoy en ese día. Se calcula para todos los días,
+     * no sólo el de hoy, porque la tarjeta Web los lista todos y el entrenador quiere ver cuál
+     * le va a tocar en cada uno.
+     *
+     * Mira `rutinaAsignada` porque las variaciones sólo existen en rutina propia, y ahí esa
+     * copia es la verdad. Quien sigue una plantilla no tiene ninguna y todo da 0.
+     */
+    val variacionQueTocaPorDia: StateFlow<Map<Int, Int>> =
+        combine(cliente, asistenciasDelCliente) { c, asistencias ->
+            val dias = c?.rutinaAsignada?.dias.orEmpty()
+            val hoy = LocalDate.now().toString()
+            dias.indices.associateWith { indice ->
+                VariacionCalculator.variacionQueToca(
+                    diaDelCiclo = indice,
+                    asistenciasDelCliente = asistencias,
+                    hoy = hoy,
+                    totalVariaciones = totalVariaciones(dias[indice])
+                )
+            }
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyMap())
+
     /** Día del ciclo que le toca, deducido del historial de asistencias. */
     val diaQueToca: StateFlow<Int> = combine(cliente, asistenciasDelCliente) { c, asistencias ->
         if (c == null) 0 else RutinaProgressCalculator.diaQueToca(c, asistencias)

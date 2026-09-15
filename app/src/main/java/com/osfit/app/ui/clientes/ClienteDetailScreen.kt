@@ -65,6 +65,7 @@ import com.osfit.app.data.model.DiaRutina
 import com.osfit.app.data.model.Ejercicio
 import com.osfit.app.data.model.MedallaCatalogo
 import com.osfit.app.data.model.Rutina
+import com.osfit.app.data.model.VariacionDia
 import com.osfit.app.domain.CupoRevivesCalculator
 import com.osfit.app.domain.RangoResumen
 import com.osfit.app.domain.ResumenClienteCalculator
@@ -386,6 +387,7 @@ fun ClienteDetailScreen(
             item {
                 val acceso by viewModel.accesoWeb.collectAsState()
                 val revivesDisponibles by viewModel.revivesDisponibles.collectAsState()
+                val variacionPorDia by viewModel.variacionQueTocaPorDia.collectAsState()
                 val alcance = rememberCoroutineScope()
                 Spacer(modifier = Modifier.height(12.dp))
                 Card(modifier = Modifier.fillMaxWidth()) {
@@ -410,6 +412,7 @@ fun ClienteDetailScreen(
                             origen = origenRutinaDe(clienteActual, plantillas),
                             dias = diasQueVeLaClienta(clienteActual, plantillas),
                             diaQueToca = diaQueToca,
+                            variacionPorDia = variacionPorDia,
                             nombreCliente = clienteActual.nombre,
                             onGuardarDia = { indice, diaEditado ->
                                 val base = rutinaQueVeLaClienta(clienteActual, plantillas)
@@ -682,11 +685,15 @@ private fun SeccionRutinaWeb(
     origen: OrigenRutina,
     dias: List<DiaRutina>,
     diaQueToca: Int,
+    variacionPorDia: Map<Int, Int>,
     nombreCliente: String,
     onGuardarDia: (Int, DiaRutina) -> Unit,
     onConvertirEnPropia: () -> Unit
 ) {
+    // Qué se está editando: el día, y dentro de él la variación (null = la lista base, que es
+    // la que manda cuando el día no tiene variaciones).
     var diaEnEdicion by remember { mutableStateOf<Int?>(null) }
+    var variacionEnEdicion by remember { mutableStateOf<Int?>(null) }
     // Qué día quiso editar el entrenador mientras el cliente todavía sigue una plantilla. Se
     // guarda aparte de `diaEnEdicion` para que el editor abra recién después de que acepte
     // desprenderse, y no detrás de un diálogo que todavía puede cancelar.
@@ -729,13 +736,22 @@ private fun SeccionRutinaWeb(
             indice = indice,
             dia = dia,
             esElDeHoy = indice == diaQueToca,
-            onEditar = {
+            // Las variaciones quedan fuera de las plantillas compartidas a propósito: habría que
+            // decidir si dos clientas de la misma plantilla rotan juntas o por separado, y las
+            // dos respuestas se defienden. El editor de la pestaña Rutinas no se toca.
+            esRutinaPropia = origen == OrigenRutina.Propia,
+            variacionQueToca = variacionPorDia[indice] ?: 0,
+            onEditar = { variacion ->
                 if (origen is OrigenRutina.SiguePlantilla) {
                     diaQueEsperaSoltar = indice
+                    variacionEnEdicion = variacion
                 } else {
                     diaEnEdicion = indice
+                    variacionEnEdicion = variacion
                 }
-            }
+            },
+            onAgregarVariacion = { onGuardarDia(indice, conVariacionNueva(dia)) },
+            onQuitarVariacion = { onGuardarDia(indice, sinLaUltimaVariacion(dia)) }
         )
     }
 
@@ -758,14 +774,52 @@ private fun SeccionRutinaWeb(
         EditarDiaDialog(
             indice = indiceEnEdicion,
             dia = diaEditado,
+            variacion = variacionEnEdicion,
             onGuardar = { editado ->
                 onGuardarDia(indiceEnEdicion, editado)
                 diaEnEdicion = null
+                variacionEnEdicion = null
             },
-            onCancelar = { diaEnEdicion = null }
+            onCancelar = {
+                diaEnEdicion = null
+                variacionEnEdicion = null
+            }
         )
     }
 }
+
+/**
+ * Agrega una variación al día, respetando el invariante de [DiaRutina].
+ *
+ * Desde un día sin variaciones hace falta crear **dos**: la lista base pasa a ser la primera y
+ * la nueva es la segunda. Una sola variación no rotaría a ningún lado, así que el primer
+ * "Agregar variación" tiene que dejar dos o el botón no haría nada visible.
+ */
+private fun conVariacionNueva(dia: DiaRutina): DiaRutina = if (dia.variaciones.isEmpty()) {
+    dia.copy(
+        ejercicios = emptyList(),
+        variaciones = listOf(VariacionDia(dia.ejercicios), VariacionDia())
+    )
+} else {
+    dia.copy(variaciones = dia.variaciones + VariacionDia())
+}
+
+/**
+ * Quita la última variación. Al bajar a una sola se deshace el camino de [conVariacionNueva]:
+ * sus ejercicios vuelven a la lista base y `variaciones` queda vacía, porque una lista que ya
+ * nadie lee se queda vieja en silencio y el siguiente que la mire va a creerle.
+ */
+private fun sinLaUltimaVariacion(dia: DiaRutina): DiaRutina = when (dia.variaciones.size) {
+    0 -> dia
+    1, 2 -> dia.copy(
+        ejercicios = dia.variaciones.first().ejercicios,
+        variaciones = emptyList()
+    )
+    else -> dia.copy(variaciones = dia.variaciones.dropLast(1))
+}
+
+/** Etiqueta de una variación: A, B, C… Nunca la ve la clienta, sólo el entrenador. */
+private fun etiquetaVariacion(indice: Int): String = ('A' + indice).toString()
 
 /**
  * El aviso antes de desprenderse. Va **antes** de la primera edición y no callado porque el
@@ -802,13 +856,29 @@ private fun SoltarPlantillaDialog(
 private fun EditarDiaDialog(
     indice: Int,
     dia: DiaRutina,
+    variacion: Int?,
     onGuardar: (DiaRutina) -> Unit,
     onCancelar: () -> Unit
 ) {
-    var ejercicios by remember(dia) { mutableStateOf(dia.ejercicios) }
+    // `variacion` nulo edita la lista base; con valor, esa variación. Es el mismo invariante de
+    // `DiaRutina` visto desde el editor: sólo una de las dos listas está viva a la vez.
+    val original = if (variacion == null) {
+        dia.ejercicios
+    } else {
+        dia.variaciones.getOrNull(variacion)?.ejercicios.orEmpty()
+    }
+    var ejercicios by remember(dia, variacion) { mutableStateOf(original) }
     AlertDialog(
         onDismissRequest = onCancelar,
-        title = { Text("Día ${indice + 1}: ${dia.nombreDia}") },
+        title = {
+            Text(
+                if (variacion == null) {
+                    "Día ${indice + 1}: ${dia.nombreDia}"
+                } else {
+                    "Día ${indice + 1}: ${dia.nombreDia} · variación ${etiquetaVariacion(variacion)}"
+                }
+            )
+        },
         text = {
             Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
                 ejercicios.forEachIndexed { posicion, ejercicio ->
@@ -842,7 +912,22 @@ private fun EditarDiaDialog(
             }
         },
         confirmButton = {
-            TextButton(onClick = { onGuardar(dia.copy(ejercicios = ejercicios)) }) { Text("Guardar") }
+            TextButton(
+                onClick = {
+                    val editado = if (variacion == null) {
+                        dia.copy(ejercicios = ejercicios)
+                    } else {
+                        dia.copy(
+                            variaciones = dia.variaciones.toMutableList().also {
+                                it[variacion] = VariacionDia(ejercicios)
+                            }
+                        )
+                    }
+                    onGuardar(editado)
+                }
+            ) {
+                Text("Guardar")
+            }
         },
         dismissButton = { TextButton(onClick = onCancelar) { Text("Cancelar") } }
     )
@@ -853,7 +938,11 @@ private fun DiaRutinaPlegable(
     indice: Int,
     dia: DiaRutina,
     esElDeHoy: Boolean,
-    onEditar: () -> Unit
+    esRutinaPropia: Boolean,
+    variacionQueToca: Int,
+    onEditar: (Int?) -> Unit,
+    onAgregarVariacion: () -> Unit,
+    onQuitarVariacion: () -> Unit
 ) {
     // El de hoy arranca abierto porque es el que el entrenador viene a mirar; se recuerda por
     // `esElDeHoy` para que al avanzar el día del ciclo se abra el nuevo y se cierre el viejo.
@@ -884,25 +973,64 @@ private fun DiaRutinaPlegable(
             )
         }
         if (expandido) {
-            if (dia.ejercicios.isEmpty()) {
-                Text(
-                    "Sin ejercicios cargados: su página muestra sólo el nombre del día.",
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.padding(start = 8.dp, top = 4.dp)
-                )
+            if (dia.variaciones.isEmpty()) {
+                ListaEjercicios(dia.ejercicios)
+                TextButton(onClick = { onEditar(null) }, modifier = Modifier.padding(start = 4.dp)) {
+                    Text("Editar")
+                }
             } else {
-                dia.ejercicios.forEach { ejercicio ->
+                dia.variaciones.forEachIndexed { posicion, variacion ->
                     Text(
-                        textoEjercicio(ejercicio),
-                        style = MaterialTheme.typography.bodySmall,
-                        modifier = Modifier.padding(start = 8.dp, top = 4.dp)
+                        if (posicion == variacionQueToca) {
+                            "Variación ${etiquetaVariacion(posicion)} · le toca hoy"
+                        } else {
+                            "Variación ${etiquetaVariacion(posicion)}"
+                        },
+                        style = MaterialTheme.typography.labelMedium,
+                        color = if (posicion == variacionQueToca) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        },
+                        modifier = Modifier.padding(start = 8.dp, top = 8.dp)
                     )
+                    ListaEjercicios(variacion.ejercicios)
+                    TextButton(
+                        onClick = { onEditar(posicion) },
+                        modifier = Modifier.padding(start = 4.dp)
+                    ) {
+                        Text("Editar")
+                    }
                 }
             }
-            TextButton(onClick = onEditar, modifier = Modifier.padding(start = 4.dp)) {
-                Text("Editar")
+            if (esRutinaPropia) {
+                Row(modifier = Modifier.padding(start = 4.dp)) {
+                    TextButton(onClick = onAgregarVariacion) { Text("Agregar variación") }
+                    if (dia.variaciones.isNotEmpty()) {
+                        TextButton(onClick = onQuitarVariacion) { Text("Quitar variación") }
+                    }
+                }
             }
         }
+    }
+}
+
+@Composable
+private fun ListaEjercicios(ejercicios: List<Ejercicio>) {
+    if (ejercicios.isEmpty()) {
+        Text(
+            "Sin ejercicios cargados: su página muestra sólo el nombre del día.",
+            style = MaterialTheme.typography.bodySmall,
+            modifier = Modifier.padding(start = 8.dp, top = 4.dp)
+        )
+        return
+    }
+    ejercicios.forEach { ejercicio ->
+        Text(
+            textoEjercicio(ejercicio),
+            style = MaterialTheme.typography.bodySmall,
+            modifier = Modifier.padding(start = 8.dp, top = 4.dp)
+        )
     }
 }
 

@@ -222,10 +222,10 @@ variacionQueToca(dia, asistencias, hoy, total):
 
 **Archivos:** `ClienteDetailScreen.kt`, `ClienteDetailViewModel.kt`, repositorio de clientes y su fake
 
-- [ ] Dentro de cada día de la sección Rutina, **solo si el cliente está en rutina propia**: sus variaciones con sus ejercicios, y cuál le toca hoy a esta clienta.
-- [ ] Botones **Agregar variación** y **Quitar variación**, aplicando el invariante del Task 6 (la primera mueve `ejercicios` a `variaciones[0]` y vacía `ejercicios`; borrar la última hace el camino inverso).
-- [ ] En modo plantilla compartida, las variaciones **no se ofrecen**. El spec las deja fuera de las plantillas a propósito: con una plantilla compartida habría que decidir si Ana y Jaime rotan juntos o por separado, y las dos respuestas se defienden. El editor de la pestaña Rutinas **no se toca en toda esta feature**.
-- [ ] Compilar. Commit.
+- [x] Dentro de cada día de la sección Rutina, **solo si el cliente está en rutina propia**: sus variaciones con sus ejercicios, y cuál le toca hoy a esta clienta.
+- [x] Botones **Agregar variación** y **Quitar variación**, aplicando el invariante del Task 6 (la primera mueve `ejercicios` a `variaciones[0]` y vacía `ejercicios`; borrar la última hace el camino inverso).
+- [x] En modo plantilla compartida, las variaciones **no se ofrecen**. El spec las deja fuera de las plantillas a propósito: con una plantilla compartida habría que decidir si Ana y Jaime rotan juntos o por separado, y las dos respuestas se defienden. El editor de la pestaña Rutinas **no se toca en toda esta feature**.
+- [x] Compilar. Commit.
 
 ### Task 11: El gemelo en TypeScript, y la variación en la página
 
