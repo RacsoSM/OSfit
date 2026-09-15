@@ -16,7 +16,67 @@ commit.
 
 # URGENTE
 
-## U1. Terminar la verificación de la Etapa 2 el lunes
+## U1. Terminar la verificación de la Etapa 2 — ⏳ REVIVIR HECHO (2026-09-15), FALTA EL CAMBIO DE DÍA
+
+### Lo verificado el 2026-09-15, y contra qué
+
+Se hizo **con una clienta de pruebas creada para esto**, no contra la cuenta real de Brianda
+como decía el punto 5 de abajo. Eso vuelve inaplicable el aviso de "dejarla como estaba al
+terminar": los datos inventados se pueden quedar donde están. Es mejor que lo acordado y
+conviene repetirlo así la próxima vez.
+
+**`revivirRacha`: terminado.** Conducido con Playwright sobre la página desplegada.
+
+- La tarjeta ofreció **la fecha correcta**, el día hábil anterior —"Repara tu falta del lunes,
+  14 de septiembre"—, y pidió confirmación antes de gastar ("¿Usar uno de tus 3 revives?").
+- Al confirmar, **la racha pasó de 🔥 0 a 🔥 1** y el calendario pintó el 14 de amarillo
+  (Justificada), con el 10 en verde (Viniste).
+- **El cupo baja y se ve en la propia página**, no sólo en la ficha: 3 → 2 → 1, recorrido
+  gastando también el viernes 11, el otro día hábil de la ventana.
+- **El cupo se devuelve solo.** Al desmarcar el entrenador la justificada del 14, la página
+  volvió a ofrecer ese día y a decir "Te quedan 2 este mes", sin tocar nada más. Es lo que
+  `cupo.ts` promete al contar en vez de guardar un contador.
+- **La fecha arbitraria se rechaza.** Llamando al callable a mano con el bearer de la sesión de
+  la clienta y `fecha: "2026-09-01"`, responde **400 `fecha_no_justificable` /
+  `FAILED_PRECONDITION`**. Es lo que impide que revivir sea "justificar cualquier día".
+- **No se pueden gastar los tres en un día, y no es un fallo.** La ventana son 2 días hábiles,
+  así que como mucho hay dos roturas reparables a la vez. Para ver el estado "sin cupo" hace
+  falta una tercera rotura en otra fecha del mes.
+
+**"Hoy no voy a poder ir": terminado.** Sirve sin registro previo, y el acuse persiste al
+recargar (verificado, no supuesto).
+
+**Los motivos:** salen los 5 de la lista general y **no** "Soy una perra frágil", correcto
+porque la clienta de pruebas no es una de las seis.
+
+### Lo que falta, todo del bloque "cambio de día"
+
+La mitad web ya está hecha: el 2026-09-15 se cambió el día desde la página a "Día 3 · Pierna
+completa" con el motivo "Quiero adelantar el día", y la tarjeta quedó mostrando *"Cambiaste tu
+día a las 12:47 · Quiero adelantar el día"*. Lo que queda es todo lo que sólo se ve en la app o
+al día siguiente:
+
+- [ ] **El indicador "🔄 Cambió su día: Quiero adelantar el día" en Tomar Asistencia.** El
+      cambio ya está escrito en `cambiosDia` con fecha 2026-09-15, así que se puede comprobar
+      abriendo Tomar Asistencia de ese día. **Ojo: sólo se dibuja el mismo día del cambio**, así
+      que si se deja pasar la fecha hay que volver a cambiar el día para verlo.
+- [ ] **Que el ciclo avance al día siguiente** en vez de quedarse trabado en el Día 3. Es lo
+      que queda de la regresión de `d424286`: el ancla se fecha ayer a propósito y equivocarse
+      no se nota hoy, sólo mañana.
+- [ ] **El botón deshabilitado con la asistencia de hoy ya marcada** ("Ya registraste tu
+      asistencia de hoy") y que el callable responda `ya_asistio_hoy`. Requiere que el
+      entrenador le marque asistencia hoy a la clienta de pruebas; entonces se puede repetir la
+      llamada a mano igual que se hizo con `revivirRacha`.
+
+### Estado en que quedó la clienta de pruebas
+
+Asistencia el 10, justificadas por ella el 11 y el 14 (2 de 3 revives gastados en septiembre),
+aviso de falta del 15, y cambio de día al Día 3 el 15. Nada de esto es real: es el andamio de
+la verificación y se puede borrar cuando estorbe.
+
+---
+
+## U1 (texto original). Terminar la verificación de la Etapa 2 el lunes
 
 **Detectado:** 2026-09-12 (sábado), intentando verificar la Etapa 2 en dispositivo.
 
