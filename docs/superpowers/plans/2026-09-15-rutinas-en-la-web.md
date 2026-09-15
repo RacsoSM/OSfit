@@ -69,17 +69,17 @@ El repositorio no conoce la rutina del cliente ni su historial, y darle acceso l
 
 **Archivos:** `web/src/ui/tarjetaDia.ts`, `web/src/ui/tarjetaDia.test.ts` (nuevo), `web/src/estilos.css`
 
-- [ ] **Borrar el comentario de las líneas 24-29.** Dice hoy exactamente lo contrario de lo que la función va a hacer (*"muestra solo el nombre del día, nunca los ejercicios... Ver el spec, sección 'Por qué la página no muestra los ejercicios'"*). Reemplazarlo por uno que apunte a `docs/superpowers/specs/2026-09-15-rutinas-en-la-web-design.md` y diga que esa decisión fue revertida el 2026-09-15. Si se deja, el siguiente que lo lea va a quitar la lista creyendo que es un error.
-- [ ] Escribir los tests primero, en `tarjetaDia.test.ts`. Cuatro estados, en este orden de precedencia (el spec los fija):
+- [x] **Borrar el comentario de las líneas 24-29.** Dice hoy exactamente lo contrario de lo que la función va a hacer (*"muestra solo el nombre del día, nunca los ejercicios... Ver el spec, sección 'Por qué la página no muestra los ejercicios'"*). Reemplazarlo por uno que apunte a `docs/superpowers/specs/2026-09-15-rutinas-en-la-web-design.md` y diga que esa decisión fue revertida el 2026-09-15. Si se deja, el siguiente que lo lea va a quitar la lista creyendo que es un error.
+- [x] Escribir los tests primero, en `tarjetaDia.test.ts`. Cuatro estados, en este orden de precedencia (el spec los fija):
   - `` `fin de semana no lista ejercicios aunque el día los tenga` `` — el estado "hoy toca descansar" manda.
   - `` `sin rutina asignada sigue mostrando la tarjeta de siembra` `` — el 🌱 actual, sin cambios.
   - `` `día sin ejercicios explica que el entrenador no los cargó` `` — el caso mayoritario: la mayoría de las rutinas hoy no traen ejercicios. Texto: "Tu entrenador todavía no cargó los ejercicios de este día."
   - `` `día con ejercicios los lista con series, repeticiones y nota` `` — los cuatro campos.
   - `` `el texto del ejercicio se escapa` `` — meter `<script>` y comillas en `nombre` y en `pesoONota`, verificar que sale escapado.
-- [ ] **Expected: FAIL.** Correr `npm test` dentro de `web/` y confirmarlo antes de implementar.
-- [ ] Implementar. De cada ejercicio se muestran **nombre, series, repeticiones y `pesoONota`** (decisión del entrenador el 2026-09-15). Todo pasa por `escapar()`, que ya está en ese archivo: `pesoONota` es texto libre y termina dentro del HTML.
-- [ ] Estilos en `estilos.css`, usando las variables de la paleta que ya existen (`--texto-tenue` y compañía). Nada de colores fijos: la paleta se la asigna el entrenador por clienta.
-- [ ] `npm test` en verde. Commit.
+- [x] **Expected: FAIL.** Correr `npm test` dentro de `web/` y confirmarlo antes de implementar.
+- [x] Implementar. De cada ejercicio se muestran **nombre, series, repeticiones y `pesoONota`** (decisión del entrenador el 2026-09-15). Todo pasa por `escapar()`, que ya está en ese archivo: `pesoONota` es texto libre y termina dentro del HTML.
+- [x] Estilos en `estilos.css`, usando las variables de la paleta que ya existen (`--texto-tenue` y compañía). Nada de colores fijos: la paleta se la asigna el entrenador por clienta.
+- [x] `npm test` en verde. Commit.
 
 **No toca `datos.ts`:** `Ejercicio`, `DiaRutina` y `Rutina` ya están declarados ahí con los cuatro campos, y `Cliente.rutinaAsignada` ya se lee. No hay nada que agregar a la capa de datos.
 
