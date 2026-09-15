@@ -203,6 +203,10 @@ class FakeClienteRepository : ClienteRepository {
         }
     }
 
+    override suspend fun actualizarPesosPropios(clienteId: String, pesos: Map<String, String>) {
+        actualizarCliente(clienteId) { it.copy(pesoPorEjercicio = pesos) }
+    }
+
     override suspend fun actualizarDiaFavorito(clienteId: String, diaIndex: Int) {
         actualizarCliente(clienteId) { it.copy(diaFavoritoIndex = diaIndex) }
     }

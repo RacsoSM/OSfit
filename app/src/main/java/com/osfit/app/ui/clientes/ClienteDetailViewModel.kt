@@ -30,6 +30,8 @@ import com.osfit.app.domain.AsignarDiaManual
 import com.osfit.app.domain.CupoRevivesCalculator
 import com.osfit.app.domain.RachaCalculator
 import com.osfit.app.domain.RutinaProgressCalculator
+import com.osfit.app.domain.conPesoPropio
+import com.osfit.app.domain.conPesosPropios
 import com.osfit.app.domain.VariacionCalculator
 import com.osfit.app.domain.totalVariaciones
 import java.io.File
@@ -192,6 +194,42 @@ class ClienteDetailViewModel(
         viewModelScope.launch {
             clienteRepository.guardarRutinaPropia(clienteId, rutina)
         }
+    }
+
+    /**
+     * Desprende a la clienta de la plantilla **llevándose sus pesos propios dentro de la copia**.
+     *
+     * Si no se plegaran aquí se perderían en el acto: los pesos propios sólo se aplican mientras
+     * siga una plantilla, y desprenderse es justo dejar de seguirla. El mapa se conserva sin
+     * tocar, por si algún día vuelve al grupo.
+     */
+    fun convertirEnRutinaPropia(rutina: Rutina) {
+        val propios = cliente.value?.pesoPorEjercicio.orEmpty()
+        val plegada = rutina.copy(
+            dias = rutina.dias.map { dia ->
+                dia.copy(
+                    ejercicios = conPesosPropios(dia.ejercicios, propios),
+                    variaciones = dia.variaciones.map { variacion ->
+                        variacion.copy(ejercicios = conPesosPropios(variacion.ejercicios, propios))
+                    }
+                )
+            }
+        )
+        guardarRutinaPropia(plegada)
+    }
+
+    /**
+     * Cambia los pesos propios de varios ejercicios sin sacar a la clienta de su plantilla.
+     *
+     * Recibe el lote entero y hace **una** escritura: uno por campo leería `cliente.value` antes
+     * de que el listener trajera la escritura anterior, y cada uno pisaría al de antes.
+     */
+    fun guardarPesosPropios(cambios: Map<String, String>) {
+        val actual = cliente.value?.pesoPorEjercicio.orEmpty()
+        val nuevo = cambios.entries.fold(actual) { acumulado, (nombre, valor) ->
+            conPesoPropio(acumulado, nombre, valor)
+        }
+        viewModelScope.launch { clienteRepository.actualizarPesosPropios(clienteId, nuevo) }
     }
 
     fun actualizarDatosPersonales(

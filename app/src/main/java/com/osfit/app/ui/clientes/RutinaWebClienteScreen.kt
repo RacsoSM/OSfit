@@ -17,6 +17,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -37,6 +38,8 @@ import com.osfit.app.data.model.DiaRutina
 import com.osfit.app.data.model.Ejercicio
 import com.osfit.app.data.model.Rutina
 import com.osfit.app.data.model.VariacionDia
+import com.osfit.app.domain.claveEjercicio
+import com.osfit.app.domain.conPesosPropios
 import com.osfit.app.domain.conVariacionNueva
 import com.osfit.app.domain.etiquetaVariacion
 import com.osfit.app.domain.sinLaUltimaVariacion
@@ -97,8 +100,10 @@ fun RutinaWebClienteScreen(clienteId: String) {
                         },
                         onConvertirEnPropia = {
                             rutinaQueVeLaClienta(clienteActual, plantillas)
-                                ?.let { viewModel.guardarRutinaPropia(it) }
-                        }
+                                ?.let { viewModel.convertirEnRutinaPropia(it) }
+                        },
+                        pesosPropios = clienteActual.pesoPorEjercicio,
+                        onGuardarPesos = viewModel::guardarPesosPropios
                     )
                 }
             }
@@ -155,19 +160,19 @@ private fun SeccionRutinaWeb(
     variacionPorDia: Map<Int, Int>,
     nombreCliente: String,
     onGuardarDia: (Int, DiaRutina) -> Unit,
-    onConvertirEnPropia: () -> Unit
+    onConvertirEnPropia: () -> Unit,
+    pesosPropios: Map<String, String>,
+    onGuardarPesos: (Map<String, String>) -> Unit
 ) {
     // Qué se está editando: el día, y dentro de él la variación (null = la lista base, que es
     // la que manda cuando el día no tiene variaciones).
+    // El editor completo (rutina propia) y el de sólo pesos (mientras sigue una plantilla) son
+    // dos cosas distintas y llevan estado separado: el segundo no desprende a nadie.
     var diaEnEdicion by remember { mutableStateOf<Int?>(null) }
     var variacionEnEdicion by remember { mutableStateOf<Int?>(null) }
-    // Qué día quiso editar el entrenador mientras el cliente todavía sigue una plantilla. Se
-    // guarda aparte de `diaEnEdicion` para que el editor abra recién después de que acepte
-    // desprenderse, y no detrás de un diálogo que todavía puede cancelar.
-    var diaQueEsperaSoltar by remember { mutableStateOf<Int?>(null) }
-    // Desprenderse sin pasar por el editor. Antes sólo se podía editando un día y guardando,
-    // lo que obligaba a abrir un editor y darle Guardar sin cambiar nada.
-    var soltandoSinEditar by remember { mutableStateOf(false) }
+    var diaEnPesos by remember { mutableStateOf<Int?>(null) }
+    var variacionEnPesos by remember { mutableStateOf<Int?>(null) }
+    var soltandoPlantilla by remember { mutableStateOf(false) }
 
     Text("Rutina", style = MaterialTheme.typography.titleSmall)
     when (origen) {
@@ -183,13 +188,14 @@ private fun SeccionRutinaWeb(
                 modifier = Modifier.padding(top = 4.dp)
             )
             Text(
-                "Sus variaciones se editan en la pestaña Rutinas y las comparten todas las que " +
-                    "siguen esta plantilla. Cada una rota por su cuenta, según sus asistencias.",
+                "Los ejercicios y las variaciones se editan en la pestaña Rutinas y los comparten " +
+                    "todas las que siguen esta plantilla. Los pesos y notas sí son suyos: " +
+                    "edítalos con «Editar pesos», sin sacarla de la plantilla.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 2.dp)
             )
-            TextButton(onClick = { soltandoSinEditar = true }) {
+            TextButton(onClick = { soltandoPlantilla = true }) {
                 Text("Convertir en rutina propia")
             }
         }
@@ -223,10 +229,13 @@ private fun SeccionRutinaWeb(
             // desprendería, que es justo lo contrario de lo que quiere quien las comparte.
             esRutinaPropia = origen == OrigenRutina.Propia,
             variacionQueToca = variacionPorDia[indice] ?: 0,
+            // Mientras siga una plantilla se muestran sus pesos, no los del grupo: es lo que ve
+            // en su página, y el entrenador tiene que ver lo mismo.
+            pesosPropios = if (origen is OrigenRutina.SiguePlantilla) pesosPropios else emptyMap(),
             onEditar = { variacion ->
                 if (origen is OrigenRutina.SiguePlantilla) {
-                    diaQueEsperaSoltar = indice
-                    variacionEnEdicion = variacion
+                    diaEnPesos = indice
+                    variacionEnPesos = variacion
                 } else {
                     diaEnEdicion = indice
                     variacionEnEdicion = variacion
@@ -238,29 +247,36 @@ private fun SeccionRutinaWeb(
     }
 
     val plantillaASoltar = (origen as? OrigenRutina.SiguePlantilla)?.nombre
-    if (diaQueEsperaSoltar != null && plantillaASoltar != null) {
-        SoltarPlantillaDialog(
-            nombreCliente = nombreCliente,
-            nombrePlantilla = plantillaASoltar,
-            onAceptar = {
-                diaEnEdicion = diaQueEsperaSoltar
-                diaQueEsperaSoltar = null
-            },
-            onCancelar = { diaQueEsperaSoltar = null }
-        )
-    }
-
-    // El mismo aviso, porque la consecuencia es la misma: lo que cambie en la plantilla deja de
-    // llegarle. Lo único distinto es que al aceptar no se abre ningún editor.
-    if (soltandoSinEditar && plantillaASoltar != null) {
+    if (soltandoPlantilla && plantillaASoltar != null) {
         SoltarPlantillaDialog(
             nombreCliente = nombreCliente,
             nombrePlantilla = plantillaASoltar,
             onAceptar = {
                 onConvertirEnPropia()
-                soltandoSinEditar = false
+                soltandoPlantilla = false
             },
-            onCancelar = { soltandoSinEditar = false }
+            onCancelar = { soltandoPlantilla = false }
+        )
+    }
+
+    val indiceEnPesos = diaEnPesos
+    val diaDePesos = indiceEnPesos?.let { dias.getOrNull(it) }
+    if (indiceEnPesos != null && diaDePesos != null) {
+        EditarPesosDialog(
+            indice = indiceEnPesos,
+            dia = diaDePesos,
+            variacion = variacionEnPesos,
+            nombreCliente = nombreCliente,
+            pesosPropios = pesosPropios,
+            onGuardar = { cambios ->
+                onGuardarPesos(cambios)
+                diaEnPesos = null
+                variacionEnPesos = null
+            },
+            onCancelar = {
+                diaEnPesos = null
+                variacionEnPesos = null
+            }
         )
     }
 
@@ -282,6 +298,76 @@ private fun SeccionRutinaWeb(
             }
         )
     }
+}
+
+/**
+ * Edita **sólo** el peso o la nota de cada ejercicio, para una clienta que sigue una plantilla.
+ *
+ * No la desprende, que es el punto: los ejercicios son del grupo y siguen llegándole, pero el
+ * peso es suyo. Lo que se escriba se guarda en su documento indexado por nombre de ejercicio
+ * (ver `domain/PesosPropios.kt`), no dentro de la plantilla.
+ *
+ * Dejar un campo vacío no borra nada: vuelve a mostrar el de la plantilla, que aparece como
+ * marca de agua para que se vea cuál se estaría heredando.
+ */
+@Composable
+private fun EditarPesosDialog(
+    indice: Int,
+    dia: DiaRutina,
+    variacion: Int?,
+    nombreCliente: String,
+    pesosPropios: Map<String, String>,
+    onGuardar: (Map<String, String>) -> Unit,
+    onCancelar: () -> Unit
+) {
+    val ejercicios = if (variacion == null) {
+        dia.ejercicios
+    } else {
+        dia.variaciones.getOrNull(variacion)?.ejercicios.orEmpty()
+    }
+    // Sólo lo tecleado en este diálogo. Lo que no se toca no entra en el lote y se queda como
+    // estaba, así que abrir y cancelar no puede borrarle nada.
+    var cambios by remember(dia, variacion) { mutableStateOf(mapOf<String, String>()) }
+    AlertDialog(
+        onDismissRequest = onCancelar,
+        title = {
+            Text(
+                if (variacion == null) {
+                    "Pesos de $nombreCliente · Día ${indice + 1}"
+                } else {
+                    "Pesos de $nombreCliente · Día ${indice + 1} variación ${etiquetaVariacion(variacion)}"
+                }
+            )
+        },
+        text = {
+            Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                if (ejercicios.isEmpty()) {
+                    Text("Este día no tiene ejercicios cargados en la plantilla.")
+                }
+                ejercicios.forEach { ejercicio ->
+                    val propio = pesosPropios[claveEjercicio(ejercicio.nombre)].orEmpty()
+                    OutlinedTextField(
+                        value = cambios[ejercicio.nombre] ?: propio,
+                        onValueChange = { cambios = cambios + (ejercicio.nombre to it) },
+                        label = { Text(ejercicio.nombre) },
+                        placeholder = {
+                            Text(
+                                if (ejercicio.pesoONota.isBlank()) {
+                                    "Sin peso en la plantilla"
+                                } else {
+                                    "De la plantilla: ${ejercicio.pesoONota}"
+                                }
+                            )
+                        },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+                    )
+                }
+            }
+        },
+        confirmButton = { TextButton(onClick = { onGuardar(cambios) }) { Text("Guardar") } },
+        dismissButton = { TextButton(onClick = onCancelar) { Text("Cancelar") } }
+    )
 }
 
 /**
@@ -403,6 +489,7 @@ private fun DiaRutinaPlegable(
     esElDeHoy: Boolean,
     esRutinaPropia: Boolean,
     variacionQueToca: Int,
+    pesosPropios: Map<String, String>,
     onEditar: (Int?) -> Unit,
     onAgregarVariacion: () -> Unit,
     onQuitarVariacion: () -> Unit
@@ -436,10 +523,11 @@ private fun DiaRutinaPlegable(
             )
         }
         if (expandido) {
+            val textoEditar = if (esRutinaPropia) "Editar" else "Editar pesos"
             if (dia.variaciones.isEmpty()) {
-                ListaEjercicios(dia.ejercicios)
+                ListaEjercicios(conPesosPropios(dia.ejercicios, pesosPropios))
                 TextButton(onClick = { onEditar(null) }, modifier = Modifier.padding(start = 4.dp)) {
-                    Text("Editar")
+                    Text(textoEditar)
                 }
             } else {
                 dia.variaciones.forEachIndexed { posicion, variacion ->
@@ -457,12 +545,12 @@ private fun DiaRutinaPlegable(
                         },
                         modifier = Modifier.padding(start = 8.dp, top = 8.dp)
                     )
-                    ListaEjercicios(variacion.ejercicios)
+                    ListaEjercicios(conPesosPropios(variacion.ejercicios, pesosPropios))
                     TextButton(
                         onClick = { onEditar(posicion) },
                         modifier = Modifier.padding(start = 4.dp)
                     ) {
-                        Text("Editar")
+                        Text(textoEditar)
                     }
                 }
             }

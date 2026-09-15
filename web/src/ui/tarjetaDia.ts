@@ -1,5 +1,6 @@
 import type { Asistencia, Cliente, DiaRutina, Ejercicio } from "../datos";
 import { interpretar } from "../dia";
+import { conPesosPropios } from "../pesosPropios";
 import { variacionQueToca } from "../variacion";
 
 /** Sábado y domingo no cuentan para la racha, así que la página lo dice en vez de mostrar
@@ -48,6 +49,16 @@ function ejerciciosDeHoy(
   if (variaciones.length === 0) return dia.ejercicios ?? [];
   const cual = variacionQueToca(indiceDia, asistencias, hoy, variaciones.length);
   return variaciones[cual]?.ejercicios ?? [];
+}
+
+/**
+ * Los pesos propios sólo mandan mientras siga una plantilla. Con rutina propia, `rutinaAsignada`
+ * ya trae los suyos plegados dentro, y aplicarlos otra vez pisaría lo que el entrenador acabe de
+ * escribirle en su editor.
+ */
+function conSusPesos(cliente: Cliente, ejercicios: Ejercicio[]): Ejercicio[] {
+  const sigueUnaPlantilla = (cliente.plantillaOrigenId ?? "").trim() !== "";
+  return sigueUnaPlantilla ? conPesosPropios(ejercicios, cliente.pesoPorEjercicio) : ejercicios;
 }
 
 function listaEjercicios(ejercicios: Ejercicio[]): string {
@@ -116,7 +127,9 @@ export function tarjetaDia(
       <p class="tarjeta-titulo">Hoy te toca</p>
       <p class="hoy-dia">Día ${indice + 1}<br>${escapar(dias[indice]?.nombreDia ?? "")}</p>
       ${listaEjercicios(
-        dias[indice] ? ejerciciosDeHoy(dias[indice], indice, asistencias, hoy) : []
+        dias[indice]
+          ? conSusPesos(cliente, ejerciciosDeHoy(dias[indice], indice, asistencias, hoy))
+          : []
       )}
       ${acciones ? `<div class="hoy-acciones">${acciones}</div>` : ""}
     </div>`;

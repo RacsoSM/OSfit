@@ -2,6 +2,7 @@ package com.osfit.app.util
 
 import android.net.Uri
 import com.osfit.app.data.model.DiaRutina
+import com.osfit.app.data.model.Ejercicio
 import java.net.URLEncoder
 
 object WhatsAppUtil {
@@ -41,16 +42,33 @@ object WhatsAppUtil {
         return Uri.parse("https://wa.me/$numero?text=$mensajeCodificado")
     }
 
-    fun crearUriEnviarRutinaDelDia(telefono: String, nombreCliente: String, dia: DiaRutina): Uri {
+    fun crearUriEnviarRutinaDelDia(
+        telefono: String,
+        nombreCliente: String,
+        dia: DiaRutina,
+        ejercicios: List<Ejercicio>
+    ): Uri {
         val numero = normalizarTelefonoMx(telefono)
-        val mensaje = formatearMensajeRutinaDelDia(nombreCliente, dia)
+        val mensaje = formatearMensajeRutinaDelDia(nombreCliente, dia, ejercicios)
         val mensajeCodificado = URLEncoder.encode(mensaje, "UTF-8")
         return Uri.parse("https://wa.me/$numero?text=$mensajeCodificado")
     }
 
-    fun formatearMensajeRutinaDelDia(nombreCliente: String, dia: DiaRutina): String {
+    /**
+     * Recibe los ejercicios ya resueltos en vez de sacarlos de [dia].
+     *
+     * Leer `dia.ejercicios` aquí dejaba el mensaje **vacío** en cuanto el día tenía variaciones:
+     * el invariante de `DiaRutina` vacía esa lista y la buena pasa a ser `variaciones[n]`. Y
+     * además hay que elegir *cuál* variación toca y aplicarle los pesos propios de la clienta,
+     * dos cosas que dependen de su historial y que este util no conoce ni debe conocer.
+     */
+    fun formatearMensajeRutinaDelDia(
+        nombreCliente: String,
+        dia: DiaRutina,
+        ejerciciosDelDia: List<Ejercicio>
+    ): String {
         val encabezado = "Hola, *$nombreCliente*, hoy te toca *${dia.nombreDia}*:\n\n"
-        val ejercicios = dia.ejercicios.mapIndexed { indice, ejercicio ->
+        val ejercicios = ejerciciosDelDia.mapIndexed { indice, ejercicio ->
             buildString {
                 append("${indice + 1}. ${ejercicio.nombre} — ${ejercicio.series} series x ${ejercicio.repeticiones}")
                 if (ejercicio.pesoONota.isNotBlank()) append(" (${ejercicio.pesoONota})")

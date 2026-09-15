@@ -131,4 +131,30 @@ describe("tarjetaDia", () => {
     expect(html).toContain("Empieza por pecho");
     expect(html).not.toContain("Empieza por espalda");
   });
+
+  it("una clienta en plantilla ve su peso propio, no el del grupo", () => {
+    const base = cliente([ejercicio({ nombre: "Press banca", pesoONota: "30 kg" })]);
+    const enPlantilla: Cliente = {
+      ...base,
+      plantillaOrigenId: "r1",
+      pesoPorEjercicio: { "press banca": "40 kg" },
+    };
+    const html = tarjetaDia(enPlantilla, LUNES);
+    expect(html).toContain("40 kg");
+    expect(html).not.toContain("30 kg");
+  });
+
+  it("con rutina propia el mapa no se aplica", () => {
+    // Su copia ya trae los pesos plegados; aplicarlos otra vez pisaría lo que el entrenador
+    // acabe de escribirle en su editor.
+    const base = cliente([ejercicio({ nombre: "Press banca", pesoONota: "30 kg" })]);
+    const propia: Cliente = {
+      ...base,
+      plantillaOrigenId: "",
+      pesoPorEjercicio: { "press banca": "40 kg" },
+    };
+    const html = tarjetaDia(propia, LUNES);
+    expect(html).toContain("30 kg");
+    expect(html).not.toContain("40 kg");
+  });
 });

@@ -958,6 +958,37 @@ cosa.
 
 ---
 
+## 22. Renombrar un ejercicio le borra su peso propio a quien lo tuviera
+
+**Detectado:** 2026-09-15, al construir los pesos por clienta.
+
+`Cliente.pesoPorEjercicio` se indexa por el **nombre normalizado** del ejercicio, y esa
+decisión es la que hace que reordenar la plantilla o meter un ejercicio en medio no le
+despegue los pesos a nadie — que es el caso común. El caso raro es el que paga:
+cambiarle el nombre a un ejercicio en la plantilla ("Press banca" → "Press plano") deja
+huérfano el peso propio de cada clienta que lo tuviera, y todas vuelven a ver el de la
+plantilla.
+
+**No se pierde nada visible ni se rompe nada**: el mapa conserva la entrada vieja, sin
+usarse, y el ejercicio muestra el peso del grupo. Si se vuelve a poner el nombre
+anterior, los pesos reaparecen solos.
+
+**Qué habría que hacer si estorba:** darle un `id` fijo a cada `Ejercicio`, generado al
+guardar la plantilla, e indexar el mapa por ese id en vez de por el nombre. Aguanta
+también el renombrado. Se valoró el 2026-09-15 y se descartó por precio: obliga a
+generar ids, a una pasada sobre las plantillas existentes, y a decidir qué hacer con los
+ejercicios que ya existen sin id.
+
+**Por qué no corre prisa:** renombrar un ejercicio es raro, el daño es que un dato vuelve
+a su valor por defecto, y se nota en el acto al abrir la pantalla.
+
+**Segundo detalle del mismo diseño:** dos ejercicios con el mismo nombre dentro de una
+misma rutina comparten peso propio, porque comparten clave. Si alguna vez hace falta
+distinguirlos (una serie de calentamiento y otra pesada del mismo movimiento), la salida
+es la misma de arriba.
+
+---
+
 ## 21. Las plantillas viejas no llegan a la web hasta que se guarden una vez
 
 **Detectado:** 2026-09-15, al meter variaciones en las plantillas compartidas.

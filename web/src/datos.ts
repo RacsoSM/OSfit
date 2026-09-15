@@ -26,6 +26,16 @@ export interface Cliente {
   nombre: string;
   activo: boolean;
   rutinaAsignada: Rutina | null;
+  /**
+   * Con valor, sigue una plantilla compartida; vacío o ausente, la rutina es suya. Lo único que
+   * decide si `pesoPorEjercicio` se aplica.
+   */
+  plantillaOrigenId?: string;
+  /**
+   * Sus pesos y notas propios, por nombre de ejercicio normalizado. Opcional por la razón de
+   * siempre: Firestore omite los campos que nunca se escribieron.
+   */
+  pesoPorEjercicio?: Record<string, string>;
   ultimoDia: number | null;
   ultimoDiaFecha: string | null;
   ultimoDiaEsAncla: boolean;

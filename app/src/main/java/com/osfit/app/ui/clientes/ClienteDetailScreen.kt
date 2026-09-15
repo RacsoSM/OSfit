@@ -63,6 +63,8 @@ import com.osfit.app.domain.CupoRevivesCalculator
 import com.osfit.app.domain.RangoResumen
 import com.osfit.app.domain.ResumenClienteCalculator
 import com.osfit.app.domain.RutinaProgressCalculator
+import com.osfit.app.domain.conPesosPropios
+import com.osfit.app.domain.ejerciciosDe
 import com.osfit.app.domain.TipoResumen
 import com.osfit.app.ui.common.AccionCard
 import com.osfit.app.ui.common.AsignarDiaDialog
@@ -193,6 +195,19 @@ fun ClienteDetailScreen(
                 val rutinaViva = plantillas.firstOrNull { it.id == clienteActual.plantillaOrigenId }
                 val diaRutinaActual = (rutinaViva?.dias ?: clienteActual.rutinaAsignada?.dias)?.getOrNull(diaActualEfectivo)
                 val nombreDiaActual = diaRutinaActual?.nombreDia
+                // Lo que se manda por WhatsApp tiene que ser lo mismo que ella ve en su página:
+                // la variación que le toca hoy, con sus pesos propios si sigue una plantilla.
+                val variacionPorDia by viewModel.variacionQueTocaPorDia.collectAsState()
+                val ejerciciosDeHoy = diaRutinaActual?.let { dia ->
+                    conPesosPropios(
+                        ejerciciosDe(dia, variacionPorDia[diaActualEfectivo] ?: 0),
+                        if (clienteActual.plantillaOrigenId.isBlank()) {
+                            emptyMap()
+                        } else {
+                            clienteActual.pesoPorEjercicio
+                        }
+                    )
+                }.orEmpty()
                 Card(modifier = Modifier.fillMaxWidth()) {
                     Column(modifier = Modifier.padding(12.dp)) {
                         Row(
@@ -234,7 +249,8 @@ fun ClienteDetailScreen(
                                         val uri = WhatsAppUtil.crearUriEnviarRutinaDelDia(
                                             telefono = clienteActual.telefono,
                                             nombreCliente = clienteActual.nombre,
-                                            dia = diaRutinaActual
+                                            dia = diaRutinaActual,
+                                            ejercicios = ejerciciosDeHoy
                                         )
                                         try {
                                             context.startActivity(Intent(Intent.ACTION_VIEW, uri))

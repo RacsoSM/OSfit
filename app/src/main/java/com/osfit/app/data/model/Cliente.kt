@@ -24,6 +24,17 @@ data class Cliente(
     val fechaProximoPago: Timestamp? = null,
     val fechaIngreso: Timestamp? = null,
     val ejercicioFavoritoPorDia: Map<String, String> = emptyMap(),
+    /**
+     * Peso o nota **de esta clienta** para un ejercicio, indexado por el nombre normalizado
+     * (ver `domain/PesosPropios.kt`). Existe porque `pesoONota` vive dentro de la plantilla y
+     * por tanto es el mismo para todas las que la siguen: el ejercicio es del programa, pero el
+     * peso es de la persona.
+     *
+     * **Sólo se aplica mientras [plantillaOrigenId] tenga valor.** En rutina propia manda
+     * [rutinaAsignada], y aplicarlo encima pisaría lo que el entrenador escribió en su editor.
+     * Se conserva aunque se desprenda, para que vuelva a servir si algún día regresa al grupo.
+     */
+    val pesoPorEjercicio: Map<String, String> = emptyMap(),
     val diaFavoritoIndex: Int? = null,
     val peso: Double? = null,
     val altura: Double? = null,

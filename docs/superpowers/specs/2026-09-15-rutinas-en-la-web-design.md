@@ -159,6 +159,37 @@ Ana y Jaime entrenan en días distintos y van por días distintos del ciclo.
 Editar las variaciones de una clienta concreta desde su ficha **la sigue desprendiendo**
 de la plantilla, sin cambios. Quien comparte una plantilla la edita donde vive.
 
+### Pesos y notas por clienta, sin sacarla de la plantilla
+
+`pesoONota` vive dentro del `Ejercicio` de la plantilla, así que **es el mismo para todas las
+que la siguen**. Eso está bien para el ejercicio, que es del programa, y mal para el peso, que
+es de la persona: hasta que esto existió, darle un peso propio a alguien obligaba a
+desprenderla, y entonces dejaban de llegarle los cambios de la plantilla. Había que elegir
+entre ejercicios compartidos y pesos personales.
+
+`Cliente.pesoPorEjercicio` es un mapa suyo, `nombre normalizado → peso o nota`, que se aplica
+encima de los de la plantilla al mostrarlos. La forma es la misma que ya tenía
+`ejercicioFavoritoPorDia`, que también es un mapa por clienta.
+
+**Se indexa por nombre y no por posición.** Reordenar la plantilla, o meter un ejercicio en
+medio, no le despega los pesos a nadie. El costo aceptado es que **renombrar** un ejercicio
+pierde su peso propio: no rompe nada, vuelve a mostrar el de la plantilla. La alternativa era
+darle un id fijo a cada `Ejercicio`, que aguanta también el renombrado pero obliga a generarlos
+y a una pasada sobre lo existente; se descartó por precio, no porque fuera peor.
+
+**Sólo se aplican mientras siga una plantilla.** En rutina propia la verdad es su copia, y
+aplicarlos encima pisaría lo que el entrenador acaba de escribir en su editor. Por eso, al
+convertirla a rutina propia, sus pesos **se pliegan dentro de la copia** (`convertirEnRutinaPropia`):
+si no, se perderían en el mismo acto de desprenderla. El mapa se conserva igualmente, por si
+algún día vuelve al grupo.
+
+**Un valor en blanco no borra: hereda.** Vaciar el campo es la forma de decir "usa el del
+grupo", y la entrada se quita del mapa en vez de guardarse vacía.
+
+En la app, para quien sigue una plantilla el botón por día dice **"Editar pesos"** y abre un
+diálogo que sólo toca este mapa — no la desprende. El editor completo sigue siendo el de rutina
+propia, y para llegar a él está el botón explícito de convertir.
+
 ### Cómo la plantilla llega a la web
 
 `firestore.rules:73` concede `rutinas` **sólo al entrenador**, y abrirla le enseñaría a
@@ -362,7 +393,7 @@ libre escrito por el entrenador y termina dentro del HTML.
 
 **`pesoONota` queda a la vista de la clienta.** Es un campo de uso mixto: a veces
 tiene el peso ("30 kg"), a veces una nota del entrenador para sí mismo ("bajarle,
-se lastimó"). Se decidió mostrarlo el 2026-09-15 sabiendo esto. Atenúa el riesgo
+se lastimó"). Sigue siéndolo con los pesos por clienta: lo que se escribe ahí lo ve ella. Se decidió mostrarlo el 2026-09-15 sabiendo esto. Atenúa el riesgo
 —pero no lo elimina— que el campo ya viajaba al navegador. **El entrenador tiene
 que saber que ese campo dejó de ser privado**, y conviene decírselo el día que
 esto se despliegue, no dejarlo escrito solo aquí. Si más adelante estorba, la

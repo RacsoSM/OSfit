@@ -46,6 +46,16 @@ interface ClienteRepository {
     suspend fun actualizarProximoPago(clienteId: String, fecha: Timestamp)
     suspend fun actualizarFechaIngreso(clienteId: String, fecha: Timestamp)
     suspend fun actualizarEjercicioFavorito(clienteId: String, diaIndex: Int, ejercicio: String)
+
+    /**
+     * Los pesos y notas propios de esta clienta, por nombre de ejercicio.
+     *
+     * Escribe el mapa **entero** y no una clave suelta: las claves son nombres de ejercicio
+     * escritos por una persona y pueden traer puntos ("Press 3.5"), que en una ruta de campo de
+     * Firestore (`pesoPorEjercicio.$clave`) se interpretarían como anidamiento y crearían un
+     * documento con la forma equivocada.
+     */
+    suspend fun actualizarPesosPropios(clienteId: String, pesos: Map<String, String>)
     suspend fun actualizarDiaFavorito(clienteId: String, diaIndex: Int)
     /** Refresca el día denormalizado que consume la web. Lo llama SincronizadorDiaWeb. */
     suspend fun actualizarDiaDenormalizado(clienteId: String, valor: DiaDenormalizado)

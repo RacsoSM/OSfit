@@ -130,6 +130,10 @@ class FirestoreClienteRepository(
         coleccion.document(clienteId).update("ejercicioFavoritoPorDia.$diaIndex", ejercicio).await()
     }
 
+    override suspend fun actualizarPesosPropios(clienteId: String, pesos: Map<String, String>) {
+        coleccion.document(clienteId).update("pesoPorEjercicio", pesos).await()
+    }
+
     override suspend fun actualizarDiaFavorito(clienteId: String, diaIndex: Int) {
         coleccion.document(clienteId).update("diaFavoritoIndex", diaIndex).await()
     }
