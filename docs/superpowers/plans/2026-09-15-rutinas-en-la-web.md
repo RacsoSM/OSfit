@@ -102,16 +102,16 @@ El repositorio no conoce la rutina del cliente ni su historial, y darle acceso l
 
 Solo lectura en esta tarea. Editar viene en la siguiente.
 
-- [ ] Dentro de la tarjeta **Acceso web** (arranca en la línea 375), agregar una sección **Rutina**. El criterio de qué va en esta tarjeta es *todo lo que la clienta ve en su página*, y la rutina ahora lo es.
-- [ ] Mostrar de dónde sale la rutina, con los **tres** estados que el spec separa:
+- [x] Dentro de la tarjeta **Acceso web** (arranca en la línea 375), agregar una sección **Rutina**. El criterio de qué va en esta tarjeta es *todo lo que la clienta ve en su página*, y la rutina ahora lo es.
+- [x] Mostrar de dónde sale la rutina, con los **tres** estados que el spec separa:
   - `plantillaOrigenId` vacío → "Rutina propia".
   - Con valor y la plantilla existe → "Sigue la plantilla «Fuerza 3 días»".
   - Con valor y la plantilla **no** existe → "⚠ La plantilla que seguía ya no existe. Está usando la última copia."
   
   Hoy los dos últimos casos se ven igual, porque `plantillas.firstOrNull { it.id == plantillaOrigenId }` (línea 188) devuelve `null` en ambos y el `?:` cae a la copia sin decir nada. Con esta feature la diferencia importa: uno es normal y el otro es un aviso.
-- [ ] Listar los días del ciclo, plegables, con el de hoy marcado, y dentro de cada uno sus ejercicios.
-- [ ] **No duplicar la tarjeta "Rutina asignada"** que ya existe en la línea 182. Esa responde *qué rutina tiene y qué día le toca*; ésta responde *qué ejercicios ve la clienta*. Las dos se quedan, y el botón de WhatsApp de la vieja también — sigue sirviendo para quien pide la rutina sin abrir la página.
-- [ ] Compilar (`./gradlew assembleDebug`). Commit.
+- [x] Listar los días del ciclo, plegables, con el de hoy marcado, y dentro de cada uno sus ejercicios.
+- [x] **No duplicar la tarjeta "Rutina asignada"** que ya existe en la línea 182. Esa responde *qué rutina tiene y qué día le toca*; ésta responde *qué ejercicios ve la clienta*. Las dos se quedan, y el botón de WhatsApp de la vieja también — sigue sirviendo para quien pide la rutina sin abrir la página.
+- [x] Compilar (`./gradlew assembleDebug`). Commit.
 
 ### Task 4: Editar los ejercicios de un cliente, y desprenderse de la plantilla
 
