@@ -958,65 +958,6 @@ cosa.
 
 ---
 
-## 22. Renombrar un ejercicio le borra su peso propio a quien lo tuviera
-
-**Detectado:** 2026-09-15, al construir los pesos por clienta.
-
-`Cliente.pesoPorEjercicio` se indexa por el **nombre normalizado** del ejercicio, y esa
-decisión es la que hace que reordenar la plantilla o meter un ejercicio en medio no le
-despegue los pesos a nadie — que es el caso común. El caso raro es el que paga:
-cambiarle el nombre a un ejercicio en la plantilla ("Press banca" → "Press plano") deja
-huérfano el peso propio de cada clienta que lo tuviera, y todas vuelven a ver el de la
-plantilla.
-
-**No se pierde nada visible ni se rompe nada**: el mapa conserva la entrada vieja, sin
-usarse, y el ejercicio muestra el peso del grupo. Si se vuelve a poner el nombre
-anterior, los pesos reaparecen solos.
-
-**Qué habría que hacer si estorba:** darle un `id` fijo a cada `Ejercicio`, generado al
-guardar la plantilla, e indexar el mapa por ese id en vez de por el nombre. Aguanta
-también el renombrado. Se valoró el 2026-09-15 y se descartó por precio: obliga a
-generar ids, a una pasada sobre las plantillas existentes, y a decidir qué hacer con los
-ejercicios que ya existen sin id.
-
-**Por qué no corre prisa:** renombrar un ejercicio es raro, el daño es que un dato vuelve
-a su valor por defecto, y se nota en el acto al abrir la pantalla.
-
-**Segundo detalle del mismo diseño:** dos ejercicios con el mismo nombre dentro de una
-misma rutina comparten peso propio, porque comparten clave. Si alguna vez hace falta
-distinguirlos (una serie de calentamiento y otra pesada del mismo movimiento), la salida
-es la misma de arriba.
-
----
-
-## 21. Las plantillas viejas no llegan a la web hasta que se guarden una vez
-
-**Detectado:** 2026-09-15, al meter variaciones en las plantillas compartidas.
-
-Desde hoy, guardar una plantilla la copia a `rutinaAsignada` de cada clienta que la
-sigue (`RutinaRepository.propagarASeguidoras`). Eso arregla un fallo que llevaba
-existiendo desde que la web muestra ejercicios: **las ediciones de una plantilla nunca
-le llegaban a la página de la clienta**, que seguía mostrando la copia congelada del día
-en que se le asignó. La app enseñaba la plantilla viva y la web otra cosa, sin que nada
-lo dijera.
-
-**Lo que queda pendiente es lo viejo.** La copia se hace *al guardar*, y no se escribió
-ninguna migración que recorra las plantillas existentes. Hasta que cada plantilla se abra
-y se guarde una vez, sus seguidoras siguen viendo en la web lo que veían ayer.
-
-**Qué hacer:** abrir cada plantilla en la pestaña Rutinas y darle Guardar. No hace falta
-cambiar nada; el guardado dispara la copia. Son tantas pulsaciones como plantillas haya.
-
-**Por qué no corre prisa:** no hay nada roto ni peor que antes — es exactamente el estado
-en el que llevaban desde siempre. Sólo que ahora tiene arreglo, y el arreglo es trivial.
-
-**Ojo si en vez de eso se escribe una migración:** tiene que escribir **sólo**
-`rutinaAsignada`. Tocar `diaActualIndex` o `diaAnclaFecha` le movería el día del ciclo a
-todo el mundo de golpe, que es justo el desastre que el spec *Calendario-Rutina como ley*
-existe para impedir.
-
----
-
 ## 20. `DESKTOP-DA82BC2` no tiene Node, npm ni firebase CLI — ✅ RESUELTO CAMBIANDO DE MÁQUINA (2026-09-15)
 
 **Detectado:** 2026-09-15, al arrancar la implementación de la entrada 19.
@@ -1075,3 +1016,64 @@ decisión de diseño, es el peor motivo posible para que se quede parada.
 máquina y que desde CESAVESIN no se puede actualizar la app del teléfono. El proyecto está
 repartido entre al menos tres máquinas con capacidades distintas, y conviene tenerlo presente
 antes de planear una sesión: preguntar primero "¿desde cuál?" ahorra descubrirlo a medias.
+
+---
+
+## 21. Las plantillas viejas no llegan a la web hasta que se guarden una vez
+
+**Detectado:** 2026-09-15, al meter variaciones en las plantillas compartidas.
+
+Desde hoy, guardar una plantilla la copia a `rutinaAsignada` de cada clienta que la
+sigue (`RutinaRepository.propagarASeguidoras`). Eso arregla un fallo que llevaba
+existiendo desde que la web muestra ejercicios: **las ediciones de una plantilla nunca
+le llegaban a la página de la clienta**, que seguía mostrando la copia congelada del día
+en que se le asignó. La app enseñaba la plantilla viva y la web otra cosa, sin que nada
+lo dijera.
+
+**Lo que queda pendiente es lo viejo.** La copia se hace *al guardar*, y no se escribió
+ninguna migración que recorra las plantillas existentes. Hasta que cada plantilla se abra
+y se guarde una vez, sus seguidoras siguen viendo en la web lo que veían ayer.
+
+**Qué hacer:** abrir cada plantilla en la pestaña Rutinas y darle Guardar. No hace falta
+cambiar nada; el guardado dispara la copia. Son tantas pulsaciones como plantillas haya.
+
+**Por qué no corre prisa:** no hay nada roto ni peor que antes — es exactamente el estado
+en el que llevaban desde siempre. Sólo que ahora tiene arreglo, y el arreglo es trivial.
+
+**Ojo si en vez de eso se escribe una migración:** tiene que escribir **sólo**
+`rutinaAsignada`. Tocar `diaActualIndex` o `diaAnclaFecha` le movería el día del ciclo a
+todo el mundo de golpe, que es justo el desastre que el spec *Calendario-Rutina como ley*
+existe para impedir.
+
+---
+
+## 22. Renombrar un ejercicio le borra su peso propio a quien lo tuviera
+
+**Detectado:** 2026-09-15, al construir los pesos por clienta.
+
+`Cliente.pesoPorEjercicio` se indexa por el **nombre normalizado** del ejercicio, y esa
+decisión es la que hace que reordenar la plantilla o meter un ejercicio en medio no le
+despegue los pesos a nadie — que es el caso común. El caso raro es el que paga:
+cambiarle el nombre a un ejercicio en la plantilla ("Press banca" → "Press plano") deja
+huérfano el peso propio de cada clienta que lo tuviera, y todas vuelven a ver el de la
+plantilla.
+
+**No se pierde nada visible ni se rompe nada**: el mapa conserva la entrada vieja, sin
+usarse, y el ejercicio muestra el peso del grupo. Si se vuelve a poner el nombre
+anterior, los pesos reaparecen solos.
+
+**Qué habría que hacer si estorba:** darle un `id` fijo a cada `Ejercicio`, generado al
+guardar la plantilla, e indexar el mapa por ese id en vez de por el nombre. Aguanta
+también el renombrado. Se valoró el 2026-09-15 y se descartó por precio: obliga a
+generar ids, a una pasada sobre las plantillas existentes, y a decidir qué hacer con los
+ejercicios que ya existen sin id.
+
+**Por qué no corre prisa:** renombrar un ejercicio es raro, el daño es que un dato vuelve
+a su valor por defecto, y se nota en el acto al abrir la pantalla.
+
+**Segundo detalle del mismo diseño:** dos ejercicios con el mismo nombre dentro de una
+misma rutina comparten peso propio, porque comparten clave. Si alguna vez hace falta
+distinguirlos (una serie de calentamiento y otra pesada del mismo movimiento), la salida
+es la misma de arriba.
+
+---
