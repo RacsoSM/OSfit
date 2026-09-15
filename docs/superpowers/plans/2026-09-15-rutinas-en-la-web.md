@@ -158,13 +158,13 @@ data class DiaRutina(
 )
 ```
 
-- [ ] `VariacionDia` existe **porque Firestore no admite arreglos anidados**: un `List<List<Ejercicio>>` no se puede guardar. Envolver cada variación en un objeto la convierte en un arreglo de mapas, que sí. Dejarlo escrito en un comentario, o alguien lo va a "simplificar".
-- [ ] Función pura `ejerciciosDe(dia: DiaRutina, variacion: Int): List<Ejercicio>` en `domain/`, que aplica el invariante: `variaciones` vacía → `ejercicios`; si no → `variaciones[variacion]`, acotando el índice.
-- [ ] Tests primero, **Expected: FAIL**, después implementar:
+- [x] `VariacionDia` existe **porque Firestore no admite arreglos anidados**: un `List<List<Ejercicio>>` no se puede guardar. Envolver cada variación en un objeto la convierte en un arreglo de mapas, que sí. Dejarlo escrito en un comentario, o alguien lo va a "simplificar".
+- [x] Función pura `ejerciciosDe(dia: DiaRutina, variacion: Int): List<Ejercicio>` en `domain/`, que aplica el invariante: `variaciones` vacía → `ejercicios`; si no → `variaciones[variacion]`, acotando el índice.
+- [x] Tests primero, **Expected: FAIL**, después implementar:
   - `` `sin variaciones devuelve la lista base` ``
   - `` `con variaciones devuelve la de su índice` ``
   - `` `un índice fuera de rango se acota en vez de reventar` `` — un documento puede quedar con más variaciones de las que tenía cuando se calculó.
-- [ ] `./gradlew test` en verde. Commit.
+- [x] `./gradlew test` en verde. Commit.
 
 **Invariante, y hay que respetarlo al escribir:** exactamente una de las dos listas está llena. Al crear la **primera** variación de un día se mueve `ejercicios` a `variaciones[0]` y se **vacía** `ejercicios`; al borrar la última, el camino inverso. Se vacía en vez de dejarla ahí porque una lista que ya nadie lee se queda vieja en silencio y el siguiente que la mire va a creerle.
 
