@@ -63,6 +63,18 @@ al día siguiente:
 - [ ] **Que el ciclo avance al día siguiente** en vez de quedarse trabado en el Día 3. Es lo
       que queda de la regresión de `d424286`: el ancla se fecha ayer a propósito y equivocarse
       no se nota hoy, sólo mañana.
+
+      **La mitad de esto ya está verificada.** El ancla que escribió `cambiarDia` el
+      2026-09-15 quedó en `diaAnclaFecha: 2026-09-14` con `diaActualIndex: 2`, leído del
+      documento real. O sea que la parte que podía estar mal —fechar el ancla hoy y dejar la
+      asistencia de hoy fuera de su propia ventana, para siempre— está bien.
+
+      **Trampa al comprobarlo, y es fácil caer:** hace falta una **asistencia de hoy**
+      marcada. Sin ella, mañana seguirá diciendo Día 3 y eso es *correcto* —el día avanza al
+      completar una sesión, no al pasar el calendario—, pero se lee igual que el bug. El
+      2026-09-15 la clienta de pruebas quedó **sin** asistencia de ese día, así que quien
+      retome esto tiene que marcarla antes de que la fecha sirva de algo. Con ella puesta, al
+      día siguiente debe mostrar **Día 1** (el ciclo da la vuelta 3 → 1).
 - [ ] **El botón deshabilitado con la asistencia de hoy ya marcada** ("Ya registraste tu
       asistencia de hoy") y que el callable responda `ya_asistio_hoy`. Requiere que el
       entrenador le marque asistencia hoy a la clienta de pruebas; entonces se puede repetir la
