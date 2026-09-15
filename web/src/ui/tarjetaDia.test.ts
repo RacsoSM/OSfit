@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { Cliente, Ejercicio } from "../datos";
+import type { Asistencia, Cliente, Ejercicio } from "../datos";
 import { tarjetaDia } from "./tarjetaDia";
 
 /** 2026-09-15 es lunes; 2026-09-19 viernes; 2026-09-20 domingo. */
@@ -78,5 +78,57 @@ describe("tarjetaDia", () => {
     expect(html).not.toContain("<b>10</b>");
     expect(html).toContain("&lt;script&gt;");
     expect(html).toContain("&quot;lastimó&quot;");
+  });
+
+  it("con variaciones lista la que le toca, no siempre la primera", () => {
+    const base = cliente([]);
+    const conVariaciones: Cliente = {
+      ...base,
+      rutinaAsignada: {
+        id: "r1",
+        nombre: "Fuerza",
+        dias: [
+          {
+            nombreDia: "Pecho y espalda",
+            ejercicios: [],
+            variaciones: [
+              { ejercicios: [ejercicio({ nombre: "Empieza por pecho" })] },
+              { ejercicios: [ejercicio({ nombre: "Empieza por espalda" })] },
+            ],
+          },
+        ],
+      },
+    };
+    // La última vez hizo la A, así que hoy le toca la B.
+    const asistencias: Asistencia[] = [
+      { fecha: "2026-09-08", asistio: true, justificada: false, diaRutinaRealizado: 0, variacionRealizada: 0 },
+    ];
+    const html = tarjetaDia(conVariaciones, LUNES, "", asistencias);
+    expect(html).toContain("Empieza por espalda");
+    expect(html).not.toContain("Empieza por pecho");
+  });
+
+  it("sin asistencias en un día con variaciones muestra la primera", () => {
+    const base = cliente([]);
+    const conVariaciones: Cliente = {
+      ...base,
+      rutinaAsignada: {
+        id: "r1",
+        nombre: "Fuerza",
+        dias: [
+          {
+            nombreDia: "Pecho y espalda",
+            ejercicios: [],
+            variaciones: [
+              { ejercicios: [ejercicio({ nombre: "Empieza por pecho" })] },
+              { ejercicios: [ejercicio({ nombre: "Empieza por espalda" })] },
+            ],
+          },
+        ],
+      },
+    };
+    const html = tarjetaDia(conVariaciones, LUNES, "", []);
+    expect(html).toContain("Empieza por pecho");
+    expect(html).not.toContain("Empieza por espalda");
   });
 });

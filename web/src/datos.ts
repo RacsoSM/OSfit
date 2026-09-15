@@ -3,7 +3,23 @@ import { db } from "./firebase";
 import type { PaletaWeb } from "./paleta";
 
 export interface Ejercicio { nombre: string; series: number; repeticiones: string; pesoONota: string; }
-export interface DiaRutina { nombreDia: string; ejercicios: Ejercicio[]; }
+/**
+ * Envuelve la lista porque Firestore no admite arreglos anidados: un `Ejercicio[][]` no se
+ * puede guardar, un arreglo de mapas sí. Espejo de `VariacionDia` en Kotlin.
+ */
+export interface VariacionDia { ejercicios: Ejercicio[]; }
+
+export interface DiaRutina {
+  nombreDia: string;
+  ejercicios: Ejercicio[];
+  /**
+   * Invariante: exactamente una de las dos listas está llena. Vacía o ausente → manda
+   * `ejercicios`, que es el estado de todo lo anterior al 2026-09-15 y de toda plantilla
+   * compartida. Opcional por la misma razón que los campos de `Asistencia`: Firestore omite
+   * los que nunca se escribieron.
+   */
+  variaciones?: VariacionDia[];
+}
 export interface Rutina { id: string; nombre: string; dias: DiaRutina[]; }
 
 export interface Cliente {
@@ -36,6 +52,13 @@ export interface Asistencia {
    * cronometro (commit 473220e) nunca lo escribieron y llegan sin el campo.
    */
   duracionMinutos?: number | null;
+  /**
+   * Qué variación del día se hizo. Opcional por la misma razón que los dos de arriba: nada
+   * anterior al 2026-09-15 la escribió, así que llega `undefined` y no `null`. Vale 0, que es
+   * lo correcto: cuando esas asistencias se guardaron no había variaciones que preservar.
+   */
+  variacionRealizada?: number | null;
+  diaRutinaRealizado?: number | null;
 }
 
 export function observarCliente(clienteId: string, alCambiar: (c: Cliente | null) => void) {

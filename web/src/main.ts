@@ -143,7 +143,7 @@ async function arrancar(): Promise<void> {
       ${hojaDeMotivosAbierta() ? "" : accionHoyNoPuedo(cliente, hoy, yaAviso)}`;
 
     contenido.innerHTML = `
-      ${tarjetaDia(cliente, hoy, accionesDelDia)}
+      ${tarjetaDia(cliente, hoy, accionesDelDia, asistencias)}
       ${tarjetasStats(asistencias, hoy)}
       ${tarjetaRevivir(cliente, hoy, asistencias)}
       ${calendario(asistencias, mesVisible, hoy)}

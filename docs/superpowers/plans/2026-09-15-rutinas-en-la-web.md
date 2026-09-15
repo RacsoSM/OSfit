@@ -231,12 +231,12 @@ variacionQueToca(dia, asistencias, hoy, total):
 
 **Archivos:** `web/src/variacion.ts` (nuevo), `web/src/variacion.test.ts` (nuevo), `web/src/datos.ts`, `web/src/ui/tarjetaDia.ts`, `web/src/main.ts`
 
-- [ ] `web/src/variacion.ts` con la misma lógica del Task 8 y el comentario **GEMELO** que ya lleva `web/src/dia.ts`: *"Si cambia allá, cambia acá."*
-- [ ] En `datos.ts`: `variaciones?: VariacionDia[]` en `DiaRutina` y `variacionRealizada?: number | null` en `Asistencia`. **Opcionales a propósito**, con el comentario que ese archivo ya usa dos veces: Firestore omite los campos que nunca se escribieron, así que todo lo anterior a esta feature llega con `undefined` y no con `null`. Usar `== null`, no `===`, por la misma razón que está documentada en `dia.ts` (con `===` se coló un `NaN` hasta indexar `dias[NaN]`).
-- [ ] `tarjetaDia` gana el parámetro de asistencias para poder resolver la variación. Actualizar la llamada en `main.ts`.
-- [ ] **Esto no se denormaliza al documento del cliente**, a diferencia del día. El día se denormalizó porque su cálculo es difícil (ancla, `FECHA_CORTE`, clientes viejos) y no valía la pena reescribirlo en la web. La variación es una búsqueda del máximo sobre asistencias que la web **ya tiene descargadas** con `observarAsistencias`, así que denormalizarla solo agregaría un campo capaz de quedar viejo, sin ahorrar nada.
-- [ ] Tests de `variacion.ts` espejo de los del Task 8, más uno de `tarjetaDia` que verifique que lista los ejercicios de la variación que toca y no los de la primera.
-- [ ] `npm test` en verde. Commit.
+- [x] `web/src/variacion.ts` con la misma lógica del Task 8 y el comentario **GEMELO** que ya lleva `web/src/dia.ts`: *"Si cambia allá, cambia acá."*
+- [x] En `datos.ts`: `variaciones?: VariacionDia[]` en `DiaRutina` y `variacionRealizada?: number | null` en `Asistencia`. **Opcionales a propósito**, con el comentario que ese archivo ya usa dos veces: Firestore omite los campos que nunca se escribieron, así que todo lo anterior a esta feature llega con `undefined` y no con `null`. Usar `== null`, no `===`, por la misma razón que está documentada en `dia.ts` (con `===` se coló un `NaN` hasta indexar `dias[NaN]`).
+- [x] `tarjetaDia` gana el parámetro de asistencias para poder resolver la variación. Actualizar la llamada en `main.ts`.
+- [x] **Esto no se denormaliza al documento del cliente**, a diferencia del día. El día se denormalizó porque su cálculo es difícil (ancla, `FECHA_CORTE`, clientes viejos) y no valía la pena reescribirlo en la web. La variación es una búsqueda del máximo sobre asistencias que la web **ya tiene descargadas** con `observarAsistencias`, así que denormalizarla solo agregaría un campo capaz de quedar viejo, sin ahorrar nada.
+- [x] Tests de `variacion.ts` espejo de los del Task 8, más uno de `tarjetaDia` que verifique que lista los ejercicios de la variación que toca y no los de la primera.
+- [x] `npm test` en verde. Commit.
 
 ### Task 12: Desplegar el bloque C
 
