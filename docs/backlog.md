@@ -773,3 +773,62 @@ hace falta más — el token es lo único que canjea la sesión, así que revoca
 
 **Por qué no corre prisa:** el link da acceso solo a los datos de esa clienta, no a los del
 gimnasio, y para usarlo hay que tener el historial del chat. Pero es trabajo de un minuto.
+
+---
+
+## 19. Ejecutar los tres bloques de "Rutinas en la web"
+
+**Detectado:** 2026-09-15, al definir la feature con el entrenador.
+
+> necesito crear una nueva feature que me permita agregar rutinas a la web, estas rutinas
+> deben poder venir de dos lugares diferentes, el que yo escoja
+
+Spec y plan escritos y commiteados, sin una sola línea de código todavía:
+
+- `docs/superpowers/specs/2026-09-15-rutinas-en-la-web-design.md`
+- `docs/superpowers/plans/2026-09-15-rutinas-en-la-web.md`
+
+El plan son 13 tareas en tres bloques. **El orden es por qué se puede desplegar solo, no por
+dependencia técnica**, así que se pueden hacer en sesiones distintas y cortar por donde sea:
+
+- [ ] **Bloque A (Tasks 1-2) — Los ejercicios en la página.** Sirve tal cual, sin nada de lo
+  demás: las clientas que ya tienen ejercicios cargados en su plantilla los verían el mismo
+  día. Es lo más barato de todo el plan y lo único que se despliega.
+- [ ] **Bloque B (Tasks 3-5) — Rutina propia y edición por cliente.** Solo app: no toca la
+  web y no necesita despliegue.
+- [ ] **Bloque C (Tasks 6-12) — Variaciones que rotan solas.** Lo caro. Si hay que cortar
+  algo, se corta esto y los bloques A y B siguen en pie.
+- [ ] **Task 13 — Verificación en dispositivo.** No se puede cubrir con tests: la rotación
+  depende de asistencias reales en días reales y la UI es Compose, que la suite no prueba.
+
+**Tres cosas que conviene saber antes de empezar, y que están argumentadas en el plan:**
+
+**Esto revierte una decisión explícita del spec del 2026-09-10.** Aquel documento tiene una
+sección titulada "Por qué la página no muestra los ejercicios" que avisa a quien lo lea
+después: *"va a ver una tarjeta de 'hoy te toca' sin ejercicios y va a querer 'arreglarla'.
+No es un bug."* El entrenador decidió revertirla el 2026-09-15. El spec nuevo lo dice; el
+viejo hay que leerlo sabiendo esto.
+
+**El Task 2 incluye avisarle al entrenador que `pesoONota` dejó de ser privado.** Es un campo
+de uso mixto —a veces el peso, a veces una nota suya del tipo "bajarle, se lastimó"— y a
+partir del despliegue del Bloque A la clienta lo ve. El riesgo está aceptado por escrito en
+el spec, pero eso no es lo mismo que que él se entere el día que aparece en la pantalla. Ese
+paso no se salta.
+
+**`registrarAsistencia` se traga los campos que no se nombren.** Construye un `Asistencia(...)`
+desde cero y hace `set()`, no un `copy()`. El Bloque C le agrega `variacionRealizada`, y si se
+olvida ahí el síntoma sería que la rotación se reinicia sola cada vez que el entrenador
+remarca una asistencia, sin que nadie lo relacione. Son tres los caminos que escriben el día
+—`registrarAsistencia`, `iniciarTiempo` y `actualizarDiaRealizado`— y los tres tienen que
+tratar la variación. Está en la decisión 1 del plan, con la tabla.
+
+**Por qué no corre prisa:** no hay nada roto. Hoy la página funciona igual que siempre y la
+rutina se la manda el entrenador por WhatsApp, que es lo que se ha hecho hasta ahora. Lo que
+sí conviene es no dejar el Bloque A parado mucho tiempo: es un despliegue de `web/` y ya está
+todo decidido.
+
+**Depende de:** nada. Pero cuando se despliegue el Bloque A se lleva por delante lo que siga
+sin desplegar de la entrada 17 (el esqueleto de carga y el caché persistente, que están en
+`main` desde el 2026-09-15 sin subir). No es un problema —son cambios de `web/` igual— pero
+conviene verificar los dos en la misma pasada en vez de creer que el despliegue hizo solo una
+cosa.
