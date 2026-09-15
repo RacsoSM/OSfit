@@ -13,8 +13,16 @@ function porRangoDescendente<T extends { rangoInicio: string; orden?: number }>(
 }
 
 /**
+ * Imagen por defecto de los logros personales, la misma que empaqueta la app para cuando el
+ * logro no tiene una propia. Vive en `public/`, así que Vite la copia a `dist` tal cual y
+ * queda servida desde la raíz, sin hash ni import.
+ */
+const IMAGEN_LOGRO_POR_DEFECTO = "/logroPersonalDefault.png";
+
+/**
  * Sin `imagenUrl` se dibuja una insignia genérica en vez de un hueco: todo lo otorgado antes
- * de que existiera Storage llegó sin imagen, y esas medallas se ganaron igual.
+ * de que existiera Storage llegó sin imagen, y esas medallas se ganaron igual. Las medallas
+ * no tienen imagen por defecto que poner ahí, así que su respaldo sigue siendo el emoji.
  */
 function insignia(imagenUrl: string | null | undefined, respaldo: string): string {
   return imagenUrl
@@ -72,7 +80,7 @@ export function tarjetaLogrosPersonales(logros: LogroPersonalOtorgado[]): string
   const piezas = porRangoDescendente(logros).map(
     (l) => `
       <div class="insignia">
-        ${insignia(l.imagenUrl, "⭐")}
+        ${insignia(l.imagenUrl ?? IMAGEN_LOGRO_POR_DEFECTO, "⭐")}
         <p class="insignia-nombre">${escapar(l.nombreLogro)}</p>
         <p class="insignia-rango">${escapar(l.encabezadoRango)}</p>
       </div>`

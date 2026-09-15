@@ -197,7 +197,7 @@ variacionQueToca(dia, asistencias, hoy, total):
     si no:                   (v + 1) % total
 ```
 
-- [ ] Tests primero, **Expected: FAIL**. Mirar `RutinaProgressCalculatorTest.kt` y `EscenarioRutina.kt` para el estilo y reutilizar los helpers de escenario:
+- [x] Tests primero, **Expected: FAIL**. Mirar `RutinaProgressCalculatorTest.kt` y `EscenarioRutina.kt` para el estilo y reutilizar los helpers de escenario:
   - `` `sin asistencias previas toca la primera variación` ``
   - `` `la siguiente vuelta avanza una posición` ``
   - `` `después de la última vuelve a la primera` ``
@@ -206,7 +206,7 @@ variacionQueToca(dia, asistencias, hoy, total):
   - `` `una asistencia sin variacionRealizada cuenta como la primera` `` — todo lo anterior a esta feature llega sin el campo.
   - `` `cada día del ciclo rota por su cuenta` `` — el Día 1 puede tener 3 variaciones y el Día 2 ninguna.
   - `` `si se quitan variaciones el índice se acota` ``
-- [ ] `./gradlew test` en verde. Commit.
+- [x] `./gradlew test` en verde. Commit.
 
 **Por qué mira la última y no cuenta las ocurrencias** (está argumentado en el spec, resumen para quien implemente): contar rompe si alguien hace la entrada 17c del backlog —acotar `observarAsistencias` a 12 meses le movería la variación a todo el mundo en silencio—, y contar se recorre entero si corriges una asistencia vieja. Mirar la última es inmune a las dos cosas y tiene la misma forma que `diaQueToca`.
 
