@@ -791,22 +791,22 @@ Spec y plan escritos y commiteados, sin una sola línea de código todavía:
 El plan son 13 tareas en tres bloques. **El orden es por qué se puede desplegar solo, no por
 dependencia técnica**, así que se pueden hacer en sesiones distintas y cortar por donde sea:
 
-- [ ] **Bloque A (Tasks 1-2) — Los ejercicios en la página. 🚧 BLOQUEADO, ver entrada 20.**
-  Sirve tal cual, sin nada de lo demás: las clientas que ya tienen ejercicios cargados en su
-  plantilla los verían el mismo día. Es lo más barato de todo el plan y lo único que se
-  despliega. No se pudo empezar el 2026-09-15 porque la máquina `DESKTOP-DA82BC2` no tiene
-  Node ni npm.
-- [ ] **Bloque B (Tasks 3-5) — Rutina propia y edición por cliente.** Solo app: no toca la
-  web y no necesita despliegue.
-- [ ] **Bloque C (Tasks 6-12) — Variaciones que rotan solas.** Lo caro. Si hay que cortar
-  algo, se corta esto y los bloques A y B siguen en pie. Las Tasks 6-10 son Kotlin y sí se
-  pueden hacer aquí; la **Task 11** (el gemelo `web/src/variacion.ts`) y la **Task 12** (el
-  despliegue) están 🚧 **BLOQUEADAS por la entrada 20**. Ojo con el orden que eso deja: la
-  app escribiría `variacionRealizada` y rotaría bien, pero **la página seguiría mostrando
-  siempre la primera variación** hasta que la Task 11 se haga. No es un estado roto, pero sí
-  uno a medias, y conviene no enseñarlo como terminado.
-- [ ] **Task 13 — Verificación en dispositivo.** No se puede cubrir con tests: la rotación
-  depende de asistencias reales en días reales y la UI es Compose, que la suite no prueba.
+- [x] **Bloque A (Tasks 1-2) — Los ejercicios en la página. ✅ CODIFICADO (2026-09-15),
+  ⏳ FALTA DESPLEGAR.** `tarjetaDia` lista nombre, series, repeticiones y `pesoONota`, y el
+  día sin ejercicios lo dice en vez de dejar un hueco. El 2026-09-15 se desbloqueó al retomarlo
+  desde **SISTEMAS-03**, que sí tiene Node, npm y la CLI de Firebase (ver entrada 20).
+- [x] **Bloque B (Tasks 3-5) — Rutina propia y edición por cliente. ✅ HECHO (2026-09-15).**
+  Solo app: no toca la web y no necesita despliegue. Sección Rutina dentro de la tarjeta
+  Acceso web, edición por día con el diálogo de desprenderse, y confirmación al reasignar
+  plantilla a quien tiene rutina propia.
+- [x] **Bloque C (Tasks 6-12) — Variaciones que rotan solas. ✅ CODIFICADO (2026-09-15),
+  ⏳ FALTA DESPLEGAR.** Modelo, los tres caminos de escritura, `VariacionCalculator`, la UI de
+  variaciones y el gemelo `web/src/variacion.ts`. La Task 11 **sí se hizo**, así que la página
+  no se queda mostrando siempre la primera variación: ese riesgo ya no aplica.
+- [ ] **Task 13 — Verificación en dispositivo. ⏳ PENDIENTE.** No se puede cubrir con tests:
+  la rotación depende de asistencias reales en días reales y la UI es Compose, que la suite no
+  prueba. Es lo único que queda junto con los dos despliegues. La lista de qué probar está en
+  el Task 13 del plan y **no se resume aquí para no tener dos versiones**.
 
 **Tres cosas que conviene saber antes de empezar, y que están argumentadas en el plan:**
 
@@ -815,6 +815,10 @@ sección titulada "Por qué la página no muestra los ejercicios" que avisa a qu
 después: *"va a ver una tarjeta de 'hoy te toca' sin ejercicios y va a querer 'arreglarla'.
 No es un bug."* El entrenador decidió revertirla el 2026-09-15. El spec nuevo lo dice; el
 viejo hay que leerlo sabiendo esto.
+
+**El Task 2 incluye avisarle al entrenador que `pesoONota` dejó de ser privado, y sigue
+pendiente**: el código está, el despliegue no, así que todavía no ha pasado nada en la pantalla
+de nadie. Ese aviso va **antes** de `firebase deploy`, no después.
 
 **El Task 2 incluye avisarle al entrenador que `pesoONota` dejó de ser privado.** Es un campo
 de uso mixto —a veces el peso, a veces una nota suya del tipo "bajarle, se lastimó"— y a
@@ -842,9 +846,22 @@ cosa.
 
 ---
 
-## 20. Esta máquina no tiene Node, npm ni firebase CLI — y eso bloquea todo lo de `web/`
+## 20. `DESKTOP-DA82BC2` no tiene Node, npm ni firebase CLI — ✅ RESUELTO CAMBIANDO DE MÁQUINA (2026-09-15)
 
 **Detectado:** 2026-09-15, al arrancar la implementación de la entrada 19.
+**Resuelto:** el mismo día, retomando el trabajo desde **SISTEMAS-03**.
+
+> **Ojo al leer lo de abajo: el título original decía "esta máquina" y eso ya engaña.** El
+> diagnóstico vale sólo para `DESKTOP-DA82BC2`. **SISTEMAS-03 sí tiene** Node v24.18.0
+> (`C:\Program Files\nodejs`), npm 11.16.0 y la CLI de Firebase (`%APPDATA%\npm\firebase`),
+> y desde ahí se hizo todo lo de `web/` el 2026-09-15: el Bloque A, la Task 11 y las dos
+> suites en verde (264 tests de Kotlin, 108 de TypeScript). Lo que sigue bloqueado no es el
+> `web/`: es el despliegue, que está a la espera de decidirlo, no de una herramienta.
+>
+> Es la segunda opción de las dos que esta misma entrada proponía, y confirma su propia
+> conclusión: **preguntar "¿desde cuál máquina?" antes de planear una sesión** ahorra
+> descubrirlo a medias. Lo que no se hizo es instalar Node en `DESKTOP-DA82BC2`, así que desde
+> ahí sigue sin poderse tocar `web/`.
 
 La máquina **`DESKTOP-DA82BC2`** —una tercera, que el backlog no conocía: hasta ahora solo
 aparecían CESAVESIN y SISTEMAS-03— tiene Java 17 y Gradle funcionando, pero **no tiene Node,
