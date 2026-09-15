@@ -27,7 +27,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
-import com.osfit.app.data.model.Ejercicio
+import com.osfit.app.ui.common.EjercicioRow
 
 @Composable
 fun RutinaEditorScreen(rutinaId: String?, onGuardado: () -> Unit) {
@@ -94,33 +94,6 @@ fun RutinaEditorScreen(rutinaId: String?, onGuardado: () -> Unit) {
                     Text("Guardar rutina")
                 }
             }
-        }
-    }
-}
-
-@Composable
-private fun EjercicioRow(ejercicio: Ejercicio, onChange: (Ejercicio) -> Unit, onEliminar: () -> Unit) {
-    Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-        OutlinedTextField(
-            value = ejercicio.nombre,
-            onValueChange = { onChange(ejercicio.copy(nombre = it)) },
-            label = { Text("Ejercicio") },
-            modifier = Modifier.weight(2f)
-        )
-        OutlinedTextField(
-            value = if (ejercicio.series == 0) "" else ejercicio.series.toString(),
-            onValueChange = { onChange(ejercicio.copy(series = it.toIntOrNull() ?: 0)) },
-            label = { Text("Series") },
-            modifier = Modifier.weight(1f)
-        )
-        OutlinedTextField(
-            value = ejercicio.repeticiones,
-            onValueChange = { onChange(ejercicio.copy(repeticiones = it)) },
-            label = { Text("Reps") },
-            modifier = Modifier.weight(1f)
-        )
-        IconButton(onClick = onEliminar) {
-            Icon(Icons.Filled.Delete, contentDescription = "Eliminar ejercicio")
         }
     }
 }

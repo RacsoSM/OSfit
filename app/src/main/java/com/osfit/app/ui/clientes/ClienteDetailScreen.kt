@@ -15,7 +15,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Chat
 import androidx.compose.material.icons.filled.CloudUpload
@@ -69,6 +72,7 @@ import com.osfit.app.domain.RutinaProgressCalculator
 import com.osfit.app.domain.TipoResumen
 import com.osfit.app.ui.common.AccionCard
 import com.osfit.app.ui.common.AsignarDiaDialog
+import com.osfit.app.ui.common.EjercicioRow
 import com.osfit.app.ui.common.RachaBadge
 import com.osfit.app.ui.common.TextoMaquinaEscribir
 import com.osfit.app.ui.common.rememberFechaActual
@@ -401,7 +405,20 @@ fun ClienteDetailScreen(
                         SeccionRutinaWeb(
                             origen = origenRutinaDe(clienteActual, plantillas),
                             dias = diasQueVeLaClienta(clienteActual, plantillas),
-                            diaQueToca = diaQueToca
+                            diaQueToca = diaQueToca,
+                            nombreCliente = clienteActual.nombre,
+                            onGuardarDia = { indice, diaEditado ->
+                                val base = rutinaQueVeLaClienta(clienteActual, plantillas)
+                                if (base != null) {
+                                    val diasNuevos = base.dias.toMutableList()
+                                    diasNuevos[indice] = diaEditado
+                                    viewModel.guardarRutinaPropia(base.copy(dias = diasNuevos))
+                                }
+                            },
+                            onConvertirEnPropia = {
+                                rutinaQueVeLaClienta(clienteActual, plantillas)
+                                    ?.let { viewModel.guardarRutinaPropia(it) }
+                            }
                         )
                         if (clienteActual.telefono.isNotBlank()) {
                             Button(
@@ -597,15 +614,18 @@ private fun origenRutinaDe(cliente: Cliente, plantillas: List<Rutina>): OrigenRu
 }
 
 /**
- * Los días que realmente ve la clienta: la plantilla viva si todavía existe, y si no la copia
+ * La rutina que realmente ve la clienta: la plantilla viva si todavía existe, y si no la copia
  * congelada en el cliente. Es el mismo `?:` que usa la tarjeta "Rutina asignada", para que las
  * dos muestren lo mismo.
+ *
+ * Es también la que hay que congelar al desprenderse: **la viva, no la copia guardada**, que
+ * puede tener meses de atraso respecto de la plantilla.
  */
+private fun rutinaQueVeLaClienta(cliente: Cliente, plantillas: List<Rutina>): Rutina? =
+    plantillas.firstOrNull { it.id == cliente.plantillaOrigenId } ?: cliente.rutinaAsignada
+
 private fun diasQueVeLaClienta(cliente: Cliente, plantillas: List<Rutina>): List<DiaRutina> =
-    (
-        plantillas.firstOrNull { it.id == cliente.plantillaOrigenId }?.dias
-            ?: cliente.rutinaAsignada?.dias
-        ).orEmpty()
+    rutinaQueVeLaClienta(cliente, plantillas)?.dias.orEmpty()
 
 /**
  * La rutina dentro de la tarjeta "Acceso web". Va ahí y no en una tarjeta propia porque el
@@ -619,8 +639,17 @@ private fun diasQueVeLaClienta(cliente: Cliente, plantillas: List<Rutina>): List
 private fun SeccionRutinaWeb(
     origen: OrigenRutina,
     dias: List<DiaRutina>,
-    diaQueToca: Int
+    diaQueToca: Int,
+    nombreCliente: String,
+    onGuardarDia: (Int, DiaRutina) -> Unit,
+    onConvertirEnPropia: () -> Unit
 ) {
+    var diaEnEdicion by remember { mutableStateOf<Int?>(null) }
+    // Qué día quiso editar el entrenador mientras el cliente todavía sigue una plantilla. Se
+    // guarda aparte de `diaEnEdicion` para que el editor abra recién después de que acepte
+    // desprenderse, y no detrás de un diálogo que todavía puede cancelar.
+    var diaQueEsperaSoltar by remember { mutableStateOf<Int?>(null) }
+
     Text("Rutina", style = MaterialTheme.typography.titleSmall)
     when (origen) {
         OrigenRutina.Propia -> Text(
@@ -633,12 +662,17 @@ private fun SeccionRutinaWeb(
             style = MaterialTheme.typography.bodySmall,
             modifier = Modifier.padding(top = 4.dp)
         )
-        OrigenRutina.PlantillaBorrada -> Text(
-            "⚠ La plantilla que seguía ya no existe. Está usando la última copia.",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.error,
-            modifier = Modifier.padding(top = 4.dp)
-        )
+        OrigenRutina.PlantillaBorrada -> {
+            Text(
+                "⚠ La plantilla que seguía ya no existe. Está usando la última copia.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.padding(top = 4.dp)
+            )
+            // Sin diálogo de por medio: no hay nada que perder, la plantilla ya no existe y sus
+            // cambios no podían llegarle. Sólo quita el aviso y deja el estado consistente.
+            TextButton(onClick = onConvertirEnPropia) { Text("Convertir en rutina propia") }
+        }
     }
     if (dias.isEmpty()) {
         Text(
@@ -649,12 +683,136 @@ private fun SeccionRutinaWeb(
         return
     }
     dias.forEachIndexed { indice, dia ->
-        DiaRutinaPlegable(indice = indice, dia = dia, esElDeHoy = indice == diaQueToca)
+        DiaRutinaPlegable(
+            indice = indice,
+            dia = dia,
+            esElDeHoy = indice == diaQueToca,
+            onEditar = {
+                if (origen is OrigenRutina.SiguePlantilla) {
+                    diaQueEsperaSoltar = indice
+                } else {
+                    diaEnEdicion = indice
+                }
+            }
+        )
+    }
+
+    val plantillaASoltar = (origen as? OrigenRutina.SiguePlantilla)?.nombre
+    if (diaQueEsperaSoltar != null && plantillaASoltar != null) {
+        SoltarPlantillaDialog(
+            nombreCliente = nombreCliente,
+            nombrePlantilla = plantillaASoltar,
+            onAceptar = {
+                diaEnEdicion = diaQueEsperaSoltar
+                diaQueEsperaSoltar = null
+            },
+            onCancelar = { diaQueEsperaSoltar = null }
+        )
+    }
+
+    val indiceEnEdicion = diaEnEdicion
+    val diaEditado = indiceEnEdicion?.let { dias.getOrNull(it) }
+    if (indiceEnEdicion != null && diaEditado != null) {
+        EditarDiaDialog(
+            indice = indiceEnEdicion,
+            dia = diaEditado,
+            onGuardar = { editado ->
+                onGuardarDia(indiceEnEdicion, editado)
+                diaEnEdicion = null
+            },
+            onCancelar = { diaEnEdicion = null }
+        )
     }
 }
 
+/**
+ * El aviso antes de desprenderse. Va **antes** de la primera edición y no callado porque el
+ * efecto no se nota hasta semanas después, cuando el entrenador edite la plantilla y se
+ * pregunte por qué a esta clienta no le llegó.
+ */
 @Composable
-private fun DiaRutinaPlegable(indice: Int, dia: DiaRutina, esElDeHoy: Boolean) {
+private fun SoltarPlantillaDialog(
+    nombreCliente: String,
+    nombrePlantilla: String,
+    onAceptar: () -> Unit,
+    onCancelar: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onCancelar,
+        title = { Text("Dejar de seguir la plantilla") },
+        text = {
+            Text(
+                "$nombreCliente va a dejar de seguir la plantilla «$nombrePlantilla». " +
+                    "Los cambios que le hagas a la plantilla ya no le van a llegar."
+            )
+        },
+        confirmButton = { TextButton(onClick = onAceptar) { Text("Entiendo") } },
+        dismissButton = { TextButton(onClick = onCancelar) { Text("Cancelar") } }
+    )
+}
+
+/**
+ * Edita los ejercicios de un día. Trabaja sobre una copia en memoria y sólo la entrega al
+ * guardar: cancelar tiene que dejar la rutina como estaba, y guardar campo por campo escribiría
+ * en Firestore con cada tecla.
+ */
+@Composable
+private fun EditarDiaDialog(
+    indice: Int,
+    dia: DiaRutina,
+    onGuardar: (DiaRutina) -> Unit,
+    onCancelar: () -> Unit
+) {
+    var ejercicios by remember(dia) { mutableStateOf(dia.ejercicios) }
+    AlertDialog(
+        onDismissRequest = onCancelar,
+        title = { Text("Día ${indice + 1}: ${dia.nombreDia}") },
+        text = {
+            Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                ejercicios.forEachIndexed { posicion, ejercicio ->
+                    EjercicioRow(
+                        ejercicio = ejercicio,
+                        onChange = { cambiado ->
+                            ejercicios = ejercicios.toMutableList().also { it[posicion] = cambiado }
+                        },
+                        onEliminar = {
+                            ejercicios = ejercicios.toMutableList().also { it.removeAt(posicion) }
+                        },
+                        mostrarPesoONota = true,
+                        onSubir = if (posicion == 0) null else {
+                            {
+                                ejercicios = ejercicios.toMutableList()
+                                    .also { it.add(posicion - 1, it.removeAt(posicion)) }
+                            }
+                        },
+                        onBajar = if (posicion == ejercicios.lastIndex) null else {
+                            {
+                                ejercicios = ejercicios.toMutableList()
+                                    .also { it.add(posicion + 1, it.removeAt(posicion)) }
+                            }
+                        }
+                    )
+                }
+                TextButton(onClick = { ejercicios = ejercicios + Ejercicio() }) {
+                    Icon(Icons.Filled.Add, contentDescription = null)
+                    Text("Agregar ejercicio")
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = { onGuardar(dia.copy(ejercicios = ejercicios)) }) { Text("Guardar") }
+        },
+        dismissButton = { TextButton(onClick = onCancelar) { Text("Cancelar") } }
+    )
+}
+
+@Composable
+private fun DiaRutinaPlegable(
+    indice: Int,
+    dia: DiaRutina,
+    esElDeHoy: Boolean,
+    onEditar: () -> Unit
+) {
     // El de hoy arranca abierto porque es el que el entrenador viene a mirar; se recuerda por
     // `esElDeHoy` para que al avanzar el día del ciclo se abra el nuevo y se cierre el viejo.
     var expandido by remember(esElDeHoy) { mutableStateOf(esElDeHoy) }
@@ -698,6 +856,9 @@ private fun DiaRutinaPlegable(indice: Int, dia: DiaRutina, esElDeHoy: Boolean) {
                         modifier = Modifier.padding(start = 8.dp, top = 4.dp)
                     )
                 }
+            }
+            TextButton(onClick = onEditar, modifier = Modifier.padding(start = 4.dp)) {
+                Text("Editar")
             }
         }
     }

@@ -57,6 +57,15 @@ class FirestoreClienteRepository(
         ).await()
     }
 
+    override suspend fun guardarRutinaPropia(clienteId: String, rutina: Rutina) {
+        coleccion.document(clienteId).update(
+            mapOf(
+                "rutinaAsignada" to rutina,
+                "plantillaOrigenId" to ""
+            )
+        ).await()
+    }
+
     override suspend fun actualizarDatosPersonales(
         clienteId: String,
         nombre: String,

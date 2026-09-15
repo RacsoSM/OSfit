@@ -155,6 +155,19 @@ class ClienteDetailViewModel(
         }
     }
 
+    /**
+     * Guardar los ejercicios de un día convierte al cliente a rutina propia. La pantalla ya
+     * avisó y el entrenador ya aceptó: acá solo se persiste.
+     *
+     * No se refresca el día denormalizado, a diferencia de `asignarRutina`: la cantidad de días
+     * no cambia al editar los ejercicios de uno, así que el día no puede quedar fuera de rango.
+     */
+    fun guardarRutinaPropia(rutina: Rutina) {
+        viewModelScope.launch {
+            clienteRepository.guardarRutinaPropia(clienteId, rutina)
+        }
+    }
+
     fun actualizarDatosPersonales(
         nombre: String,
         telefono: String,

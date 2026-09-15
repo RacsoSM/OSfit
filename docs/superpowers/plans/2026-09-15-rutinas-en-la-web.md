@@ -117,18 +117,18 @@ Solo lectura en esta tarea. Editar viene en la siguiente.
 
 **Archivos:** `ClienteDetailScreen.kt`, `ClienteDetailViewModel.kt`, `FirestoreClienteRepository.kt`, `ClienteRepository.kt`, `FakeClienteRepository.kt`, `ui/rutinas/RutinaEditorScreen.kt`
 
-- [ ] **Extraer `EjercicioRow`** de `RutinaEditorScreen.kt:102` a un componente compartido (p. ej. `ui/common/EjercicioRow.kt`) y dejar de tenerlo `private`. Es exactamente el editor de ejercicio que hace falta acá y reescribirlo sería tener dos que se separan con el tiempo.
-- [ ] Botón **Editar** por día en la sección Rutina: agregar, quitar, reordenar y modificar ejercicios.
-- [ ] **El diálogo de desprenderse.** Si el cliente sigue una plantilla, antes de guardar la primera edición:
+- [x] **Extraer `EjercicioRow`** de `RutinaEditorScreen.kt:102` a un componente compartido (p. ej. `ui/common/EjercicioRow.kt`) y dejar de tenerlo `private`. Es exactamente el editor de ejercicio que hace falta acá y reescribirlo sería tener dos que se separan con el tiempo.
+- [x] Botón **Editar** por día en la sección Rutina: agregar, quitar, reordenar y modificar ejercicios.
+- [x] **El diálogo de desprenderse.** Si el cliente sigue una plantilla, antes de guardar la primera edición:
 
   > Jaime va a dejar de seguir la plantilla «Fuerza 3 días». Los cambios que le hagas a la plantilla ya no le van a llegar.
   > `[Cancelar]` `[Entiendo]`
 
   Va antes y no callado porque el efecto no se nota hasta semanas después, cuando el entrenador edite la plantilla y se pregunte por qué a Jaime no le llegó.
-- [ ] Al aceptar: congelar **la plantilla viva** en `rutinaAsignada` (la viva, no la copia guardada, que puede tener meses) y **borrar `plantillaOrigenId`**. Nada más.
-- [ ] **No se agrega ningún campo de "modo".** `plantillaOrigenId` ya discrimina los dos casos y un booleano aparte sería una segunda fuente de verdad capaz de contradecir a la primera. El `?:` de la línea 188 ya cae a `rutinaAsignada` cuando el campo está vacío, así que el camino de lectura ya hace lo correcto sin tocarlo.
-- [ ] **No tocar `diaActualIndex` ni `diaAnclaFecha`.** El día del ciclo y el origen de la rutina son cosas distintas; moverlo acá le cambiaría el día al cliente sin motivo.
-- [ ] Método nuevo en el repositorio (y en el fake). Compilar. Commit.
+- [x] Al aceptar: congelar **la plantilla viva** en `rutinaAsignada` (la viva, no la copia guardada, que puede tener meses) y **borrar `plantillaOrigenId`**. Nada más.
+- [x] **No se agrega ningún campo de "modo".** `plantillaOrigenId` ya discrimina los dos casos y un booleano aparte sería una segunda fuente de verdad capaz de contradecir a la primera. El `?:` de la línea 188 ya cae a `rutinaAsignada` cuando el campo está vacío, así que el camino de lectura ya hace lo correcto sin tocarlo.
+- [x] **No tocar `diaActualIndex` ni `diaAnclaFecha`.** El día del ciclo y el origen de la rutina son cosas distintas; moverlo acá le cambiaría el día al cliente sin motivo.
+- [x] Método nuevo en el repositorio (y en el fake). Compilar. Commit.
 
 ### Task 5: Confirmar antes de reasignar plantilla a quien tiene rutina propia
 
