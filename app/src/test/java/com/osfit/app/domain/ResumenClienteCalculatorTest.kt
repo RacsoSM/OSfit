@@ -45,6 +45,21 @@ class ResumenClienteCalculatorTest {
     }
 
     @Test
+    fun `contarDiasHabiles ignora sabados y domingos`() {
+        // La semana lunes-viernes son 5 días hábiles.
+        val semana = ResumenClienteCalculator.rangoSemanal(LocalDate.of(2024, 3, 20))
+        assertEquals(5, ResumenClienteCalculator.contarDiasHabiles(semana))
+
+        // Marzo 2024: 31 días, 5 sábados y 5 domingos.
+        val mes = ResumenClienteCalculator.rangoMensual(YearMonth.of(2024, 3))
+        assertEquals(21, ResumenClienteCalculator.contarDiasHabiles(mes))
+
+        // 1ra quincena de marzo 2024: del viernes 1 al viernes 15, con 2 fines de semana.
+        val quincena = ResumenClienteCalculator.rangoQuincenal(LocalDate.of(2024, 3, 8))
+        assertEquals(11, ResumenClienteCalculator.contarDiasHabiles(quincena))
+    }
+
+    @Test
     fun `rangoQuincenal arma el 1-15 cuando la fecha cae en la primera mitad del mes`() {
         val rango = ResumenClienteCalculator.rangoQuincenal(LocalDate.of(2024, 3, 8))
         assertEquals(LocalDate.of(2024, 3, 1), rango.inicio)

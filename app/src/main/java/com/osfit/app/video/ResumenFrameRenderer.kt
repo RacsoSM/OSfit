@@ -241,7 +241,10 @@ object ResumenFrameRenderer {
         is EscenaResumen.Asistencia -> {
             val prefijo = "${determinante(escena.unidad, mayuscula = true)} ${escena.unidad} asististe "
             val diasTexto = "${escena.dias} días"
-            val texto = prefijo + diasTexto
+            // Los fines de semana no cuentan: el total contra el que se compara son los días
+            // hábiles del rango.
+            val sufijo = " de ${escena.diasHabiles} días hábiles"
+            val texto = prefijo + diasTexto + sufijo
             listOf(
                 BloqueTexto(escena.encabezadoRango, inicioMs = 0, duracionMs = 400, y = 160f, tamano = 44f, color = Color.LTGRAY, estilo = Typeface.NORMAL),
                 BloqueTexto(
@@ -249,11 +252,7 @@ object ResumenFrameRenderer {
                     inicioMs = 400,
                     duracionMs = (texto.length * VELOCIDAD_DESTACADO_MS_POR_CARACTER).toLong(),
                     y = 700f, tamano = 84f, color = Color.WHITE, estilo = Typeface.BOLD,
-                    resaltados = listOf(Resaltado(prefijo.length until texto.length, paleta.destacado))
-                ),
-                BloqueTexto(
-                    comparacion(escena.ranking, "¡Vas primero en asistencias ${determinante(escena.unidad)} ${escena.unidad}!", "asistencias"),
-                    inicioMs = 3_400, duracionMs = 800, y = 1500f, tamano = 48f, color = Color.LTGRAY, estilo = Typeface.NORMAL
+                    resaltados = listOf(Resaltado(prefijo.length until prefijo.length + diasTexto.length, paleta.destacado))
                 )
             )
         }

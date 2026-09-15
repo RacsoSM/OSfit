@@ -12,6 +12,9 @@ sealed class EscenaResumen {
     data class Asistencia(
         val encabezadoRango: String,
         val dias: Int,
+        // Días hábiles del rango (lunes a viernes): el total contra el que se compara
+        // [dias] en la frase de la escena. Los fines de semana no cuentan.
+        val diasHabiles: Int,
         val unidad: String,
         val ranking: RankingResultado
     ) : EscenaResumen()

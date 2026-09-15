@@ -13,7 +13,7 @@ class TimelineResumenTest {
     private fun timelineDeDosEscenas() = TimelineResumen(
         listOf(
             EscenaResumen.Saludo("Ana"),
-            EscenaResumen.Asistencia("Semana 1", dias = 3, unidad = "semana", ranking = ranking)
+            EscenaResumen.Asistencia("Semana 1", dias = 3, diasHabiles = 5, unidad = "semana", ranking = ranking)
         )
     )
 

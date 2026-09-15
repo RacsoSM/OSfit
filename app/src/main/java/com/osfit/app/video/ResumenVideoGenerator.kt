@@ -4,6 +4,7 @@ import android.content.Context
 import com.osfit.app.data.AppContainer
 import com.osfit.app.data.model.LogroPersonalCatalogo
 import com.osfit.app.data.model.MedallaCatalogo
+import com.osfit.app.domain.ResumenClienteCalculator
 import com.osfit.app.domain.ResumenClienteData
 import com.osfit.app.domain.TipoResumen
 import com.osfit.app.util.CancionUtil
@@ -139,6 +140,7 @@ object ResumenVideoGenerator {
             EscenaResumen.Asistencia(
                 encabezadoRango = encabezadoRango,
                 dias = resumen.diasAsistidos,
+                diasHabiles = ResumenClienteCalculator.contarDiasHabiles(resumen.rango),
                 unidad = unidad,
                 ranking = resumen.rankingAsistencia
             ),

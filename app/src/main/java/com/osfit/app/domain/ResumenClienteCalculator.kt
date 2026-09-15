@@ -122,6 +122,20 @@ object ResumenClienteCalculator {
         )
     }
 
+    /**
+     * Días hábiles del rango: lunes a viernes, ignorando sábados y domingos. Es el total
+     * contra el que el video compara los días asistidos ("asististe 8 días de 9 días hábiles").
+     */
+    fun contarDiasHabiles(rango: RangoResumen): Int {
+        var contador = 0
+        var dia = rango.inicio
+        while (!dia.isAfter(rango.fin)) {
+            if (dia.dayOfWeek != DayOfWeek.SATURDAY && dia.dayOfWeek != DayOfWeek.SUNDAY) contador++
+            dia = dia.plusDays(1)
+        }
+        return contador
+    }
+
     fun calcularRanking(valoresPorCliente: List<Pair<Cliente, Int>>, clienteId: String): RankingResultado {
         val grupos = valoresPorCliente
             .groupBy { it.second }

@@ -151,6 +151,16 @@ class ResumenVideoGeneratorTest {
     }
 
     @Test
+    fun `la escena Asistencia lleva los dias habiles del rango, sin fines de semana`() {
+        val rango = ResumenClienteCalculator.rangoMensual(YearMonth.of(2024, 3))
+        val escenas = ResumenVideoGenerator.construirEscenas(resumen(rango))
+        val asistencia = escenas[1] as EscenaResumen.Asistencia
+
+        // Marzo 2024 tiene 31 días, de los cuales 21 son hábiles.
+        assertEquals(21, asistencia.diasHabiles)
+    }
+
+    @Test
     fun `el encabezado de rango mensual reusa el encabezado de RangoResumen`() {
         val rango = ResumenClienteCalculator.rangoMensual(YearMonth.of(2024, 3))
         val escenas = ResumenVideoGenerator.construirEscenas(resumen(rango))
