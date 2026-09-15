@@ -28,7 +28,41 @@ main { max-width: 480px; margin: 0 auto; padding: 16px 14px 48px; }
   position: fixed; inset: 0; width: 100%; height: 100%;
   z-index: -1; pointer-events: none;
 }
-.cargando { color: var(--texto-tenue); text-align: center; padding: 40px 0; }
+/* El esqueleto de carga que vive en `index.html`. Reusa `.tarjeta` y `.fila` para que
+   ocupe el mismo lugar que el contenido real y la página no dé un salto al llenarse.
+   Todos los grises son neutros, nunca de la paleta: los colores de la clienta llegan
+   después y un esqueleto morado haría que la página cambiara de color a la vista. */
+.esq-saludo {
+  width: 180px; height: 38px; border-radius: 8px;
+  background: var(--superficie-alta); margin: 4px 2px 14px;
+}
+.esq-linea { height: 13px; border-radius: 7px; background: var(--superficie-alta); margin: 10px 0; }
+.esq-corta { width: 35%; height: 10px; }
+.esq-titulo { width: 70%; height: 24px; }
+.esq-numero { width: 45%; height: 26px; }
+/* Las alturas salen de medir las tarjetas reales en el navegador, no a ojo: si el
+   esqueleto es más bajo que lo que viene a reemplazarlo, la página da un salto al
+   llenarse y se siente peor que no haber puesto nada. */
+.esq-hoy { min-height: 237px; }
+.esq-stat { min-height: 101px; }
+.esq-calendario { min-height: 350px; }
+.esq-cal-nav { height: 32px; border-radius: 8px; background: var(--superficie-alta); margin: 10px 0; }
+/* Cinco filas y `aspect-ratio: 1`, igual que `.cal`: da los mismos 235px de alto que el mes
+   real, así el calendario no se mueve al aparecer. */
+.esq-cuadricula { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.esq-cuadricula span { aspect-ratio: 1; border-radius: 7px; background: var(--superficie-alta); }
+.esq-leyenda { width: 60%; height: 11px; border-radius: 6px; background: var(--superficie-alta); margin-top: 12px; }
+/* Un latido lento sobre el bloque entero, no por elemento: 28 cuadritos parpadeando cada
+   uno por su cuenta se ve como ruido. */
+.esqueleto { animation: latido 1.6s ease-in-out infinite; }
+@keyframes latido {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+/* Quien pidió menos movimiento ve el esqueleto quieto, igual que el saludo. */
+@media (prefers-reduced-motion: reduce) {
+  .esqueleto { animation: none; }
+}
 /* El saludo. El nombre lleva el mismo degradado morado que la tarjeta del día, recortado
    sobre el texto, para que la página salude con el color de su propia identidad. */
 .saludo {

@@ -42,7 +42,49 @@
       </g>
     </svg>
 
-    <main id="app"><p class="cargando">Cargando…</p></main>
+    <!--
+      Esqueleto de carga. Vive en el HTML y no en `main.ts` a propósito: así se pinta en
+      cuanto llega el documento, sin esperar los ~170 kB del bundle de Firebase ni el canje
+      del token. Lo que antes se veía como varios segundos de página vacía ahora se ve como
+      una página que ya está ahí, llenándose.
+
+      Sin un solo color de la paleta: los colores de la clienta recién llegan con su
+      documento de Firestore, y pintar el esqueleto en morado haría que la página cambiara
+      de color a la vista. Gris neutro no parpadea.
+
+      Lo borra el primer `pintar()`, que reemplaza el `innerHTML` de #app entero.
+    -->
+    <main id="app">
+      <div class="esqueleto" role="status" aria-label="Cargando">
+        <div class="esq-saludo"></div>
+        <div class="tarjeta esq-hoy">
+          <div class="esq-linea esq-corta"></div>
+          <div class="esq-linea esq-titulo"></div>
+          <div class="esq-linea"></div>
+        </div>
+        <div class="fila">
+          <div class="tarjeta esq-stat">
+            <div class="esq-linea esq-corta"></div>
+            <div class="esq-linea esq-numero"></div>
+          </div>
+          <div class="tarjeta esq-stat">
+            <div class="esq-linea esq-corta"></div>
+            <div class="esq-linea esq-numero"></div>
+          </div>
+        </div>
+        <div class="tarjeta esq-calendario">
+          <div class="esq-cal-nav"></div>
+          <div class="esq-cuadricula">
+            <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+            <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+            <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+            <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+            <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+          </div>
+          <div class="esq-leyenda"></div>
+        </div>
+      </div>
+    </main>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
