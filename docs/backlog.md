@@ -710,6 +710,45 @@ Las dos perillas, si al verlo hay que ajustar: `ESCALA_SOBREPASO` (cuánto se pa
 `DESTELLO_PICO` (cuánto brilla). Cambiar cualquiera de las dos no rompe ningún test salvo que
 `ESCALA_SOBREPASO` baje de 1f, que es justo lo que ese test protege.
 
+### Segunda pasada (2026-09-15): "casi no se nota"
+
+El entrenador lo vio y no se notaba. Tenía razón, y por **dos** motivos, los dos errores de
+la primera pasada y los dos invisibles desde los tests:
+
+**1. El fade se comía la animación.** La opacidad iba de 0 a 255 en los **mismos** 600ms en
+que la escala subía de 0.4× a 1.12×. La medalla hacía casi todo su crecimiento siendo
+transparente: se animaba, pero no se veía animarse. Ahora la opacidad llega a tope en 180ms
+(`MEDALLA_OPACIDAD_MS`) y quedan 420ms de crecimiento a la vista.
+
+**2. El destello estaba saturado, y el cambio anterior no hizo nada.** En `dibujarHalo` el
+alpha es `(HALO_ALPHA_MEDALLA * intensidad).coerceIn(0, 255)`, y con `HALO_ALPHA_MEDALLA` en
+150 **cualquier intensidad por encima de ~1.7 clampea a 255**. Subir `DESTELLO_PICO` de 1.7 a
+2.6 fue literalmente un no-op. El halo no podía brillar más: tenía que crecer. Eso es
+`HALO_CRECIMIENTO_DESTELLO`, que agranda el radio del halo con la intensidad y es la perilla
+de verdad. Con intensidad 1 —los logros personales— no cambia nada.
+
+Lo demás de esta pasada, ya con eso arreglado:
+
+- **Rango de escala mucho mayor:** 0.12× → sobrepaso 1.38× (antes 0.4× → 1.12×).
+- **`rotacionEntrada`, nueva.** Entra ladeada −16°, se pasa a +5° al aterrizar y se endereza
+  oscilando hasta 0° exacto. El golpe deja de ser solo de tamaño.
+- **`ondaExpansiva`, nueva.** Un aro blanco que sale del borde en el frame del golpe, se abre
+  hasta 2.9× el radio y se apaga en 520ms. **Es un solo `drawCircle` en STROKE por frame,
+  ~16 frames en total** — por eso éste sí se paga y un sistema de partículas no.
+- **Asentamiento de 1200 a 1400ms.** Termina en 5.3s, todavía antes del mensaje (5.9s).
+
+La oscilación amortiguada se extrajo a `oscilacionAmortiguada`, compartida por escala y
+rotación: las dos tienen que morir en el mismo instante y en cero exacto, y con dos copias
+eso se separa en cuanto alguien toque una.
+
+Tests: 11 en `MedallaAnimacionTest.kt`, cuatro nuevos. Uno de ellos es el que habría cazado el
+fallo del fade — *"la medalla ya es opaca mientras todavía está creciendo"*: busca el primer
+instante en que la opacidad llega a 1f y exige que en ese momento le quede todavía más de
+0.30 de crecimiento por hacer. Suite completa: 275 tests.
+
+**Sigue sin verificarse cómo se ve.** Los tests miden la forma de las curvas; que el resultado
+se sienta un premio solo se sabe mirando un video.
+
 ---
 
 ## 17. Arranque lento de la web — ⏳ DESPLEGADO (2026-09-15), FALTA VERIFICAR Y LO DEMÁS

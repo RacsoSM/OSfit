@@ -62,8 +62,32 @@ internal const val MEDALLA_FADE_MS = 600L
  * - [ESCALA_SOBREPASO] hasta dónde se pasa en el aterrizaje (el golpe),
  * - [ASENTAMIENTO_MS] cuánto late después antes de quedarse quieta en 1f.
  */
-internal const val ESCALA_ENTRADA_INICIAL = 0.4f
-internal const val ESCALA_SOBREPASO = 1.12f
+internal const val ESCALA_ENTRADA_INICIAL = 0.12f
+internal const val ESCALA_SOBREPASO = 1.38f
+
+/**
+ * La opacidad llega a tope **mucho antes** de que la medalla aterrice, y eso no es un detalle:
+ * es el arreglo del fallo de la primera pasada. Entonces el fade y la escala compartían los
+ * mismos [MEDALLA_FADE_MS], así que la medalla hacía casi todo su crecimiento siendo
+ * transparente. Se animaba y no se veía animarse.
+ *
+ * Con 180ms la medalla es sólida a los 3.48s y todavía le quedan 420ms de crecimiento a la
+ * vista. Si alguien lo sube, que sepa qué está apagando.
+ */
+internal const val MEDALLA_OPACIDAD_MS = 180L
+
+/** De dónde sale torcida y cuánto se pasa para el otro lado al aterrizar. El golpe no es solo
+ *  de tamaño: la medalla llega ladeada y se endereza pasándose, como algo que cae y se acomoda. */
+internal const val ROTACION_ENTRADA_GRADOS = -16f
+private const val ROTACION_SOBREPASO_GRADOS = 5f
+
+/** Onda expansiva: un aro que sale del borde de la medalla en el frame del golpe, se abre
+ *  hasta [ONDA_FACTOR_FINAL] veces su radio y se apaga. Es **un** drawCircle por frame durante
+ *  medio segundo, no un sistema de partículas: eso es lo que lo hace pagable acá. */
+internal const val ONDA_MS = 520L
+private const val ONDA_FACTOR_FINAL = 2.9f
+private const val ONDA_GROSOR_MAXIMO = 26f
+private const val ONDA_ALPHA_MAXIMO = 210
 
 /**
  * El latido posterior al golpe. Tiene que morir **antes** de [MENSAJE_MEDALLA_INICIO_MS]
@@ -74,7 +98,7 @@ internal const val ESCALA_SOBREPASO = 1.12f
  * medalla terminaba de entrar y el mensaje arrancaba; la animación se come 1.2s de esos y
  * deja el resto de respiro.
  */
-internal const val ASENTAMIENTO_MS = 1_200L
+internal const val ASENTAMIENTO_MS = 1_400L
 
 /** Ciclos completos del latido dentro de [ASENTAMIENTO_MS]. 1.5 deja la secuencia
  *  golpe → hundida → rebote chico → quieta, que es la que se lee como celebración. */
@@ -82,8 +106,17 @@ private const val ASENTAMIENTO_CICLOS = 1.5
 
 /** El halo de la medalla sobrepasa su brillo final y recién después se asienta: ese pico es
  *  el "destello" de victoria, y cae en el mismo frame que el sobrepaso de escala. Dura desde
- *  que la insignia termina de entrar. */
-internal const val DESTELLO_PICO = 2.6f
+ *  que la insignia termina de entrar.
+ *
+ *  **El destello crece en radio, no en opacidad.** El alpha del halo satura: con
+ *  `HALO_ALPHA_MEDALLA` en 150, cualquier intensidad por encima de ~1.7 clampea a 255 y deja
+ *  de verse diferencia. Subir sólo este número no hace nada — por eso está
+ *  [HALO_CRECIMIENTO_DESTELLO], que es lo que de verdad agranda el golpe de luz. */
+internal const val DESTELLO_PICO = 4.2f
+
+/** Cuánto se agranda el radio del halo por cada punto de intensidad por encima de 1. Es la
+ *  perilla real del destello, porque el alpha ya está al tope. */
+private const val HALO_CRECIMIENTO_DESTELLO = 0.28f
 internal const val DESTELLO_MS = 700L
 
 object ResumenFrameRenderer {
@@ -578,9 +611,9 @@ object ResumenFrameRenderer {
      *  nombre debajo en el destacado de la paleta. */
     private fun dibujarMedalla(canvas: Canvas, ancho: Int, paleta: Paleta, escena: EscenaResumen.Medalla, elapsedMs: Long, alphaEscena: Float) {
         val nombre = escena.nombre ?: return
-        val progreso = ((elapsedMs - MEDALLA_INICIO_GRUPAL_MS).coerceIn(0L, MEDALLA_FADE_MS)).toFloat() / MEDALLA_FADE_MS
-        if (progreso <= 0f) return
-        val alphaAplicado = (255 * progreso * alphaEscena).toInt().coerceIn(0, 255)
+        val opacidad = opacidadEntrada(elapsedMs)
+        if (opacidad <= 0f) return
+        val alphaAplicado = (255 * opacidad * alphaEscena).toInt().coerceIn(0, 255)
 
         val centroX = ancho / 2f
         val centroY = 1150f
@@ -598,6 +631,12 @@ object ResumenFrameRenderer {
             intensidad = intensidadDestello(elapsedMs), alphaAplicado = alphaAplicado
         )
 
+        dibujarOndaExpansiva(canvas, centroX, centroY, radio, ondaExpansiva(elapsedMs), alphaEscena)
+
+        // La rotación envuelve solo a la medalla: el halo es un degradado radial (girarlo no
+        // cambia un pixel) y el nombre tiene que quedarse derecho.
+        canvas.save()
+        canvas.rotate(rotacionEntrada(elapsedMs), centroX, centroY)
         val bitmap = escena.imagenPersonalizada
         if (bitmap != null) {
             val destino = RectF(
@@ -614,6 +653,7 @@ object ResumenFrameRenderer {
                 alphaAplicado = alphaAplicado
             )
         }
+        canvas.restore()
 
         dibujarTextoCentradoMultilinea(
             canvas, listOf(nombre), centroX, centroY + radio + 90f,
@@ -634,6 +674,58 @@ object ResumenFrameRenderer {
      * de [MENSAJE_MEDALLA_INICIO_MS] y una medalla que sigue temblando un 0.5% arruina la
      * lectura sin que se note de dónde sale.
      */
+    /**
+     * Opacidad de la medalla, **desacoplada de la escala a propósito**. Ver
+     * [MEDALLA_OPACIDAD_MS]: mientras las dos compartieron ventana, la animación existía pero
+     * era invisible.
+     */
+    internal fun opacidadEntrada(elapsedMs: Long): Float {
+        val transcurrido = elapsedMs - MEDALLA_INICIO_GRUPAL_MS
+        if (transcurrido <= 0L) return 0f
+        return (transcurrido.toFloat() / MEDALLA_OPACIDAD_MS).coerceIn(0f, 1f)
+    }
+
+    /**
+     * Inclinación de la medalla en grados: entra ladeada desde [ROTACION_ENTRADA_GRADOS], se
+     * pasa al otro lado en el aterrizaje y se endereza oscilando hasta **0 exacto**, con la
+     * misma amortiguación que [escalaEntrada] y por la misma razón: una medalla que sigue
+     * torcida medio grado mientras se escribe el mensaje se ve mal sin que se sepa por qué.
+     */
+    internal fun rotacionEntrada(elapsedMs: Long): Float {
+        val transcurrido = elapsedMs - MEDALLA_INICIO_GRUPAL_MS
+        if (transcurrido <= 0L) return ROTACION_ENTRADA_GRADOS
+        if (transcurrido < MEDALLA_FADE_MS) {
+            val avance = transcurrido.toFloat() / MEDALLA_FADE_MS
+            val restante = 1f - avance
+            val suavizado = 1f - restante * restante * restante
+            return ROTACION_ENTRADA_GRADOS +
+                (ROTACION_SOBREPASO_GRADOS - ROTACION_ENTRADA_GRADOS) * suavizado
+        }
+        return ROTACION_SOBREPASO_GRADOS * oscilacionAmortiguada(transcurrido)
+    }
+
+    /**
+     * Avance del aro de la onda expansiva, de 0 a 1 a lo largo de [ONDA_MS] desde el golpe.
+     * Devuelve 0f fuera de esa ventana, que es la señal de "no dibujar nada": el aro existe
+     * medio segundo y después no está.
+     */
+    internal fun ondaExpansiva(elapsedMs: Long): Float {
+        val desdeElGolpe = elapsedMs - (MEDALLA_INICIO_GRUPAL_MS + MEDALLA_FADE_MS)
+        if (desdeElGolpe <= 0L || desdeElGolpe >= ONDA_MS) return 0f
+        return desdeElGolpe.toFloat() / ONDA_MS
+    }
+
+    /**
+     * El latido compartido por la escala y la rotación: vale 1 en el aterrizaje y cae a **0
+     * exacto** al final de [ASENTAMIENTO_MS], cruzando por debajo de cero en el medio (que es
+     * lo que lo hace rebote y no decaimiento).
+     */
+    private fun oscilacionAmortiguada(transcurridoMs: Long): Float {
+        val q = ((transcurridoMs - MEDALLA_FADE_MS).toFloat() / ASENTAMIENTO_MS).coerceIn(0f, 1f)
+        val amortiguacion = (1f - q) * (1f - q)
+        return amortiguacion * cos(2.0 * PI * ASENTAMIENTO_CICLOS * q).toFloat()
+    }
+
     internal fun escalaEntrada(elapsedMs: Long): Float {
         val transcurrido = elapsedMs - MEDALLA_INICIO_GRUPAL_MS
         if (transcurrido <= 0L) return ESCALA_ENTRADA_INICIAL
@@ -644,10 +736,7 @@ object ResumenFrameRenderer {
             val suavizado = 1f - restante * restante * restante
             return ESCALA_ENTRADA_INICIAL + (ESCALA_SOBREPASO - ESCALA_ENTRADA_INICIAL) * suavizado
         }
-        val q = ((transcurrido - MEDALLA_FADE_MS).toFloat() / ASENTAMIENTO_MS).coerceIn(0f, 1f)
-        val amortiguacion = (1f - q) * (1f - q)
-        val amplitud = (ESCALA_SOBREPASO - 1f) * amortiguacion
-        return 1f + amplitud * cos(2.0 * PI * ASENTAMIENTO_CICLOS * q).toFloat()
+        return 1f + (ESCALA_SOBREPASO - 1f) * oscilacionAmortiguada(transcurrido)
     }
 
     /**
@@ -670,6 +759,32 @@ object ResumenFrameRenderer {
     }
 
     /**
+     * Aro que sale del borde de la medalla en el frame del golpe y se abre apagándose. Es el
+     * único elemento que se agregó al frame, y a propósito: un `drawCircle` en STROKE durante
+     * [ONDA_MS] son ~16 frames de un trazo. Un sistema de partículas acá no se paga —el video
+     * se dibuja frame a frame en CPU, entre 930 y 2.300 frames (entrada 11 del backlog)—, pero
+     * un aro sí.
+     */
+    private fun dibujarOndaExpansiva(
+        canvas: Canvas, cx: Float, cy: Float, radioBase: Float, avance: Float, alphaEscena: Float
+    ) {
+        if (avance <= 0f) return
+        val radio = radioBase * (1f + (ONDA_FACTOR_FINAL - 1f) * avance)
+        // Se apaga con el cuadrado del avance: fuerte al salir, y ya casi nada en la segunda
+        // mitad, que es como se lee un golpe y no una burbuja que se infla.
+        val desvanecido = (1f - avance) * (1f - avance)
+        val alpha = (ONDA_ALPHA_MAXIMO * desvanecido * alphaEscena).toInt().coerceIn(0, 255)
+        if (alpha <= 0) return
+        val paint = Paint().apply {
+            isAntiAlias = true
+            style = Paint.Style.STROKE
+            strokeWidth = ONDA_GROSOR_MAXIMO * desvanecido
+            color = Color.argb(alpha, 255, 255, 255)
+        }
+        canvas.drawCircle(cx, cy, radio, paint)
+    }
+
+    /**
      * Resplandor detrás de la insignia: un degradado radial que va de blanco en el centro a
      * transparente en el borde, para que la insignia se recorte contra un halo de luz.
      *
@@ -681,7 +796,10 @@ object ResumenFrameRenderer {
         canvas: Canvas, cx: Float, cy: Float, radioInsignia: Float,
         factor: Float, alphaMaximo: Int, intensidad: Float, alphaAplicado: Int
     ) {
-        val radio = radioInsignia * factor
+        // El alpha satura enseguida (ver DESTELLO_PICO), así que el golpe de luz se nota
+        // agrandando el halo. Con intensidad 1 —los logros personales— esto no cambia nada.
+        val crecimiento = 1f + (intensidad - 1f).coerceAtLeast(0f) * HALO_CRECIMIENTO_DESTELLO
+        val radio = radioInsignia * factor * crecimiento
         if (radio <= 0f) return
         val alpha = (alphaMaximo * intensidad * (alphaAplicado / 255f)).toInt().coerceIn(0, 255)
         if (alpha <= 0) return
