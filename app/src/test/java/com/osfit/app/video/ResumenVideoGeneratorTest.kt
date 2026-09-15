@@ -161,6 +161,19 @@ class ResumenVideoGeneratorTest {
     }
 
     @Test
+    fun `los dias habiles del resumen quincenal cuentan solo esa quincena`() {
+        // 1ra quincena de marzo 2024: del viernes 1 al viernes 15, 11 días hábiles.
+        val primera = ResumenClienteCalculator.rangoQuincenal(LocalDate.of(2024, 3, 8))
+        val asistenciaPrimera = ResumenVideoGenerator.construirEscenas(resumen(primera))[1] as EscenaResumen.Asistencia
+        assertEquals(11, asistenciaPrimera.diasHabiles)
+
+        // 2da quincena de marzo 2024: del sábado 16 al domingo 31, 10 días hábiles.
+        val segunda = ResumenClienteCalculator.rangoQuincenal(LocalDate.of(2024, 3, 20))
+        val asistenciaSegunda = ResumenVideoGenerator.construirEscenas(resumen(segunda))[1] as EscenaResumen.Asistencia
+        assertEquals(10, asistenciaSegunda.diasHabiles)
+    }
+
+    @Test
     fun `el encabezado de rango mensual reusa el encabezado de RangoResumen`() {
         val rango = ResumenClienteCalculator.rangoMensual(YearMonth.of(2024, 3))
         val escenas = ResumenVideoGenerator.construirEscenas(resumen(rango))
