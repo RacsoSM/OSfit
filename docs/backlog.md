@@ -645,3 +645,131 @@ distintos, con dos técnicas distintas.
 
 **Por qué no corre prisa:** es puro adorno. La medalla se otorga y se ve igual de bien o de
 mal que hoy.
+
+---
+
+## 17. Arranque lento de la web — ⏳ HECHO A MEDIAS, FALTA DESPLEGAR
+
+**Detectado:** 2026-09-15.
+
+> quiero que investigues de la web, cuando un cliente entra a su link, tarda algunos
+> segundos en cargar, esto a que se debe? se puede reducir?
+
+**Estado: el código está en `main` (commit 543b41c) pero NO está desplegado.** Lo que ven
+las clientas hoy sigue siendo la versión vieja. Desplegar es lo primero que hay que hacer
+en la próxima sesión, antes de tocar nada más:
+
+```bash
+cd web && npm ci && npm run build
+cd .. && firebase deploy --only hosting
+```
+
+Solo `hosting`: los dos cambios son de `web/`, no tocan functions ni reglas. Y el
+`npm run build` va aparte porque `firebase.json` no tiene hooks de `predeploy` (ver la nota
+en U1); sin eso se sube el `dist` viejo y parece que el despliegue no sirvió.
+
+### Por qué tardaba
+
+Todo el arranque es una cadena en serie y nada se pinta hasta el último eslabón:
+HTML → bundle de Firebase → canje del token contra la function `sesion` →
+`signInWithCustomToken` → handshake de Firestore → primer `pintar()`. Hasta ahí, la clienta
+veía un `Cargando…` sobre fondo vacío.
+
+Medido en este repo (no estimado), con `npm run build` y con esbuild por módulo:
+
+| Pieza | gzip |
+|---|---|
+| bundle completo, antes | 170 kB |
+| └ `firebase/firestore` | 125 kB (74% del total) |
+| └ `firebase/auth` | 25 kB |
+| └ `firebase/app` | 8 kB |
+| └ `storage` + `functions` | 9 kB |
+| CSS | 1.9 kB |
+
+No hay fuentes web ni imágenes pesadas: el peso es todo SDK de Firebase.
+
+### Lo que ya se hizo (commit 543b41c)
+
+**Esqueleto de carga en `index.html`.** Va en el HTML y no en `main.ts` a propósito: así se
+pinta al llegar el documento, sin esperar el bundle ni el canje del token. Sus alturas salen
+de medir las tarjetas reales en Chromium, renderizando los módulos de UI con datos de
+prueba — saludo 38 px, tarjeta del día 237, stats 101, calendario 350 — así que la página no
+da un salto al llenarse. Gris neutro, sin colores de la paleta, porque la paleta llega con
+el documento de la clienta y el esqueleto no debe cambiar de color a la vista (misma razón
+por la que `aplicarPaleta` corre antes del primer `pintar()`).
+
+**Caché persistente de Firestore** (`web/src/firebase.ts`): `initializeFirestore` con
+`persistentLocalCache()`. En la segunda visita `onSnapshot` entrega primero lo guardado en
+IndexedDB, así que la página pinta antes de que conteste la red, y de paso baja las lecturas
+facturadas. Verificado en el código del SDK (`canFallbackFromIndexedDbError`) que si
+IndexedDB no está disponible —modo privado, cuota llena, navegador interno de WhatsApp— cae
+solo a caché en memoria con un warning en consola; no rompe la página.
+
+**Contrapartida medida, que hay que tener presente:** el caché persistente subió el bundle de
+170 a **190 kB gzip**. La primera visita paga esos 20 kB sin recibir nada a cambio (el caché
+está vacío); se recuperan en cada visita siguiente. Para una página que se abre casi a diario
+el saldo es positivo, pero si alguna vez se decide que no, el cambio es una línea.
+
+### Qué verificar cuando esté desplegado
+
+1. DevTools → Network → "Disable cache": el esqueleto gris debe verse antes de que termine
+   de bajar el JS.
+2. Recargar **sin** "Disable cache" (la visita repetida): la página debe aparecer con datos
+   casi al instante, servidos de IndexedDB.
+3. Si en consola sale `Error using user provided cache. Falling back to memory cache`, ese
+   navegador no dejó usar IndexedDB. No es un fallo, pero conviene probarlo **abriendo el
+   link desde WhatsApp**, que es como entran las clientas de verdad.
+
+### Lo que queda, en orden de impacto
+
+**a) El cold start de `sesion`. Medirlo antes de decidir nada.** `functions/src/sesion.ts` es
+`onRequest` sin `minInstances`, así que Cloud Run escala a cero y con el tráfico esporádico
+del gimnasio casi siempre arranca en frío (Node 22 + firebase-admin: típicamente 1.5-4 s).
+En DevTools, ver cuánto tarda la llamada a `sesion-cuzhc6pwiq-uw.a.run.app`; recargar
+enseguida y comparar, porque la segunda pega una instancia ya tibia y la diferencia confirma
+el diagnóstico.
+
+Ojo con el matiz: ese canje **solo ocurre con la URL `/c/<token>`**. En visitas siguientes la
+sesión persiste y el `fetch` se salta. Si resulta que tarda *siempre*, el culpable no es el
+cold start sino que la sesión no persiste — sospecha principal: el navegador interno de
+WhatsApp no comparte almacenamiento y cada apertura vuelve a ser "primera vez".
+
+Dos arreglos, y conviene el gratis primero: `functions/src/index.ts` exporta las 4 functions
+estáticamente, así que el contenedor de `sesion` carga en cada arranque el módulo de
+`avisarFalta` con su `firebase-admin/messaging`, código que `sesion` no usa nunca; moviendo
+esos imports dentro de cada handler el arranque se acorta sin costo. Si aun así molesta,
+`minInstances: 1` lo elimina, pero se paga ~5-8 USD/mes de instancia tibia 24/7 (se abarata
+con `cpu: 0.25`) y hay que ponerlo **solo** en `sesion`.
+
+**b) Diferir `storage` y `functions` con `import()` dinámico.** Devuelve ~9 kB gzip de los 20
+que costó el caché. `storage` solo hace falta al resolver las URLs de los videos y
+`functions` al tocar una acción: ninguno de los dos en el primer pintado.
+
+**c) Acotar las queries.** `observarAsistencias` (`web/src/datos.ts`) trae *todas* las
+asistencias históricas de la clienta, sin `limit` ni filtro de fecha, y crece para siempre;
+las otras cinco igual. Limitar a los últimos ~12 meses achica el primer snapshot.
+
+**d) `preconnect` y cache headers.** Un `<link rel="preconnect">` a firestore,
+identitytoolkit y el dominio `run.app` ahorra DNS+TLS en cada salto de la cadena serial. Y
+`firebase.json` no tiene bloque `headers`, así que los assets con hash salen con el
+`max-age` por defecto de Hosting en vez de `immutable`.
+
+**Por qué no corre prisa (lo que queda):** con el esqueleto desplegado la página ya *se ve*
+ocupada desde el primer momento, que era lo que hacía que los segundos se sintieran rotos.
+Lo de arriba baja los segundos de verdad, pero ninguno es un fallo.
+
+---
+
+## 18. Rotar el token de acceso web que se compartió en un chat
+
+**Detectado:** 2026-09-15, durante la investigación de la entrada 17.
+
+Para que pudiera probar la página se pegó en el chat un link `/c/<token>` de una clienta
+real. El token quedó escrito en el historial de esa sesión, que no es un sitio pensado para
+guardar credenciales.
+
+Qué hacer: borrar ese documento de `accesosWeb` y generarle un link nuevo desde la app. No
+hace falta más — el token es lo único que canjea la sesión, así que revocarlo lo cierra.
+
+**Por qué no corre prisa:** el link da acceso solo a los datos de esa clienta, no a los del
+gimnasio, y para usarlo hay que tener el historial del chat. Pero es trabajo de un minuto.
