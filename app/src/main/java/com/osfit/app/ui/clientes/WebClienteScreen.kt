@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.VideoLibrary
 import androidx.compose.material3.MaterialTheme
@@ -31,9 +32,14 @@ import com.osfit.app.ui.common.AccionCard
 fun WebClienteScreen(
     clienteId: String,
     onVerVideosWeb: (String) -> Unit,
-    onVerPaletaWeb: (String) -> Unit
+    onVerPaletaWeb: (String) -> Unit,
+    onVerRutinaWeb: (String) -> Unit
 ) {
-    val secciones = seccionesWeb(onVerVideosWeb = onVerVideosWeb, onVerPaletaWeb = onVerPaletaWeb)
+    val secciones = seccionesWeb(
+        onVerVideosWeb = onVerVideosWeb,
+        onVerPaletaWeb = onVerPaletaWeb,
+        onVerRutinaWeb = onVerRutinaWeb
+    )
     Scaffold { padding ->
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(padding).padding(16.dp),
@@ -67,8 +73,16 @@ private class SeccionWeb(
 
 private fun seccionesWeb(
     onVerVideosWeb: (String) -> Unit,
-    onVerPaletaWeb: (String) -> Unit
+    onVerPaletaWeb: (String) -> Unit,
+    onVerRutinaWeb: (String) -> Unit
 ) = listOf(
+    // Primera de la lista: es lo que la clienta abre a diario, a diferencia de los videos
+    // (quincenales) y de la paleta (se elige una vez).
+    SeccionWeb(
+        icono = Icons.Filled.FitnessCenter,
+        texto = "Rutina y variaciones",
+        alAbrir = onVerRutinaWeb
+    ),
     SeccionWeb(
         icono = Icons.Filled.VideoLibrary,
         texto = "Videos en la web",

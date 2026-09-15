@@ -41,6 +41,10 @@ sealed class Screen(val route: String) {
         fun crearRuta(clienteId: String) = "paleta_web_cliente/$clienteId"
     }
 
+    data object RutinaWebCliente : Screen("rutina_web_cliente/{clienteId}") {
+        fun crearRuta(clienteId: String) = "rutina_web_cliente/$clienteId"
+    }
+
     data object Top : Screen("top")
 
     data object TomarAsistencia : Screen("tomar_asistencia/{fecha}") {
