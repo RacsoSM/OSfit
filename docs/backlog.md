@@ -637,7 +637,7 @@ se quiere evitar el recompilado, eso es una entrada nueva, no ésta.
 
 ---
 
-## 16. Exagerar la animación de cuando se gana una medalla
+## 16. Exagerar la animación de cuando se gana una medalla — ⏳ HECHO EN CÓDIGO (2026-09-15), FALTA VERLO EN UN VIDEO
 
 **Detectado:** 2026-09-14.
 
@@ -653,6 +653,62 @@ distintos, con dos técnicas distintas.
 
 **Por qué no corre prisa:** es puro adorno. La medalla se otorga y se ve igual de bien o de
 mal que hoy.
+
+### Se eligió el video (2026-09-15)
+
+El entrenador decidió el sitio: **el video resumen**. La tarjeta de la web queda fuera de esta
+entrada. Si algún día se quiere animar también ahí, es una entrada nueva: `tarjetaInsignias.ts`
+hoy es HTML estático sin ninguna animación, así que sería escribirla de cero en CSS, y además
+se vería al abrir la página y no en el momento de ganar la medalla.
+
+### Qué estaba pasando
+
+`dibujarMedalla` **solo interpolaba opacidad**: de alpha 0 a 255 en 600ms, sin escala, sin
+entrada y sin rebote. Todo el peso de "premio" lo cargaba el halo, con un sobrepaso modesto a
+1.7× que caía en 700ms. Por eso se leía como un cambio de estado: literalmente lo era.
+
+Y había hueco de sobra. La medalla terminaba de entrar a los **3.9s** (3300 + 600) y el
+mensaje no arranca hasta los **5.9s**: dos segundos en los que no pasaba nada.
+
+### Lo que se hizo
+
+Tres cambios, todos en `ResumenFrameRenderer.kt`:
+
+- **`escalaEntrada(elapsedMs)`, nueva.** La medalla entra desde 0.4× frenando (ease-out
+  cúbica), **se pasa** hasta 1.12× en el aterrizaje, y late amortiguada 1200ms hasta quedarse
+  en 1f. El sobrepaso es lo que convierte la aparición en un golpe.
+- **`DESTELLO_PICO` de 1.7 a 2.6.** No hizo falta re-sincronizarlo: la curva del destello ya
+  picaba exactamente en el aterrizaje (`MEDALLA_INICIO_GRUPAL_MS + MEDALLA_FADE_MS`), así que
+  el golpe de luz y el de escala ya caían en el mismo frame. Solo se subió el número.
+- **El radio de dibujo se separó del radio de layout.** El nombre de la medalla se sigue
+  colgando del radio fijo. Si se colgara del animado, subiría y bajaría con cada rebote.
+
+**`TimelineResumen.kt` no se tocó.** Las duraciones no cambian, el video dura exactamente lo
+mismo y ninguna otra escena se corre. La animación se come 1.2s de los 2s muertos y deja
+800ms de calma antes del mensaje — a propósito: el mensaje se lee quieto.
+
+**No se metieron partículas ni rayos radiales**, y conviene que quede escrito por qué: el
+generador dibuja frame a frame en CPU, entre 930 y 2.300 frames por video (entrada 11).
+Escalar un bitmap no cuesta nada; N partículas por frame sí. Si al verlo sabe a poco, esa es
+una segunda pasada y hay que medirla, no darla por gratis.
+
+### Qué se verificó, y qué no
+
+Verificado con tests, en `MedallaAnimacionTest.kt` (7 tests, escritos antes de implementar y
+vistos fallar): que antes de entrar la escala es la inicial; que la entrada crece sin
+retroceder; que en el aterrizaje sobrepasa 1f; que después late **por debajo** de 1f (sin ese
+cruce hay decaimiento, no rebote); que vuelve a **1f exacto** antes de
+`MENSAJE_MEDALLA_INICIO_MS`; y que el pico de escala y el de destello caen en el mismo
+instante. Suite completa en verde: 271 tests.
+
+**Lo que NO se verificó: cómo se ve.** Los tests prueban la forma de la curva, no el trazo.
+Hay que generar un video en el teléfono y mirarlo. **Ojo con la entrada 11**: con una build
+`debuggable` son ~35 minutos por video; con una release firmada más
+`adb shell cmd package compile -m speed -f com.osfit.app`, 86 segundos.
+
+Las dos perillas, si al verlo hay que ajustar: `ESCALA_SOBREPASO` (cuánto se pasa) y
+`DESTELLO_PICO` (cuánto brilla). Cambiar cualquiera de las dos no rompe ningún test salvo que
+`ESCALA_SOBREPASO` baje de 1f, que es justo lo que ese test protege.
 
 ---
 

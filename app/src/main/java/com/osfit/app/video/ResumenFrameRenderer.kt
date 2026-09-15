@@ -22,6 +22,8 @@ import com.osfit.app.domain.RankingResultado
 import java.time.format.DateTimeFormatter
 import kotlin.math.atan2
 import kotlin.math.cos
+import kotlin.math.PI
+import kotlin.math.cos
 import kotlin.math.sin
 
 private data class Resaltado(val rango: IntRange, val color: Int)
@@ -42,6 +44,48 @@ private data class BloqueTexto(
  * escena activa, o de la escena activa y la entrante mezcladas por alpha durante un crossfade.
  * Reemplaza a ResumenCardRenderer (una tarjeta estática por bitmap, sin animación).
  */
+/** La insignia de la medalla entra 1s después de que el "¡Felicidades!" terminó de
+ *  escribirse (500 + 1800 + 1000). Retrasarla es lo que arma el suspenso. */
+internal const val MEDALLA_INICIO_GRUPAL_MS = 3_300L
+
+/** Lo que tarda la medalla en entrar: el fade de opacidad y, a la vez, el tramo en que la
+ *  escala sube de [ESCALA_ENTRADA_INICIAL] a [ESCALA_SOBREPASO]. */
+internal const val MEDALLA_FADE_MS = 600L
+
+/**
+ * La medalla no aparece: **aterriza**. Entra pequeña, se pasa de largo del tamaño final y
+ * recién después se asienta oscilando. Antes esto era un fade de opacidad a secas, y ganar la
+ * medalla del quincena se leía como un cambio de estado en vez de como un premio.
+ *
+ * Los tres números son la coreografía entera:
+ * - [ESCALA_ENTRADA_INICIAL] de dónde viene,
+ * - [ESCALA_SOBREPASO] hasta dónde se pasa en el aterrizaje (el golpe),
+ * - [ASENTAMIENTO_MS] cuánto late después antes de quedarse quieta en 1f.
+ */
+internal const val ESCALA_ENTRADA_INICIAL = 0.4f
+internal const val ESCALA_SOBREPASO = 1.12f
+
+/**
+ * El latido posterior al golpe. Tiene que morir **antes** de [MENSAJE_MEDALLA_INICIO_MS]
+ * (3300 + 600 + 1200 = 5100 < 5900) o la medalla tiembla mientras se escribe el mensaje
+ * debajo, que es justo lo contrario de lo que se busca: el mensaje se lee en calma.
+ *
+ * Ese hueco de 800ms no se rellena a propósito. La escena ya tenía 2s muertos entre que la
+ * medalla terminaba de entrar y el mensaje arrancaba; la animación se come 1.2s de esos y
+ * deja el resto de respiro.
+ */
+internal const val ASENTAMIENTO_MS = 1_200L
+
+/** Ciclos completos del latido dentro de [ASENTAMIENTO_MS]. 1.5 deja la secuencia
+ *  golpe → hundida → rebote chico → quieta, que es la que se lee como celebración. */
+private const val ASENTAMIENTO_CICLOS = 1.5
+
+/** El halo de la medalla sobrepasa su brillo final y recién después se asienta: ese pico es
+ *  el "destello" de victoria, y cae en el mismo frame que el sobrepaso de escala. Dura desde
+ *  que la insignia termina de entrar. */
+internal const val DESTELLO_PICO = 2.6f
+internal const val DESTELLO_MS = 700L
+
 object ResumenFrameRenderer {
 
     private const val NEGRO = 0xFF000000.toInt()
@@ -113,7 +157,6 @@ object ResumenFrameRenderer {
     )
 
     private const val MEDALLA_INICIO_MS = 2_000L
-    private const val MEDALLA_FADE_MS = 600L
 
     private const val TITULO_GRUPAL = "Logros grupales"
     private const val TITULO_PERSONAL = "Logros personales"
@@ -129,9 +172,6 @@ object ResumenFrameRenderer {
      *  título de sección, después entran insignias y textos. */
     private const val LOGROS_RETRASO_MS = 1_000L
 
-    /** La insignia de la medalla entra 1s después de que el "¡Felicidades!" terminó de
-     *  escribirse (500 + 1800 + 1000). Retrasarla es lo que arma el suspenso. */
-    private const val MEDALLA_INICIO_GRUPAL_MS = 3_300L
 
     /** Radio del halo respecto del de la insignia, y opacidad máxima de su centro. La medalla
      *  brilla más que los logros personales: la jerarquía tiene que leerse. */
@@ -140,10 +180,6 @@ object ResumenFrameRenderer {
     private const val HALO_FACTOR_LOGRO = 1.45f
     private const val HALO_ALPHA_LOGRO = 70
 
-    /** El halo de la medalla sobrepasa su brillo final y recién después se asienta: ese pico
-     *  es el "destello" de victoria. Dura desde que la insignia termina de entrar. */
-    private const val DESTELLO_PICO = 1.7f
-    private const val DESTELLO_MS = 700L
     /** Mismos colores que [DONA_PALETA_PASTEL], mapeados por categoría (en vez de por índice de
      *  rebanada) para que la insignia por defecto se sienta parte del mismo lenguaje visual del
      *  video. Solo se usa cuando la medalla no tiene imagen propia. */
@@ -551,21 +587,28 @@ object ResumenFrameRenderer {
         // Un 20% más grande que la insignia de los logros personales: la medalla es el premio
         // de la quincena y tiene la escena para ella sola.
         val radio = 264f
+        // El radio que se dibuja late con la entrada; el de arriba se queda fijo porque es el
+        // que posiciona el nombre. Si el texto se colgara del radio animado, subiría y bajaría
+        // con cada rebote y el nombre de la medalla quedaría bailando.
+        val radioDibujo = radio * escalaEntrada(elapsedMs)
 
         dibujarHalo(
-            canvas, centroX, centroY, radio,
+            canvas, centroX, centroY, radioDibujo,
             factor = HALO_FACTOR_MEDALLA, alphaMaximo = HALO_ALPHA_MEDALLA,
             intensidad = intensidadDestello(elapsedMs), alphaAplicado = alphaAplicado
         )
 
         val bitmap = escena.imagenPersonalizada
         if (bitmap != null) {
-            val destino = RectF(centroX - radio, centroY - radio, centroX + radio, centroY + radio)
+            val destino = RectF(
+                centroX - radioDibujo, centroY - radioDibujo,
+                centroX + radioDibujo, centroY + radioDibujo
+            )
             val paintImagen = Paint().apply { isAntiAlias = true; alpha = alphaAplicado }
             canvas.drawBitmap(bitmap, null, destino, paintImagen)
         } else {
             dibujarInsignia(
-                canvas, centroX, centroY, radio,
+                canvas, centroX, centroY, radioDibujo,
                 colorInsignia = escena.categoria?.let { COLOR_INSIGNIA_MEDALLA[it] } ?: 0xFFB0B0B0.toInt(),
                 glifo = escena.categoria?.name?.first()?.toString() ?: "★",
                 alphaAplicado = alphaAplicado
@@ -579,11 +622,40 @@ object ResumenFrameRenderer {
     }
 
     /**
+     * Curva de escala de la medalla: entra desde [ESCALA_ENTRADA_INICIAL] frenando, **se pasa**
+     * hasta [ESCALA_SOBREPASO] en el aterrizaje y de ahí late amortiguada durante
+     * [ASENTAMIENTO_MS] hasta quedarse en 1f exacto.
+     *
+     * El sobrepaso es lo que convierte la aparición en un golpe: sin él la medalla solo subía
+     * de opacidad y el premio de la quincena se leía como un cambio de estado.
+     *
+     * La amortiguación es `(1-q)²`, así que en `q = 1` la amplitud es **cero** y la escala
+     * queda clavada en 1f, no cerca de 1f. Eso importa: el mensaje se escribe debajo a partir
+     * de [MENSAJE_MEDALLA_INICIO_MS] y una medalla que sigue temblando un 0.5% arruina la
+     * lectura sin que se note de dónde sale.
+     */
+    internal fun escalaEntrada(elapsedMs: Long): Float {
+        val transcurrido = elapsedMs - MEDALLA_INICIO_GRUPAL_MS
+        if (transcurrido <= 0L) return ESCALA_ENTRADA_INICIAL
+        if (transcurrido < MEDALLA_FADE_MS) {
+            // Ease-out cúbica: llega frenando al golpe en vez de a velocidad constante.
+            val avance = transcurrido.toFloat() / MEDALLA_FADE_MS
+            val restante = 1f - avance
+            val suavizado = 1f - restante * restante * restante
+            return ESCALA_ENTRADA_INICIAL + (ESCALA_SOBREPASO - ESCALA_ENTRADA_INICIAL) * suavizado
+        }
+        val q = ((transcurrido - MEDALLA_FADE_MS).toFloat() / ASENTAMIENTO_MS).coerceIn(0f, 1f)
+        val amortiguacion = (1f - q) * (1f - q)
+        val amplitud = (ESCALA_SOBREPASO - 1f) * amortiguacion
+        return 1f + amplitud * cos(2.0 * PI * ASENTAMIENTO_CICLOS * q).toFloat()
+    }
+
+    /**
      * Curva del destello de la medalla: sube hasta [DESTELLO_PICO] mientras la insignia
      * termina de entrar y después baja a 1f. Es el golpe de luz que da el aire de victoria;
      * los logros personales no lo usan (su halo es constante y más tenue).
      */
-    private fun intensidadDestello(elapsedMs: Long): Float {
+    internal fun intensidadDestello(elapsedMs: Long): Float {
         val inicio = MEDALLA_INICIO_GRUPAL_MS + MEDALLA_FADE_MS
         val transcurrido = elapsedMs - inicio
         if (transcurrido >= DESTELLO_MS) return 1f
