@@ -71,7 +71,7 @@ function confirmacion(disponibles: number): string {
 }
 
 /** Lo que ve quien revive su racha. */
-const ACUSE_REVIVIR = `<p class="aviso-ok">Esperamos que todo esté bien, te vemos mañana si Dios quiere!</p>`;
+const ACUSE_REVIVIR = `<p class="aviso-ok">Has revivido tu racha!</p>`;
 
 /** Lo que ve quien avisa que hoy no puede. No menciona rachas: no se gastó nada. */
 const ACUSE_AVISO = `<p class="aviso-ok">Entendido, esperamos que todo esté bien, nos vemos pronto!</p>`;
