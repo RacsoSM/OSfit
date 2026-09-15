@@ -114,6 +114,22 @@ class InsigniaImagenUtil(private val carpeta: String) {
         return salida
     }
 
+    /**
+     * Igual que [cargarBitmap] pero desde un drawable empaquetado, para la imagen por defecto:
+     * pasa por el mismo recorte y encaje cuadrado que las que sube el trainer, así el renderer
+     * del video no la deforma aunque el PNG original no sea cuadrado.
+     *
+     * `inScaled = false` para quedarse con los píxeles del archivo: el drawable vive en la
+     * carpeta sin calificador y Android, si no, lo reescalaría por densidad de pantalla.
+     */
+    fun cargarBitmapDeRecurso(context: Context, resId: Int): Bitmap? {
+        val opciones = BitmapFactory.Options().apply { inScaled = false }
+        val crudo = runCatching {
+            BitmapFactory.decodeResource(context.resources, resId, opciones)
+        }.getOrNull() ?: return null
+        return normalizarYEncajar(crudo)
+    }
+
     fun eliminarImagen(context: Context, nombreArchivo: String) {
         runCatching { archivoImagen(context, nombreArchivo).delete() }
     }

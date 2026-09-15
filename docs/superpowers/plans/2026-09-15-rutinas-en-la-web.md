@@ -172,11 +172,11 @@ data class DiaRutina(
 
 **Archivos:** `data/model/Asistencia.kt`, `data/repository/AsistenciaRepository.kt`, `FirestoreAsistenciaRepository.kt`, `data/fake/FakeAsistenciaRepository.kt`
 
-- [ ] `val variacionRealizada: Int? = null` en `Asistencia`, junto a `diaRutinaRealizado`. Comentario: es el **registro de lo que pasó**, no un contador mutable — la misma naturaleza que `diaRutinaRealizado`, que ya vive ahí.
-- [ ] Los tres caminos, según la tabla de la sección "Tres cosas que el spec no fija" de arriba. **Releerla antes de escribir**: el primero se traga el campo en silencio si se olvida, y el tercero deja la variación de un día pegada a otro.
-- [ ] `actualizarDiaRealizado` gana el parámetro de la variación recalculada.
-- [ ] Actualizar `FakeAsistenciaRepository` con los mismos tres cambios. Si se queda atrás, los tests prueban un comportamiento que la app real no tiene.
-- [ ] Compilar. Commit.
+- [x] `val variacionRealizada: Int? = null` en `Asistencia`, junto a `diaRutinaRealizado`. Comentario: es el **registro de lo que pasó**, no un contador mutable — la misma naturaleza que `diaRutinaRealizado`, que ya vive ahí.
+- [x] Los tres caminos, según la tabla de la sección "Tres cosas que el spec no fija" de arriba. **Releerla antes de escribir**: el primero se traga el campo en silencio si se olvida, y el tercero deja la variación de un día pegada a otro.
+- [x] `actualizarDiaRealizado` gana el parámetro de la variación recalculada.
+- [x] Actualizar `FakeAsistenciaRepository` con los mismos tres cambios. Si se queda atrás, los tests prueban un comportamiento que la app real no tiene.
+- [x] Compilar. Commit.
 
 ### Task 8: `VariacionCalculator`
 
