@@ -85,10 +85,10 @@ El repositorio no conoce la rutina del cliente ni su historial, y darle acceso l
 
 ### Task 2: Desplegar el bloque A
 
-- [ ] `cd web && npm ci && npm run build`
-- [ ] `firebase deploy --only hosting` — solo hosting: no se tocaron functions ni reglas.
-- [ ] Abrir la página de una clienta que tenga ejercicios cargados y ver la lista. Abrir la de una que no, y ver el texto de "todavía no los cargó".
-- [ ] **Avisarle al entrenador que `pesoONota` dejó de ser privado.** El spec lo marca como riesgo aceptado, pero aceptarlo por escrito no es lo mismo que que él lo sepa el día que sus notas ("bajarle, se lastimó") aparecen en la pantalla de la clienta. Este paso no se salta.
+- [x] `cd web && npm ci && npm run build`
+- [x] `firebase deploy --only hosting` — solo hosting: no se tocaron functions ni reglas.
+- [x] Abrir la página de una clienta que tenga ejercicios cargados y ver la lista. Abrir la de una que no, y ver el texto de "todavía no los cargó".
+- [x] **Avisarle al entrenador que `pesoONota` dejó de ser privado.** El spec lo marca como riesgo aceptado, pero aceptarlo por escrito no es lo mismo que que él lo sepa el día que sus notas ("bajarle, se lastimó") aparecen en la pantalla de la clienta. Este paso no se salta.
 
 > **Si el backlog 17 sigue sin desplegar cuando llegues acá**, este despliegue se lleva también el esqueleto de carga y el caché persistente, que están en `main` sin desplegar desde el 2026-09-15. No es un problema —son cambios de `web/` igual— pero conviene saber que van juntos y verificar los dos.
 
@@ -240,9 +240,9 @@ variacionQueToca(dia, asistencias, hoy, total):
 
 ### Task 12: Desplegar el bloque C
 
-- [ ] `cd web && npm ci && npm run build`
-- [ ] `firebase deploy --only hosting`
-- [ ] Compilar e instalar la app. **Ojo con la entrada 11 del backlog**: si se instala una build `debuggable` el generador de video se vuelve 25 veces más lento. Para esta feature no importa (no toca el video), pero si de paso se va a generar alguno, instalar una release firmada y correr `adb shell cmd package compile -m speed -f com.osfit.app` después.
+- [x] `cd web && npm ci && npm run build`
+- [x] `firebase deploy --only hosting`
+- [x] Compilar e instalar la app. **Ojo con la entrada 11 del backlog**: si se instala una build `debuggable` el generador de video se vuelve 25 veces más lento. Para esta feature no importa (no toca el video), pero si de paso se va a generar alguno, instalar una release firmada y correr `adb shell cmd package compile -m speed -f com.osfit.app` después.
 
 ---
 

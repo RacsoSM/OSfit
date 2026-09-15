@@ -611,7 +611,7 @@ Desde Git Bash no funciona —convierte la ruta a Windows—: hay que hacerlo de
 
 ---
 
-## 15. Cambiar las fotos de los logros personales
+## 15. Cambiar las fotos de los logros personales — ✅ HECHO (2026-09-15)
 
 **Detectado:** 2026-09-14.
 
@@ -626,6 +626,14 @@ Dónde vive: las imágenes de logros y medallas se suben a Storage y se restaura
 que apunta a que esto puede acabar siendo una tarea de contenido y no de programación.
 
 **Por qué no corre prisa:** los logros se ven y funcionan; es cuestión de que se vean mejor.
+
+**Resuelto el 2026-09-15: era lo primero de las dos opciones.** El entrenador sustituyó las
+imágenes que ya estaban por otras. No hubo cambio de código: acabó siendo una tarea de
+contenido, que es justo lo que esta entrada apuntaba como desenlace probable.
+
+Queda descartada, entonces, la otra mitad de la pregunta: **no** se hizo que las fotos se
+puedan cambiar desde la app sin recompilar. Si alguna vez vuelve a hacer falta cambiarlas y
+se quiere evitar el recompilado, eso es una entrada nueva, no ésta.
 
 ---
 
@@ -648,16 +656,21 @@ mal que hoy.
 
 ---
 
-## 17. Arranque lento de la web — ⏳ HECHO A MEDIAS, FALTA DESPLEGAR
+## 17. Arranque lento de la web — ⏳ DESPLEGADO (2026-09-15), FALTA VERIFICAR Y LO DEMÁS
 
 **Detectado:** 2026-09-15.
 
 > quiero que investigues de la web, cuando un cliente entra a su link, tarda algunos
 > segundos en cargar, esto a que se debe? se puede reducir?
 
-**Estado: el código está en `main` (commit 543b41c) pero NO está desplegado.** Lo que ven
-las clientas hoy sigue siendo la versión vieja. Desplegar es lo primero que hay que hacer
-en la próxima sesión, antes de tocar nada más:
+**Estado: desplegado el 2026-09-15**, de arrastre con el Bloque A de la entrada 19 —son
+cambios de `web/` igual—, desde SISTEMAS-03 y con `npm run build` a mano antes, como avisa la
+constante de abajo. El bundle servido es `assets/index-IxZpqViu.js` y la página responde 200.
+Lo que **no** se ha hecho es la verificación de la sección "Qué verificar cuando esté
+desplegado": eso requiere DevTools contra la página real y sigue pendiente, igual que la lista
+de "Lo que queda, en orden de impacto".
+
+El comando que se corrió, que es el que documentaba esta entrada:
 
 ```bash
 cd web && npm ci && npm run build
@@ -791,16 +804,17 @@ Spec y plan escritos y commiteados, sin una sola línea de código todavía:
 El plan son 13 tareas en tres bloques. **El orden es por qué se puede desplegar solo, no por
 dependencia técnica**, así que se pueden hacer en sesiones distintas y cortar por donde sea:
 
-- [x] **Bloque A (Tasks 1-2) — Los ejercicios en la página. ✅ CODIFICADO (2026-09-15),
-  ⏳ FALTA DESPLEGAR.** `tarjetaDia` lista nombre, series, repeticiones y `pesoONota`, y el
+- [x] **Bloque A (Tasks 1-2) — Los ejercicios en la página. ✅ HECHO Y DESPLEGADO
+  (2026-09-15).** `tarjetaDia` lista nombre, series, repeticiones y `pesoONota`, y el
   día sin ejercicios lo dice en vez de dejar un hueco. El 2026-09-15 se desbloqueó al retomarlo
   desde **SISTEMAS-03**, que sí tiene Node, npm y la CLI de Firebase (ver entrada 20).
 - [x] **Bloque B (Tasks 3-5) — Rutina propia y edición por cliente. ✅ HECHO (2026-09-15).**
   Solo app: no toca la web y no necesita despliegue. Sección Rutina dentro de la tarjeta
   Acceso web, edición por día con el diálogo de desprenderse, y confirmación al reasignar
   plantilla a quien tiene rutina propia.
-- [x] **Bloque C (Tasks 6-12) — Variaciones que rotan solas. ✅ CODIFICADO (2026-09-15),
-  ⏳ FALTA DESPLEGAR.** Modelo, los tres caminos de escritura, `VariacionCalculator`, la UI de
+- [x] **Bloque C (Tasks 6-12) — Variaciones que rotan solas. ✅ HECHO Y DESPLEGADO
+  (2026-09-15).** Falta instalar la app en el teléfono: el despliegue es sólo la web.
+ Modelo, los tres caminos de escritura, `VariacionCalculator`, la UI de
   variaciones y el gemelo `web/src/variacion.ts`. La Task 11 **sí se hizo**, así que la página
   no se queda mostrando siempre la primera variación: ese riesgo ya no aplica.
 - [ ] **Task 13 — Verificación en dispositivo. ⏳ PENDIENTE.** No se puede cubrir con tests:
@@ -816,9 +830,12 @@ después: *"va a ver una tarjeta de 'hoy te toca' sin ejercicios y va a querer '
 No es un bug."* El entrenador decidió revertirla el 2026-09-15. El spec nuevo lo dice; el
 viejo hay que leerlo sabiendo esto.
 
-**El Task 2 incluye avisarle al entrenador que `pesoONota` dejó de ser privado, y sigue
-pendiente**: el código está, el despliegue no, así que todavía no ha pasado nada en la pantalla
-de nadie. Ese aviso va **antes** de `firebase deploy`, no después.
+**Al entrenador se le avisó que `pesoONota` dejó de ser privado, y aun así pidió desplegar
+(2026-09-15).** Desde ese despliegue, una nota suya del tipo «bajarle, se lastimó» se ve en la
+pantalla de la clienta. Queda escrito acá porque el riesgo está aceptado, no resuelto: si algún
+día estorba, la salida que fija el spec es partir el campo en dos (`peso` visible y `nota`
+interna), no dejar de pintarlo — esconderlo en el pintado es justo el error que este spec
+corrigió.
 
 **El Task 2 incluye avisarle al entrenador que `pesoONota` dejó de ser privado.** Es un campo
 de uso mixto —a veces el peso, a veces una nota suya del tipo "bajarle, se lastimó"— y a
