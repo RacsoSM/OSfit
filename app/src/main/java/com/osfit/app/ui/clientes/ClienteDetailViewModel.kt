@@ -94,8 +94,9 @@ class ClienteDetailViewModel(
      * no sólo el de hoy, porque la tarjeta Web los lista todos y el entrenador quiere ver cuál
      * le va a tocar en cada uno.
      *
-     * Mira `rutinaAsignada` porque las variaciones sólo existen en rutina propia, y ahí esa
-     * copia es la verdad. Quien sigue una plantilla no tiene ninguna y todo da 0.
+     * Mira `rutinaAsignada` porque es la verdad para las dos fuentes: la copia propia de la
+     * clienta, o el reflejo de la plantilla viva que `RutinaRepository.guardarRutina` deja ahí
+     * al guardar. Es también lo único que lee la página de la clienta.
      */
     val variacionQueTocaPorDia: StateFlow<Map<Int, Int>> =
         combine(cliente, asistenciasDelCliente) { c, asistencias ->

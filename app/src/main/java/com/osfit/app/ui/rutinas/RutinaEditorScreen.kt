@@ -27,6 +27,10 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import androidx.compose.material3.MaterialTheme
+import com.osfit.app.data.model.DiaRutina
+import com.osfit.app.data.model.Ejercicio
+import com.osfit.app.domain.etiquetaVariacion
 import com.osfit.app.ui.common.EjercicioRow
 
 @Composable
@@ -65,17 +69,29 @@ fun RutinaEditorScreen(rutinaId: String?, onGuardado: () -> Unit) {
                                 Icon(Icons.Filled.Delete, contentDescription = "Eliminar día")
                             }
                         }
-                        dia.ejercicios.forEachIndexed { indiceEjercicio, ejercicio ->
-                            EjercicioRow(
-                                ejercicio = ejercicio,
-                                onChange = { viewModel.actualizarEjercicio(indiceDia, indiceEjercicio, it) },
-                                onEliminar = { viewModel.eliminarEjercicio(indiceDia, indiceEjercicio) }
+                        if (dia.variaciones.isEmpty()) {
+                            EjerciciosEditables(
+                                ejercicios = dia.ejercicios,
+                                indiceDia = indiceDia,
+                                variacion = null,
+                                viewModel = viewModel
                             )
+                        } else {
+                            dia.variaciones.forEachIndexed { posicion, variacion ->
+                                Text(
+                                    "Variación ${etiquetaVariacion(posicion)}",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    modifier = Modifier.padding(top = 8.dp)
+                                )
+                                EjerciciosEditables(
+                                    ejercicios = variacion.ejercicios,
+                                    indiceDia = indiceDia,
+                                    variacion = posicion,
+                                    viewModel = viewModel
+                                )
+                            }
                         }
-                        Button(onClick = { viewModel.agregarEjercicio(indiceDia) }) {
-                            Icon(Icons.Filled.Add, contentDescription = null)
-                            Text("Agregar ejercicio")
-                        }
+                        VariacionesDelDia(dia = dia, indiceDia = indiceDia, viewModel = viewModel)
                     }
                 }
             }
@@ -94,6 +110,53 @@ fun RutinaEditorScreen(rutinaId: String?, onGuardado: () -> Unit) {
                     Text("Guardar rutina")
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun EjerciciosEditables(
+    ejercicios: List<Ejercicio>,
+    indiceDia: Int,
+    variacion: Int?,
+    viewModel: RutinaEditorViewModel
+) {
+    ejercicios.forEachIndexed { indiceEjercicio, ejercicio ->
+        EjercicioRow(
+            ejercicio = ejercicio,
+            onChange = { viewModel.actualizarEjercicio(indiceDia, indiceEjercicio, it, variacion) },
+            onEliminar = { viewModel.eliminarEjercicio(indiceDia, indiceEjercicio, variacion) },
+            // La clienta ve `pesoONota` en su página desde el 2026-09-15, así que también se
+            // escribe acá y no sólo en la rutina propia de cada una.
+            mostrarPesoONota = true,
+            onSubir = if (indiceEjercicio == 0) {
+                null
+            } else {
+                { viewModel.moverEjercicio(indiceDia, indiceEjercicio, -1, variacion) }
+            },
+            onBajar = if (indiceEjercicio == ejercicios.lastIndex) {
+                null
+            } else {
+                { viewModel.moverEjercicio(indiceDia, indiceEjercicio, 1, variacion) }
+            }
+        )
+    }
+    Button(onClick = { viewModel.agregarEjercicio(indiceDia, variacion) }) {
+        Icon(Icons.Filled.Add, contentDescription = null)
+        Text("Agregar ejercicio")
+    }
+}
+
+/**
+ * Los dos botones que manejan el invariante de [DiaRutina]. Llaman a las funciones de `domain/`,
+ * las mismas que usa el editor de la rutina propia de una clienta.
+ */
+@Composable
+private fun VariacionesDelDia(dia: DiaRutina, indiceDia: Int, viewModel: RutinaEditorViewModel) {
+    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+        Button(onClick = { viewModel.agregarVariacion(indiceDia) }) { Text("Agregar variación") }
+        if (dia.variaciones.isNotEmpty()) {
+            Button(onClick = { viewModel.quitarVariacion(indiceDia) }) { Text("Quitar variación") }
         }
     }
 }

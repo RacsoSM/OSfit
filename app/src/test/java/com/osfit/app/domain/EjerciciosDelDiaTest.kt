@@ -60,4 +60,76 @@ class EjerciciosDelDiaTest {
     fun `un dia sin nada devuelve vacio`() {
         assertEquals(emptyList<Ejercicio>(), ejerciciosDe(DiaRutina(nombreDia = "Descanso"), 0))
     }
+
+    @Test
+    fun `la primera variacion deja dos y vacia la lista base`() {
+        // Una sola no rotaria a ningun lado: el boton parecería no hacer nada.
+        val dia = DiaRutina(nombreDia = "Pecho", ejercicios = listOf(ejercicio("Press")))
+
+        val resultado = conVariacionNueva(dia)
+
+        assertEquals(2, resultado.variaciones.size)
+        assertEquals(listOf(ejercicio("Press")), resultado.variaciones[0].ejercicios)
+        assertEquals(emptyList<Ejercicio>(), resultado.variaciones[1].ejercicios)
+        assertEquals("la base queda vacia", emptyList<Ejercicio>(), resultado.ejercicios)
+    }
+
+    @Test
+    fun `agregar sobre un dia que ya tiene variaciones suma una`() {
+        val dia = DiaRutina(
+            nombreDia = "Pecho",
+            variaciones = listOf(VariacionDia(listOf(ejercicio("Press"))), VariacionDia())
+        )
+
+        assertEquals(3, conVariacionNueva(dia).variaciones.size)
+    }
+
+    @Test
+    fun `quitar hasta la ultima devuelve los ejercicios a la lista base`() {
+        val dia = DiaRutina(
+            nombreDia = "Pecho",
+            variaciones = listOf(VariacionDia(listOf(ejercicio("Press"))), VariacionDia())
+        )
+
+        val resultado = sinLaUltimaVariacion(dia)
+
+        assertEquals(emptyList<VariacionDia>(), resultado.variaciones)
+        assertEquals(listOf(ejercicio("Press")), resultado.ejercicios)
+    }
+
+    @Test
+    fun `quitar con mas de dos solo descarta la ultima`() {
+        val dia = DiaRutina(
+            nombreDia = "Pecho",
+            variaciones = listOf(
+                VariacionDia(listOf(ejercicio("Press"))),
+                VariacionDia(listOf(ejercicio("Aperturas"))),
+                VariacionDia(listOf(ejercicio("Fondos")))
+            )
+        )
+
+        val resultado = sinLaUltimaVariacion(dia)
+
+        assertEquals(2, resultado.variaciones.size)
+        assertEquals(emptyList<Ejercicio>(), resultado.ejercicios)
+    }
+
+    @Test
+    fun `quitar sobre un dia sin variaciones no lo toca`() {
+        val dia = DiaRutina(nombreDia = "Pecho", ejercicios = listOf(ejercicio("Press")))
+        assertEquals(dia, sinLaUltimaVariacion(dia))
+    }
+
+    @Test
+    fun `agregar y quitar deja el dia como estaba`() {
+        val dia = DiaRutina(nombreDia = "Pecho", ejercicios = listOf(ejercicio("Press")))
+        assertEquals(dia, sinLaUltimaVariacion(conVariacionNueva(dia)))
+    }
+
+    @Test
+    fun `las etiquetas van en letras`() {
+        assertEquals("A", etiquetaVariacion(0))
+        assertEquals("B", etiquetaVariacion(1))
+        assertEquals("C", etiquetaVariacion(2))
+    }
 }

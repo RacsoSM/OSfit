@@ -37,6 +37,9 @@ import com.osfit.app.data.model.DiaRutina
 import com.osfit.app.data.model.Ejercicio
 import com.osfit.app.data.model.Rutina
 import com.osfit.app.data.model.VariacionDia
+import com.osfit.app.domain.conVariacionNueva
+import com.osfit.app.domain.etiquetaVariacion
+import com.osfit.app.domain.sinLaUltimaVariacion
 import com.osfit.app.ui.common.EjercicioRow
 
 /**
@@ -180,7 +183,8 @@ private fun SeccionRutinaWeb(
                 modifier = Modifier.padding(top = 4.dp)
             )
             Text(
-                "Las variaciones sólo existen en rutina propia.",
+                "Sus variaciones se editan en la pestaña Rutinas y las comparten todas las que " +
+                    "siguen esta plantilla. Cada una rota por su cuenta, según sus asistencias.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 2.dp)
@@ -214,9 +218,9 @@ private fun SeccionRutinaWeb(
             indice = indice,
             dia = dia,
             esElDeHoy = indice == diaQueToca,
-            // Las variaciones quedan fuera de las plantillas compartidas a propósito: habría que
-            // decidir si dos clientas de la misma plantilla rotan juntas o por separado, y las
-            // dos respuestas se defienden. El editor de la pestaña Rutinas no se toca.
+            // Las variaciones de una plantilla existen y se ven acá, pero se editan donde vive la
+            // plantilla: en la pestaña Rutinas. Tocarlas desde la ficha de una clienta la
+            // desprendería, que es justo lo contrario de lo que quiere quien las comparte.
             esRutinaPropia = origen == OrigenRutina.Propia,
             variacionQueToca = variacionPorDia[indice] ?: 0,
             onEditar = { variacion ->
@@ -279,39 +283,6 @@ private fun SeccionRutinaWeb(
         )
     }
 }
-
-/**
- * Agrega una variación al día, respetando el invariante de [DiaRutina].
- *
- * Desde un día sin variaciones hace falta crear **dos**: la lista base pasa a ser la primera y
- * la nueva es la segunda. Una sola variación no rotaría a ningún lado, así que el primer
- * "Agregar variación" tiene que dejar dos o el botón no haría nada visible.
- */
-private fun conVariacionNueva(dia: DiaRutina): DiaRutina = if (dia.variaciones.isEmpty()) {
-    dia.copy(
-        ejercicios = emptyList(),
-        variaciones = listOf(VariacionDia(dia.ejercicios), VariacionDia())
-    )
-} else {
-    dia.copy(variaciones = dia.variaciones + VariacionDia())
-}
-
-/**
- * Quita la última variación. Al bajar a una sola se deshace el camino de [conVariacionNueva]:
- * sus ejercicios vuelven a la lista base y `variaciones` queda vacía, porque una lista que ya
- * nadie lee se queda vieja en silencio y el siguiente que la mire va a creerle.
- */
-private fun sinLaUltimaVariacion(dia: DiaRutina): DiaRutina = when (dia.variaciones.size) {
-    0 -> dia
-    1, 2 -> dia.copy(
-        ejercicios = dia.variaciones.first().ejercicios,
-        variaciones = emptyList()
-    )
-    else -> dia.copy(variaciones = dia.variaciones.dropLast(1))
-}
-
-/** Etiqueta de una variación: A, B, C… Nunca la ve la clienta, sólo el entrenador. */
-private fun etiquetaVariacion(indice: Int): String = ('A' + indice).toString()
 
 /**
  * El aviso antes de desprenderse. Va **antes** de la primera edición y no callado porque el

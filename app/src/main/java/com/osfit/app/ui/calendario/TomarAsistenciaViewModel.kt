@@ -95,8 +95,10 @@ class TomarAsistenciaViewModel(
      * el repositorio: el repositorio no conoce la rutina ni el historial, y dárselos lo
      * convertiría en otra cosa.
      *
-     * Las variaciones sólo existen en rutina propia, y ahí `rutinaAsignada` es la verdad, así
-     * que mirarla es correcto incluso para quien sigue una plantilla: su copia no trae ninguna.
+     * `rutinaAsignada` es la verdad para las dos fuentes: en rutina propia es la copia de la
+     * clienta, y desde el 2026-09-15 —cuando las plantillas también llevan variaciones— es
+     * además el reflejo de la plantilla viva, que `RutinaRepository.guardarRutina` copia a sus
+     * seguidoras al guardar. Por eso no hace falta observar la colección de plantillas acá.
      */
     private fun variacionQueToca(cliente: Cliente, diaDelCiclo: Int): Int =
         VariacionCalculator.variacionQueToca(

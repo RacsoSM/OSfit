@@ -958,6 +958,34 @@ cosa.
 
 ---
 
+## 21. Las plantillas viejas no llegan a la web hasta que se guarden una vez
+
+**Detectado:** 2026-09-15, al meter variaciones en las plantillas compartidas.
+
+Desde hoy, guardar una plantilla la copia a `rutinaAsignada` de cada clienta que la
+sigue (`RutinaRepository.propagarASeguidoras`). Eso arregla un fallo que llevaba
+existiendo desde que la web muestra ejercicios: **las ediciones de una plantilla nunca
+le llegaban a la página de la clienta**, que seguía mostrando la copia congelada del día
+en que se le asignó. La app enseñaba la plantilla viva y la web otra cosa, sin que nada
+lo dijera.
+
+**Lo que queda pendiente es lo viejo.** La copia se hace *al guardar*, y no se escribió
+ninguna migración que recorra las plantillas existentes. Hasta que cada plantilla se abra
+y se guarde una vez, sus seguidoras siguen viendo en la web lo que veían ayer.
+
+**Qué hacer:** abrir cada plantilla en la pestaña Rutinas y darle Guardar. No hace falta
+cambiar nada; el guardado dispara la copia. Son tantas pulsaciones como plantillas haya.
+
+**Por qué no corre prisa:** no hay nada roto ni peor que antes — es exactamente el estado
+en el que llevaban desde siempre. Sólo que ahora tiene arreglo, y el arreglo es trivial.
+
+**Ojo si en vez de eso se escribe una migración:** tiene que escribir **sólo**
+`rutinaAsignada`. Tocar `diaActualIndex` o `diaAnclaFecha` le movería el día del ciclo a
+todo el mundo de golpe, que es justo el desastre que el spec *Calendario-Rutina como ley*
+existe para impedir.
+
+---
+
 ## 20. `DESKTOP-DA82BC2` no tiene Node, npm ni firebase CLI — ✅ RESUELTO CAMBIANDO DE MÁQUINA (2026-09-15)
 
 **Detectado:** 2026-09-15, al arrancar la implementación de la entrada 19.

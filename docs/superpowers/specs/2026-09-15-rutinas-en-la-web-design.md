@@ -48,8 +48,8 @@ al argumento de privacidad de la decisión original.
 - Los ejercicios del día de hoy en la página de la clienta.
 - Un modo **rutina propia** por cliente, alternativo a seguir una plantilla
   compartida.
-- **Variaciones por día** dentro de la rutina propia, que rotan solas vuelta a
-  vuelta.
+- **Variaciones por día** —en la rutina propia y, desde el mismo 2026-09-15, también en
+  las plantillas compartidas— que rotan solas vuelta a vuelta.
 - Una tarjeta de rutina dentro de la tarjeta **Web** de la ficha del cliente, que
   muestra la rutina y deja editarla solo para esa persona.
 
@@ -57,7 +57,8 @@ al argumento de privacidad de la decisión original.
 
 - La clienta sigue sin poder editar nada de su rutina. Lee.
 - La clienta ve **solo el día de hoy**, no los otros días del ciclo.
-- Las plantillas compartidas **no** llevan variaciones (ver más abajo).
+- ~~Las plantillas compartidas **no** llevan variaciones.~~ Revertido el mismo día: sí las
+  llevan. Ver "Variaciones en plantillas compartidas".
 - La clienta no se entera de que las variaciones existen: no hay etiqueta, no hay
   "Variación B de 3". Solo ve los ejercicios de hoy.
 
@@ -67,8 +68,8 @@ La elección es **por cliente, todo o nada**. Un cliente está en uno de dos mod
 
 | Modo | De dónde sale la rutina | Variaciones |
 |---|---|---|
-| **Plantilla compartida** | La plantilla viva de la pestaña Rutinas | No |
-| **Rutina propia** | La copia guardada en el documento del cliente | Sí |
+| **Plantilla compartida** | La plantilla viva de la pestaña Rutinas, copiada al documento del cliente al guardarla | Sí, compartidas; cada clienta rota por su cuenta |
+| **Rutina propia** | La copia guardada en el documento del cliente | Sí, sólo suyas |
 
 ### El campo que ya existe para esto
 
@@ -126,13 +127,56 @@ cliente está en rutina propia**.
 
 ## Variaciones
 
-### Por qué solo en rutina propia
+### Por qué solo en rutina propia — ⚠ REVERTIDO el 2026-09-15 (mismo día)
 
-Una plantilla compartida con variaciones obligaría a decidir si Ana y Jaime, en la
+> **Esta sección ya no describe el sistema.** El entrenador pidió variaciones también
+> en las plantillas compartidas, y la pregunta que este párrafo evitaba quedó
+> contestada: **cada clienta rota por su cuenta.** Ver "Variaciones en plantillas
+> compartidas", abajo. Se conserva el texto original porque explica por qué la
+> primera versión las dejó fuera, y ese razonamiento sigue siendo el correcto para
+> entender la forma del código.
+
+~~Una plantilla compartida con variaciones obligaría a decidir si Ana y Jaime, en la
 misma plantilla, rotan juntos o por separado, y las dos respuestas se defienden.
 Dejarlas fuera mantiene la plantilla como lo que es hoy —una lista de ejercicios
-por día— y no toca el editor de la pestaña Rutinas en absoluto. Si más adelante se
-quieren en plantillas, el modelo de datos de abajo ya lo permite sin cambios.
+por día— y no toca el editor de la pestaña Rutinas en absoluto.~~ La frase que sí
+resultó cierta es la última: **si más adelante se quieren en plantillas, el modelo de
+datos de abajo ya lo permite sin cambios.** Y así fue: `DiaRutina.variaciones` no se
+tocó.
+
+### Variaciones en plantillas compartidas
+
+Una plantilla puede llevar variaciones por día, editadas en la pestaña Rutinas. Las ven
+todas las clientas que la siguen.
+
+**Cada clienta rota por su cuenta.** No hay contador compartido: `variacionQueToca`
+deriva la variación del historial de asistencias *de cada clienta*, así que Ana puede ir
+en la B y Jaime en la A aunque compartan plantilla. Rotar juntas habría necesitado un
+contador guardado en la plantilla —exactamente el tipo de estado mutable que el spec
+*Calendario-Rutina como ley* existe para evitar— y además no significaría gran cosa:
+Ana y Jaime entrenan en días distintos y van por días distintos del ciclo.
+
+Editar las variaciones de una clienta concreta desde su ficha **la sigue desprendiendo**
+de la plantilla, sin cambios. Quien comparte una plantilla la edita donde vive.
+
+### Cómo la plantilla llega a la web
+
+`firestore.rules:73` concede `rutinas` **sólo al entrenador**, y abrirla le enseñaría a
+cada clienta las plantillas de todas. Lo único que su sesión lee es su propio documento,
+así que la plantilla tiene que llegar ahí: al guardar, `RutinaRepository.guardarRutina`
+copia la plantilla a `rutinaAsignada` de cada clienta con ese `plantillaOrigenId`.
+
+**Esto arregla un fallo que ya existía y que este spec describía al revés.** Más abajo,
+"Riesgos y decisiones aceptadas" afirma que *"agregarle un ejercicio a una plantilla se
+lo agrega a todas las clientas que la siguen, al instante y sin avisar"*. Era cierto
+**dentro de la app** —la ficha lee la plantilla viva— y falso en la web: la página
+mostraba la copia congelada del día en que se asignó la plantilla, y ninguna edición
+posterior le llegaba nunca. Las dos superficies discrepaban en silencio.
+
+La copia escribe **sólo** `rutinaAsignada`. Ni `diaActualIndex`, ni `diaAnclaFecha`, ni
+`plantillaOrigenId`: editar ejercicios no le mueve el día del ciclo a nadie. Quien tiene
+rutina propia queda fuera por construcción, porque al desprenderse se le borró
+`plantillaOrigenId` y el filtro no la encuentra.
 
 ### Cada día rota por su cuenta
 
@@ -325,10 +369,15 @@ esto se despliegue, no dejarlo escrito solo aquí. Si más adelante estorba, la
 salida es partir el campo en dos (`peso` visible y `nota` interna), no esconderlo
 en el pintado, que es justo el error que este spec corrige.
 
-**La plantilla viva le llega a todos.** No es nuevo, pero con ejercicios en la web
-se nota más: agregarle un ejercicio a una plantilla se lo agrega a todas las
-clientas que la siguen, al instante y sin avisar. Es lo que se quiere, y es
+**La plantilla viva le llega a todos.** Agregarle un ejercicio a una plantilla se lo
+agrega a todas las clientas que la siguen, sin avisar. Es lo que se quiere, y es
 exactamente el motivo por el que existe el modo rutina propia.
+
+> **Corrección del 2026-09-15:** este párrafo daba por cierto algo que no lo era en la
+> web. Hasta ese día la página de la clienta mostraba la copia congelada y **ninguna
+> edición de la plantilla le llegaba**. Lo dice bien la sección "Cómo la plantilla llega
+> a la web"; desde que existe esa copia, el párrafo de arriba ya es cierto en las dos
+> superficies.
 
 **Acotar `observarAsistencias` (backlog 17c) ya no rompe esto**, gracias a la
 decisión de mirar la última asistencia en vez de contarlas. Queda escrito aquí
@@ -346,3 +395,7 @@ Nada de esto necesita migración ni despliegue coordinado:
 - Una web vieja contra datos nuevos ignora `variaciones` y muestra `ejercicios`,
   que estará vacía en quien tenga variaciones — degrada al caso 3 de arriba, no
   rompe.
+- Una plantilla ya existente **no le llega a la web hasta que se guarda una vez**. La
+  copia se hace al guardar, no hay migración que recorra lo viejo, y lo que las clientas
+  ven hasta entonces es lo mismo que veían ayer. Abrir la plantilla y guardarla la pone
+  al día.
