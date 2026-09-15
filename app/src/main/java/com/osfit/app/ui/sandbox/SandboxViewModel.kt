@@ -8,6 +8,8 @@ import com.osfit.app.data.model.Asistencia
 import com.osfit.app.data.model.Cliente
 import com.osfit.app.domain.AsignarDiaManual
 import com.osfit.app.domain.RutinaProgressCalculator
+import com.osfit.app.domain.VariacionCalculator
+import com.osfit.app.domain.totalVariaciones
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -64,12 +66,14 @@ class SandboxViewModel : ViewModel() {
     fun marcar(cliente: Cliente, asistio: Boolean) {
         viewModelScope.launch {
             val fecha = _simulatedFecha.value.toString()
+            val dia = if (asistio) diaQueTocaDe(cliente) else null
             asistenciaRepository.registrarAsistencia(
                 clienteId = cliente.id,
                 fecha = fecha,
                 asistio = asistio,
-                diaRutinaRealizado = if (asistio) diaQueTocaDe(cliente) else null,
-                nota = ""
+                diaRutinaRealizado = dia,
+                nota = "",
+                variacionRealizada = dia?.let { variacionQueTocaDe(cliente, it) }
             )
         }
     }
@@ -80,15 +84,28 @@ class SandboxViewModel : ViewModel() {
         _simulatedFecha.value.toString()
     )
 
+    /** Igual que en Tomar Asistencia: el cálculo vive en el ViewModel, no en el repositorio. */
+    private fun variacionQueTocaDe(cliente: Cliente, diaDelCiclo: Int): Int =
+        VariacionCalculator.variacionQueToca(
+            diaDelCiclo = diaDelCiclo,
+            asistenciasDelCliente = asistenciasDeCliente(cliente.id),
+            hoy = _simulatedFecha.value.toString(),
+            totalVariaciones = totalVariaciones(
+                cliente.rutinaAsignada?.dias?.getOrNull(diaDelCiclo)
+            )
+        )
+
     private fun asistenciasDeCliente(clienteId: String): List<Asistencia> =
         todasAsistencias.value.filter { it.clienteId == clienteId }
 
     fun iniciarTiempo(cliente: Cliente) {
         viewModelScope.launch {
+            val dia = diaQueTocaDe(cliente)
             asistenciaRepository.iniciarTiempo(
                 clienteId = cliente.id,
                 fecha = _simulatedFecha.value.toString(),
-                diaRutinaRealizado = diaQueTocaDe(cliente)
+                diaRutinaRealizado = dia,
+                variacionRealizada = variacionQueTocaDe(cliente, dia)
             )
         }
     }
@@ -101,7 +118,8 @@ class SandboxViewModel : ViewModel() {
                 asistenciaRepository = asistenciaRepository,
                 clienteId = cliente.id,
                 diaIndex = diaIndex,
-                hoy = _simulatedFecha.value.toString()
+                hoy = _simulatedFecha.value.toString(),
+                variacionRealizada = variacionQueTocaDe(cliente, diaIndex)
             )
         }
     }

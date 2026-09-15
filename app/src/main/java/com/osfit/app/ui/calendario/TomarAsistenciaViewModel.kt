@@ -11,6 +11,8 @@ import com.osfit.app.data.repository.AvisoFaltaWebRepository
 import com.osfit.app.data.repository.CambioDiaWebRepository
 import com.osfit.app.data.repository.ClienteRepository
 import com.osfit.app.domain.RutinaProgressCalculator
+import com.osfit.app.domain.VariacionCalculator
+import com.osfit.app.domain.totalVariaciones
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -88,6 +90,24 @@ class TomarAsistenciaViewModel(
         cliente, todasAsistencias.value.filter { it.clienteId == cliente.id }, fecha
     )
 
+    /**
+     * La variación que se le está sirviendo al cliente en [diaDelCiclo]. Se calcula acá y no en
+     * el repositorio: el repositorio no conoce la rutina ni el historial, y dárselos lo
+     * convertiría en otra cosa.
+     *
+     * Las variaciones sólo existen en rutina propia, y ahí `rutinaAsignada` es la verdad, así
+     * que mirarla es correcto incluso para quien sigue una plantilla: su copia no trae ninguna.
+     */
+    private fun variacionQueToca(cliente: Cliente, diaDelCiclo: Int): Int =
+        VariacionCalculator.variacionQueToca(
+            diaDelCiclo = diaDelCiclo,
+            asistenciasDelCliente = todasAsistencias.value.filter { it.clienteId == cliente.id },
+            hoy = fecha,
+            totalVariaciones = totalVariaciones(
+                cliente.rutinaAsignada?.dias?.getOrNull(diaDelCiclo)
+            )
+        )
+
     private val cambiosPendientes = MutableStateFlow<Map<String, Boolean>>(emptyMap())
 
     val estadoPorCliente: StateFlow<Map<String, Boolean>> =
@@ -123,10 +143,12 @@ class TomarAsistenciaViewModel(
 
     fun iniciarTiempo(cliente: Cliente) {
         viewModelScope.launch {
+            val dia = diaQueToca(cliente)
             asistenciaRepository.iniciarTiempo(
                 clienteId = cliente.id,
                 fecha = fecha,
-                diaRutinaRealizado = diaQueToca(cliente)
+                diaRutinaRealizado = dia,
+                variacionRealizada = variacionQueToca(cliente, dia)
             )
             sincronizadorDiaWeb.refrescar(cliente.id, fecha)
         }
@@ -153,12 +175,14 @@ class TomarAsistenciaViewModel(
                     cliente to asistio
                 }.map { (cliente, asistio) ->
                     async {
+                        val dia = if (asistio) diaQueToca(cliente) else null
                         asistenciaRepository.registrarAsistencia(
                             clienteId = cliente.id,
                             fecha = fecha,
                             asistio = asistio,
-                            diaRutinaRealizado = if (asistio) diaQueToca(cliente) else null,
-                            nota = ""
+                            diaRutinaRealizado = dia,
+                            nota = "",
+                            variacionRealizada = dia?.let { variacionQueToca(cliente, it) }
                         )
                         sincronizadorDiaWeb.refrescar(cliente.id, fecha)
                     }
@@ -189,8 +213,15 @@ class TomarAsistenciaViewModel(
                 cambios.map { (clienteId, diaElegido) ->
                     async {
                         // Solo se corrige el registro: al ser la fuente de verdad, el día
-                        // que le toca al cliente se recalcula solo a partir de él.
-                        asistenciaRepository.actualizarDiaRealizado(clienteId, fecha, diaElegido)
+                        // que le toca al cliente se recalcula solo a partir de él. La variación
+                        // guardada era del día viejo, así que se recalcula para el nuevo.
+                        val cliente = clientesActivos.value.firstOrNull { it.id == clienteId }
+                        asistenciaRepository.actualizarDiaRealizado(
+                            clienteId = clienteId,
+                            fecha = fecha,
+                            nuevoDia = diaElegido,
+                            variacionRealizada = cliente?.let { variacionQueToca(it, diaElegido) }
+                        )
                         sincronizadorDiaWeb.refrescar(clienteId, fecha)
                     }
                 }.awaitAll()

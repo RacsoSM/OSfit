@@ -21,6 +21,10 @@ import java.time.LocalDate
  *     instante y además las estadísticas contarían un día que el cliente no hizo. No hace
  *     nada si hoy no hay registro, o si el registro es una falta.
  *
+ * [variacionRealizada] la calcula el llamador con [VariacionCalculator], porque es quien tiene
+ * la rutina y el historial del cliente; acá sólo se pasa. Corregir el día deja la variación
+ * guardada apuntando a la rotación de otro día, así que hay que reemplazarla, no conservarla.
+ *
  * El resultado es el mismo sin importar el orden en que el entrenador haga las cosas
  * (asignar y luego marcar asistencia, o marcar asistencia y luego corregir el día).
  */
@@ -32,11 +36,12 @@ object AsignarDiaManual {
         clienteId: String,
         diaIndex: Int,
         hoy: String,
-        sincronizador: SincronizadorDiaWeb? = null
+        sincronizador: SincronizadorDiaWeb? = null,
+        variacionRealizada: Int? = null
     ) {
         val ancla = LocalDate.parse(hoy).minusDays(1).toString()
         clienteRepository.asignarDiaAncla(clienteId, diaIndex, ancla)
-        asistenciaRepository.actualizarDiaRealizado(clienteId, hoy, diaIndex)
+        asistenciaRepository.actualizarDiaRealizado(clienteId, hoy, diaIndex, variacionRealizada)
         // Se refresca al final, cuando el ancla y el registro ya están escritos: el trío
         // tiene que reflejar el estado final, no uno intermedio.
         sincronizador?.refrescar(clienteId, hoy)

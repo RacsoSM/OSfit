@@ -30,6 +30,8 @@ import com.osfit.app.domain.AsignarDiaManual
 import com.osfit.app.domain.CupoRevivesCalculator
 import com.osfit.app.domain.RachaCalculator
 import com.osfit.app.domain.RutinaProgressCalculator
+import com.osfit.app.domain.VariacionCalculator
+import com.osfit.app.domain.totalVariaciones
 import java.io.File
 import java.time.LocalDate
 import kotlinx.coroutines.CancellationException
@@ -38,6 +40,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -233,13 +236,26 @@ class ClienteDetailViewModel(
 
     fun asignarDiaActual(diaIndex: Int) {
         viewModelScope.launch {
+            val hoy = LocalDate.now().toString()
+            // La variación se calcula acá y se pasa: corregir el día deja la guardada apuntando
+            // a la rotación del día viejo. El repositorio no conoce la rutina ni el historial.
+            val clienteActual = cliente.value
+            val variacion = clienteActual?.let { c ->
+                VariacionCalculator.variacionQueToca(
+                    diaDelCiclo = diaIndex,
+                    asistenciasDelCliente = asistenciasDelCliente.first(),
+                    hoy = hoy,
+                    totalVariaciones = totalVariaciones(c.rutinaAsignada?.dias?.getOrNull(diaIndex))
+                )
+            }
             AsignarDiaManual.ejecutar(
                 clienteRepository = clienteRepository,
                 asistenciaRepository = asistenciaRepository,
                 clienteId = clienteId,
                 diaIndex = diaIndex,
-                hoy = LocalDate.now().toString(),
-                sincronizador = sincronizadorDiaWeb
+                hoy = hoy,
+                sincronizador = sincronizadorDiaWeb,
+                variacionRealizada = variacion
             )
         }
     }

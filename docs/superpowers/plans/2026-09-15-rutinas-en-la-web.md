@@ -214,9 +214,9 @@ variacionQueToca(dia, asistencias, hoy, total):
 
 **Archivos:** los ViewModels que llaman a `registrarAsistencia`, `iniciarTiempo` y `actualizarDiaRealizado`
 
-- [ ] Localizarlos con `grep -rn "registrarAsistencia\|iniciarTiempo\|actualizarDiaRealizado" --include=*.kt app/src/main/java`. Son varios: Tomar Asistencia, el cronómetro y la corrección desde la pestaña Rutina.
-- [ ] Cada uno calcula con `VariacionCalculator.variacionQueToca(...)` **antes** de escribir y pasa el entero. El repositorio no conoce la rutina ni el historial y no debe conocerlos.
-- [ ] Compilar. Commit.
+- [x] Localizarlos con `grep -rn "registrarAsistencia\|iniciarTiempo\|actualizarDiaRealizado" --include=*.kt app/src/main/java`. Son varios: Tomar Asistencia, el cronómetro y la corrección desde la pestaña Rutina.
+- [x] Cada uno calcula con `VariacionCalculator.variacionQueToca(...)` **antes** de escribir y pasa el entero. El repositorio no conoce la rutina ni el historial y no debe conocerlos.
+- [x] Compilar. Commit.
 
 ### Task 10: UI de variaciones en la tarjeta Web
 
