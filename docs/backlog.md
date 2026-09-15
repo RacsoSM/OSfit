@@ -75,6 +75,18 @@ al día siguiente:
       2026-09-15 la clienta de pruebas quedó **sin** asistencia de ese día, así que quien
       retome esto tiene que marcarla antes de que la fecha sirva de algo. Con ella puesta, al
       día siguiente debe mostrar **Día 1** (el ciclo da la vuelta 3 → 1).
+
+      **Resuelto sin esperar a mañana (2026-09-15).** Marcada la asistencia, el trío
+      denormalizado pasó a `{ultimoDia: 2, ultimoDiaFecha: 2026-09-15, ultimoDiaEsAncla:
+      false}`, leído del documento real. **Ese `esAncla: false` es la prueba**: sólo se
+      escribe si la asistencia de hoy entró en la ventana exclusiva del ancla (`15 > 14`),
+      que es justo lo que la regresión rompía. Con la regresión el trío se habría quedado en
+      `esAncla: true` y la clienta en el Día 3 para siempre.
+
+      La consecuencia quedó fijada en `web/src/dia.test.ts` con esos mismos valores: un test
+      comprueba que al día siguiente devuelve Día 1, y otro que el estado que habría dejado
+      la regresión devuelve Día 3 indefinidamente. Ya no depende de que alguien se acuerde de
+      mirarlo un día después.
 - [ ] **El botón deshabilitado con la asistencia de hoy ya marcada** ("Ya registraste tu
       asistencia de hoy") y que el callable responda `ya_asistio_hoy`. Requiere que el
       entrenador le marque asistencia hoy a la clienta de pruebas; entonces se puede repetir la
