@@ -71,7 +71,9 @@ import com.osfit.app.ui.common.AsignarDiaDialog
 import com.osfit.app.ui.common.RachaBadge
 import com.osfit.app.ui.common.TextoMaquinaEscribir
 import com.osfit.app.ui.common.rememberFechaActual
+import com.osfit.app.util.TextoEntradas
 import com.osfit.app.util.WhatsAppUtil
+import java.time.Instant
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
@@ -409,6 +411,17 @@ fun ClienteDetailScreen(
                             style = MaterialTheme.typography.bodySmall,
                             modifier = Modifier.padding(top = 4.dp)
                         )
+                        acceso?.let { accesoActual ->
+                            Text(
+                                TextoEntradas.resumen(
+                                    entradas = accesoActual.entradas,
+                                    ultimoAcceso = accesoActual.ultimoAcceso?.toDate()?.toInstant(),
+                                    ahora = Instant.now()
+                                ),
+                                style = MaterialTheme.typography.bodySmall,
+                                modifier = Modifier.padding(top = 8.dp)
+                            )
+                        }
                         Text(
                             "Revives: $revivesDisponibles de ${CupoRevivesCalculator.MAXIMO_POR_MES} disponibles este mes",
                             style = MaterialTheme.typography.bodySmall,
