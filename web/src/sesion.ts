@@ -17,8 +17,19 @@
  */
 export type ResultadoSesion =
   | { estado: "lista"; clienteId: string }
-  | { estado: "sin-acceso" }
+  | { estado: "sin-acceso"; motivo?: MotivoSinAcceso }
   | { estado: "sin-conexion" };
+
+/**
+ * Cuál de los tres escalones dejó a la clienta afuera.
+ *
+ * No cambia lo que ella ve —siempre el candado—, pero sí lo que podemos averiguar cuando
+ * nos avisa: "sin-rastro" es el callejón que este arreglo vino a tapar y no debería volver
+ * a aparecer en una recarga; "recordado-rechazado" es el entrenador que revocó el acceso, y
+ * "link-rechazado" es un link muerto desde el primer toque. Sin esto, los tres se ven igual
+ * desde afuera y la única forma de distinguirlos es adivinando.
+ */
+export type MotivoSinAcceso = "link-rechazado" | "sin-rastro" | "recordado-rechazado";
 
 const RUTA_CON_TOKEN = /^\/c\/([A-Za-z0-9]+)$/;
 
@@ -109,6 +120,36 @@ export function memoriaToken(almacenes: (Storage | null)[]): MemoriaToken {
 }
 
 /**
+ * Qué tan vivo está un almacén: `+` guarda, `r` deja leer pero no escribir, `x` ni existe.
+ *
+ * Es lo único que distingue las dos formas de quedarse sin rastro, que se arreglan al revés:
+ * si los almacenes guardan bien y aun así el token no estaba, algo lo borró entre una carga
+ * y la otra; si no guardan nada, ninguna red de seguridad que dependa de ellos va a servir
+ * —tampoco la del SDK, que guarda la sesión ahí mismo— y hay que sostener el token en otro
+ * lado.
+ *
+ * La prueba escribe de verdad, con su propia llave y borrándola enseguida: en Safari,
+ * `setItem` puede tirar por cuota aunque leer funcione, así que preguntar no alcanza.
+ */
+export function saludDelAlmacen(almacen: Storage | null): "+" | "r" | "x" {
+  if (!almacen) return "x";
+  const llave = `${LLAVE_TOKEN}:prueba`;
+  try {
+    almacen.setItem(llave, "1");
+    almacen.removeItem(llave);
+    return "+";
+  } catch {
+    return "r";
+  }
+}
+
+/** Las dos saludes juntas, como `s+l+`, para que quepan en el renglón del candado. */
+export function saludDeLosAlmacenes(almacenes: (Storage | null)[]): string {
+  const [sesion, local] = almacenes;
+  return `s${saludDelAlmacen(sesion ?? null)}l${saludDelAlmacen(local ?? null)}`;
+}
+
+/**
  * Los almacenes del navegador, o `null` donde no se pueda ni nombrarlos.
  *
  * El `try` no es paranoia: con las cookies de terceros bloqueadas, en un iframe o en algunos
@@ -140,8 +181,10 @@ export interface EntornoSesion {
   canjear(token: string): Promise<ResultadoSesion>;
   /** El `clienteId` de la sesión que el SDK haya restaurado, o `null` si no hay. */
   sesionGuardada(): Promise<string | null>;
-  /** Saca el token de la barra de direcciones. */
-  esconderToken(): void;
+  /** El token escondido en la dirección por una versión anterior, si sigue ahí. */
+  tokenEscondido(): string | null;
+  /** Borra el token escondido, cuando el backend ya lo rechazó. */
+  olvidarEscondido(): void;
   memoria: MemoriaToken;
 }
 
@@ -149,12 +192,28 @@ export interface EntornoSesion {
  * La escalera del arranque: tres formas de probar que es ella, de la más a la mano a la
  * menos.
  *
- * 1. **Token en la URL.** Vino del link de WhatsApp. Se canjea, se recuerda, y la URL pasa a
- *    `/mi` para que el token no quede a la vista en una captura ni al pasarle la dirección a
- *    alguien.
+ * 1. **Token en la ruta.** Vino del link de WhatsApp. Se canjea y se recuerda, y la ruta se
+ *    queda como está: `/c/<token>`.
+ *
+ *    Antes de acá el token se borraba de la barra con un `replaceState` a `/mi`, para que no
+ *    quedara a la vista en una captura. Salía caro y por un lado que no se veía venir: todo
+ *    lo que restaura "la última página" —WhatsApp al reabrir su navegador, Safari al
+ *    recuperar la pestaña— restauraba `/mi`, que no dice quién es ella, así que la clienta
+ *    terminaba en la pantalla de pedir link aunque hubiera entrado por su propio link. Con
+ *    el token en la dirección, cualquier cosa que la restaure la deja adentro. Lo que se
+ *    paga es que el token se ve en la barra; es el mismo que vive para siempre en su chat de
+ *    WhatsApp, y sigue muriendo el día que el entrenador revoca el acceso.
  * 2. **Sesión guardada.** El camino normal de la segunda visita en adelante.
- * 3. **Token recordado.** El paracaídas: la sesión guardada se perdió, pero todavía nos
- *    acordamos del token, así que se canjea otra vez y la clienta ni se entera.
+ * 3. **Token escondido en la dirección**, y si no, el recordado en el almacén. El
+ *    paracaídas: la sesión guardada se perdió, pero todavía nos acordamos del token, así que
+ *    se canjea otra vez y la clienta ni se entera.
+ *
+ * Lo escondido va antes que el almacén porque aguanta donde nada más aguanta. Medido en el
+ * navegador que WhatsApp abre encima de sí mismo: al recargar no volvía el token del
+ * almacén, ni el estado de la entrada del historial, ni la sesión que guarda el SDK —los
+ * tres vacíos, y con el almacén escribiendo bien—, o sea que esa carga no continúa la
+ * anterior: el contexto se rehace entero. Lo único que el navegador vuelve a pedir tal cual
+ * es la dirección, y por eso el token viaja ahí.
  *
  * El escalón 3 es la razón de todo esto. Sin él, después del `replaceState` la sesión
  * guardada era lo único que quedaba, y perderla dejaba a la clienta en un callejón sin
@@ -168,24 +227,23 @@ export async function resolverSesion(entorno: EntornoSesion): Promise<ResultadoS
   const deLaUrl = tokenEnLaUrl(entorno.rutaActual());
   if (deLaUrl) {
     const resultado = await entorno.canjear(deLaUrl);
-    if (resultado.estado === "lista") {
-      // Primero recordar, después esconder. Al revés, una falla al guardar dejaría
-      // exactamente el callejón sin salida que veníamos a tapar.
-      entorno.memoria.recordar(deLaUrl);
-      entorno.esconderToken();
-    }
-    return resultado;
+    if (resultado.estado === "lista") entorno.memoria.recordar(deLaUrl);
+    return resultado.estado === "sin-acceso"
+      ? { estado: "sin-acceso", motivo: "link-rechazado" }
+      : resultado;
   }
 
   const guardada = await entorno.sesionGuardada();
   if (guardada) return { estado: "lista", clienteId: guardada };
 
-  const recordado = entorno.memoria.recordado();
-  if (!recordado) return { estado: "sin-acceso" };
+  const recordado = entorno.tokenEscondido() ?? entorno.memoria.recordado();
+  if (!recordado) return { estado: "sin-acceso", motivo: "sin-rastro" };
 
   const resultado = await entorno.canjear(recordado);
   // Se olvida solo cuando el backend dijo que el token ya no vale. Si lo que falló fue la
   // red, se queda: es la única copia que nos queda del link.
-  if (resultado.estado === "sin-acceso") entorno.memoria.olvidar();
-  return resultado;
+  if (resultado.estado !== "sin-acceso") return resultado;
+  entorno.memoria.olvidar();
+  entorno.olvidarEscondido();
+  return { estado: "sin-acceso", motivo: "recordado-rechazado" };
 }

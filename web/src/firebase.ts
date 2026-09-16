@@ -93,7 +93,15 @@ export function iniciarSesion(): Promise<ResultadoSesion> {
       await auth.authStateReady();
       return auth.currentUser?.uid ?? null;
     },
-    esconderToken: () => history.replaceState(null, "", "/mi"),
+    /*
+     * Ya no se esconde el token: la dirección se queda en `/c/<token>`.
+     *
+     * Esto sigue leyendo el `#` porque las clientas que entraron mientras el token se
+     * escondía ahí pueden tener esa dirección guardada —en una pestaña, en la pantalla de
+     * inicio— y esa también tiene que abrirles.
+     */
+    tokenEscondido: () => location.hash.replace(/^#/, "") || null,
+    olvidarEscondido: () => history.replaceState(null, "", "/mi"),
     memoria: memoriaToken(almacenesDelNavegador()),
   });
 }

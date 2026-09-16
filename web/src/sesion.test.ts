@@ -5,6 +5,8 @@ import {
   lecturaDelStatus,
   memoriaToken,
   resolverSesion,
+  saludDeLosAlmacenes,
+  saludDelAlmacen,
   tokenEnLaUrl,
 } from "./sesion";
 
@@ -142,19 +144,25 @@ function entorno(campos: {
   guardada?: string | null;
   canje?: (token: string) => ResultadoSesion;
   recordado?: string;
-}): EntornoSesion & { canjes: string[]; escondio: boolean; memoria: MemoriaToken } {
+  escondido?: string;
+}): EntornoSesion & {
+  canjes: string[];
+  memoria: MemoriaToken;
+  escondido: string | null;
+} {
   const sesion = almacen();
   const local = almacen();
   const memoria = memoriaToken([sesion, local]);
   if (campos.recordado) memoria.recordar(campos.recordado);
   const estado = {
     canjes: [] as string[],
-    escondio: false,
     memoria,
+    escondido: campos.escondido ?? null,
     rutaActual: () => campos.ruta ?? "/mi",
     sesionGuardada: async () => campos.guardada ?? null,
-    esconderToken: () => {
-      estado.escondio = true;
+    tokenEscondido: () => estado.escondido,
+    olvidarEscondido: () => {
+      estado.escondido = null;
     },
     canjear: async (token: string) => {
       estado.canjes.push(token);
@@ -171,15 +179,13 @@ describe("resolverSesion", () => {
       expect(r).toEqual({ estado: "lista", clienteId: "c1" });
       expect(e.canjes).toEqual(["tok1"]);
       expect(e.memoria.recordado()).toBe("tok1");
-      expect(e.escondio).toBe(true);
     });
   });
 
   it("un link muerto no se recuerda ni esconde el token", async () => {
     const e = entorno({ ruta: "/c/muerto", canje: () => ({ estado: "sin-acceso" }) });
-    expect(await resolverSesion(e)).toEqual({ estado: "sin-acceso" });
+    expect(await resolverSesion(e)).toEqual({ estado: "sin-acceso", motivo: "link-rechazado" });
     expect(e.memoria.recordado()).toBe(null);
-    expect(e.escondio).toBe(false);
   });
 
   it("con la sesión guardada entra directo, sin molestar al backend", async () => {
@@ -199,9 +205,42 @@ describe("resolverSesion", () => {
     expect(e.canjes).toEqual(["tok1"]);
   });
 
+  /**
+   * EL BUG, segunda parte. En el navegador que WhatsApp abre encima de sí mismo, recargar
+   * rehace el contexto entero: no volvieron ni el token del almacén, ni el estado del
+   * historial, ni la sesión del SDK —los tres vacíos, con el almacén escribiendo bien—. La
+   * dirección es lo único que el navegador vuelve a pedir tal cual, así que el token va ahí.
+   */
+  it("si el almacén no guardó nada, el token escondido en la dirección la recupera igual", async () => {
+    const e = entorno({ ruta: "/mi", guardada: null, escondido: "tok1" });
+    expect(await resolverSesion(e)).toEqual({ estado: "lista", clienteId: "c1" });
+    expect(e.canjes).toEqual(["tok1"]);
+  });
+
+  /**
+   * El token se queda en la dirección a propósito. Borrarlo de ahí era lo que rompía la
+   * vuelta: cualquier cosa que restaure "la última página" —WhatsApp al reabrir su
+   * navegador, Safari al recuperar la pestaña— la devolvía a una dirección que ya no decía
+   * quién era ella.
+   */
+  it("no toca la dirección: el token se queda donde llegó", async () => {
+    const e = entorno({ ruta: "/c/tok1" });
+    await resolverSesion(e);
+    expect(e.escondido).toBe(null);
+  });
+
+  it("un token viejo escondido en el # que el backend rechaza no se reintenta para siempre", async () => {
+    const e = entorno({ guardada: null, escondido: "tok1", canje: () => ({ estado: "sin-acceso" }) });
+    expect(await resolverSesion(e)).toEqual({
+      estado: "sin-acceso",
+      motivo: "recordado-rechazado",
+    });
+    expect(e.escondido).toBe(null);
+  });
+
   it("sin sesión y sin token recordado sí es un callejón, y se dice", async () => {
     const e = entorno({ ruta: "/mi", guardada: null });
-    expect(await resolverSesion(e)).toEqual({ estado: "sin-acceso" });
+    expect(await resolverSesion(e)).toEqual({ estado: "sin-acceso", motivo: "sin-rastro" });
     expect(e.canjes).toEqual([]);
   });
 
@@ -215,7 +254,10 @@ describe("resolverSesion", () => {
 
   it("si el entrenador revocó el acceso, el token recordado se olvida", async () => {
     const e = entorno({ guardada: null, recordado: "tok1", canje: () => ({ estado: "sin-acceso" }) });
-    expect(await resolverSesion(e)).toEqual({ estado: "sin-acceso" });
+    expect(await resolverSesion(e)).toEqual({
+      estado: "sin-acceso",
+      motivo: "recordado-rechazado",
+    });
     expect(e.memoria.recordado()).toBe(null);
   });
 
@@ -224,5 +266,29 @@ describe("resolverSesion", () => {
     expect(await resolverSesion(e)).toEqual({ estado: "lista", clienteId: "c1" });
     expect(e.canjes).toEqual(["tok2"]);
     expect(e.memoria.recordado()).toBe("tok2");
+  });
+});
+
+describe("saludDelAlmacen", () => {
+  it("un almacén que escribe es un +", () => {
+    expect(saludDelAlmacen(almacen())).toBe("+");
+  });
+
+  it("uno que tira al escribir es una r, no un +", () => {
+    expect(saludDelAlmacen(almacen({ tira: true }))).toBe("r");
+  });
+
+  it("uno que ni se puede nombrar es una x", () => {
+    expect(saludDelAlmacen(null)).toBe("x");
+  });
+
+  it("no deja basura suya en el almacén", () => {
+    const a = almacen();
+    saludDelAlmacen(a);
+    expect(a.length).toBe(0);
+  });
+
+  it("las dos saludes caben en un renglón", () => {
+    expect(saludDeLosAlmacenes([almacen(), null])).toBe("s+lx");
   });
 });
