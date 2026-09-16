@@ -1164,7 +1164,7 @@ es la misma de arriba.
 
 ---
 
-## 23. `avisosFalta` deniega la lectura mientras el documento no existe
+## 23. `avisosFalta` deniega la lectura mientras el documento no existe — ✅ HECHO (2026-09-16)
 
 **Detectado:** 2026-09-15, verificando U1 en la página de una clienta de pruebas.
 
@@ -1220,5 +1220,32 @@ existencia de los avisos de cualquier otra clienta probando ids.
 
 **Por qué no corre prisa:** nadie ve nada roto. Pero es un cambio de tres líneas en las reglas
 y requiere `firebase deploy --only firestore:rules`, que hasta hoy esta feature no ha tocado.
+
+**Hecho el 2026-09-16**, con la regla tal como estaba escrita arriba, desplegada con
+`firebase deploy --only firestore:rules`. Dejó de "no correr prisa" de golpe: ese mismo día se
+hicieron visibles los fallos de los listeners en la página, y el `permission-denied` que hasta
+entonces era ruido en consola pasó a llevarse la pantalla entera de la clienta, con un código
+que ella no podía resolver. Commit `cd61093`.
+
+---
+
+---
+
+## 24. Un icono en Clientes para ver quién cambió su rutina
+
+**Pedido:** 2026-09-16, por el entrenador. En sus palabras:
+
+> agregar un icono en la pantalla de Clientes que me permita identificar cuando un cliente
+> cambio su rutina
+
+**Sin diseñar todavía.** Antes de implementarlo hay que acordar al menos qué cuenta como
+"cambió su rutina" —la clienta cambió su día desde su página (`cambiosDia`), o el entrenador
+le despegó la rutina de la plantilla, que son cosas distintas y viven en sitios distintos— y
+cuánto dura el indicador: solo el día del cambio, como el de `avisosFalta`, o hasta que el
+entrenador lo vea.
+
+**Lo que ya existe y sirve de espejo:** la clienta se pinta de amarillo en Clientes cuando
+avisa que no viene, y en Tomar Asistencia sale "🔄 Cambió su día: <motivo>" el mismo día del
+cambio (entrada 7). El icono pedido es el mismo problema en otra pantalla.
 
 ---
