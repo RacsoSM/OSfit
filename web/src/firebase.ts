@@ -89,9 +89,32 @@ export function iniciarSesion(): Promise<ResultadoSesion> {
   return resolverSesion({
     rutaActual: () => location.pathname,
     canjear,
+    /**
+     * La sesión guardada, pero solo si de verdad sirve.
+     *
+     * Devolver el uid a secas fue un agujero: una sesión guardada puede estar muerta —su
+     * refresh token vencido o revocado— y el SDK no lo sabe hasta que alguien le pide un
+     * token, momento en el que la cierra por su cuenta. La escalera la daba por buena, no
+     * canjeaba nada, y los listeners salían a leer sin usuario: todo denegado, con el token
+     * del link intacto en la dirección a un paso de distancia.
+     *
+     * Se veía solo en Safari, y con razón: en el navegador de WhatsApp no sobrevive nada, así
+     * que ahí nunca hay sesión vieja que recoger y siempre se canjea de cero.
+     *
+     * Pedir el token acá cuesta un viaje que casi siempre está cacheado, y a cambio un
+     * cadáver cae al escalón siguiente en vez de hundir la página. Se exige además el claim:
+     * sin él, la sesión no puede leer nada aunque el token sea válido.
+     */
     sesionGuardada: async () => {
       await auth.authStateReady();
-      return auth.currentUser?.uid ?? null;
+      const usuario = auth.currentUser;
+      if (!usuario) return null;
+      try {
+        const token = await usuario.getIdTokenResult();
+        return typeof token.claims.clienteId === "string" ? usuario.uid : null;
+      } catch {
+        return null;
+      }
     },
     /*
      * Ya no se esconde el token: la dirección se queda en `/c/<token>`.
