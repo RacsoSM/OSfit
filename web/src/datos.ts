@@ -85,20 +85,66 @@ export interface Asistencia {
  * uno solo: la pantalla, que solo necesita saber que algo falló y qué dijo Firestore.
  */
 let reportarFallo: (origen: string, error: FirestoreError) => void = () => {};
+let reportarVuelta: (origen: string) => void = () => {};
 
 export function alFallarDatos(escucha: (origen: string, error: FirestoreError) => void): void {
   reportarFallo = escucha;
 }
 
-function fallo(origen: string) {
-  return (error: FirestoreError) => reportarFallo(origen, error);
+/** El otro lado: un listener que se había caído y volvió. La pantalla borra su error. */
+export function alVolverDatos(escucha: (origen: string) => void): void {
+  reportarVuelta = escucha;
+}
+
+/**
+ * Un listener que se vuelve a parar cuando se cae.
+ *
+ * `onSnapshot` es terminal: al primer error se muere y no vuelve nunca. Eso convierte
+ * cualquier tropiezo de medio segundo en una página rota hasta que la clienta recargue, y el
+ * tropiezo existe: al arrancar, la sesión recién canjeada tarda en llegarle al cliente de
+ * Firestore, así que las primeras lecturas pueden salir sin credencial y volver como
+ * `permission-denied`. Visto en un iPhone: el documento del cliente denegado, con su regla de
+ * una línea, mientras la sesión estaba perfectamente viva.
+ *
+ * Reintenta cuatro veces, separándolas cada vez más, y reporta cada caída para que la
+ * pantalla pueda decir qué pasó. Si vuelve, avisa que volvió. Después de eso se rinde: si la
+ * regla de verdad deniega, reintentar para siempre no la va a convencer.
+ */
+function escuchar(
+  origen: string,
+  suscribir: (alLlegar: () => void, alFallar: (e: FirestoreError) => void) => () => void
+): () => void {
+  let intentos = 0;
+  let vivo = true;
+  let cancelar = () => {};
+  const conectar = (): void => {
+    cancelar = suscribir(
+      () => reportarVuelta(origen),
+      (error) => {
+        reportarFallo(origen, error);
+        if (!vivo || intentos >= 4) return;
+        intentos += 1;
+        setTimeout(() => vivo && conectar(), 400 * intentos);
+      }
+    );
+  };
+  conectar();
+  return () => {
+    vivo = false;
+    cancelar();
+  };
 }
 
 export function observarCliente(clienteId: string, alCambiar: (c: Cliente | null) => void) {
-  return onSnapshot(
-    doc(db, "clientes", clienteId),
-    (snap) => alCambiar(snap.exists() ? (snap.data() as Cliente) : null),
-    fallo("cliente")
+  return escuchar("cliente", (alLlegar, alFallar) =>
+    onSnapshot(
+      doc(db, "clientes", clienteId),
+      (snap) => {
+        alLlegar();
+        alCambiar(snap.exists() ? (snap.data() as Cliente) : null);
+      },
+      alFallar
+    )
   );
 }
 
@@ -108,10 +154,15 @@ export function observarCliente(clienteId: string, alCambiar: (c: Cliente | null
  */
 export function observarAsistencias(clienteId: string, alCambiar: (a: Asistencia[]) => void) {
   const consulta = query(collection(db, "asistencias"), where("clienteId", "==", clienteId));
-  return onSnapshot(
-    consulta,
-    (snap) => alCambiar(snap.docs.map((d) => d.data() as Asistencia)),
-    fallo("asistencias")
+  return escuchar("asistencias", (alLlegar, alFallar) =>
+    onSnapshot(
+      consulta,
+      (snap) => {
+        alLlegar();
+        alCambiar(snap.docs.map((d) => d.data() as Asistencia));
+      },
+      alFallar
+    )
   );
 }
 
@@ -125,10 +176,15 @@ export function observarAvisoFalta(
   hoy: string,
   alCambiar: (yaAviso: boolean) => void
 ) {
-  return onSnapshot(
-    doc(db, "avisosFalta", `${clienteId}_${hoy}`),
-    (snap) => alCambiar(snap.exists()),
-    fallo("avisoFalta")
+  return escuchar("avisoFalta", (alLlegar, alFallar) =>
+    onSnapshot(
+      doc(db, "avisosFalta", `${clienteId}_${hoy}`),
+      (snap) => {
+        alLlegar();
+        alCambiar(snap.exists());
+      },
+      alFallar
+    )
   );
 }
 
@@ -170,18 +226,28 @@ export interface VideoResumen {
 }
 
 export function observarVideos(clienteId: string, alCambiar: (v: VideoResumen[]) => void) {
-  return onSnapshot(
-    collection(db, "clientes", clienteId, "videos"),
-    (snap) => alCambiar(snap.docs.map((d) => d.data() as VideoResumen)),
-    fallo("videos")
+  return escuchar("videos", (alLlegar, alFallar) =>
+    onSnapshot(
+      collection(db, "clientes", clienteId, "videos"),
+      (snap) => {
+        alLlegar();
+        alCambiar(snap.docs.map((d) => d.data() as VideoResumen));
+      },
+      alFallar
+    )
   );
 }
 
 export function observarMedallas(clienteId: string, alCambiar: (m: MedallaOtorgada[]) => void) {
-  return onSnapshot(
-    collection(db, "clientes", clienteId, "medallas"),
-    (snap) => alCambiar(snap.docs.map((d) => d.data() as MedallaOtorgada)),
-    fallo("medallas")
+  return escuchar("medallas", (alLlegar, alFallar) =>
+    onSnapshot(
+      collection(db, "clientes", clienteId, "medallas"),
+      (snap) => {
+        alLlegar();
+        alCambiar(snap.docs.map((d) => d.data() as MedallaOtorgada));
+      },
+      alFallar
+    )
   );
 }
 
@@ -189,10 +255,15 @@ export function observarLogrosPersonales(
   clienteId: string,
   alCambiar: (l: LogroPersonalOtorgado[]) => void
 ) {
-  return onSnapshot(
-    collection(db, "clientes", clienteId, "logrosPersonales"),
-    // El id no se guarda dentro del documento; se rellena al leer, como en la app.
-    (snap) => alCambiar(snap.docs.map((d) => ({ ...(d.data() as LogroPersonalOtorgado), id: d.id }))),
-    fallo("logrosPersonales")
+  return escuchar("logrosPersonales", (alLlegar, alFallar) =>
+    onSnapshot(
+      collection(db, "clientes", clienteId, "logrosPersonales"),
+      (snap) => {
+        alLlegar();
+        // El id no se guarda dentro del documento; se rellena al leer, como en la app.
+        alCambiar(snap.docs.map((d) => ({ ...(d.data() as LogroPersonalOtorgado), id: d.id })));
+      },
+      alFallar
+    )
   );
 }

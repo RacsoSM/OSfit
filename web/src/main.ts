@@ -1,6 +1,7 @@
 import { getDownloadURL, ref } from "firebase/storage";
 import {
   alFallarDatos,
+  alVolverDatos,
   observarCliente,
   observarAsistencias,
   observarAvisoFalta,
@@ -16,7 +17,7 @@ import type {
   VideoResumen,
 } from "./datos";
 import { hoyEnMazatlan } from "./fecha";
-import { iniciarSesion, storage } from "./firebase";
+import { credencialLista, iniciarSesion, storage } from "./firebase";
 import { almacenesDelNavegador, saludDeLosAlmacenes } from "./sesion";
 import type { MotivoSinAcceso, ResultadoSesion } from "./sesion";
 import { aplicarPaleta } from "./paleta";
@@ -270,6 +271,17 @@ async function arrancar(): Promise<void> {
   let falloDatos: string | null = null;
   /** Lo que falló de los listeners de al lado. No tapa la página; se muestra si no hay otra. */
   let falloSecundario: string | null = null;
+
+  // La credencial antes que los listeners: pedir datos en el hueco entre entrar y que el
+  // cliente de Firestore se entere vuelve como `permission-denied`.
+  await credencialLista();
+
+  alVolverDatos((origen) => {
+    // Volvió: se borra su error. Sin esto, un tropiezo al arrancar dejaría la pantalla de la
+    // antena puesta aunque los datos ya estuvieran llegando.
+    if (origen === "cliente") falloDatos = null;
+    else if (falloSecundario?.startsWith(`${origen}:`)) falloSecundario = null;
+  });
 
   alFallarDatos((origen, error) => {
     const marca = `${origen}:${error.code}`;

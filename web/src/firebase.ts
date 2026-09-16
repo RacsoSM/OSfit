@@ -106,6 +106,20 @@ export function iniciarSesion(): Promise<ResultadoSesion> {
   });
 }
 
+/**
+ * Espera a que la credencial exista antes de que nadie le pida datos a Firestore.
+ *
+ * `iniciarSesion` promete que la clienta entró, no que el cliente de Firestore ya se enteró:
+ * la credencial le llega por el evento de cambio de token, que es asíncrono. Pedir datos en
+ * ese hueco sale sin credencial y vuelve como `permission-denied` —visto en un iPhone,
+ * denegando hasta el documento del cliente, que tiene la regla más simple de todas—.
+ * `getIdToken` cierra el hueco: cuando resuelve, el token existe y ya se anunció.
+ */
+export async function credencialLista(): Promise<void> {
+  await auth.authStateReady();
+  await auth.currentUser?.getIdToken();
+}
+
 /** Canjea un token por una sesión de Firebase. No tira: cada falla vuelve como un estado. */
 async function canjear(token: string): Promise<ResultadoSesion> {
   let respuesta: Response;
