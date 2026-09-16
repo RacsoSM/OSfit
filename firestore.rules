@@ -57,8 +57,14 @@ service cloud.firestore {
     // mantiene el botón escondido el resto del día aunque recargue—, pero escribir solo lo
     // hace la función `avisarFalta` con el Admin SDK, que no pasa por estas reglas.
     match /avisosFalta/{doc} {
+      // Por el id del documento y no por su contenido: el aviso no existe hasta que la
+      // clienta avisa, y con `resource` en null una regla que mire `resource.data` deniega
+      // la lectura de lo que todavía no está. El id ya lleva el clienteId adelante, y los
+      // ids que genera Firestore son alfanuméricos, así que partir por `_` es seguro.
+      // Relajarlo a `resource == null` no vale: dejaría probar ids para averiguar si otra
+      // clienta avisó.
       allow read: if esEntrenador() ||
-                     resource.data.clienteId == request.auth.token.clienteId;
+                     doc.split('_')[0] == request.auth.token.clienteId;
       allow write: if esEntrenador();
     }
 

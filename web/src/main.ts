@@ -211,9 +211,18 @@ async function arrancar(): Promise<void> {
              <p style="color: var(--texto-tenue); font-size: 14px">
                Revisa tu conexión y vuelve a entrar desde tu link.
              </p>
-             <p style="color: var(--texto-tenue); font-size: 11px; opacity: 0.7">${falloDatos}</p>
+             <p style="color: var(--texto-tenue); font-size: 11px; opacity: 0.7">
+               ${falloDatos}${falloSecundario ? ` · ${falloSecundario}` : ""}
+             </p>
            </div>`
-        : `<div class="tarjeta vacio"><p>No encontramos tus datos.</p></div>`;
+        : `<div class="tarjeta vacio">
+             <p>No encontramos tus datos.</p>
+             ${
+               falloSecundario
+                 ? `<p style="color: var(--texto-tenue); font-size: 11px; opacity: 0.7">${falloSecundario}</p>`
+                 : ""
+             }
+           </div>`;
       return;
     }
     prepararEstructura(cliente.nombre);
@@ -257,11 +266,21 @@ async function arrancar(): Promise<void> {
    * en pantalla y son cosas distintas.
    */
   let clienteLlego = false;
-  /** Lo último que falló, como `cliente:permission-denied`; `null` mientras todo va bien. */
+  /** Lo último que falló del cliente, como `cliente:permission-denied`; `null` si todo va. */
   let falloDatos: string | null = null;
+  /** Lo que falló de los listeners de al lado. No tapa la página; se muestra si no hay otra. */
+  let falloSecundario: string | null = null;
 
   alFallarDatos((origen, error) => {
-    falloDatos = `${origen}:${error.code}`;
+    const marca = `${origen}:${error.code}`;
+    // Solo el cliente se lleva la pantalla. Que muera un listener de al lado —un aviso que
+    // todavía no existe, unos videos que no cargan— no es razón para taparle la página
+    // entera: se anota, se ve si de todos modos no hay nada que pintar, y ya.
+    if (origen !== "cliente") {
+      falloSecundario = marca;
+      return;
+    }
+    falloDatos = marca;
     pintar();
   });
 
