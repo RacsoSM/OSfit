@@ -1238,14 +1238,18 @@ que ella no podía resolver. Commit `cd61093`.
 > agregar un icono en la pantalla de Clientes que me permita identificar cuando un cliente
 > cambio su rutina
 
-**Sin diseñar todavía.** Antes de implementarlo hay que acordar al menos qué cuenta como
-"cambió su rutina" —la clienta cambió su día desde su página (`cambiosDia`), o el entrenador
-le despegó la rutina de la plantilla, que son cosas distintas y viven en sitios distintos— y
-cuánto dura el indicador: solo el día del cambio, como el de `avisosFalta`, o hasta que el
-entrenador lo vea.
+**Precisado el mismo día**, preguntando qué contaba como "cambió su rutina":
 
-**Lo que ya existe y sirve de espejo:** la clienta se pinta de amarillo en Clientes cuando
-avisa que no viene, y en Tomar Asistencia sale "🔄 Cambió su día: <motivo>" el mismo día del
-cambio (entrada 7). El icono pedido es el mismo problema en otra pantalla.
+> me refiero a que cambie su rutina desde la web, exactamente como lo que hace 🔄 Cambió su
+> día: <motivo>" de Tomar Asistencia. pero desde la pantalla de Clientes
+
+O sea `cambiosDia` —lo que la clienta hace desde su página—, y no el entrenador despegándola
+de su plantilla. El indicador ya existe y se dibuja en Tomar Asistencia; lo que falta es el
+mismo hecho visible en Clientes.
+
+**Lo que queda por decidir:** cuánto dura. El de Tomar Asistencia solo se dibuja el día del
+cambio, igual que el amarillo del aviso de falta, y esa ventana es la que hace que hoy solo se
+vea si el entrenador entra a esa pantalla ese día. Si en Clientes se quiere lo mismo, la regla
+ya está escrita y solo hay que reusarla.
 
 ---
