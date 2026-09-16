@@ -59,6 +59,7 @@ fun ClientesListScreen(
     val diaQueTocaPorCliente by viewModel.diaQueTocaPorCliente.collectAsState()
     val errorValidacion by viewModel.errorValidacion.collectAsState()
     val avisaronQueNoVienen by viewModel.avisaronQueNoVienen.collectAsState()
+    val cambiaronSuDia by viewModel.cambiaronSuDia.collectAsState()
     val hoy by rememberFechaActual()
 
     // `rememberFechaActual()` despierta sola a medianoche; el ViewModel se entera por aquí y
@@ -90,6 +91,7 @@ fun ClientesListScreen(
                         cliente = cliente,
                         diaQueToca = diaQueTocaPorCliente[cliente.id] ?: 0,
                         avisoNoViene = cliente.id in avisaronQueNoVienen,
+                        cambioSuDia = cliente.id in cambiaronSuDia,
                         onClick = { onClienteClick(cliente.id) }
                     )
                 }
@@ -156,6 +158,7 @@ private fun ClienteItem(
     cliente: Cliente,
     diaQueToca: Int,
     avisoNoViene: Boolean,
+    cambioSuDia: Boolean,
     onClick: () -> Unit
 ) {
     val nombreDia = cliente.rutinaAsignada?.dias?.getOrNull(diaQueToca)?.nombreDia
@@ -200,13 +203,27 @@ private fun ClienteItem(
             ) {
                 AvatarCliente(nombre = cliente.nombre, activo = cliente.activo)
                 Column(modifier = Modifier.padding(start = 12.dp)) {
-                    Text(
-                        cliente.nombre,
-                        style = MaterialTheme.typography.titleMedium,
-                        color = colorTexto,
-                        textDecoration = if (cliente.activo) null else TextDecoration.LineThrough,
-                        maxLines = 1
-                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            cliente.nombre,
+                            style = MaterialTheme.typography.titleMedium,
+                            color = colorTexto,
+                            textDecoration = if (cliente.activo) null else TextDecoration.LineThrough,
+                            maxLines = 1
+                        )
+                        if (cambioSuDia) {
+                            // Solo el icono, sin el motivo: el porqué se lee en Tomar
+                            // Asistencia, que es donde el entrenador está cuando le importa.
+                            // Acá el trabajo del indicador es que se note de un vistazo en la
+                            // lista, y una segunda línea solo en algunas tarjetas desparejaría
+                            // la altura de todas.
+                            Text(
+                                "🔄",
+                                style = MaterialTheme.typography.titleMedium,
+                                modifier = Modifier.padding(start = 6.dp)
+                            )
+                        }
+                    }
                 }
             }
         }
