@@ -16,6 +16,7 @@ import type {
 } from "./datos";
 import { hoyEnMazatlan } from "./fecha";
 import { iniciarSesion, storage } from "./firebase";
+import type { ResultadoSesion } from "./sesion";
 import { aplicarPaleta } from "./paleta";
 import { tarjetaDia } from "./ui/tarjetaDia";
 import { saludo, conectarSaludo, actualizarNombre } from "./ui/saludo";
@@ -40,21 +41,54 @@ function mostrarEnlaceInvalido(): void {
     </div>`;
 }
 
+/**
+ * La red, que no es lo mismo que un link muerto.
+ *
+ * Antes las dos cosas caían en la pantalla del candado, y el precio lo pagaba la clienta:
+ * un bache de señal la mandaba a pedirle al entrenador un link nuevo que no necesitaba,
+ * cuando lo único que hacía falta era volver a intentar. De ahí el botón: el reintento
+ * está acá y no en su chat de WhatsApp.
+ */
+function mostrarSinConexion(): void {
+  app.innerHTML = `
+    <div class="tarjeta vacio">
+      <div class="vacio-emoji">📡</div>
+      <p>No pudimos conectarte.</p>
+      <p style="color: var(--texto-tenue); font-size: 14px">
+        Revisa tu conexión e inténtalo de nuevo. Tu enlace sigue sirviendo.
+      </p>
+      <button class="boton" id="reintentar">Reintentar</button>
+    </div>`;
+  const boton = document.querySelector<HTMLButtonElement>("#reintentar");
+  boton?.addEventListener("click", () => {
+    // Se deshabilita en vez de repintar la pantalla entera: así el toque se siente
+    // atendido sin que la página parpadee, y no se pueden encimar dos arranques.
+    boton.disabled = true;
+    boton.textContent = "Conectando…";
+    arrancar();
+  });
+}
+
 async function arrancar(): Promise<void> {
-  let clienteId: string | null;
+  let sesion: ResultadoSesion;
   try {
-    clienteId = await iniciarSesion();
+    sesion = await iniciarSesion();
   } catch {
-    // Un error de red al canjear el token y un token inválido se ven igual para el
-    // cliente: en ambos casos no pudimos meterlo a su sesión, así que reciben el
-    // mismo mensaje en vez de quedarse viendo la pantalla de carga para siempre.
+    // `iniciarSesion` devuelve sus fallas como estado, así que llegar acá es una falla que
+    // no previmos. Se trata como red: deja reintentar, que es lo peor que puede pasar, en
+    // vez de mandarla a pedir un link que a lo mejor no tiene nada malo.
+    mostrarSinConexion();
+    return;
+  }
+  if (sesion.estado === "sin-acceso") {
     mostrarEnlaceInvalido();
     return;
   }
-  if (!clienteId) {
-    mostrarEnlaceInvalido();
+  if (sesion.estado === "sin-conexion") {
+    mostrarSinConexion();
     return;
   }
+  const clienteId = sesion.clienteId;
   const hoy = hoyEnMazatlan();
 
   let cliente: Cliente | null = null;

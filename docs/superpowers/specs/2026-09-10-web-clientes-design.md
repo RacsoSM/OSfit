@@ -72,13 +72,35 @@ antes de escribir.
 2. El cliente abre el link. El JS toma el token de la URL y llama a `sesion`.
 3. `sesion` valida el token, y devuelve un **custom token** de Firebase con el
    claim `clienteId`.
-4. El navegador hace `signInWithCustomToken`, y **reemplaza la URL por `/mi`**
-   con `history.replaceState`.
-5. La sesión persiste (`browserLocalPersistence`). Las próximas veces entra
+4. El navegador hace `signInWithCustomToken`, **guarda el token** en
+   `sessionStorage` y `localStorage`, y **reemplaza la URL por `/mi`** con
+   `history.replaceState`.
+5. La sesión persiste (la jerarquía por defecto de `getAuth`:
+   `[IndexedDB, localStorage, sessionStorage]`). Las próximas veces entra
    directo, sin el link.
+6. Si en alguna visita la sesión guardada ya no está, se vuelve a canjear el
+   token guardado en el paso 4, sin que la clienta se entere.
 
 El paso 4 importa: el token deja de estar a la vista apenas se canjea. No queda
 en una captura de pantalla ni se comparte sin querer al pasar la dirección.
+Guardarlo en el almacén del propio sitio no deshace eso —ahí no está a la vista
+de nadie— y no es un secreto nuevo: es el mismo que vive para siempre en su chat
+de WhatsApp.
+
+El paso 6 tampoco es de adorno. Sin él, después del `replaceState` la sesión
+guardada era lo único que quedaba, así que cualquier pérdida de almacenamiento
+dejaba a la clienta en `/mi` sin sesión y sin nada con qué recuperarla: la
+pantalla de "este enlace ya no es válido" con un link que seguía vivo. En iOS
+eso no es raro — Safari borra el almacenamiento de un sitio con el que no
+interactúas en una semana, y abrir el link desde el navegador de WhatsApp puede
+ni siquiera usar el mismo almacén que Safari.
+
+Por lo mismo, la web distingue **"no hay acceso"** de **"no hay red"**. Un 404
+del canje es un link revocado y manda a pedirle otro al entrenador; un fallo de
+`fetch`, un 429 o un 5xx —un arranque en frío de Cloud Run se ve igual que un
+bache de señal— muestran "no pudimos conectarte" con un botón de reintentar, y
+**no** queman el token guardado. Tratar los dos igual le costaba a la clienta un
+link nuevo cada vez que se le caía la señal.
 
 El token vive en una colección **aparte** y no en el documento del cliente, a
 propósito: así el documento que el cliente puede leer no contiene ningún

@@ -1,13 +1,15 @@
 import { initializeApp } from "firebase/app";
-import {
-  browserLocalPersistence,
-  getAuth,
-  setPersistence,
-  signInWithCustomToken,
-} from "firebase/auth";
+import { getAuth, signInWithCustomToken } from "firebase/auth";
 import { initializeFirestore, persistentLocalCache } from "firebase/firestore";
 import { getFunctions } from "firebase/functions";
 import { getStorage } from "firebase/storage";
+import {
+  almacenesDelNavegador,
+  lecturaDelStatus,
+  memoriaToken,
+  resolverSesion,
+} from "./sesion";
+import type { ResultadoSesion } from "./sesion";
 
 const firebaseConfig = {
   apiKey: "AIzaSyD-VnmxHFK1ptLWFKgAd80caa7EkiD0PZA",
@@ -51,30 +53,85 @@ export const storage = getStorage(app);
  */
 export const functions = getFunctions(app, "us-west1");
 
+/**
+ * Sin `setPersistence`: `getAuth` ya deja la sesión guardada, y forzarla la empeoraba.
+ *
+ * El default de `getAuth` es la jerarquía `[IndexedDB, localStorage, sessionStorage]` —las
+ * tres sobreviven a cerrar el navegador— y se queda con la primera que el navegador ofrezca.
+ * O sea que el `setPersistence(auth, browserLocalPersistence)` que había acá no compraba la
+ * persistencia: ya la teníamos. Lo único que hacía era *angostar* la jerarquía a
+ * `localStorage`.
+ *
+ * Y eso cobraba caro. `setPersistence` migra: lee al usuario del almacén actual, **lo borra
+ * de ahí** y recién entonces lo escribe en el nuevo. Como el SDK arranca cada carga eligiendo
+ * IndexedDB y devolviéndolo a su lugar, cada visita hacía el viaje de ida y vuelta completo:
+ * IndexedDB → borrar → localStorage, y a la siguiente al revés. Un borrado y una escritura
+ * cruzando dos almacenes, en cada carga, sobre la única copia de la sesión. Si en Safari
+ * falla la mitad de atrás de ese viaje —IndexedDB en WKWebView es de fallar sola— la sesión
+ * se queda borrada de un lado sin haber llegado al otro, y la clienta despierta en `/mi` sin
+ * sesión.
+ *
+ * Quitándolo, la sesión se queda quieta donde el SDK la puso.
+ */
 const auth = getAuth(app);
 
 /**
- * Devuelve el clienteId de la sesión, canjeando el token del link si la URL lo trae.
+ * Mete a la clienta a su sesión y devuelve en qué quedó el intento.
  *
- * Después de canjear reemplaza la URL por `/mi`: el token deja de estar a la vista apenas
- * se usa, así no queda en una captura de pantalla ni se comparte sin querer al pasar la
- * dirección. La sesión persiste, así que las próximas visitas entran sin el link.
+ * El orden en que se intenta y qué se olvida cuándo vive en `resolverSesion`, con sus
+ * tests; acá solo se le enchufa el navegador y el SDK.
+ *
+ * `authStateReady` y no `currentUser` a secas: el SDK restaura la sesión guardada de forma
+ * asíncrona, así que preguntar antes es leer `null` sin que eso signifique que no hay
+ * sesión.
  */
-export async function iniciarSesion(): Promise<string | null> {
-  await setPersistence(auth, browserLocalPersistence);
+export function iniciarSesion(): Promise<ResultadoSesion> {
+  return resolverSesion({
+    rutaActual: () => location.pathname,
+    canjear,
+    sesionGuardada: async () => {
+      await auth.authStateReady();
+      return auth.currentUser?.uid ?? null;
+    },
+    esconderToken: () => history.replaceState(null, "", "/mi"),
+    memoria: memoriaToken(almacenesDelNavegador()),
+  });
+}
 
-  const enLaUrl = location.pathname.match(/^\/c\/([A-Za-z0-9]+)$/);
-  if (enLaUrl) {
-    const respuesta = await fetch(URL_SESION, {
+/** Canjea un token por una sesión de Firebase. No tira: cada falla vuelve como un estado. */
+async function canjear(token: string): Promise<ResultadoSesion> {
+  let respuesta: Response;
+  try {
+    respuesta = await fetch(URL_SESION, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ token: enLaUrl[1] }),
+      body: JSON.stringify({ token }),
     });
-    if (!respuesta.ok) return null;
-    const { customToken } = await respuesta.json();
-    await signInWithCustomToken(auth, customToken);
-    history.replaceState(null, "", "/mi");
+  } catch {
+    // `fetch` solo rechaza cuando la petición no llegó a ningún lado: sin señal, DNS caído,
+    // la función sin desplegar. Nada de eso dice nada sobre el token.
+    return { estado: "sin-conexion" };
   }
 
-  return auth.currentUser?.uid ?? null;
+  const lectura = lecturaDelStatus(respuesta.status);
+  if (lectura !== "canjeado") return { estado: lectura };
+
+  try {
+    const { customToken } = await respuesta.json();
+    const credencial = await signInWithCustomToken(auth, customToken);
+    return { estado: "lista", clienteId: credencial.user.uid };
+  } catch (error) {
+    // El custom token ya salió bueno, así que lo único que puede fallar acá es el viaje a
+    // Identity Toolkit. Si fue la red, se puede reintentar; si el token expiró en el camino
+    // (duran una hora), un canje nuevo lo arregla y ese también pasa por acá.
+    return { estado: esFalloDeRed(error) ? "sin-conexion" : "sin-acceso" };
+  }
+}
+
+function esFalloDeRed(error: unknown): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    (error as { code?: string }).code === "auth/network-request-failed"
+  );
 }
