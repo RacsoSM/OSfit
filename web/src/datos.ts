@@ -1,6 +1,6 @@
 import { collection, doc, onSnapshot, query, where } from "firebase/firestore";
 import type { FirestoreError } from "firebase/firestore";
-import { db } from "./firebase";
+import { db, renovarCredencial } from "./firebase";
 import type { PaletaWeb } from "./paleta";
 
 export interface Ejercicio { nombre: string; series: number; repeticiones: string; pesoONota: string; }
@@ -124,7 +124,15 @@ function escuchar(
         reportarFallo(origen, error);
         if (!vivo || intentos >= 4) return;
         intentos += 1;
-        setTimeout(() => vivo && conectar(), 400 * intentos);
+        // Un permiso denegado no se arregla insistiendo con la misma credencial: o está
+        // vencida, o nunca llegó. Se renueva antes de volver a colgarse, y solo el primer
+        // reintento paga ese viaje —si con credencial nueva sigue denegado, el problema es
+        // la regla y no el token.
+        const listo =
+          error.code === "permission-denied" && intentos === 1
+            ? renovarCredencial()
+            : Promise.resolve(true);
+        listo.then(() => setTimeout(() => vivo && conectar(), 400 * intentos));
       }
     );
   };

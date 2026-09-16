@@ -17,7 +17,7 @@ import type {
   VideoResumen,
 } from "./datos";
 import { hoyEnMazatlan } from "./fecha";
-import { credencialLista, iniciarSesion, storage } from "./firebase";
+import { credencialLista, huellaDeLaSesion, iniciarSesion, storage } from "./firebase";
 import { almacenesDelNavegador, saludDeLosAlmacenes } from "./sesion";
 import type { MotivoSinAcceso, ResultadoSesion } from "./sesion";
 import { aplicarPaleta } from "./paleta";
@@ -213,7 +213,7 @@ async function arrancar(): Promise<void> {
                Revisa tu conexión y vuelve a entrar desde tu link.
              </p>
              <p style="color: var(--texto-tenue); font-size: 11px; opacity: 0.7">
-               ${falloDatos}${falloSecundario ? ` · ${falloSecundario}` : ""}
+               ${falloDatos}${falloSecundario ? ` · ${falloSecundario}` : ""}${huella ? `<br>${huella}` : ""}
              </p>
            </div>`
         : `<div class="tarjeta vacio">
@@ -271,6 +271,8 @@ async function arrancar(): Promise<void> {
   let falloDatos: string | null = null;
   /** Lo que falló de los listeners de al lado. No tapa la página; se muestra si no hay otra. */
   let falloSecundario: string | null = null;
+  /** Qué traía la sesión cuando denegaron. Se pide una sola vez, y solo si deniegan. */
+  let huella: string | null = null;
 
   // La credencial antes que los listeners: pedir datos en el hueco entre entrar y que el
   // cliente de Firestore se entere vuelve como `permission-denied`.
@@ -294,6 +296,14 @@ async function arrancar(): Promise<void> {
     }
     falloDatos = marca;
     pintar();
+    // La huella llega tarde a propósito: leer el token es asíncrono y la pantalla no puede
+    // esperarla. Cuando llega, se repinta con ella.
+    if (error.code === "permission-denied" && !huella) {
+      huellaDeLaSesion().then((h) => {
+        huella = h;
+        pintar();
+      });
+    }
   });
 
   observarCliente(clienteId, (c) => {
