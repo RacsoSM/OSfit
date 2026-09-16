@@ -1,5 +1,6 @@
 import { getDownloadURL, ref } from "firebase/storage";
 import {
+  alFallarDatos,
   observarCliente,
   observarAsistencias,
   observarAvisoFalta,
@@ -16,7 +17,8 @@ import type {
 } from "./datos";
 import { hoyEnMazatlan } from "./fecha";
 import { iniciarSesion, storage } from "./firebase";
-import type { ResultadoSesion } from "./sesion";
+import { almacenesDelNavegador, saludDeLosAlmacenes } from "./sesion";
+import type { MotivoSinAcceso, ResultadoSesion } from "./sesion";
 import { aplicarPaleta } from "./paleta";
 import { tarjetaDia } from "./ui/tarjetaDia";
 import { saludo, conectarSaludo, actualizarNombre } from "./ui/saludo";
@@ -30,13 +32,47 @@ import type { VideoConUrl } from "./ui/tarjetaVideos";
 
 const app = document.querySelector<HTMLElement>("#app")!;
 
-function mostrarEnlaceInvalido(): void {
+/**
+ * De qué bundle salió esta pantalla.
+ *
+ * Va junto al motivo porque sin esto no se puede saber si un reporte viene del código de
+ * hoy o de uno que el navegador tenía guardado: hosting servía el `index.html` con una hora
+ * de caché, así que un teléfono podía seguir corriendo el bundle viejo mucho después del
+ * deploy y el candado se veía idéntico. El nombre del archivo lleva el hash del build.
+ */
+function versionDelBundle(): string {
+  const src = document.querySelector<HTMLScriptElement>('script[src*="/assets/"]')?.src ?? "";
+  return src.split("/").pop()?.replace(/^index-|\.js$/g, "") ?? "?";
+}
+
+/**
+ * El candado, con una línea que dice cuál de los tres escalones falló.
+ *
+ * La clienta no necesita el código, pero el entrenador sí cuando ella le manda la captura:
+ * `sin-rastro` en una recarga significa que se perdieron sesión y token a la vez —el
+ * callejón que ya arreglamos, y que no debería reaparecer—, mientras que
+ * `recordado-rechazado` o `link-rechazado` son un acceso de verdad revocado. Antes los tres
+ * se veían igual y la única forma de distinguirlos era adivinando.
+ */
+function mostrarEnlaceInvalido(motivo?: MotivoSinAcceso): void {
+  // `sin-rastro` no es un link muerto: es haber llegado sin él. Pasa al abrir el navegador
+  // de cero y entrar al sitio sin tocar el link —ahí no hay nada que diga quién es ella— y
+  // mandarla a pedir uno nuevo sería mentirle, porque el suyo sigue vivo. Lo único que
+  // necesita es volver a abrirlo.
+  const perdida = motivo === "sin-rastro";
   app.innerHTML = `
     <div class="tarjeta vacio">
-      <div class="vacio-emoji">🔒</div>
-      <p>Este enlace ya no es válido.</p>
+      <div class="vacio-emoji">${perdida ? "🔗" : "🔒"}</div>
+      <p>${perdida ? "Abre tu link otra vez." : "Este enlace ya no es válido."}</p>
       <p style="color: var(--texto-tenue); font-size: 14px">
-        Pídele a tu entrenador que te comparta uno nuevo.
+        ${
+          perdida
+            ? "Búscalo en tu chat de WhatsApp con tu entrenador: el mismo de siempre sirve."
+            : "Pídele a tu entrenador que te comparta uno nuevo."
+        }
+      </p>
+      <p style="color: var(--texto-tenue); font-size: 11px; opacity: 0.7">
+        ${motivo ?? "desconocido"} · ${versionDelBundle()} · ${saludDeLosAlmacenes(almacenesDelNavegador())} · h${history.state ? "+" : "-"}f${location.hash ? "+" : "-"}
       </p>
     </div>`;
 }
@@ -81,7 +117,7 @@ async function arrancar(): Promise<void> {
     return;
   }
   if (sesion.estado === "sin-acceso") {
-    mostrarEnlaceInvalido();
+    mostrarEnlaceInvalido(sesion.motivo);
     return;
   }
   if (sesion.estado === "sin-conexion") {
@@ -160,9 +196,24 @@ async function arrancar(): Promise<void> {
 
   function pintar(): void {
     if (!cliente) {
-      app.innerHTML = `<div class="tarjeta vacio"><p>No encontramos tus datos.</p></div>`;
       // Se tira la estructura entera, así que la firma de los videos deja de describir nada.
       firmaPintada = null;
+      // Callarse mientras el cliente no llegó. Los seis listeners repintan al llegar, y el de
+      // las medallas o el de las asistencias puede ganarle al del cliente —otorgarle algo
+      // desde la app es la forma más fácil de provocarlo—: pintar ahí "No encontramos tus
+      // datos" es decirle que no existe cuando lo único que pasa es que su documento todavía
+      // viene en camino. El esqueleto de carga del HTML aguanta hasta que llegue.
+      if (!clienteLlego && !falloDatos) return;
+      app.innerHTML = falloDatos
+        ? `<div class="tarjeta vacio">
+             <div class="vacio-emoji">📡</div>
+             <p>No pudimos traer tus datos.</p>
+             <p style="color: var(--texto-tenue); font-size: 14px">
+               Revisa tu conexión y vuelve a entrar desde tu link.
+             </p>
+             <p style="color: var(--texto-tenue); font-size: 11px; opacity: 0.7">${falloDatos}</p>
+           </div>`
+        : `<div class="tarjeta vacio"><p>No encontramos tus datos.</p></div>`;
       return;
     }
     prepararEstructura(cliente.nombre);
@@ -200,8 +251,23 @@ async function arrancar(): Promise<void> {
     });
   }
 
+  /**
+   * Si el listener del cliente ya contestó alguna vez, exista o no su documento. Es lo que
+   * separa "Firestore dijo que no está" de "todavía no llegó", que hasta hoy se veían igual
+   * en pantalla y son cosas distintas.
+   */
+  let clienteLlego = false;
+  /** Lo último que falló, como `cliente:permission-denied`; `null` mientras todo va bien. */
+  let falloDatos: string | null = null;
+
+  alFallarDatos((origen, error) => {
+    falloDatos = `${origen}:${error.code}`;
+    pintar();
+  });
+
   observarCliente(clienteId, (c) => {
     cliente = c;
+    clienteLlego = true;
     // Antes de pintar: así el primer repintado ya sale con los colores buenos y la página no
     // parpadea de morado al color de la clienta.
     aplicarPaleta(c?.paletaWeb, document.documentElement);

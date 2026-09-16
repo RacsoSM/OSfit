@@ -1,4 +1,5 @@
 import { collection, doc, onSnapshot, query, where } from "firebase/firestore";
+import type { FirestoreError } from "firebase/firestore";
 import { db } from "./firebase";
 import type { PaletaWeb } from "./paleta";
 
@@ -71,10 +72,34 @@ export interface Asistencia {
   diaRutinaRealizado?: number | null;
 }
 
+/**
+ * Adónde van los fallos de los listeners.
+ *
+ * Ninguno tenía manejador de error, y eso fue un agujero caro: `onSnapshot` se queda callado
+ * cuando el servidor le dice que no, así que un listener podía morirse —reglas, red, el caché
+ * local roto— sin que la página se enterara. Con el del cliente muerto y los demás vivos, la
+ * pantalla decía "No encontramos tus datos" para siempre, que suena a que la clienta no
+ * existe cuando lo que pasó fue que la lectura falló.
+ *
+ * Es un solo punto de reporte y no un parámetro por observador porque quien lo escucha es
+ * uno solo: la pantalla, que solo necesita saber que algo falló y qué dijo Firestore.
+ */
+let reportarFallo: (origen: string, error: FirestoreError) => void = () => {};
+
+export function alFallarDatos(escucha: (origen: string, error: FirestoreError) => void): void {
+  reportarFallo = escucha;
+}
+
+function fallo(origen: string) {
+  return (error: FirestoreError) => reportarFallo(origen, error);
+}
+
 export function observarCliente(clienteId: string, alCambiar: (c: Cliente | null) => void) {
-  return onSnapshot(doc(db, "clientes", clienteId), (snap) => {
-    alCambiar(snap.exists() ? (snap.data() as Cliente) : null);
-  });
+  return onSnapshot(
+    doc(db, "clientes", clienteId),
+    (snap) => alCambiar(snap.exists() ? (snap.data() as Cliente) : null),
+    fallo("cliente")
+  );
 }
 
 /**
@@ -83,9 +108,11 @@ export function observarCliente(clienteId: string, alCambiar: (c: Cliente | null
  */
 export function observarAsistencias(clienteId: string, alCambiar: (a: Asistencia[]) => void) {
   const consulta = query(collection(db, "asistencias"), where("clienteId", "==", clienteId));
-  return onSnapshot(consulta, (snap) => {
-    alCambiar(snap.docs.map((d) => d.data() as Asistencia));
-  });
+  return onSnapshot(
+    consulta,
+    (snap) => alCambiar(snap.docs.map((d) => d.data() as Asistencia)),
+    fallo("asistencias")
+  );
 }
 
 /**
@@ -98,9 +125,11 @@ export function observarAvisoFalta(
   hoy: string,
   alCambiar: (yaAviso: boolean) => void
 ) {
-  return onSnapshot(doc(db, "avisosFalta", `${clienteId}_${hoy}`), (snap) => {
-    alCambiar(snap.exists());
-  });
+  return onSnapshot(
+    doc(db, "avisosFalta", `${clienteId}_${hoy}`),
+    (snap) => alCambiar(snap.exists()),
+    fallo("avisoFalta")
+  );
 }
 
 /**
@@ -141,23 +170,29 @@ export interface VideoResumen {
 }
 
 export function observarVideos(clienteId: string, alCambiar: (v: VideoResumen[]) => void) {
-  return onSnapshot(collection(db, "clientes", clienteId, "videos"), (snap) => {
-    alCambiar(snap.docs.map((d) => d.data() as VideoResumen));
-  });
+  return onSnapshot(
+    collection(db, "clientes", clienteId, "videos"),
+    (snap) => alCambiar(snap.docs.map((d) => d.data() as VideoResumen)),
+    fallo("videos")
+  );
 }
 
 export function observarMedallas(clienteId: string, alCambiar: (m: MedallaOtorgada[]) => void) {
-  return onSnapshot(collection(db, "clientes", clienteId, "medallas"), (snap) => {
-    alCambiar(snap.docs.map((d) => d.data() as MedallaOtorgada));
-  });
+  return onSnapshot(
+    collection(db, "clientes", clienteId, "medallas"),
+    (snap) => alCambiar(snap.docs.map((d) => d.data() as MedallaOtorgada)),
+    fallo("medallas")
+  );
 }
 
 export function observarLogrosPersonales(
   clienteId: string,
   alCambiar: (l: LogroPersonalOtorgado[]) => void
 ) {
-  return onSnapshot(collection(db, "clientes", clienteId, "logrosPersonales"), (snap) => {
+  return onSnapshot(
+    collection(db, "clientes", clienteId, "logrosPersonales"),
     // El id no se guarda dentro del documento; se rellena al leer, como en la app.
-    alCambiar(snap.docs.map((d) => ({ ...(d.data() as LogroPersonalOtorgado), id: d.id })));
-  });
+    (snap) => alCambiar(snap.docs.map((d) => ({ ...(d.data() as LogroPersonalOtorgado), id: d.id }))),
+    fallo("logrosPersonales")
+  );
 }
