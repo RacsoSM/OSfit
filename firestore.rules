@@ -62,6 +62,19 @@ service cloud.firestore {
       allow write: if esEntrenador();
     }
 
+    // La ruleta: una tirada por cliente por mes, con id `{clienteId}_{AAAA-MM}`. El cliente
+    // lee la suya —la necesita para saber si ya jugó y para calcular su cupo— pero escribir
+    // solo lo hace la función `jugarRuleta` con el Admin SDK, que no pasa por estas reglas.
+    //
+    // Se autoriza por el ID y no por `resource.data`, a diferencia de las de arriba: acá el
+    // documento ausente es el caso normal (casi nadie juega), y una regla que mira
+    // `resource.data` no deja leer lo que no existe. Ver entrada 23 de docs/backlog.md.
+    match /ruletas/{doc} {
+      allow read: if esEntrenador() ||
+                     doc.split('_')[0] == request.auth.token.clienteId;
+      allow write: if esEntrenador();
+    }
+
     // El token de acceso nunca se expone al navegador: solo lo lee el Admin SDK, que no
     // pasa por estas reglas.
     match /accesosWeb/{token} {
