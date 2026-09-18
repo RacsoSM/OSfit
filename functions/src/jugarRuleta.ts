@@ -30,6 +30,82 @@ export function calcularDisponibles(gastados: number, castigo: number): number {
   return Math.max(MAXIMO_POR_MES - castigo - gastados, 0);
 }
 
+/**
+ * Código gRPC de "el documento ya existe". Confirmado en `google-gax` (dependencia
+ * transitiva de `@google-cloud/firestore`, en `node_modules/google-gax/build/src/status.js`):
+ * `Status.ALREADY_EXISTS === 6`. El error que lanza `DocumentReference.create()` sobre un
+ * documento existente es un `GoogleError` (`node_modules/google-gax/build/src/googleError.js`)
+ * con ese número en `.code`.
+ */
+const CODIGO_GRPC_DOCUMENTO_EXISTENTE = 6;
+
+/**
+ * Distingue "ya existe la tirada de este mes" de cualquier otro fallo de `create()`
+ * (permisos, red caída, timeout). Un `catch` sin filtrar tragaría los tres por igual y le
+ * diría "ya jugaste" a un cliente que en realidad chocó con un error de red — y encima le
+ * haría creer que gastó su tirada del mes sin haberla gastado.
+ */
+export function esErrorDeDocumentoExistente(error: unknown): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    (error as { code?: unknown }).code === CODIGO_GRPC_DOCUMENTO_EXISTENTE
+  );
+}
+
+/**
+ * Los campos que el premio le impone a la asistencia justificada, sea que cree el documento
+ * o actualice uno existente.
+ *
+ * `justificadaPorCliente: false` va explícito y no solo se omite: si el entrenador había
+ * desmarcado una justificada del cliente (le devolvió el cupo, así que quedó `justificada:
+ * false` pero `justificadaPorCliente` se quedó en `true`), un `update` que solo tocara
+ * `justificada` y `ganadaEnRuleta` dejaría las dos banderas en `true` — y `gastadosEnElMes`
+ * contaría el premio como un revive gastado por el cliente. El premio se cobraría a sí mismo,
+ * que es exactamente lo que existe `ganadaEnRuleta` para evitar.
+ */
+export const CAMPOS_PREMIO = {
+  justificada: true,
+  ganadaEnRuleta: true,
+  justificadaPorCliente: false,
+} as const;
+
+/** Lo mínimo que necesita `crearJustificarFalta` de una asistencia ya existente. */
+export interface AsistenciaExistente {
+  update: (campos: Record<string, unknown>) => Promise<void>;
+}
+
+/**
+ * Fábrica de `justificarFalta` para `aplicarTirada`, separada del `onCall` por el mismo
+ * motivo que `aplicarTirada` se separó del resto: así se prueba en Node con un Firestore de
+ * mentiras, sin arrastrar un documento ni una consulta reales.
+ */
+export function crearJustificarFalta(deps: {
+  clienteId: string;
+  buscarExistente: (fecha: string) => AsistenciaExistente | undefined;
+  crearAsistencia: (datos: Record<string, unknown>) => Promise<void>;
+}): (fecha: string) => Promise<void> {
+  return async (fecha: string) => {
+    const existente = deps.buscarExistente(fecha);
+    if (existente) {
+      await existente.update({ ...CAMPOS_PREMIO });
+    } else {
+      await deps.crearAsistencia({
+        id: "",
+        clienteId: deps.clienteId,
+        fecha,
+        asistio: false,
+        ...CAMPOS_PREMIO,
+        diaRutinaRealizado: null,
+        nota: "",
+        horaLlegada: null,
+        horaSalida: null,
+        duracionMinutos: null,
+      });
+    }
+  };
+}
+
 export interface DepsTirada {
   estado: EstadoParaJugar;
   apostado: Color;
@@ -153,33 +229,21 @@ export const jugarRuleta = onCall({ region: REGION }, async (request) => {
       registrarTirada: async (tirada) => {
         try {
           await refTirada.create({ clienteId, ...tirada });
-        } catch {
-          throw new Error("ya_jugo");
+        } catch (error) {
+          if (esErrorDeDocumentoExistente(error)) throw new Error("ya_jugo");
+          // Cualquier otro fallo (permisos, red caída, timeout) se deja propagar tal cual,
+          // para que salga como fallo genérico y no como "ya jugaste este mes".
+          throw error;
         }
       },
-      justificarFalta: async (fecha) => {
-        const existente = todas.docs.find((d) => d.get("fecha") === fecha);
-        // `ganadaEnRuleta` y NO `justificadaPorCliente`: si se marcara como del cliente,
-        // `gastadosEnElMes` la contaría como un revive usado y el premio se cobraría a sí
-        // mismo.
-        if (existente) {
-          await existente.ref.update({ justificada: true, ganadaEnRuleta: true });
-        } else {
-          await firestore.collection("asistencias").add({
-            id: "",
-            clienteId,
-            fecha,
-            asistio: false,
-            justificada: true,
-            ganadaEnRuleta: true,
-            diaRutinaRealizado: null,
-            nota: "",
-            horaLlegada: null,
-            horaSalida: null,
-            duracionMinutos: null,
-          });
-        }
-      },
+      justificarFalta: crearJustificarFalta({
+        clienteId,
+        buscarExistente: (fecha) => {
+          const doc = todas.docs.find((d) => d.get("fecha") === fecha);
+          return doc ? { update: (campos) => doc.ref.update(campos).then(() => {}) } : undefined;
+        },
+        crearAsistencia: (datos) => firestore.collection("asistencias").add(datos).then(() => {}),
+      }),
     });
   } catch (error) {
     const motivo = (error as Error).message;

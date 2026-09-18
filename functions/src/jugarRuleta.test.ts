@@ -1,5 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
-import { aplicarTirada, calcularDisponibles, type DepsTirada } from "./jugarRuleta";
+import {
+  aplicarTirada,
+  calcularDisponibles,
+  crearJustificarFalta,
+  esErrorDeDocumentoExistente,
+  type DepsTirada,
+} from "./jugarRuleta";
 import { motivoDeRechazo } from "./reglasRuleta";
 
 function deps(campos: Partial<DepsTirada> = {}): DepsTirada {
@@ -90,5 +96,71 @@ describe("calcularDisponibles", () => {
     expect(
       motivoDeRechazo({ activo: true, faltaRota: "2026-09-16", disponibles, yaJugo: false })
     ).toBeNull();
+  });
+});
+
+// Corrección de ronda 1: un `catch` sin filtrar en `registrarTirada` atrapaba también
+// permisos, red caída y timeouts, y se los traducía a "ya jugaste este mes" — mintiéndole al
+// cliente y haciéndole creer que gastó una tirada que nunca se registró.
+describe("esErrorDeDocumentoExistente", () => {
+  it("reconoce el código gRPC ALREADY_EXISTS que lanza create() sobre un documento existente", () => {
+    expect(esErrorDeDocumentoExistente({ code: 6 })).toBe(true);
+  });
+
+  it("no confunde otros códigos gRPC, como UNAVAILABLE, con documento existente", () => {
+    expect(esErrorDeDocumentoExistente({ code: 14 })).toBe(false);
+  });
+
+  it("no confunde un error sin código", () => {
+    expect(esErrorDeDocumentoExistente(new Error("boom"))).toBe(false);
+  });
+});
+
+// Corrección de ronda 1: el documento de asistencia del premio omitía `justificadaPorCliente`,
+// dejando la forma distinta a la que escribe `revivirRacha.ts` y, más grave, dejando la
+// bandera en `true` si el entrenador ya había desmarcado una justificada del cliente.
+describe("crearJustificarFalta", () => {
+  it("sobre una asistencia existente, deja justificada y ganadaEnRuleta en true y apaga justificadaPorCliente", async () => {
+    // Simula el agujero real: el entrenador había desmarcado una justificada del cliente
+    // (`justificada: false`) pero `justificadaPorCliente` se quedó en `true`. Si el `update`
+    // del premio no la tocara, las dos banderas volverían a quedar en `true` y
+    // `gastadosEnElMes` contaría el premio como un revive gastado por el cliente.
+    const update = vi.fn(async () => {});
+    const crearAsistencia = vi.fn(async () => {});
+    const justificarFalta = crearJustificarFalta({
+      clienteId: "cliente-1",
+      buscarExistente: (fecha) => (fecha === "2026-09-16" ? { update } : undefined),
+      crearAsistencia,
+    });
+
+    await justificarFalta("2026-09-16");
+
+    expect(update).toHaveBeenCalledWith({
+      justificada: true,
+      ganadaEnRuleta: true,
+      justificadaPorCliente: false,
+    });
+    expect(crearAsistencia).not.toHaveBeenCalled();
+  });
+
+  it("sin asistencia previa, crea una con justificadaPorCliente en false", async () => {
+    const crearAsistencia = vi.fn(async () => {});
+    const justificarFalta = crearJustificarFalta({
+      clienteId: "cliente-1",
+      buscarExistente: () => undefined,
+      crearAsistencia,
+    });
+
+    await justificarFalta("2026-09-16");
+
+    expect(crearAsistencia).toHaveBeenCalledWith(
+      expect.objectContaining({
+        clienteId: "cliente-1",
+        fecha: "2026-09-16",
+        justificada: true,
+        ganadaEnRuleta: true,
+        justificadaPorCliente: false,
+      })
+    );
   });
 });
