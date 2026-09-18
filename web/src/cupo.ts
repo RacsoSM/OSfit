@@ -9,6 +9,11 @@ import type { Asistencia } from "./datos";
  * contar antes que mantener un contador porque si el entrenador desmarca una justificada
  * desde su app, el cupo se le devuelve al cliente solo; un contador se quedaría viejo y
  * habría que acordarse de corregirlo en un lugar que nadie mira.
+ *
+ * Desde la ruleta (2026-09-18) el máximo del mes ya no es fijo: perder la ruleta un mes le
+ * quita un revive al siguiente. El castigo tampoco se guarda como número — se deduce del
+ * documento `ruletas/{cliente}_{mes anterior}`, así que borrar ese documento devuelve el cupo
+ * solo, igual que desmarcar una justificada.
  */
 
 export const MAXIMO_POR_MES = 3;
@@ -27,6 +32,17 @@ export function gastadosEnElMes(asistencias: Asistencia[], mes: string): number 
   ).length;
 }
 
-export function disponiblesEnElMes(asistencias: Asistencia[], mes: string): number {
-  return Math.max(MAXIMO_POR_MES - gastadosEnElMes(asistencias, mes), 0);
+/**
+ * Lo que le queda al cliente este mes.
+ *
+ * [castigo] son los revives que perdió por fallar la ruleta el mes pasado (0 o 1). Entra como
+ * parámetro y no se lee acá adentro a propósito: esta función es pura y se prueba en Node,
+ * donde no hay Firestore. Quien la llama ya tiene el documento de la tirada.
+ */
+export function disponiblesEnElMes(
+  asistencias: Asistencia[],
+  mes: string,
+  castigo = 0
+): number {
+  return Math.max(MAXIMO_POR_MES - castigo - gastadosEnElMes(asistencias, mes), 0);
 }
