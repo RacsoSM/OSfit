@@ -313,6 +313,11 @@ main { max-width: 480px; margin: 0 auto; padding: 16px 14px 48px; }
    una por una ni tocar `ruleta.ts` para lograr el fundido. */
 @media (prefers-reduced-motion: reduce) {
   .ruleta-rueda.girando { animation: none; }
+  /* `frenar()` pone `transition: transform 4000ms ...` inline (ruletaGiro.ts) sin consultar
+     `matchMedia`: sin este `!important` de autor, que gana por cascada sobre ese inline, el
+     frenado —tres vueltas con easing a lo largo de 4 segundos— se vería entero. No toca
+     `opacity`, así que no interfiere con el fundido del acuse de abajo. */
+  .ruleta-rueda { transition: none !important; }
   .ruleta-marco + p { animation: ruleta-fundido 200ms linear; }
 }
 @keyframes ruleta-fundido {

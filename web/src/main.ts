@@ -150,7 +150,19 @@ async function arrancar(): Promise<void> {
     const html = modalRuleta();
     if (html === firmaRuletaPintada) return;
     firmaRuletaPintada = html;
+    // `innerHTML` reemplaza `#ruleta-rueda` por un nodo nuevo, sin el `transform` que
+    // `frenar()` le dejó puesto a mano (ese estilo vive en el DOM, no en el string de
+    // `modalRuleta()`). Sin rescatarlo, justo el repintado que muestra el acuse ("cayó en...")
+    // haría que la rueda brincara de golpe a su ángulo de reposo, delatando la animación en el
+    // instante en que la clienta más está mirando el resultado.
+    const ruedaVieja = caja.querySelector<HTMLElement>("#ruleta-rueda");
+    const anguloVivo = ruedaVieja ? getComputedStyle(ruedaVieja).transform : null;
     caja.innerHTML = html;
+    const ruedaNueva = caja.querySelector<HTMLElement>("#ruleta-rueda");
+    if (ruedaNueva && anguloVivo && anguloVivo !== "none") {
+      ruedaNueva.style.transition = "none";
+      ruedaNueva.style.transform = anguloVivo;
+    }
     conectarRuleta(pintarRuleta);
   }
 
