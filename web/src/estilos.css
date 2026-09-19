@@ -244,7 +244,11 @@ main { max-width: 480px; margin: 0 auto; padding: 16px 14px 48px; }
   inset: 0;
   z-index: 50;
   display: flex;
-  align-items: center;
+  /* Se desplaza en vez de recortar, y la caja se centra con `margin: auto` en lugar de con
+     `align-items: center`: centrar por alineación recorta arriba y abajo cuando la caja es más
+     alta que la pantalla (teléfono en horizontal, o texto agrandado), y como la ✕ es la única
+     salida del modal, recortarla es dejar a la clienta encerrada. */
+  overflow-y: auto;
   justify-content: center;
   padding: 16px;
   background: rgba(18, 18, 18, 0.8);
@@ -252,6 +256,7 @@ main { max-width: 480px; margin: 0 auto; padding: 16px 14px 48px; }
 }
 .ruleta-caja {
   position: relative;
+  margin: auto;
   background: var(--superficie-alta);
   border-radius: 20px;
   padding: 20px 18px;
@@ -303,7 +308,11 @@ main { max-width: 480px; margin: 0 auto; padding: 16px 14px 48px; }
   background: conic-gradient(var(--primario) 0deg 180deg, var(--ambar) 180deg 360deg);
 }
 .ruleta-rueda.girando { animation: ruleta-libre 0.7s linear infinite; }
+/* El `from` va explícito: sin él lo pone el `transform` inline que dejó la tirada anterior, y
+   el giro de la segunda tirada de la sesión se veía como un bamboleo entre ese ángulo y 360°
+   en vez de como una rueda girando. */
 @keyframes ruleta-libre {
+  from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
 
@@ -313,10 +322,11 @@ main { max-width: 480px; margin: 0 auto; padding: 16px 14px 48px; }
    una por una ni tocar `ruleta.ts` para lograr el fundido. */
 @media (prefers-reduced-motion: reduce) {
   .ruleta-rueda.girando { animation: none; }
-  /* `frenar()` pone `transition: transform 4000ms ...` inline (ruletaGiro.ts) sin consultar
-     `matchMedia`: sin este `!important` de autor, que gana por cascada sobre ese inline, el
-     frenado —tres vueltas con easing a lo largo de 4 segundos— se vería entero. No toca
-     `opacity`, así que no interfiere con el fundido del acuse de abajo. */
+  /* `frenar()` pone `transition: transform 4000ms ...` inline (ruletaGiro.ts) siempre, porque
+     lo que consulta ahí `matchMedia` es cuánto esperar antes del acuse, no si escribir el
+     inline: sin este `!important` de autor, que gana por cascada sobre ese inline, el frenado
+     —tres vueltas con easing a lo largo de 4 segundos— se vería entero. No toca `opacity`, así
+     que no interfiere con el fundido del acuse de abajo. */
   .ruleta-rueda { transition: none !important; }
   .ruleta-marco + p { animation: ruleta-fundido 200ms linear; }
 }
