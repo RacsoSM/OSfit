@@ -110,8 +110,12 @@ export function modalRuleta(): string {
 
   // La propuesta con su costo solo se pinta mientras nadie ha jugado: repetirla junto al
   // acuse de "ganaste" mezclaría el premio con un castigo que ya no aplica a esta tirada.
+  //
+  // El error entra acá porque desde ahí se vuelve a apostar: es el único estado en el que la
+  // clienta puede tocar "Jugar", y hacerlo sin las condiciones delante sería pedirle que
+  // reapueste a ciegas.
   const propuesta =
-    estado.fase.tipo === "propuesta"
+    estado.fase.tipo === "propuesta" || estado.fase.tipo === "error"
       ? `<p class="confirmar-titulo">Te propongo un juego.</p>
          <p class="accion-nota">
            Si adivinas en qué color caerá la ruleta, te revivo tu racha. Si no le atinas, el

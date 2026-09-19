@@ -63,6 +63,17 @@ describe("modalRuleta", () => {
     expect(html).not.toContain("en vez de 3");
   });
 
+  // Desde el error se vuelve a apostar, asi que es el unico estado en el que podria apostarse
+  // sin las condiciones delante.
+  it("tras un error sigue mostrando la propuesta que se va a reapostar", () => {
+    abrirRuleta();
+    marcarResultado({ tipo: "error", texto: "No pudimos girar la ruleta." });
+    const html = modalRuleta();
+    expect(html).toContain("Te propongo un juego");
+    expect(html).toContain("2 oportunidades para revivir en vez de 3");
+    expect(html).toContain("No pudimos girar la ruleta.");
+  });
+
   it("mientras gira no dibuja la salida: la apuesta ya esta cobrada", () => {
     abrirRuleta();
     marcarResultado({ tipo: "girando-real" });
