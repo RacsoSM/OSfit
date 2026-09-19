@@ -43,11 +43,29 @@ export function rotacionDestino(color: "primario" | "ambar", azar: number): numb
   return (360 - enElSector) % 360;
 }
 
-/** El ángulo en el que está la rueda AHORA, leído de la matriz de transformación calculada. */
-function anguloActual(rueda: HTMLElement): number {
-  const matriz = new DOMMatrixReadOnly(getComputedStyle(rueda).transform);
+/**
+ * Convierte el `transform` computado en grados. Separada de `anguloActual` para poder probar
+ * la guarda sin DOM: los tests de este repo corren en Node sin jsdom.
+ *
+ * Cuando la rueda no tiene transform, el computado no es la cadena vacía sino el string
+ * literal "none", y `DOMMatrixReadOnly` lo rechaza con `SyntaxError` porque no es un
+ * `<transform-list>` válido. Esto no es un borde raro: con "reducir movimiento" activo (común
+ * en iOS por mareo) `estilos.css` apaga la animación del giro libre y nunca hay transform
+ * inline, así que este es el camino normal para esas clientas, y antes reventaba `frenar` a
+ * mitad de una tirada que el servidor ya había registrado.
+ */
+export function anguloDesdeTransform(transformComputado: string): number {
+  if (transformComputado === "none" || transformComputado === "") {
+    return 0;
+  }
+  const matriz = new DOMMatrixReadOnly(transformComputado);
   const grados = (Math.atan2(matriz.b, matriz.a) * 180) / Math.PI;
   return (grados + 360) % 360;
+}
+
+/** El ángulo en el que está la rueda AHORA, leído de la matriz de transformación calculada. */
+function anguloActual(rueda: HTMLElement): number {
+  return anguloDesdeTransform(getComputedStyle(rueda).transform);
 }
 
 /** Fase 1: rotación pareja e infinita, desde el instante en que el cliente toca "Jugar". */

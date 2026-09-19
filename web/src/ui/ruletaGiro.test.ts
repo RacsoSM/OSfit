@@ -1,6 +1,6 @@
 // web/src/ui/ruletaGiro.test.ts
 import { describe, expect, it } from "vitest";
-import { rotacionDestino } from "./ruletaGiro";
+import { anguloDesdeTransform, rotacionDestino } from "./ruletaGiro";
 
 /**
  * `rotacionDestino` NO devuelve un ángulo del dibujo: devuelve la rotación que se le pasa a
@@ -46,5 +46,20 @@ describe("rotacionDestino", () => {
       expect(distanciaAlBorde(rotacionDestino("primario", azar))).toBeGreaterThanOrEqual(margen);
       expect(distanciaAlBorde(rotacionDestino("ambar", azar))).toBeGreaterThanOrEqual(margen);
     }
+  });
+});
+
+describe("anguloDesdeTransform", () => {
+  // El fallo que esto fija: sin transform, `getComputedStyle` devuelve el string "none" (no la
+  // cadena vacía), y `DOMMatrixReadOnly` lo rechazaba con SyntaxError. Eso pasaba siempre que
+  // la clienta tuviera "reducir movimiento" activo, porque ahí nunca hay transform inline
+  // durante el giro libre, y `frenar` reventaba a mitad de una tirada ya registrada.
+  it("trata 'none' como 0 grados en vez de reventar", () => {
+    expect(anguloDesdeTransform("none")).toBe(0);
+  });
+
+  // Algún motor podría computar la cadena vacía para "sin transform"; también es identidad.
+  it("trata la cadena vacía como 0 grados", () => {
+    expect(anguloDesdeTransform("")).toBe(0);
   });
 });
