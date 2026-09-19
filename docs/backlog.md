@@ -1222,3 +1222,88 @@ existencia de los avisos de cualquier otra clienta probando ids.
 y requiere `firebase deploy --only firestore:rules`, que hasta hoy esta feature no ha tocado.
 
 ---
+
+## 24. Lo que quedó pendiente de la ruleta
+
+**Detectado:** 2026-09-18, al terminar la rama `feature/ruleta-revivir-racha`.
+
+La feature "ruleta para revivir la racha" está implementada entera: cuando a una clienta se le
+acaban sus 3 revives del mes y tiene la racha rota, apuesta a uno de dos colores; si acierta se
+le revive, si falla el mes siguiente tendrá 2 revives en vez de 3. El sorteo vive solo en la
+Cloud Function `jugarRuleta`, que escribe un documento por clienta y mes en `ruletas` con id
+`{clienteId}_{AAAA-MM}`. Spec en
+`docs/superpowers/specs/2026-09-18-ruleta-revivir-racha-design.md`, plan en
+`docs/superpowers/plans/2026-09-18-ruleta-revivir-racha.md`.
+
+**Verificado, y sólo esto:** las tres suites en verde — web 154/154, functions 35/35,
+`./gradlew test` OK. **No verificado, y es todo lo demás:** no se ha desplegado, no se ha
+mezclado a `main`, y no se ha tocado con los ojos ni en el emulador ni en un teléfono real.
+
+### 1. El recorrido manual, que nadie ha hecho
+
+El propio plan lo exige antes de mezclar a `main`, porque todas las clientas tienen su página
+funcionando hoy. Lo que falta ver:
+
+- Que el puntero quede dentro del sector del color que nombra el acuse, varias tiradas
+  seguidas, ganando y perdiendo (se puede forzar fijando la probabilidad a 1 y a 0 en el
+  emulador).
+- Encadenar una tirada de prueba con la real: el giro libre de la real tiene que verse como
+  una rotación pareja, no como un bamboleo.
+- Que "Jugar" esté muerto mientras gira una tirada de prueba, mirando la pestaña de Red para
+  confirmar que no sale ninguna llamada.
+- Que nada cierre el modal mientras la ruleta gira: el fondo, `Escape`, el botón atrás de
+  Android.
+- Que la rueda sobreviva a un snapshot ajeno: con la tirada girando, marcarle una asistencia a
+  la clienta desde la app del entrenador.
+- Que la rueda no brinque al aparecer el acuse.
+- Con "reducir movimiento" activado: sin giro, y el resultado en un fundido corto.
+- Los cinco estados de la tarjeta, y sobre todo el de cupo disponible, que tiene que verse
+  idéntico a como está hoy en producción.
+- El mes castigado punta a punta: que la web diga "Te quedan 2 este mes (perdiste la ruleta
+  el mes pasado)" y que la app del entrenador diga "Revives: 2 de 2" con el motivo, para la
+  misma clienta y el mismo mes; y que borrar el documento de la ruleta devuelva el cupo a 3 en
+  los dos lados sin tocar nada más.
+- El cruce de medianoche con el detalle de una clienta abierto en el teléfono del entrenador:
+  "Revives: X de Y" tiene que cambiar de mes sin recargar.
+- El modal en pantalla pequeña y con el texto del sistema agrandado: la ✕ tiene que seguir
+  alcanzable, porque es la única salida.
+- Dos toques simultáneos desde dos teléfonos con la misma sesión: solo una tirada registrada,
+  y el segundo leyendo "Ya jugaste tu tirada de este mes".
+
+### 2. El orden del despliegue, que importa
+
+Las reglas de Firestore y la función van antes que el bundle de la web. Si el bundle sale
+primero, los dos `observarTirada` chocan con `permission-denied` hasta que las reglas estén
+arriba: degrada sin romper nada (los listeners mueren, la tirada se queda en `null` y el cupo
+se comporta como hoy), pero llena la consola de errores — exactamente el ruido que describe la
+entrada 23. Y una clienta podría tocar "Leer propuesta" contra una función que todavía no
+existe.
+
+### 3. `aplicarTirada` escribe sin transacción, y el spec sí pedía una
+
+En `functions/src/jugarRuleta.ts`, la tirada se registra con `create()` y la justificación de
+la falta se escribe después, en dos operaciones sueltas. El orden está pensado a propósito (la
+tirada primero, para que una falla no deje premio con tirada intacta), pero si la segunda
+escritura falla —timeout, `UNAVAILABLE`, contención— la clienta queda con la tirada del mes
+gastada, un documento que dice `gano: true`, y la racha sin revivir; al reintentar recibe "Ya
+jugaste tu tirada de este mes" y no puede arreglarlo desde la página. La ventana es de
+milisegundos y el entrenador puede justificar la falta a mano, por eso se dejó pasar antes del
+despliegue; arreglarlo obliga a reestructurar `aplicarTirada`, que hoy está limpia y bien
+probada.
+
+### 4. Tres detalles de pulido que no afectan al número ni a la apuesta
+
+- La tirada de prueba no tiene fase de giro libre: `girarLibre` y `frenar` se llaman en el
+  mismo tick, así que entra directo al frenado mientras la real arranca con 800 ms de rotación
+  pareja. El spec decía "misma animación", y el ensayo existe justo para que la real no
+  sorprenda.
+- La app del entrenador dice "(perdió la ruleta en 2026-08)" donde el spec escribía "(perdió
+  la ruleta en agosto)".
+- El test de `web/src/ui/ruletaGiro.test.ts` reimplementa a mano el margen de 10°, el
+  `conic-gradient` y la posición del puntero en vez de leerlos, así que si alguien invierte
+  los colores del gradiente o mueve el puntero, el test seguiría verde. Se dejó así a
+  propósito: exportar constantes internas solo para el test sería peor.
+- En la fase `"error"` tras un `already-exists` ("Ya jugaste tu tirada de este mes"), el botón
+  "Jugar" sigue habilitado e invita a una apuesta que fallará siempre.
+
+---
