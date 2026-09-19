@@ -307,8 +307,15 @@ main { max-width: 480px; margin: 0 auto; padding: 16px 14px 48px; }
   to { transform: rotate(360deg); }
 }
 
-/* Sin giro para quien pidió menos movimiento: el resultado llega igual, con un fundido. */
+/* Sin giro para quien pidió menos movimiento: el resultado llega igual, con un fundido.
+   `.ruleta-marco + p` es el acuse (gano/perdió/prueba/error): siempre es el párrafo que
+   sigue a la rueda en el HTML de `modalRuleta()`, así que no hace falta listar sus clases
+   una por una ni tocar `ruleta.ts` para lograr el fundido. */
 @media (prefers-reduced-motion: reduce) {
   .ruleta-rueda.girando { animation: none; }
-  .ruleta-rueda { transition: opacity 200ms linear !important; }
+  .ruleta-marco + p { animation: ruleta-fundido 200ms linear; }
+}
+@keyframes ruleta-fundido {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }

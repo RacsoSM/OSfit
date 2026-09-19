@@ -130,24 +130,36 @@ async function arrancar(): Promise<void> {
     caja.innerHTML = tarjetaVideos(videos);
   }
 
+  /** Lo último que se pintó en `#ruleta`; `null` mientras no se pintó nada. */
+  let firmaRuletaPintada: string | null = null;
+
   /**
    * La ruleta se repinta APARTE, por lo mismo que el saludo y los videos: `pintar()` rehace el
    * `innerHTML` de `#contenido` en cada snapshot de Firestore, y una rueda a media vuelta se
    * moriría en cuanto el entrenador marcara una asistencia. Acá el nodo solo se toca cuando
-   * cambia el estado del propio modal.
+   * cambia el estado del propio modal — igual que `pintarVideos`, comparando contra lo último
+   * pintado, porque `pintar()` llama a esta función en CADA snapshot (asistencias, avisos,
+   * medallas, logros, cliente, las dos tiradas), y `jugarRuleta` escribe en Firestore antes de
+   * responder: esos snapshots pueden llegar a mitad del giro libre o del frenado. Sin la
+   * guardia, ese repintado reemplaza el nodo de la rueda por uno sin la clase `.girando` ni el
+   * `transform` que `ruletaGiro.ts` le puso a mano, y la rueda se congela en seco.
    */
   function pintarRuleta(): void {
     const caja = document.querySelector<HTMLElement>("#ruleta");
     if (!caja) return;
-    caja.innerHTML = modalRuleta();
+    const html = modalRuleta();
+    if (html === firmaRuletaPintada) return;
+    firmaRuletaPintada = html;
+    caja.innerHTML = html;
     conectarRuleta(pintarRuleta);
   }
 
   function pintar(): void {
     if (!cliente) {
       app.innerHTML = `<div class="tarjeta vacio"><p>No encontramos tus datos.</p></div>`;
-      // Se tira la estructura entera, así que la firma de los videos deja de describir nada.
+      // Se tira la estructura entera, así que las firmas de videos y ruleta dejan de describir nada.
       firmaPintada = null;
+      firmaRuletaPintada = null;
       return;
     }
     prepararEstructura(cliente.nombre);
