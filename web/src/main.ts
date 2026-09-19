@@ -145,7 +145,9 @@ async function arrancar(): Promise<void> {
     contenido.innerHTML = `
       ${tarjetaDia(cliente, hoy, accionesDelDia, asistencias)}
       ${tarjetasStats(asistencias, hoy)}
-      ${tarjetaRevivir(cliente, hoy, asistencias)}
+      <!-- Las tiradas todavía no se observan acá, así que la tarjeta se pinta como siempre:
+           sin castigo y sin propuesta, que es el estado que ven hoy todas las clientas. -->
+      ${tarjetaRevivir(cliente, hoy, asistencias, null, null)}
       ${calendario(asistencias, mesVisible, hoy)}
       ${tarjetaMedallas(medallas)}
       ${tarjetaLogrosPersonales(logros)}
