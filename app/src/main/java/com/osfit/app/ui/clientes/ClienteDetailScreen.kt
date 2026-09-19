@@ -59,7 +59,6 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.osfit.app.data.model.Cliente
 import com.osfit.app.data.model.MedallaCatalogo
 import com.osfit.app.data.model.Rutina
-import com.osfit.app.domain.CupoRevivesCalculator
 import com.osfit.app.domain.RangoResumen
 import com.osfit.app.domain.ResumenClienteCalculator
 import com.osfit.app.domain.RutinaProgressCalculator
@@ -395,6 +394,8 @@ fun ClienteDetailScreen(
             item {
                 val acceso by viewModel.accesoWeb.collectAsState()
                 val revivesDisponibles by viewModel.revivesDisponibles.collectAsState()
+                val revivesMaximo by viewModel.revivesMaximo.collectAsState()
+                val mesPerdio by viewModel.mesQuePerdioLaRuleta.collectAsState()
                 val alcance = rememberCoroutineScope()
                 Spacer(modifier = Modifier.height(12.dp))
                 Card(modifier = Modifier.fillMaxWidth()) {
@@ -410,7 +411,13 @@ fun ClienteDetailScreen(
                             modifier = Modifier.padding(top = 4.dp)
                         )
                         Text(
-                            "Revives: $revivesDisponibles de ${CupoRevivesCalculator.MAXIMO_POR_MES} disponibles este mes",
+                            buildString {
+                                append("Revives: $revivesDisponibles de $revivesMaximo disponibles este mes")
+                                // Decir POR QUÉ: si la app del entrenador y la del cliente
+                                // muestran números distintos sin explicación, el reclamo por
+                                // WhatsApp le llega a él.
+                                mesPerdio?.let { append(" (perdió la ruleta en $it)") }
+                            },
                             style = MaterialTheme.typography.bodySmall,
                             modifier = Modifier.padding(top = 8.dp)
                         )
