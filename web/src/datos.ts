@@ -1,6 +1,7 @@
 import { collection, doc, onSnapshot, query, where } from "firebase/firestore";
 import { db } from "./firebase";
 import type { PaletaWeb } from "./paleta";
+import type { Tirada } from "./tirada";
 
 export interface Ejercicio { nombre: string; series: number; repeticiones: string; pesoONota: string; }
 /**
@@ -57,6 +58,14 @@ export interface Asistencia {
    * toda asistencia anterior a esta etapa llega sin él. Ver el commit bf5463c.
    */
   justificadaPorCliente?: boolean;
+  /**
+   * La justificó el cliente ganando la ruleta. Deliberadamente SEPARADA de
+   * `justificadaPorCliente`: si compartieran bandera, `gastadosEnElMes` contaría el premio
+   * como un revive usado y el premio se cobraría a sí mismo.
+   *
+   * Opcional por la razón de siempre: Firestore omite los campos que nunca se escribieron.
+   */
+  ganadaEnRuleta?: boolean;
   /**
    * Opcional por la misma razon que `justificadaPorCliente`: las asistencias anteriores al
    * cronometro (commit 473220e) nunca lo escribieron y llegan sin el campo.
@@ -159,5 +168,24 @@ export function observarLogrosPersonales(
   return onSnapshot(collection(db, "clientes", clienteId, "logrosPersonales"), (snap) => {
     // El id no se guarda dentro del documento; se rellena al leer, como en la app.
     alCambiar(snap.docs.map((d) => ({ ...(d.data() as LogroPersonalOtorgado), id: d.id })));
+  });
+}
+
+/**
+ * La tirada de ruleta de un mes, o `null` si no jugó. Se observa para dos cosas: saber si ya
+ * gastó su tirada de este mes, y saber si el mes pasado perdió (lo que le quita un revive).
+ *
+ * Lo normal es que el documento NO exista: casi nadie juega. Por eso la regla de `ruletas`
+ * autoriza por el id del documento y no por `resource.data` — ver entrada 23 de
+ * `docs/backlog.md`, donde esto mismo llenaba la consola de `permission-denied` en
+ * `avisosFalta` y mataba el listener en cada carga.
+ */
+export function observarTirada(
+  clienteId: string,
+  mes: string,
+  alCambiar: (t: Tirada | null) => void
+) {
+  return onSnapshot(doc(db, "ruletas", `${clienteId}_${mes}`), (snap) => {
+    alCambiar(snap.exists() ? (snap.data() as Tirada) : null);
   });
 }
