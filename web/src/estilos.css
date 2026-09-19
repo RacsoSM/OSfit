@@ -237,3 +237,78 @@ main { max-width: 480px; margin: 0 auto; padding: 16px 14px 48px; }
   padding: 24px 8px; text-align: center; border-radius: 10px;
   background: var(--superficie-alta); color: var(--texto-tenue); font-size: 13px;
 }
+
+/* La ruleta. El modal va en primer plano y lo demás queda visible pero apagado. */
+.ruleta-fondo {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(18, 18, 18, 0.8);
+  backdrop-filter: blur(4px);
+}
+.ruleta-caja {
+  position: relative;
+  background: var(--superficie-alta);
+  border-radius: 20px;
+  padding: 20px 18px;
+  width: 100%;
+  max-width: 360px;
+  text-align: center;
+}
+.ruleta-x {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  background: none;
+  border: 0;
+  color: var(--texto-tenue);
+  font-size: 18px;
+  cursor: pointer;
+}
+.ruleta-pregunta { font-weight: 800; margin: 14px 0 10px; }
+.ruleta-fichas { display: flex; gap: 14px; justify-content: center; margin-bottom: 16px; }
+.ruleta-ficha {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 3px solid transparent;
+  cursor: pointer;
+}
+.ruleta-ficha.primario { background: var(--primario); }
+.ruleta-ficha.ambar { background: var(--ambar); }
+.ruleta-ficha.elegida { border-color: var(--texto); }
+.ruleta-ficha:disabled { cursor: default; }
+
+.ruleta-marco { position: relative; width: 200px; height: 200px; margin: 0 auto 14px; }
+/* El puntero es fijo y la rueda es la que gira, como una ruleta de verdad. */
+.ruleta-puntero {
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-left: 9px solid transparent;
+  border-right: 9px solid transparent;
+  border-top: 14px solid var(--texto);
+  z-index: 1;
+}
+/* Mitad y mitad: la ruleta se dibuja justa aunque el sorteo no lo sea (ver el spec). */
+.ruleta-rueda {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: conic-gradient(var(--primario) 0deg 180deg, var(--ambar) 180deg 360deg);
+}
+.ruleta-rueda.girando { animation: ruleta-libre 0.7s linear infinite; }
+@keyframes ruleta-libre {
+  to { transform: rotate(360deg); }
+}
+
+/* Sin giro para quien pidió menos movimiento: el resultado llega igual, con un fundido. */
+@media (prefers-reduced-motion: reduce) {
+  .ruleta-rueda.girando { animation: none; }
+  .ruleta-rueda { transition: opacity 200ms linear !important; }
+}

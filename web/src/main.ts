@@ -6,6 +6,7 @@ import {
   observarMedallas,
   observarLogrosPersonales,
   observarVideos,
+  observarTirada,
 } from "./datos";
 import type {
   Cliente,
@@ -15,6 +16,8 @@ import type {
   VideoResumen,
 } from "./datos";
 import { hoyEnMazatlan } from "./fecha";
+import { mesAnterior, type Tirada } from "./tirada";
+import { modalRuleta, conectarRuleta } from "./ui/ruleta";
 import { iniciarSesion, storage } from "./firebase";
 import { aplicarPaleta } from "./paleta";
 import { tarjetaDia } from "./ui/tarjetaDia";
@@ -64,6 +67,8 @@ async function arrancar(): Promise<void> {
   let medallas: MedallaOtorgada[] = [];
   let logros: LogroPersonalOtorgado[] = [];
   let videos: VideoConUrl[] = [];
+  let tiradaEsteMes: Tirada | null = null;
+  let tiradaMesAnterior: Tirada | null = null;
 
   /**
    * Resuelve la URL de cada video ANTES de pintar (decisión del brief): así el HTML se arma
@@ -98,7 +103,8 @@ async function arrancar(): Promise<void> {
    */
   function prepararEstructura(nombre: string): void {
     if (document.querySelector("#contenido")) return;
-    app.innerHTML = `${saludo(nombre)}<div id="contenido"></div><div id="videos"></div>`;
+    app.innerHTML =
+      `${saludo(nombre)}<div id="contenido"></div><div id="videos"></div><div id="ruleta"></div>`;
     conectarSaludo();
   }
 
@@ -124,6 +130,19 @@ async function arrancar(): Promise<void> {
     caja.innerHTML = tarjetaVideos(videos);
   }
 
+  /**
+   * La ruleta se repinta APARTE, por lo mismo que el saludo y los videos: `pintar()` rehace el
+   * `innerHTML` de `#contenido` en cada snapshot de Firestore, y una rueda a media vuelta se
+   * moriría en cuanto el entrenador marcara una asistencia. Acá el nodo solo se toca cuando
+   * cambia el estado del propio modal.
+   */
+  function pintarRuleta(): void {
+    const caja = document.querySelector<HTMLElement>("#ruleta");
+    if (!caja) return;
+    caja.innerHTML = modalRuleta();
+    conectarRuleta(pintarRuleta);
+  }
+
   function pintar(): void {
     if (!cliente) {
       app.innerHTML = `<div class="tarjeta vacio"><p>No encontramos tus datos.</p></div>`;
@@ -145,14 +164,13 @@ async function arrancar(): Promise<void> {
     contenido.innerHTML = `
       ${tarjetaDia(cliente, hoy, accionesDelDia, asistencias)}
       ${tarjetasStats(asistencias, hoy)}
-      <!-- Las tiradas todavía no se observan acá, así que la tarjeta se pinta como siempre:
-           sin castigo y sin propuesta, que es el estado que ven hoy todas las clientas. -->
-      ${tarjetaRevivir(cliente, hoy, asistencias, null, null)}
+      ${tarjetaRevivir(cliente, hoy, asistencias, tiradaEsteMes, tiradaMesAnterior)}
       ${calendario(asistencias, mesVisible, hoy)}
       ${tarjetaMedallas(medallas)}
       ${tarjetaLogrosPersonales(logros)}
     `;
     pintarVideos();
+    pintarRuleta();
     // Los listeners se vuelven a colgar en cada repintado: `innerHTML` tira los anteriores
     // junto con los elementos. El estado de las dos acciones no vive acá, sino dentro de sus
     // módulos, justo para que un snapshot a destiempo no lo borre.
@@ -180,6 +198,11 @@ async function arrancar(): Promise<void> {
   observarMedallas(clienteId, (m) => { medallas = m; pintar(); });
   observarLogrosPersonales(clienteId, (l) => { logros = l; pintar(); });
   observarVideos(clienteId, (v) => { resolverVideos(v); });
+  observarTirada(clienteId, hoy.slice(0, 7), (t) => { tiradaEsteMes = t; pintar(); });
+  observarTirada(clienteId, mesAnterior(hoy.slice(0, 7)), (t) => {
+    tiradaMesAnterior = t;
+    pintar();
+  });
 }
 
 arrancar();
