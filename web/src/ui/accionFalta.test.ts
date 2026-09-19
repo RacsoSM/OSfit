@@ -42,6 +42,10 @@ describe("tarjetaRevivir", () => {
     const html = tarjetaRevivir(cliente(), HOY, conFaltaRota(3), tirada({ mes: "2026-09" }), null);
     expect(html).not.toContain("Leer propuesta");
     expect(html).toContain("Y tu tirada");
+    // "Ya no ofrece nada" es literal: ni siquiera el botón muerto, que es la pared que esta
+    // tarjeta existe para tumbar.
+    expect(html).not.toContain("Revivir mi racha");
+    expect(html).not.toContain("falta-revivir");
   });
 
   it("la cuenta pausada no recibe la propuesta", () => {

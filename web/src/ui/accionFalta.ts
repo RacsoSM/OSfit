@@ -143,6 +143,10 @@ export function tarjetaRevivir(
   // La propuesta: sin cupo, con la cuenta activa y sin haber jugado este mes.
   const ofreceJuego = sinCupo && cliente.activo && tiradaEsteMes === null && rota !== null;
 
+  // Sin cupo y con la tirada ya gastada no queda nada que ofrecer, así que tampoco se pinta el
+  // botón: un botón muerto es la pared lisa que esta tarjeta existe para tumbar.
+  const sinNadaQueOfrecer = sinCupo && cliente.activo && !ofreceJuego;
+
   const cuerpo =
     estado.pendiente !== null
       ? confirmacion(disponibles)
@@ -152,17 +156,17 @@ export function tarjetaRevivir(
           ? `<p class="accion-nota">💔 Te quedaste sin vidas para revivir tu racha… pero te
                tengo una propuesta.</p>
              <button id="falta-propuesta" class="boton">Leer propuesta</button>`
-          : `<button id="falta-revivir" class="boton secundario" ${bloqueado ? "disabled" : ""}>
-               💔 Revivir mi racha
-             </button>
-             <p class="accion-nota">Repara tu falta del ${escapar(enPalabras(rota as string))}.</p>
-             ${
-               !cliente.activo
-                 ? `<p class="accion-nota">Tu cuenta está pausada. Habla con tu entrenador.</p>`
-                 : sinCupo
-                   ? `<p class="accion-nota">Ya usaste tus revives de este mes. Y tu tirada.</p>`
+          : sinNadaQueOfrecer
+            ? `<p class="accion-nota">Ya usaste tus revives de este mes. Y tu tirada.</p>`
+            : `<button id="falta-revivir" class="boton secundario" ${bloqueado ? "disabled" : ""}>
+                 💔 Revivir mi racha
+               </button>
+               <p class="accion-nota">Repara tu falta del ${escapar(enPalabras(rota as string))}.</p>
+               ${
+                 !cliente.activo
+                   ? `<p class="accion-nota">Tu cuenta está pausada. Habla con tu entrenador.</p>`
                    : `<p class="accion-nota">${cuantosQuedan(disponibles, castigo > 0)}</p>`
-             }`;
+               }`;
 
   const error =
     estado.error?.origen === "revivir"
