@@ -159,12 +159,21 @@ descuido.
 Este es el único punto donde el cambio deja de ser local, y conviene ser honesto
 sobre por qué.
 
-Hoy `diaQueToca` devuelve `Int` y no tiene forma de decir "no hay día". El valor
-`diaRutinaRealizado = null` ya está tomado: es como el sistema marca **una
-falta**, y es lo que mantiene a las faltas fuera del avance del ciclo. Reusarlo
-para "vino pero ya completó la semana" corrompería el conteo de rachas.
+Hay que separar dos cosas que es fácil confundir: **lo que se guarda** y **lo que
+se calcula**.
 
-Así que el resultado se vuelve explícito:
+**Lo que se guarda no necesita nada nuevo.** El filtro del ciclo exige las dos
+condiciones —`asistio && diaRutinaRealizado != null`— y las rachas se calculan
+con `asistio` y las fechas, sin mirar el día (`RachaCalculator.rachaMasLarga`;
+el único que lee el día es `diaFavorito`). Así que una asistencia con
+`asistio = true` y `diaRutinaRealizado = null` ya es hoy un estado coherente y
+distinto de una falta: **cuenta para la racha y no mueve el ciclo**, que es
+exactamente lo que se quiere para "vino pero ya había completado la semana". No
+hace falta ningún campo ni valor nuevo en Firestore.
+
+**Lo que se calcula sí.** `diaQueToca` devuelve `Int` y no tiene forma de decir
+"hoy no hay día", y quien lo llama necesita saberlo para pintar la pantalla.
+Ese es el único motivo del tipo nuevo:
 
 ```kotlin
 sealed interface DiaQueToca {
@@ -176,6 +185,11 @@ sealed interface DiaQueToca {
 
 Son seis sitios de llamada en Kotlin y el compilador los encuentra todos, que es
 precisamente lo que se quiere: ninguno puede ignorar el caso nuevo en silencio.
+
+`iniciarTiempo` es el que hay que mirar con cuidado, porque su firma pide un
+`Int` no nulo. Con `Descanso` el botón no tiene día que mandar: se deshabilita, y
+la asistencia del sábado se registra por el camino normal de Tomar Asistencia,
+que sí admite día nulo.
 
 **La alternativa descartada** era dejar `diaQueToca` devolviendo el último día y
 preguntar el descanso por separado, con un `semanaCompleta()` aparte. Se evita
@@ -238,6 +252,10 @@ completa"** en lugar de un día sugerido.
 
 El entrenador **sí puede** marcarla presente: abre el selector de día que ya
 existe en `TomarAsistenciaScreen` y escoge cuál hizo. Se guarda ese día.
+
+Si la marca presente **sin** elegir día, se guarda `asistio = true` con
+`diaRutinaRealizado = null`. Queda el registro de que vino, cuenta para su racha,
+y no mueve el ciclo — el estado que ya existía y que aquí encaja solo.
 
 Se descartaron las dos alternativas: **repetir el día 5 automáticamente**
 registraría pierna dos veces —justo lo que esta feature evita—, y **deshabilitar
