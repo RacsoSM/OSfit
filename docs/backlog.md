@@ -267,8 +267,19 @@ quien monte la próxima verificación lo sepa antes de perder una tarde.
 
 ### Qué hay que hacer, en orden
 
-1. **Hoy (lunes 2026-09-21): marcarle una falta a la clienta de pruebas en el día de hoy**,
-   desde Tomar Asistencia en la app del entrenador. Sin justificar.
+1. **Hoy (lunes 2026-09-21): no hacer nada, y sobre todo NO marcarle asistencia al 21.**
+
+   Al escribir esta entrada se dijo que había que marcarle una falta hoy. **Es falso**, y se
+   comprobó corriendo `faltaQueRompioLaRacha` contra su historial real: con registro de falta
+   del 21 y sin él, mañana devuelve igual `2026-09-21`. `fechasQueCuentan` sólo mete los días
+   con `asistio` o `justificada`, así que **un día sin registro ya es una falta** para la
+   ventana; el registro en rojo es para que el entrenador lo vea en el calendario, no para el
+   cálculo.
+
+   Lo que tiene que pasar es **la medianoche**, no el registro: el recorrido arranca en
+   `restarUnDia(hoy)` y por eso hoy nunca se devuelve. Queda escrito porque es el mismo error
+   dos veces — igual que la trampa de U1 con la asistencia de hoy, es fácil creer que falta un
+   dato cuando lo que falta es que pase el día.
 2. **Mañana (martes 22):** el lunes 21 entra en la ventana sin justificar, el cupo sigue en 0,
    y la ruleta debe aparecer sola al abrir
    `https://osfit-cccfe--ruleta-2ey141ze.web.app/c/<token de la clienta test>`.
