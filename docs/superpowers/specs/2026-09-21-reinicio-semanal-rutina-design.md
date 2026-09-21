@@ -211,15 +211,30 @@ La web recibe el trío `{dia, fecha, esAncla}` más `reinicioSemanal`, que ya
 viaja dentro de `rutinaAsignada`, y aplica:
 
 ```
-si reinicioSemanal y lunesDe(valor.fecha) < lunesDe(fecha):  → día 0
-si valor.fecha === fecha:                                     → acotado
-si reinicioSemanal y acotado + 1 >= totalDias:                → Descanso
-                                                              → acotado + 1
+domingo = domingoAnterior(fecha)
+
+si reinicioSemanal y esAncla    y valor.fecha <  domingo:  → día 0
+si reinicioSemanal y no esAncla y valor.fecha <= domingo:  → día 0
+si esAncla:                                                → acotado
+si valor.fecha === fecha:                                  → acotado
+si reinicioSemanal y acotado + 1 >= totalDias:             → Descanso
+                                                           → acotado + 1
 ```
 
-La comparación por lunes en vez de por fechas sueltas es lo que hace que el trío
-siga bastando: no hace falta mandar nada más, porque "la asistencia es de la
-semana pasada" se puede decidir con la fecha que ya está ahí.
+Los dos comparadores son los mismos que usa `diaQueToca` —el ancla con `>=`, la
+asistencia estrictamente después— y tienen que serlo. El trío sigue bastando:
+"esto es de la semana pasada" se decide con la fecha que ya viene ahí.
+
+**Lo que no se puede hacer, y cuesta caro:** truncar las dos fechas al lunes de
+su semana. En ISO el domingo pertenece a la semana que abrió el lunes
+*anterior*, y las anclas se fechan en domingo a propósito, así que
+`lunesDe(ancla) < lunesDe(hoy)` da verdadero para un ancla que es de la semana
+actual. El efecto: una clienta que cambia su día un lunes ve el día 3 en la app
+y el día 1 en la web —exactamente la desincronización que este diseño existe
+para evitar—, y `SincronizadorDiaWeb.refrescar` corre dentro de
+`AsignarDiaManual.ejecutar`, así que el trío malo se escribe en esa misma
+pulsación. Queda escrito porque es el error que se cometió al implementarlo, y
+lo atrapó la revisión.
 
 **Zona horaria.** `esFinDeSemana` en `tarjetaDia.ts` construye la fecha con
 `T12:00:00` y lee `getUTCDay()` para no depender de la zona del navegador.

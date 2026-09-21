@@ -19,7 +19,7 @@
 - **Fechas siempre como `String` ISO-8601 (`YYYY-MM-DD`)**, comparables lexicográficamente. Es la convención de todo el proyecto; no se introducen `LocalDate` en las firmas públicas.
 - **Zona horaria en la web:** toda construcción de fecha usa `new Date(\`${fecha}T12:00:00\`)` y lectores `getUTC*`. Es lo que ya hace `esFinDeSemana` y mezclarlo con lectores locales produce discrepancias en los bordes del día.
 - **El contrato gemelo es ley:** para toda fecha `d >= hoy`, `interpretar(denormalizar(c, a, hoy), totalDias, d, r) == diaQueToca(c, a, d)`. Lo verifica `DiaDenormalizadoTest` y no puede quedar en rojo al terminar ninguna tarea.
-- **Comandos de prueba:** Android `./gradlew test` desde la raíz (en PowerShell, `.\gradlew.bat test`). Web `npm test` desde `web/`.
+- **Comandos de prueba:** Android `./gradlew test` desde la raíz para la suite completa (en PowerShell, `.\gradlew.bat test`). Para correr una clase sola, `./gradlew :app:testDebugUnitTest --tests "<clase>"` — `:app:test` es una tarea agregada de ciclo de vida y **no acepta `--tests`**. Web `npm test` desde `web/`.
 
 ---
 
@@ -101,7 +101,7 @@ class SemanaDeRutinaTest {
 
 - [ ] **Step 2: Correr el test y verificar que falla**
 
-Run: `./gradlew test --tests "com.osfit.app.domain.SemanaDeRutinaTest"`
+Run: `./gradlew :app:testDebugUnitTest --tests "com.osfit.app.domain.SemanaDeRutinaTest"`
 Expected: FAIL — error de compilación, `Unresolved reference: SemanaDeRutina`.
 
 - [ ] **Step 3: Escribir la implementación mínima**
@@ -143,7 +143,7 @@ object SemanaDeRutina {
 
 - [ ] **Step 4: Correr el test y verificar que pasa**
 
-Run: `./gradlew test --tests "com.osfit.app.domain.SemanaDeRutinaTest"`
+Run: `./gradlew :app:testDebugUnitTest --tests "com.osfit.app.domain.SemanaDeRutinaTest"`
 Expected: PASS, 7 tests.
 
 - [ ] **Step 5: Agregar el campo a `Rutina`**
@@ -343,7 +343,18 @@ Y en el método `marcar`, sustituir el cálculo del día por uno que tolere el d
 ```kotlin
     /** Marcar Asistió/Faltó y guardar (TomarAsistenciaViewModel.guardarTodo). */
     suspend fun marcar(id: String, fecha: String, asistio: Boolean) {
-        val dia = if (asistio) (estado(id, fecha) as? DiaQueToca.Dia)?.indice else null
+        // El mismo mapeo que `TomarAsistenciaViewModel.indiceQueToca`, y tiene que seguir
+        // siéndolo: sin rutina se registra el día 0 como siempre, y sólo el descanso se queda
+        // sin día. Si los dos se separan, este escenario deja de imitar la pantalla real.
+        val dia = if (asistio) {
+            when (val d = estado(id, fecha)) {
+                is DiaQueToca.Dia -> d.indice
+                DiaQueToca.SinRutina -> 0
+                DiaQueToca.Descanso -> null
+            }
+        } else {
+            null
+        }
         asistencias.registrarAsistencia(
             clienteId = id,
             fecha = fecha,
@@ -386,9 +397,19 @@ Y el helper privado del mismo archivo, que sí alimenta escrituras:
         cliente, todasAsistencias.value.filter { it.clienteId == cliente.id }, fecha
     )
 
-    /** El índice a escribir, o null si hoy no hay día que registrar. */
+    /**
+     * El índice a escribir, o null si hoy no hay día que registrar.
+     *
+     * `SinRutina` vale 0 y no null: es lo que el cálculo devolvía antes de ser un tipo, y el
+     * test `cliente sin rutina no rompe al iniciar tiempo` depende de que a un cliente sin
+     * rutina se le registre la asistencia igual. Sólo el descanso se queda sin día.
+     */
     private fun indiceQueToca(cliente: Cliente): Int? =
-        (diaQueToca(cliente) as? DiaQueToca.Dia)?.indice
+        when (val d = diaQueToca(cliente)) {
+            is DiaQueToca.Dia -> d.indice
+            DiaQueToca.SinRutina -> 0
+            DiaQueToca.Descanso -> null
+        }
 ```
 
 En `iniciarTiempo` (línea ~148), sustituir:
@@ -732,7 +753,7 @@ class ReinicioSemanalTest {
 
 - [ ] **Step 4: Correr los tests y verificar que fallan**
 
-Run: `./gradlew test --tests "com.osfit.app.domain.ReinicioSemanalTest"`
+Run: `./gradlew :app:testDebugUnitTest --tests "com.osfit.app.domain.ReinicioSemanalTest"`
 Expected: FAIL. En particular, `faltar un dia deja la semana en el dia 4` falla porque el lunes siguiente devuelve `Dia(4)` (el día 5) en vez de `Dia(0)`, que es exactamente el bug que se está arreglando. `con la semana completa el sabado toca descansar` falla devolviendo `Dia(0)`.
 
 Los dos que sí deben pasar ya son `una rutina sin reinicio sigue dando la vuelta` y `un cambio manual hecho en lunes sobrevive` — el primero porque nada cambió para el ciclo rodante, el segundo porque sin la regla el ancla manda de todos modos. Que pasen antes de implementar está bien; lo que importa es que **sigan** pasando después.
@@ -837,16 +858,23 @@ Y reemplazar `interpretar` entera:
         valor: DiaDenormalizado,
         totalDias: Int,
         fecha: String,
-        reinicioSemanal: Boolean = false
+        reinicioSemanal: Boolean
     ): DiaQueToca {
         val dia = valor.dia ?: return DiaQueToca.SinRutina
         if (totalDias <= 0) return DiaQueToca.SinRutina
         val acotado = dia.coerceIn(0, totalDias - 1)
         val fechaValor = valor.fecha
 
-        if (reinicioSemanal && fechaValor != null &&
-            SemanaDeRutina.lunesDe(fechaValor) < SemanaDeRutina.lunesDe(fecha)
-        ) return DiaQueToca.Dia(0)
+        // El ancla se compara con `<` y la asistencia con `<=`, igual que en `diaQueToca`: el
+        // ancla del reinicio se conserva cuando empata con el domingo, y una asistencia de ese
+        // mismo domingo o anterior ya no cuenta. **No truncar a lunes con `lunesDe`**: en ISO
+        // el domingo pertenece a la semana que abrió el lunes anterior, y las anclas se fechan
+        // en domingo a propósito, así que truncar reiniciaría un ancla de esta semana.
+        if (reinicioSemanal && fechaValor != null) {
+            val domingo = SemanaDeRutina.domingoAnterior(fecha)
+            if (valor.esAncla && fechaValor < domingo) return DiaQueToca.Dia(0)
+            if (!valor.esAncla && fechaValor <= domingo) return DiaQueToca.Dia(0)
+        }
 
         if (valor.esAncla) return DiaQueToca.Dia(acotado)
         if (fechaValor == fecha) return DiaQueToca.Dia(acotado)
@@ -951,7 +979,7 @@ git commit -m "feat: el ciclo de rutina se reinicia cada lunes con reinicioSeman
 **Interfaces:**
 - Consumes: `Rutina.reinicioSemanal?: boolean` (Task 1).
 - Produces:
-  - `lunesDe(fecha: string): string`
+  - `lunesDe(fecha: string): string` y `domingoAnterior(fecha: string): string`
   - `DESCANSO` (constante `"descanso"`) y el tipo `DiaQueToca = number | null | typeof DESCANSO`
   - `interpretar(valor, totalDias, fecha, reinicioSemanal?): DiaQueToca`
 
@@ -976,6 +1004,21 @@ Añadir al final del `describe("interpretar", ...)` de `web/src/dia.test.ts`, y 
     expect(interpretar(valor, 5, "2026-09-10", true)).toBe(2);
   });
 
+  // La regresión que el gemelo Kotlin tuvo primero: `cambiarDia` fecha el ancla AYER, así
+  // que un cambio hecho el lunes 09-14 queda fechado el domingo 09-13. Ese domingo, en ISO,
+  // pertenece a la semana anterior — truncar a lunes lo reiniciaría y la clienta perdería su
+  // cambio en el acto. `domingoAnterior("2026-09-14")` es exactamente "2026-09-13", y el
+  // empate lo gana el ancla.
+  it("con reinicio semanal, un ancla fechada en domingo es de la semana que empieza", () => {
+    const valor = { dia: 2, fecha: "2026-09-13", esAncla: true };
+    expect(interpretar(valor, 5, "2026-09-14", true)).toBe(2);
+  });
+
+  it("con reinicio semanal, una asistencia de ese mismo domingo sí reinicia", () => {
+    const valor = { dia: 2, fecha: "2026-09-13", esAncla: false };
+    expect(interpretar(valor, 5, "2026-09-14", true)).toBe(0);
+  });
+
   it("con reinicio semanal, después del último día toca descansar", () => {
     // Día 5 hecho el viernes; el sábado ya no hay día.
     const valor = { dia: 4, fecha: "2026-09-11", esAncla: false };
@@ -990,6 +1033,21 @@ Añadir al final del `describe("interpretar", ...)` de `web/src/dia.test.ts`, y 
   it("sin reinicio semanal nada cambia al cruzar la semana", () => {
     const valor = { dia: 3, fecha: "2026-09-11", esAncla: false };
     expect(interpretar(valor, 5, "2026-09-14")).toBe(4);
+  });
+});
+
+describe("domingoAnterior", () => {
+  it("el domingo anterior al lunes es el dia previo", () => {
+    expect(domingoAnterior("2026-09-07")).toBe("2026-09-06");
+  });
+
+  it("cualquier dia de la semana da el mismo domingo", () => {
+    expect(domingoAnterior("2026-09-11")).toBe("2026-09-06");
+    expect(domingoAnterior("2026-09-13")).toBe("2026-09-06");
+  });
+
+  it("el lunes siguiente da el domingo que lo precede", () => {
+    expect(domingoAnterior("2026-09-14")).toBe("2026-09-13");
   });
 });
 
@@ -1015,7 +1073,7 @@ describe("lunesDe", () => {
 Y cambiar el import de la primera línea del archivo:
 
 ```ts
-import { DESCANSO, interpretar, lunesDe } from "./dia";
+import { DESCANSO, domingoAnterior, interpretar, lunesDe } from "./dia";
 ```
 
 **No tocar ninguno de los once tests que ya existen.** Todos afirman el modo por defecto y tienen que seguir pasando letra por letra: son la prueba de que las rutinas de 3 y 6 días no cambian.
@@ -1023,7 +1081,7 @@ import { DESCANSO, interpretar, lunesDe } from "./dia";
 - [ ] **Step 2: Correr los tests y verificar que fallan**
 
 Run: `cd web && npx vitest run src/dia.test.ts`
-Expected: FAIL — `lunesDe` y `DESCANSO` no existen.
+Expected: FAIL — `lunesDe`, `domingoAnterior` y `DESCANSO` no existen.
 
 - [ ] **Step 3: Implementar**
 
@@ -1073,6 +1131,18 @@ export function lunesDe(fecha: string): string {
   return d.toISOString().slice(0, 10);
 }
 
+/**
+ * Domingo anterior al lunes de la semana de [fecha].
+ *
+ * GEMELO: `SemanaDeRutina.domingoAnterior` en Kotlin. Es la fecha del ancla del reinicio, y
+ * es domingo y no lunes porque el ancla es exclusiva.
+ */
+export function domingoAnterior(fecha: string): string {
+  const d = new Date(`${lunesDe(fecha)}T12:00:00`);
+  d.setUTCDate(d.getUTCDate() - 1);
+  return d.toISOString().slice(0, 10);
+}
+
 export function interpretar(
   valor: DiaDenormalizado,
   totalDias: number,
@@ -1087,7 +1157,16 @@ export function interpretar(
   const acotado = Math.min(Math.max(valor.dia, 0), totalDias - 1);
 
   // Antes que el ancla: con reinicio, un ancla de la semana pasada también se reinicia.
-  if (reinicioSemanal && valor.fecha != null && lunesDe(valor.fecha) < lunesDe(fecha)) return 0;
+  // Los dos comparadores son los del gemelo Kotlin: el ancla con `<` y la asistencia con
+  // `<=`. **No truncar las dos fechas a lunes**: en ISO el domingo pertenece a la semana que
+  // abrió el lunes anterior, y las anclas se fechan en domingo a propósito, así que truncar
+  // reiniciaría un ancla de esta semana — y la clienta que cambia su día un lunes vería el
+  // día 1 en la web mientras la app le muestra el 3.
+  if (reinicioSemanal && valor.fecha != null) {
+    const domingo = domingoAnterior(fecha);
+    if (valor.esAncla && valor.fecha < domingo) return 0;
+    if (!valor.esAncla && valor.fecha <= domingo) return 0;
+  }
 
   if (valor.esAncla) return acotado;
   if (valor.fecha === fecha) return acotado;
@@ -1099,7 +1178,13 @@ export function interpretar(
 - [ ] **Step 4: Correr los tests y verificar que pasan**
 
 Run: `cd web && npx vitest run src/dia.test.ts`
-Expected: PASS — los 11 de antes más los 10 nuevos.
+Expected: PASS — los 11 de antes más los 15 nuevos.
+
+**`npm run build` va a fallar al terminar esta tarea, y está bien.** `tarjetaDia.ts` todavía
+indexa `dias[]` con el resultado crudo de `interpretar`, que ahora puede valer `"descanso"`.
+Ese error de tipos es el compilador haciendo exactamente lo que se le pidió: obligar a que el
+estado nuevo se contemple en algún lado. Lo cierra la Task 5, que es la siguiente. No lo
+arregles aquí — ese archivo es de esa tarea.
 
 - [ ] **Step 5: Commit**
 
@@ -1256,7 +1341,7 @@ Run: `cd web && npm test`
 Expected: PASS, todo verde.
 
 Run: `cd web && npm run build`
-Expected: build limpio. `tsc` es quien verifica que ningún sitio se olvidó de contemplar `DESCANSO` en la unión.
+Expected: build limpio — y aquí sí. `tsc` es quien verifica que ningún sitio se olvidó de contemplar `DESCANSO` en la unión, y esta tarea es la que cierra el error de tipos que la Task 4 dejó abierto a propósito.
 
 - [ ] **Step 5: Commit**
 
@@ -1320,7 +1405,7 @@ Añadir el import de `assertNull` si se prefiere sobre `assertEquals(null, ...)`
 
 - [ ] **Step 2: Correr y verificar que falla**
 
-Run: `./gradlew test --tests "com.osfit.app.domain.ReinicioSemanalTest"`
+Run: `./gradlew :app:testDebugUnitTest --tests "com.osfit.app.domain.ReinicioSemanalTest"`
 Expected: FAIL en el segundo test — `EscenarioRutina.iniciarTiempo` todavía llama al helper que revienta con `Descanso`.
 
 (El primero ya debería pasar: la Task 2 dejó `marcar` tolerando el descanso. Si pasa, está bien — confirma que el camino de guardado quedó correcto desde entonces.)
