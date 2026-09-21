@@ -93,13 +93,14 @@ class EscenarioRutina {
         )
     }
 
-    /** Botón "Iniciar tiempo". */
+    /** Botón "Iniciar tiempo". Sin día que hacer no hay nada que cronometrar. */
     suspend fun iniciarTiempo(id: String, fecha: String) {
-        asistencias.iniciarTiempo(
-            clienteId = id,
-            fecha = fecha,
-            diaRutinaRealizado = diaQueToca(id, fecha)
-        )
+        val dia = when (val d = estado(id, fecha)) {
+            is DiaQueToca.Dia -> d.indice
+            DiaQueToca.SinRutina -> 0
+            DiaQueToca.Descanso -> return
+        }
+        asistencias.iniciarTiempo(clienteId = id, fecha = fecha, diaRutinaRealizado = dia)
     }
 
     /** Botón "Asignar día": ancla el día y alinea el registro de esa fecha si ya existe. */

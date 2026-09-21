@@ -157,4 +157,34 @@ class ReinicioSemanalTest {
             e.estado(ANA, LUNES_SIGUIENTE)
         )
     }
+
+    @Test
+    fun `marcar presente en un dia de descanso deja el registro sin dia y no mueve el ciclo`() = runBlocking {
+        val e = EscenarioRutina()
+        listOf(LUNES, MARTES, MIERCOLES, JUEVES, VIERNES).forEach {
+            e.marcar(ELENA, it, asistio = true)
+        }
+
+        e.marcar(ELENA, SABADO, asistio = true)
+
+        assertEquals("queda el registro de que vino", true, e.registro(ELENA, SABADO)?.asistio)
+        assertEquals("pero sin día", null, e.registro(ELENA, SABADO)?.diaRutinaRealizado)
+        assertEquals(
+            "y el lunes sigue siendo el día 1",
+            DiaQueToca.Dia(0),
+            e.estado(ELENA, LUNES_SIGUIENTE)
+        )
+    }
+
+    @Test
+    fun `iniciar tiempo en un dia de descanso no registra nada`() = runBlocking {
+        val e = EscenarioRutina()
+        listOf(LUNES, MARTES, MIERCOLES, JUEVES, VIERNES).forEach {
+            e.marcar(ELENA, it, asistio = true)
+        }
+
+        e.iniciarTiempo(ELENA, SABADO)
+
+        assertEquals("no hay nada que cronometrar sin día", null, e.registro(ELENA, SABADO))
+    }
 }

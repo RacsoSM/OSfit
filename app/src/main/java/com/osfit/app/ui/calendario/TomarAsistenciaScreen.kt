@@ -56,6 +56,7 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.osfit.app.data.model.Asistencia
 import com.osfit.app.data.model.Cliente
+import com.osfit.app.domain.DiaQueToca
 import com.osfit.app.domain.TiempoGymCalculator
 import com.osfit.app.ui.common.TextoMaquinaEscribir
 import kotlinx.coroutines.delay
@@ -75,6 +76,7 @@ fun TomarAsistenciaScreen(fecha: String, onGuardado: () -> Unit = {}) {
     val clientes by viewModel.clientesActivos.collectAsState()
     val estadoPorCliente by viewModel.estadoPorCliente.collectAsState()
     val diaRealizadoPorCliente by viewModel.diaRealizadoPorCliente.collectAsState()
+    val diaQueTocaPorCliente by viewModel.diaQueTocaPorCliente.collectAsState()
     val asistenciasDelDia by viewModel.asistenciasDelDia.collectAsState()
     val cambioDiaPorCliente by viewModel.cambioDiaPorCliente.collectAsState()
     val avisoAusenciaPorCliente by viewModel.avisoAusenciaPorCliente.collectAsState()
@@ -181,6 +183,7 @@ fun TomarAsistenciaScreen(fecha: String, onGuardado: () -> Unit = {}) {
                             cliente = cliente,
                             asistio = asistio,
                             diaRealizado = diaRealizado,
+                            semanaCompleta = diaQueTocaPorCliente[cliente.id] == DiaQueToca.Descanso,
                             onElegirDia = { diaElegido -> viewModel.marcarDiaRealizado(cliente, diaElegido) }
                         )
                     }
@@ -348,6 +351,7 @@ private fun ClienteRutinaRow(
     cliente: Cliente,
     asistio: Boolean,
     diaRealizado: Int?,
+    semanaCompleta: Boolean,
     onElegirDia: (Int) -> Unit
 ) {
     var mostrarSelector by remember { mutableStateOf(false) }
@@ -367,6 +371,9 @@ private fun ClienteRutinaRow(
             Text(cliente.nombre, style = MaterialTheme.typography.titleMedium)
             val texto = when {
                 !asistio -> "Faltó"
+                // Vino con la semana ya completa: no hay día sugerido, pero el entrenador
+                // puede tocar la fila y elegir cuál hizo.
+                diaRealizado == null && semanaCompleta -> "Semana completa"
                 diaRealizado == null -> "Sin registrar"
                 else -> {
                     val nombreDia = dias?.getOrNull(diaRealizado)?.nombreDia
