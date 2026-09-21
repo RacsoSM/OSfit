@@ -257,6 +257,17 @@ No hizo falta tocar la fecha del teléfono ni escribir el test: cayó en sábado
 > if a woman dont go the 5 days of a week in a row, the routine should change looking that
 > they dont do legs two times in a row
 
+**Spec escrito (2026-09-21):**
+[`docs/superpowers/specs/2026-09-21-reinicio-semanal-rutina-design.md`](superpowers/specs/2026-09-21-reinicio-semanal-rutina-design.md).
+
+La solucion no detecta el choque: lo vuelve imposible. Un campo nuevo
+`Rutina.reinicioSemanal` hace que el ancla efectiva nunca sea anterior al domingo pasado,
+asi que el dia que toca pasa a ser la N-esima asistencia de la semana y el ciclo deja de
+dar la vuelta. Si falto un dia, la semana termina en el dia 4 y el dia 5 no se hace. Solo
+aplica a las rutinas de 5 dias que se marquen; las de 3 y 6 siguen con el ciclo rodante.
+
+Falta el plan de implementacion.
+
 ---
 
 ## 6. Saludo de la página — ✅ HECHO (2026-09-14)
