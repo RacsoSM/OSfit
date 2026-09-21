@@ -7,6 +7,7 @@ import com.osfit.app.domain.EscenarioRutina.Companion.DIA1
 import com.osfit.app.domain.EscenarioRutina.Companion.DIA2
 import com.osfit.app.domain.EscenarioRutina.Companion.DIA3
 import com.osfit.app.domain.EscenarioRutina.Companion.DIEGO
+import com.osfit.app.domain.EscenarioRutina.Companion.ELENA
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -24,10 +25,13 @@ class DiaDenormalizadoTest {
     private fun assertEquivale(e: EscenarioRutina, id: String, hoy: String, cuando: String) = runBlocking {
         val cliente = e.cliente(id)
         val asistencias = e.asistenciasDe(id)
-        val totalDias = cliente.rutinaAsignada?.dias?.size ?: 0
+        val rutina = cliente.rutinaAsignada
+        val totalDias = rutina?.dias?.size ?: 0
 
         val valor = RutinaProgressCalculator.denormalizar(cliente, asistencias, hoy)
-        val interpretado = RutinaProgressCalculator.interpretar(valor, totalDias, cuando)
+        val interpretado = RutinaProgressCalculator.interpretar(
+            valor, totalDias, cuando, rutina?.reinicioSemanal ?: false
+        )
 
         assertEquals(
             "denormalizado en $hoy e interpretado en $cuando",
@@ -110,5 +114,29 @@ class DiaDenormalizadoTest {
         val e = EscenarioRutina()
         val valor = RutinaProgressCalculator.denormalizar(e.cliente(DIEGO), e.asistenciasDe(DIEGO), DIA1)
         assertEquals(null, valor.dia)
+    }
+
+    @Test
+    fun `con reinicio semanal el cruce de semana equivale`() = runBlocking {
+        val e = EscenarioRutina()
+        e.marcar(ELENA, EscenarioRutina.VIERNES, asistio = true)
+        assertEquivale(e, ELENA, hoy = EscenarioRutina.VIERNES, cuando = EscenarioRutina.LUNES_SIGUIENTE)
+    }
+
+    @Test
+    fun `con reinicio semanal el descanso equivale`() = runBlocking {
+        val e = EscenarioRutina()
+        listOf(
+            EscenarioRutina.LUNES, EscenarioRutina.MARTES, EscenarioRutina.MIERCOLES,
+            EscenarioRutina.JUEVES, EscenarioRutina.VIERNES
+        ).forEach { e.marcar(ELENA, it, asistio = true) }
+        assertEquivale(e, ELENA, hoy = EscenarioRutina.VIERNES, cuando = EscenarioRutina.SABADO)
+    }
+
+    @Test
+    fun `con reinicio semanal el ancla de la semana pasada equivale`() = runBlocking {
+        val e = EscenarioRutina()
+        e.asignarDia(ELENA, dia = 2, fecha = EscenarioRutina.MIERCOLES)
+        assertEquivale(e, ELENA, hoy = EscenarioRutina.MIERCOLES, cuando = EscenarioRutina.LUNES_SIGUIENTE)
     }
 }

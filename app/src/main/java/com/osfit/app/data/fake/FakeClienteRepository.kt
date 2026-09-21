@@ -48,7 +48,24 @@ class FakeClienteRepository : ClienteRepository {
         )
     )
 
-    private val idCounter = AtomicInteger(5)
+    /**
+     * El caso que motivó el reinicio semanal: el primer día y el último trabajan pierna.
+     * Con el ciclo rodante, una falta los deja en días consecutivos.
+     */
+    private fun rutinaDe5DiasConReinicio(nombre: String): Rutina = Rutina(
+        id = "rutina-$nombre",
+        nombre = nombre,
+        reinicioSemanal = true,
+        dias = listOf(
+            DiaRutina(nombreDia = "Pierna (cuádriceps)", ejercicios = ejercicios("Sentadilla")),
+            DiaRutina(nombreDia = "Espalda", ejercicios = ejercicios("Remo")),
+            DiaRutina(nombreDia = "Pecho", ejercicios = ejercicios("Press")),
+            DiaRutina(nombreDia = "Hombro y brazo", ejercicios = ejercicios("Press militar")),
+            DiaRutina(nombreDia = "Pierna completa", ejercicios = ejercicios("Peso muerto"))
+        )
+    )
+
+    private val idCounter = AtomicInteger(6)
 
     private val clientesIniciales: List<Cliente> = listOf(
         // a. A mitad de ciclo, con ancla propia y sin asistencias posteriores.
@@ -97,6 +114,18 @@ class FakeClienteRepository : ClienteRepository {
             plantillaOrigenId = "",
             diaActualIndex = 0,
             diaAnclaFecha = null
+        ),
+        // e. Rutina de 5 días con reinicio semanal, anclada al día 1 en la fecha de corte.
+        //    Es el caso de "Mujeres básicos": día 1 y día 5 son pierna.
+        Cliente(
+            id = "5",
+            nombre = "Elena Semana Completa",
+            telefono = "555-0005",
+            activo = true,
+            rutinaAsignada = rutinaDe5DiasConReinicio("Elena"),
+            plantillaOrigenId = "rutina-Elena",
+            diaActualIndex = 0,
+            diaAnclaFecha = RutinaProgressCalculator.FECHA_CORTE
         )
     )
 

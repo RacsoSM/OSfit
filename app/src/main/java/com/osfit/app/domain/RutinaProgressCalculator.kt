@@ -64,12 +64,32 @@ object RutinaProgressCalculator {
     }
 
     /**
+     * El ancla que manda de verdad hoy.
+     *
+     * Con [reinicioSemanal], nunca puede ser anterior al domingo pasado: eso es todo lo que
+     * hace falta para que el día sea "la N-ésima asistencia de la semana", porque el ancla ya
+     * es exclusiva y `diaQueToca` ya ignora todo lo anterior a ella.
+     *
+     * Un ancla manual de esta misma semana sobrevive la comparación y manda hasta el domingo,
+     * que es cuando el corrimiento la barre sola. No hay nada que borrar ni que programar.
+     */
+    private fun anclaEfectiva(ancla: Ancla, hoy: String, reinicioSemanal: Boolean): Ancla {
+        if (!reinicioSemanal) return ancla
+        val domingo = SemanaDeRutina.domingoAnterior(hoy)
+        return if (ancla.fecha >= domingo) ancla else Ancla(dia = 0, fecha = domingo)
+    }
+
+    /**
      * Día del ciclo que le toca al cliente en [hoy].
      *
-     * Toma la asistencia más reciente posterior al ancla: si es de hoy, es el día que
-     * está haciendo hoy; si es anterior, le toca el siguiente del ciclo. Las faltas
-     * guardan `diaRutinaRealizado = null`, así que quedan fuera por construcción y no
-     * avanzan el ciclo.
+     * Toma la asistencia más reciente posterior al ancla: si es de hoy, es el día que está
+     * haciendo hoy; si es anterior, le toca el siguiente del ciclo. Las faltas guardan
+     * `diaRutinaRealizado = null`, así que quedan fuera por construcción y no avanzan el ciclo.
+     *
+     * Con [com.osfit.app.data.model.Rutina.reinicioSemanal] cambian dos cosas: el ancla nunca
+     * es anterior al domingo pasado (ver [anclaEfectiva]), y el ciclo no da la vuelta —después
+     * del último día viene [DiaQueToca.Descanso], no el primero—. Juntas hacen que el día sea
+     * la N-ésima asistencia de la semana.
      *
      * [asistenciasDelCliente] puede traer asistencias de cualquier fecha; se filtran aquí.
      */
@@ -78,7 +98,7 @@ object RutinaProgressCalculator {
         val totalDias = rutina.dias.size
         if (totalDias <= 0) return DiaQueToca.SinRutina
 
-        val ancla = anclaDe(cliente)
+        val ancla = anclaEfectiva(anclaDe(cliente), hoy, rutina.reinicioSemanal)
 
         val ultima = asistenciasDelCliente
             .filter { it.clienteId == cliente.id || cliente.id.isEmpty() }
@@ -88,10 +108,10 @@ object RutinaProgressCalculator {
             ?: return DiaQueToca.Dia(ancla.dia.coerceIn(0, totalDias - 1))
 
         val realizado = ultima.diaRutinaRealizado!!.coerceIn(0, totalDias - 1)
-        return if (ultima.fecha == hoy) {
-            DiaQueToca.Dia(realizado)
-        } else {
-            DiaQueToca.Dia(siguienteDia(realizado, totalDias))
+        return when {
+            ultima.fecha == hoy -> DiaQueToca.Dia(realizado)
+            rutina.reinicioSemanal && realizado + 1 >= totalDias -> DiaQueToca.Descanso
+            else -> DiaQueToca.Dia(siguienteDia(realizado, totalDias))
         }
     }
 
@@ -118,10 +138,11 @@ object RutinaProgressCalculator {
         asistenciasDelCliente: List<Asistencia>,
         hoy: String
     ): DiaDenormalizado {
-        val totalDias = cliente.rutinaAsignada?.dias?.size ?: 0
+        val rutina = cliente.rutinaAsignada ?: return DiaDenormalizado()
+        val totalDias = rutina.dias.size
         if (totalDias <= 0) return DiaDenormalizado()
 
-        val ancla = anclaDe(cliente)
+        val ancla = anclaEfectiva(anclaDe(cliente), hoy, rutina.reinicioSemanal)
 
         val ultima = asistenciasDelCliente
             .filter { it.clienteId == cliente.id || cliente.id.isEmpty() }
@@ -142,19 +163,31 @@ object RutinaProgressCalculator {
     }
 
     /**
-     * Interpreta el trío de [denormalizar]. Es la referencia de las tres líneas que corre la
+     * Interpreta el trío de [denormalizar]. Es la referencia de las pocas líneas que corre la
      * web: si cambia acá, hay que cambiar `web/src/dia.ts`.
+     *
+     * El cruce de semana se decide **antes** que el ancla, porque con [reinicioSemanal] un
+     * ancla de la semana pasada también tiene que reiniciarse.
      */
-    fun interpretar(valor: DiaDenormalizado, totalDias: Int, fecha: String): DiaQueToca {
+    fun interpretar(
+        valor: DiaDenormalizado,
+        totalDias: Int,
+        fecha: String,
+        reinicioSemanal: Boolean = false
+    ): DiaQueToca {
         val dia = valor.dia ?: return DiaQueToca.SinRutina
         if (totalDias <= 0) return DiaQueToca.SinRutina
         val acotado = dia.coerceIn(0, totalDias - 1)
+        val fechaValor = valor.fecha
+
+        if (reinicioSemanal && fechaValor != null &&
+            SemanaDeRutina.lunesDe(fechaValor) < SemanaDeRutina.lunesDe(fecha)
+        ) return DiaQueToca.Dia(0)
+
         if (valor.esAncla) return DiaQueToca.Dia(acotado)
-        return if (valor.fecha == fecha) {
-            DiaQueToca.Dia(acotado)
-        } else {
-            DiaQueToca.Dia(siguienteDia(acotado, totalDias))
-        }
+        if (fechaValor == fecha) return DiaQueToca.Dia(acotado)
+        if (reinicioSemanal && acotado + 1 >= totalDias) return DiaQueToca.Descanso
+        return DiaQueToca.Dia(siguienteDia(acotado, totalDias))
     }
 
     /** Siguiente día del ciclo, dando la vuelta al llegar al final. */

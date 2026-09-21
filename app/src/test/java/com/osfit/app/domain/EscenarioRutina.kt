@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.first
  *  - "2" Beto  — 3 días, ancla día 2 (último del ciclo)
  *  - "3" Carla — cliente anterior al cambio: sin ancla, con pendiente viejo ya vencido
  *  - "4" Diego — sin rutina asignada
+ *  - "5" Elena — 5 días con reinicioSemanal, ancla día 1 en FECHA_CORTE
  */
 class EscenarioRutina {
     val clientes = FakeClienteRepository()
@@ -26,12 +27,22 @@ class EscenarioRutina {
         const val BETO = "2"
         const val CARLA = "3"
         const val DIEGO = "4"
+        const val ELENA = "5"
 
         // Todas posteriores a RutinaProgressCalculator.FECHA_CORTE (2026-09-01).
         const val DIA1 = "2026-09-02"
         const val DIA2 = "2026-09-03"
         const val DIA3 = "2026-09-04"
         const val DIA4 = "2026-09-05"
+
+        // Una semana real posterior a FECHA_CORTE: 2026-09-07 es lunes.
+        const val LUNES = "2026-09-07"
+        const val MARTES = "2026-09-08"
+        const val MIERCOLES = "2026-09-09"
+        const val JUEVES = "2026-09-10"
+        const val VIERNES = "2026-09-11"
+        const val SABADO = "2026-09-12"
+        const val LUNES_SIGUIENTE = "2026-09-14"
     }
 
     suspend fun cliente(id: String): Cliente =

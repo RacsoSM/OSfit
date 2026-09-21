@@ -13,7 +13,12 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
 
-/** Secuencias día a día sobre los repositorios en memoria. */
+/**
+ * Secuencias día a día sobre los repositorios en memoria.
+ *
+ * Todo lo de aquí es el **ciclo rodante**, el modo por defecto. El modo de reinicio semanal
+ * vive en `ReinicioSemanalTest`.
+ */
 class AvanceDiaSecuenciaTest {
 
     @Test
@@ -51,7 +56,7 @@ class AvanceDiaSecuenciaTest {
     }
 
     @Test
-    fun `dias seguidos recorren el ciclo y dan la vuelta`() = runBlocking {
+    fun `sin reinicio semanal los dias seguidos recorren el ciclo y dan la vuelta`() = runBlocking {
         val e = EscenarioRutina()
         // Beto arranca en el día 2, último de un ciclo de 3.
         val fechas = listOf(DIA1, DIA2, DIA3, DIA4)
