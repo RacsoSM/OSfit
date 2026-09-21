@@ -73,9 +73,10 @@ object RutinaProgressCalculator {
      *
      * [asistenciasDelCliente] puede traer asistencias de cualquier fecha; se filtran aquí.
      */
-    fun diaQueToca(cliente: Cliente, asistenciasDelCliente: List<Asistencia>, hoy: String): Int {
-        val totalDias = cliente.rutinaAsignada?.dias?.size ?: return 0
-        if (totalDias <= 0) return 0
+    fun diaQueToca(cliente: Cliente, asistenciasDelCliente: List<Asistencia>, hoy: String): DiaQueToca {
+        val rutina = cliente.rutinaAsignada ?: return DiaQueToca.SinRutina
+        val totalDias = rutina.dias.size
+        if (totalDias <= 0) return DiaQueToca.SinRutina
 
         val ancla = anclaDe(cliente)
 
@@ -84,14 +85,18 @@ object RutinaProgressCalculator {
             .filter { it.asistio && it.diaRutinaRealizado != null }
             .filter { it.fecha > ancla.fecha && it.fecha <= hoy }
             .maxByOrNull { it.fecha }
-            ?: return ancla.dia.coerceIn(0, totalDias - 1)
+            ?: return DiaQueToca.Dia(ancla.dia.coerceIn(0, totalDias - 1))
 
         val realizado = ultima.diaRutinaRealizado!!.coerceIn(0, totalDias - 1)
-        return if (ultima.fecha == hoy) realizado else siguienteDia(realizado, totalDias)
+        return if (ultima.fecha == hoy) {
+            DiaQueToca.Dia(realizado)
+        } else {
+            DiaQueToca.Dia(siguienteDia(realizado, totalDias))
+        }
     }
 
     /** Versión de conveniencia para "hoy" real. */
-    fun diaQueToca(cliente: Cliente, asistenciasDelCliente: List<Asistencia>): Int =
+    fun diaQueToca(cliente: Cliente, asistenciasDelCliente: List<Asistencia>): DiaQueToca =
         diaQueToca(cliente, asistenciasDelCliente, LocalDate.now().toString())
 
     /**
@@ -140,12 +145,16 @@ object RutinaProgressCalculator {
      * Interpreta el trío de [denormalizar]. Es la referencia de las tres líneas que corre la
      * web: si cambia acá, hay que cambiar `web/src/dia.ts`.
      */
-    fun interpretar(valor: DiaDenormalizado, totalDias: Int, fecha: String): Int {
-        val dia = valor.dia ?: return 0
-        if (totalDias <= 0) return 0
+    fun interpretar(valor: DiaDenormalizado, totalDias: Int, fecha: String): DiaQueToca {
+        val dia = valor.dia ?: return DiaQueToca.SinRutina
+        if (totalDias <= 0) return DiaQueToca.SinRutina
         val acotado = dia.coerceIn(0, totalDias - 1)
-        if (valor.esAncla) return acotado
-        return if (valor.fecha == fecha) acotado else siguienteDia(acotado, totalDias)
+        if (valor.esAncla) return DiaQueToca.Dia(acotado)
+        return if (valor.fecha == fecha) {
+            DiaQueToca.Dia(acotado)
+        } else {
+            DiaQueToca.Dia(siguienteDia(acotado, totalDias))
+        }
     }
 
     /** Siguiente día del ciclo, dando la vuelta al llegar al final. */

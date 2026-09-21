@@ -43,17 +43,29 @@ class EscenarioRutina {
     suspend fun registro(id: String, fecha: String): Asistencia? =
         asistenciasDe(id).firstOrNull { it.fecha == fecha }
 
-    /** Día del ciclo que le toca, deducido igual que en las pantallas. */
-    suspend fun diaQueToca(id: String, hoy: String): Int =
+    /** Estado completo del día, incluido el descanso del reinicio semanal. */
+    suspend fun estado(id: String, hoy: String): DiaQueToca =
         RutinaProgressCalculator.diaQueToca(cliente(id), asistenciasDe(id), hoy)
+
+    /**
+     * Índice del día, como lo veían los tests antes de que el cálculo tuviera tres estados.
+     * `SinRutina` sigue valiendo 0, igual que antes. `Descanso` revienta a propósito: un test
+     * que lo encuentre por accidente tiene que enterarse, no recibir un número inventado.
+     */
+    suspend fun diaQueToca(id: String, hoy: String): Int = when (val d = estado(id, hoy)) {
+        is DiaQueToca.Dia -> d.indice
+        DiaQueToca.SinRutina -> 0
+        DiaQueToca.Descanso -> error("le toca descansar en $hoy; usa estado() para afirmarlo")
+    }
 
     /** Marcar Asistió/Faltó y guardar (TomarAsistenciaViewModel.guardarTodo). */
     suspend fun marcar(id: String, fecha: String, asistio: Boolean) {
+        val dia = if (asistio) (estado(id, fecha) as? DiaQueToca.Dia)?.indice else null
         asistencias.registrarAsistencia(
             clienteId = id,
             fecha = fecha,
             asistio = asistio,
-            diaRutinaRealizado = if (asistio) diaQueToca(id, fecha) else null,
+            diaRutinaRealizado = dia,
             nota = ""
         )
     }

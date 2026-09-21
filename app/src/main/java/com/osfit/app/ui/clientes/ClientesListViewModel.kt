@@ -8,6 +8,7 @@ import com.osfit.app.data.repository.AsistenciaRepository
 import com.osfit.app.data.repository.AvisoFaltaWebRepository
 import com.osfit.app.data.repository.CambioDiaWebRepository
 import com.osfit.app.data.repository.ClienteRepository
+import com.osfit.app.domain.DiaQueToca
 import com.osfit.app.domain.RutinaProgressCalculator
 import java.time.LocalDate
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -38,9 +39,14 @@ class ClientesListViewModel(
             val hoy = LocalDate.now().toString()
             val porCliente = asistencias.groupBy { it.clienteId }
             lista.associate { cliente ->
-                cliente.id to RutinaProgressCalculator.diaQueToca(
-                    cliente, porCliente[cliente.id].orEmpty(), hoy
-                )
+                cliente.id to when (
+                    val d = RutinaProgressCalculator.diaQueToca(
+                        cliente, porCliente[cliente.id].orEmpty(), hoy
+                    )
+                ) {
+                    is DiaQueToca.Dia -> d.indice
+                    else -> 0
+                }
             }
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyMap())
 

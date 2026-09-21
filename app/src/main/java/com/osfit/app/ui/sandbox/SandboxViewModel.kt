@@ -7,6 +7,7 @@ import com.osfit.app.data.fake.FakeClienteRepository
 import com.osfit.app.data.model.Asistencia
 import com.osfit.app.data.model.Cliente
 import com.osfit.app.domain.AsignarDiaManual
+import com.osfit.app.domain.DiaQueToca
 import com.osfit.app.domain.RutinaProgressCalculator
 import com.osfit.app.domain.VariacionCalculator
 import com.osfit.app.domain.totalVariaciones
@@ -57,9 +58,14 @@ class SandboxViewModel : ViewModel() {
         combine(clientes, todasAsistencias, _simulatedFecha) { lista, asistencias, fecha ->
             val porCliente = asistencias.groupBy { it.clienteId }
             lista.associate { cliente ->
-                cliente.id to RutinaProgressCalculator.diaQueToca(
-                    cliente, porCliente[cliente.id].orEmpty(), fecha.toString()
-                )
+                cliente.id to when (
+                    val d = RutinaProgressCalculator.diaQueToca(
+                        cliente, porCliente[cliente.id].orEmpty(), fecha.toString()
+                    )
+                ) {
+                    is DiaQueToca.Dia -> d.indice
+                    else -> 0
+                }
             }
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyMap())
 
@@ -78,11 +84,10 @@ class SandboxViewModel : ViewModel() {
         }
     }
 
-    private fun diaQueTocaDe(cliente: Cliente): Int = RutinaProgressCalculator.diaQueToca(
-        cliente,
-        asistenciasDeCliente(cliente.id),
-        _simulatedFecha.value.toString()
-    )
+    private fun diaQueTocaDe(cliente: Cliente): Int =
+        (RutinaProgressCalculator.diaQueToca(
+            cliente, asistenciasDeCliente(cliente.id), _simulatedFecha.value.toString()
+        ) as? DiaQueToca.Dia)?.indice ?: 0
 
     /** Igual que en Tomar Asistencia: el cálculo vive en el ViewModel, no en el repositorio. */
     private fun variacionQueTocaDe(cliente: Cliente, diaDelCiclo: Int): Int =

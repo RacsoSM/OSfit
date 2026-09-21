@@ -49,13 +49,16 @@ class RutinaProgressCalculatorTest {
         val resultado = RutinaProgressCalculator.diaQueToca(
             cliente(diaAncla = 2), emptyList(), "2026-09-10"
         )
-        assertEquals(2, resultado)
+        assertEquals(DiaQueToca.Dia(2), resultado)
     }
 
     @Test
     fun `sin rutina asignada, siempre dia 0`() {
         val sinRutina = Cliente(id = "c", rutinaAsignada = null, diaActualIndex = 3)
-        assertEquals(0, RutinaProgressCalculator.diaQueToca(sinRutina, emptyList(), "2026-09-10"))
+        assertEquals(
+            DiaQueToca.SinRutina,
+            RutinaProgressCalculator.diaQueToca(sinRutina, emptyList(), "2026-09-10")
+        )
     }
 
     // ---- Con historial: manda Calendario-Rutina ----
@@ -65,7 +68,7 @@ class RutinaProgressCalculatorTest {
         val resultado = RutinaProgressCalculator.diaQueToca(
             cliente(diaAncla = 0), listOf(asistio("2026-09-05", 2)), "2026-09-05"
         )
-        assertEquals(2, resultado)
+        assertEquals(DiaQueToca.Dia(2), resultado)
     }
 
     @Test
@@ -73,7 +76,7 @@ class RutinaProgressCalculatorTest {
         val resultado = RutinaProgressCalculator.diaQueToca(
             cliente(diaAncla = 0), listOf(asistio("2026-09-05", 2)), "2026-09-06"
         )
-        assertEquals(3, resultado)
+        assertEquals(DiaQueToca.Dia(3), resultado)
     }
 
     @Test
@@ -81,7 +84,7 @@ class RutinaProgressCalculatorTest {
         val resultado = RutinaProgressCalculator.diaQueToca(
             cliente(diaAncla = 0, totalDias = 4), listOf(asistio("2026-09-05", 3)), "2026-09-06"
         )
-        assertEquals(0, resultado)
+        assertEquals(DiaQueToca.Dia(0), resultado)
     }
 
     @Test
@@ -94,7 +97,7 @@ class RutinaProgressCalculatorTest {
         val resultado = RutinaProgressCalculator.diaQueToca(
             cliente(diaAncla = 0), desordenadas, "2026-09-08"
         )
-        assertEquals("cuenta la del 07, que registró el día 2", 3, resultado)
+        assertEquals("cuenta la del 07, que registró el día 2", DiaQueToca.Dia(3), resultado)
     }
 
     @Test
@@ -103,7 +106,7 @@ class RutinaProgressCalculatorTest {
         val resultado = RutinaProgressCalculator.diaQueToca(
             cliente(diaAncla = 0), historial, "2026-09-08"
         )
-        assertEquals("sigue tocando el siguiente al día 1", 2, resultado)
+        assertEquals("sigue tocando el siguiente al día 1", DiaQueToca.Dia(2), resultado)
     }
 
     @Test
@@ -111,7 +114,7 @@ class RutinaProgressCalculatorTest {
         val resultado = RutinaProgressCalculator.diaQueToca(
             cliente(diaAncla = 0), listOf(asistio("2026-09-20", 3)), "2026-09-10"
         )
-        assertEquals("una fecha posterior a hoy se ignora", 0, resultado)
+        assertEquals("una fecha posterior a hoy se ignora", DiaQueToca.Dia(0), resultado)
     }
 
     // ---- El ancla corta el historial ----
@@ -123,7 +126,7 @@ class RutinaProgressCalculatorTest {
             listOf(asistio("2026-09-05", 0)),
             "2026-09-12"
         )
-        assertEquals("manda el ancla, no el registro viejo", 3, resultado)
+        assertEquals("manda el ancla, no el registro viejo", DiaQueToca.Dia(3), resultado)
     }
 
     @Test
@@ -133,7 +136,7 @@ class RutinaProgressCalculatorTest {
             listOf(asistio("2026-09-10", 0)),
             "2026-09-10"
         )
-        assertEquals("el ancla manda en su propia fecha", 3, resultado)
+        assertEquals("el ancla manda en su propia fecha", DiaQueToca.Dia(3), resultado)
     }
 
     @Test
@@ -143,7 +146,7 @@ class RutinaProgressCalculatorTest {
             listOf(asistio("2026-09-11", 0)),
             "2026-09-12"
         )
-        assertEquals("el historial retoma el mando", 1, resultado)
+        assertEquals("el historial retoma el mando", DiaQueToca.Dia(1), resultado)
     }
 
     // ---- Migración: clientes anteriores al cambio ----
@@ -151,7 +154,7 @@ class RutinaProgressCalculatorTest {
     @Test
     fun `cliente viejo sin pendiente conserva su diaActualIndex`() {
         val viejo = cliente(diaAncla = 2, anclaFecha = null)
-        assertEquals(2, RutinaProgressCalculator.diaQueToca(viejo, emptyList(), "2026-09-20"))
+        assertEquals(DiaQueToca.Dia(2), RutinaProgressCalculator.diaQueToca(viejo, emptyList(), "2026-09-20"))
     }
 
     @Test
@@ -164,7 +167,7 @@ class RutinaProgressCalculatorTest {
         )
         assertEquals(
             "el pendiente venció antes del corte, así que va en el ancla",
-            2,
+            DiaQueToca.Dia(2),
             RutinaProgressCalculator.diaQueToca(viejo, emptyList(), "2026-09-20")
         )
     }
@@ -195,7 +198,7 @@ class RutinaProgressCalculatorTest {
         val resultado = RutinaProgressCalculator.diaQueToca(
             viejo, listOf(asistio(despuesDelCorte, 1)), LocalDate.parse(despuesDelCorte).plusDays(1).toString()
         )
-        assertEquals("el día 1 quedó hecho, toca el 2", 2, resultado)
+        assertEquals("el día 1 quedó hecho, toca el 2", DiaQueToca.Dia(2), resultado)
     }
 
     // ---- siguienteDia ----
@@ -229,7 +232,7 @@ class RutinaProgressCalculatorTest {
         val resultado = RutinaProgressCalculator.diaQueToca(
             cliente(diaAncla = 0, totalDias = 3), listOf(asistio("2026-09-05", 99)), "2026-09-05"
         )
-        assertEquals("se recorta al último día válido", 2, resultado)
+        assertEquals("se recorta al último día válido", DiaQueToca.Dia(2), resultado)
     }
 
     @Test
@@ -237,6 +240,6 @@ class RutinaProgressCalculatorTest {
         val resultado = RutinaProgressCalculator.diaQueToca(
             cliente(diaAncla = 99, totalDias = 3), emptyList(), "2026-09-05"
         )
-        assertEquals(2, resultado)
+        assertEquals(DiaQueToca.Dia(2), resultado)
     }
 }

@@ -28,6 +28,7 @@ import com.osfit.app.data.repository.RutinaRepository
 import com.osfit.app.data.repository.VideoPublicadoRepository
 import com.osfit.app.domain.AsignarDiaManual
 import com.osfit.app.domain.CupoRevivesCalculator
+import com.osfit.app.domain.DiaQueToca
 import com.osfit.app.domain.RachaCalculator
 import com.osfit.app.domain.RutinaProgressCalculator
 import com.osfit.app.domain.conPesoPropio
@@ -116,7 +117,10 @@ class ClienteDetailViewModel(
 
     /** Día del ciclo que le toca, deducido del historial de asistencias. */
     val diaQueToca: StateFlow<Int> = combine(cliente, asistenciasDelCliente) { c, asistencias ->
-        if (c == null) 0 else RutinaProgressCalculator.diaQueToca(c, asistencias)
+        if (c == null) 0 else when (val d = RutinaProgressCalculator.diaQueToca(c, asistencias)) {
+            is DiaQueToca.Dia -> d.indice
+            else -> 0
+        }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0)
 
     val rachaActual: StateFlow<Int> = asistenciaRepository.observarAsistenciasPorCliente(clienteId)

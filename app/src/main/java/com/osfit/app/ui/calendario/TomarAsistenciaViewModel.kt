@@ -10,6 +10,7 @@ import com.osfit.app.data.repository.AsistenciaRepository
 import com.osfit.app.data.repository.AvisoFaltaWebRepository
 import com.osfit.app.data.repository.CambioDiaWebRepository
 import com.osfit.app.data.repository.ClienteRepository
+import com.osfit.app.domain.DiaQueToca
 import com.osfit.app.domain.RutinaProgressCalculator
 import com.osfit.app.domain.VariacionCalculator
 import com.osfit.app.domain.totalVariaciones
@@ -50,7 +51,7 @@ class TomarAsistenciaViewModel(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     /** Día del ciclo que le toca a cada cliente en la fecha abierta. */
-    val diaQueTocaPorCliente: StateFlow<Map<String, Int>> =
+    val diaQueTocaPorCliente: StateFlow<Map<String, DiaQueToca>> =
         combine(clientesActivos, todasAsistencias) { clientes, asistencias ->
             val porCliente = asistencias.groupBy { it.clienteId }
             clientes.associate { cliente ->
@@ -86,9 +87,13 @@ class TomarAsistenciaViewModel(
             .toSet() + avisos.map { it.clienteId }.toSet()
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptySet())
 
-    private fun diaQueToca(cliente: Cliente): Int = RutinaProgressCalculator.diaQueToca(
+    private fun diaQueToca(cliente: Cliente): DiaQueToca = RutinaProgressCalculator.diaQueToca(
         cliente, todasAsistencias.value.filter { it.clienteId == cliente.id }, fecha
     )
+
+    /** El índice a escribir, o null si hoy no hay día que registrar. */
+    private fun indiceQueToca(cliente: Cliente): Int? =
+        (diaQueToca(cliente) as? DiaQueToca.Dia)?.indice
 
     /**
      * La variación que se le está sirviendo al cliente en [diaDelCiclo]. Se calcula acá y no en
@@ -145,7 +150,7 @@ class TomarAsistenciaViewModel(
 
     fun iniciarTiempo(cliente: Cliente) {
         viewModelScope.launch {
-            val dia = diaQueToca(cliente)
+            val dia = indiceQueToca(cliente) ?: return@launch
             asistenciaRepository.iniciarTiempo(
                 clienteId = cliente.id,
                 fecha = fecha,
@@ -177,7 +182,7 @@ class TomarAsistenciaViewModel(
                     cliente to asistio
                 }.map { (cliente, asistio) ->
                     async {
-                        val dia = if (asistio) diaQueToca(cliente) else null
+                        val dia = if (asistio) indiceQueToca(cliente) else null
                         asistenciaRepository.registrarAsistencia(
                             clienteId = cliente.id,
                             fecha = fecha,
