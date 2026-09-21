@@ -21,7 +21,7 @@ export interface DiaRutina {
    */
   variaciones?: VariacionDia[];
 }
-export interface Rutina { id: string; nombre: string; dias: DiaRutina[]; }
+export interface Rutina { id: string; nombre: string; dias: DiaRutina[]; reinicioSemanal?: boolean; }
 
 export interface Cliente {
   nombre: string;
