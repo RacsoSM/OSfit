@@ -91,9 +91,19 @@ class TomarAsistenciaViewModel(
         cliente, todasAsistencias.value.filter { it.clienteId == cliente.id }, fecha
     )
 
-    /** El índice a escribir, o null si hoy no hay día que registrar. */
+    /**
+     * El índice a escribir, o null si hoy no hay día que registrar.
+     *
+     * `SinRutina` vale 0 y no null: es lo que el cálculo devolvía antes de que fuera un tipo,
+     * y hay un test —`cliente sin rutina no rompe al iniciar tiempo`— que depende de que a un
+     * cliente sin rutina se le registre igual la asistencia. Sólo el descanso no tiene día.
+     */
     private fun indiceQueToca(cliente: Cliente): Int? =
-        (diaQueToca(cliente) as? DiaQueToca.Dia)?.indice
+        when (val d = diaQueToca(cliente)) {
+            is DiaQueToca.Dia -> d.indice
+            DiaQueToca.SinRutina -> 0
+            DiaQueToca.Descanso -> null
+        }
 
     /**
      * La variación que se le está sirviendo al cliente en [diaDelCiclo]. Se calcula acá y no en
