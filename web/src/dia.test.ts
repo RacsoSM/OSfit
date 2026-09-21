@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { interpretar } from "./dia";
+import { DESCANSO, domingoAnterior, interpretar, lunesDe } from "./dia";
 
 describe("interpretar", () => {
   it("un ancla vale tal cual, sin importar la fecha", () => {
@@ -76,5 +76,85 @@ describe("interpretar", () => {
 
     expect(interpretar(trioTrabado, 3, "2026-09-16")).toBe(2);
     expect(interpretar(trioTrabado, 3, "2026-10-30")).toBe(2);
+  });
+
+  it("con reinicio semanal, una asistencia de la semana pasada vuelve al día 1", () => {
+    // 2026-09-11 es viernes, 2026-09-14 el lunes siguiente.
+    const valor = { dia: 3, fecha: "2026-09-11", esAncla: false };
+    expect(interpretar(valor, 5, "2026-09-14", true)).toBe(0);
+  });
+
+  it("con reinicio semanal, un ancla de la semana pasada también vuelve al día 1", () => {
+    const valor = { dia: 2, fecha: "2026-09-09", esAncla: true };
+    expect(interpretar(valor, 5, "2026-09-14", true)).toBe(0);
+  });
+
+  it("con reinicio semanal, un ancla de esta semana manda", () => {
+    const valor = { dia: 2, fecha: "2026-09-09", esAncla: true };
+    expect(interpretar(valor, 5, "2026-09-10", true)).toBe(2);
+  });
+
+  // La regresión que el gemelo Kotlin tuvo primero: `cambiarDia` fecha el ancla AYER, así
+  // que un cambio hecho el lunes 09-14 queda fechado el domingo 09-13. Ese domingo, en ISO,
+  // pertenece a la semana anterior — truncar a lunes lo reiniciaría y la clienta perdería su
+  // cambio en el acto. `domingoAnterior("2026-09-14")` es exactamente "2026-09-13", y el
+  // empate lo gana el ancla.
+  it("con reinicio semanal, un ancla fechada en domingo es de la semana que empieza", () => {
+    const valor = { dia: 2, fecha: "2026-09-13", esAncla: true };
+    expect(interpretar(valor, 5, "2026-09-14", true)).toBe(2);
+  });
+
+  it("con reinicio semanal, una asistencia de ese mismo domingo sí reinicia", () => {
+    const valor = { dia: 2, fecha: "2026-09-13", esAncla: false };
+    expect(interpretar(valor, 5, "2026-09-14", true)).toBe(0);
+  });
+
+  it("con reinicio semanal, después del último día toca descansar", () => {
+    // Día 5 hecho el viernes; el sábado ya no hay día.
+    const valor = { dia: 4, fecha: "2026-09-11", esAncla: false };
+    expect(interpretar(valor, 5, "2026-09-12", true)).toBe(DESCANSO);
+  });
+
+  it("con reinicio semanal, dentro de la semana avanza normal", () => {
+    const valor = { dia: 1, fecha: "2026-09-08", esAncla: false };
+    expect(interpretar(valor, 5, "2026-09-09", true)).toBe(2);
+  });
+
+  it("sin reinicio semanal nada cambia al cruzar la semana", () => {
+    const valor = { dia: 3, fecha: "2026-09-11", esAncla: false };
+    expect(interpretar(valor, 5, "2026-09-14")).toBe(4);
+  });
+});
+
+describe("domingoAnterior", () => {
+  it("el domingo anterior al lunes es el dia previo", () => {
+    expect(domingoAnterior("2026-09-07")).toBe("2026-09-06");
+  });
+
+  it("cualquier dia de la semana da el mismo domingo", () => {
+    expect(domingoAnterior("2026-09-11")).toBe("2026-09-06");
+    expect(domingoAnterior("2026-09-13")).toBe("2026-09-06");
+  });
+
+  it("el lunes siguiente da el domingo que lo precede", () => {
+    expect(domingoAnterior("2026-09-14")).toBe("2026-09-13");
+  });
+});
+
+describe("lunesDe", () => {
+  it("el lunes es su propio lunes", () => {
+    expect(lunesDe("2026-09-07")).toBe("2026-09-07");
+  });
+
+  it("el viernes pertenece a la semana que empezó el lunes", () => {
+    expect(lunesDe("2026-09-11")).toBe("2026-09-07");
+  });
+
+  it("el domingo cierra su semana y no abre la siguiente", () => {
+    expect(lunesDe("2026-09-13")).toBe("2026-09-07");
+  });
+
+  it("el lunes siguiente ya es otra semana", () => {
+    expect(lunesDe("2026-09-14")).toBe("2026-09-14");
   });
 });
