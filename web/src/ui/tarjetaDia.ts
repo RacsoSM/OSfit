@@ -1,5 +1,5 @@
 import type { Asistencia, Cliente, DiaRutina, Ejercicio } from "../datos";
-import { interpretar } from "../dia";
+import { DESCANSO, interpretar, lunesDe } from "../dia";
 import { conPesosPropios } from "../pesosPropios";
 import { variacionQueToca } from "../variacion";
 
@@ -8,6 +8,13 @@ import { variacionQueToca } from "../variacion";
 export function esFinDeSemana(fecha: string): boolean {
   const dia = new Date(`${fecha}T12:00:00`).getUTCDay();
   return dia === 0 || dia === 6;
+}
+
+/** El lunes de la semana que viene, para anunciar qué toca cuando hoy es fin de semana. */
+function proximoLunes(fecha: string): string {
+  const d = new Date(`${lunesDe(fecha)}T12:00:00`);
+  d.setUTCDate(d.getUTCDate() + 7);
+  return d.toISOString().slice(0, 10);
 }
 
 /**
@@ -100,20 +107,37 @@ export function tarjetaDia(
       </div>`;
   }
 
-  const indice = interpretar(
-    { dia: cliente.ultimoDia, fecha: cliente.ultimoDiaFecha, esAncla: cliente.ultimoDiaEsAncla },
-    dias.length,
-    hoy
-  );
+  const reinicioSemanal = cliente.rutinaAsignada?.reinicioSemanal ?? false;
+  const trio = {
+    dia: cliente.ultimoDia,
+    fecha: cliente.ultimoDiaFecha,
+    esAncla: cliente.ultimoDiaEsAncla,
+  };
 
   if (esFinDeSemana(hoy)) {
-    const proximo = indice !== null ? dias[indice]?.nombreDia ?? "" : "";
+    // Se pregunta por el LUNES, no por hoy. Con el ciclo rodante daba lo mismo; con el
+    // reinicio semanal, hoy responde DESCANSO y el lunes responde el día 1.
+    const elLunes = interpretar(trio, dias.length, proximoLunes(hoy), reinicioSemanal);
+    const proximo = typeof elLunes === "number" ? dias[elLunes]?.nombreDia ?? "" : "";
     return `
       <div class="tarjeta vacio">
         <div class="vacio-emoji">😴</div>
         <p><strong>Hoy toca descansar</strong></p>
         <p style="color: var(--texto-tenue); font-size: 14px">
           El lunes te toca ${escapar(proximo)}.
+        </p>
+      </div>`;
+  }
+
+  const indice = interpretar(trio, dias.length, hoy, reinicioSemanal);
+
+  if (indice === DESCANSO) {
+    return `
+      <div class="tarjeta vacio">
+        <div class="vacio-emoji">😴</div>
+        <p><strong>Hoy toca descansar</strong></p>
+        <p style="color: var(--texto-tenue); font-size: 14px">
+          Ya completaste tu semana. El lunes empiezas de nuevo.
         </p>
       </div>`;
   }

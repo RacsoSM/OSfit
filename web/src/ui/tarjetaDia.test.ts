@@ -6,6 +6,12 @@ import { tarjetaDia } from "./tarjetaDia";
 const LUNES = "2026-09-15";
 const DOMINGO = "2026-09-20";
 
+/** Semana distinta, para los tests de reinicio semanal: 2026-09-11 es viernes;
+ *  2026-09-12, sábado. Las fechas las fija el brief; no reutilizar LUNES/DOMINGO de arriba
+ *  porque son de otra semana y sus nombres mentirían. */
+const VIERNES_RS = "2026-09-11";
+const SABADO_RS = "2026-09-12";
+
 function ejercicio(campos: Partial<Ejercicio> = {}): Ejercicio {
   return { nombre: "Press banca", series: 4, repeticiones: "10", pesoONota: "30 kg", ...campos };
 }
@@ -156,5 +162,56 @@ describe("tarjetaDia", () => {
     const html = tarjetaDia(propia, LUNES);
     expect(html).toContain("30 kg");
     expect(html).not.toContain("40 kg");
+  });
+
+  it("en sábado anuncia el día 1 de una rutina con reinicio semanal", () => {
+    const clienteConReinicio = cliente([], {
+      nombre: "Elena",
+      rutinaAsignada: {
+        id: "r",
+        nombre: "Mujeres básicos",
+        reinicioSemanal: true,
+        dias: [
+          { nombreDia: "Pierna (cuádriceps)", ejercicios: [] },
+          { nombreDia: "Espalda", ejercicios: [] },
+          { nombreDia: "Pecho", ejercicios: [] },
+          { nombreDia: "Hombro y brazo", ejercicios: [] },
+          { nombreDia: "Pierna completa", ejercicios: [] },
+        ],
+      },
+      // Hizo el día 4 el viernes: le faltó uno, así que no llegó al 5.
+      ultimoDia: 3,
+      ultimoDiaFecha: VIERNES_RS,
+      ultimoDiaEsAncla: false,
+    });
+
+    const html = tarjetaDia(clienteConReinicio, SABADO_RS);
+
+    expect(html).toContain("Hoy toca descansar");
+    expect(html).toContain("Pierna (cuádriceps)");
+    expect(html).not.toContain("Pierna completa");
+  });
+
+  it("sin reinicio semanal el sábado sigue anunciando lo de siempre", () => {
+    const clienteSinReinicio = cliente([], {
+      nombre: "Jaime",
+      rutinaAsignada: {
+        id: "r",
+        nombre: "Tres días",
+        dias: [
+          { nombreDia: "Pecho y espalda", ejercicios: [] },
+          { nombreDia: "Hombro y brazo", ejercicios: [] },
+          { nombreDia: "Pierna completa", ejercicios: [] },
+        ],
+      },
+      ultimoDia: 2,
+      ultimoDiaFecha: VIERNES_RS,
+      ultimoDiaEsAncla: false,
+    });
+
+    const html = tarjetaDia(clienteSinReinicio, SABADO_RS);
+
+    expect(html).toContain("Hoy toca descansar");
+    expect(html).toContain("Pecho y espalda");
   });
 });
