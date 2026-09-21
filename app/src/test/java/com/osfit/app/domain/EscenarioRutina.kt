@@ -60,7 +60,19 @@ class EscenarioRutina {
 
     /** Marcar Asistió/Faltó y guardar (TomarAsistenciaViewModel.guardarTodo). */
     suspend fun marcar(id: String, fecha: String, asistio: Boolean) {
-        val dia = if (asistio) (estado(id, fecha) as? DiaQueToca.Dia)?.indice else null
+        // El mismo mapeo que `TomarAsistenciaViewModel.indiceQueToca`, y tiene que seguir
+        // siéndolo: sin rutina se registra el día 0 como siempre, y sólo el descanso se
+        // queda sin día. Si los dos se separan, este escenario deja de imitar la pantalla
+        // real y los tests validan contra algo que no existe.
+        val dia = if (asistio) {
+            when (val d = estado(id, fecha)) {
+                is DiaQueToca.Dia -> d.indice
+                DiaQueToca.SinRutina -> 0
+                DiaQueToca.Descanso -> null
+            }
+        } else {
+            null
+        }
         asistencias.registrarAsistencia(
             clienteId = id,
             fecha = fecha,
