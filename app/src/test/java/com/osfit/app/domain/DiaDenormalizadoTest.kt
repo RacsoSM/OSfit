@@ -139,4 +139,17 @@ class DiaDenormalizadoTest {
         e.asignarDia(ELENA, dia = 2, fecha = EscenarioRutina.MIERCOLES)
         assertEquivale(e, ELENA, hoy = EscenarioRutina.MIERCOLES, cuando = EscenarioRutina.LUNES_SIGUIENTE)
     }
+
+    /**
+     * El ancla que escribe `cambiarDia` un lunes queda fechada en domingo, y el domingo, en
+     * ISO, pertenece a la semana anterior. Si `interpretar` truncara a lunes, reiniciaría un
+     * ancla que es de esta semana y la web mostraría el día 1 mientras la app muestra el 3.
+     */
+    @Test
+    fun `con reinicio semanal el cambio manual del lunes equivale`() = runBlocking {
+        val e = EscenarioRutina()
+        e.asignarDia(ELENA, dia = 2, fecha = EscenarioRutina.LUNES)
+        assertEquivale(e, ELENA, hoy = EscenarioRutina.LUNES, cuando = EscenarioRutina.LUNES)
+        assertEquivale(e, ELENA, hoy = EscenarioRutina.LUNES, cuando = EscenarioRutina.MARTES)
+    }
 }

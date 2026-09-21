@@ -26,7 +26,9 @@ class SincronizadorDiaWebTest {
         assertEquals(
             "el trío guardado quedó viejo",
             RutinaProgressCalculator.diaQueToca(cliente, e.asistenciasDe(id), hoy),
-            RutinaProgressCalculator.interpretar(guardado, totalDias, hoy)
+            RutinaProgressCalculator.interpretar(
+                guardado, totalDias, hoy, cliente.rutinaAsignada?.reinicioSemanal ?: false
+            )
         )
     }
 

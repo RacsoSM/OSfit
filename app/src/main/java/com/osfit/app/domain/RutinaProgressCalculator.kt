@@ -126,8 +126,8 @@ object RutinaProgressCalculator {
      * imposible que las dos versiones se separen.
      *
      * Contrato, verificado en `DiaDenormalizadoTest`: para toda fecha `d >= hoy`,
-     * `interpretar(denormalizar(c, a, hoy), totalDias, d) == diaQueToca(c, a, d)`, mientras no
-     * haya asistencias posteriores a [hoy] ni escrituras nuevas.
+     * `interpretar(denormalizar(c, a, hoy), totalDias, d, r) == diaQueToca(c, a, d)`, mientras
+     * no haya asistencias posteriores a [hoy] ni escrituras nuevas.
      *
      * Las asistencias posteriores a [hoy] se ignoran igual que en [diaQueToca]. Si el
      * entrenador registra una fecha futura, el trío no la refleja hasta la siguiente
@@ -173,16 +173,24 @@ object RutinaProgressCalculator {
         valor: DiaDenormalizado,
         totalDias: Int,
         fecha: String,
-        reinicioSemanal: Boolean = false
+        reinicioSemanal: Boolean
     ): DiaQueToca {
         val dia = valor.dia ?: return DiaQueToca.SinRutina
         if (totalDias <= 0) return DiaQueToca.SinRutina
         val acotado = dia.coerceIn(0, totalDias - 1)
         val fechaValor = valor.fecha
 
-        if (reinicioSemanal && fechaValor != null &&
-            SemanaDeRutina.lunesDe(fechaValor) < SemanaDeRutina.lunesDe(fecha)
-        ) return DiaQueToca.Dia(0)
+        // El ancla se compara con `<` y la asistencia con `<=`, igual que en `diaQueToca`:
+        // el ancla del reinicio se conserva cuando empata con el domingo, y una asistencia
+        // de ese mismo domingo o anterior ya no cuenta. NO se puede truncar a lunes con
+        // `lunesDe`: en ISO el domingo pertenece a la semana que abrió el lunes anterior, y
+        // las anclas se fechan en domingo a propósito, así que truncar reiniciaría un ancla
+        // que es de esta semana.
+        if (reinicioSemanal && fechaValor != null) {
+            val domingo = SemanaDeRutina.domingoAnterior(fecha)
+            if (valor.esAncla && fechaValor < domingo) return DiaQueToca.Dia(0)
+            if (!valor.esAncla && fechaValor <= domingo) return DiaQueToca.Dia(0)
+        }
 
         if (valor.esAncla) return DiaQueToca.Dia(acotado)
         if (fechaValor == fecha) return DiaQueToca.Dia(acotado)
