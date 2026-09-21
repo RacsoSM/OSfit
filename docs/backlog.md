@@ -266,28 +266,49 @@ asi que el dia que toca pasa a ser la N-esima asistencia de la semana y el ciclo
 dar la vuelta. Si falto un dia, la semana termina en el dia 4 y el dia 5 no se hace. Solo
 aplica a las rutinas de 5 dias que se marquen; las de 3 y 6 siguen con el ciclo rodante.
 
-**Implementado (2026-09-21), commits `b5b4b12..c8ec676` más el switch del editor.** Las siete
-tareas del plan entraron: el campo `Rutina.reinicioSemanal`, la aritmética del ciclo en Kotlin
-y su gemela en `web/src/dia.ts`, la tarjeta de la web reconociendo el descanso, "Semana
-completa" en Tomar Asistencia, y por último el switch en el editor de rutinas
-(`RutinaEditorViewModel.cambiarReinicioSemanal`, cableado en `RutinaEditorScreen`) — sin él no
-había forma de activar el campo desde la app, así que hasta ahora la funcionalidad no era
-alcanzable. Toda la suite en verde: `./gradlew test` y `web`'s `npm test && npm run build`.
+**Hecho (2026-09-21), en main, commits `f65a75f..cb83bb1`.** Las siete tareas del plan
+entraron: el campo `Rutina.reinicioSemanal`, la aritmética del ciclo en Kotlin y su gemela en
+`web/src/dia.ts`, la tarjeta de la web reconociendo el descanso, "Semana completa" en Tomar
+Asistencia, y el switch en el editor de rutinas. Los 14 commits se trasplantaron a main sin
+conflictos, sin arrastrar la ruleta, que sigue en su rama. Suite en verde sobre el resultado:
+`./gradlew test` y, en `web`, `npm test` (167) y `npm run build`.
 
-**Lo que falta, y por qué sigue sin marcarse HECHA:**
+**Verificado en dispositivo el 2026-09-21**, en el modo Sandbox, que no toca Firebase. Se corrió
+el caso original completo sobre la clienta de prueba de 5 días con reinicio, avanzando la fecha
+simulada día a día:
 
-- **Nada de esto se ha visto correr en un dispositivo real.** Los cinco puntos de la
-  verificación manual que cierra el plan —activar el switch y verlo en Firestore, el caso
-  original de la falta a mitad de semana, "Semana completa" en Tomar Asistencia, la tarjeta de
-  la web un sábado, y que una rutina de 3 días siga dando la vuelta como antes— están todos sin
-  hacer.
-- **La web no está desplegada** con este cambio; sigue sirviendo el bundle de antes.
+| Día | Rutina | |
+|---|---|---|
+| Lun 21 | Día 1 · Pierna (cuádriceps) | |
+| Mar 22 | Día 2 · Espalda | |
+| Mié 23 | **faltó** | el ciclo no avanza |
+| Jue 24 | Día 3 · Pecho | |
+| Vie 25 | Día 4 · Hombro y brazo | la semana termina aquí |
+| Sáb 26 | Día 5 · Pierna completa | el caso aceptado a sabiendas: recupera |
+| **Lun 28** | **Día 1 · Pierna (cuádriceps)** | **el choque desaparecido** |
+
+Con el ciclo rodante, ese lunes 28 habría dado "Pierna completa" y el martes "Pierna
+(cuádriceps)": pierna dos días seguidos, que es justo lo que pedía el entrenador que no pasara.
+
+**El switch quedó encendido en "Mujeres básicos"** el mismo día, y se comprobó que persiste tras
+reiniciar la app (o sea que llegó a Firestore) y que `propagarASeguidoras` lo copió a las
+clientas. Se activó en lunes a propósito: las cuatro que siguen esa plantilla ya estaban en el
+Día 1, así que no vieron ningún cambio de inmediato — el efecto aparece la primera semana que
+alguna falte un día. Se verificó que la lista de clientes quedó idéntica antes y después.
+
+**Lo que sigue pendiente:**
+
+- **La web no está desplegada** con este cambio; sigue sirviendo el bundle de antes, así que la
+  tarjeta de la clienta todavía no sabe del descanso. Hasta que se despliegue, la app y la
+  página pueden discrepar un sábado.
 - **El switch del editor no tiene cobertura automatizada.** `RutinaRepository` es una clase
   concreta acoplada a `FirebaseFirestore`, no una interfaz, y `RutinaEditorViewModel` resuelve
   sus dos dependencias desde `AppContainer` en los defaults del constructor — construirlo en un
   test unitario toca Firebase sin inicializar. Hacerlo testeable es extraer una interfaz de
-  `RutinaRepository` y tocar todo lo que la usa, un refactor ajeno a esta feature que merece su
-  propia decisión, no un drive-by de esta tarea.
+  `RutinaRepository` y tocar todo lo que la usa, un refactor ajeno a esta feature.
+- **Tres pantallas del entrenador colapsan el descanso al día 1** (lista, ficha y el día
+  preseleccionado de "Asignar día"). Decisión consciente, con el riesgo nombrado en la sección
+  correspondiente del spec.
 
 ---
 
