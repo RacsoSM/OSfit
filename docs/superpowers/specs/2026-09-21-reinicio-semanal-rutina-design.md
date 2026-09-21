@@ -57,6 +57,36 @@ nunca puede ser anterior al domingo pasado, y el ciclo deja de dar la vuelta.
   `diaRutinaRealizado` con el mismo significado de siempre.
 - Las reglas de Firestore y las Cloud Functions, salvo lo que se dice al final
   sobre `cambiarDia`, que resulta encajar sin modificarse.
+- **Tres pantallas del entrenador que colapsan el descanso al día 1.** Ver abajo.
+
+### Las tres pantallas que no distinguen el descanso
+
+`ClientesListViewModel`, `SandboxViewModel` y `ClienteDetailViewModel` traducen
+el resultado del cálculo a un entero con un `else -> 0`, así que un `Descanso` se
+les vuelve "día 1". Esto es una decisión, no un descuido, y afecta a tres
+superficies que conviene nombrar en vez de dejar implícitas:
+
+1. La fila del cliente en la lista.
+2. La tarjeta de ejercicios en la ficha del cliente —**y es la que importa**,
+   porque de ahí sale lo que el entrenador manda por WhatsApp, que por diseño
+   debe coincidir con lo que la clienta ve en su página.
+3. El día preseleccionado en el diálogo de "Asignar día".
+
+**En el caso que de verdad ocurre no hay discrepancia.** El descanso solo se
+alcanza en sábado o domingo, y esos días la página de la clienta muestra "Hoy
+toca descansar" y anuncia *"El lunes te toca …"* con el día 1 — el mismo que la
+ficha le muestra al entrenador. Los dos apuntan a lo mismo.
+
+**Sí la habría** si alguien activara el reinicio en una rutina corta: con tres
+días, un jueves daría `Descanso` en la web y "día 1" en la ficha. Nadie tiene esa
+configuración hoy —el entrenador confirmó que las rutinas de 3 y 6 días no
+empiezan y terminan con la misma parte del cuerpo— pero el switch se muestra en
+todas, así que es alcanzable a mano.
+
+Se deja así porque arreglarlo obliga a que las tres pantallas manejen el tipo
+sellado, y eso es alcance que esta feature no pidió. Queda escrito para que sea
+una decisión revisable y no un hueco que alguien descubra desde un WhatsApp mal
+mandado.
 
 ## Modelo de datos
 
