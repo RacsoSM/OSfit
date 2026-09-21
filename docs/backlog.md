@@ -266,7 +266,28 @@ asi que el dia que toca pasa a ser la N-esima asistencia de la semana y el ciclo
 dar la vuelta. Si falto un dia, la semana termina en el dia 4 y el dia 5 no se hace. Solo
 aplica a las rutinas de 5 dias que se marquen; las de 3 y 6 siguen con el ciclo rodante.
 
-Falta el plan de implementacion.
+**Implementado (2026-09-21), commits `b5b4b12..c8ec676` más el switch del editor.** Las siete
+tareas del plan entraron: el campo `Rutina.reinicioSemanal`, la aritmética del ciclo en Kotlin
+y su gemela en `web/src/dia.ts`, la tarjeta de la web reconociendo el descanso, "Semana
+completa" en Tomar Asistencia, y por último el switch en el editor de rutinas
+(`RutinaEditorViewModel.cambiarReinicioSemanal`, cableado en `RutinaEditorScreen`) — sin él no
+había forma de activar el campo desde la app, así que hasta ahora la funcionalidad no era
+alcanzable. Toda la suite en verde: `./gradlew test` y `web`'s `npm test && npm run build`.
+
+**Lo que falta, y por qué sigue sin marcarse HECHA:**
+
+- **Nada de esto se ha visto correr en un dispositivo real.** Los cinco puntos de la
+  verificación manual que cierra el plan —activar el switch y verlo en Firestore, el caso
+  original de la falta a mitad de semana, "Semana completa" en Tomar Asistencia, la tarjeta de
+  la web un sábado, y que una rutina de 3 días siga dando la vuelta como antes— están todos sin
+  hacer.
+- **La web no está desplegada** con este cambio; sigue sirviendo el bundle de antes.
+- **El switch del editor no tiene cobertura automatizada.** `RutinaRepository` es una clase
+  concreta acoplada a `FirebaseFirestore`, no una interfaz, y `RutinaEditorViewModel` resuelve
+  sus dos dependencias desde `AppContainer` en los defaults del constructor — construirlo en un
+  test unitario toca Firebase sin inicializar. Hacerlo testeable es extraer una interfaz de
+  `RutinaRepository` y tocar todo lo que la usa, un refactor ajeno a esta feature que merece su
+  propia decisión, no un drive-by de esta tarea.
 
 ---
 

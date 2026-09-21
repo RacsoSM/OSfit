@@ -40,6 +40,15 @@ class RutinaEditorViewModel(
         _rutina.value = _rutina.value.copy(nombre = nombre)
     }
 
+    /**
+     * Tiene sentido solo en rutinas cuyo primer y último día trabajan la misma parte del
+     * cuerpo, y eso la app no puede saberlo: el switch se muestra siempre y decide el
+     * entrenador. Ver `docs/superpowers/specs/2026-09-21-reinicio-semanal-rutina-design.md`.
+     */
+    fun cambiarReinicioSemanal(valor: Boolean) {
+        _rutina.value = _rutina.value.copy(reinicioSemanal = valor)
+    }
+
     fun agregarDia() {
         val dias = _rutina.value.dias + DiaRutina(nombreDia = "Día ${_rutina.value.dias.size + 1}")
         _rutina.value = _rutina.value.copy(dias = dias)

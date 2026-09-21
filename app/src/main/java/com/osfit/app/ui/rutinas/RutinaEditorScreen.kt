@@ -3,9 +3,11 @@ package com.osfit.app.ui.rutinas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
@@ -17,11 +19,13 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -54,6 +58,29 @@ fun RutinaEditorScreen(rutinaId: String?, onGuardado: () -> Unit) {
                     label = { Text("Nombre de la rutina") },
                     modifier = Modifier.fillMaxWidth()
                 )
+            }
+            item {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            "Reiniciar el ciclo cada lunes",
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                        Text(
+                            "El último día solo se hace si viene la semana completa. " +
+                                "Úsalo cuando el primer día y el último trabajan lo mismo.",
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Switch(
+                        checked = rutina.reinicioSemanal,
+                        onCheckedChange = viewModel::cambiarReinicioSemanal
+                    )
+                }
             }
             itemsIndexed(rutina.dias) { indiceDia, dia ->
                 Card(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
