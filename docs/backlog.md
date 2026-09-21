@@ -199,6 +199,94 @@ terminar.
 
 ---
 
+## U2. Terminar el recorrido manual de la ruleta — ⏳ DESPLEGADA A MEDIAS (2026-09-21), BLOQUEADA HASTA MAÑANA
+
+**Detectado:** 2026-09-21, al intentar hacer el recorrido manual que pide la entrada 25.
+
+Corre prisa por dos cosas que caducan: **el canal de preview expira el 2026-09-28**, y el
+estado de la clienta de pruebas depende de una falta que hay que marcar **hoy** para poder
+probar mañana. Si se deja pasar, hay que volver a montar el andamio desde cero.
+
+### Lo que YA está en producción, y conviene saberlo antes de tocar nada
+
+Se desplegó en el orden que manda la entrada 25 §2, y **dos de las tres patas ya son
+producción de verdad**:
+
+- **Reglas de Firestore: desplegadas.** El bloque `match /ruletas/{doc}` nuevo, nada más; no
+  se tocó ninguna regla existente.
+- **Functions: desplegadas.** `jugarRuleta` creada, y `sesion`, `cambiarDia`, `revivirRacha` y
+  `avisarFalta` actualizadas. `revivirRacha` cambió de verdad —ahora resta el castigo—, pero
+  sin documento de ruleta del mes anterior el castigo es 0 y se comporta igual que antes. Como
+  nadie ha jugado nunca, hoy es un no-op para todas las clientas.
+- **Web: NO desplegada a producción.** El bundle salió a un canal de preview,
+  `https://osfit-cccfe--ruleta-2ey141ze.web.app`, que **expira el 2026-09-28**. Producción
+  sigue sirviendo `index--AJAJZu0.js`, verificado después de desplegar: 0 apariciones de
+  "ruleta" en el bundle vivo. Las clientas reales no ven nada nuevo.
+
+O sea que revertir no es simétrico: la web se cae sola cuando expire el canal, pero las reglas
+y las functions se quedan hasta que alguien las quite a mano.
+
+### Lo que quedó verificado el 2026-09-21
+
+- **La tarjeta con cupo disponible se ve idéntica a producción.** Diff del texto completo de la
+  página entre las dos URLs, con la misma clienta: sin una sola diferencia. Era uno de los tres
+  puntos que la entrada 25 marca como bloqueantes, y es el que protege a las clientas que nunca
+  van a llegar a la ruleta.
+- **Cero errores de consola** en el preview con las reglas nuevas ya arriba — o sea que los dos
+  `observarTirada` no están chocando con `permission-denied`, que era el riesgo del orden de
+  despliegue.
+- La sesión se canjea bien desde el origen del preview, que no era obvio: es otro dominio.
+- **El camino de revivir, punta a punta:** pide confirmación ("Cancelar" / "Sí, usar uno"),
+  la racha subió 🔥 0 → 🔥 1 → 🔥 2, y el cupo bajó con la gramática correcta ("Te quedan 2"
+  → "Te queda 1").
+
+**Nada de la ruleta en sí está verificado todavía**, porque no se ha logrado llegar a la
+pantalla. Los 12 puntos de la entrada 25 §1 siguen todos sin hacer.
+
+### Por qué no se pudo llegar a la ruleta hoy, que es el hallazgo
+
+La ruleta pide **dos** condiciones a la vez: cupo en 0 **y** una falta reparable. Y llegar a
+las dos el mismo día choca con el diseño de la ventana:
+
+- La ventana de reparación son los **2 días hábiles anteriores** (`faltaRompio.ts`), y el
+  recorrido empieza en *ayer*, nunca en hoy — hoy se justifica por el otro camino, el de "hoy
+  no voy a poder ir".
+- Para dejar el cupo en 0 hubo que justificar esos mismos dos días (el jueves 17 y el viernes
+  18), que eran los únicos reparables.
+- Desmarcar uno para abrir el hueco **devuelve el revive**, porque el cupo se cuenta y no se
+  guarda. Es justo lo que U1 verificó como correcto, pero acá se muerde la cola.
+
+O sea que hace falta una **cuarta** falta justificada por la clienta dentro del mes, en una
+fecha fuera de la ventana. **La app del entrenador no puede crearla:** cuando el entrenador
+justifica, `justificadaPorCliente` queda en `false` y no cuenta contra el cupo. Sólo cuenta lo
+que la clienta justifica desde su página, y desde su página sólo alcanza la ventana.
+
+Esto no es un fallo: es la consecuencia de dos reglas que por separado están bien. Pero
+significa que **el estado "sin cupo" sólo se alcanza dejando pasar los días**, y conviene que
+quien monte la próxima verificación lo sepa antes de perder una tarde.
+
+### Qué hay que hacer, en orden
+
+1. **Hoy (lunes 2026-09-21): marcarle una falta a la clienta de pruebas en el día de hoy**,
+   desde Tomar Asistencia en la app del entrenador. Sin justificar.
+2. **Mañana (martes 22):** el lunes 21 entra en la ventana sin justificar, el cupo sigue en 0,
+   y la ruleta debe aparecer sola al abrir
+   `https://osfit-cccfe--ruleta-2ey141ze.web.app/c/<token de la clienta test>`.
+3. Con eso ya se puede hacer el recorrido de la entrada 25 §1 entero, incluida la app del
+   entrenador en el teléfono, que ya está conectado.
+4. **Antes del 2026-09-28**, o el canal expira y hay que volver a desplegarlo.
+
+### Estado en que quedó la clienta de pruebas
+
+Septiembre 2026: asistió el 10 y el 15; justificadas por ella el 11, el 17 y el 18 (las dos
+últimas gastadas hoy desde la página, en esta verificación); falta sin justificar el 14. Cupo
+en **0 de 3**. Racha 🔥 2. Nada de esto es real: es andamio y se puede borrar cuando estorbe.
+
+**Ojo al borrarlo:** si se le quitan justificadas de septiembre, el cupo vuelve a subir y hay
+que rehacer el paso 1.
+
+---
+
 ## 1. Revocar el acceso web no corta la sesión ya abierta
 
 **Detectado:** 2026-09-11, verificando el Task 13 del plan de la web de clientes.
@@ -1267,7 +1355,8 @@ Cloud Function `jugarRuleta`, que escribe un documento por clienta y mes en `rul
 `docs/superpowers/plans/2026-09-18-ruleta-revivir-racha.md`.
 
 **Verificado, y sólo esto:** las tres suites en verde — web 154/154, functions 35/35,
-`./gradlew test` OK. **No verificado, y es todo lo demás:** no se ha desplegado, no se ha
+`./gradlew test` OK. *(Tras mezclar `main` el 2026-09-21 son 184/184 y 37/37; los de más son
+de main, no de la ruleta.)* **No verificado, y es todo lo demás:** no se ha desplegado, no se ha
 mezclado a `main`, y no se ha tocado con los ojos ni en el emulador ni en un teléfono real.
 
 ### 1. El recorrido manual, que nadie ha hecho
@@ -1322,7 +1411,7 @@ milisegundos y el entrenador puede justificar la falta a mano, por eso se dejó 
 despliegue; arreglarlo obliga a reestructurar `aplicarTirada`, que hoy está limpia y bien
 probada.
 
-### 4. Tres detalles de pulido que no afectan al número ni a la apuesta
+### 4. Cuatro detalles de pulido que no afectan al número ni a la apuesta
 
 - La tirada de prueba no tiene fase de giro libre: `girarLibre` y `frenar` se llaman en el
   mismo tick, así que entra directo al frenado mientras la real arranca con 800 ms de rotación
