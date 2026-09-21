@@ -1,5 +1,7 @@
 import { getDownloadURL, ref } from "firebase/storage";
 import {
+  alFallarDatos,
+  alVolverDatos,
   observarCliente,
   observarAsistencias,
   observarAvisoFalta,
@@ -18,7 +20,9 @@ import type {
 import { hoyEnMazatlan } from "./fecha";
 import { mesAnterior, type Tirada } from "./tirada";
 import { modalRuleta, conectarRuleta } from "./ui/ruleta";
-import { iniciarSesion, storage } from "./firebase";
+import { credencialLista, huellaDeLaSesion, iniciarSesion, storage } from "./firebase";
+import { almacenesDelNavegador, saludDeLosAlmacenes } from "./sesion";
+import type { MotivoSinAcceso, ResultadoSesion } from "./sesion";
 import { aplicarPaleta } from "./paleta";
 import { tarjetaDia } from "./ui/tarjetaDia";
 import { saludo, conectarSaludo, actualizarNombre } from "./ui/saludo";
@@ -32,32 +36,99 @@ import type { VideoConUrl } from "./ui/tarjetaVideos";
 
 const app = document.querySelector<HTMLElement>("#app")!;
 
-function mostrarEnlaceInvalido(): void {
+/**
+ * De qué bundle salió esta pantalla.
+ *
+ * Va junto al motivo porque sin esto no se puede saber si un reporte viene del código de
+ * hoy o de uno que el navegador tenía guardado: hosting servía el `index.html` con una hora
+ * de caché, así que un teléfono podía seguir corriendo el bundle viejo mucho después del
+ * deploy y el candado se veía idéntico. El nombre del archivo lleva el hash del build.
+ */
+function versionDelBundle(): string {
+  const src = document.querySelector<HTMLScriptElement>('script[src*="/assets/"]')?.src ?? "";
+  return src.split("/").pop()?.replace(/^index-|\.js$/g, "") ?? "?";
+}
+
+/**
+ * El candado, con una línea que dice cuál de los tres escalones falló.
+ *
+ * La clienta no necesita el código, pero el entrenador sí cuando ella le manda la captura:
+ * `sin-rastro` en una recarga significa que se perdieron sesión y token a la vez —el
+ * callejón que ya arreglamos, y que no debería reaparecer—, mientras que
+ * `recordado-rechazado` o `link-rechazado` son un acceso de verdad revocado. Antes los tres
+ * se veían igual y la única forma de distinguirlos era adivinando.
+ */
+function mostrarEnlaceInvalido(motivo?: MotivoSinAcceso): void {
+  // `sin-rastro` no es un link muerto: es haber llegado sin él. Pasa al abrir el navegador
+  // de cero y entrar al sitio sin tocar el link —ahí no hay nada que diga quién es ella— y
+  // mandarla a pedir uno nuevo sería mentirle, porque el suyo sigue vivo. Lo único que
+  // necesita es volver a abrirlo.
+  const perdida = motivo === "sin-rastro";
   app.innerHTML = `
     <div class="tarjeta vacio">
-      <div class="vacio-emoji">🔒</div>
-      <p>Este enlace ya no es válido.</p>
+      <div class="vacio-emoji">${perdida ? "🔗" : "🔒"}</div>
+      <p>${perdida ? "Abre tu link otra vez." : "Este enlace ya no es válido."}</p>
       <p style="color: var(--texto-tenue); font-size: 14px">
-        Pídele a tu entrenador que te comparta uno nuevo.
+        ${
+          perdida
+            ? "Búscalo en tu chat de WhatsApp con tu entrenador: el mismo de siempre sirve."
+            : "Pídele a tu entrenador que te comparta uno nuevo."
+        }
+      </p>
+      <p style="color: var(--texto-tenue); font-size: 11px; opacity: 0.7">
+        ${motivo ?? "desconocido"} · ${versionDelBundle()} · ${saludDeLosAlmacenes(almacenesDelNavegador())} · h${history.state ? "+" : "-"}f${location.hash ? "+" : "-"}
       </p>
     </div>`;
 }
 
+/**
+ * La red, que no es lo mismo que un link muerto.
+ *
+ * Antes las dos cosas caían en la pantalla del candado, y el precio lo pagaba la clienta:
+ * un bache de señal la mandaba a pedirle al entrenador un link nuevo que no necesitaba,
+ * cuando lo único que hacía falta era volver a intentar. De ahí el botón: el reintento
+ * está acá y no en su chat de WhatsApp.
+ */
+function mostrarSinConexion(): void {
+  app.innerHTML = `
+    <div class="tarjeta vacio">
+      <div class="vacio-emoji">📡</div>
+      <p>No pudimos conectarte.</p>
+      <p style="color: var(--texto-tenue); font-size: 14px">
+        Revisa tu conexión e inténtalo de nuevo. Tu enlace sigue sirviendo.
+      </p>
+      <button class="boton" id="reintentar">Reintentar</button>
+    </div>`;
+  const boton = document.querySelector<HTMLButtonElement>("#reintentar");
+  boton?.addEventListener("click", () => {
+    // Se deshabilita en vez de repintar la pantalla entera: así el toque se siente
+    // atendido sin que la página parpadee, y no se pueden encimar dos arranques.
+    boton.disabled = true;
+    boton.textContent = "Conectando…";
+    arrancar();
+  });
+}
+
 async function arrancar(): Promise<void> {
-  let clienteId: string | null;
+  let sesion: ResultadoSesion;
   try {
-    clienteId = await iniciarSesion();
+    sesion = await iniciarSesion();
   } catch {
-    // Un error de red al canjear el token y un token inválido se ven igual para el
-    // cliente: en ambos casos no pudimos meterlo a su sesión, así que reciben el
-    // mismo mensaje en vez de quedarse viendo la pantalla de carga para siempre.
-    mostrarEnlaceInvalido();
+    // `iniciarSesion` devuelve sus fallas como estado, así que llegar acá es una falla que
+    // no previmos. Se trata como red: deja reintentar, que es lo peor que puede pasar, en
+    // vez de mandarla a pedir un link que a lo mejor no tiene nada malo.
+    mostrarSinConexion();
     return;
   }
-  if (!clienteId) {
-    mostrarEnlaceInvalido();
+  if (sesion.estado === "sin-acceso") {
+    mostrarEnlaceInvalido(sesion.motivo);
     return;
   }
+  if (sesion.estado === "sin-conexion") {
+    mostrarSinConexion();
+    return;
+  }
+  const clienteId = sesion.clienteId;
   const hoy = hoyEnMazatlan();
 
   let cliente: Cliente | null = null;
@@ -168,10 +239,35 @@ async function arrancar(): Promise<void> {
 
   function pintar(): void {
     if (!cliente) {
-      app.innerHTML = `<div class="tarjeta vacio"><p>No encontramos tus datos.</p></div>`;
-      // Se tira la estructura entera, así que las firmas de videos y ruleta dejan de describir nada.
+      // Se tira la estructura entera, así que las firmas de videos y ruleta dejan de
+      // describir nada.
       firmaPintada = null;
       firmaRuletaPintada = null;
+      // Callarse mientras el cliente no llegó. Los ocho listeners repintan al llegar, y el de
+      // las medallas o el de las asistencias puede ganarle al del cliente —otorgarle algo
+      // desde la app es la forma más fácil de provocarlo—: pintar ahí "No encontramos tus
+      // datos" es decirle que no existe cuando lo único que pasa es que su documento todavía
+      // viene en camino. El esqueleto de carga del HTML aguanta hasta que llegue.
+      if (!clienteLlego && !falloDatos) return;
+      app.innerHTML = falloDatos
+        ? `<div class="tarjeta vacio">
+             <div class="vacio-emoji">📡</div>
+             <p>No pudimos traer tus datos.</p>
+             <p style="color: var(--texto-tenue); font-size: 14px">
+               Revisa tu conexión y vuelve a entrar desde tu link.
+             </p>
+             <p style="color: var(--texto-tenue); font-size: 11px; opacity: 0.7">
+               ${falloDatos}${falloSecundario ? ` · ${falloSecundario}` : ""}${huella ? `<br>${huella}` : ""}
+             </p>
+           </div>`
+        : `<div class="tarjeta vacio">
+             <p>No encontramos tus datos.</p>
+             ${
+               falloSecundario
+                 ? `<p style="color: var(--texto-tenue); font-size: 11px; opacity: 0.7">${falloSecundario}</p>`
+                 : ""
+             }
+           </div>`;
       return;
     }
     prepararEstructura(cliente.nombre);
@@ -210,8 +306,54 @@ async function arrancar(): Promise<void> {
     });
   }
 
+  /**
+   * Si el listener del cliente ya contestó alguna vez, exista o no su documento. Es lo que
+   * separa "Firestore dijo que no está" de "todavía no llegó", que hasta hoy se veían igual
+   * en pantalla y son cosas distintas.
+   */
+  let clienteLlego = false;
+  /** Lo último que falló del cliente, como `cliente:permission-denied`; `null` si todo va. */
+  let falloDatos: string | null = null;
+  /** Lo que falló de los listeners de al lado. No tapa la página; se muestra si no hay otra. */
+  let falloSecundario: string | null = null;
+  /** Qué traía la sesión cuando denegaron. Se pide una sola vez, y solo si deniegan. */
+  let huella: string | null = null;
+
+  // La credencial antes que los listeners: pedir datos en el hueco entre entrar y que el
+  // cliente de Firestore se entere vuelve como `permission-denied`.
+  await credencialLista();
+
+  alVolverDatos((origen) => {
+    // Volvió: se borra su error. Sin esto, un tropiezo al arrancar dejaría la pantalla de la
+    // antena puesta aunque los datos ya estuvieran llegando.
+    if (origen === "cliente") falloDatos = null;
+    else if (falloSecundario?.startsWith(`${origen}:`)) falloSecundario = null;
+  });
+
+  alFallarDatos((origen, error) => {
+    const marca = `${origen}:${error.code}`;
+    // Solo el cliente se lleva la pantalla. Que muera un listener de al lado —un aviso que
+    // todavía no existe, unos videos que no cargan— no es razón para taparle la página
+    // entera: se anota, se ve si de todos modos no hay nada que pintar, y ya.
+    if (origen !== "cliente") {
+      falloSecundario = marca;
+      return;
+    }
+    falloDatos = marca;
+    pintar();
+    // La huella llega tarde a propósito: leer el token es asíncrono y la pantalla no puede
+    // esperarla. Cuando llega, se repinta con ella.
+    if (error.code === "permission-denied" && !huella) {
+      huellaDeLaSesion().then((h) => {
+        huella = h;
+        pintar();
+      });
+    }
+  });
+
   observarCliente(clienteId, (c) => {
     cliente = c;
+    clienteLlego = true;
     // Antes de pintar: así el primer repintado ya sale con los colores buenos y la página no
     // parpadea de morado al color de la clienta.
     aplicarPaleta(c?.paletaWeb, document.documentElement);

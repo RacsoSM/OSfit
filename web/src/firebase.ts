@@ -1,13 +1,15 @@
 import { initializeApp } from "firebase/app";
-import {
-  browserLocalPersistence,
-  getAuth,
-  setPersistence,
-  signInWithCustomToken,
-} from "firebase/auth";
+import { getAuth, signInWithCustomToken } from "firebase/auth";
 import { initializeFirestore, persistentLocalCache } from "firebase/firestore";
 import { getFunctions } from "firebase/functions";
 import { getStorage } from "firebase/storage";
+import {
+  almacenesDelNavegador,
+  lecturaDelStatus,
+  memoriaToken,
+  resolverSesion,
+} from "./sesion";
+import type { ResultadoSesion } from "./sesion";
 
 const firebaseConfig = {
   apiKey: "AIzaSyD-VnmxHFK1ptLWFKgAd80caa7EkiD0PZA",
@@ -51,30 +53,182 @@ export const storage = getStorage(app);
  */
 export const functions = getFunctions(app, "us-west1");
 
+/**
+ * Sin `setPersistence`: `getAuth` ya deja la sesión guardada, y forzarla la empeoraba.
+ *
+ * El default de `getAuth` es la jerarquía `[IndexedDB, localStorage, sessionStorage]` —las
+ * tres sobreviven a cerrar el navegador— y se queda con la primera que el navegador ofrezca.
+ * O sea que el `setPersistence(auth, browserLocalPersistence)` que había acá no compraba la
+ * persistencia: ya la teníamos. Lo único que hacía era *angostar* la jerarquía a
+ * `localStorage`.
+ *
+ * Y eso cobraba caro. `setPersistence` migra: lee al usuario del almacén actual, **lo borra
+ * de ahí** y recién entonces lo escribe en el nuevo. Como el SDK arranca cada carga eligiendo
+ * IndexedDB y devolviéndolo a su lugar, cada visita hacía el viaje de ida y vuelta completo:
+ * IndexedDB → borrar → localStorage, y a la siguiente al revés. Un borrado y una escritura
+ * cruzando dos almacenes, en cada carga, sobre la única copia de la sesión. Si en Safari
+ * falla la mitad de atrás de ese viaje —IndexedDB en WKWebView es de fallar sola— la sesión
+ * se queda borrada de un lado sin haber llegado al otro, y la clienta despierta en `/mi` sin
+ * sesión.
+ *
+ * Quitándolo, la sesión se queda quieta donde el SDK la puso.
+ */
 const auth = getAuth(app);
 
 /**
- * Devuelve el clienteId de la sesión, canjeando el token del link si la URL lo trae.
+ * Mete a la clienta a su sesión y devuelve en qué quedó el intento.
  *
- * Después de canjear reemplaza la URL por `/mi`: el token deja de estar a la vista apenas
- * se usa, así no queda en una captura de pantalla ni se comparte sin querer al pasar la
- * dirección. La sesión persiste, así que las próximas visitas entran sin el link.
+ * El orden en que se intenta y qué se olvida cuándo vive en `resolverSesion`, con sus
+ * tests; acá solo se le enchufa el navegador y el SDK.
+ *
+ * `authStateReady` y no `currentUser` a secas: el SDK restaura la sesión guardada de forma
+ * asíncrona, así que preguntar antes es leer `null` sin que eso signifique que no hay
+ * sesión.
  */
-export async function iniciarSesion(): Promise<string | null> {
-  await setPersistence(auth, browserLocalPersistence);
+export function iniciarSesion(): Promise<ResultadoSesion> {
+  return resolverSesion({
+    rutaActual: () => location.pathname,
+    canjear,
+    /**
+     * La sesión guardada, pero solo si de verdad sirve.
+     *
+     * Devolver el uid a secas fue un agujero: una sesión guardada puede estar muerta —su
+     * refresh token vencido o revocado— y el SDK no lo sabe hasta que alguien le pide un
+     * token, momento en el que la cierra por su cuenta. La escalera la daba por buena, no
+     * canjeaba nada, y los listeners salían a leer sin usuario: todo denegado, con el token
+     * del link intacto en la dirección a un paso de distancia.
+     *
+     * Se veía solo en Safari, y con razón: en el navegador de WhatsApp no sobrevive nada, así
+     * que ahí nunca hay sesión vieja que recoger y siempre se canjea de cero.
+     *
+     * Pedir el token acá cuesta un viaje que casi siempre está cacheado, y a cambio un
+     * cadáver cae al escalón siguiente en vez de hundir la página. Se exige además el claim:
+     * sin él, la sesión no puede leer nada aunque el token sea válido.
+     */
+    sesionGuardada: async () => {
+      await auth.authStateReady();
+      const usuario = auth.currentUser;
+      if (!usuario) return null;
+      try {
+        const token = await usuario.getIdTokenResult();
+        return typeof token.claims.clienteId === "string" ? usuario.uid : null;
+      } catch {
+        return null;
+      }
+    },
+    /*
+     * Ya no se esconde el token: la dirección se queda en `/c/<token>`.
+     *
+     * Esto sigue leyendo el `#` porque las clientas que entraron mientras el token se
+     * escondía ahí pueden tener esa dirección guardada —en una pestaña, en la pantalla de
+     * inicio— y esa también tiene que abrirles.
+     */
+    tokenEscondido: () => location.hash.replace(/^#/, "") || null,
+    olvidarEscondido: () => history.replaceState(null, "", "/mi"),
+    memoria: memoriaToken(almacenesDelNavegador()),
+  });
+}
 
-  const enLaUrl = location.pathname.match(/^\/c\/([A-Za-z0-9]+)$/);
-  if (enLaUrl) {
-    const respuesta = await fetch(URL_SESION, {
+/**
+ * Espera a que la credencial exista antes de que nadie le pida datos a Firestore.
+ *
+ * `iniciarSesion` promete que la clienta entró, no que el cliente de Firestore ya se enteró:
+ * la credencial le llega por el evento de cambio de token, que es asíncrono. Pedir datos en
+ * ese hueco sale sin credencial y vuelve como `permission-denied` —visto en un iPhone,
+ * denegando hasta el documento del cliente, que tiene la regla más simple de todas—.
+ * `getIdToken` cierra el hueco: cuando resuelve, el token existe y ya se anunció.
+ */
+export async function credencialLista(): Promise<void> {
+  await auth.authStateReady();
+  await auth.currentUser?.getIdToken();
+}
+
+/**
+ * Consigue una credencial nueva cuando la que hay ya no sirve.
+ *
+ * Dos escalones, del más barato al más caro. Primero forzar la renovación del token, que es
+ * lo que arregla el caso normal: los tokens duran una hora, y una página que la clienta dejó
+ * abierta —o un navegador que no pudo renovar solo— se queda con uno vencido. Si eso falla,
+ * volver a canjear desde cero: el token del link sigue en la dirección, así que se puede
+ * armar una sesión nueva sin que ella toque nada.
+ *
+ * Reintentar la lectura sin esto no sirve de nada: la misma credencial vencida da denegado
+ * las veces que haga falta.
+ */
+export async function renovarCredencial(): Promise<boolean> {
+  try {
+    if (auth.currentUser) {
+      await auth.currentUser.getIdToken(true);
+      return true;
+    }
+  } catch {
+    /* Renovar falló: queda el canje de abajo, que no depende del token viejo. */
+  }
+  const resultado = await iniciarSesion();
+  return resultado.estado === "lista";
+}
+
+/**
+ * Qué trae la sesión en el momento en que Firestore dijo que no.
+ *
+ * Todas las reglas —Firestore y Storage— cuelgan de lo mismo: el claim `clienteId` del token
+ * tiene que ser igual al id del documento. Denegado el documento del cliente, las tres
+ * posibilidades son que no haya usuario, que el token no traiga el claim, o que el claim no
+ * coincida con el uid, y se arreglan en lugares distintos: la primera acá, la segunda en la
+ * función `sesion`, la tercera en las reglas.
+ *
+ * Los ids salen recortados a cuatro caracteres: alcanzan para comparar y no llenan la
+ * pantalla de la clienta con identificadores.
+ */
+export async function huellaDeLaSesion(): Promise<string> {
+  const usuario = auth.currentUser;
+  if (!usuario) return "sin-usuario";
+  try {
+    const token = await usuario.getIdTokenResult();
+    const claim = typeof token.claims.clienteId === "string" ? token.claims.clienteId : null;
+    const minutos = Math.round((Date.parse(token.expirationTime) - Date.now()) / 60000);
+    return `u:${usuario.uid.slice(0, 4)} c:${claim ? claim.slice(0, 4) : "sin-claim"} ${
+      claim === usuario.uid ? "=" : "!="
+    } exp:${minutos}m`;
+  } catch (error) {
+    return `huella:${(error as { code?: string }).code ?? "error"}`;
+  }
+}
+
+/** Canjea un token por una sesión de Firebase. No tira: cada falla vuelve como un estado. */
+async function canjear(token: string): Promise<ResultadoSesion> {
+  let respuesta: Response;
+  try {
+    respuesta = await fetch(URL_SESION, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ token: enLaUrl[1] }),
+      body: JSON.stringify({ token }),
     });
-    if (!respuesta.ok) return null;
-    const { customToken } = await respuesta.json();
-    await signInWithCustomToken(auth, customToken);
-    history.replaceState(null, "", "/mi");
+  } catch {
+    // `fetch` solo rechaza cuando la petición no llegó a ningún lado: sin señal, DNS caído,
+    // la función sin desplegar. Nada de eso dice nada sobre el token.
+    return { estado: "sin-conexion" };
   }
 
-  return auth.currentUser?.uid ?? null;
+  const lectura = lecturaDelStatus(respuesta.status);
+  if (lectura !== "canjeado") return { estado: lectura };
+
+  try {
+    const { customToken } = await respuesta.json();
+    const credencial = await signInWithCustomToken(auth, customToken);
+    return { estado: "lista", clienteId: credencial.user.uid };
+  } catch (error) {
+    // El custom token ya salió bueno, así que lo único que puede fallar acá es el viaje a
+    // Identity Toolkit. Si fue la red, se puede reintentar; si el token expiró en el camino
+    // (duran una hora), un canje nuevo lo arregla y ese también pasa por acá.
+    return { estado: esFalloDeRed(error) ? "sin-conexion" : "sin-acceso" };
+  }
+}
+
+function esFalloDeRed(error: unknown): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    (error as { code?: string }).code === "auth/network-request-failed"
+  );
 }

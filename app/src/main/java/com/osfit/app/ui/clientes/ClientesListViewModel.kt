@@ -6,6 +6,7 @@ import com.osfit.app.data.AppContainer
 import com.osfit.app.data.model.Cliente
 import com.osfit.app.data.repository.AsistenciaRepository
 import com.osfit.app.data.repository.AvisoFaltaWebRepository
+import com.osfit.app.data.repository.CambioDiaWebRepository
 import com.osfit.app.data.repository.ClienteRepository
 import com.osfit.app.domain.RutinaProgressCalculator
 import java.time.LocalDate
@@ -23,7 +24,8 @@ import kotlinx.coroutines.launch
 class ClientesListViewModel(
     private val clienteRepository: ClienteRepository = AppContainer.clienteRepository,
     private val asistenciaRepository: AsistenciaRepository = AppContainer.asistenciaRepository,
-    private val avisoFaltaWebRepository: AvisoFaltaWebRepository = AppContainer.avisoFaltaWebRepository
+    private val avisoFaltaWebRepository: AvisoFaltaWebRepository = AppContainer.avisoFaltaWebRepository,
+    private val cambioDiaWebRepository: CambioDiaWebRepository = AppContainer.cambioDiaWebRepository
 ) : ViewModel() {
 
     val clientes: StateFlow<List<Cliente>> = clienteRepository.observarClientes()
@@ -63,6 +65,23 @@ class ClientesListViewModel(
     val avisaronQueNoVienen: StateFlow<Set<String>> = fechaVisible
         .flatMapLatest { fecha -> avisoFaltaWebRepository.observarPorFecha(fecha) }
         .map { avisos -> avisos.map { it.clienteId }.toSet() }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptySet())
+
+    /**
+     * clienteIds que cambiaron su día **hoy** desde su página.
+     *
+     * Gemelo exacto de [avisaronQueNoVienen], y a propósito: el entrenador pidió ver en
+     * Clientes lo mismo que Tomar Asistencia ya le muestra, así que comparten fuente
+     * (`cambiosDia`), ventana (solo el día del cambio) y forma de consultarse. Si un día se
+     * cambia una, hay que mirar la otra.
+     *
+     * Se queda con los ids y tira el motivo: acá el indicador es solo el icono. El motivo se
+     * lee en Tomar Asistencia, que es donde el entrenador está cuando le importa el porqué.
+     */
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val cambiaronSuDia: StateFlow<Set<String>> = fechaVisible
+        .flatMapLatest { fecha -> cambioDiaWebRepository.observarPorFecha(fecha) }
+        .map { cambios -> cambios.map { it.clienteId }.toSet() }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptySet())
 
     private val _errorValidacion = MutableStateFlow<String?>(null)

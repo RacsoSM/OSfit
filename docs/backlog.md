@@ -1164,7 +1164,7 @@ es la misma de arriba.
 
 ---
 
-## 23. `avisosFalta` deniega la lectura mientras el documento no existe
+## 23. `avisosFalta` deniega la lectura mientras el documento no existe — ✅ HECHO (2026-09-16)
 
 **Detectado:** 2026-09-15, verificando U1 en la página de una clienta de pruebas.
 
@@ -1221,9 +1221,40 @@ existencia de los avisos de cualquier otra clienta probando ids.
 **Por qué no corre prisa:** nadie ve nada roto. Pero es un cambio de tres líneas en las reglas
 y requiere `firebase deploy --only firestore:rules`, que hasta hoy esta feature no ha tocado.
 
+**Hecho el 2026-09-16**, con la regla tal como estaba escrita arriba, desplegada con
+`firebase deploy --only firestore:rules`. Dejó de "no correr prisa" de golpe: ese mismo día se
+hicieron visibles los fallos de los listeners en la página, y el `permission-denied` que hasta
+entonces era ruido en consola pasó a llevarse la pantalla entera de la clienta, con un código
+que ella no podía resolver. Commit `cd61093`.
+
 ---
 
-## 24. Lo que quedó pendiente de la ruleta
+---
+
+## 24. Un icono en Clientes para ver quién cambió su rutina
+
+**Pedido:** 2026-09-16, por el entrenador. En sus palabras:
+
+> agregar un icono en la pantalla de Clientes que me permita identificar cuando un cliente
+> cambio su rutina
+
+**Precisado el mismo día**, preguntando qué contaba como "cambió su rutina":
+
+> me refiero a que cambie su rutina desde la web, exactamente como lo que hace 🔄 Cambió su
+> día: <motivo>" de Tomar Asistencia. pero desde la pantalla de Clientes
+
+O sea `cambiosDia` —lo que la clienta hace desde su página—, y no el entrenador despegándola
+de su plantilla. El indicador ya existe y se dibuja en Tomar Asistencia; lo que falta es el
+mismo hecho visible en Clientes.
+
+**Lo que queda por decidir:** cuánto dura. El de Tomar Asistencia solo se dibuja el día del
+cambio, igual que el amarillo del aviso de falta, y esa ventana es la que hace que hoy solo se
+vea si el entrenador entra a esa pantalla ese día. Si en Clientes se quiere lo mismo, la regla
+ya está escrita y solo hay que reusarla.
+
+---
+
+## 25. Lo que quedó pendiente de la ruleta
 
 **Detectado:** 2026-09-18, al terminar la rama `feature/ruleta-revivir-racha`.
 

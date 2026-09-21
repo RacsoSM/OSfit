@@ -43,7 +43,14 @@ class AccesoWebRepository(
         awaitClose { registro.remove() }
     }
 
-    /** Crea el acceso si no existe y devuelve el token vigente. Idempotente. */
+    /**
+     * Crea el acceso si no existe y devuelve el token vigente. Idempotente.
+     *
+     * OJO con el `set` de abajo: escribe el documento entero, así que sobre uno existente
+     * borraría el contador de entradas que lleva la función `sesion`. No pasa porque sale
+     * antes si ya hay acceso —solo escribe al crear uno nuevo—, y esa salida temprana es
+     * justamente lo que hay que conservar.
+     */
     suspend fun crearAcceso(clienteId: String): String {
         val existente = coleccion.whereEqualTo("clienteId", clienteId).limit(1).get().await()
         existente.documents.firstOrNull()?.let { return it.id }
