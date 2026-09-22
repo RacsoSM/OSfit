@@ -8,6 +8,7 @@ import {
   arcoDelSector,
   frenar,
   girarLibre,
+  puntoDelAnillo,
   varillaEn,
 } from "./ruletaGiro";
 import type { Color } from "./ruletaGiro";
@@ -121,7 +122,7 @@ const TACHUELAS = 16;
  *
  * `aria-hidden` porque es decoración: quien no lo ve se entera por el acuse, que es texto.
  */
-function rueda(): string {
+function rueda(parada: boolean): string {
   const casillas = SECTORES.map(
     (s) => `<path class="ruleta-sector ${s.color}" d="${arcoDelSector(s)}"></path>`
   ).join("");
@@ -138,9 +139,20 @@ function rueda(): string {
     return `<circle class="ruleta-tachuela" cx="${x}" cy="${y}" r="2.1"></circle>`;
   }).join("");
 
+  /**
+   * La bola sólo se dibuja con la rueda quieta, y SIEMPRE a las 12. No hace falta calcular
+   * dónde: el frenado deja la casilla ganadora bajo el puntero, así que las 12 ES la casilla
+   * ganadora. Es lo que quita toda duda sobre dónde cayó, y lo hace siendo más realista y no
+   * menos — en una ruleta lo que dice el resultado es la bola, no una flecha.
+   */
+  const bola = parada
+    ? `<circle class="ruleta-bola" cx="${puntoDelAnillo(0).split(",")[0]}"
+               cy="${puntoDelAnillo(0).split(",")[1]}" r="6.4"></circle>`
+    : "";
+
   return `
     <div class="ruleta-mesa">
-    <svg class="ruleta-svg" viewBox="0 0 200 200" aria-hidden="true" focusable="false">
+    <svg class="ruleta-svg" viewBox="-26 -26 252 252" aria-hidden="true" focusable="false">
       <defs>
         <linearGradient id="ruleta-metal" x1="0.12" y1="0" x2="0.88" y2="1">
           <stop offset="0%" stop-color="#f8efcb"></stop>
@@ -185,10 +197,23 @@ function rueda(): string {
         <filter id="ruleta-suavizar" x="-40%" y="-40%" width="180%" height="180%">
           <feGaussianBlur stdDeviation="3.2"></feGaussianBlur>
         </filter>
+        <!-- La madera del cubilete. Es el objeto que faltaba: una ruleta de verdad va
+             encastrada en un cuenco pulido, y sin él la rueda flotaba sobre un rectángulo de
+             color por muy bien iluminada que estuviera. -->
+        <linearGradient id="ruleta-madera" x1="0.1" y1="0" x2="0.9" y2="1">
+          <stop offset="0%" stop-color="#7d4a28"></stop>
+          <stop offset="26%" stop-color="#4e2b16"></stop>
+          <stop offset="52%" stop-color="#2f180c"></stop>
+          <stop offset="74%" stop-color="#5d3419"></stop>
+          <stop offset="100%" stop-color="#25120a"></stop>
+        </linearGradient>
         <clipPath id="ruleta-recorte"><circle cx="100" cy="100" r="92"></circle></clipPath>
       </defs>
 
       <g filter="url(#ruleta-sombra)">
+        <circle class="ruleta-madera" cx="100" cy="100" r="122"></circle>
+        <circle class="ruleta-madera-luz" cx="100" cy="100" r="118"></circle>
+        <circle class="ruleta-madera-hueco" cx="100" cy="100" r="99.5"></circle>
         <circle class="ruleta-aro" cx="100" cy="100" r="97"></circle>
         <circle class="ruleta-ranura" cx="100" cy="100" r="92.6"></circle>
       </g>
@@ -209,6 +234,7 @@ function rueda(): string {
       </g>
       <path class="ruleta-rebote" d="${arcoDelBorde(118, 242)}"
             clip-path="url(#ruleta-recorte)"></path>
+      ${bola}
       <circle class="ruleta-eje-sombra" cx="100" cy="101.5" r="14"></circle>
       <circle class="ruleta-eje" cx="100" cy="100" r="13"></circle>
       <ellipse class="ruleta-eje-brillo" cx="96" cy="95.5" rx="5.2" ry="3.4"
@@ -255,14 +281,19 @@ export function modalRuleta(): string {
   // El error entra acá porque desde ahí se vuelve a apostar: es el único estado en el que la
   // clienta puede tocar "Jugar", y hacerlo sin las condiciones delante sería pedirle que
   // reapueste a ciegas.
+  // Mientras gira se OCULTA pero se queda ocupando su sitio (`invisible`, que es
+  // `visibility: hidden`). Quitarla del todo encoge el modal cuatro líneas justo en el
+  // instante en que la clienta está mirando la rueda, y el salto se ve como un fallo.
   const propuesta =
-    estado.fase.tipo === "propuesta" || estado.fase.tipo === "error"
-      ? `<p class="confirmar-titulo">Te propongo un juego.</p>
+    estado.fase.tipo === "propuesta" || estado.fase.tipo === "error" || enJuego
+      ? `<div class="${enJuego ? "invisible" : ""}">
+         <p class="confirmar-titulo">Te propongo un juego.</p>
          <p class="accion-nota">
            Si adivinas en qué color caerá la ruleta, te revivo tu racha. Si no le atinas, el
            próximo mes tendrás solo 2 oportunidades para revivir en vez de 3.
          </p>
-         <p class="ruleta-pregunta">¿Quieres jugar?</p>`
+         <p class="ruleta-pregunta">¿Quieres jugar?</p>
+         </div>`
       : "";
 
   return `
@@ -273,7 +304,7 @@ export function modalRuleta(): string {
         <div class="ruleta-fichas">${eleccion}</div>
         <div class="ruleta-marco">
           <div class="ruleta-puntero"></div>
-          ${rueda()}
+          ${rueda(!enJuego)}
         </div>
         ${acuse(estado.fase)}
         ${botones}

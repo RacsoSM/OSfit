@@ -1693,6 +1693,58 @@ muestras entre −66° y 154°.
 - Producción intacta tras cada despliegue: 0 apariciones de "ruleta" en el bundle vivo.
 - Suites: web 197/197, functions 37/37.
 
+### Tercera pasada: la sala, el cubilete, doce casillas y la bola
+
+La ambientación seguía sin leerse, y el motivo era que **el modal verde estaba sobre la página
+de la clienta, que es de su paleta**: con una clienta en turquesa salía verde sobre verde y no
+había ninguna sala oscura contra la que la mesa destacara. El fondo del modal dejaba pasar la
+página a 0.8 de opacidad. Ahora va casi opaco, desaturado y oscurecido — la sala apagada es lo
+que hace que la mesa parezca una mesa.
+
+**El cubilete de madera** es el objeto que faltaba. Una ruleta va encastrada en un cuenco
+pulido; sin él la rueda flotaba sobre un rectángulo de color por muy bien iluminada que
+estuviera. El `viewBox` se abrió a `-26 -26 252 252`, **alrededor del mismo centro (100,100)**,
+así que `punto`, `arcoDelSector` y `rotacionDestino` siguen valiendo sin tocarse.
+
+**De 36 casillas a 12.** Las 36 eran lo realista y se vieron: con 10° por casilla, comprimidos
+además por la perspectiva, había que entornar los ojos para saber de qué color era la franja
+bajo el puntero — que es la única pregunta que la clienta se hace. Con 30° se lee de un vistazo.
+**Acá el realismo y la legibilidad tiran en contra y gana la legibilidad.**
+
+**Y la bola**, que es lo que de verdad resuelve la duda, y encima siendo más realista: en una
+ruleta el resultado lo dice la bola, no una flecha. Sale gratis porque el frenado siempre deja
+la casilla ganadora bajo el puntero, así que la bola va **fija a las 12** sin calcular nada. Se
+dibuja sólo con la rueda quieta.
+
+### Tres fallos de esta pasada
+
+**El puntero desaparecía detrás de la madera, y tardé en verlo porque miré el CSS que creía
+haber escrito y no el que mandaba.** Había dos reglas para `.ruleta-puntero`: la que añadí con
+`z-index: 2` y el bloque original, más abajo, con `z-index: 1`. Misma especificidad, gana el
+último. Perdí también un rato culpando a `transform-style: preserve-3d` — que sí sobraba y se
+quitó, pero no era eso.
+
+**El navegador servía CSS cacheado** y estuve diagnosticando contra una versión vieja: el
+`z-index` computado seguía diciendo 1 después de dos despliegues. Con `Network.setCacheDisabled`
+por CDP se ve el de verdad. Si algo desplegado "no cambia", eso primero.
+
+**El modal encogía cuatro líneas al empezar el giro**, porque la propuesta se quita en cuanto se
+juega —decisión correcta, está comentada: no mezclar el premio con un castigo que ya no
+aplica—, pero quitarla del DOM daba un salto justo cuando la clienta mira la rueda. Ahora se
+queda ocupando sitio con `visibility: hidden`. Medido: de un salto visible a **0.0 px**. Al
+aparecer el acuse el modal sí encoge (471 → 370), y se deja así a propósito: eso ya es después
+del giro, leyendo el resultado, y reservar ahí dejaría un hueco vacío enorme.
+
+### Verificado en esta pasada
+
+- Gira sobre su eje: **0.00 px** por `getScreenCTM`.
+- `reduced-motion` durante el frenado: 4s en normal, **0s** bajo `reduce`.
+- Contraste sobre el tapete: **7.92:1** para la ✕ y el texto tenue.
+- 320×568 con la raíz a 24 px: sin scroll horizontal, ✕ dentro, y el cubilete mide 211 px en un
+  modal de 288.
+- Producción intacta: 0 apariciones de "ruleta" en el bundle vivo.
+- **La tirada real sigue sin gastarse.** Todo lo anterior salió de tiradas de prueba.
+
 **Lo que no se hizo:** mirarlo en un teléfono de verdad. Todo es Chromium.
 
 ---

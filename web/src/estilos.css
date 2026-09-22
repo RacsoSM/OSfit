@@ -251,8 +251,12 @@ main { max-width: 480px; margin: 0 auto; padding: 16px 14px 48px; }
   overflow-y: auto;
   justify-content: center;
   padding: 16px;
-  background: rgba(18, 18, 18, 0.8);
-  backdrop-filter: blur(4px);
+  background: radial-gradient(
+    ellipse at 50% 42%,
+    rgba(10, 13, 11, 0.9) 0%,
+    rgba(4, 6, 5, 0.975) 68%
+  );
+  backdrop-filter: blur(9px) saturate(0.55) brightness(0.5);
 
   /* Los colores de la ruleta son FIJOS y viven acá, no en `:root` junto a la paleta, para que
      se vea que `paleta.ts` no los pisa: esa función sólo escribe `--primario*`. Atarlos otra
@@ -276,21 +280,21 @@ main { max-width: 480px; margin: 0 auto; padding: 16px 14px 48px; }
 .ruleta-caja {
   position: relative;
   margin: auto;
-  background-color: #10291f;
+  background-color: #0a1d15;
   background-image:
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)' opacity='0.35'/%3E%3C/svg%3E"),
-    radial-gradient(ellipse 120% 54% at 50% 24%, rgba(255, 214, 158, 0.17), transparent 66%),
-    radial-gradient(ellipse 130% 95% at 50% 40%, #173b2d 0%, #102a20 54%, #091710 100%);
+    radial-gradient(ellipse 85% 42% at 50% 56%, rgba(255, 211, 150, 0.2), transparent 62%),
+    radial-gradient(ellipse 120% 88% at 50% 52%, #133026 0%, #0b2018 46%, #040d09 100%);
   background-blend-mode: overlay, normal, normal;
   border: 1px solid rgba(196, 166, 96, 0.24);
   box-shadow:
-    inset 0 0 66px 14px rgba(0, 0, 0, 0.5),
-    0 18px 44px rgba(0, 0, 0, 0.55);
+    inset 0 0 90px 26px rgba(0, 0, 0, 0.72),
+    0 22px 56px rgba(0, 0, 0, 0.7);
 
   /* Sobre el tapete, el `--texto-tenue` de la página se quedaba en 4.48:1, justo por debajo
      del mínimo de 4.5. Se aclara SOLO acá dentro, que es donde cambió el fondo. Importa más
      de lo que parece: lo hereda la ✕, que es la única salida del modal (entrada 27). */
-  --texto-tenue: #a8a79b;
+  --texto-tenue: #b0afa2;
   border-radius: 20px;
   padding: 20px 18px;
   width: 100%;
@@ -308,6 +312,8 @@ main { max-width: 480px; margin: 0 auto; padding: 16px 14px 48px; }
   cursor: pointer;
 }
 .ruleta-pregunta { font-weight: 800; margin: 14px 0 10px; }
+/* Ocupa sitio pero no se lee: evita que el modal encoja al empezar el giro. */
+.ruleta-caja .invisible { visibility: hidden; }
 
 /* "Jugar" deja de usar `--primario`. Sobre el tapete verde, una clienta con paleta turquesa o
    menta se encontraba el botón principal camuflado en el fondo — y cuál es depende de la
@@ -353,10 +359,10 @@ main { max-width: 480px; margin: 0 auto; padding: 16px 14px 48px; }
    cuadrada abría un hueco arriba y abajo. */
 .ruleta-marco {
   position: relative;
-  width: 200px;
-  height: 152px;
+  width: 244px;
+  height: 178px;
   margin: 0 auto 14px;
-  perspective: 620px;
+  perspective: 760px;
 }
 /* La luz del casino: un charco cálido cayendo sobre la mesa. Va DETRÁS de la rueda y no tiñe
    el texto del modal, porque bajar el contraste acá se paga en la ✕, que es la única salida
@@ -385,29 +391,42 @@ main { max-width: 480px; margin: 0 auto; padding: 16px 14px 48px; }
   filter: blur(3px);
   pointer-events: none;
 }
-.ruleta-mesa, .ruleta-puntero { position: absolute; z-index: 1; }
+.ruleta-mesa { position: absolute; z-index: 1; }
 .ruleta-mesa {
   position: absolute;
   inset: -24px 0;
   transform: rotateX(52deg) scale(0.87);
-  transform-style: preserve-3d;
+  /* Sin `preserve-3d`: no hay hijos en 3D que preservar —el SVG es plano— y en cambio creaba
+     un contexto de apilado que se comía el puntero, que es un hermano con más z-index. */
 }
 /* El puntero es fijo y la rueda es la que gira, como una ruleta de verdad. */
+/* El puntero va con la punta tocando el aro metálico, no la madera. La posición depende del
+   `rotateX` y del `scale`, así que se midió en el navegador en vez de calcularla: con la
+   inclinación actual el aro empieza a 45.8px del borde de la caja. Si se cambia el ángulo o el
+   tamaño de la rueda, hay que volver a medirlo. */
 .ruleta-puntero {
   position: absolute;
-  top: 8px;
+  top: 32px;
   left: 50%;
   transform: translateX(-50%);
-  border-left: 9px solid transparent;
-  border-right: 9px solid transparent;
-  border-top: 14px solid var(--texto);
-  z-index: 1;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-top: 16px solid #f4f1e8;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.9));
+  /* Por encima de la mesa (z-index 1). El SVG se pinta después en el DOM, así que empatar a 1
+     dejaba que la madera se comiera el puntero. */
+  z-index: 2;
 }
 .ruleta-svg { display: block; width: 100%; height: 100%; }
 
 /* Nada de esto gira: describe de dónde viene la luz, y una luz que gira con la pieza deja de
    leerse como luz. El aro asoma por fuera del disco y ése es además el filo que impide que la
    mitad negra se funda con la superficie oscura del modal. */
+.ruleta-madera { fill: url(#ruleta-madera); }
+/* El filo iluminado del borde de la madera, y la sombra del hueco donde encaja la rueda: sin
+   esa sombra la rueda se ve pegada encima de la madera en vez de metida dentro. */
+.ruleta-madera-luz { fill: none; stroke: rgba(255, 206, 150, 0.22); stroke-width: 1.6; }
+.ruleta-madera-hueco { fill: none; stroke: rgba(0, 0, 0, 0.75); stroke-width: 5; }
 .ruleta-aro { fill: url(#ruleta-metal); }
 /* La ranura entre el aro y el material: sin ella el latón y el sector se tocan y el aro se ve
    pegado encima en vez de rodeando. */
@@ -435,7 +454,17 @@ main { max-width: 480px; margin: 0 auto; padding: 16px 14px 48px; }
 .ruleta-sector.rojo { fill: var(--ruleta-rojo); }
 .ruleta-sector.negro { fill: var(--ruleta-negro); }
 /* Las varillas que separan las casillas. Éstas SÍ giran: son parte del material. */
-.ruleta-varilla { stroke: #c9ae6b; stroke-width: 1.1; opacity: 0.85; }
+.ruleta-varilla { stroke: #c9ae6b; stroke-width: 1.4; opacity: 0.9; }
+
+/* La bola: es ELLA la que dice dónde cayó. Va con su propia sombra proyectada sobre la casilla
+   para que se lea apoyada dentro y no flotando encima. */
+.ruleta-bola {
+  fill: radial-gradient(#fff, #bbb);
+  fill: #f4f1e8;
+  stroke: rgba(0, 0, 0, 0.45);
+  stroke-width: 0.8;
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.75));
+}
 
 /* El cono central, con su filo claro donde arranca el anillo de casillas. */
 .ruleta-cono { fill: url(#ruleta-cono); }

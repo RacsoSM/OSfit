@@ -13,8 +13,14 @@ export type Color = (typeof COLORES)[number];
  * Cuántas casillas tiene la rueda. Par, siempre: los colores se alternan, así que impar
  * dejaría dos del mismo color juntas en la costura del 0 y el reparto dejaría de ser mitad y
  * mitad.
+ *
+ * **Doce, no treinta y seis.** Se probó con 36, que es lo realista, y el color bajo el puntero
+ * quedaba en una franja de 10° que además la perspectiva comprime: había que entornar los ojos
+ * para saber si se había ganado, que es justo la única pregunta que la clienta se hace. Con 30°
+ * por casilla se lee de un vistazo. El realismo y la legibilidad tiran en contra acá, y gana la
+ * legibilidad.
  */
-export const CASILLAS = 36;
+export const CASILLAS = 12;
 
 /** Lo que ocupa cada casilla. Con 36 son 10°. */
 export const GRADOS_POR_CASILLA = 360 / CASILLAS;
@@ -75,6 +81,11 @@ export function arcoDelSector(sector: { desde: number; hasta: number }): string 
 export function arcoDelBorde(desde: number, hasta: number): string {
   const grande = hasta - desde > 180 ? 1 : 0;
   return `M${punto(desde, RADIO)} A${RADIO},${RADIO} 0 ${grande},1 ${punto(hasta, RADIO)}`;
+}
+
+/** El punto medio del anillo de casillas, que es donde descansa la bola. */
+export function puntoDelAnillo(grados: number): string {
+  return punto(grados, (RADIO + RADIO_INTERIOR) / 2);
 }
 
 /** La varilla que separa dos casillas: del anillo interior al exterior. */
