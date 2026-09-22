@@ -199,7 +199,7 @@ terminar.
 
 ---
 
-## U2. Terminar el recorrido manual de la ruleta — ⏳ DESPLEGADA A MEDIAS (2026-09-21), BLOQUEADA HASTA MAÑANA
+## U2. Terminar el recorrido manual de la ruleta — ⏳ RECORRIDO A MEDIAS (2026-09-22), FALTA EL TELÉFONO Y LA TIRADA REAL
 
 **Detectado:** 2026-09-21, al intentar hacer el recorrido manual que pide la entrada 25.
 
@@ -286,6 +286,41 @@ quien monte la próxima verificación lo sepa antes de perder una tarde.
 3. Con eso ya se puede hacer el recorrido de la entrada 25 §1 entero, incluida la app del
    entrenador en el teléfono, que ya está conectado.
 4. **Antes del 2026-09-28**, o el canal expira y hay que volver a desplegarlo.
+
+### Lo verificado el 2026-09-22, con la ruleta por fin en pantalla
+
+**El montaje aguantó la noche y la predicción del paso 2 se cumplió tal cual.** Al abrir el
+preview con la clienta de pruebas, la tarjeta ofrecía sola *"💔 Te quedaste sin vidas para
+revivir tu racha… pero te tengo una propuesta"*, con la racha en 🔥 0 y el cupo agotado. Lo que
+faltaba era la medianoche, no un registro — que era justo lo que decía el paso 1.
+
+Conducido con Playwright 1.63 contra el canal de preview, en un Chromium visible. **Sin gastar
+la tirada real**, que sigue entera: todo lo de abajo sale de tiradas de prueba.
+
+- **"Jugar" y "Tirada de prueba" quedan muertos mientras gira el ensayo**, y en toda la tirada
+  de prueba salen **cero llamadas de red** — ni a `jugarRuleta` ni a ninguna función. Era el
+  punto que pedía mirar la pestaña de Red, y pasa.
+- **Nada cierra el modal**: ni `Escape` ni el clic en el fondo, ni girando ni ya parada. La ✕
+  es la única salida, que es lo que se buscaba. Falta el botón atrás de Android.
+- **El puntero cayó dentro del sector que anunciaba el acuse**, aunque cerca de la costura: o
+  sea que el margen de 10° de la entrada 25 §4 se está ganando el sueldo.
+- **`reduced-motion` cumple:** sin giro, y el acuse a los **330 ms** contra los **4136 ms** del
+  modo normal, medido esperando al texto y no a ojo. 12× más rápido es el "fundido corto".
+- **La ✕ es alcanzable en pantalla pequeña** (320×568 con la raíz a 24 px): dentro del
+  viewport y sin scroll horizontal. **Pero mide 27×26 px.** Ver la entrada 27.
+- **Un fallo encontrado y arreglado el mismo día:** el acuse nombraba el color primario a
+  mano. Ver la entrada 26.
+
+### Lo que sigue faltando
+
+- **La tirada real**, que es **una por clienta y por mes** — en cuanto se juegue, el resto del
+  mes contesta "Ya jugaste tu tirada de este mes". Cuatro de los puntos de la entrada 25 §1
+  dependen de verla girar de verdad, así que conviene gastarla en el de los **dos toques
+  simultáneos** y grabar vídeo: esa misma tirada sirve para revisar los otros tres.
+- Todo lo que necesita el teléfono: botón atrás, el snapshot ajeno a media tirada, el cruce de
+  medianoche y el "Revives: 2 de 2" del mes castigado.
+- Ganar y perder forzando la probabilidad a 1 y a 0, que el propio §1 manda hacer **en el
+  emulador**, no contra el preview.
 
 ### Estado en que quedó la clienta de pruebas
 
@@ -1436,5 +1471,103 @@ probada.
   propósito: exportar constantes internas solo para el test sería peor.
 - En la fase `"error"` tras un `already-exists` ("Ya jugaste tu tirada de este mes"), el botón
   "Jugar" sigue habilitado e invita a una apuesta que fallará siempre.
+
+---
+
+## 26. El acuse de la ruleta nombraba un color que la clienta no ve — ✅ HECHO (2026-09-22)
+
+**Detectado:** 2026-09-22, en el primer recorrido con la ruleta en pantalla.
+
+La clienta de pruebas tiene paleta turquesa. La rueda salió turquesa y ámbar, el puntero cayó
+en el sector turquesa —correcto— y el texto dijo **"Cayó en morado"**.
+
+`web/src/ui/ruleta.ts` tenía los nombres escritos a mano:
+
+```ts
+const NOMBRE: Record<Color, string> = { primario: "morado", ambar: "ámbar" };
+```
+
+Pero la ficha y el sector son `var(--primario)`: la paleta por clienta de la entrada 7. O sea
+que "morado" sólo acierta con `porDefectoWeb`, y **con cualquier otra paleta la clienta lee un
+color que no tiene delante, justo en la frase que le dice si ganó o perdió**. No era sólo el
+`aria-label`: el mismo mapa alimentaba las tres frases visibles — ganar, perder y ensayar.
+
+**Por qué se escapó:** ningún test tocaba esos textos. Y encaja con lo que la entrada 25 §4 ya
+avisaba de `ruletaGiro.test.ts`, que reimplementa el gradiente a mano en vez de leerlo: los
+colores de este modal no los estaba mirando nadie.
+
+**Arreglado sin nombrar el tono.** El primario pasa a ser "tu color"; el ámbar, que no sale de
+la paleta, se sigue nombrando. Son dos formas —`cayo` y `apuesta`— porque las dos frases piden
+gramática distinta ("Cayó en ___" y "Apostar ___"), y unificarlas en una sola cadena deja una
+de las dos mal escrita. Hay un test que lo dice, para que nadie lo "simplifique".
+
+Tres tests nuevos en `web/src/ui/ruleta.test.ts`, **comprobados fallando contra el código
+viejo** antes de darlos por buenos. Suite 187/187 y `npm run build` limpio.
+
+**No está desplegado:** el canal de preview sigue sirviendo el bundle que dice "morado".
+
+---
+
+## 27. La ✕ de la ruleta mide 27×26, y es la única salida del modal
+
+**Detectado:** 2026-09-22, en el recorrido.
+
+A 320×568 con la raíz a 24 px la ✕ queda dentro del viewport y no provoca scroll horizontal,
+así que el punto "la ✕ tiene que seguir alcanzable" de la entrada 25 §1 **pasa**. Pero mide
+**27×26 px**, por debajo del mínimo de 44×44 — que las fichas de color del mismo modal **sí**
+respetan. O sea que el código ya conoce la regla y la ✕ es la que se sale de ella.
+
+**Por qué no corre prisa:** fallar el toque no rompe ni pierde nada, el modal sigue ahí. Pero
+es la única salida a propósito —ni `Escape` ni el fondo lo cierran— así que en un teléfono
+pequeño una clienta con dedos grandes se queda peleando con la propuesta hasta acertar.
+
+**Qué hacer:** subir el área táctil a 44×44 sin agrandar el glifo, con padding o un `::before`
+transparente. No obliga a rediseñar nada.
+
+---
+
+## 28. La ruleta se ve pobre: hacerla realista, o pixel art
+
+**Pedido:** 2026-09-22, al verla girar por primera vez.
+
+Hoy la rueda es lo mínimo que funciona: un `div` de 200×200 con
+`conic-gradient(var(--primario) 0deg 180deg, var(--ambar) 180deg 360deg)`, un puntero fijo a
+las 12 y `rotate()` para girar. Dos medias tartas planas. Se entiende, pero no parece una
+ruleta: parece un gráfico de sectores.
+
+**Lo primero que hay que decidir es cuál de las dos**, porque tiran en direcciones opuestas y
+empezar sin elegir es trabajo tirado:
+
+- **Realista.** Aro metálico, bisel, sombra proyectada, separadores entre sectores, quizá un
+  reflejo que no gire con la rueda. Pide salir del `conic-gradient` a SVG o canvas.
+- **Pixel art.** Rueda de baja resolución, bordes dentados a propósito, paleta reducida, y
+  **rotación a saltos** (`steps()`) en vez de continua, que es lo que hace que se lea como
+  pixel art y no como un PNG girando borroso.
+
+**Por qué no corre prisa:** es puro aspecto. El sorteo vive en `jugarRuleta`, en el servidor, y
+no se entera de cómo se pinte la rueda.
+
+### Tres cosas que hay que respetar, y una de ellas no tiene red
+
+**El mapa de ángulos es un contrato con `ruletaGiro.ts`.** Ese módulo calcula el aterrizaje
+dando por hecho que `primario` ocupa de 0° a 180° y `ambar` de 180° a 360°, medidos desde las
+12 en horario. Si el rediseño reordena o reparte distinto los sectores, hay que cambiar los
+dos a la vez.
+
+**Y ahí no hay red:** la entrada 25 §4 ya avisa de que `ruletaGiro.test.ts` **reimplementa a
+mano** el margen, el `conic-gradient` y la posición del puntero en vez de leerlos. O sea que
+invertir los colores del gradiente dejaría el test en verde y al puntero señalando el color
+contrario al que anuncia el acuse — exactamente el fallo que la entrada 26 acaba de destapar
+por otra vía. Quien toque el dibujo arregla ese test primero, o lo comprueba con los ojos.
+
+**La rueda se dibuja 50/50 aunque el sorteo no lo sea** (está en el spec). Realista invita a
+meter más sectores; hacerlo rompe esa decisión y hay que ir al spec antes, no después.
+
+**`prefers-reduced-motion` tiene que seguir cumpliendo.** Hoy da el resultado en 330 ms sin
+girar, contra 4136 ms del modo normal (verificado el 2026-09-22). Pixel art con `steps()` es
+justo el caso en que es fácil dejarse un `animation` suelto que se salte la regla.
+
+**Y no tocar la paleta.** El sector primario es `var(--primario)`, el color de cada clienta.
+Un rediseño que fije los colores a mano vuelve a meter el fallo de la entrada 26.
 
 ---
