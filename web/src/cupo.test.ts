@@ -70,4 +70,31 @@ describe("cupo de revives", () => {
     expect(gastadosEnElMes(asistencias, "2026-09")).toBe(0);
     expect(disponiblesEnElMes(asistencias, "2026-09")).toBe(3);
   });
+
+  // El castigo de la ruleta baja el máximo del mes, no lo que ya se gastó. Estos casos son
+  // los que impiden que el castigo se cuele en `gastadosEnElMes`, que solo cuenta faltas.
+  it("el castigo baja el maximo del mes a 2", () => {
+    expect(disponiblesEnElMes([], "2026-09", 1)).toBe(2);
+  });
+
+  it("sin castigo el maximo sigue siendo 3", () => {
+    expect(disponiblesEnElMes([], "2026-09", 0)).toBe(3);
+  });
+
+  it("con castigo y una gastada quedan 1", () => {
+    const asistencias = [falta("2026-09-01", true)];
+    expect(disponiblesEnElMes(asistencias, "2026-09", 1)).toBe(1);
+  });
+
+  it("con castigo y dos gastadas quedan 0", () => {
+    const asistencias = [falta("2026-09-01", true), falta("2026-09-02", true)];
+    expect(disponiblesEnElMes(asistencias, "2026-09", 1)).toBe(0);
+  });
+
+  // Regresión: la llamada sin tercer parámetro es la que hacen hoy todos los clientes que
+  // nunca han jugado. Si esta se rompe, se rompe la página de todos, no la de los que juegan.
+  it("sin tercer parametro se comporta como antes", () => {
+    const asistencias = [falta("2026-09-01", true)];
+    expect(disponiblesEnElMes(asistencias, "2026-09")).toBe(2);
+  });
 });

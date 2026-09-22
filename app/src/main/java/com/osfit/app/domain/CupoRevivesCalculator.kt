@@ -11,6 +11,11 @@ import com.osfit.app.data.model.Asistencia
  * habría que acordarse de corregirlo en un lugar que nadie mira.
  *
  * GEMELO: `web/src/cupo.ts`. Si cambia acá, cambia allá.
+ *
+ * Desde la ruleta (2026-09-18) el máximo del mes ya no es fijo: perder la ruleta un mes le
+ * quita un revive al siguiente. El castigo tampoco se guarda como número — se deduce del
+ * documento `ruletas/{cliente}_{mes anterior}`, así que borrar ese documento devuelve el cupo
+ * solo, igual que desmarcar una justificada.
  */
 object CupoRevivesCalculator {
 
@@ -29,6 +34,11 @@ object CupoRevivesCalculator {
             it.justificadaPorCliente && it.justificada && it.fecha.startsWith("$mes-")
         }
 
-    fun disponiblesEnElMes(asistencias: List<Asistencia>, mes: String): Int =
-        (MAXIMO_POR_MES - gastadosEnElMes(asistencias, mes)).coerceAtLeast(0)
+    /**
+     * [castigo] son los revives que el cliente perdió por fallar la ruleta el mes pasado
+     * (0 o 1). Entra como parámetro y no se lee acá: este objeto es puro y se prueba en la
+     * JVM, sin Firestore. Quien lo llama ya tiene el documento de la tirada.
+     */
+    fun disponiblesEnElMes(asistencias: List<Asistencia>, mes: String, castigo: Int = 0): Int =
+        (MAXIMO_POR_MES - castigo - gastadosEnElMes(asistencias, mes)).coerceAtLeast(0)
 }

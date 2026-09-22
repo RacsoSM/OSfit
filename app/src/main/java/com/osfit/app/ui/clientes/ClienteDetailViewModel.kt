@@ -24,7 +24,9 @@ import com.osfit.app.data.repository.LogroPersonalRepository
 import com.osfit.app.data.repository.MedallaRepository
 import com.osfit.app.data.repository.PagoRepository
 import com.osfit.app.data.repository.ResumenStorageRepository
+import com.osfit.app.data.repository.RuletaRepository
 import com.osfit.app.data.repository.RutinaRepository
+import com.osfit.app.data.repository.Tirada
 import com.osfit.app.data.repository.VideoPublicadoRepository
 import com.osfit.app.domain.AsignarDiaManual
 import com.osfit.app.domain.CupoRevivesCalculator
@@ -38,12 +40,15 @@ import com.osfit.app.domain.totalVariaciones
 import java.io.File
 import java.time.LocalDate
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -62,6 +67,8 @@ class ClienteDetailViewModel(
     private val resumenStorageRepository: ResumenStorageRepository = AppContainer.resumenStorageRepository,
     private val cancionStorageRepository: CancionStorageRepository = AppContainer.cancionStorageRepository
 ) : ViewModel() {
+
+    private val ruletaRepository = RuletaRepository()
 
     init {
         viewModelScope.launch { medallaRepository.asegurarCategoriasAutomaticas() }
@@ -135,20 +142,81 @@ class ClienteDetailViewModel(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     /**
-     * Revives que le quedan al cliente este mes. El mes sale de la zona del gimnasio y no del
-     * dispositivo: la Cloud Function cuenta el cupo en esa zona, y si el entrenador contara en
-     * otro mes vería un número distinto al de la página del cliente — justo la discusión que
-     * este dato existe para zanjar.
+     * Disparador de refresco: la pantalla lo empuja desde `rememberFechaActual()`, que
+     * despierta sola a medianoche (mismo mecanismo que `ClientesListScreen`/`fijarFecha`).
+     *
+     * El valor en sí no se usa para calcular el mes — solo dispara la recomputación de
+     * `mesActualFlow` con `SincronizadorDiaWeb.hoy()` fresco. Sin este empuje, `mesActual`
+     * quedaba fijado al momento en que se construyó el ViewModel: si el entrenador dejaba el
+     * detalle abierto toda la noche, la app le seguía mostrando el mes de ayer mientras la
+     * página de la clienta ya contaba en el mes nuevo.
      */
-    val revivesDisponibles: StateFlow<Int> = asistenciasDelCliente
-        .map { asistencias ->
-            CupoRevivesCalculator.disponiblesEnElMes(asistencias, SincronizadorDiaWeb.hoy().substring(0, 7))
-        }
+    private val diaVisible = MutableStateFlow(SincronizadorDiaWeb.hoy())
+
+    fun fijarFecha(fecha: String) {
+        diaVisible.value = fecha
+    }
+
+    /** El mes de hoy, en la zona del gimnasio y no la del dispositivo, en formato `AAAA-MM`. */
+    private val mesActualFlow: Flow<String> = diaVisible.map { SincronizadorDiaWeb.hoy().substring(0, 7) }
+
+    /** El mes anterior al que llega, cruzando el año si hace falta. */
+    private fun mesAnterior(mes: String): String {
+        val (anio, numero) = mes.split("-").map { it.toInt() }
+        return if (numero == 1) "${anio - 1}-12" else "$anio-${"%02d".format(numero - 1)}"
+    }
+
+    /**
+     * La tirada del mes pasado. Si existe y la perdió, este mes tiene un revive menos.
+     *
+     * `flatMapLatest` y no `map`: si el mes cambia con la pantalla abierta hay que escuchar
+     * el documento del mes anterior nuevo, no seguir pegado al viejo.
+     *
+     * Se lee acá y no dentro de `CupoRevivesCalculator` porque el calculador es puro y se
+     * prueba en la JVM, sin Firestore.
+     */
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private val tiradaMesPrevio: StateFlow<Tirada?> =
+        mesActualFlow.map { mesAnterior(it) }
+            .flatMapLatest { mesPrevio -> ruletaRepository.observarTirada(clienteId, mesPrevio) }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+
+    /**
+     * El castigo de la ruleta (0 o 1), en un solo lugar: es una regla con gemelos en la web y
+     * en el servidor, y repetirla en cada StateFlow de acá es justo lo que se rompe en
+     * silencio cuando alguien cambia una sola copia.
+     */
+    private fun castigoDe(tirada: Tirada?): Int = if (tirada != null && !tirada.gano) 1 else 0
+
+    /**
+     * Revives que le quedan al cliente este mes, incluido el castigo de la ruleta.
+     *
+     * El mes sale de la zona del gimnasio y no del dispositivo: la Cloud Function cuenta el
+     * cupo en esa zona, y si el entrenador contara en otro mes vería un número distinto al de
+     * la página del cliente — justo la discusión que este dato existe para zanjar.
+     */
+    val revivesDisponibles: StateFlow<Int> =
+        combine(asistenciasDelCliente, tiradaMesPrevio, mesActualFlow) { asistencias, tirada, mes ->
+            CupoRevivesCalculator.disponiblesEnElMes(asistencias, mes, castigoDe(tirada))
+        }.stateIn(
+            viewModelScope,
+            SharingStarted.WhileSubscribed(5000),
+            CupoRevivesCalculator.MAXIMO_POR_MES
+        )
+
+    /** El máximo de este mes: 3, o 2 si perdió la ruleta el mes pasado. */
+    val revivesMaximo: StateFlow<Int> = tiradaMesPrevio
+        .map { tirada -> CupoRevivesCalculator.MAXIMO_POR_MES - castigoDe(tirada) }
         .stateIn(
             viewModelScope,
             SharingStarted.WhileSubscribed(5000),
             CupoRevivesCalculator.MAXIMO_POR_MES
         )
+
+    /** El mes en que perdió, para poder decir POR QUÉ le quedan menos. */
+    val mesQuePerdioLaRuleta: StateFlow<String?> = tiradaMesPrevio
+        .map { tirada -> if (castigoDe(tirada) == 1) tirada!!.mes else null }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
     /** Soborno: marca o desmarca una falta como justificada. */
     fun alternarSoborno(asistencia: Asistencia) {

@@ -210,6 +210,163 @@ terminar.
 
 ---
 
+## U2. Terminar el recorrido manual de la ruleta — ⏳ TIRADA REAL HECHA (2026-09-22), FALTA EL TELÉFONO Y EL EMULADOR
+
+**Detectado:** 2026-09-21, al intentar hacer el recorrido manual que pide la entrada 25.
+
+Corre prisa por dos cosas que caducan: **el canal de preview expira el 2026-09-28**, y el
+estado de la clienta de pruebas depende de una falta que hay que marcar **hoy** para poder
+probar mañana. Si se deja pasar, hay que volver a montar el andamio desde cero.
+
+### Lo que YA está en producción, y conviene saberlo antes de tocar nada
+
+Se desplegó en el orden que manda la entrada 25 §2, y **dos de las tres patas ya son
+producción de verdad**:
+
+- **Reglas de Firestore: desplegadas.** El bloque `match /ruletas/{doc}` nuevo, nada más; no
+  se tocó ninguna regla existente.
+- **Functions: desplegadas.** `jugarRuleta` creada, y `sesion`, `cambiarDia`, `revivirRacha` y
+  `avisarFalta` actualizadas. `revivirRacha` cambió de verdad —ahora resta el castigo—, pero
+  sin documento de ruleta del mes anterior el castigo es 0 y se comporta igual que antes. Como
+  nadie ha jugado nunca, hoy es un no-op para todas las clientas.
+- **Web: NO desplegada a producción.** El bundle salió a un canal de preview,
+  `https://osfit-cccfe--ruleta-2ey141ze.web.app`, que **expira el 2026-09-28**. Producción
+  sigue sirviendo `index--AJAJZu0.js`, verificado después de desplegar: 0 apariciones de
+  "ruleta" en el bundle vivo. Las clientas reales no ven nada nuevo.
+
+O sea que revertir no es simétrico: la web se cae sola cuando expire el canal, pero las reglas
+y las functions se quedan hasta que alguien las quite a mano.
+
+### Lo que quedó verificado el 2026-09-21
+
+- **La tarjeta con cupo disponible se ve idéntica a producción.** Diff del texto completo de la
+  página entre las dos URLs, con la misma clienta: sin una sola diferencia. Era uno de los tres
+  puntos que la entrada 25 marca como bloqueantes, y es el que protege a las clientas que nunca
+  van a llegar a la ruleta.
+- **Cero errores de consola** en el preview con las reglas nuevas ya arriba — o sea que los dos
+  `observarTirada` no están chocando con `permission-denied`, que era el riesgo del orden de
+  despliegue.
+- La sesión se canjea bien desde el origen del preview, que no era obvio: es otro dominio.
+- **El camino de revivir, punta a punta:** pide confirmación ("Cancelar" / "Sí, usar uno"),
+  la racha subió 🔥 0 → 🔥 1 → 🔥 2, y el cupo bajó con la gramática correcta ("Te quedan 2"
+  → "Te queda 1").
+
+**Nada de la ruleta en sí está verificado todavía**, porque no se ha logrado llegar a la
+pantalla. Los 12 puntos de la entrada 25 §1 siguen todos sin hacer.
+
+### Por qué no se pudo llegar a la ruleta hoy, que es el hallazgo
+
+La ruleta pide **dos** condiciones a la vez: cupo en 0 **y** una falta reparable. Y llegar a
+las dos el mismo día choca con el diseño de la ventana:
+
+- La ventana de reparación son los **2 días hábiles anteriores** (`faltaRompio.ts`), y el
+  recorrido empieza en *ayer*, nunca en hoy — hoy se justifica por el otro camino, el de "hoy
+  no voy a poder ir".
+- Para dejar el cupo en 0 hubo que justificar esos mismos dos días (el jueves 17 y el viernes
+  18), que eran los únicos reparables.
+- Desmarcar uno para abrir el hueco **devuelve el revive**, porque el cupo se cuenta y no se
+  guarda. Es justo lo que U1 verificó como correcto, pero acá se muerde la cola.
+
+O sea que hace falta una **cuarta** falta justificada por la clienta dentro del mes, en una
+fecha fuera de la ventana. **La app del entrenador no puede crearla:** cuando el entrenador
+justifica, `justificadaPorCliente` queda en `false` y no cuenta contra el cupo. Sólo cuenta lo
+que la clienta justifica desde su página, y desde su página sólo alcanza la ventana.
+
+Esto no es un fallo: es la consecuencia de dos reglas que por separado están bien. Pero
+significa que **el estado "sin cupo" sólo se alcanza dejando pasar los días**, y conviene que
+quien monte la próxima verificación lo sepa antes de perder una tarde.
+
+### Qué hay que hacer, en orden
+
+1. **Hoy (lunes 2026-09-21): no hacer nada, y sobre todo NO marcarle asistencia al 21.**
+
+   Al escribir esta entrada se dijo que había que marcarle una falta hoy. **Es falso**, y se
+   comprobó corriendo `faltaQueRompioLaRacha` contra su historial real: con registro de falta
+   del 21 y sin él, mañana devuelve igual `2026-09-21`. `fechasQueCuentan` sólo mete los días
+   con `asistio` o `justificada`, así que **un día sin registro ya es una falta** para la
+   ventana; el registro en rojo es para que el entrenador lo vea en el calendario, no para el
+   cálculo.
+
+   Lo que tiene que pasar es **la medianoche**, no el registro: el recorrido arranca en
+   `restarUnDia(hoy)` y por eso hoy nunca se devuelve. Queda escrito porque es el mismo error
+   dos veces — igual que la trampa de U1 con la asistencia de hoy, es fácil creer que falta un
+   dato cuando lo que falta es que pase el día.
+2. **Mañana (martes 22):** el lunes 21 entra en la ventana sin justificar, el cupo sigue en 0,
+   y la ruleta debe aparecer sola al abrir
+   `https://osfit-cccfe--ruleta-2ey141ze.web.app/c/<token de la clienta test>`.
+3. Con eso ya se puede hacer el recorrido de la entrada 25 §1 entero, incluida la app del
+   entrenador en el teléfono, que ya está conectado.
+4. **Antes del 2026-09-28**, o el canal expira y hay que volver a desplegarlo.
+
+### Lo verificado el 2026-09-22, con la ruleta por fin en pantalla
+
+**El montaje aguantó la noche y la predicción del paso 2 se cumplió tal cual.** Al abrir el
+preview con la clienta de pruebas, la tarjeta ofrecía sola *"💔 Te quedaste sin vidas para
+revivir tu racha… pero te tengo una propuesta"*, con la racha en 🔥 0 y el cupo agotado. Lo que
+faltaba era la medianoche, no un registro — que era justo lo que decía el paso 1.
+
+Conducido con Playwright 1.63 contra el canal de preview, en un Chromium visible. **Sin gastar
+la tirada real**, que sigue entera: todo lo de abajo sale de tiradas de prueba.
+
+- **"Jugar" y "Tirada de prueba" quedan muertos mientras gira el ensayo**, y en toda la tirada
+  de prueba salen **cero llamadas de red** — ni a `jugarRuleta` ni a ninguna función. Era el
+  punto que pedía mirar la pestaña de Red, y pasa.
+- **Nada cierra el modal**: ni `Escape` ni el clic en el fondo, ni girando ni ya parada. La ✕
+  es la única salida, que es lo que se buscaba. Falta el botón atrás de Android.
+- **El puntero cayó dentro del sector que anunciaba el acuse**, aunque cerca de la costura: o
+  sea que el margen de 10° de la entrada 25 §4 se está ganando el sueldo.
+- **`reduced-motion` cumple:** sin giro, y el acuse a los **330 ms** contra los **4136 ms** del
+  modo normal, medido esperando al texto y no a ojo. 12× más rápido es el "fundido corto".
+- **La ✕ es alcanzable en pantalla pequeña** (320×568 con la raíz a 24 px): dentro del
+  viewport y sin scroll horizontal. **Pero mide 27×26 px.** Ver la entrada 27.
+- **Un fallo encontrado y arreglado el mismo día:** el acuse nombraba el color primario a
+  mano. Ver la entrada 26.
+
+### La tirada real, jugada el 2026-09-22
+
+**Se jugó, y encontró dos fallos por el camino que habrían llegado a producción.**
+
+La clienta de pruebas apostó al rojo, **cayó negro y perdió**: `{"gano": false, "color": "negro"}`.
+La web mostró *"Cayó en negro. El próximo mes tendrás 2 revives en vez de 3."* Tras recargar, la
+tarjeta **ya no ofrece la propuesta** y la racha sigue en 🔥 0, que es lo correcto — gastó su
+tirada del mes.
+
+**Los dos toques simultáneos: aguanta.** Dos pestañas con la misma sesión, las dos con el color
+elegido, los dos clics en el mismo instante. Una recibió `200` con el sorteo y la otra
+`409 ya_jugo` con "Ya jugaste tu tirada de este mes". O sea que el `create()` sobre
+`{cliente}_{mes}` protege de verdad contra el Firestore real y no sólo en los tests.
+
+*(El entrenador lo considera un caso demasiado improbable como para seguir pidiéndolo en el
+recorrido, así que sale de la lista. Queda anotado porque la comprobación ya estaba hecha y la
+guarda del código se queda: es una línea y quitarla sería un riesgo gratis.)*
+
+**Confirmado en vivo el defecto que la entrada 25 §4 ya anotaba:** en la pestaña que recibió
+`ya_jugo`, el botón "Jugar" sigue habilitado e invita a una apuesta que fallará siempre.
+
+### Lo que sigue faltando
+
+- El mes castigado punta a punta: que en octubre la web diga "Te quedan 2 este mes (perdiste la
+  ruleta el mes pasado)" y la app "Revives: 2 de 2". **Ya hay documento de ruleta perdida** para
+  comprobarlo. — en cuanto se juegue, el resto del
+  mes contesta "Ya jugaste tu tirada de este mes". Cuatro de los puntos de la entrada 25 §1
+  dependen de verla girar de verdad, así que conviene gastarla en el de los **dos toques
+  simultáneos** y grabar vídeo: esa misma tirada sirve para revisar los otros tres.
+- Todo lo que necesita el teléfono: botón atrás, el snapshot ajeno a media tirada, el cruce de
+  medianoche y el "Revives: 2 de 2" del mes castigado.
+- Ganar y perder forzando la probabilidad a 1 y a 0, que el propio §1 manda hacer **en el
+  emulador**, no contra el preview.
+
+### Estado en que quedó la clienta de pruebas
+
+Septiembre 2026: asistió el 10 y el 15; justificadas por ella el 11, el 17 y el 18 (las dos
+últimas gastadas hoy desde la página, en esta verificación); falta sin justificar el 14. Cupo
+en **0 de 3**. Racha 🔥 2. Nada de esto es real: es andamio y se puede borrar cuando estorbe.
+
+**Ojo al borrarlo:** si se le quitan justificadas de septiembre, el cupo vuelve a subir y hay
+que rehacer el paso 1.
+
+---
+
 ## 1. Revocar el acceso web no corta la sesión ya abierta
 
 **Detectado:** 2026-09-11, verificando el Task 13 del plan de la web de clientes.
@@ -1334,5 +1491,408 @@ se lee en Tomar Asistencia, que es donde el entrenador está cuando le importa. 
 pantallas comparten ventana, si un día se cambia una hay que mirar la otra.**
 
 La entrada se cerró el 2026-09-22; el código llevaba dentro desde el 16.
+
+---
+
+## 25. Lo que quedó pendiente de la ruleta
+
+**Detectado:** 2026-09-18, al terminar la rama `feature/ruleta-revivir-racha`.
+
+La feature "ruleta para revivir la racha" está implementada entera: cuando a una clienta se le
+acaban sus 3 revives del mes y tiene la racha rota, apuesta a uno de dos colores; si acierta se
+le revive, si falla el mes siguiente tendrá 2 revives en vez de 3. El sorteo vive solo en la
+Cloud Function `jugarRuleta`, que escribe un documento por clienta y mes en `ruletas` con id
+`{clienteId}_{AAAA-MM}`. Spec en
+`docs/superpowers/specs/2026-09-18-ruleta-revivir-racha-design.md`, plan en
+`docs/superpowers/plans/2026-09-18-ruleta-revivir-racha.md`.
+
+**Verificado, y sólo esto:** las tres suites en verde — web 154/154, functions 35/35,
+`./gradlew test` OK. *(Tras mezclar `main` el 2026-09-21 son 184/184 y 37/37; los de más son
+de main, no de la ruleta.)* **No verificado, y es todo lo demás:** no se ha desplegado, no se ha
+mezclado a `main`, y no se ha tocado con los ojos ni en el emulador ni en un teléfono real.
+
+### 1. El recorrido manual, que nadie ha hecho
+
+El propio plan lo exige antes de mezclar a `main`, porque todas las clientas tienen su página
+funcionando hoy. Lo que falta ver:
+
+- Que el puntero quede dentro del sector del color que nombra el acuse, varias tiradas
+  seguidas, ganando y perdiendo (se puede forzar fijando la probabilidad a 1 y a 0 en el
+  emulador).
+- Encadenar una tirada de prueba con la real: el giro libre de la real tiene que verse como
+  una rotación pareja, no como un bamboleo.
+- Que "Jugar" esté muerto mientras gira una tirada de prueba, mirando la pestaña de Red para
+  confirmar que no sale ninguna llamada.
+- Que nada cierre el modal mientras la ruleta gira: el fondo, `Escape`, el botón atrás de
+  Android.
+- Que la rueda sobreviva a un snapshot ajeno: con la tirada girando, marcarle una asistencia a
+  la clienta desde la app del entrenador.
+- Que la rueda no brinque al aparecer el acuse.
+- Con "reducir movimiento" activado: sin giro, y el resultado en un fundido corto.
+- Los cinco estados de la tarjeta, y sobre todo el de cupo disponible, que tiene que verse
+  idéntico a como está hoy en producción.
+- El mes castigado punta a punta: que la web diga "Te quedan 2 este mes (perdiste la ruleta
+  el mes pasado)" y que la app del entrenador diga "Revives: 2 de 2" con el motivo, para la
+  misma clienta y el mismo mes; y que borrar el documento de la ruleta devuelva el cupo a 3 en
+  los dos lados sin tocar nada más.
+- El cruce de medianoche con el detalle de una clienta abierto en el teléfono del entrenador:
+  "Revives: X de Y" tiene que cambiar de mes sin recargar.
+- El modal en pantalla pequeña y con el texto del sistema agrandado: la ✕ tiene que seguir
+  alcanzable, porque es la única salida.
+- Dos toques simultáneos desde dos teléfonos con la misma sesión: solo una tirada registrada,
+  y el segundo leyendo "Ya jugaste tu tirada de este mes".
+
+### 2. El orden del despliegue, que importa
+
+Las reglas de Firestore y la función van antes que el bundle de la web. Si el bundle sale
+primero, los dos `observarTirada` chocan con `permission-denied` hasta que las reglas estén
+arriba: degrada sin romper nada (los listeners mueren, la tirada se queda en `null` y el cupo
+se comporta como hoy), pero llena la consola de errores — exactamente el ruido que describe la
+entrada 23. Y una clienta podría tocar "Leer propuesta" contra una función que todavía no
+existe.
+
+### 3. `aplicarTirada` escribe sin transacción, y el spec sí pedía una
+
+En `functions/src/jugarRuleta.ts`, la tirada se registra con `create()` y la justificación de
+la falta se escribe después, en dos operaciones sueltas. El orden está pensado a propósito (la
+tirada primero, para que una falla no deje premio con tirada intacta), pero si la segunda
+escritura falla —timeout, `UNAVAILABLE`, contención— la clienta queda con la tirada del mes
+gastada, un documento que dice `gano: true`, y la racha sin revivir; al reintentar recibe "Ya
+jugaste tu tirada de este mes" y no puede arreglarlo desde la página. La ventana es de
+milisegundos y el entrenador puede justificar la falta a mano, por eso se dejó pasar antes del
+despliegue; arreglarlo obliga a reestructurar `aplicarTirada`, que hoy está limpia y bien
+probada.
+
+### 4. Cuatro detalles de pulido que no afectan al número ni a la apuesta
+
+- La tirada de prueba no tiene fase de giro libre: `girarLibre` y `frenar` se llaman en el
+  mismo tick, así que entra directo al frenado mientras la real arranca con 800 ms de rotación
+  pareja. El spec decía "misma animación", y el ensayo existe justo para que la real no
+  sorprenda.
+- La app del entrenador dice "(perdió la ruleta en 2026-08)" donde el spec escribía "(perdió
+  la ruleta en agosto)".
+- El test de `web/src/ui/ruletaGiro.test.ts` reimplementa a mano el margen de 10°, el
+  `conic-gradient` y la posición del puntero en vez de leerlos, así que si alguien invierte
+  los colores del gradiente o mueve el puntero, el test seguiría verde. Se dejó así a
+  propósito: exportar constantes internas solo para el test sería peor.
+- En la fase `"error"` tras un `already-exists` ("Ya jugaste tu tirada de este mes"), el botón
+  "Jugar" sigue habilitado e invita a una apuesta que fallará siempre.
+
+---
+
+## 26. El acuse de la ruleta nombraba un color que la clienta no ve — ✅ HECHO (2026-09-22), REHECHO EL MISMO DÍA
+
+**Detectado:** 2026-09-22, en el primer recorrido con la ruleta en pantalla.
+
+La clienta de pruebas tiene paleta turquesa. La rueda salió turquesa y ámbar, el puntero cayó
+en el sector turquesa —correcto— y el texto dijo **"Cayó en morado"**.
+
+`web/src/ui/ruleta.ts` tenía los nombres escritos a mano:
+
+```ts
+const NOMBRE: Record<Color, string> = { primario: "morado", ambar: "ámbar" };
+```
+
+Pero la ficha y el sector son `var(--primario)`: la paleta por clienta de la entrada 7. O sea
+que "morado" sólo acierta con `porDefectoWeb`, y **con cualquier otra paleta la clienta lee un
+color que no tiene delante, justo en la frase que le dice si ganó o perdió**. No era sólo el
+`aria-label`: el mismo mapa alimentaba las tres frases visibles — ganar, perder y ensayar.
+
+**Por qué se escapó:** ningún test tocaba esos textos. Y encaja con lo que la entrada 25 §4 ya
+avisaba de `ruletaGiro.test.ts`, que reimplementa el gradiente a mano en vez de leerlo: los
+colores de este modal no los estaba mirando nadie.
+
+**Arreglado sin nombrar el tono.** El primario pasa a ser "tu color"; el ámbar, que no sale de
+la paleta, se sigue nombrando. Son dos formas —`cayo` y `apuesta`— porque las dos frases piden
+gramática distinta ("Cayó en ___" y "Apostar ___"), y unificarlas en una sola cadena deja una
+de las dos mal escrita. Hay un test que lo dice, para que nadie lo "simplifique".
+
+Tres tests nuevos en `web/src/ui/ruleta.test.ts`, **comprobados fallando contra el código
+viejo** antes de darlos por buenos. Suite 187/187 y `npm run build` limpio.
+
+**Rehecho unas horas después, en la entrada 28.** Al fijar los colores a rojo y negro el tono
+volvió a poderse nombrar, así que "tu color" duró media mañana y ahora dice "Cayó en rojo". Lo
+que **no** cambió es la estructura de dos formas (`cayo` y `apuesta`): las frases siguen
+pidiendo gramática distinta. El test que guardaba esto pasó de comprobar que *no* se nombrara
+el tono a comprobar que el nombre **coincida con lo que se pinta**, que es la propiedad que de
+verdad importaba desde el principio.
+
+---
+
+## 27. La ✕ de la ruleta mide 27×26, y es la única salida del modal
+
+**Detectado:** 2026-09-22, en el recorrido.
+
+A 320×568 con la raíz a 24 px la ✕ queda dentro del viewport y no provoca scroll horizontal,
+así que el punto "la ✕ tiene que seguir alcanzable" de la entrada 25 §1 **pasa**. Pero mide
+**27×26 px**, por debajo del mínimo de 44×44 — que las fichas de color del mismo modal **sí**
+respetan. O sea que el código ya conoce la regla y la ✕ es la que se sale de ella.
+
+**Por qué no corre prisa:** fallar el toque no rompe ni pierde nada, el modal sigue ahí. Pero
+es la única salida a propósito —ni `Escape` ni el fondo lo cierran— así que en un teléfono
+pequeño una clienta con dedos grandes se queda peleando con la propuesta hasta acertar.
+
+**Qué hacer:** subir el área táctil a 44×44 sin agrandar el glifo, con padding o un `::before`
+transparente. No obliga a rediseñar nada.
+
+---
+
+## 28. La ruleta se ve pobre: hacerla realista, o pixel art — ✅ HECHO (2026-09-22)
+
+**Pedido:** 2026-09-22, al verla girar por primera vez.
+
+Hoy la rueda es lo mínimo que funciona: un `div` de 200×200 con
+`conic-gradient(var(--primario) 0deg 180deg, var(--ambar) 180deg 360deg)`, un puntero fijo a
+las 12 y `rotate()` para girar. Dos medias tartas planas. Se entiende, pero no parece una
+ruleta: parece un gráfico de sectores.
+
+**Lo primero que hay que decidir es cuál de las dos**, porque tiran en direcciones opuestas y
+empezar sin elegir es trabajo tirado:
+
+- **Realista.** Aro metálico, bisel, sombra proyectada, separadores entre sectores, quizá un
+  reflejo que no gire con la rueda. Pide salir del `conic-gradient` a SVG o canvas.
+- **Pixel art.** Rueda de baja resolución, bordes dentados a propósito, paleta reducida, y
+  **rotación a saltos** (`steps()`) en vez de continua, que es lo que hace que se lea como
+  pixel art y no como un PNG girando borroso.
+
+**Por qué no corre prisa:** es puro aspecto. El sorteo vive en `jugarRuleta`, en el servidor, y
+no se entera de cómo se pinte la rueda.
+
+### Tres cosas que hay que respetar, y una de ellas no tiene red
+
+**El mapa de ángulos es un contrato con `ruletaGiro.ts`.** Ese módulo calcula el aterrizaje
+dando por hecho que `primario` ocupa de 0° a 180° y `ambar` de 180° a 360°, medidos desde las
+12 en horario. Si el rediseño reordena o reparte distinto los sectores, hay que cambiar los
+dos a la vez.
+
+**Y ahí no hay red:** la entrada 25 §4 ya avisa de que `ruletaGiro.test.ts` **reimplementa a
+mano** el margen, el `conic-gradient` y la posición del puntero en vez de leerlos. O sea que
+invertir los colores del gradiente dejaría el test en verde y al puntero señalando el color
+contrario al que anuncia el acuse — exactamente el fallo que la entrada 26 acaba de destapar
+por otra vía. Quien toque el dibujo arregla ese test primero, o lo comprueba con los ojos.
+
+**La rueda se dibuja 50/50 aunque el sorteo no lo sea** (está en el spec). Realista invita a
+meter más sectores; hacerlo rompe esa decisión y hay que ir al spec antes, no después.
+
+**`prefers-reduced-motion` tiene que seguir cumpliendo.** Hoy da el resultado en 330 ms sin
+girar, contra 4136 ms del modo normal (verificado el 2026-09-22). Pixel art con `steps()` es
+justo el caso en que es fácil dejarse un `animation` suelto que se salte la regla.
+
+**Y no tocar la paleta.** El sector primario es `var(--primario)`, el color de cada clienta.
+Un rediseño que fije los colores a mano vuelve a meter el fallo de la entrada 26.
+
+---
+
+### Hecho el 2026-09-22: realista, en SVG, con los colores fijos
+
+**Se eligió realista.** El argumento no fue estético: es la única de las dos que preserva el
+giro continuo y el reparto de grados, y por tanto no obliga a tocar `rotacionDestino`, el
+margen de 10° ni la ruta de `reduced-motion` — justo donde esta entrada avisaba de que no hay
+red. Pixel art obligaba a rehacer el aterrizaje **y** a resolver el teñido, dos frentes a la
+vez.
+
+**Y se fijaron los colores a rojo y negro**, que no estaba en el plan de esta entrada pero
+resolvió de raíz el problema de la paleta: ver la 26 y el aviso del spec, actualizado.
+
+**El contrato dejó de ser un acuerdo tácito.** `SECTORES` en `ruletaGiro.ts` es ahora la única
+fuente: de ahí salen a la vez los `<path>` del SVG (vía `arcoDelSector`, que genera el `d` en
+vez de escribirlo a mano) y la cuenta del aterrizaje. **Con eso se tapa el agujero que
+nombraban la 25 §4 y esta entrada:** `ruletaGiro.test.ts` ya no reimplementa el gradiente ni el
+margen, los importa, así que invertir los sectores ya no puede dejar el test en verde con el
+puntero en el color contrario.
+
+Lo que se dibuja: aro de latón con bisel y 16 tachuelas, ranura oscura entre aro y material,
+sombreado de domo, reflejo especular difuminado, luz rebotada en el filo inferior, varilla
+metálica entre sectores y eje domado con su propio brillo. **Todo lo que describe la luz va
+fuera del `<g>` que gira** — aro, tachuelas, domo, reflejo, rebote y eje—, porque una luz que
+da vueltas con la pieza deja de leerse como luz.
+
+**Tres trampas que costaron, y quedan resueltas en el código:**
+
+- `transform-box: fill-box` en el `<g>`, o `rotate()` pivota sobre el origen del viewBox y la
+  rueda orbita en vez de girar. **Verificado midiendo:** 8 ángulos distintos durante el giro y
+  0.0 px de dispersión del centro, clavado en el centro del marco.
+- `frenar()` forzaba el reflow con `void rueda.offsetWidth`, y **los elementos SVG no tienen
+  `offsetWidth`** — es de `HTMLElement`. Se evaluaba a `undefined` y dejaba de forzar nada,
+  devolviendo en silencio el salto que ese truco existe para evitar. Ahora va por
+  `getBoundingClientRect().width`.
+- Trazar `arcoDelSector` en vez de rellenarlo dibuja también los dos radios hasta el centro,
+  o sea una V. Para el filo hay `arcoDelBorde`, que da sólo el arco.
+
+Desplegado al canal de preview, **no a producción**: verificado tras cada despliegue que el
+bundle vivo sigue con 0 apariciones de "ruleta". De paso el canal se extendió del 2026-09-28 al
+**2026-10-22**, así que el vencimiento que U2 marcaba como urgente ya no aprieta.
+
+Suites: web 192/192, functions 37/37, `npm run build` limpio.
+
+### Segunda pasada el mismo día: casillas, perspectiva y luz
+
+La primera versión no convencía, y el diagnóstico fue que **lo que delataba a la ruleta no era
+la luz sino la geometría**: dos medias tartas vistas de frente se leen como gráfico de sectores
+por la forma, antes de que nadie mire el sombreado. Por eso se hicieron las tres cosas, en
+orden de cuánto cambian la lectura.
+
+**1. Casillas alternadas.** 36 casillas rojo/negro en un ANILLO, con un cono en el centro. No es
+licencia artística: así funciona una ruleta —la bola cae en una casilla y apostar al color
+sigue siendo binario—, y **el dibujo sigue siendo mitad y mitad**, que es lo que pide el spec:
+18 de cada color. Las casillas van en anillo y no en porciones que lleguen al eje porque con 36
+porciones el centro es una estrella de picos y se vuelve a leer como gráfico.
+
+**Y se llevó por delante el margen de 10°, para bien.** Existía para no parar pegada a la
+costura, donde el puntero queda ambiguo. Con casillas el aterrizaje es el CENTRO de una —la
+bola se queda en la casilla, no sobre la varilla—, así que la ambigüedad desaparece sin margen
+que mantener. `rotacionDestino` elige entre las 18 casillas del color y para en el centro de la
+elegida.
+
+**2. Perspectiva.** `rotateX(52deg)` sobre un envoltorio HTML, no sobre el SVG: así el
+`rotate()` del `<g>` sigue ocurriendo en el plano propio de la rueda y el aterrizaje no se
+entera. Mezclar las dos transformaciones en el mismo elemento sí rompería la cuenta.
+
+**El puntero se queda a las 12.** Antes de hacerlo se dio por hecho que la inclinación lo
+apretaría, porque 10° de arco en el borde lejano son pocos píxeles. **Es falso:** `rotateX`
+comprime en vertical, y arriba la casilla se ve de frente en horizontal — es donde mejor se
+lee. Lo que se comprime son los laterales, a las 3 y a las 9, donde no hay puntero.
+
+**3. La luz, y luego el entorno.** Primero sólo un charco cálido detrás de la rueda y una
+sombra elíptica que la asienta. Eso era iluminación, no ambiente, y se quedaba corto: el modal
+seguía siendo una caja gris. La segunda mitad es la mesa entera — tapete verde con grano, foco
+cayendo desde arriba, viñeta por dentro y un canto dorado.
+
+**Oscurecer el modal no empeoró la lectura, la mejoró**, que era justo el riesgo que se temía
+por la ✕. El texto de ahí es claro (`--texto-tenue`) y el fondo pasó de `#2C2C2E` a un verde
+mucho más oscuro. Medido: de 3.9:1 a 4.48:1 sólo con el cambio de fondo, y a **6.38:1** tras
+aclarar `--texto-tenue` dentro del modal, que era gratis y dejaba el texto cómodamente por
+encima del mínimo de 4.5. La ✕ lo hereda.
+
+**Y salió un fallo que sólo se ve con el tapete puesto: "Jugar" era `var(--primario)`.** Para
+una clienta con paleta turquesa o menta, el botón principal quedaba camuflado en el verde del
+fondo. No es un caso raro: cuál se camufla depende de la paleta, o sea que es una lotería. Los
+botones del modal pasan a latón, acotados a `.ruleta-caja` — el resto de la página sigue con la
+paleta de la clienta. Es el mismo razonamiento que la entrada 26: dentro de la ruleta los
+colores son propios.
+
+El grano del tapete va en un `data:` de 300 bytes y no en un archivo, para no añadir una
+petición a una página cuyo arranque ya es la entrada 17.
+
+### Dos cosas que costaron y conviene no repetir
+
+**Las fichas se multiplicaron por 18 y nadie lo vio.** `eleccion` mapeaba `SECTORES`, que pasó
+de 2 entradas a 36, así que el modal dibujaba 18 fichas y el id `#ruleta-color-rojo` salía
+repetido 18 veces. Los tests no lo cazaron porque comprobaban que las fichas *existieran*, no
+cuántas. Hay dos tests nuevos: una ficha por color con su id único, y una casilla por sector.
+
+**`boundingBox()` NO sirve para comprobar que algo gira sobre su eje.** Devuelve la caja
+alineada a los ejes del cuadrado transformado, que se ensancha y encoge al rotar aunque el
+contenido no se mueva: daba 9.5 px de desplazamiento y un falso "orbita", incluso con un
+control —el aro— quieto en 0.0 px, porque el aro no rota y no sufre el mismo artefacto. Lo que
+sí sirve es mapear el punto central por `getScreenCTM()`: **0.00 px de desplazamiento** en 10
+muestras entre −66° y 154°.
+
+### Verificado en esta pasada
+
+- Gira sobre su eje dentro del `rotateX`: 0.00 px por `getScreenCTM`.
+- `reduced-motion`, medido **durante el frenado** y no con la rueda parada, que es el error de
+  la primera vez: `transition-duration` de 4s en normal y **0s** bajo `reduce`.
+- A 320×568 con la raíz a 24 px: **sin scroll horizontal**, ✕ dentro de pantalla, y el aro mide
+  189 px dentro de un modal de 288. Recomprobado con el tapete y la viñeta puestos. Hizo falta un `scale(0.87)`, porque la perspectiva agranda
+  el borde cercano y sin él el aro medía 221 px en una caja de 200.
+- Producción intacta tras cada despliegue: 0 apariciones de "ruleta" en el bundle vivo.
+- Suites: web 197/197, functions 37/37.
+
+### Tercera pasada: la sala, el cubilete, doce casillas y la bola
+
+La ambientación seguía sin leerse, y el motivo era que **el modal verde estaba sobre la página
+de la clienta, que es de su paleta**: con una clienta en turquesa salía verde sobre verde y no
+había ninguna sala oscura contra la que la mesa destacara. El fondo del modal dejaba pasar la
+página a 0.8 de opacidad. Ahora va casi opaco, desaturado y oscurecido — la sala apagada es lo
+que hace que la mesa parezca una mesa.
+
+**El cubilete de madera** es el objeto que faltaba. Una ruleta va encastrada en un cuenco
+pulido; sin él la rueda flotaba sobre un rectángulo de color por muy bien iluminada que
+estuviera. El `viewBox` se abrió a `-26 -26 252 252`, **alrededor del mismo centro (100,100)**,
+así que `punto`, `arcoDelSector` y `rotacionDestino` siguen valiendo sin tocarse.
+
+**De 36 casillas a 12.** Las 36 eran lo realista y se vieron: con 10° por casilla, comprimidos
+además por la perspectiva, había que entornar los ojos para saber de qué color era la franja
+bajo el puntero — que es la única pregunta que la clienta se hace. Con 30° se lee de un vistazo.
+**Acá el realismo y la legibilidad tiran en contra y gana la legibilidad.**
+
+**Y la bola**, que es lo que de verdad resuelve la duda, y encima siendo más realista: en una
+ruleta el resultado lo dice la bola, no una flecha. Sale gratis porque el frenado siempre deja
+la casilla ganadora bajo el puntero, así que la bola va **fija a las 12** sin calcular nada. Se
+dibuja sólo con la rueda quieta.
+
+### Tres fallos de esta pasada
+
+**El puntero desaparecía detrás de la madera, y tardé en verlo porque miré el CSS que creía
+haber escrito y no el que mandaba.** Había dos reglas para `.ruleta-puntero`: la que añadí con
+`z-index: 2` y el bloque original, más abajo, con `z-index: 1`. Misma especificidad, gana el
+último. Perdí también un rato culpando a `transform-style: preserve-3d` — que sí sobraba y se
+quitó, pero no era eso.
+
+**El navegador servía CSS cacheado** y estuve diagnosticando contra una versión vieja: el
+`z-index` computado seguía diciendo 1 después de dos despliegues. Con `Network.setCacheDisabled`
+por CDP se ve el de verdad. Si algo desplegado "no cambia", eso primero.
+
+**El modal encogía cuatro líneas al empezar el giro**, porque la propuesta se quita en cuanto se
+juega —decisión correcta, está comentada: no mezclar el premio con un castigo que ya no
+aplica—, pero quitarla del DOM daba un salto justo cuando la clienta mira la rueda. Ahora se
+queda ocupando sitio con `visibility: hidden`. Medido: de un salto visible a **0.0 px**. Al
+aparecer el acuse el modal sí encoge (471 → 370), y se deja así a propósito: eso ya es después
+del giro, leyendo el resultado, y reservar ahí dejaría un hueco vacío enorme.
+
+### Verificado en esta pasada
+
+- Gira sobre su eje: **0.00 px** por `getScreenCTM`.
+- `reduced-motion` durante el frenado: 4s en normal, **0s** bajo `reduce`.
+- Contraste sobre el tapete: **7.92:1** para la ✕ y el texto tenue.
+- 320×568 con la raíz a 24 px: sin scroll horizontal, ✕ dentro, y el cubilete mide 211 px en un
+  modal de 288.
+- Producción intacta: 0 apariciones de "ruleta" en el bundle vivo.
+- **La tirada real sigue sin gastarse.** Todo lo anterior salió de tiradas de prueba.
+
+**Lo que no se hizo:** mirarlo en un teléfono de verdad. Todo es Chromium.
+
+---
+
+## 29. Dos trampas de despliegue que costaron la tarde — ✅ HECHO (2026-09-22)
+
+**Detectado:** 2026-09-22, al intentar jugar la tirada real por primera vez.
+
+Las dos pestañas recibieron **400 y "Ya no hay nada que revivir"**. La falta reparable estaba
+ahí; el mensaje mentía. Dos fallos encadenados, y los dos habrían llegado a producción.
+
+### 1. `color_invalido` se disfrazaba de estado de la clienta
+
+`CODIGO_HTTP` mandaba `color_invalido` a `failed-precondition`, el mismo código que
+`sin_falta_reparable`. La página traduce ese código a *"Ya no hay nada que revivir"* — una
+frase sobre el estado de la clienta. Así que **un desajuste de contrato se leía como un hecho
+sobre ella**, y mandó a buscar el fallo donde no estaba.
+
+Arreglado: va en `invalid-argument`, y la página cae en su mensaje genérico, que no afirma nada
+falso.
+
+### 2. El despliegue subía el compilado viejo, en silencio
+
+El desajuste era real: la web mandaba `"rojo"` y la función desplegada esperaba `"primario"`,
+porque al renombrar los colores **no se redesplegaron las functions**. Y al redesplegarlas,
+siguió fallando: `functions/package.json` tiene `main: "lib/index.js"` y `firebase.json` **no
+tenía hook de `predeploy`**, así que `firebase deploy --only functions` subió el `lib/` del
+2026-09-21 sin compilar nada. El despliegue decía "Successful update operation" mientras subía
+el código de anteayer.
+
+Es **exactamente** el aviso que la entrada 17 ya daba para la web —*"el `npm run build` va
+aparte porque `firebase.json` no tiene hooks de `predeploy`; sin eso se sube el `dist` viejo y
+parece que el despliegue no sirvió"*— sólo que aplicado a `functions/`, donde nadie lo había
+escrito.
+
+**Arreglado de raíz, no a mano:** `firebase.json` lleva ahora `predeploy` en `hosting` y en
+`functions`, así que compilan solos. Se comprobó **borrando `functions/lib/` antes de
+desplegar**: el hook corrió `tsc`, lo reconstruyó y subió lo correcto. Si algún día el build
+falla, el despliegue falla — que es mucho mejor que subir algo viejo sin avisar.
+
+**La lección, que es la reutilizable:** si algo desplegado "no cambia", mirar el compilado y su
+fecha antes que el código fuente. Pasó también con el CSS ese mismo día, cacheado en el
+navegador (entrada 28).
 
 ---

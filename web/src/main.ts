@@ -8,6 +8,7 @@ import {
   observarMedallas,
   observarLogrosPersonales,
   observarVideos,
+  observarTirada,
 } from "./datos";
 import type {
   Cliente,
@@ -17,6 +18,8 @@ import type {
   VideoResumen,
 } from "./datos";
 import { hoyEnMazatlan } from "./fecha";
+import { mesAnterior, type Tirada } from "./tirada";
+import { modalRuleta, conectarRuleta } from "./ui/ruleta";
 import { credencialLista, huellaDeLaSesion, iniciarSesion, storage } from "./firebase";
 import { almacenesDelNavegador, saludDeLosAlmacenes } from "./sesion";
 import type { MotivoSinAcceso, ResultadoSesion } from "./sesion";
@@ -135,6 +138,8 @@ async function arrancar(): Promise<void> {
   let medallas: MedallaOtorgada[] = [];
   let logros: LogroPersonalOtorgado[] = [];
   let videos: VideoConUrl[] = [];
+  let tiradaEsteMes: Tirada | null = null;
+  let tiradaMesAnterior: Tirada | null = null;
 
   /**
    * Resuelve la URL de cada video ANTES de pintar (decisión del brief): así el HTML se arma
@@ -169,7 +174,8 @@ async function arrancar(): Promise<void> {
    */
   function prepararEstructura(nombre: string): void {
     if (document.querySelector("#contenido")) return;
-    app.innerHTML = `${saludo(nombre)}<div id="contenido"></div><div id="videos"></div>`;
+    app.innerHTML =
+      `${saludo(nombre)}<div id="contenido"></div><div id="videos"></div><div id="ruleta"></div>`;
     conectarSaludo();
   }
 
@@ -195,11 +201,49 @@ async function arrancar(): Promise<void> {
     caja.innerHTML = tarjetaVideos(videos);
   }
 
+  /** Lo último que se pintó en `#ruleta`; `null` mientras no se pintó nada. */
+  let firmaRuletaPintada: string | null = null;
+
+  /**
+   * La ruleta se repinta APARTE, por lo mismo que el saludo y los videos: `pintar()` rehace el
+   * `innerHTML` de `#contenido` en cada snapshot de Firestore, y una rueda a media vuelta se
+   * moriría en cuanto el entrenador marcara una asistencia. Acá el nodo solo se toca cuando
+   * cambia el estado del propio modal — igual que `pintarVideos`, comparando contra lo último
+   * pintado, porque `pintar()` llama a esta función en CADA snapshot (asistencias, avisos,
+   * medallas, logros, cliente, las dos tiradas), y `jugarRuleta` escribe en Firestore antes de
+   * responder: esos snapshots pueden llegar a mitad del giro libre o del frenado. Sin la
+   * guardia, ese repintado reemplaza el nodo de la rueda por uno sin la clase `.girando` ni el
+   * `transform` que `ruletaGiro.ts` le puso a mano, y la rueda se congela en seco.
+   */
+  function pintarRuleta(): void {
+    const caja = document.querySelector<HTMLElement>("#ruleta");
+    if (!caja) return;
+    const html = modalRuleta();
+    if (html === firmaRuletaPintada) return;
+    firmaRuletaPintada = html;
+    // `innerHTML` reemplaza `#ruleta-rueda` por un nodo nuevo, sin el `transform` que
+    // `frenar()` le dejó puesto a mano (ese estilo vive en el DOM, no en el string de
+    // `modalRuleta()`). Sin rescatarlo, justo el repintado que muestra el acuse ("cayó en...")
+    // haría que la rueda brincara de golpe a su ángulo de reposo, delatando la animación en el
+    // instante en que la clienta más está mirando el resultado.
+    const ruedaVieja = caja.querySelector<HTMLElement>("#ruleta-rueda");
+    const anguloVivo = ruedaVieja ? getComputedStyle(ruedaVieja).transform : null;
+    caja.innerHTML = html;
+    const ruedaNueva = caja.querySelector<HTMLElement>("#ruleta-rueda");
+    if (ruedaNueva && anguloVivo && anguloVivo !== "none") {
+      ruedaNueva.style.transition = "none";
+      ruedaNueva.style.transform = anguloVivo;
+    }
+    conectarRuleta(pintarRuleta);
+  }
+
   function pintar(): void {
     if (!cliente) {
-      // Se tira la estructura entera, así que la firma de los videos deja de describir nada.
+      // Se tira la estructura entera, así que las firmas de videos y ruleta dejan de
+      // describir nada.
       firmaPintada = null;
-      // Callarse mientras el cliente no llegó. Los seis listeners repintan al llegar, y el de
+      firmaRuletaPintada = null;
+      // Callarse mientras el cliente no llegó. Los ocho listeners repintan al llegar, y el de
       // las medallas o el de las asistencias puede ganarle al del cliente —otorgarle algo
       // desde la app es la forma más fácil de provocarlo—: pintar ahí "No encontramos tus
       // datos" es decirle que no existe cuando lo único que pasa es que su documento todavía
@@ -240,12 +284,13 @@ async function arrancar(): Promise<void> {
     contenido.innerHTML = `
       ${tarjetaDia(cliente, hoy, accionesDelDia, asistencias)}
       ${tarjetasStats(asistencias, hoy)}
-      ${tarjetaRevivir(cliente, hoy, asistencias)}
+      ${tarjetaRevivir(cliente, hoy, asistencias, tiradaEsteMes, tiradaMesAnterior)}
       ${calendario(asistencias, mesVisible, hoy)}
       ${tarjetaMedallas(medallas)}
       ${tarjetaLogrosPersonales(logros)}
     `;
     pintarVideos();
+    pintarRuleta();
     // Los listeners se vuelven a colgar en cada repintado: `innerHTML` tira los anteriores
     // junto con los elementos. El estado de las dos acciones no vive acá, sino dentro de sus
     // módulos, justo para que un snapshot a destiempo no lo borre.
@@ -319,6 +364,11 @@ async function arrancar(): Promise<void> {
   observarMedallas(clienteId, (m) => { medallas = m; pintar(); });
   observarLogrosPersonales(clienteId, (l) => { logros = l; pintar(); });
   observarVideos(clienteId, (v) => { resolverVideos(v); });
+  observarTirada(clienteId, hoy.slice(0, 7), (t) => { tiradaEsteMes = t; pintar(); });
+  observarTirada(clienteId, mesAnterior(hoy.slice(0, 7)), (t) => {
+    tiradaMesAnterior = t;
+    pintar();
+  });
 }
 
 arrancar();

@@ -67,4 +67,33 @@ class CupoRevivesCalculatorTest {
         val asistencias = listOf(falta("2026-09-01", porCliente = true, justificada = false))
         assertEquals(0, CupoRevivesCalculator.gastadosEnElMes(asistencias, "2026-09"))
     }
+
+    // GEMELO de los casos de `cupo.test.ts`. Los mismos números, para que los dos lados no
+    // se separen sin que nadie lo note.
+    @Test
+    fun `el castigo baja el maximo del mes a 2`() {
+        assertEquals(2, CupoRevivesCalculator.disponiblesEnElMes(emptyList(), "2026-09", 1))
+    }
+
+    @Test
+    fun `sin castigo el maximo sigue siendo 3`() {
+        assertEquals(3, CupoRevivesCalculator.disponiblesEnElMes(emptyList(), "2026-09", 0))
+    }
+
+    @Test
+    fun `con castigo y dos gastadas quedan 0`() {
+        val asistencias = listOf(
+            falta("2026-09-01", porCliente = true),
+            falta("2026-09-02", porCliente = true)
+        )
+        assertEquals(0, CupoRevivesCalculator.disponiblesEnElMes(asistencias, "2026-09", 1))
+    }
+
+    @Test
+    fun `sin tercer parametro se comporta como antes`() {
+        val asistencias = listOf(
+            falta("2026-09-01", porCliente = true)
+        )
+        assertEquals(2, CupoRevivesCalculator.disponiblesEnElMes(asistencias, "2026-09"))
+    }
 }

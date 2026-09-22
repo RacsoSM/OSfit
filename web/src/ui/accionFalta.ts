@@ -3,6 +3,8 @@ import { MAXIMO_POR_MES, disponiblesEnElMes } from "../cupo";
 import { faltaQueRompioLaRacha } from "../faltaRompio";
 import { avisarFalta, revivirRacha } from "../acciones";
 import { escapar, esFinDeSemana } from "./tarjetaDia";
+import { castigoDelMes, type Tirada } from "../tirada";
+import { abrirRuleta } from "./ruleta";
 
 /**
  * Las dos entradas al mismo endpoint, que viven en sitios distintos de la página:
@@ -38,6 +40,17 @@ interface Estado {
 
 const estado: Estado = { pendiente: null, enVuelo: false, exito: null, error: null };
 
+/**
+ * El máximo real de revives de este mes: 3, o 2 si perdió la ruleta el mes pasado.
+ *
+ * Lo deja `tarjetaRevivir` al pintar, en vez de recalcularlo donde se usa, porque ni el
+ * diálogo ni el conectado reciben la tirada del mes anterior. Decir "te quedan 2 este mes
+ * (perdiste la ruleta el mes pasado)" en la tarjeta y "¿usar uno de tus 3 revives?" en el
+ * diálogo que sale al tocarla es justo la incoherencia de números que el mes castigado tiene
+ * que poder explicarse solo.
+ */
+let maximoDelMes = MAXIMO_POR_MES;
+
 function enPalabras(fecha: string): string {
   return new Intl.DateTimeFormat("es-MX", {
     timeZone: "UTC",
@@ -47,9 +60,15 @@ function enPalabras(fecha: string): string {
   }).format(new Date(`${fecha}T12:00:00Z`));
 }
 
-/** "Te quedan 2 este mes." / "Te queda 1 este mes." */
-function cuantosQuedan(disponibles: number): string {
-  return disponibles === 1 ? "Te queda 1 este mes." : `Te quedan ${disponibles} este mes.`;
+/**
+ * "Te quedan 2 este mes." / "Te queda 1 este mes."
+ *
+ * En un mes castigado dice además por qué: sin esa frase el cliente ve un número que no
+ * cuadra con los 3 que se le prometieron y no tiene forma de saber de dónde salió.
+ */
+function cuantosQuedan(disponibles: number, castigado: boolean): string {
+  const base = disponibles === 1 ? "Te queda 1 este mes." : `Te quedan ${disponibles} este mes.`;
+  return castigado ? `${base} (perdiste la ruleta el mes pasado)` : base;
 }
 
 /**
@@ -58,8 +77,8 @@ function cuantosQuedan(disponibles: number): string {
  */
 function confirmacion(disponibles: number): string {
   return `
-    <p class="confirmar-titulo">¿Usar uno de tus ${MAXIMO_POR_MES} revives?</p>
-    <p class="accion-nota">${cuantosQuedan(disponibles)}</p>
+    <p class="confirmar-titulo">¿Usar uno de tus ${maximoDelMes} revives?</p>
+    <p class="accion-nota">${cuantosQuedan(disponibles, false)}</p>
     <div class="fila-botones">
       <button id="falta-cancelar" class="boton secundario" ${estado.enVuelo ? "disabled" : ""}>
         Cancelar
@@ -110,37 +129,56 @@ export function accionHoyNoPuedo(cliente: Cliente, hoy: string, yaAviso: boolean
  * No se dibuja si no hay nada que reparar. Son dos motivos distintos y los dos terminan igual:
  * la racha está viva, o la rotura ya quedó fuera de la ventana de 2 días hábiles. En ninguno
  * de los dos casos la página le recuerda al cliente que puede faltar.
+ *
+ * Desde la ruleta (2026-09-18) esta tarjeta tiene dos estados más, y la regla que los ordena
+ * es que **el juego solo existe donde antes había una pared**: sin cupo, con la racha rota y
+ * la cuenta activa. Con cupo no cambia nada, que es el camino de todos los clientes.
  */
 export function tarjetaRevivir(
   cliente: Cliente,
   hoy: string,
-  asistencias: Asistencia[]
+  asistencias: Asistencia[],
+  tiradaEsteMes: Tirada | null,
+  tiradaMesAnterior: Tirada | null
 ): string {
   if (esFinDeSemana(hoy)) return "";
 
   const rota = faltaQueRompioLaRacha(asistencias, hoy);
   if (rota === null && estado.exito !== "revivir") return "";
 
-  const disponibles = disponiblesEnElMes(asistencias, hoy.slice(0, 7));
+  const castigo = castigoDelMes(tiradaMesAnterior);
+  maximoDelMes = MAXIMO_POR_MES - castigo;
+  const disponibles = disponiblesEnElMes(asistencias, hoy.slice(0, 7), castigo);
   const sinCupo = disponibles === 0;
   const bloqueado = !cliente.activo || sinCupo || estado.enVuelo;
+
+  // La propuesta: sin cupo, con la cuenta activa y sin haber jugado este mes.
+  const ofreceJuego = sinCupo && cliente.activo && tiradaEsteMes === null && rota !== null;
+
+  // Sin cupo y con la tirada ya gastada no queda nada que ofrecer, así que tampoco se pinta el
+  // botón: un botón muerto es la pared lisa que esta tarjeta existe para tumbar.
+  const sinNadaQueOfrecer = sinCupo && cliente.activo && !ofreceJuego;
 
   const cuerpo =
     estado.pendiente !== null
       ? confirmacion(disponibles)
       : estado.exito === "revivir"
         ? ACUSE_REVIVIR
-        : `<button id="falta-revivir" class="boton secundario" ${bloqueado ? "disabled" : ""}>
-             💔 Revivir mi racha
-           </button>
-           <p class="accion-nota">Repara tu falta del ${escapar(enPalabras(rota as string))}.</p>
-           ${
-             !cliente.activo
-               ? `<p class="accion-nota">Tu cuenta está pausada. Habla con tu entrenador.</p>`
-               : sinCupo
-                 ? `<p class="accion-nota">Ya usaste tus ${MAXIMO_POR_MES} revives de este mes.</p>`
-                 : `<p class="accion-nota">${cuantosQuedan(disponibles)}</p>`
-           }`;
+        : ofreceJuego
+          ? `<p class="accion-nota">💔 Te quedaste sin vidas para revivir tu racha… pero te
+               tengo una propuesta.</p>
+             <button id="falta-propuesta" class="boton">Leer propuesta</button>`
+          : sinNadaQueOfrecer
+            ? `<p class="accion-nota">Ya usaste tus revives de este mes. Y tu tirada.</p>`
+            : `<button id="falta-revivir" class="boton secundario" ${bloqueado ? "disabled" : ""}>
+                 💔 Revivir mi racha
+               </button>
+               <p class="accion-nota">Repara tu falta del ${escapar(enPalabras(rota as string))}.</p>
+               ${
+                 !cliente.activo
+                   ? `<p class="accion-nota">Tu cuenta está pausada. Habla con tu entrenador.</p>`
+                   : `<p class="accion-nota">${cuantosQuedan(disponibles, castigo > 0)}</p>`
+               }`;
 
   const error =
     estado.error?.origen === "revivir"
@@ -180,6 +218,12 @@ export function conectarAccionFalta(
     }
   });
 
+  // La propuesta solo abre el modal: la ruleta tiene su propio estado y su propio conectado.
+  document.querySelector("#falta-propuesta")?.addEventListener("click", () => {
+    abrirRuleta();
+    repintar();
+  });
+
   document.querySelector("#falta-revivir")?.addEventListener("click", () => {
     const rota = faltaQueRompioLaRacha(asistencias, hoy);
     if (rota === null) return;
@@ -212,7 +256,7 @@ export function conectarAccionFalta(
         origen: "revivir",
         texto:
           codigo === "functions/resource-exhausted"
-            ? `Ya usaste tus ${MAXIMO_POR_MES} revives de este mes.`
+            ? `Ya usaste tus ${maximoDelMes} revives de este mes.`
             : "No pudimos registrar tu aviso. Inténtalo otra vez en un momento.",
       };
       estado.pendiente = null;

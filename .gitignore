@@ -16,3 +16,6 @@ web/dist/
 functions/lib/
 .firebase/
 .kotlin/
+
+# Ajustes locales de Claude Code: son de esta maquina, no del equipo.
+.claude/settings.local.json

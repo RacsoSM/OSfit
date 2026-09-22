@@ -237,3 +237,270 @@ main { max-width: 480px; margin: 0 auto; padding: 16px 14px 48px; }
   padding: 24px 8px; text-align: center; border-radius: 10px;
   background: var(--superficie-alta); color: var(--texto-tenue); font-size: 13px;
 }
+
+/* La ruleta. El modal va en primer plano y lo demás queda visible pero apagado. */
+.ruleta-fondo {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  /* Se desplaza en vez de recortar, y la caja se centra con `margin: auto` en lugar de con
+     `align-items: center`: centrar por alineación recorta arriba y abajo cuando la caja es más
+     alta que la pantalla (teléfono en horizontal, o texto agrandado), y como la ✕ es la única
+     salida del modal, recortarla es dejar a la clienta encerrada. */
+  overflow-y: auto;
+  justify-content: center;
+  padding: 16px;
+  background: radial-gradient(
+    ellipse at 50% 42%,
+    rgba(10, 13, 11, 0.9) 0%,
+    rgba(4, 6, 5, 0.975) 68%
+  );
+  backdrop-filter: blur(9px) saturate(0.55) brightness(0.5);
+
+  /* Los colores de la ruleta son FIJOS y viven acá, no en `:root` junto a la paleta, para que
+     se vea que `paleta.ts` no los pisa: esa función sólo escribe `--primario*`. Atarlos otra
+     vez a la paleta reintroduce el fallo de la entrada 26 del backlog, donde el acuse nombraba
+     un color que la clienta no tenía delante. */
+  /* Más oscuro que el `--rojo` del calendario (#C4453D) a propósito: ahí el rojo significa
+     "Faltaste", que es justo la falta que esta ruleta intenta perdonar. Ver el spec. */
+  --ruleta-rojo: #9e1b26;
+  --ruleta-negro: #16161a;
+}
+/* La mesa. Tres capas: el grano del tapete, el foco que cae desde arriba y el paño verde.
+   Y una viñeta por dentro, que es lo que cierra la escena.
+
+   Oscurecer el modal NO empeora la lectura, al revés: el texto de acá es claro
+   (`--texto-tenue` es #8A8A8A) y el fondo pasa de #2C2C2E a un verde mucho más oscuro, así
+   que el contraste sube. Se midió antes de dejarlo, justamente porque la ✕ es la única salida
+   del modal y la viñeta cae encima de ella (entrada 27 del backlog).
+
+   El grano va en `data:` y no en un archivo: son 300 bytes y evita una petición más en una
+   página cuyo arranque ya es una entrada del backlog (la 17). */
+.ruleta-caja {
+  position: relative;
+  margin: auto;
+  background-color: #0a1d15;
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)' opacity='0.35'/%3E%3C/svg%3E"),
+    radial-gradient(ellipse 85% 42% at 50% 56%, rgba(255, 211, 150, 0.2), transparent 62%),
+    radial-gradient(ellipse 120% 88% at 50% 52%, #133026 0%, #0b2018 46%, #040d09 100%);
+  background-blend-mode: overlay, normal, normal;
+  border: 1px solid rgba(196, 166, 96, 0.24);
+  box-shadow:
+    inset 0 0 90px 26px rgba(0, 0, 0, 0.72),
+    0 22px 56px rgba(0, 0, 0, 0.7);
+
+  /* Sobre el tapete, el `--texto-tenue` de la página se quedaba en 4.48:1, justo por debajo
+     del mínimo de 4.5. Se aclara SOLO acá dentro, que es donde cambió el fondo. Importa más
+     de lo que parece: lo hereda la ✕, que es la única salida del modal (entrada 27). */
+  --texto-tenue: #b0afa2;
+  border-radius: 20px;
+  padding: 20px 18px;
+  width: 100%;
+  max-width: 360px;
+  text-align: center;
+}
+.ruleta-x {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  background: none;
+  border: 0;
+  color: var(--texto-tenue);
+  font-size: 18px;
+  cursor: pointer;
+}
+.ruleta-pregunta { font-weight: 800; margin: 14px 0 10px; }
+/* Ocupa sitio pero no se lee: evita que el modal encoja al empezar el giro. */
+.ruleta-caja .invisible { visibility: hidden; }
+
+/* "Jugar" deja de usar `--primario`. Sobre el tapete verde, una clienta con paleta turquesa o
+   menta se encontraba el botón principal camuflado en el fondo — y cuál es depende de la
+   paleta, así que no es un caso raro sino una lotería. Dentro de este modal los colores son
+   propios, igual que los de la rueda (entrada 26): latón sobre verde, que además es el par de
+   un casino. El acotado a `.ruleta-caja` es a propósito: el resto de la página sigue con la
+   paleta de la clienta. */
+.ruleta-caja .boton {
+  background: linear-gradient(180deg, #e8cf8f 0%, #c9a24a 100%);
+  color: #2a1f05;
+}
+.ruleta-caja .boton.secundario {
+  background: transparent;
+  color: #e8dcc0;
+  border: 1px solid rgba(214, 186, 116, 0.45);
+}
+.ruleta-caja .boton:disabled { opacity: 0.45; }
+.ruleta-fichas { display: flex; gap: 14px; justify-content: center; margin-bottom: 16px; }
+.ruleta-ficha {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 3px solid transparent;
+  cursor: pointer;
+}
+.ruleta-ficha.rojo { background: var(--ruleta-rojo); }
+/* La ficha negra sobre la superficie oscura del modal se perdería sin este filo. */
+.ruleta-ficha.negro {
+  background: var(--ruleta-negro);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.28);
+}
+.ruleta-ficha.elegida { border-color: var(--texto); }
+.ruleta-ficha:disabled { cursor: default; }
+
+/* La rueda va inclinada, como sobre una mesa. La perspectiva es la pista más fuerte de que
+   algo es un objeto y no un dibujo, y es lo que hace el salto que el sombreado solo no daba.
+
+   El `rotateX` va en un envoltorio HTML y NO en el SVG: así el `rotate()` del `<g>` sigue
+   ocurriendo en el plano propio de la rueda y `rotacionDestino` no se entera de nada. Mezclar
+   las dos transformaciones en el mismo elemento sí rompería la cuenta.
+
+   La caja es más baja que ancha porque al inclinarla la rueda ocupa menos alto; dejarla
+   cuadrada abría un hueco arriba y abajo. */
+.ruleta-marco {
+  position: relative;
+  width: 244px;
+  height: 178px;
+  margin: 0 auto 14px;
+  perspective: 760px;
+}
+/* La luz del casino: un charco cálido cayendo sobre la mesa. Va DETRÁS de la rueda y no tiñe
+   el texto del modal, porque bajar el contraste acá se paga en la ✕, que es la única salida
+   (entrada 27 del backlog). Es ambiente, no un filtro encima de todo. */
+.ruleta-marco::before {
+  content: "";
+  position: absolute;
+  inset: -46px -34px -30px;
+  background: radial-gradient(
+    ellipse at 50% 40%,
+    rgba(255, 201, 130, 0.17),
+    rgba(255, 146, 58, 0.07) 46%,
+    transparent 72%
+  );
+  pointer-events: none;
+}
+/* Y la sombra que la asienta en la mesa: sin ella la rueda inclinada flota. */
+.ruleta-marco::after {
+  content: "";
+  position: absolute;
+  left: 14%;
+  right: 14%;
+  bottom: 2px;
+  height: 20px;
+  background: radial-gradient(ellipse at 50% 50%, rgba(0, 0, 0, 0.55), transparent 70%);
+  filter: blur(3px);
+  pointer-events: none;
+}
+.ruleta-mesa { position: absolute; z-index: 1; }
+.ruleta-mesa {
+  position: absolute;
+  inset: -24px 0;
+  transform: rotateX(52deg) scale(0.87);
+  /* Sin `preserve-3d`: no hay hijos en 3D que preservar —el SVG es plano— y en cambio creaba
+     un contexto de apilado que se comía el puntero, que es un hermano con más z-index. */
+}
+/* El puntero es fijo y la rueda es la que gira, como una ruleta de verdad. */
+/* El puntero va con la punta tocando el aro metálico, no la madera. La posición depende del
+   `rotateX` y del `scale`, así que se midió en el navegador en vez de calcularla: con la
+   inclinación actual el aro empieza a 45.8px del borde de la caja. Si se cambia el ángulo o el
+   tamaño de la rueda, hay que volver a medirlo. */
+.ruleta-puntero {
+  position: absolute;
+  top: 32px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-top: 16px solid #f4f1e8;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.9));
+  /* Por encima de la mesa (z-index 1). El SVG se pinta después en el DOM, así que empatar a 1
+     dejaba que la madera se comiera el puntero. */
+  z-index: 2;
+}
+.ruleta-svg { display: block; width: 100%; height: 100%; }
+
+/* Nada de esto gira: describe de dónde viene la luz, y una luz que gira con la pieza deja de
+   leerse como luz. El aro asoma por fuera del disco y ése es además el filo que impide que la
+   mitad negra se funda con la superficie oscura del modal. */
+.ruleta-madera { fill: url(#ruleta-madera); }
+/* El filo iluminado del borde de la madera, y la sombra del hueco donde encaja la rueda: sin
+   esa sombra la rueda se ve pegada encima de la madera en vez de metida dentro. */
+.ruleta-madera-luz { fill: none; stroke: rgba(255, 206, 150, 0.22); stroke-width: 1.6; }
+.ruleta-madera-hueco { fill: none; stroke: rgba(0, 0, 0, 0.75); stroke-width: 5; }
+.ruleta-aro { fill: url(#ruleta-metal); }
+/* La ranura entre el aro y el material: sin ella el latón y el sector se tocan y el aro se ve
+   pegado encima en vez de rodeando. */
+.ruleta-ranura { fill: none; stroke: rgba(0, 0, 0, 0.55); stroke-width: 2.4; }
+.ruleta-tachuela { fill: url(#ruleta-metal); stroke: rgba(0, 0, 0, 0.35); stroke-width: 0.5; }
+
+/* El domo y el reflejo van ENCIMA de los sectores, fuera del grupo que gira. */
+.ruleta-domo { fill: url(#ruleta-domo); }
+/* La luz rebotada del borde de abajo: un trazo claro siguiendo el filo, no un relleno. Es el
+   detalle que separa una esfera de un disco con una sombra encima. */
+.ruleta-rebote {
+  fill: none;
+  stroke: rgba(255, 245, 225, 0.5);
+  stroke-width: 3;
+  filter: blur(2.5px);
+}
+.ruleta-reflejo { fill: url(#ruleta-reflejo); }
+
+.ruleta-eje-sombra { fill: rgba(0, 0, 0, 0.5); }
+.ruleta-eje { fill: url(#ruleta-eje); }
+.ruleta-eje-brillo { fill: #fffdf2; opacity: 0.75; }
+
+/* Mitad y mitad: la ruleta se dibuja justa aunque el sorteo no lo sea (ver el spec). El
+   reparto sale de `SECTORES` en `ruletaGiro.ts`; acá sólo se le pone color. */
+.ruleta-sector.rojo { fill: var(--ruleta-rojo); }
+.ruleta-sector.negro { fill: var(--ruleta-negro); }
+/* Las varillas que separan las casillas. Éstas SÍ giran: son parte del material. */
+.ruleta-varilla { stroke: #c9ae6b; stroke-width: 1.4; opacity: 0.9; }
+
+/* La bola: es ELLA la que dice dónde cayó. Va con su propia sombra proyectada sobre la casilla
+   para que se lea apoyada dentro y no flotando encima. */
+.ruleta-bola {
+  fill: radial-gradient(#fff, #bbb);
+  fill: #f4f1e8;
+  stroke: rgba(0, 0, 0, 0.45);
+  stroke-width: 0.8;
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.75));
+}
+
+/* El cono central, con su filo claro donde arranca el anillo de casillas. */
+.ruleta-cono { fill: url(#ruleta-cono); }
+.ruleta-cono-filo { fill: none; stroke: rgba(255, 245, 225, 0.22); stroke-width: 1.2; }
+
+/* `transform-box: fill-box` NO es opcional: sin él `transform-origin: center` se resuelve
+   contra el viewport del SVG y no contra la caja del `<g>`, y la rueda orbita alrededor de una
+   esquina en vez de girar sobre su eje. Es la forma más común de romper esto. */
+.ruleta-rueda {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.ruleta-rueda.girando { animation: ruleta-libre 0.7s linear infinite; }
+/* El `from` va explícito: sin él lo pone el `transform` inline que dejó la tirada anterior, y
+   el giro de la segunda tirada de la sesión se veía como un bamboleo entre ese ángulo y 360°
+   en vez de como una rueda girando. */
+@keyframes ruleta-libre {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Sin giro para quien pidió menos movimiento: el resultado llega igual, con un fundido.
+   `.ruleta-marco + p` es el acuse (gano/perdió/prueba/error): siempre es el párrafo que
+   sigue a la rueda en el HTML de `modalRuleta()`, así que no hace falta listar sus clases
+   una por una ni tocar `ruleta.ts` para lograr el fundido. */
+@media (prefers-reduced-motion: reduce) {
+  .ruleta-rueda.girando { animation: none; }
+  /* `frenar()` pone `transition: transform 4000ms ...` inline (ruletaGiro.ts) siempre, porque
+     lo que consulta ahí `matchMedia` es cuánto esperar antes del acuse, no si escribir el
+     inline: sin este `!important` de autor, que gana por cascada sobre ese inline, el frenado
+     —tres vueltas con easing a lo largo de 4 segundos— se vería entero. No toca `opacity`, así
+     que no interfiere con el fundido del acuse de abajo. */
+  .ruleta-rueda { transition: none !important; }
+  .ruleta-marco + p { animation: ruleta-fundido 200ms linear; }
+}
+@keyframes ruleta-fundido {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
