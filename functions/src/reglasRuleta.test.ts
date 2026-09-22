@@ -49,13 +49,13 @@ describe("motivoDeRechazo", () => {
 
 describe("resolverTirada", () => {
   it("cae en el color apostado cuando el azar entra en la probabilidad", () => {
-    expect(resolverTirada("primario", 0)).toEqual({ gano: true, color: "primario" });
-    expect(resolverTirada("ambar", 0.69)).toEqual({ gano: true, color: "ambar" });
+    expect(resolverTirada("rojo", 0)).toEqual({ gano: true, color: "rojo" });
+    expect(resolverTirada("negro", 0.69)).toEqual({ gano: true, color: "negro" });
   });
 
   it("cae en el otro color cuando el azar la pasa", () => {
-    expect(resolverTirada("primario", 0.7)).toEqual({ gano: false, color: "ambar" });
-    expect(resolverTirada("ambar", 0.99)).toEqual({ gano: false, color: "primario" });
+    expect(resolverTirada("rojo", 0.7)).toEqual({ gano: false, color: "negro" });
+    expect(resolverTirada("negro", 0.99)).toEqual({ gano: false, color: "rojo" });
   });
 
   // El 0.7 es el contrato con el entrenador y el único lugar donde vive. Si alguien lo
@@ -66,7 +66,7 @@ describe("resolverTirada", () => {
 
   it("de 1000 tiradas con azar parejo gana cerca del 70 por ciento", () => {
     const ganadas = Array.from({ length: 1000 }, (_, i) =>
-      resolverTirada("primario", i / 1000)
+      resolverTirada("rojo", i / 1000)
     ).filter((t) => t.gano).length;
     expect(ganadas).toBe(700);
   });

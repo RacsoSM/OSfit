@@ -3,7 +3,7 @@ import { castigoDelMes, mesAnterior, type Tirada } from "./tirada";
 
 const tirada = (campos: Partial<Tirada> = {}): Tirada => ({
   mes: "2026-08",
-  color: "primario",
+  color: "rojo",
   gano: false,
   fecha: "2026-08-20",
   ...campos,

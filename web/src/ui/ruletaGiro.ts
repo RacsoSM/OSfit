@@ -5,11 +5,73 @@
  * (cómo llega hasta ahí). Separadas porque los tests de este repo corren en Node sin jsdom.
  */
 
-/** Dos colores, media vuelta cada uno. La ruleta se dibuja mitad y mitad (ver el spec). */
+/**
+ * Los dos colores y cómo se reparten el dibujo. **Esta constante es el contrato:** de acá
+ * salen a la vez los sectores del SVG que pinta `modalRuleta` y el aterrizaje que calcula
+ * `rotacionDestino`, así que mover un sector mueve las dos cosas juntas y no pueden discrepar.
+ *
+ * Antes no era así. El reparto vivía en un `conic-gradient` de `estilos.css` y el test lo
+ * reimplementaba a mano, de modo que invertir los colores habría dejado el test en verde y al
+ * puntero señalando el color contrario al que anunciaba el acuse. Ver la entrada 28 del
+ * backlog.
+ *
+ * Los grados se miden desde las 12 en sentido horario, que es donde el puntero está fijo.
+ * GEMELO de `COLORES` en `functions/src/reglasRuleta.ts`: los nombres viajan a Firestore.
+ */
+export const SECTORES = [
+  { color: "rojo", desde: 0, hasta: 180 },
+  { color: "negro", desde: 180, hasta: 360 },
+] as const;
+
+export type Color = (typeof SECTORES)[number]["color"];
+
+/** Media vuelta cada uno: la ruleta se dibuja justa aunque el sorteo no lo sea (ver el spec). */
 export const GRADOS_POR_SECTOR = 180;
 
 /** Margen en grados para no aterrizar pegada al borde, donde el puntero queda ambiguo. */
-const MARGEN = 10;
+export const MARGEN = 10;
+
+/** Radio del disco dentro del `viewBox` de 200×200. El aro va por fuera, en 96. */
+const RADIO = 92;
+
+/** Un punto del borde del disco. 0° son las 12 y crece en horario, como todo acá. */
+function punto(grados: number): string {
+  const rad = ((grados - 90) * Math.PI) / 180;
+  return `${(100 + RADIO * Math.cos(rad)).toFixed(2)},${(100 + RADIO * Math.sin(rad)).toFixed(2)}`;
+}
+
+/**
+ * El atributo `d` de un sector. Se GENERA desde [SECTORES] en vez de escribirse a mano en el
+ * marcado, que es lo que impide que el dibujo y el aterrizaje se separen.
+ */
+export function arcoDelSector(sector: { desde: number; hasta: number }): string {
+  const grande = sector.hasta - sector.desde > 180 ? 1 : 0;
+  return `M100,100 L${punto(sector.desde)} A${RADIO},${RADIO} 0 ${grande},1 ${punto(sector.hasta)} Z`;
+}
+
+/**
+ * Sólo el arco del borde, sin los dos radios que cierran la porción. [arcoDelSector] devuelve
+ * una porción de tarta, así que trazarla en vez de rellenarla dibuja también las dos rectas
+ * hasta el centro — una V. Esto es para lo que se traza: el filo del disco.
+ */
+export function arcoDelBorde(desde: number, hasta: number): string {
+  const grande = hasta - desde > 180 ? 1 : 0;
+  return `M${punto(desde)} A${RADIO},${RADIO} 0 ${grande},1 ${punto(hasta)}`;
+}
+
+/** Qué color está pintado en ese punto del dibujo, medido desde las 12 en horario. */
+export function colorEnElDibujo(grados: number): Color {
+  const g = ((grados % 360) + 360) % 360;
+  return (SECTORES.find((s) => g >= s.desde && g < s.hasta) ?? SECTORES[0]).color;
+}
+
+/**
+ * Qué color queda bajo el puntero —fijo a las 12— con la rueda girada [rotacion] grados.
+ * Es la relación que los tests fijan, y vive acá para que la fijen contra el dibujo de verdad.
+ */
+export function colorBajoElPuntero(rotacion: number): Color {
+  return colorEnElDibujo(360 - (((rotacion % 360) + 360) % 360));
+}
 
 /** Milisegundos de giro libre antes de empezar a frenar, aunque el servidor responda antes. */
 export const MINIMO_GIRO_LIBRE_MS = 800;
@@ -26,20 +88,20 @@ export const MS_DE_FRENADO = 4000;
  * pasa a `transform: rotate()`, y confundir los dos números es exactamente lo que hacía que
  * el puntero aterrizara en el color contrario al que anunciaba el acuse.
  *
- * El `conic-gradient` de `estilos.css` pinta `primario` de 0° a 180° y `ambar` de 180° a
- * 360°, medidos desde las 12 en sentido horario, y el puntero es fijo a las 12. Como
- * `rotate(D)` gira la rueda D grados en horario, bajo el puntero queda el material que
- * estaba en `360 − D`: la rotación es el espejo del ángulo del sector, no el mismo número.
+ * [SECTORES] dice qué hay pintado en cada grado, medido desde las 12 en horario, y el
+ * puntero es fijo a las 12. Como `rotate(D)` gira la rueda D grados en horario, bajo el
+ * puntero queda el material que estaba en `360 − D`: la rotación es el espejo del ángulo del
+ * sector, no el mismo número.
  *
  * [azar] entra como parámetro (0 a 1) en vez de llamar a `Math.random()` acá para poder
  * probarlo. No decide nada del resultado: el color ya viene decidido, esto solo elige en qué
  * punto de ese medio círculo se detiene, para que dos tiradas del mismo color no se vean
  * idénticas.
  */
-export function rotacionDestino(color: "primario" | "ambar", azar: number): number {
-  const inicio = color === "primario" ? 0 : GRADOS_POR_SECTOR;
-  const util = GRADOS_POR_SECTOR - MARGEN * 2;
-  const enElSector = inicio + MARGEN + azar * util;
+export function rotacionDestino(color: Color, azar: number): number {
+  const sector = SECTORES.find((s) => s.color === color) ?? SECTORES[0];
+  const util = sector.hasta - sector.desde - MARGEN * 2;
+  const enElSector = sector.desde + MARGEN + azar * util;
   return (360 - enElSector) % 360;
 }
 
@@ -64,12 +126,12 @@ export function anguloDesdeTransform(transformComputado: string): number {
 }
 
 /** El ángulo en el que está la rueda AHORA, leído de la matriz de transformación calculada. */
-function anguloActual(rueda: HTMLElement): number {
+function anguloActual(rueda: SVGElement): number {
   return anguloDesdeTransform(getComputedStyle(rueda).transform);
 }
 
 /** Fase 1: rotación pareja e infinita, desde el instante en que el cliente toca "Jugar". */
-export function girarLibre(rueda: HTMLElement): void {
+export function girarLibre(rueda: SVGElement): void {
   rueda.style.transition = "none";
   // El `transform` inline que dejó el frenado anterior se borra antes de animar: el keyframe
   // arranca en 0°, y arrastrar el ángulo viejo convertía el giro de la segunda tirada de la
@@ -103,7 +165,7 @@ export const MS_DE_FUNDIDO = 200;
  * Los milisegundos que devuelve son los que quien llama espera antes de mostrar el acuse, y
  * por eso bajan al fundido cuando no hay frenado que mirar.
  */
-export function frenar(rueda: HTMLElement, color: "primario" | "ambar", azar: number): number {
+export function frenar(rueda: SVGElement, color: Color, azar: number): number {
   const desde = anguloActual(rueda);
   const hasta =
     desde + VUELTAS_DE_FRENADO * 360 + ((rotacionDestino(color, azar) - desde + 360) % 360);
@@ -112,7 +174,11 @@ export function frenar(rueda: HTMLElement, color: "primario" | "ambar", azar: nu
   rueda.style.transform = `rotate(${desde}deg)`;
   // Fuerza el recálculo: sin esto el navegador agrupa las dos escrituras y la transición
   // arranca desde el ángulo viejo, que es exactamente el salto que se quiere evitar.
-  void rueda.offsetWidth;
+  //
+  // Va por `getBoundingClientRect` y NO por `offsetWidth`: los elementos SVG no tienen
+  // `offsetWidth` —es de `HTMLElement`—, así que desde que la rueda es un `<g>` aquello se
+  // evaluaba a `undefined` y no forzaba nada, devolviendo el salto en silencio.
+  void rueda.getBoundingClientRect().width;
   rueda.style.transition = `transform ${MS_DE_FRENADO}ms cubic-bezier(0.17, 0.67, 0.2, 1)`;
   rueda.style.transform = `rotate(${hasta}deg)`;
   return prefiereMenosMovimiento() ? MS_DE_FUNDIDO : MS_DE_FRENADO;

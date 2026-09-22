@@ -11,7 +11,7 @@ import { motivoDeRechazo } from "./reglasRuleta";
 function deps(campos: Partial<DepsTirada> = {}): DepsTirada {
   return {
     estado: { activo: true, faltaRota: "2026-09-16", disponibles: 0, yaJugo: false },
-    apostado: "primario",
+    apostado: "rojo",
     mes: "2026-09",
     hoy: "2026-09-18",
     azar: () => 0,
@@ -26,11 +26,11 @@ describe("aplicarTirada", () => {
     const d = deps({ azar: () => 0 });
     const resultado = await aplicarTirada(d);
 
-    expect(resultado).toEqual({ gano: true, color: "primario" });
+    expect(resultado).toEqual({ gano: true, color: "rojo" });
     expect(d.justificarFalta).toHaveBeenCalledWith("2026-09-16");
     expect(d.registrarTirada).toHaveBeenCalledWith({
       mes: "2026-09",
-      color: "primario",
+      color: "rojo",
       gano: true,
       fecha: "2026-09-18",
     });
@@ -40,11 +40,11 @@ describe("aplicarTirada", () => {
     const d = deps({ azar: () => 0.99 });
     const resultado = await aplicarTirada(d);
 
-    expect(resultado).toEqual({ gano: false, color: "ambar" });
+    expect(resultado).toEqual({ gano: false, color: "negro" });
     expect(d.justificarFalta).not.toHaveBeenCalled();
     expect(d.registrarTirada).toHaveBeenCalledWith({
       mes: "2026-09",
-      color: "ambar",
+      color: "negro",
       gano: false,
       fecha: "2026-09-18",
     });

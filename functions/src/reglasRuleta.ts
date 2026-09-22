@@ -14,11 +14,20 @@
 export const PROBABILIDAD_GANAR = 0.7;
 
 /**
- * Los dos colores, por nombre de variable CSS y no por hex: el `primario` es el de la paleta
- * que el entrenador le eligió a cada clienta, así que su valor cambia por cliente y solo la
- * página sabe cuál es.
+ * Los dos colores de la ruleta. **Son fijos y no salen de la paleta de la clienta**, al revés
+ * que todo lo demás de la página.
+ *
+ * Hasta el 2026-09-22 eran `["primario", "ambar"]` —nombres de variable CSS— para que el
+ * sector tomara el color que el entrenador le hubiera elegido a cada clienta. Se revirtió por
+ * dos motivos: con el color cambiando por cliente **el acuse no podía nombrarlo** ("Cayó en
+ * morado" con la rueda turquesa, entrada 26 del backlog), y cualquier rediseño del dibujo
+ * tenía que quedar bien con las cinco paletas. Rojo y negro son además los de una ruleta de
+ * verdad, que es hacia donde va el dibujo (entrada 28).
+ *
+ * El valor viaja a Firestore tal cual, en `ruletas/{cliente}_{mes}.color`. Se pudo renombrar
+ * sin migración porque nadie había jugado todavía; a partir de la primera tirada, ya no.
  */
-export const COLORES = ["primario", "ambar"] as const;
+export const COLORES = ["rojo", "negro"] as const;
 export type Color = (typeof COLORES)[number];
 
 export type MotivoRechazo =
@@ -58,7 +67,7 @@ export function motivoDeRechazo(estado: EstadoParaJugar): MotivoRechazo | null {
  */
 export function resolverTirada(apostado: Color, azar: number): { gano: boolean; color: Color } {
   const gano = azar < PROBABILIDAD_GANAR;
-  const otro: Color = apostado === "primario" ? "ambar" : "primario";
+  const otro: Color = apostado === "rojo" ? "negro" : "rojo";
   return { gano, color: gano ? apostado : otro };
 }
 

@@ -1,6 +1,14 @@
 // web/src/ui/ruleta.ts
 import { jugarRuleta } from "../acciones";
-import { MINIMO_GIRO_LIBRE_MS, frenar, girarLibre } from "./ruletaGiro";
+import {
+  MINIMO_GIRO_LIBRE_MS,
+  SECTORES,
+  arcoDelBorde,
+  arcoDelSector,
+  frenar,
+  girarLibre,
+} from "./ruletaGiro";
+import type { Color } from "./ruletaGiro";
 
 /**
  * El modal de la ruleta: la propuesta, la elección de color, el giro y el acuse.
@@ -11,7 +19,8 @@ import { MINIMO_GIRO_LIBRE_MS, frenar, girarLibre } from "./ruletaGiro";
  * asistencia. Es el mismo motivo por el que el saludo y los videos ya viven fuera.
  */
 
-export type Color = "primario" | "ambar";
+/** Reexportado: el tipo vive junto al reparto del dibujo, en `ruletaGiro.ts`. */
+export type { Color };
 
 type Fase =
   | { tipo: "propuesta" }
@@ -56,18 +65,18 @@ export function marcarResultado(fase: Fase): void {
 }
 
 /**
- * Cómo se nombra cada color. **El primario no se nombra por su tono**: la ficha y el sector
- * son `var(--primario)`, o sea la paleta que el entrenador le asigna a cada clienta, así que
- * escribir "morado" miente con cualquier paleta que no sea la de por defecto — y la clienta
- * lee un color que no tiene delante justo cuando le estamos diciendo si ganó. El ámbar sí es
- * fijo, y ése se nombra.
+ * Cómo se nombra cada color. Son dos formas porque las dos frases piden gramática distinta:
+ * "Cayó en ___" y "Apostar ___"; unificarlas en una sola cadena deja una de las dos mal
+ * escrita, y hay un test que lo dice.
  *
- * Son dos formas porque las dos frases piden gramática distinta: "Cayó en ___" y
- * "Apostar ___".
+ * **Nombrar el tono sólo es correcto porque los colores son fijos** (2026-09-22). Mientras el
+ * sector fue `var(--primario)` esto decía "morado" y mentía con toda clienta que no tuviera la
+ * paleta de por defecto — ver la entrada 26 del backlog. Si alguien vuelve a atar la rueda a
+ * la paleta, esto vuelve a mentir.
  */
 const NOMBRE: Record<Color, { cayo: string; apuesta: string }> = {
-  primario: { cayo: "tu color", apuesta: "a tu color" },
-  ambar: { cayo: "el ámbar", apuesta: "al ámbar" },
+  rojo: { cayo: "rojo", apuesta: "al rojo" },
+  negro: { cayo: "negro", apuesta: "al negro" },
 };
 
 const girando = (fase: Fase) => fase.tipo === "girando-real" || fase.tipo === "girando-prueba";
@@ -89,6 +98,102 @@ function acuse(fase: Fase): string {
   }
 }
 
+/** Tachuelas del aro. Van en el aro, que NO gira: en una ruleta de verdad tampoco. */
+const TACHUELAS = 16;
+
+/**
+ * El disco. Los sectores salen de [SECTORES] y no de un `d` escrito a mano: así el dibujo no
+ * puede discrepar del aterrizaje que calcula `rotacionDestino` (entrada 28 del backlog).
+ *
+ * **Qué gira y qué no, que es de lo que depende que parezca metal.** Sólo el `<g>` del
+ * material da vueltas. El aro, las tachuelas, el sombreado de domo, el reflejo y el eje se
+ * quedan quietos, porque describen de dónde viene la luz — y una luz que gira con la pieza
+ * deja de leerse como luz y se lee como una calcomanía. Es el mismo motivo por el que el
+ * reflejo va encima de los sectores y no dentro del grupo.
+ *
+ * El `<g>` necesita `transform-box: fill-box` en el CSS, o `rotate()` pivota sobre el origen
+ * del viewBox en vez de sobre el centro del disco.
+ *
+ * `aria-hidden` porque es decoración: quien no lo ve se entera por el acuse, que es texto.
+ */
+function rueda(): string {
+  const sectores = SECTORES.map(
+    (s) => `<path class="ruleta-sector ${s.color}" d="${arcoDelSector(s)}"></path>`
+  ).join("");
+
+  const tachuelas = Array.from({ length: TACHUELAS }, (_, i) => {
+    const rad = (i * 2 * Math.PI) / TACHUELAS;
+    const x = (100 + 94.5 * Math.sin(rad)).toFixed(2);
+    const y = (100 - 94.5 * Math.cos(rad)).toFixed(2);
+    return `<circle class="ruleta-tachuela" cx="${x}" cy="${y}" r="2.1"></circle>`;
+  }).join("");
+
+  return `
+    <svg class="ruleta-svg" viewBox="0 0 200 200" aria-hidden="true" focusable="false">
+      <defs>
+        <linearGradient id="ruleta-metal" x1="0.12" y1="0" x2="0.88" y2="1">
+          <stop offset="0%" stop-color="#f8efcb"></stop>
+          <stop offset="22%" stop-color="#cba750"></stop>
+          <stop offset="48%" stop-color="#7f6124"></stop>
+          <stop offset="70%" stop-color="#e7d294"></stop>
+          <stop offset="88%" stop-color="#9b7a2e"></stop>
+          <stop offset="100%" stop-color="#6d551d"></stop>
+        </linearGradient>
+        <!-- El domo: luz arriba a la izquierda y el borde de abajo apagándose. Es lo que hace
+             que dos medias tartas planas pasen a parecer una pieza curva. -->
+        <radialGradient id="ruleta-domo" cx="34%" cy="26%" r="80%">
+          <stop offset="0%" stop-color="#ffffff" stop-opacity="0.34"></stop>
+          <stop offset="40%" stop-color="#ffffff" stop-opacity="0.05"></stop>
+          <stop offset="70%" stop-color="#000000" stop-opacity="0.12"></stop>
+          <stop offset="100%" stop-color="#000000" stop-opacity="0.5"></stop>
+        </radialGradient>
+        <radialGradient id="ruleta-reflejo" cx="50%" cy="38%" r="62%">
+          <stop offset="0%" stop-color="#ffffff" stop-opacity="0.42"></stop>
+          <stop offset="52%" stop-color="#ffffff" stop-opacity="0.16"></stop>
+          <stop offset="100%" stop-color="#ffffff" stop-opacity="0"></stop>
+        </radialGradient>
+        <filter id="ruleta-suavizar" x="-40%" y="-40%" width="180%" height="180%">
+          <feGaussianBlur stdDeviation="3.2"></feGaussianBlur>
+        </filter>
+        <radialGradient id="ruleta-eje" cx="36%" cy="30%" r="75%">
+          <stop offset="0%" stop-color="#fdf6d8"></stop>
+          <stop offset="55%" stop-color="#c2a049"></stop>
+          <stop offset="100%" stop-color="#6d551d"></stop>
+        </radialGradient>
+        <filter id="ruleta-sombra" x="-30%" y="-30%" width="160%" height="160%">
+          <feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="#000" flood-opacity="0.55">
+          </feDropShadow>
+        </filter>
+        <clipPath id="ruleta-recorte"><circle cx="100" cy="100" r="92"></circle></clipPath>
+      </defs>
+
+      <g filter="url(#ruleta-sombra)">
+        <circle class="ruleta-aro" cx="100" cy="100" r="97"></circle>
+        <circle class="ruleta-ranura" cx="100" cy="100" r="92.6"></circle>
+      </g>
+      ${tachuelas}
+
+      <g class="ruleta-rueda" id="ruleta-rueda">
+        ${sectores}
+        <line class="ruleta-varilla-sombra" x1="100" y1="8" x2="100" y2="192"></line>
+        <line class="ruleta-separador" x1="100" y1="8" x2="100" y2="192"></line>
+      </g>
+
+      <!-- Encima del material y fuera del grupo: no giran. -->
+      <circle class="ruleta-domo" cx="100" cy="100" r="92"></circle>
+      <g clip-path="url(#ruleta-recorte)" filter="url(#ruleta-suavizar)">
+        <ellipse class="ruleta-reflejo" cx="98" cy="56" rx="54" ry="27"
+                 transform="rotate(-16 98 56)"></ellipse>
+      </g>
+      <path class="ruleta-rebote" d="${arcoDelBorde(118, 242)}"
+            clip-path="url(#ruleta-recorte)"></path>
+      <circle class="ruleta-eje-sombra" cx="100" cy="101.5" r="14"></circle>
+      <circle class="ruleta-eje" cx="100" cy="100" r="13"></circle>
+      <ellipse class="ruleta-eje-brillo" cx="96" cy="95.5" rx="5.2" ry="3.4"
+               transform="rotate(-20 96 95.5)"></ellipse>
+    </svg>`;
+}
+
 export function modalRuleta(): string {
   if (!estado.abierta) return "";
 
@@ -96,9 +201,9 @@ export function modalRuleta(): string {
   const enJuego = girando(estado.fase);
   const jugarBloqueado = estado.color === null || enJuego || terminada;
 
-  const eleccion = (["primario", "ambar"] as Color[])
+  const eleccion = SECTORES
     .map(
-      (c) => `<button class="ruleta-ficha ${c} ${estado.color === c ? "elegida" : ""}"
+      ({ color: c }) => `<button class="ruleta-ficha ${c} ${estado.color === c ? "elegida" : ""}"
                        id="ruleta-color-${c}" ${enJuego || terminada ? "disabled" : ""}
                        aria-label="Apostar ${NOMBRE[c].apuesta}"></button>`
     )
@@ -145,7 +250,7 @@ export function modalRuleta(): string {
         <div class="ruleta-fichas">${eleccion}</div>
         <div class="ruleta-marco">
           <div class="ruleta-puntero"></div>
-          <div class="ruleta-rueda" id="ruleta-rueda"></div>
+          ${rueda()}
         </div>
         ${acuse(estado.fase)}
         ${botones}
@@ -169,9 +274,9 @@ function textoDeError(codigo: string | undefined): string {
 export function conectarRuleta(repintar: () => void): void {
   if (!estado.abierta) return;
 
-  const rueda = () => document.querySelector<HTMLElement>("#ruleta-rueda");
+  const disco = () => document.querySelector<SVGGElement>("#ruleta-rueda");
 
-  for (const c of ["primario", "ambar"] as Color[]) {
+  for (const { color: c } of SECTORES) {
     document.querySelector(`#ruleta-color-${c}`)?.addEventListener("click", () => {
       elegirColor(c);
       repintar();
@@ -189,10 +294,10 @@ export function conectarRuleta(repintar: () => void): void {
   });
 
   document.querySelector("#ruleta-prueba")?.addEventListener("click", () => {
-    const color: Color = Math.random() < 0.5 ? "primario" : "ambar";
+    const color: Color = SECTORES[Math.random() < 0.5 ? 0 : 1].color;
     marcarResultado({ tipo: "girando-prueba" });
     repintar();
-    const r = rueda();
+    const r = disco();
     if (!r) return;
     girarLibre(r);
     // La prueba no toca el servidor: el color lo decide el navegador y no tiene ninguna
@@ -210,7 +315,7 @@ export function conectarRuleta(repintar: () => void): void {
 
     marcarResultado({ tipo: "girando-real" });
     repintar();
-    const r = rueda();
+    const r = disco();
     if (r) girarLibre(r);
 
     // El giro libre dura un mínimo fijo aunque el servidor responda antes: así el frenado

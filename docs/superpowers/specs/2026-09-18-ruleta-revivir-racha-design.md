@@ -125,14 +125,30 @@ no tocarla.
 
 ### El dibujo
 
-Un `<div>` circular con `conic-gradient` de dos sectores iguales y un puntero
-fijo arriba. Gira con `transform: rotate()`. Sin canvas y sin librerías: el
-proyecto no tiene dependencias de UI y esto no amerita la primera.
+Un SVG de dos sectores iguales con un puntero fijo arriba. Sólo el `<g>` del
+disco gira, con `transform: rotate()`; el aro y el eje se quedan quietos. Sin
+canvas y sin librerías: el proyecto no tiene dependencias de UI y esto no
+amerita la primera.
 
-Los dos colores son **`--primario`** (el de la paleta de la clienta) y
-**`--ambar`**. Deliberadamente **no** `--verde` ni `--rojo`: en el calendario
-esos dos ya significan "asistió" y "faltó", y verlos en una ruleta que decide
-justo eso confunde.
+Los dos colores son **rojo** y **negro**, fijos para todas las clientas.
+
+> **Revisado el 2026-09-22.** Hasta esa fecha eran `--primario` (el de la
+> paleta de la clienta) y `--ambar`, y este documento decía: *"Deliberadamente
+> no `--verde` ni `--rojo`: en el calendario esos dos ya significan 'asistió' y
+> 'faltó', y verlos en una ruleta que decide justo eso confunde."*
+>
+> Se revirtió por dos motivos. Uno: con el sector tomando la paleta, **el acuse
+> no podía nombrar el color** —una clienta en turquesa leía "Cayó en morado"—,
+> y eso rompía la mecánica entera, que es adivinar un color (entrada 26 del
+> backlog). Dos: cualquier rediseño del dibujo tenía que quedar bien con las
+> cinco paletas.
+>
+> **El aviso de arriba sigue siendo válido y se asume a sabiendas.** Se mitiga
+> con un rojo más oscuro que el del calendario (`#9e1b26` contra `#C4453D`), y
+> se apoya en que el modal es otro contexto: dentro no hay calendario, y el par
+> rojo/negro se lee como ruleta antes que como asistencia. Conviene saber
+> también que la regla ya estaba medio rota: el `--ambar` que usaba la ruleta
+> **es** el color de "Justificada" en el calendario.
 
 ### La elección
 

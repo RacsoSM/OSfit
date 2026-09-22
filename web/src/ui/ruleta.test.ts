@@ -1,6 +1,7 @@
 // web/src/ui/ruleta.test.ts
 import { beforeEach, describe, expect, it } from "vitest";
 import { abrirRuleta, cerrarRuleta, elegirColor, modalRuleta, marcarResultado } from "./ruleta";
+import { SECTORES } from "./ruletaGiro";
 
 beforeEach(() => cerrarRuleta());
 
@@ -27,14 +28,14 @@ describe("modalRuleta", () => {
   it("Jugar esta deshabilitado hasta elegir color", () => {
     abrirRuleta();
     expect(modalRuleta()).toMatch(/id="ruleta-jugar"[^>]*disabled/);
-    elegirColor("primario");
+    elegirColor("rojo");
     expect(modalRuleta()).not.toMatch(/id="ruleta-jugar"[^>]*disabled/);
   });
 
   it("la tirada de prueba siempre esta disponible y se rotula como falsa", () => {
     abrirRuleta();
     expect(modalRuleta()).toContain(`id="ruleta-prueba"`);
-    marcarResultado({ tipo: "prueba", color: "ambar" });
+    marcarResultado({ tipo: "prueba", color: "negro" });
     expect(modalRuleta()).toContain("esta no cuenta");
   });
 
@@ -42,14 +43,14 @@ describe("modalRuleta", () => {
   // posible de esta pantalla.
   it("durante una prueba girando, Jugar queda deshabilitado", () => {
     abrirRuleta();
-    elegirColor("primario");
+    elegirColor("rojo");
     marcarResultado({ tipo: "girando-prueba" });
     expect(modalRuleta()).toMatch(/id="ruleta-jugar"[^>]*disabled/);
   });
 
   it("al perder nombra el costo, no solo dice que perdio", () => {
     abrirRuleta();
-    marcarResultado({ tipo: "perdio", color: "primario" });
+    marcarResultado({ tipo: "perdio", color: "rojo" });
     const html = modalRuleta();
     expect(html).toContain("2 revives en vez de 3");
     expect(html).not.toMatch(/^Perdiste\.?$/);
@@ -57,7 +58,7 @@ describe("modalRuleta", () => {
 
   it("al ganar lo dice y no menciona castigo", () => {
     abrirRuleta();
-    marcarResultado({ tipo: "gano", color: "primario" });
+    marcarResultado({ tipo: "gano", color: "rojo" });
     const html = modalRuleta();
     expect(html).toContain("Has revivido tu racha");
     expect(html).not.toContain("en vez de 3");
@@ -80,35 +81,48 @@ describe("modalRuleta", () => {
     expect(modalRuleta()).not.toContain(`id="ruleta-cerrar"`);
   });
   /**
-   * El sector y la ficha del primario son `var(--primario)`: la paleta que el entrenador le
-   * asigna a cada clienta. Nombrar el tono a mano ("morado") sólo acierta con la paleta de
-   * por defecto, y con cualquier otra la clienta lee un color que no tiene delante — en la
-   * frase que le dice si ganó. Se detectó el 2026-09-22 con una clienta en turquesa, que leía
-   * "Cayó en morado" con la rueda verde agua.
+   * El acuse tiene que nombrar lo que la clienta ve. Se detectó al revés el 2026-09-22: los
+   * colores salían de la paleta (`var(--primario)`), el nombre estaba escrito a mano, y una
+   * clienta en turquesa leía "Cayó en morado" con la rueda verde agua (entrada 26 del
+   * backlog). Se arregló fijando los colores a rojo y negro, así que ahora el nombre puede
+   * volver a ser el tono — y este test es lo que amarra las dos puntas.
    */
-  it("el acuse no nombra el tono del primario, que lo pone la paleta de cada clienta", () => {
-    for (const tipo of ["gano", "perdio", "prueba"] as const) {
-      abrirRuleta();
-      marcarResultado({ tipo, color: "primario" });
-      const html = modalRuleta();
-      expect(html).toContain("Cayó en tu color.");
-      expect(html).not.toContain("morado");
+  it("el acuse nombra el color que de verdad se pinta", () => {
+    for (const { color } of SECTORES) {
+      for (const tipo of ["gano", "perdio", "prueba"] as const) {
+        abrirRuleta();
+        marcarResultado({ tipo, color });
+        expect(modalRuleta()).toContain(`Cayó en ${color}.`);
+      }
     }
   });
 
-  // El ámbar no sale de la paleta: es el mismo para todas, así que ése sí se nombra.
-  it("el ambar si se nombra, porque no depende de la paleta", () => {
+  // Si alguien vuelve a atar la rueda a la paleta, el nombre vuelve a mentir. Esto lo nota:
+  // los sectores y las fichas se marcan con el nombre del color, no con el de una variable.
+  it("el dibujo no depende de la paleta de la clienta", () => {
     abrirRuleta();
-    marcarResultado({ tipo: "gano", color: "ambar" });
-    expect(modalRuleta()).toContain("Cayó en el ámbar.");
+    const html = modalRuleta();
+    expect(html).not.toContain("primario");
+    expect(html).not.toContain("ambar");
+    for (const { color } of SECTORES) {
+      expect(html).toContain(`ruleta-sector ${color}`);
+      expect(html).toContain(`ruleta-ficha ${color}`);
+    }
   });
 
-  // Las dos frases piden gramática distinta, y salen del mismo sitio: si alguien unifica los
+  // Las dos frases piden gramática distinta y salen del mismo sitio: si alguien unifica los
   // nombres en una sola cadena, una de las dos queda mal escrita.
   it("las fichas se anuncian con la preposicion correcta", () => {
     abrirRuleta();
     const html = modalRuleta();
-    expect(html).toContain('aria-label="Apostar a tu color"');
-    expect(html).toContain('aria-label="Apostar al ámbar"');
+    expect(html).toContain('aria-label="Apostar al rojo"');
+    expect(html).toContain('aria-label="Apostar al negro"');
+  });
+
+  // Sólo el `<g>` gira: `girarLibre` y `frenar` buscan `#ruleta-rueda`, y si ese id acabara en
+  // el `<svg>` entero el aro metálico daría vueltas con el disco.
+  it("el id que gira esta en el grupo, no en el svg", () => {
+    abrirRuleta();
+    expect(modalRuleta()).toMatch(/<g class="ruleta-rueda" id="ruleta-rueda">/);
   });
 });

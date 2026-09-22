@@ -21,7 +21,7 @@ const conFaltaRota = (gastadas: number): Asistencia[] => [
 ];
 
 const tirada = (campos: Partial<Tirada> = {}): Tirada =>
-  ({ mes: "2026-08", color: "primario", gano: false, fecha: "2026-08-20", ...campos });
+  ({ mes: "2026-08", color: "rojo", gano: false, fecha: "2026-08-20", ...campos });
 
 describe("tarjetaRevivir", () => {
   // REGRESIÓN: este es el camino que usan TODOS los clientes hoy, no solo los que juegan.

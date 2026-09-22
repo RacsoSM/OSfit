@@ -253,6 +253,15 @@ main { max-width: 480px; margin: 0 auto; padding: 16px 14px 48px; }
   padding: 16px;
   background: rgba(18, 18, 18, 0.8);
   backdrop-filter: blur(4px);
+
+  /* Los colores de la ruleta son FIJOS y viven acá, no en `:root` junto a la paleta, para que
+     se vea que `paleta.ts` no los pisa: esa función sólo escribe `--primario*`. Atarlos otra
+     vez a la paleta reintroduce el fallo de la entrada 26 del backlog, donde el acuse nombraba
+     un color que la clienta no tenía delante. */
+  /* Más oscuro que el `--rojo` del calendario (#C4453D) a propósito: ahí el rojo significa
+     "Faltaste", que es justo la falta que esta ruleta intenta perdonar. Ver el spec. */
+  --ruleta-rojo: #9e1b26;
+  --ruleta-negro: #16161a;
 }
 .ruleta-caja {
   position: relative;
@@ -283,8 +292,12 @@ main { max-width: 480px; margin: 0 auto; padding: 16px 14px 48px; }
   border: 3px solid transparent;
   cursor: pointer;
 }
-.ruleta-ficha.primario { background: var(--primario); }
-.ruleta-ficha.ambar { background: var(--ambar); }
+.ruleta-ficha.rojo { background: var(--ruleta-rojo); }
+/* La ficha negra sobre la superficie oscura del modal se perdería sin este filo. */
+.ruleta-ficha.negro {
+  background: var(--ruleta-negro);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.28);
+}
 .ruleta-ficha.elegida { border-color: var(--texto); }
 .ruleta-ficha:disabled { cursor: default; }
 
@@ -300,12 +313,49 @@ main { max-width: 480px; margin: 0 auto; padding: 16px 14px 48px; }
   border-top: 14px solid var(--texto);
   z-index: 1;
 }
-/* Mitad y mitad: la ruleta se dibuja justa aunque el sorteo no lo sea (ver el spec). */
+.ruleta-svg { display: block; width: 100%; height: 100%; }
+
+/* Nada de esto gira: describe de dónde viene la luz, y una luz que gira con la pieza deja de
+   leerse como luz. El aro asoma por fuera del disco y ése es además el filo que impide que la
+   mitad negra se funda con la superficie oscura del modal. */
+.ruleta-aro { fill: url(#ruleta-metal); }
+/* La ranura entre el aro y el material: sin ella el latón y el sector se tocan y el aro se ve
+   pegado encima en vez de rodeando. */
+.ruleta-ranura { fill: none; stroke: rgba(0, 0, 0, 0.55); stroke-width: 2.4; }
+.ruleta-tachuela { fill: url(#ruleta-metal); stroke: rgba(0, 0, 0, 0.35); stroke-width: 0.5; }
+
+/* El domo y el reflejo van ENCIMA de los sectores, fuera del grupo que gira. */
+.ruleta-domo { fill: url(#ruleta-domo); }
+/* La luz rebotada del borde de abajo: un trazo claro siguiendo el filo, no un relleno. Es el
+   detalle que separa una esfera de un disco con una sombra encima. */
+.ruleta-rebote {
+  fill: none;
+  stroke: rgba(255, 245, 225, 0.5);
+  stroke-width: 3;
+  filter: blur(2.5px);
+}
+.ruleta-reflejo { fill: url(#ruleta-reflejo); }
+
+.ruleta-eje-sombra { fill: rgba(0, 0, 0, 0.5); }
+.ruleta-eje { fill: url(#ruleta-eje); }
+.ruleta-eje-brillo { fill: #fffdf2; opacity: 0.75; }
+
+/* Mitad y mitad: la ruleta se dibuja justa aunque el sorteo no lo sea (ver el spec). El
+   reparto sale de `SECTORES` en `ruletaGiro.ts`; acá sólo se le pone color. */
+.ruleta-sector.rojo { fill: var(--ruleta-rojo); }
+.ruleta-sector.negro { fill: var(--ruleta-negro); }
+/* La costura es metálica, no blanca: en una ruleta de verdad los sectores los separa una
+   varilla. Ésta sí gira, porque es parte del material. Van dos trazos —filo oscuro debajo y
+   latón encima—, que es lo que le da grosor en vez de parecer una raya pintada. */
+.ruleta-varilla-sombra { stroke: rgba(0, 0, 0, 0.55); stroke-width: 4.4; }
+.ruleta-separador { stroke: #d8bd74; stroke-width: 2; }
+
+/* `transform-box: fill-box` NO es opcional: sin él `transform-origin: center` se resuelve
+   contra el viewport del SVG y no contra la caja del `<g>`, y la rueda orbita alrededor de una
+   esquina en vez de girar sobre su eje. Es la forma más común de romper esto. */
 .ruleta-rueda {
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  background: conic-gradient(var(--primario) 0deg 180deg, var(--ambar) 180deg 360deg);
+  transform-box: fill-box;
+  transform-origin: center;
 }
 .ruleta-rueda.girando { animation: ruleta-libre 0.7s linear infinite; }
 /* El `from` va explícito: sin él lo pone el `transform` inline que dejó la tirada anterior, y
