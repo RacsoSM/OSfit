@@ -154,12 +154,25 @@ export async function aplicarTirada(deps: DepsTirada): Promise<{ gano: boolean; 
   return resultado;
 }
 
-const CODIGO_HTTP: Record<string, "failed-precondition" | "already-exists" | "permission-denied"> = {
+/**
+ * `color_invalido` va en `invalid-argument` y NO en `failed-precondition`, que es donde estaba.
+ *
+ * No es cosmético: la página traduce `failed-precondition` a "Ya no hay nada que revivir", y
+ * eso es una frase sobre el estado de la clienta. Cuando el 2026-09-22 la web empezó a mandar
+ * "rojo" contra una función desplegada que todavía esperaba "primario", la clienta —y quien
+ * estaba depurando— leyó que no tenía ninguna falta que reparar, cuando lo que pasaba era que
+ * el cliente y el servidor no hablaban el mismo idioma. Un desajuste de contrato tiene que
+ * verse como un error, no disfrazarse de estado.
+ */
+const CODIGO_HTTP: Record<
+  string,
+  "failed-precondition" | "already-exists" | "permission-denied" | "invalid-argument"
+> = {
   cuenta_pausada: "permission-denied",
   sin_falta_reparable: "failed-precondition",
   todavia_tiene_cupo: "failed-precondition",
   ya_jugo: "already-exists",
-  color_invalido: "failed-precondition",
+  color_invalido: "invalid-argument",
 };
 
 /**
