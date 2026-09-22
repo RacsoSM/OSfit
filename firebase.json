@@ -7,7 +7,7 @@
     "rules": "storage.rules"
   },
   "hosting": {
-    "predeploy": ["npm --prefix \"$RESOURCE_DIR/web\" run build"],
+    "predeploy": ["npm --prefix \"$PROJECT_DIR/web\" run build"],
     "public": "web/dist",
     "ignore": [
       "firebase.json",
