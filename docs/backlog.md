@@ -199,7 +199,7 @@ terminar.
 
 ---
 
-## U2. Terminar el recorrido manual de la ruleta — ⏳ RECORRIDO A MEDIAS (2026-09-22), FALTA EL TELÉFONO Y LA TIRADA REAL
+## U2. Terminar el recorrido manual de la ruleta — ⏳ TIRADA REAL HECHA (2026-09-22), FALTA EL TELÉFONO Y EL EMULADOR
 
 **Detectado:** 2026-09-21, al intentar hacer el recorrido manual que pide la entrada 25.
 
@@ -311,9 +311,32 @@ la tirada real**, que sigue entera: todo lo de abajo sale de tiradas de prueba.
 - **Un fallo encontrado y arreglado el mismo día:** el acuse nombraba el color primario a
   mano. Ver la entrada 26.
 
+### La tirada real, jugada el 2026-09-22
+
+**Se jugó, y encontró dos fallos por el camino que habrían llegado a producción.**
+
+La clienta de pruebas apostó al rojo, **cayó negro y perdió**: `{"gano": false, "color": "negro"}`.
+La web mostró *"Cayó en negro. El próximo mes tendrás 2 revives en vez de 3."* Tras recargar, la
+tarjeta **ya no ofrece la propuesta** y la racha sigue en 🔥 0, que es lo correcto — gastó su
+tirada del mes.
+
+**Los dos toques simultáneos: aguanta.** Dos pestañas con la misma sesión, las dos con el color
+elegido, los dos clics en el mismo instante. Una recibió `200` con el sorteo y la otra
+`409 ya_jugo` con "Ya jugaste tu tirada de este mes". O sea que el `create()` sobre
+`{cliente}_{mes}` protege de verdad contra el Firestore real y no sólo en los tests.
+
+*(El entrenador lo considera un caso demasiado improbable como para seguir pidiéndolo en el
+recorrido, así que sale de la lista. Queda anotado porque la comprobación ya estaba hecha y la
+guarda del código se queda: es una línea y quitarla sería un riesgo gratis.)*
+
+**Confirmado en vivo el defecto que la entrada 25 §4 ya anotaba:** en la pestaña que recibió
+`ya_jugo`, el botón "Jugar" sigue habilitado e invita a una apuesta que fallará siempre.
+
 ### Lo que sigue faltando
 
-- **La tirada real**, que es **una por clienta y por mes** — en cuanto se juegue, el resto del
+- El mes castigado punta a punta: que en octubre la web diga "Te quedan 2 este mes (perdiste la
+  ruleta el mes pasado)" y la app "Revives: 2 de 2". **Ya hay documento de ruleta perdida** para
+  comprobarlo. — en cuanto se juegue, el resto del
   mes contesta "Ya jugaste tu tirada de este mes". Cuatro de los puntos de la entrada 25 §1
   dependen de verla girar de verdad, así que conviene gastarla en el de los **dos toques
   simultáneos** y grabar vídeo: esa misma tirada sirve para revisar los otros tres.
@@ -1746,5 +1769,47 @@ del giro, leyendo el resultado, y reservar ahí dejaría un hueco vacío enorme.
 - **La tirada real sigue sin gastarse.** Todo lo anterior salió de tiradas de prueba.
 
 **Lo que no se hizo:** mirarlo en un teléfono de verdad. Todo es Chromium.
+
+---
+
+## 29. Dos trampas de despliegue que costaron la tarde — ✅ HECHO (2026-09-22)
+
+**Detectado:** 2026-09-22, al intentar jugar la tirada real por primera vez.
+
+Las dos pestañas recibieron **400 y "Ya no hay nada que revivir"**. La falta reparable estaba
+ahí; el mensaje mentía. Dos fallos encadenados, y los dos habrían llegado a producción.
+
+### 1. `color_invalido` se disfrazaba de estado de la clienta
+
+`CODIGO_HTTP` mandaba `color_invalido` a `failed-precondition`, el mismo código que
+`sin_falta_reparable`. La página traduce ese código a *"Ya no hay nada que revivir"* — una
+frase sobre el estado de la clienta. Así que **un desajuste de contrato se leía como un hecho
+sobre ella**, y mandó a buscar el fallo donde no estaba.
+
+Arreglado: va en `invalid-argument`, y la página cae en su mensaje genérico, que no afirma nada
+falso.
+
+### 2. El despliegue subía el compilado viejo, en silencio
+
+El desajuste era real: la web mandaba `"rojo"` y la función desplegada esperaba `"primario"`,
+porque al renombrar los colores **no se redesplegaron las functions**. Y al redesplegarlas,
+siguió fallando: `functions/package.json` tiene `main: "lib/index.js"` y `firebase.json` **no
+tenía hook de `predeploy`**, así que `firebase deploy --only functions` subió el `lib/` del
+2026-09-21 sin compilar nada. El despliegue decía "Successful update operation" mientras subía
+el código de anteayer.
+
+Es **exactamente** el aviso que la entrada 17 ya daba para la web —*"el `npm run build` va
+aparte porque `firebase.json` no tiene hooks de `predeploy`; sin eso se sube el `dist` viejo y
+parece que el despliegue no sirvió"*— sólo que aplicado a `functions/`, donde nadie lo había
+escrito.
+
+**Arreglado de raíz, no a mano:** `firebase.json` lleva ahora `predeploy` en `hosting` y en
+`functions`, así que compilan solos. Se comprobó **borrando `functions/lib/` antes de
+desplegar**: el hook corrió `tsc`, lo reconstruyó y subió lo correcto. Si algún día el build
+falla, el despliegue falla — que es mucho mejor que subir algo viejo sin avisar.
+
+**La lección, que es la reutilizable:** si algo desplegado "no cambia", mirar el compilado y su
+fecha antes que el código fuente. Pasó también con el CSS ese mismo día, cacheado en el
+navegador (entrada 28).
 
 ---
