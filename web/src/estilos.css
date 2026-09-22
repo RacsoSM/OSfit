@@ -263,10 +263,34 @@ main { max-width: 480px; margin: 0 auto; padding: 16px 14px 48px; }
   --ruleta-rojo: #9e1b26;
   --ruleta-negro: #16161a;
 }
+/* La mesa. Tres capas: el grano del tapete, el foco que cae desde arriba y el paño verde.
+   Y una viñeta por dentro, que es lo que cierra la escena.
+
+   Oscurecer el modal NO empeora la lectura, al revés: el texto de acá es claro
+   (`--texto-tenue` es #8A8A8A) y el fondo pasa de #2C2C2E a un verde mucho más oscuro, así
+   que el contraste sube. Se midió antes de dejarlo, justamente porque la ✕ es la única salida
+   del modal y la viñeta cae encima de ella (entrada 27 del backlog).
+
+   El grano va en `data:` y no en un archivo: son 300 bytes y evita una petición más en una
+   página cuyo arranque ya es una entrada del backlog (la 17). */
 .ruleta-caja {
   position: relative;
   margin: auto;
-  background: var(--superficie-alta);
+  background-color: #10291f;
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)' opacity='0.35'/%3E%3C/svg%3E"),
+    radial-gradient(ellipse 120% 54% at 50% 24%, rgba(255, 214, 158, 0.17), transparent 66%),
+    radial-gradient(ellipse 130% 95% at 50% 40%, #173b2d 0%, #102a20 54%, #091710 100%);
+  background-blend-mode: overlay, normal, normal;
+  border: 1px solid rgba(196, 166, 96, 0.24);
+  box-shadow:
+    inset 0 0 66px 14px rgba(0, 0, 0, 0.5),
+    0 18px 44px rgba(0, 0, 0, 0.55);
+
+  /* Sobre el tapete, el `--texto-tenue` de la página se quedaba en 4.48:1, justo por debajo
+     del mínimo de 4.5. Se aclara SOLO acá dentro, que es donde cambió el fondo. Importa más
+     de lo que parece: lo hereda la ✕, que es la única salida del modal (entrada 27). */
+  --texto-tenue: #a8a79b;
   border-radius: 20px;
   padding: 20px 18px;
   width: 100%;
@@ -284,6 +308,23 @@ main { max-width: 480px; margin: 0 auto; padding: 16px 14px 48px; }
   cursor: pointer;
 }
 .ruleta-pregunta { font-weight: 800; margin: 14px 0 10px; }
+
+/* "Jugar" deja de usar `--primario`. Sobre el tapete verde, una clienta con paleta turquesa o
+   menta se encontraba el botón principal camuflado en el fondo — y cuál es depende de la
+   paleta, así que no es un caso raro sino una lotería. Dentro de este modal los colores son
+   propios, igual que los de la rueda (entrada 26): latón sobre verde, que además es el par de
+   un casino. El acotado a `.ruleta-caja` es a propósito: el resto de la página sigue con la
+   paleta de la clienta. */
+.ruleta-caja .boton {
+  background: linear-gradient(180deg, #e8cf8f 0%, #c9a24a 100%);
+  color: #2a1f05;
+}
+.ruleta-caja .boton.secundario {
+  background: transparent;
+  color: #e8dcc0;
+  border: 1px solid rgba(214, 186, 116, 0.45);
+}
+.ruleta-caja .boton:disabled { opacity: 0.45; }
 .ruleta-fichas { display: flex; gap: 14px; justify-content: center; margin-bottom: 16px; }
 .ruleta-ficha {
   width: 44px;
