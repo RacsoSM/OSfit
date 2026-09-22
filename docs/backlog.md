@@ -16,7 +16,7 @@ commit.
 
 # URGENTE
 
-## U1. Terminar la verificación de la Etapa 2 — ⏳ REVIVIR HECHO (2026-09-15), FALTA EL CAMBIO DE DÍA
+## U1. Terminar la verificación de la Etapa 2 — ✅ HECHO (2026-09-22)
 
 ### Lo verificado el 2026-09-15, y contra qué
 
@@ -56,11 +56,11 @@ completa" con el motivo "Quiero adelantar el día", y la tarjeta quedó mostrand
 día a las 12:47 · Quiero adelantar el día"*. Lo que queda es todo lo que sólo se ve en la app o
 al día siguiente:
 
-- [ ] **El indicador "🔄 Cambió su día: Quiero adelantar el día" en Tomar Asistencia.** El
+- [x] **El indicador "🔄 Cambió su día: Quiero adelantar el día" en Tomar Asistencia.** El
       cambio ya está escrito en `cambiosDia` con fecha 2026-09-15, así que se puede comprobar
       abriendo Tomar Asistencia de ese día. **Ojo: sólo se dibuja el mismo día del cambio**, así
       que si se deja pasar la fecha hay que volver a cambiar el día para verlo.
-- [ ] **Que el ciclo avance al día siguiente** en vez de quedarse trabado en el Día 3. Es lo
+- [x] **Que el ciclo avance al día siguiente** en vez de quedarse trabado en el Día 3. Es lo
       que queda de la regresión de `d424286`: el ancla se fecha ayer a propósito y equivocarse
       no se nota hoy, sólo mañana.
 
@@ -87,10 +87,21 @@ al día siguiente:
       comprueba que al día siguiente devuelve Día 1, y otro que el estado que habría dejado
       la regresión devuelve Día 3 indefinidamente. Ya no depende de que alguien se acuerde de
       mirarlo un día después.
-- [ ] **El botón deshabilitado con la asistencia de hoy ya marcada** ("Ya registraste tu
+- [x] **El botón deshabilitado con la asistencia de hoy ya marcada** ("Ya registraste tu
       asistencia de hoy") y que el callable responda `ya_asistio_hoy`. Requiere que el
       entrenador le marque asistencia hoy a la clienta de pruebas; entonces se puede repetir la
       llamada a mano igual que se hizo con `revivirRacha`.
+
+### Cerrado el 2026-09-22
+
+Las tres casillas de arriba quedaron verificadas y el entrenador lo dio por bueno ese día. Con
+eso la Etapa 2 no tiene nada pendiente: `revivirRacha`, "Hoy no voy a poder ir" y el bloque
+completo de cambio de día están comprobados.
+
+**El detalle de esta última pasada no se anotó.** Las dos primeras casillas exigían rehacer el
+cambio de día en la fecha misma —el indicador solo se dibuja ese día— y la tercera que el
+entrenador le marcara asistencia a la clienta de pruebas. Qué se vio exactamente al hacerlo no
+quedó por escrito; el montaje que se usó está descrito abajo y en la pasada del 2026-09-15.
 
 ### Estado en que quedó la clienta de pruebas
 
@@ -774,7 +785,7 @@ se quiere evitar el recompilado, eso es una entrada nueva, no ésta.
 
 ---
 
-## 16. Exagerar la animación de cuando se gana una medalla — ⏳ HECHO EN CÓDIGO (2026-09-15), FALTA VERLO EN UN VIDEO
+## 16. Exagerar la animación de cuando se gana una medalla — ✅ HECHO (2026-09-22)
 
 **Detectado:** 2026-09-14.
 
@@ -883,8 +894,9 @@ fallo del fade — *"la medalla ya es opaca mientras todavía está creciendo"*:
 instante en que la opacidad llega a 1f y exige que en ese momento le quede todavía más de
 0.30 de crecimiento por hacer. Suite completa: 275 tests.
 
-**Sigue sin verificarse cómo se ve.** Los tests miden la forma de las curvas; que el resultado
-se sienta un premio solo se sabe mirando un video.
+**Verificado en video el 2026-09-22**, y el entrenador lo dio por bueno. Eso cierra lo único
+que los tests no podían medir: miden la forma de las curvas, pero que el momento se sienta un
+premio y no un cambio de estado solo se sabe mirándolo.
 
 ---
 
@@ -1156,7 +1168,7 @@ antes de planear una sesión: preguntar primero "¿desde cuál?" ahorra descubri
 
 ---
 
-## 21. Las plantillas viejas no llegan a la web hasta que se guarden una vez
+## 21. Las plantillas viejas no llegan a la web hasta que se guarden una vez — ✅ HECHO (2026-09-22)
 
 **Detectado:** 2026-09-15, al meter variaciones en las plantillas compartidas.
 
@@ -1181,6 +1193,11 @@ en el que llevaban desde siempre. Sólo que ahora tiene arreglo, y el arreglo es
 `rutinaAsignada`. Tocar `diaActualIndex` o `diaAnclaFecha` le movería el día del ciclo a
 todo el mundo de golpe, que es justo el desastre que el spec *Calendario-Rutina como ley*
 existe para impedir.
+
+**Hecho el 2026-09-22.** Se abrieron y guardaron las plantillas existentes desde la pestaña
+Rutinas, que es lo que dispara `propagarASeguidoras`. **No se escribió migración**, así que el
+aviso de arriba sigue valiendo para quien alguna vez se plantee escribirla: con las plantillas
+que hay, las pulsaciones salieron más baratas que el código y su riesgo.
 
 ---
 
@@ -1284,7 +1301,7 @@ que ella no podía resolver. Commit `cd61093`.
 
 ---
 
-## 24. Un icono en Clientes para ver quién cambió su rutina
+## 24. Un icono en Clientes para ver quién cambió su rutina — ✅ HECHO (2026-09-16)
 
 **Pedido:** 2026-09-16, por el entrenador. En sus palabras:
 
@@ -1304,5 +1321,18 @@ mismo hecho visible en Clientes.
 cambio, igual que el amarillo del aviso de falta, y esa ventana es la que hace que hoy solo se
 vea si el entrenador entra a esa pantalla ese día. Si en Clientes se quiere lo mismo, la regla
 ya está escrita y solo hay que reusarla.
+
+### Hecho el 2026-09-16, commit `42d6da9`
+
+Se resolvió reusando la regla: `ClientesListViewModel.cambiaronSuDia` es el gemelo exacto de
+`avisaronQueNoVienen` —misma fuente (`cambiosDia`), misma ventana (solo el día del cambio, que
+era la duda de arriba) y misma forma de consultarse, sobre
+`CambioDiaWebRepository.observarPorFecha`. El 🔄 se pinta en `ClientesListScreen.kt:221`.
+
+Se queda con los ids y tira el motivo: en Clientes el indicador es solo el icono, y el porqué
+se lee en Tomar Asistencia, que es donde el entrenador está cuando le importa. **Como las dos
+pantallas comparten ventana, si un día se cambia una hay que mirar la otra.**
+
+La entrada se cerró el 2026-09-22; el código llevaba dentro desde el 16.
 
 ---
