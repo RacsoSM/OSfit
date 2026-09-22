@@ -1647,9 +1647,26 @@ apretaría, porque 10° de arco en el borde lejano son pocos píxeles. **Es fals
 comprime en vertical, y arriba la casilla se ve de frente en horizontal — es donde mejor se
 lee. Lo que se comprime son los laterales, a las 3 y a las 9, donde no hay puntero.
 
-**3. La luz.** Un charco cálido detrás de la rueda y una sombra elíptica que la asienta en la
-mesa. Va **detrás**, no encima: bajar el contraste del modal se paga en la ✕, que es la única
-salida (entrada 27).
+**3. La luz, y luego el entorno.** Primero sólo un charco cálido detrás de la rueda y una
+sombra elíptica que la asienta. Eso era iluminación, no ambiente, y se quedaba corto: el modal
+seguía siendo una caja gris. La segunda mitad es la mesa entera — tapete verde con grano, foco
+cayendo desde arriba, viñeta por dentro y un canto dorado.
+
+**Oscurecer el modal no empeoró la lectura, la mejoró**, que era justo el riesgo que se temía
+por la ✕. El texto de ahí es claro (`--texto-tenue`) y el fondo pasó de `#2C2C2E` a un verde
+mucho más oscuro. Medido: de 3.9:1 a 4.48:1 sólo con el cambio de fondo, y a **6.38:1** tras
+aclarar `--texto-tenue` dentro del modal, que era gratis y dejaba el texto cómodamente por
+encima del mínimo de 4.5. La ✕ lo hereda.
+
+**Y salió un fallo que sólo se ve con el tapete puesto: "Jugar" era `var(--primario)`.** Para
+una clienta con paleta turquesa o menta, el botón principal quedaba camuflado en el verde del
+fondo. No es un caso raro: cuál se camufla depende de la paleta, o sea que es una lotería. Los
+botones del modal pasan a latón, acotados a `.ruleta-caja` — el resto de la página sigue con la
+paleta de la clienta. Es el mismo razonamiento que la entrada 26: dentro de la ruleta los
+colores son propios.
+
+El grano del tapete va en un `data:` de 300 bytes y no en un archivo, para no añadir una
+petición a una página cuyo arranque ya es la entrada 17.
 
 ### Dos cosas que costaron y conviene no repetir
 
@@ -1671,7 +1688,7 @@ muestras entre −66° y 154°.
 - `reduced-motion`, medido **durante el frenado** y no con la rueda parada, que es el error de
   la primera vez: `transition-duration` de 4s en normal y **0s** bajo `reduce`.
 - A 320×568 con la raíz a 24 px: **sin scroll horizontal**, ✕ dentro de pantalla, y el aro mide
-  189 px dentro de un modal de 288. Hizo falta un `scale(0.87)`, porque la perspectiva agranda
+  189 px dentro de un modal de 288. Recomprobado con el tapete y la viñeta puestos. Hizo falta un `scale(0.87)`, porque la perspectiva agranda
   el borde cercano y sin él el aro medía 221 px en una caja de 200.
 - Producción intacta tras cada despliegue: 0 apariciones de "ruleta" en el bundle vivo.
 - Suites: web 197/197, functions 37/37.
