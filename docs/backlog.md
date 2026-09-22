@@ -343,11 +343,25 @@ guarda del código se queda: es una línea y quitarla sería un riesgo gratis.)*
 **Confirmado en vivo el defecto que la entrada 25 §4 ya anotaba:** en la pestaña que recibió
 `ya_jugo`, el botón "Jugar" sigue habilitado e invita a una apuesta que fallará siempre.
 
+### El documento se borró el mismo día, a sabiendas
+
+Con la tirada gastada, la oferta desaparece hasta octubre — y la rueda estaba ya en producción
+**sin que nadie la hubiera visto en un teléfono real**. Se borró
+`ruletas/XkQtnzRGjU95O1so5lJk_2026-09` para que la oferta volviera y poder mirarla en el móvil.
+
+**Comprobado tras borrar:** la tarjeta vuelve a ofrecer la propuesta y el modal abre con sus 12
+casillas. O sea que **borrar el documento devuelve el cupo sin tocar nada más**, que era uno de
+los puntos del recorrido de la entrada 25 §1. Ese punto queda hecho.
+
+**El precio, asumido:** se pierde la comprobación de octubre del mes castigado, porque
+`castigoDelMes` lee el documento del mes anterior y ya no existe. Vuelve a haber tirada
+disponible: quien abra el modal en el móvil puede usar "Tirada de prueba" cuantas veces quiera
+—es gratis y no toca el servidor— pero pulsar "Jugar" gasta la tirada del mes otra vez.
+
 ### Lo que sigue faltando
 
-- El mes castigado punta a punta: que en octubre la web diga "Te quedan 2 este mes (perdiste la
-  ruleta el mes pasado)" y la app "Revives: 2 de 2". **Ya hay documento de ruleta perdida** para
-  comprobarlo. — en cuanto se juegue, el resto del
+- El mes castigado punta a punta. **Ya no hay documento** con el que comprobarlo: hace falta que
+  alguien pierda una tirada y esperar al mes siguiente. — en cuanto se juegue, el resto del
   mes contesta "Ya jugaste tu tirada de este mes". Cuatro de los puntos de la entrada 25 §1
   dependen de verla girar de verdad, así que conviene gastarla en el de los **dos toques
   simultáneos** y grabar vídeo: esa misma tirada sirve para revisar los otros tres.
