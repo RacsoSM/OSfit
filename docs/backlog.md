@@ -1865,7 +1865,14 @@ del giro, leyendo el resultado, y reservar ahí dejaría un hueco vacío enorme.
 - Producción intacta: 0 apariciones de "ruleta" en el bundle vivo.
 - **La tirada real sigue sin gastarse.** Todo lo anterior salió de tiradas de prueba.
 
-**Lo que no se hizo:** mirarlo en un teléfono de verdad. Todo es Chromium.
+**Visto en un teléfono real el 2026-09-22**, sobre producción, y el entrenador lo dio por
+bueno: se ve bien. Eso cierra el "todo es Chromium" que arrastraba el rediseño entero — la
+perspectiva, el cubilete, las 12 casillas y el tapete aguantan a tamaño de móvil de verdad.
+
+**Lo que ese vistazo NO cubre**, y sigue pendiente: si va fluida en un teléfono flojo (la rueda
+lleva sombras, desenfoques y un filtro de ruido, y la entrada 11 ya documenta que aquí los hay
+lentos), si la ✕ de 27×26 se acierta al primer toque con el dedo (entrada 27), y el botón atrás
+de Android a media tirada.
 
 ---
 
