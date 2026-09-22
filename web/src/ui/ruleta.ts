@@ -2,11 +2,13 @@
 import { jugarRuleta } from "../acciones";
 import {
   MINIMO_GIRO_LIBRE_MS,
+  COLORES,
   SECTORES,
   arcoDelBorde,
   arcoDelSector,
   frenar,
   girarLibre,
+  varillaEn,
 } from "./ruletaGiro";
 import type { Color } from "./ruletaGiro";
 
@@ -102,14 +104,17 @@ function acuse(fase: Fase): string {
 const TACHUELAS = 16;
 
 /**
- * El disco. Los sectores salen de [SECTORES] y no de un `d` escrito a mano: así el dibujo no
+ * El disco. Las casillas salen de [SECTORES] y no de un `d` escrito a mano: así el dibujo no
  * puede discrepar del aterrizaje que calcula `rotacionDestino` (entrada 28 del backlog).
  *
- * **Qué gira y qué no, que es de lo que depende que parezca metal.** Sólo el `<g>` del
- * material da vueltas. El aro, las tachuelas, el sombreado de domo, el reflejo y el eje se
- * quedan quietos, porque describen de dónde viene la luz — y una luz que gira con la pieza
- * deja de leerse como luz y se lee como una calcomanía. Es el mismo motivo por el que el
- * reflejo va encima de los sectores y no dentro del grupo.
+ * **Qué gira y qué no, que es de lo que depende que parezca metal.** Sólo el `<g>` de las
+ * casillas y sus varillas da vueltas. El aro, las tachuelas, el cono, el sombreado de domo, el
+ * reflejo y el eje se quedan quietos, porque describen de dónde viene la luz — y una luz que
+ * gira con la pieza deja de leerse como luz y pasa a leerse como calcomanía.
+ *
+ * El cono podría ir dentro del grupo, porque en una ruleta gira con ella, pero se deja fuera:
+ * es simétrico, nadie puede notar que no rota, y fuera recibe la luz fija sin tener que
+ * compensarla.
  *
  * El `<g>` necesita `transform-box: fill-box` en el CSS, o `rotate()` pivota sobre el origen
  * del viewBox en vez de sobre el centro del disco.
@@ -117,9 +122,14 @@ const TACHUELAS = 16;
  * `aria-hidden` porque es decoración: quien no lo ve se entera por el acuse, que es texto.
  */
 function rueda(): string {
-  const sectores = SECTORES.map(
+  const casillas = SECTORES.map(
     (s) => `<path class="ruleta-sector ${s.color}" d="${arcoDelSector(s)}"></path>`
   ).join("");
+
+  const varillas = SECTORES.map((s) => {
+    const v = varillaEn(s.desde);
+    return `<line class="ruleta-varilla" x1="${v.x1}" y1="${v.y1}" x2="${v.x2}" y2="${v.y2}"></line>`;
+  }).join("");
 
   const tachuelas = Array.from({ length: TACHUELAS }, (_, i) => {
     const rad = (i * 2 * Math.PI) / TACHUELAS;
@@ -129,6 +139,7 @@ function rueda(): string {
   }).join("");
 
   return `
+    <div class="ruleta-mesa">
     <svg class="ruleta-svg" viewBox="0 0 200 200" aria-hidden="true" focusable="false">
       <defs>
         <linearGradient id="ruleta-metal" x1="0.12" y1="0" x2="0.88" y2="1">
@@ -140,21 +151,28 @@ function rueda(): string {
           <stop offset="100%" stop-color="#6d551d"></stop>
         </linearGradient>
         <!-- El domo: luz arriba a la izquierda y el borde de abajo apagándose. Es lo que hace
-             que dos medias tartas planas pasen a parecer una pieza curva. -->
+             que un dibujo plano pase a parecer una pieza curva. -->
         <radialGradient id="ruleta-domo" cx="34%" cy="26%" r="80%">
-          <stop offset="0%" stop-color="#ffffff" stop-opacity="0.34"></stop>
-          <stop offset="40%" stop-color="#ffffff" stop-opacity="0.05"></stop>
-          <stop offset="70%" stop-color="#000000" stop-opacity="0.12"></stop>
-          <stop offset="100%" stop-color="#000000" stop-opacity="0.5"></stop>
+          <stop offset="0%" stop-color="#ffffff" stop-opacity="0.30"></stop>
+          <stop offset="40%" stop-color="#ffffff" stop-opacity="0.04"></stop>
+          <stop offset="70%" stop-color="#000000" stop-opacity="0.14"></stop>
+          <stop offset="100%" stop-color="#000000" stop-opacity="0.52"></stop>
         </radialGradient>
         <radialGradient id="ruleta-reflejo" cx="50%" cy="38%" r="62%">
           <stop offset="0%" stop-color="#ffffff" stop-opacity="0.42"></stop>
           <stop offset="52%" stop-color="#ffffff" stop-opacity="0.16"></stop>
           <stop offset="100%" stop-color="#ffffff" stop-opacity="0"></stop>
         </radialGradient>
-        <filter id="ruleta-suavizar" x="-40%" y="-40%" width="180%" height="180%">
-          <feGaussianBlur stdDeviation="3.2"></feGaussianBlur>
-        </filter>
+        <!-- El cono. Radial CENTRADO a propósito: así es invariante al giro y da igual que la
+             pieza rote o no, que es lo que permite sacarlo del grupo. -->
+        <!-- El cono. Radial CENTRADO a propósito: así es invariante al giro, da igual que la
+             pieza rote o no, y eso es lo que permite sacarlo del grupo que gira. -->
+        <radialGradient id="ruleta-cono" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#5b5f68"></stop>
+          <stop offset="55%" stop-color="#3a3d44"></stop>
+          <stop offset="88%" stop-color="#23252a"></stop>
+          <stop offset="100%" stop-color="#4c505a"></stop>
+        </radialGradient>
         <radialGradient id="ruleta-eje" cx="36%" cy="30%" r="75%">
           <stop offset="0%" stop-color="#fdf6d8"></stop>
           <stop offset="55%" stop-color="#c2a049"></stop>
@@ -163,6 +181,9 @@ function rueda(): string {
         <filter id="ruleta-sombra" x="-30%" y="-30%" width="160%" height="160%">
           <feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="#000" flood-opacity="0.55">
           </feDropShadow>
+        </filter>
+        <filter id="ruleta-suavizar" x="-40%" y="-40%" width="180%" height="180%">
+          <feGaussianBlur stdDeviation="3.2"></feGaussianBlur>
         </filter>
         <clipPath id="ruleta-recorte"><circle cx="100" cy="100" r="92"></circle></clipPath>
       </defs>
@@ -174,12 +195,13 @@ function rueda(): string {
       ${tachuelas}
 
       <g class="ruleta-rueda" id="ruleta-rueda">
-        ${sectores}
-        <line class="ruleta-varilla-sombra" x1="100" y1="8" x2="100" y2="192"></line>
-        <line class="ruleta-separador" x1="100" y1="8" x2="100" y2="192"></line>
+        ${casillas}
+        ${varillas}
       </g>
 
       <!-- Encima del material y fuera del grupo: no giran. -->
+      <circle class="ruleta-cono" cx="100" cy="100" r="54.4"></circle>
+      <circle class="ruleta-cono-filo" cx="100" cy="100" r="54.4"></circle>
       <circle class="ruleta-domo" cx="100" cy="100" r="92"></circle>
       <g clip-path="url(#ruleta-recorte)" filter="url(#ruleta-suavizar)">
         <ellipse class="ruleta-reflejo" cx="98" cy="56" rx="54" ry="27"
@@ -191,7 +213,8 @@ function rueda(): string {
       <circle class="ruleta-eje" cx="100" cy="100" r="13"></circle>
       <ellipse class="ruleta-eje-brillo" cx="96" cy="95.5" rx="5.2" ry="3.4"
                transform="rotate(-20 96 95.5)"></ellipse>
-    </svg>`;
+    </svg>
+    </div>`;
 }
 
 export function modalRuleta(): string {
@@ -201,9 +224,9 @@ export function modalRuleta(): string {
   const enJuego = girando(estado.fase);
   const jugarBloqueado = estado.color === null || enJuego || terminada;
 
-  const eleccion = SECTORES
+  const eleccion = COLORES
     .map(
-      ({ color: c }) => `<button class="ruleta-ficha ${c} ${estado.color === c ? "elegida" : ""}"
+      (c) => `<button class="ruleta-ficha ${c} ${estado.color === c ? "elegida" : ""}"
                        id="ruleta-color-${c}" ${enJuego || terminada ? "disabled" : ""}
                        aria-label="Apostar ${NOMBRE[c].apuesta}"></button>`
     )
@@ -276,7 +299,7 @@ export function conectarRuleta(repintar: () => void): void {
 
   const disco = () => document.querySelector<SVGGElement>("#ruleta-rueda");
 
-  for (const { color: c } of SECTORES) {
+  for (const c of COLORES) {
     document.querySelector(`#ruleta-color-${c}`)?.addEventListener("click", () => {
       elegirColor(c);
       repintar();
@@ -294,7 +317,7 @@ export function conectarRuleta(repintar: () => void): void {
   });
 
   document.querySelector("#ruleta-prueba")?.addEventListener("click", () => {
-    const color: Color = SECTORES[Math.random() < 0.5 ? 0 : 1].color;
+    const color: Color = COLORES[Math.random() < 0.5 ? 0 : 1];
     marcarResultado({ tipo: "girando-prueba" });
     repintar();
     const r = disco();

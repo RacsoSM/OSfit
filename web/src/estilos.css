@@ -301,11 +301,60 @@ main { max-width: 480px; margin: 0 auto; padding: 16px 14px 48px; }
 .ruleta-ficha.elegida { border-color: var(--texto); }
 .ruleta-ficha:disabled { cursor: default; }
 
-.ruleta-marco { position: relative; width: 200px; height: 200px; margin: 0 auto 14px; }
+/* La rueda va inclinada, como sobre una mesa. La perspectiva es la pista más fuerte de que
+   algo es un objeto y no un dibujo, y es lo que hace el salto que el sombreado solo no daba.
+
+   El `rotateX` va en un envoltorio HTML y NO en el SVG: así el `rotate()` del `<g>` sigue
+   ocurriendo en el plano propio de la rueda y `rotacionDestino` no se entera de nada. Mezclar
+   las dos transformaciones en el mismo elemento sí rompería la cuenta.
+
+   La caja es más baja que ancha porque al inclinarla la rueda ocupa menos alto; dejarla
+   cuadrada abría un hueco arriba y abajo. */
+.ruleta-marco {
+  position: relative;
+  width: 200px;
+  height: 152px;
+  margin: 0 auto 14px;
+  perspective: 620px;
+}
+/* La luz del casino: un charco cálido cayendo sobre la mesa. Va DETRÁS de la rueda y no tiñe
+   el texto del modal, porque bajar el contraste acá se paga en la ✕, que es la única salida
+   (entrada 27 del backlog). Es ambiente, no un filtro encima de todo. */
+.ruleta-marco::before {
+  content: "";
+  position: absolute;
+  inset: -46px -34px -30px;
+  background: radial-gradient(
+    ellipse at 50% 40%,
+    rgba(255, 201, 130, 0.17),
+    rgba(255, 146, 58, 0.07) 46%,
+    transparent 72%
+  );
+  pointer-events: none;
+}
+/* Y la sombra que la asienta en la mesa: sin ella la rueda inclinada flota. */
+.ruleta-marco::after {
+  content: "";
+  position: absolute;
+  left: 14%;
+  right: 14%;
+  bottom: 2px;
+  height: 20px;
+  background: radial-gradient(ellipse at 50% 50%, rgba(0, 0, 0, 0.55), transparent 70%);
+  filter: blur(3px);
+  pointer-events: none;
+}
+.ruleta-mesa, .ruleta-puntero { position: absolute; z-index: 1; }
+.ruleta-mesa {
+  position: absolute;
+  inset: -24px 0;
+  transform: rotateX(52deg) scale(0.87);
+  transform-style: preserve-3d;
+}
 /* El puntero es fijo y la rueda es la que gira, como una ruleta de verdad. */
 .ruleta-puntero {
   position: absolute;
-  top: -6px;
+  top: 8px;
   left: 50%;
   transform: translateX(-50%);
   border-left: 9px solid transparent;
@@ -344,11 +393,12 @@ main { max-width: 480px; margin: 0 auto; padding: 16px 14px 48px; }
    reparto sale de `SECTORES` en `ruletaGiro.ts`; acá sólo se le pone color. */
 .ruleta-sector.rojo { fill: var(--ruleta-rojo); }
 .ruleta-sector.negro { fill: var(--ruleta-negro); }
-/* La costura es metálica, no blanca: en una ruleta de verdad los sectores los separa una
-   varilla. Ésta sí gira, porque es parte del material. Van dos trazos —filo oscuro debajo y
-   latón encima—, que es lo que le da grosor en vez de parecer una raya pintada. */
-.ruleta-varilla-sombra { stroke: rgba(0, 0, 0, 0.55); stroke-width: 4.4; }
-.ruleta-separador { stroke: #d8bd74; stroke-width: 2; }
+/* Las varillas que separan las casillas. Éstas SÍ giran: son parte del material. */
+.ruleta-varilla { stroke: #c9ae6b; stroke-width: 1.1; opacity: 0.85; }
+
+/* El cono central, con su filo claro donde arranca el anillo de casillas. */
+.ruleta-cono { fill: url(#ruleta-cono); }
+.ruleta-cono-filo { fill: none; stroke: rgba(255, 245, 225, 0.22); stroke-width: 1.2; }
 
 /* `transform-box: fill-box` NO es opcional: sin él `transform-origin: center` se resuelve
    contra el viewport del SVG y no contra la caja del `<g>`, y la rueda orbita alrededor de una

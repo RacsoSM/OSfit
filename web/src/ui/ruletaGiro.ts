@@ -5,58 +5,83 @@
  * (cómo llega hasta ahí). Separadas porque los tests de este repo corren en Node sin jsdom.
  */
 
+/** Los dos colores. GEMELO de `COLORES` en `functions/src/reglasRuleta.ts`. */
+export const COLORES = ["rojo", "negro"] as const;
+export type Color = (typeof COLORES)[number];
+
 /**
- * Los dos colores y cómo se reparten el dibujo. **Esta constante es el contrato:** de acá
- * salen a la vez los sectores del SVG que pinta `modalRuleta` y el aterrizaje que calcula
- * `rotacionDestino`, así que mover un sector mueve las dos cosas juntas y no pueden discrepar.
+ * Cuántas casillas tiene la rueda. Par, siempre: los colores se alternan, así que impar
+ * dejaría dos del mismo color juntas en la costura del 0 y el reparto dejaría de ser mitad y
+ * mitad.
+ */
+export const CASILLAS = 36;
+
+/** Lo que ocupa cada casilla. Con 36 son 10°. */
+export const GRADOS_POR_CASILLA = 360 / CASILLAS;
+
+/**
+ * El reparto del dibujo. **Esta constante es el contrato:** de acá salen a la vez los `<path>`
+ * del SVG que pinta `modalRuleta` y el aterrizaje que calcula `rotacionDestino`, así que
+ * moverlo mueve las dos cosas juntas y no pueden discrepar.
  *
  * Antes no era así. El reparto vivía en un `conic-gradient` de `estilos.css` y el test lo
  * reimplementaba a mano, de modo que invertir los colores habría dejado el test en verde y al
- * puntero señalando el color contrario al que anunciaba el acuse. Ver la entrada 28 del
- * backlog.
+ * puntero señalando el color contrario al que anunciaba el acuse (entradas 25 §4 y 28).
  *
- * Los grados se miden desde las 12 en sentido horario, que es donde el puntero está fijo.
- * GEMELO de `COLORES` en `functions/src/reglasRuleta.ts`: los nombres viajan a Firestore.
+ * **Sigue siendo mitad y mitad**, que es lo que pide el spec: 18 casillas de cada color. Que
+ * sean muchas y alternas en vez de dos medias tartas es como funciona una ruleta de verdad
+ * —la bola cae en UNA casilla y apostar al color sigue siendo binario— y es lo que hace que
+ * el dibujo se lea como ruleta y no como gráfico de sectores.
+ *
+ * Los grados se miden desde las 12 en horario, que es donde el puntero está fijo.
  */
-export const SECTORES = [
-  { color: "rojo", desde: 0, hasta: 180 },
-  { color: "negro", desde: 180, hasta: 360 },
-] as const;
+export const SECTORES: ReadonlyArray<{ color: Color; desde: number; hasta: number }> =
+  Array.from({ length: CASILLAS }, (_, i) => ({
+    color: COLORES[i % COLORES.length],
+    desde: i * GRADOS_POR_CASILLA,
+    hasta: (i + 1) * GRADOS_POR_CASILLA,
+  }));
 
-export type Color = (typeof SECTORES)[number]["color"];
-
-/** Media vuelta cada uno: la ruleta se dibuja justa aunque el sorteo no lo sea (ver el spec). */
-export const GRADOS_POR_SECTOR = 180;
-
-/** Margen en grados para no aterrizar pegada al borde, donde el puntero queda ambiguo. */
-export const MARGEN = 10;
-
-/** Radio del disco dentro del `viewBox` de 200×200. El aro va por fuera, en 96. */
+/** Borde exterior de las casillas, dentro del `viewBox` de 200×200. El aro va por fuera. */
 const RADIO = 92;
 
-/** Un punto del borde del disco. 0° son las 12 y crece en horario, como todo acá. */
-function punto(grados: number): string {
+/**
+ * Donde acaban las casillas y empieza el cono. Las casillas de una ruleta viven en un ANILLO,
+ * no en porciones que llegan al eje: con 36 porciones completas el centro sería una estrella
+ * de picos y se volvería a leer como gráfico.
+ */
+const RADIO_INTERIOR = 54;
+
+/** Un punto del borde a [r] del centro. 0° son las 12 y crece en horario, como todo acá. */
+function punto(grados: number, r: number): string {
   const rad = ((grados - 90) * Math.PI) / 180;
-  return `${(100 + RADIO * Math.cos(rad)).toFixed(2)},${(100 + RADIO * Math.sin(rad)).toFixed(2)}`;
+  return `${(100 + r * Math.cos(rad)).toFixed(2)},${(100 + r * Math.sin(rad)).toFixed(2)}`;
 }
 
 /**
- * El atributo `d` de un sector. Se GENERA desde [SECTORES] en vez de escribirse a mano en el
- * marcado, que es lo que impide que el dibujo y el aterrizaje se separen.
+ * El `d` de una casilla: un trozo de anillo. Se GENERA desde [SECTORES] en vez de escribirse a
+ * mano en el marcado, que es lo que impide que el dibujo y el aterrizaje se separen.
  */
 export function arcoDelSector(sector: { desde: number; hasta: number }): string {
   const grande = sector.hasta - sector.desde > 180 ? 1 : 0;
-  return `M100,100 L${punto(sector.desde)} A${RADIO},${RADIO} 0 ${grande},1 ${punto(sector.hasta)} Z`;
+  return (
+    `M${punto(sector.desde, RADIO)} A${RADIO},${RADIO} 0 ${grande},1 ${punto(sector.hasta, RADIO)}` +
+    ` L${punto(sector.hasta, RADIO_INTERIOR)}` +
+    ` A${RADIO_INTERIOR},${RADIO_INTERIOR} 0 ${grande},0 ${punto(sector.desde, RADIO_INTERIOR)} Z`
+  );
 }
 
-/**
- * Sólo el arco del borde, sin los dos radios que cierran la porción. [arcoDelSector] devuelve
- * una porción de tarta, así que trazarla en vez de rellenarla dibuja también las dos rectas
- * hasta el centro — una V. Esto es para lo que se traza: el filo del disco.
- */
+/** Sólo el arco del borde exterior, sin cerrar: para trazar filos y luces sobre el canto. */
 export function arcoDelBorde(desde: number, hasta: number): string {
   const grande = hasta - desde > 180 ? 1 : 0;
-  return `M${punto(desde)} A${RADIO},${RADIO} 0 ${grande},1 ${punto(hasta)}`;
+  return `M${punto(desde, RADIO)} A${RADIO},${RADIO} 0 ${grande},1 ${punto(hasta, RADIO)}`;
+}
+
+/** La varilla que separa dos casillas: del anillo interior al exterior. */
+export function varillaEn(grados: number): { x1: string; y1: string; x2: string; y2: string } {
+  const [x1, y1] = punto(grados, RADIO_INTERIOR).split(",");
+  const [x2, y2] = punto(grados, RADIO).split(",");
+  return { x1, y1, x2, y2 };
 }
 
 /** Qué color está pintado en ese punto del dibujo, medido desde las 12 en horario. */
@@ -84,25 +109,29 @@ export const MS_DE_FRENADO = 4000;
 
 /**
  * La ROTACIÓN que hay que darle a la rueda para que el puntero caiga en el color que mandó
- * el servidor. Devuelve la rotación y no el ángulo del sector porque es lo que `frenar` le
+ * el servidor. Devuelve la rotación y no el ángulo de la casilla porque es lo que `frenar` le
  * pasa a `transform: rotate()`, y confundir los dos números es exactamente lo que hacía que
  * el puntero aterrizara en el color contrario al que anunciaba el acuse.
  *
  * [SECTORES] dice qué hay pintado en cada grado, medido desde las 12 en horario, y el
  * puntero es fijo a las 12. Como `rotate(D)` gira la rueda D grados en horario, bajo el
- * puntero queda el material que estaba en `360 − D`: la rotación es el espejo del ángulo del
- * sector, no el mismo número.
+ * puntero queda el material que estaba en `360 − D`: la rotación es el espejo del ángulo de
+ * la casilla, no el mismo número.
+ *
+ * **Aterriza en el CENTRO de una casilla.** Antes elegía un punto al azar de medio círculo y
+ * hacía falta un margen de 10° para no parar pegada a la costura, donde el puntero quedaba
+ * ambiguo. Con casillas, el centro es el único sitio sensato —la bola se queda en la casilla,
+ * no encima de la varilla— y la ambigüedad desaparece sin margen que mantener.
  *
  * [azar] entra como parámetro (0 a 1) en vez de llamar a `Math.random()` acá para poder
- * probarlo. No decide nada del resultado: el color ya viene decidido, esto solo elige en qué
- * punto de ese medio círculo se detiene, para que dos tiradas del mismo color no se vean
- * idénticas.
+ * probarlo. No decide nada del resultado: el color ya viene decidido, esto sólo elige EN CUÁL
+ * de las 18 casillas de ese color se detiene, para que dos tiradas iguales no se vean iguales.
  */
 export function rotacionDestino(color: Color, azar: number): number {
-  const sector = SECTORES.find((s) => s.color === color) ?? SECTORES[0];
-  const util = sector.hasta - sector.desde - MARGEN * 2;
-  const enElSector = sector.desde + MARGEN + azar * util;
-  return (360 - enElSector) % 360;
+  const suyas = SECTORES.filter((s) => s.color === color);
+  const elegida = suyas[Math.min(suyas.length - 1, Math.floor(azar * suyas.length))];
+  const centro = (elegida.desde + elegida.hasta) / 2;
+  return (360 - centro) % 360;
 }
 
 /**

@@ -1,7 +1,8 @@
 // web/src/ui/ruletaGiro.test.ts
 import { describe, expect, it } from "vitest";
 import {
-  MARGEN,
+  CASILLAS,
+  GRADOS_POR_CASILLA,
   SECTORES,
   anguloDesdeTransform,
   arcoDelSector,
@@ -19,8 +20,8 @@ import {
  * **Este archivo ya no reimplementa el reparto.** Antes tenía su propia copia del
  * `conic-gradient` y del margen, así que invertir los colores del dibujo lo habría dejado en
  * verde con el puntero señalando el color contrario — el agujero que nombran las entradas 25
- * §4 y 28 del backlog. Ahora importa `colorBajoElPuntero`, `SECTORES` y `MARGEN` de donde
- * también sale el SVG, de modo que una sola fuente manda sobre el dibujo y sobre la cuenta.
+ * §4 y 28 del backlog. Ahora importa `colorBajoElPuntero` y `SECTORES` de donde también sale
+ * el SVG, de modo que una sola fuente manda sobre el dibujo y sobre la cuenta.
  */
 
 describe("rotacionDestino", () => {
@@ -38,19 +39,40 @@ describe("rotacionDestino", () => {
     expect(rotacionDestino("rojo", 0.1)).not.toBe(rotacionDestino("rojo", 0.9));
   });
 
-  // Los bordes son donde el puntero queda ambiguo: nunca debe aterrizar exactamente ahí. Las
-  // costuras salen de SECTORES, así que añadir o mover un sector las mueve con él.
-  it("nunca aterriza pegada al borde del sector", () => {
+  // Antes hacía falta un margen de 10° para no parar pegada a la costura. Con casillas, el
+  // centro es el único sitio sensato —la bola se queda en la casilla, no sobre la varilla— y
+  // la ambigüedad desaparece sin margen que mantener. Esto lo fija.
+  it("aterriza en el centro de una casilla, nunca sobre una varilla", () => {
     const costuras = [...SECTORES.map((s) => s.desde), 360];
-    const distanciaAlBorde = (rotacion: number) => {
-      const enElDibujo = (((360 - (rotacion % 360)) % 360) + 360) % 360;
-      return Math.min(...costuras.map((c) => Math.abs(enElDibujo - c)));
-    };
     for (const { color } of SECTORES) {
-      for (const azar of [0, 0.5, 1]) {
-        expect(distanciaAlBorde(rotacionDestino(color, azar))).toBeGreaterThanOrEqual(MARGEN);
+      for (const azar of [0, 0.3, 0.5, 0.99, 1]) {
+        const enElDibujo = (360 - (rotacionDestino(color, azar) % 360)) % 360;
+        const alBorde = Math.min(...costuras.map((c) => Math.abs(enElDibujo - c)));
+        expect(alBorde).toBeCloseTo(GRADOS_POR_CASILLA / 2, 6);
       }
     }
+  });
+
+  // 18 de cada color: el sorteo es 70/30 pero el DIBUJO tiene que verse justo (ver el spec).
+  it("el dibujo sigue siendo mitad y mitad", () => {
+    expect(SECTORES).toHaveLength(CASILLAS);
+    expect(CASILLAS % 2).toBe(0);
+    for (const color of ["rojo", "negro"] as const) {
+      expect(SECTORES.filter((s) => s.color === color)).toHaveLength(CASILLAS / 2);
+    }
+  });
+
+  // Alternas: dos del mismo color seguidas delatarían que el reparto se generó mal.
+  it("los colores alternan casilla a casilla", () => {
+    for (let i = 1; i < SECTORES.length; i++) {
+      expect(SECTORES[i].color).not.toBe(SECTORES[i - 1].color);
+    }
+  });
+
+  // Con 18 casillas por color, tiradas distintas tienen que poder caer en casillas distintas.
+  it("usa mas de una casilla del color, no siempre la misma", () => {
+    const vistas = new Set([0, 0.2, 0.4, 0.6, 0.8, 0.99].map((a) => rotacionDestino("rojo", a)));
+    expect(vistas.size).toBeGreaterThan(3);
   });
 });
 
@@ -77,15 +99,20 @@ describe("el dibujo sale de SECTORES", () => {
   // El arco empieza y termina en el borde del disco, en los grados que declara el sector.
   // Con dos medias vueltas los dos extremos son las 12 y las 6, y el flag de arco grande va
   // en 0: si alguien mete un sector de más de media vuelta, tiene que pasar a 1.
-  it("el arco del sector empieza y acaba en sus propios grados", () => {
-    const [primero, segundo] = SECTORES;
-    expect(arcoDelSector(primero)).toBe("M100,100 L100.00,8.00 A92,92 0 0,1 100.00,192.00 Z");
-    expect(arcoDelSector(segundo)).toBe("M100,100 L100.00,192.00 A92,92 0 0,1 100.00,8.00 Z");
+  // La casilla es un trozo de ANILLO, no una porción que llegue al eje: arranca en el borde
+  // exterior, vuelve por el interior y cierra. Si alguien la convierte en porción, el centro
+  // se llena de picos y el dibujo vuelve a leerse como gráfico de sectores.
+  it("la casilla es un trozo de anillo, no una porcion", () => {
+    const d = arcoDelSector(SECTORES[0]);
+    expect(d.startsWith("M100,100")).toBe(false);
+    expect(d).toMatch(/^M100\.00,8\.00 A92,92 /);
+    expect(d).toContain("A54,54");
+    expect(d.endsWith("Z")).toBe(true);
   });
 
-  it("un sector de mas de media vuelta pide el flag de arco grande", () => {
-    expect(arcoDelSector({ desde: 0, hasta: 270 })).toContain("0 1,1");
-    expect(arcoDelSector({ desde: 0, hasta: 180 })).toContain("0 0,1");
+  it("una casilla de mas de media vuelta pide el flag de arco grande", () => {
+    expect(arcoDelSector({ desde: 0, hasta: 270 })).toContain("A92,92 0 1,1");
+    expect(arcoDelSector({ desde: 0, hasta: 90 })).toContain("A92,92 0 0,1");
   });
 });
 

@@ -1,7 +1,7 @@
 // web/src/ui/ruleta.test.ts
 import { beforeEach, describe, expect, it } from "vitest";
 import { abrirRuleta, cerrarRuleta, elegirColor, modalRuleta, marcarResultado } from "./ruleta";
-import { SECTORES } from "./ruletaGiro";
+import { COLORES, SECTORES } from "./ruletaGiro";
 
 beforeEach(() => cerrarRuleta());
 
@@ -117,6 +117,26 @@ describe("modalRuleta", () => {
     const html = modalRuleta();
     expect(html).toContain('aria-label="Apostar al rojo"');
     expect(html).toContain('aria-label="Apostar al negro"');
+  });
+
+  /**
+   * Una ficha por COLOR, no por casilla. Se rompió al pasar a 36 casillas: `eleccion` mapeaba
+   * `SECTORES`, así que aparecían 18 fichas y el id `#ruleta-color-rojo` salía repetido 18
+   * veces en el DOM — ids duplicados, y el listener enganchado sólo al primero.
+   */
+  it("hay exactamente una ficha por color", () => {
+    abrirRuleta();
+    const html = modalRuleta();
+    expect(html.match(/class="ruleta-ficha /g)).toHaveLength(COLORES.length);
+    for (const color of COLORES) {
+      expect(html.match(new RegExp(`id="ruleta-color-${color}"`, "g"))).toHaveLength(1);
+    }
+  });
+
+  // Y las casillas sí son una por sector: es el otro lado del mismo error.
+  it("hay una casilla dibujada por cada sector", () => {
+    abrirRuleta();
+    expect(modalRuleta().match(/class="ruleta-sector /g)).toHaveLength(SECTORES.length);
   });
 
   // Sólo el `<g>` gira: `girarLibre` y `frenar` buscan `#ruleta-rueda`, y si ese id acabara en
