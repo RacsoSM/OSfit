@@ -1474,7 +1474,7 @@ probada.
 
 ---
 
-## 26. El acuse de la ruleta nombraba un color que la clienta no ve — ✅ HECHO (2026-09-22)
+## 26. El acuse de la ruleta nombraba un color que la clienta no ve — ✅ HECHO (2026-09-22), REHECHO EL MISMO DÍA
 
 **Detectado:** 2026-09-22, en el primer recorrido con la ruleta en pantalla.
 
@@ -1504,7 +1504,12 @@ de las dos mal escrita. Hay un test que lo dice, para que nadie lo "simplifique"
 Tres tests nuevos en `web/src/ui/ruleta.test.ts`, **comprobados fallando contra el código
 viejo** antes de darlos por buenos. Suite 187/187 y `npm run build` limpio.
 
-**No está desplegado:** el canal de preview sigue sirviendo el bundle que dice "morado".
+**Rehecho unas horas después, en la entrada 28.** Al fijar los colores a rojo y negro el tono
+volvió a poderse nombrar, así que "tu color" duró media mañana y ahora dice "Cayó en rojo". Lo
+que **no** cambió es la estructura de dos formas (`cayo` y `apuesta`): las frases siguen
+pidiendo gramática distinta. El test que guardaba esto pasó de comprobar que *no* se nombrara
+el tono a comprobar que el nombre **coincida con lo que se pinta**, que es la propiedad que de
+verdad importaba desde el principio.
 
 ---
 
@@ -1526,7 +1531,7 @@ transparente. No obliga a rediseñar nada.
 
 ---
 
-## 28. La ruleta se ve pobre: hacerla realista, o pixel art
+## 28. La ruleta se ve pobre: hacerla realista, o pixel art — ✅ HECHO (2026-09-22)
 
 **Pedido:** 2026-09-22, al verla girar por primera vez.
 
@@ -1569,5 +1574,51 @@ justo el caso en que es fácil dejarse un `animation` suelto que se salte la reg
 
 **Y no tocar la paleta.** El sector primario es `var(--primario)`, el color de cada clienta.
 Un rediseño que fije los colores a mano vuelve a meter el fallo de la entrada 26.
+
+---
+
+### Hecho el 2026-09-22: realista, en SVG, con los colores fijos
+
+**Se eligió realista.** El argumento no fue estético: es la única de las dos que preserva el
+giro continuo y el reparto de grados, y por tanto no obliga a tocar `rotacionDestino`, el
+margen de 10° ni la ruta de `reduced-motion` — justo donde esta entrada avisaba de que no hay
+red. Pixel art obligaba a rehacer el aterrizaje **y** a resolver el teñido, dos frentes a la
+vez.
+
+**Y se fijaron los colores a rojo y negro**, que no estaba en el plan de esta entrada pero
+resolvió de raíz el problema de la paleta: ver la 26 y el aviso del spec, actualizado.
+
+**El contrato dejó de ser un acuerdo tácito.** `SECTORES` en `ruletaGiro.ts` es ahora la única
+fuente: de ahí salen a la vez los `<path>` del SVG (vía `arcoDelSector`, que genera el `d` en
+vez de escribirlo a mano) y la cuenta del aterrizaje. **Con eso se tapa el agujero que
+nombraban la 25 §4 y esta entrada:** `ruletaGiro.test.ts` ya no reimplementa el gradiente ni el
+margen, los importa, así que invertir los sectores ya no puede dejar el test en verde con el
+puntero en el color contrario.
+
+Lo que se dibuja: aro de latón con bisel y 16 tachuelas, ranura oscura entre aro y material,
+sombreado de domo, reflejo especular difuminado, luz rebotada en el filo inferior, varilla
+metálica entre sectores y eje domado con su propio brillo. **Todo lo que describe la luz va
+fuera del `<g>` que gira** — aro, tachuelas, domo, reflejo, rebote y eje—, porque una luz que
+da vueltas con la pieza deja de leerse como luz.
+
+**Tres trampas que costaron, y quedan resueltas en el código:**
+
+- `transform-box: fill-box` en el `<g>`, o `rotate()` pivota sobre el origen del viewBox y la
+  rueda orbita en vez de girar. **Verificado midiendo:** 8 ángulos distintos durante el giro y
+  0.0 px de dispersión del centro, clavado en el centro del marco.
+- `frenar()` forzaba el reflow con `void rueda.offsetWidth`, y **los elementos SVG no tienen
+  `offsetWidth`** — es de `HTMLElement`. Se evaluaba a `undefined` y dejaba de forzar nada,
+  devolviendo en silencio el salto que ese truco existe para evitar. Ahora va por
+  `getBoundingClientRect().width`.
+- Trazar `arcoDelSector` en vez de rellenarlo dibuja también los dos radios hasta el centro,
+  o sea una V. Para el filo hay `arcoDelBorde`, que da sólo el arco.
+
+Desplegado al canal de preview, **no a producción**: verificado tras cada despliegue que el
+bundle vivo sigue con 0 apariciones de "ruleta". De paso el canal se extendió del 2026-09-28 al
+**2026-10-22**, así que el vencimiento que U2 marcaba como urgente ya no aprieta.
+
+Suites: web 192/192, functions 37/37, `npm run build` limpio.
+
+**Lo que no se hizo:** mirarlo en un teléfono de verdad. Las capturas son de Chromium a 420 px.
 
 ---
