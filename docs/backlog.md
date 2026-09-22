@@ -1619,6 +1619,63 @@ bundle vivo sigue con 0 apariciones de "ruleta". De paso el canal se extendió d
 
 Suites: web 192/192, functions 37/37, `npm run build` limpio.
 
-**Lo que no se hizo:** mirarlo en un teléfono de verdad. Las capturas son de Chromium a 420 px.
+### Segunda pasada el mismo día: casillas, perspectiva y luz
+
+La primera versión no convencía, y el diagnóstico fue que **lo que delataba a la ruleta no era
+la luz sino la geometría**: dos medias tartas vistas de frente se leen como gráfico de sectores
+por la forma, antes de que nadie mire el sombreado. Por eso se hicieron las tres cosas, en
+orden de cuánto cambian la lectura.
+
+**1. Casillas alternadas.** 36 casillas rojo/negro en un ANILLO, con un cono en el centro. No es
+licencia artística: así funciona una ruleta —la bola cae en una casilla y apostar al color
+sigue siendo binario—, y **el dibujo sigue siendo mitad y mitad**, que es lo que pide el spec:
+18 de cada color. Las casillas van en anillo y no en porciones que lleguen al eje porque con 36
+porciones el centro es una estrella de picos y se vuelve a leer como gráfico.
+
+**Y se llevó por delante el margen de 10°, para bien.** Existía para no parar pegada a la
+costura, donde el puntero queda ambiguo. Con casillas el aterrizaje es el CENTRO de una —la
+bola se queda en la casilla, no sobre la varilla—, así que la ambigüedad desaparece sin margen
+que mantener. `rotacionDestino` elige entre las 18 casillas del color y para en el centro de la
+elegida.
+
+**2. Perspectiva.** `rotateX(52deg)` sobre un envoltorio HTML, no sobre el SVG: así el
+`rotate()` del `<g>` sigue ocurriendo en el plano propio de la rueda y el aterrizaje no se
+entera. Mezclar las dos transformaciones en el mismo elemento sí rompería la cuenta.
+
+**El puntero se queda a las 12.** Antes de hacerlo se dio por hecho que la inclinación lo
+apretaría, porque 10° de arco en el borde lejano son pocos píxeles. **Es falso:** `rotateX`
+comprime en vertical, y arriba la casilla se ve de frente en horizontal — es donde mejor se
+lee. Lo que se comprime son los laterales, a las 3 y a las 9, donde no hay puntero.
+
+**3. La luz.** Un charco cálido detrás de la rueda y una sombra elíptica que la asienta en la
+mesa. Va **detrás**, no encima: bajar el contraste del modal se paga en la ✕, que es la única
+salida (entrada 27).
+
+### Dos cosas que costaron y conviene no repetir
+
+**Las fichas se multiplicaron por 18 y nadie lo vio.** `eleccion` mapeaba `SECTORES`, que pasó
+de 2 entradas a 36, así que el modal dibujaba 18 fichas y el id `#ruleta-color-rojo` salía
+repetido 18 veces. Los tests no lo cazaron porque comprobaban que las fichas *existieran*, no
+cuántas. Hay dos tests nuevos: una ficha por color con su id único, y una casilla por sector.
+
+**`boundingBox()` NO sirve para comprobar que algo gira sobre su eje.** Devuelve la caja
+alineada a los ejes del cuadrado transformado, que se ensancha y encoge al rotar aunque el
+contenido no se mueva: daba 9.5 px de desplazamiento y un falso "orbita", incluso con un
+control —el aro— quieto en 0.0 px, porque el aro no rota y no sufre el mismo artefacto. Lo que
+sí sirve es mapear el punto central por `getScreenCTM()`: **0.00 px de desplazamiento** en 10
+muestras entre −66° y 154°.
+
+### Verificado en esta pasada
+
+- Gira sobre su eje dentro del `rotateX`: 0.00 px por `getScreenCTM`.
+- `reduced-motion`, medido **durante el frenado** y no con la rueda parada, que es el error de
+  la primera vez: `transition-duration` de 4s en normal y **0s** bajo `reduce`.
+- A 320×568 con la raíz a 24 px: **sin scroll horizontal**, ✕ dentro de pantalla, y el aro mide
+  189 px dentro de un modal de 288. Hizo falta un `scale(0.87)`, porque la perspectiva agranda
+  el borde cercano y sin él el aro medía 221 px en una caja de 200.
+- Producción intacta tras cada despliegue: 0 apariciones de "ruleta" en el bundle vivo.
+- Suites: web 197/197, functions 37/37.
+
+**Lo que no se hizo:** mirarlo en un teléfono de verdad. Todo es Chromium.
 
 ---
