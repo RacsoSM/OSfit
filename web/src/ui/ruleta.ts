@@ -55,7 +55,20 @@ export function marcarResultado(fase: Fase): void {
   estado.fase = fase;
 }
 
-const NOMBRE: Record<Color, string> = { primario: "morado", ambar: "ámbar" };
+/**
+ * Cómo se nombra cada color. **El primario no se nombra por su tono**: la ficha y el sector
+ * son `var(--primario)`, o sea la paleta que el entrenador le asigna a cada clienta, así que
+ * escribir "morado" miente con cualquier paleta que no sea la de por defecto — y la clienta
+ * lee un color que no tiene delante justo cuando le estamos diciendo si ganó. El ámbar sí es
+ * fijo, y ése se nombra.
+ *
+ * Son dos formas porque las dos frases piden gramática distinta: "Cayó en ___" y
+ * "Apostar ___".
+ */
+const NOMBRE: Record<Color, { cayo: string; apuesta: string }> = {
+  primario: { cayo: "tu color", apuesta: "a tu color" },
+  ambar: { cayo: "el ámbar", apuesta: "al ámbar" },
+};
 
 const girando = (fase: Fase) => fase.tipo === "girando-real" || fase.tipo === "girando-prueba";
 
@@ -63,12 +76,12 @@ const girando = (fase: Fase) => fase.tipo === "girando-real" || fase.tipo === "g
 function acuse(fase: Fase): string {
   switch (fase.tipo) {
     case "gano":
-      return `<p class="aviso-ok">Cayó en ${NOMBRE[fase.color]}. ¡Has revivido tu racha!</p>`;
+      return `<p class="aviso-ok">Cayó en ${NOMBRE[fase.color].cayo}. ¡Has revivido tu racha!</p>`;
     case "perdio":
-      return `<p class="aviso-error">Cayó en ${NOMBRE[fase.color]}. El próximo mes tendrás
+      return `<p class="aviso-error">Cayó en ${NOMBRE[fase.color].cayo}. El próximo mes tendrás
               2 revives en vez de 3.</p>`;
     case "prueba":
-      return `<p class="accion-nota">Cayó en ${NOMBRE[fase.color]}. Tirada de prueba — esta no cuenta.</p>`;
+      return `<p class="accion-nota">Cayó en ${NOMBRE[fase.color].cayo}. Tirada de prueba — esta no cuenta.</p>`;
     case "error":
       return `<p class="aviso-error">${fase.texto}</p>`;
     default:
@@ -87,7 +100,7 @@ export function modalRuleta(): string {
     .map(
       (c) => `<button class="ruleta-ficha ${c} ${estado.color === c ? "elegida" : ""}"
                        id="ruleta-color-${c}" ${enJuego || terminada ? "disabled" : ""}
-                       aria-label="Apostar al ${NOMBRE[c]}"></button>`
+                       aria-label="Apostar ${NOMBRE[c].apuesta}"></button>`
     )
     .join("");
 

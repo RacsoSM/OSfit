@@ -79,4 +79,36 @@ describe("modalRuleta", () => {
     marcarResultado({ tipo: "girando-real" });
     expect(modalRuleta()).not.toContain(`id="ruleta-cerrar"`);
   });
+  /**
+   * El sector y la ficha del primario son `var(--primario)`: la paleta que el entrenador le
+   * asigna a cada clienta. Nombrar el tono a mano ("morado") sólo acierta con la paleta de
+   * por defecto, y con cualquier otra la clienta lee un color que no tiene delante — en la
+   * frase que le dice si ganó. Se detectó el 2026-09-22 con una clienta en turquesa, que leía
+   * "Cayó en morado" con la rueda verde agua.
+   */
+  it("el acuse no nombra el tono del primario, que lo pone la paleta de cada clienta", () => {
+    for (const tipo of ["gano", "perdio", "prueba"] as const) {
+      abrirRuleta();
+      marcarResultado({ tipo, color: "primario" });
+      const html = modalRuleta();
+      expect(html).toContain("Cayó en tu color.");
+      expect(html).not.toContain("morado");
+    }
+  });
+
+  // El ámbar no sale de la paleta: es el mismo para todas, así que ése sí se nombra.
+  it("el ambar si se nombra, porque no depende de la paleta", () => {
+    abrirRuleta();
+    marcarResultado({ tipo: "gano", color: "ambar" });
+    expect(modalRuleta()).toContain("Cayó en el ámbar.");
+  });
+
+  // Las dos frases piden gramática distinta, y salen del mismo sitio: si alguien unifica los
+  // nombres en una sola cadena, una de las dos queda mal escrita.
+  it("las fichas se anuncian con la preposicion correcta", () => {
+    abrirRuleta();
+    const html = modalRuleta();
+    expect(html).toContain('aria-label="Apostar a tu color"');
+    expect(html).toContain('aria-label="Apostar al ámbar"');
+  });
 });
