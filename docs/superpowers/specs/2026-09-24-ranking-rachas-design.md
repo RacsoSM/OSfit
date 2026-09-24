@@ -23,9 +23,14 @@ de gracia).
 - **Quién aparece:** en *Racha actual*, solo clientes con `activo == true`; en
   *Racha histórica*, **todos** (activos e inactivos), a modo de salón de la fama.
 - Los clientes con racha 0 **sí aparecen**, al fondo.
-- **Empates comparten puesto**, igual que `calcularRanking` en Kotlin
-  (10, 10, 8 → puestos 1, 1, 3). Dentro de un empate, orden alfabético por
-  nombre para que la lista no baile entre aperturas.
+- **Empates comparten puesto**, con ranking **denso** (10, 10, 8 → puestos
+  1, 1, 2), no de competencia. Es distinto de `calcularRanking` en Kotlin
+  (10, 10, 8 → 1, 1, 3): ahí lo que importa es cuántas clientas van arriba de
+  una en particular, acá es el número que se muestra en un top visible, y
+  saltarse puestos por un empate se lee como un error. Corregido tras uso
+  real: dos empates seguidos hacían que el segundo grupo apareciera en un
+  puesto más alto del que le tocaba. Dentro de un empate, orden alfabético
+  por nombre para que la lista no baile entre aperturas.
 
 **Fuera de alcance:** actualización en vivo mientras la ventana está abierta;
 filtros por mes o periodo; ranking en la app Android; caché del resultado.

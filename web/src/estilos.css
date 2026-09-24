@@ -599,6 +599,12 @@ body.menu-abierto { overflow: hidden; }
 .ranking-puesto { width: 28px; text-align: center; font-variant-numeric: tabular-nums; color: var(--texto-tenue); }
 .ranking-fila.tuya .ranking-puesto { color: inherit; }
 .ranking-nombre { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* El nombre del top 1/2/3 lleva el color de su medalla, con un brillo suave (glow) en vez de
+   fondo o borde: así se lee igual de bien sobre la superficie neutra de siempre y sobre el
+   morado de `.tuya` cuando esa persona además eres tú. */
+.nombre-oro { color: #FFD54A; font-weight: 800; text-shadow: 0 0 10px rgba(255, 213, 74, 0.55); }
+.nombre-plata { color: #E3E6EA; font-weight: 800; text-shadow: 0 0 10px rgba(227, 230, 234, 0.5); }
+.nombre-bronce { color: #E3A467; font-weight: 800; text-shadow: 0 0 10px rgba(227, 164, 103, 0.5); }
 .ranking-racha { font-variant-numeric: tabular-nums; white-space: nowrap; }
 .ranking-esqueleto div {
   height: 40px; border-radius: 10px; background: var(--superficie-alta);

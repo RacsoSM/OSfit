@@ -26,6 +26,8 @@ export function elegirPestanaRanking(p: PestanaRanking): void {
 }
 
 const MEDALLAS: Record<number, string> = { 1: "🥇", 2: "🥈", 3: "🥉" };
+/** El color del nombre va con la medalla de su puesto (1 oro, 2 plata, 3 bronce). */
+const COLOR_NOMBRE: Record<number, string> = { 1: "nombre-oro", 2: "nombre-plata", 3: "nombre-bronce" };
 
 function segmentado(activa: PestanaRanking): string {
   const boton = (id: PestanaRanking, texto: string) => {
@@ -38,10 +40,11 @@ function segmentado(activa: PestanaRanking): string {
 /** Por puesto y no por posición en la lista: un empate en el 2 comparte la de plata. */
 function fila(f: FilaRanking): string {
   const nombre = f.esTuyo ? `Tú · ${escapar(f.nombre)}` : escapar(f.nombre);
+  const colorNombre = COLOR_NOMBRE[f.puesto];
   return `
       <li class="ranking-fila${f.esTuyo ? " tuya" : ""}">
         <span class="ranking-puesto">${MEDALLAS[f.puesto] ?? f.puesto}</span>
-        <span class="ranking-nombre">${nombre}</span>
+        <span class="ranking-nombre${colorNombre ? ` ${colorNombre}` : ""}">${nombre}</span>
         <span class="ranking-racha">🔥 ${f.racha}</span>
       </li>`;
 }
