@@ -24,14 +24,19 @@ import { credencialLista, huellaDeLaSesion, iniciarSesion, storage } from "./fir
 import { almacenesDelNavegador, saludDeLosAlmacenes } from "./sesion";
 import type { MotivoSinAcceso, ResultadoSesion } from "./sesion";
 import { aplicarPaleta } from "./paleta";
-import { tarjetaDia } from "./ui/tarjetaDia";
 import { saludo, conectarSaludo, actualizarNombre } from "./ui/saludo";
-import { tarjetasStats } from "./ui/tarjetasStats";
-import { accionDia, conectarAccionDia, hojaDeMotivosAbierta } from "./ui/accionDia";
-import { accionHoyNoPuedo, tarjetaRevivir, conectarAccionFalta } from "./ui/accionFalta";
-import { calendario, moverMes } from "./ui/calendario";
-import { tarjetaMedallas, tarjetaLogrosPersonales } from "./ui/tarjetaInsignias";
+import { conectarAccionDia } from "./ui/accionDia";
+import { conectarAccionFalta } from "./ui/accionFalta";
+import { moverMes } from "./ui/calendario";
 import { tarjetaVideos, ultimosRangoDescendente, firmaVideos, MAXIMO_VIDEOS } from "./ui/tarjetaVideos";
+import { VENTANAS, contenidoDe, ventana, type IdVentana } from "./ventanas";
+import {
+  abrirMenu, abrirVentana, cerrarMenu, historialDelNavegador, iniciarNavegacion, menuAbierto,
+  ventanaActiva,
+} from "./navegacion";
+import {
+  actualizarCabecera, aplicarMenuAbierto, cabecera, conectarCabecera, conectarMenu, panelMenu,
+} from "./ui/menuLateral";
 import type { VideoConUrl } from "./ui/tarjetaVideos";
 
 const app = document.querySelector<HTMLElement>("#app")!;
@@ -129,6 +134,9 @@ async function arrancar(): Promise<void> {
     return;
   }
   const clienteId = sesion.clienteId;
+  // Después de la sesión, no antes: limpia `history.state`, y la pantalla del candado lo lee
+  // para su diagnóstico.
+  iniciarNavegacion(historialDelNavegador(), () => pintar());
   const hoy = hoyEnMazatlan();
 
   let cliente: Cliente | null = null;
@@ -174,9 +182,13 @@ async function arrancar(): Promise<void> {
    */
   function prepararEstructura(nombre: string): void {
     if (document.querySelector("#contenido")) return;
-    app.innerHTML =
-      `${saludo(nombre)}<div id="contenido"></div><div id="videos"></div><div id="ruleta"></div>`;
+    // La cabecera (☰ + saludo) y el menú viven fuera de `#contenido` por lo mismo que el
+    // saludo: sus nodos tienen estado (la animación, la transición del panel) que un
+    // repintado destruiría.
+    app.innerHTML = `${cabecera(saludo(nombre))}<div id="contenido"></div>` +
+      `<div id="videos" hidden></div><div id="menu"></div><div id="ruleta"></div>`;
     conectarSaludo();
+    conectarCabecera(abrirMenu);
   }
 
   /** Lo último que se pintó en `#videos`; `null` mientras no se pintó nada. */
@@ -186,15 +198,19 @@ async function arrancar(): Promise<void> {
    * Los videos van FUERA de lo que se repinta, por lo mismo que el saludo: el `<video>` tiene
    * estado propio (posición, buffer ya descargado) y `innerHTML` lo destruye. Con seis
    * listeners vivos más los dos botones de mes, basta con que el entrenador marque una
-   * asistencia o que ella cambie de mes para que el video que está viendo vuelva a empezar y
-   * se recargue con dato móvil.
+   * asistencia para que el video que está viendo vuelva a empezar y se recargue con dato móvil.
    *
-   * Va después de `#contenido` porque el spec fija el orden de la página: calendario,
-   * medallas, logros, videos.
+   * Por eso cambiar de ventana solo oculta el contenedor y nunca lo vacía: al volver, el video
+   * sigue donde estaba. Lo que sí se hace al salir es pausarlo, para que no siga sonando
+   * detrás de otra ventana.
    */
-  function pintarVideos(): void {
+  function pintarVideos(visible: boolean): void {
     const caja = document.querySelector<HTMLElement>("#videos");
     if (!caja) return;
+    if (caja.hidden === visible) {
+      caja.hidden = !visible;
+      if (!visible) caja.querySelectorAll("video").forEach((v) => v.pause());
+    }
     const firma = firmaVideos(videos);
     if (firma === firmaPintada) return;
     firmaPintada = firma;
@@ -237,12 +253,36 @@ async function arrancar(): Promise<void> {
     conectarRuleta(pintarRuleta);
   }
 
+  /** Lo último que se pintó en `#menu`; `null` mientras no se pintó nada. */
+  let firmaMenuPintada: string | null = null;
+
+  /**
+   * El panel solo se repinta si cambió lo que muestra (la ventana activa, el nombre). Abrirlo
+   * y cerrarlo es una clase, no un repintado: rehacer el nodo cortaría la transición.
+   */
+  function pintarMenu(activa: IdVentana, nombre: string): void {
+    const caja = document.querySelector<HTMLElement>("#menu");
+    if (!caja) return;
+    const html = panelMenu(VENTANAS, activa, nombre);
+    if (html !== firmaMenuPintada) {
+      firmaMenuPintada = html;
+      caja.innerHTML = html;
+      conectarMenu({ abrirVentana, cerrarMenu });
+    }
+    aplicarMenuAbierto(menuAbierto());
+  }
+
+  /** La ventana que se pintó la última vez, para volver arriba solo al cambiar de ventana. */
+  let ventanaPintada: IdVentana | null = null;
+
   function pintar(): void {
     if (!cliente) {
       // Se tira la estructura entera, así que las firmas de videos y ruleta dejan de
       // describir nada.
       firmaPintada = null;
       firmaRuletaPintada = null;
+      firmaMenuPintada = null;
+      ventanaPintada = null;
       // Callarse mientras el cliente no llegó. Los ocho listeners repintan al llegar, y el de
       // las medallas o el de las asistencias puede ganarle al del cliente —otorgarle algo
       // desde la app es la forma más fácil de provocarlo—: pintar ahí "No encontramos tus
@@ -275,25 +315,26 @@ async function arrancar(): Promise<void> {
     const contenido = document.querySelector<HTMLElement>("#contenido");
     if (!contenido) return;
 
-    // Cada acción vive junto al dato del que habla: cambiar el día y avisar que hoy no se
-    // puede van dentro de la tarjeta del día; revivir la racha va debajo de la racha.
-    const accionesDelDia = `
-      ${accionDia(cliente, hoy, asistencias.some((a) => a.fecha === hoy && a.asistio))}
-      ${hojaDeMotivosAbierta() ? "" : accionHoyNoPuedo(cliente, hoy, yaAviso)}`;
-
-    contenido.innerHTML = `
-      ${tarjetaDia(cliente, hoy, accionesDelDia, asistencias)}
-      ${tarjetasStats(asistencias, hoy)}
-      ${tarjetaRevivir(cliente, hoy, asistencias, tiradaEsteMes, tiradaMesAnterior)}
-      ${calendario(asistencias, mesVisible, hoy)}
-      ${tarjetaMedallas(medallas)}
-      ${tarjetaLogrosPersonales(logros)}
-    `;
-    pintarVideos();
+    const activa = ventana(ventanaActiva());
+    actualizarCabecera(activa.id === "inicio" ? null : activa.titulo);
+    contenido.innerHTML = contenidoDe(activa, {
+      cliente, hoy, asistencias, mesVisible, yaAviso, medallas, logros,
+      tiradaEsteMes, tiradaMesAnterior,
+    });
+    pintarVideos(activa.contenedorPropio === "videos");
+    pintarMenu(activa.id, cliente.nombre);
     pintarRuleta();
-    // Los listeners se vuelven a colgar en cada repintado: `innerHTML` tira los anteriores
-    // junto con los elementos. El estado de las dos acciones no vive acá, sino dentro de sus
-    // módulos, justo para que un snapshot a destiempo no lo borre.
+    if (activa.id !== ventanaPintada) {
+      // Cada ventana arranca arriba. Solo al cambiar: un snapshot no debe mover el scroll.
+      if (ventanaPintada !== null) window.scrollTo(0, 0);
+      ventanaPintada = activa.id;
+    }
+
+    // Las acciones y los meses del calendario solo existen en Inicio. Los listeners se vuelven
+    // a colgar en cada repintado: `innerHTML` tira los anteriores junto con los elementos. El
+    // estado de las dos acciones no vive acá, sino dentro de sus módulos, justo para que un
+    // snapshot a destiempo no lo borre.
+    if (activa.id !== "inicio") return;
     conectarAccionDia(pintar);
     conectarAccionFalta(hoy, asistencias, pintar);
     document.querySelector("#mes-anterior")?.addEventListener("click", () => {

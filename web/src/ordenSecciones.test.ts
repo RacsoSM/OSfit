@@ -1,38 +1,36 @@
 import { describe, expect, it } from "vitest";
-// El cableado se lee como texto (`?raw`, de Vite): ver el porqué abajo.
+// El cableado se lee como texto (`?raw`, de Vite): `main.ts` arranca la sesión apenas se
+// importa y no se puede montar en un test.
 import fuente from "./main.ts?raw";
 
 /**
- * El orden de las secciones lo fija el spec (`web-clientes-design.md`, "La página"): es el
- * orden de urgencia, lo que se consulta a diario primero y el historial después. No vive en
- * una función pura sino en el cableado de `main.ts`, que arranca la sesión apenas se importa
- * y por eso no se puede montar en un test; se lee el fuente para que un reacomodo del orden
- * no pase de largo, que es exactamente lo que pasó con los videos.
- *
- * `bloqueRepintado` es lo que `pintar()` reconstruye en cada snapshot; los videos quedan
- * fuera a propósito (ver `pintarVideos` en `main.ts`).
+ * El orden de lo que va en Inicio ya no vive en `main.ts`: es la ventana Inicio del registro
+ * y se prueba en `ventanas.test.ts`. Acá queda lo que sí es cableado: que `pintar()` pinte la
+ * ventana del registro en vez de una lista fija, y que los videos sigan fuera de lo que se
+ * repinta (ver `pintarVideos` en `main.ts`).
  */
 const bloqueRepintado = fuente.slice(
   fuente.indexOf("contenido.innerHTML"),
-  fuente.indexOf("pintarVideos();")
+  fuente.indexOf("pintarVideos(activa")
 );
 
-function posicion(fragmento: string): number {
-  const indice = bloqueRepintado.indexOf(fragmento);
-  expect(indice, `no se encontró ${fragmento}`).toBeGreaterThan(-1);
-  return indice;
-}
-
-describe("orden de las secciones de la página", () => {
-  it("va calendario, medallas y logros, en ese orden", () => {
-    expect(posicion("calendario(")).toBeLessThan(posicion("tarjetaMedallas("));
-    expect(posicion("tarjetaMedallas(")).toBeLessThan(posicion("tarjetaLogrosPersonales("));
+describe("el cableado de las ventanas", () => {
+  it("pintar() pinta la ventana activa del registro", () => {
+    expect(bloqueRepintado).toContain("contenidoDe(");
+    expect(bloqueRepintado).not.toContain("tarjetaMedallas(");
+    expect(bloqueRepintado).not.toContain("calendario(");
   });
 
-  it("los videos van al final, en su propio contenedor después del repintado", () => {
+  it("los videos siguen en su propio contenedor, después del repintado", () => {
     expect(bloqueRepintado).not.toContain("tarjetaVideos(");
     expect(fuente.indexOf(`<div id="contenido">`)).toBeLessThan(
-      fuente.indexOf(`<div id="videos">`)
+      fuente.indexOf(`<div id="videos" hidden>`)
+    );
+  });
+
+  it("la navegación arranca después de la sesión", () => {
+    expect(fuente.indexOf("iniciarNavegacion(")).toBeGreaterThan(
+      fuente.indexOf("const clienteId = sesion.clienteId")
     );
   });
 });

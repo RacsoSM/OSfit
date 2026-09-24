@@ -36,6 +36,13 @@ main { max-width: 480px; margin: 0 auto; padding: 16px 14px 48px; }
   width: 180px; height: 38px; border-radius: 8px;
   background: var(--superficie-alta); margin: 4px 2px 14px;
 }
+/* El ☰ del esqueleto, en el mismo gris neutro que el resto: el botón de verdad llega con el
+   primer `pintar()` y ocupa este mismo lugar. */
+.esq-cabecera { display: flex; align-items: flex-start; gap: 4px; }
+.esq-menu {
+  flex: none; width: 28px; height: 28px; border-radius: 8px;
+  background: var(--superficie-alta); margin: 8px 8px 14px 0;
+}
 .esq-linea { height: 13px; border-radius: 7px; background: var(--superficie-alta); margin: 10px 0; }
 .esq-corta { width: 35%; height: 10px; }
 .esq-titulo { width: 70%; height: 24px; }
