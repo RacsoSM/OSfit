@@ -1026,10 +1026,10 @@
     "semantic_hash": "96696bfcc2e30cc3b4811064bac0514d"
   },
   "web/src/main.ts": {
-    "mtime": 1790189737.4633186,
-    "seen": 1790190071.8170552,
-    "ast_hash": "f63a14b0d0e4a1787331dec05a08bf28",
-    "semantic_hash": "f63a14b0d0e4a1787331dec05a08bf28"
+    "mtime": 1790277218.238035,
+    "seen": 1790278685.4394908,
+    "ast_hash": "1187309ad1389ad0dd873f6d417b1532",
+    "semantic_hash": ""
   },
   "web/src/motivos.test.ts": {
     "mtime": 1789411483.4469893,
@@ -1044,10 +1044,10 @@
     "semantic_hash": "d6886d6d88426e32f649eadf6bcb863d"
   },
   "web/src/ordenSecciones.test.ts": {
-    "mtime": 1789411483.4498942,
-    "seen": 1789411810.3461144,
-    "ast_hash": "cb678dd3b9c48661bb54dd83f20e8f86",
-    "semantic_hash": "cb678dd3b9c48661bb54dd83f20e8f86"
+    "mtime": 1790277218.2383468,
+    "seen": 1790278685.4394908,
+    "ast_hash": "2666b2053cf53774b000ec623090777b",
+    "semantic_hash": ""
   },
   "web/src/paleta.test.ts": {
     "mtime": 1789411483.4498942,
@@ -1098,10 +1098,10 @@
     "semantic_hash": "ab637f141cfc71be7ed7f0c1e8f035aa"
   },
   "web/src/ui/saludo.ts": {
-    "mtime": 1789411483.4498942,
-    "seen": 1789411810.3461144,
-    "ast_hash": "08758d1dcda287a9363c7bb4f9cb67b6",
-    "semantic_hash": "08758d1dcda287a9363c7bb4f9cb67b6"
+    "mtime": 1790277218.243883,
+    "seen": 1790278685.4394908,
+    "ast_hash": "4f39924e72b21e112ee255c6564449ca",
+    "semantic_hash": ""
   },
   "web/src/ui/tarjetaDia.ts": {
     "mtime": 1790189737.4716008,
@@ -1278,10 +1278,10 @@
     "semantic_hash": "17ad2624c6d42748427e7c45b4c91a08"
   },
   "web/index.html": {
-    "mtime": 1789494385.7917573,
-    "seen": 1790190071.8170552,
-    "ast_hash": "a8b2a4a979482cc22fabaa1cc07cf297",
-    "semantic_hash": "a8b2a4a979482cc22fabaa1cc07cf297"
+    "mtime": 1790277218.2322526,
+    "seen": 1790278685.4394908,
+    "ast_hash": "9039f52f3cc8e27d34d6f3859aefe816",
+    "semantic_hash": ""
   },
   "app/src/main/java/com/osfit/app/data/RestauradorDeArchivos.kt": {
     "mtime": 1789415627.5765426,
@@ -1624,5 +1624,77 @@
     "seen": 1790190071.8170552,
     "ast_hash": "f6bf2093e3de1972406f8bec39feddf2",
     "semantic_hash": "f6bf2093e3de1972406f8bec39feddf2"
+  },
+  ".claude/hooks/graphify-check.ps1": {
+    "mtime": 1790276062.215492,
+    "seen": 1790278685.4387214,
+    "ast_hash": "9b6b15b810d36e24ebe92ae7472abd36",
+    "semantic_hash": ""
+  },
+  ".claude/settings.json": {
+    "mtime": 1790276062.285679,
+    "seen": 1790278685.4387214,
+    "ast_hash": "596c356dc1cecbd4362a7eee04c5a8fb",
+    "semantic_hash": ""
+  },
+  "web/src/navegacion.test.ts": {
+    "mtime": 1790277218.2383468,
+    "seen": 1790278685.4394908,
+    "ast_hash": "2f2e7f157d9f105768e904231a6562a9",
+    "semantic_hash": ""
+  },
+  "web/src/navegacion.ts": {
+    "mtime": 1790277218.2383468,
+    "seen": 1790278685.4394908,
+    "ast_hash": "379172abb6f19814cc801d1efcd4aa4a",
+    "semantic_hash": ""
+  },
+  "web/src/ui/menuLateral.test.ts": {
+    "mtime": 1790277218.2383468,
+    "seen": 1790278685.4394908,
+    "ast_hash": "01309b0017888db98079103faebcf031",
+    "semantic_hash": ""
+  },
+  "web/src/ui/menuLateral.ts": {
+    "mtime": 1790277218.2418187,
+    "seen": 1790278685.4394908,
+    "ast_hash": "1cb2f387108df6c7e7a3b0ce04a0feec",
+    "semantic_hash": ""
+  },
+  "web/src/ui/saludo.test.ts": {
+    "mtime": 1790277218.2423422,
+    "seen": 1790278685.4394908,
+    "ast_hash": "1d03f870d468742699cf52e54c434e83",
+    "semantic_hash": ""
+  },
+  "web/src/ventanas.test.ts": {
+    "mtime": 1790277218.243883,
+    "seen": 1790278685.4394908,
+    "ast_hash": "4bb9c97d3e7eaaf19f1d8c20d2f17427",
+    "semantic_hash": ""
+  },
+  "web/src/ventanas.ts": {
+    "mtime": 1790277218.243883,
+    "seen": 1790278685.4394908,
+    "ast_hash": "a1021b768c500b2b4fbdb95741995855",
+    "semantic_hash": ""
+  },
+  "CLAUDE.md": {
+    "mtime": 1790276062.3354855,
+    "seen": 1790278685.4394908,
+    "ast_hash": "6bb9a32aff85a635c0d32dcb4b7814cc",
+    "semantic_hash": ""
+  },
+  "docs/superpowers/plans/2026-09-24-menu-lateral-ventanas.md": {
+    "mtime": 1790276119.6947,
+    "seen": 1790278685.4394908,
+    "ast_hash": "3a7992f1387629a4d4da9321f9468ddc",
+    "semantic_hash": ""
+  },
+  "docs/superpowers/specs/2026-09-24-menu-lateral-ventanas-design.md": {
+    "mtime": 1790277218.2322526,
+    "seen": 1790278685.4394908,
+    "ast_hash": "f320118441bd6654521e6342823b2af1",
+    "semantic_hash": ""
   }
 }
