@@ -504,3 +504,68 @@ main { max-width: 480px; margin: 0 auto; padding: 16px 14px 48px; }
   from { opacity: 0; }
   to { opacity: 1; }
 }
+
+/* `hidden` tiene que ganar siempre: el saludo es `inline-block` y sin esto no se ocultaría. */
+[hidden] { display: none !important; }
+
+/* La cabecera: el ☰ en el mismo renglón que el saludo o el nombre de la ventana. */
+.cabecera { display: flex; align-items: flex-start; gap: 4px; }
+.cabecera-texto { flex: 1; min-width: 0; }
+.cabecera-menu {
+  flex: none; width: 44px; height: 44px; margin: 0 0 0 -8px;
+  border: 0; border-radius: 12px; background: transparent;
+  color: var(--texto); font-size: 24px; line-height: 1; cursor: pointer;
+}
+.titulo-ventana { font-size: 26px; margin: 4px 2px 14px; }
+.cabecera-menu:focus-visible, .menu-opcion:focus-visible, .menu-cerrar:focus-visible {
+  outline: 2px solid var(--primario); outline-offset: 2px;
+}
+
+/* El menú lateral. Siempre está en el DOM, fuera de la pantalla, para que abrir sea una
+   transición y no un repintado. */
+.menu-velo {
+  position: fixed; inset: 0; z-index: 20;
+  background: rgba(0, 0, 0, 0.55);
+  opacity: 0; pointer-events: none; transition: opacity 200ms ease;
+}
+.menu-panel {
+  position: fixed; top: 0; bottom: 0; left: 0; z-index: 21;
+  width: min(80vw, 300px); overflow-y: auto;
+  display: flex; flex-direction: column;
+  padding: calc(16px + env(safe-area-inset-top)) 12px calc(16px + env(safe-area-inset-bottom));
+  background: var(--superficie);
+  transform: translateX(-100%); transition: transform 220ms ease;
+}
+body.menu-abierto { overflow: hidden; }
+.menu-abierto .menu-velo { opacity: 1; pointer-events: auto; }
+.menu-abierto .menu-panel { transform: none; box-shadow: 8px 0 24px rgba(0, 0, 0, 0.4); }
+.menu-encabezado {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  margin: 0 0 12px 4px;
+}
+.menu-nombre {
+  margin: 0; font-size: 18px; font-weight: 800;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.menu-cerrar {
+  flex: none; width: 44px; height: 44px; border: 0; border-radius: 12px;
+  background: transparent; color: var(--texto-tenue); font-size: 20px; cursor: pointer;
+}
+.menu-lista { display: flex; flex-direction: column; gap: 4px; }
+/* `margin-top: auto` empuja Ajustes al fondo del panel, por más ventanas que se agreguen. */
+.menu-pie { margin-top: auto; padding-top: 24px; }
+.menu-opcion {
+  display: flex; align-items: center; gap: 12px; width: 100%; min-height: 48px;
+  padding: 10px 12px; border: 0; border-radius: 12px; background: transparent;
+  color: var(--texto); font: inherit; font-size: 16px; text-align: left; cursor: pointer;
+}
+.menu-opcion.activa { background: var(--superficie-alta); color: var(--primario); font-weight: 700; }
+.menu-icono { width: 24px; text-align: center; font-size: 20px; }
+.menu-texto { flex: 1; }
+.menu-pronto {
+  font-size: 11px; color: var(--texto-tenue); background: var(--superficie-alta);
+  border-radius: 999px; padding: 2px 8px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .menu-velo, .menu-panel { transition: none; }
+}
