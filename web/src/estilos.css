@@ -576,3 +576,31 @@ body.menu-abierto { overflow: hidden; }
 @media (prefers-reduced-motion: reduce) {
   .menu-velo, .menu-panel { transition: none; }
 }
+
+/* Ranking de rachas. El segmentado y la fila propia usan la paleta de la clienta; lo demás,
+   las superficies neutras de siempre. */
+.segmentos {
+  display: flex; gap: 4px; padding: 4px; margin-bottom: 12px;
+  background: var(--superficie-alta); border-radius: 12px;
+}
+.segmento {
+  flex: 1; border: 0; border-radius: 9px; padding: 8px 6px;
+  background: transparent; color: var(--texto-tenue);
+  font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;
+}
+.segmento.activo { background: var(--primario); color: var(--sobre-primario); }
+.ranking-lista { list-style: none; margin: 0; padding: 0; }
+.ranking-fila {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 8px; border-radius: 10px;
+}
+.ranking-fila + .ranking-fila { margin-top: 2px; }
+.ranking-fila.tuya { background: var(--primario-oscuro); color: #fff; font-weight: 600; }
+.ranking-puesto { width: 28px; text-align: center; font-variant-numeric: tabular-nums; color: var(--texto-tenue); }
+.ranking-fila.tuya .ranking-puesto { color: inherit; }
+.ranking-nombre { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ranking-racha { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ranking-esqueleto div {
+  height: 40px; border-radius: 10px; background: var(--superficie-alta);
+}
+.ranking-esqueleto div + div { margin-top: 6px; }

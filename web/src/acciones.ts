@@ -1,10 +1,12 @@
 import { httpsCallable } from "firebase/functions";
 import { functions } from "./firebase";
+import type { Ranking } from "./datos";
 
 /**
- * Las cuatro escrituras que puede hacer el cliente. Nadie más llama a `httpsCallable`: el día
- * que cambie la firma de una función hay un solo sitio que tocar, y la página nunca escribe
- * en Firestore por su cuenta — las reglas la dejan en solo lectura a propósito.
+ * Las llamadas a funciones que puede hacer el cliente: cuatro escrituras y la lectura del
+ * ranking. Nadie más llama a `httpsCallable`: el día que cambie la firma de una función hay
+ * un solo sitio que tocar, y la página nunca escribe en Firestore por su cuenta — las reglas
+ * la dejan en solo lectura a propósito.
  */
 
 export const cambiarDia = httpsCallable<
@@ -36,3 +38,12 @@ export const jugarRuleta = httpsCallable<
   { color: string },
   { gano: boolean; color: string }
 >(functions, "jugarRuleta");
+
+/**
+ * El ranking de rachas. Es una lectura, pero pasa por una función porque necesita las
+ * asistencias de todos, y las reglas solo le dejan al cliente leer las suyas.
+ */
+export const obtenerRanking = httpsCallable<Record<string, never>, Ranking>(
+  functions,
+  "obtenerRanking"
+);

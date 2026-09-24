@@ -303,3 +303,21 @@ export function observarTirada(
     alCambiar(snap.exists() ? (snap.data() as Tirada) : null);
   });
 }
+
+/**
+ * Lo que devuelve la función `obtenerRanking`. GEMELO de los tipos de
+ * `functions/src/ranking.ts`: son proyectos npm separados y no se importan entre sí.
+ */
+export interface FilaRanking {
+  puesto: number;
+  nombre: string;
+  racha: number;
+  esTuyo: boolean;
+}
+
+export interface Ranking {
+  /** Solo clientes activos. */
+  actual: FilaRanking[];
+  /** Todos, activos e inactivos. */
+  historica: FilaRanking[];
+}
