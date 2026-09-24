@@ -6,6 +6,7 @@ import { accionDia, hojaDeMotivosAbierta } from "./ui/accionDia";
 import { accionHoyNoPuedo, tarjetaRevivir } from "./ui/accionFalta";
 import { calendario } from "./ui/calendario";
 import { seccionVacia, tarjetaLogrosPersonales, tarjetaMedallas } from "./ui/tarjetaInsignias";
+import { tarjetaRanking, type EstadoRanking } from "./ui/tarjetaRanking";
 
 /**
  * Las ventanas de la página y lo que pinta cada una.
@@ -29,6 +30,8 @@ export interface DatosCliente {
   logros: LogroPersonalOtorgado[];
   tiradaEsteMes: Tirada | null;
   tiradaMesAnterior: Tirada | null;
+  /** Lo último que devolvió `obtenerRanking`; lo carga `main.ts` al entrar a la ventana. */
+  ranking: EstadoRanking;
 }
 
 export interface Ventana {
@@ -68,7 +71,10 @@ function inicio(d: DatosCliente): string {
 
 export const VENTANAS: readonly Ventana[] = [
   { id: "inicio", titulo: "Inicio", icono: "🏠", grupo: "principal", pintar: inicio },
-  { id: "ranking", titulo: "Ranking", icono: "🏆", grupo: "principal", proximamente: true },
+  {
+    id: "ranking", titulo: "Ranking", icono: "🏆", grupo: "principal",
+    pintar: (d) => tarjetaRanking(d.ranking),
+  },
   {
     id: "medallas", titulo: "Medallas", icono: "🏅", grupo: "principal",
     pintar: (d) => tarjetaMedallas(d.medallas),

@@ -17,7 +17,8 @@ const conFaltaRota: Asistencia[] = [
 function datos(campos: Partial<DatosCliente> = {}): DatosCliente {
   return {
     cliente, hoy: HOY, asistencias: conFaltaRota, mesVisible: "2026-09", yaAviso: false,
-    medallas: [], logros: [], tiradaEsteMes: null, tiradaMesAnterior: null, ...campos,
+    medallas: [], logros: [], tiradaEsteMes: null, tiradaMesAnterior: null,
+    ranking: { estado: "cargando" }, ...campos,
   };
 }
 
@@ -37,8 +38,8 @@ describe("el registro de ventanas", () => {
     expect(VENTANAS.filter((v) => v.grupo === "pie").map((v) => v.id)).toEqual(["ajustes"]);
   });
 
-  it("Ranking y Ajustes son las que están por venir", () => {
-    expect(VENTANAS.filter((v) => v.proximamente).map((v) => v.id)).toEqual(["ranking", "ajustes"]);
+  it("Ajustes es la única que está por venir", () => {
+    expect(VENTANAS.filter((v) => v.proximamente).map((v) => v.id)).toEqual(["ajustes"]);
   });
 
   it("toda ventana tiene con qué pintarse", () => {
@@ -79,9 +80,16 @@ describe("las demás ventanas", () => {
     expect(contenidoDe(ventana("logros"), datos())).toContain("Tus logros personales");
   });
 
-  it("las que están por venir dicen Muy pronto", () => {
-    expect(contenidoDe(ventana("ranking"), datos())).toContain("Muy pronto");
+  it("Ajustes dice Muy pronto", () => {
     expect(contenidoDe(ventana("ajustes"), datos())).toContain("Muy pronto");
+  });
+
+  it("Ranking pinta la tarjeta del ranking con lo que haya llegado", () => {
+    const html = contenidoDe(ventana("ranking"), datos({
+      ranking: { estado: "listo", datos: { actual: [{ puesto: 1, nombre: "Ana", racha: 5, esTuyo: true }], historica: [] } },
+    }));
+    expect(html).not.toContain("Muy pronto");
+    expect(html).toContain("Tú · Ana");
   });
 
   it("Videos no pinta nada en #contenido: vive en su propio contenedor", () => {

@@ -19,7 +19,9 @@ import type {
 } from "./datos";
 import { hoyEnMazatlan } from "./fecha";
 import { mesAnterior, type Tirada } from "./tirada";
+import { obtenerRanking } from "./acciones";
 import { modalRuleta, conectarRuleta } from "./ui/ruleta";
+import { conectarRanking, type EstadoRanking } from "./ui/tarjetaRanking";
 import { credencialLista, huellaDeLaSesion, iniciarSesion, storage } from "./firebase";
 import { almacenesDelNavegador, saludDeLosAlmacenes } from "./sesion";
 import type { MotivoSinAcceso, ResultadoSesion } from "./sesion";
@@ -149,6 +151,32 @@ async function arrancar(): Promise<void> {
   let videos: VideoConUrl[] = [];
   let tiradaEsteMes: Tirada | null = null;
   let tiradaMesAnterior: Tirada | null = null;
+  let ranking: EstadoRanking = { estado: "cargando" };
+  /** Número del último pedido: una respuesta de un pedido viejo no pisa a la más nueva. */
+  let pedidoRanking = 0;
+
+  /**
+   * Pide el ranking cada vez que se entra a la ventana: no hay listener que lo mantenga al día,
+   * así que entrar es refrescar. Si ya había datos se siguen mostrando mientras llega la
+   * respuesta, y si el refresco falla también se quedan: una lista de hace un rato sirve más
+   * que una pantalla de error. No repinta al arrancar: quien lo llama ya está pintando.
+   */
+  function cargarRanking(): void {
+    const pedido = ++pedidoRanking;
+    if (ranking.estado === "error") ranking = { estado: "cargando" };
+    obtenerRanking({}).then(
+      (r) => {
+        if (pedido !== pedidoRanking) return;
+        ranking = { estado: "listo", datos: r.data };
+        pintar();
+      },
+      () => {
+        if (pedido !== pedidoRanking) return;
+        if (ranking.estado !== "listo") ranking = { estado: "error" };
+        pintar();
+      }
+    );
+  }
 
   /**
    * Resuelve la URL de cada video ANTES de pintar (decisión del brief): así el HTML se arma
@@ -319,10 +347,12 @@ async function arrancar(): Promise<void> {
     if (!contenido) return;
 
     const activa = ventana(ventanaActiva());
+    // Al entrar a Ranking se pide antes de pintar, así un error viejo ya sale como "cargando".
+    if (activa.id === "ranking" && activa.id !== ventanaPintada) cargarRanking();
     actualizarCabecera(activa.id === "inicio" ? null : activa.titulo);
     contenido.innerHTML = contenidoDe(activa, {
       cliente, hoy, asistencias, mesVisible, yaAviso, medallas, logros,
-      tiradaEsteMes, tiradaMesAnterior,
+      tiradaEsteMes, tiradaMesAnterior, ranking,
     });
     pintarVideos(activa.contenedorPropio === "videos");
     pintarMenu(activa.id, cliente.nombre);
@@ -337,6 +367,13 @@ async function arrancar(): Promise<void> {
     // a colgar en cada repintado: `innerHTML` tira los anteriores junto con los elementos. El
     // estado de las dos acciones no vive acá, sino dentro de sus módulos, justo para que un
     // snapshot a destiempo no lo borre.
+    if (activa.id === "ranking") {
+      conectarRanking(pintar, () => {
+        cargarRanking();
+        pintar();
+      });
+      return;
+    }
     if (activa.id !== "inicio") return;
     conectarAccionDia(pintar);
     conectarAccionFalta(hoy, asistencias, pintar);

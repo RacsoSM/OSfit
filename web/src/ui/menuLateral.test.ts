@@ -22,7 +22,7 @@ describe("panelMenu", () => {
   });
 
   it("las ventanas por venir llevan la etiqueta Pronto", () => {
-    expect(html.match(/class="menu-pronto"/g)).toHaveLength(2);
+    expect(html.match(/class="menu-pronto"/g)).toHaveLength(1);
   });
 
   it("escapa el nombre", () => {
