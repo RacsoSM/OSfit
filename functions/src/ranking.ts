@@ -63,14 +63,17 @@ export function asistenciaDesdeDoc(datos: Record<string, unknown>): AsistenciaPa
 
 /**
  * Racha descendente y, dentro de un empate, alfabetico para que la lista no baile entre
- * aperturas. Los empates comparten puesto, igual que `calcularRanking` en Kotlin:
- * 10, 10, 8 -> 1, 1, 3.
+ * aperturas. Los empates comparten puesto, y el puesto es DENSO (1, 1, 2, 2), no de
+ * competencia (1, 1, 3, 3): en un top visible, saltarse puestos por un empate se lee como un
+ * error, aunque cuente bien cuantas personas van arriba. Distinto del `calcularRanking` de
+ * Kotlin (otra pantalla): ahi lo que importa es cuantas clientas van arriba, no el numero del
+ * puesto que se muestra.
  */
 function ordenar(filas: Omit<FilaRanking, "puesto">[]): FilaRanking[] {
   const ordenadas = [...filas].sort((a, b) => b.racha - a.racha || a.nombre.localeCompare(b.nombre, "es"));
   let puesto = 0;
   return ordenadas.map((f, i) => {
-    if (i === 0 || f.racha !== ordenadas[i - 1].racha) puesto = i + 1;
+    if (i === 0 || f.racha !== ordenadas[i - 1].racha) puesto += 1;
     return { puesto, nombre: f.nombre, racha: f.racha, esTuyo: f.esTuyo };
   });
 }

@@ -32,7 +32,10 @@ describe("armarRanking", () => {
     ]);
   });
 
-  it("los empates comparten puesto y van en orden alfabetico", () => {
+  // Ranking denso (1,1,2,2), no de competencia (1,1,3,3): en un top visible, un empate en el
+  // 1 no debe hacer que el siguiente puesto distinto se lea como "3". Hallazgo del uso real:
+  // con dos empates seguidos se veian como si los puestos se saltaran.
+  it("los empates comparten puesto y van en orden alfabetico, sin saltar puestos", () => {
     const r = armarRanking(
       [cliente("z", "Zoe"), cliente("a", "Ana"), cliente("m", "Mario")],
       [...racha("z", 3), ...racha("a", 3), ...racha("m", 1)],
@@ -42,7 +45,22 @@ describe("armarRanking", () => {
     expect(r.actual.map((f) => [f.puesto, f.nombre])).toEqual([
       [1, "Ana"],
       [1, "Zoe"],
-      [3, "Mario"],
+      [2, "Mario"],
+    ]);
+  });
+
+  it("dos empates seguidos no se saltan puestos (1,1,2,2)", () => {
+    const r = armarRanking(
+      [cliente("b", "Brianda"), cliente("c", "Carito"), cliente("e", "Estela"), cliente("k", "Kevin")],
+      [...racha("b", 5), ...racha("c", 5), ...racha("e", 3), ...racha("k", 3)],
+      "b",
+      HOY
+    );
+    expect(r.actual.map((f) => [f.puesto, f.nombre])).toEqual([
+      [1, "Brianda"],
+      [1, "Carito"],
+      [2, "Estela"],
+      [2, "Kevin"],
     ]);
   });
 
