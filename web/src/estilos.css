@@ -38,10 +38,10 @@ main { max-width: 480px; margin: 0 auto; padding: 16px 14px 48px; }
 }
 /* El ☰ del esqueleto, en el mismo gris neutro que el resto: el botón de verdad llega con el
    primer `pintar()` y ocupa este mismo lugar. */
-.esq-cabecera { display: flex; align-items: flex-start; gap: 4px; }
+.esq-cabecera { display: flex; align-items: flex-start; justify-content: space-between; gap: 4px; }
 .esq-menu {
   flex: none; width: 28px; height: 28px; border-radius: 8px;
-  background: var(--superficie-alta); margin: 8px 8px 14px 0;
+  background: var(--superficie-alta); margin: 8px 0 14px 8px;
 }
 .esq-linea { height: 13px; border-radius: 7px; background: var(--superficie-alta); margin: 10px 0; }
 .esq-corta { width: 35%; height: 10px; }
@@ -515,11 +515,11 @@ main { max-width: 480px; margin: 0 auto; padding: 16px 14px 48px; }
 /* `hidden` tiene que ganar siempre: el saludo es `inline-block` y sin esto no se ocultaría. */
 [hidden] { display: none !important; }
 
-/* La cabecera: el ☰ en el mismo renglón que el saludo o el nombre de la ventana. */
+/* La cabecera: el ☰ a la derecha, en el mismo renglón que el saludo o el nombre de la ventana. */
 .cabecera { display: flex; align-items: flex-start; gap: 4px; }
 .cabecera-texto { flex: 1; min-width: 0; }
 .cabecera-menu {
-  flex: none; width: 44px; height: 44px; margin: 0 0 0 -8px;
+  flex: none; width: 44px; height: 44px; margin: 0 -8px 0 0;
   border: 0; border-radius: 12px; background: transparent;
   color: var(--texto); font-size: 24px; line-height: 1; cursor: pointer;
 }
@@ -528,24 +528,24 @@ main { max-width: 480px; margin: 0 auto; padding: 16px 14px 48px; }
   outline: 2px solid var(--primario); outline-offset: 2px;
 }
 
-/* El menú lateral. Siempre está en el DOM, fuera de la pantalla, para que abrir sea una
-   transición y no un repintado. */
+/* El menú lateral, que sale por la derecha como el ☰. Siempre está en el DOM, fuera de la
+   pantalla, para que abrir sea una transición y no un repintado. */
 .menu-velo {
   position: fixed; inset: 0; z-index: 20;
   background: rgba(0, 0, 0, 0.55);
   opacity: 0; pointer-events: none; transition: opacity 200ms ease;
 }
 .menu-panel {
-  position: fixed; top: 0; bottom: 0; left: 0; z-index: 21;
+  position: fixed; top: 0; bottom: 0; right: 0; z-index: 21;
   width: min(80vw, 300px); overflow-y: auto;
   display: flex; flex-direction: column;
   padding: calc(16px + env(safe-area-inset-top)) 12px calc(16px + env(safe-area-inset-bottom));
   background: var(--superficie);
-  transform: translateX(-100%); transition: transform 220ms ease;
+  transform: translateX(100%); transition: transform 220ms ease;
 }
 body.menu-abierto { overflow: hidden; }
 .menu-abierto .menu-velo { opacity: 1; pointer-events: auto; }
-.menu-abierto .menu-panel { transform: none; box-shadow: 8px 0 24px rgba(0, 0, 0, 0.4); }
+.menu-abierto .menu-panel { transform: none; box-shadow: -8px 0 24px rgba(0, 0, 0, 0.4); }
 .menu-encabezado {
   display: flex; align-items: center; justify-content: space-between; gap: 8px;
   margin: 0 0 12px 4px;

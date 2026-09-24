@@ -48,4 +48,9 @@ describe("cabecera", () => {
     expect(html).toContain(`<h1 id="saludo">Hola</h1>`);
     expect(html).toMatch(/id="titulo-ventana" hidden/);
   });
+
+  it("el ☰ va a la derecha, después del saludo", () => {
+    const html = cabecera(`<h1 id="saludo">Hola</h1>`);
+    expect(html.indexOf(`id="saludo"`)).toBeLessThan(html.indexOf(`id="abrir-menu"`));
+  });
 });

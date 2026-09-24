@@ -9,7 +9,7 @@ nueva que se agregue alarga ese scroll y empuja lo que se consulta a diario
 —el día que le toca— entre cosas que se miran de vez en cuando.
 
 Este spec parte la página en **ventanas** a las que se entra desde un **menú
-lateral** que se abre con un botón ☰ arriba a la izquierda. La pantalla
+lateral** que se abre con un botón ☰ arriba a la derecha. La pantalla
 principal (Inicio) se queda con lo que es de "hoy", y el historial pasa a sus
 propias ventanas.
 
@@ -46,12 +46,12 @@ consulta casi a diario.
 
 ## El menú lateral
 
-**Barra superior.** Un botón ☰ fijo arriba a la izquierda, en el renglón del
+**Barra superior.** Un botón ☰ fijo arriba a la derecha, en el renglón del
 saludo. Área táctil mínima de 44×44 px y `aria-label="Abrir menú"`. Vive fuera
 de `#contenido`, igual que el saludo, para que los snapshots de Firestore no lo
 recreen.
 
-**Panel.** Se desliza desde la izquierda, con un ancho del 80% de la pantalla y
+**Panel.** Se desliza desde la derecha, del mismo lado que el ☰, con un ancho del 80% de la pantalla y
 máximo 300 px, sobre un velo oscuro semitransparente. Arriba lleva el nombre de
 la clienta y debajo la lista de ventanas generada del registro:
 

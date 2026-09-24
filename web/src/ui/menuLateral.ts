@@ -16,12 +16,12 @@ import { escapar } from "./tarjetaDia";
 export function cabecera(saludoHtml: string): string {
   return `
     <header class="cabecera">
-      <button type="button" class="cabecera-menu" id="abrir-menu"
-              aria-label="Abrir menú" aria-controls="menu-panel" aria-expanded="false">☰</button>
       <div class="cabecera-texto">
         ${saludoHtml}
         <h1 class="titulo-ventana" id="titulo-ventana" hidden></h1>
       </div>
+      <button type="button" class="cabecera-menu" id="abrir-menu"
+              aria-label="Abrir menú" aria-controls="menu-panel" aria-expanded="false">☰</button>
     </header>`;
 }
 
