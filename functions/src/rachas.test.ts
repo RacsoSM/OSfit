@@ -73,4 +73,13 @@ describe("rachaMasLarga", () => {
     const set = cuentan(vino("2026-09-08"), vino("2026-09-09"), vino("2026-09-10"));
     expect(rachaMasLarga(set)).toBeGreaterThanOrEqual(rachaActual(set, "2026-09-10"));
   });
+
+  // Verificado tras revision final: un typo de año en Firestore (ej. "0026-09-08") es una
+  // fecha con formato valido, asi que `armarRanking` no la descarta. El rango "primero a
+  // ultimo registro" queda enorme, pero la funcion sigue devolviendo lo correcto sin tronar
+  // (medido: ~1.8s para 2000 años, muy por debajo del limite de 60s de la funcion).
+  it("sigue devolviendo lo correcto con un rango de fechas absurdamente largo (typo de año)", () => {
+    const set = cuentan(vino("0026-09-08"), vino("2026-09-09"));
+    expect(rachaMasLarga(set)).toBe(1);
+  });
 });

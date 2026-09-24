@@ -44,8 +44,15 @@ export function clienteDesdeDoc(id: string, datos: Record<string, unknown>): Cli
   return { id, nombre, activo: datos.activo === true };
 }
 
+/** Mismo formato que valida `revivirRacha.ts`: AAAA-MM-DD. */
+const FORMATO_FECHA = /^\d{4}-\d{2}-\d{2}$/;
+
 export function asistenciaDesdeDoc(datos: Record<string, unknown>): AsistenciaParaRanking | null {
   if (typeof datos.clienteId !== "string" || typeof datos.fecha !== "string") return null;
+  // Sin esto, una fecha con formato raro (typo, migracion vieja) hacia que `moverDias`
+  // recibiera un Date invalido y tronara con RangeError, tumbando el ranking para TODOS los
+  // clientes por el dato de uno solo.
+  if (!FORMATO_FECHA.test(datos.fecha)) return null;
   return {
     clienteId: datos.clienteId,
     fecha: datos.fecha,

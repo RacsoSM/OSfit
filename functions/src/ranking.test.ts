@@ -118,4 +118,13 @@ describe("normalizacion de documentos", () => {
       clienteId: "a", fecha: "2026-09-08", asistio: true, justificada: false,
     });
   });
+
+  // Fix tras revisión final: una fecha con formato invalido tumbaba obtenerRanking para TODOS
+  // los clientes (moverDias truena con Date invalido), y sin tope rachaMasLarga podia iterar
+  // cientos de miles de dias sobre un typo como "0026-09-08".
+  it("una fecha que no cumple AAAA-MM-DD se descarta, no solo si falta", () => {
+    expect(asistenciaDesdeDoc({ clienteId: "a", fecha: "", asistio: true })).toBeNull();
+    expect(asistenciaDesdeDoc({ clienteId: "a", fecha: "2026-9-8", asistio: true })).toBeNull();
+    expect(asistenciaDesdeDoc({ clienteId: "a", fecha: "no-es-fecha", asistio: true })).toBeNull();
+  });
 });
