@@ -74,12 +74,16 @@ describe("rachaMasLarga", () => {
     expect(rachaMasLarga(set)).toBeGreaterThanOrEqual(rachaActual(set, "2026-09-10"));
   });
 
-  // Verificado tras revision final: un typo de año en Firestore (ej. "0026-09-08") es una
-  // fecha con formato valido, asi que `armarRanking` no la descarta. El rango "primero a
-  // ultimo registro" queda enorme, pero la funcion sigue devolviendo lo correcto sin tronar
-  // (medido: ~1.8s para 2000 años, muy por debajo del limite de 60s de la funcion).
-  it("sigue devolviendo lo correcto con un rango de fechas absurdamente largo (typo de año)", () => {
+  // Hallazgo de la revision final: un typo de año en Firestore (ej. "0026-09-08") es una
+  // fecha con formato valido, asi que `armarRanking` no la descarta, y el rango "primero a
+  // ultimo registro" quedaba sin tope: ~1.8s de CPU bloqueada por cada registro asi, en una
+  // funcion que recorre a TODOS los clientes en la misma llamada. Mismo tope de seguridad que
+  // ya usa `rachaActual`, medido en días: un rango absurdo se corta, y como la racha viva
+  // siempre esta cerca del extremo reciente, el resultado sigue siendo correcto.
+  it("no se cuelga con un rango de fechas absurdamente largo (typo de año) y sigue dando lo correcto", () => {
     const set = cuentan(vino("0026-09-08"), vino("2026-09-09"));
+    const inicio = Date.now();
     expect(rachaMasLarga(set)).toBe(1);
+    expect(Date.now() - inicio).toBeLessThan(200);
   });
 });

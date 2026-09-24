@@ -45,14 +45,27 @@ export function rachaActual(cuentan: Set<string>, hoy: string): number {
   return racha;
 }
 
+/**
+ * Tope de dias hacia atras desde el ultimo registro, igual de generoso que el de `rachaActual`
+ * (~27 años). Sin esto, una fecha con formato valido pero un typo de año (ej. "0026-09-08" en
+ * vez de "2026-09-08") hacia que el rango "primero a ultimo registro" abarcara miles de años:
+ * no tronaba, pero bloqueaba la funcion varios segundos por cada registro asi, y
+ * `armarRanking` recorre a TODOS los clientes en la misma llamada.
+ */
+const TOPE_DIAS_HISTORIA = 3650 * 3;
+
 /** La corrida mas larga de dias habiles contados, del primer al ultimo registro. */
 export function rachaMasLarga(cuentan: Set<string>): number {
   if (cuentan.size === 0) return 0;
   const fechas = [...cuentan].sort();
   const fin = fechas[fechas.length - 1];
+  // El recorte es al inicio, nunca al final: la racha viva vive junto al ultimo registro, asi
+  // que acotar por ahi es lo que arriesgaria el resultado.
+  const primero = moverDias(fin, -TOPE_DIAS_HISTORIA);
+  const inicio = fechas[0] > primero ? fechas[0] : primero;
   let mejor = 0;
   let actual = 0;
-  for (let fecha = fechas[0]; fecha <= fin; fecha = moverDias(fecha, 1)) {
+  for (let fecha = inicio; fecha <= fin; fecha = moverDias(fecha, 1)) {
     if (!esDiaHabil(fecha)) continue;
     if (cuentan.has(fecha)) {
       actual++;
