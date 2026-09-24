@@ -39,6 +39,18 @@ export function actualizarNombre(nombre: string): void {
   if (el && el.textContent !== nombre) el.textContent = nombre;
 }
 
+/**
+ * Lo da por escrito de golpe. Para cuando se oculta a media animación (la clienta se fue a
+ * otra ventana): oculto, la animación se cancela sin avisar, y al volver empezaría de cero.
+ * Si queda pendiente el `setTimeout` del parpadeo, al correr deja lo mismo.
+ */
+export function terminarSaludo(el: {
+  classList: { add(clase: string): void; remove(...clases: string[]): void };
+}): void {
+  el.classList.remove("escribiendo", "parpadeando");
+  el.classList.add("escrito");
+}
+
 /** Se llama tras cada repintado; solo hace algo la primera vez. */
 export function conectarSaludo(): void {
   const el = document.querySelector<HTMLElement>("#saludo");

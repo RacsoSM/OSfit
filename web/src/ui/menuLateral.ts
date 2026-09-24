@@ -1,5 +1,6 @@
 import type { IdVentana, Ventana } from "../ventanas";
 import { escapar } from "./tarjetaDia";
+import { terminarSaludo } from "./saludo";
 
 /**
  * La cabecera con el ☰ y el panel lateral que se abre con él.
@@ -36,26 +37,35 @@ export function conectarCabecera(abrirMenu: () => void): void {
 export function actualizarCabecera(titulo: string | null): void {
   const saludo = document.querySelector<HTMLElement>("#saludo");
   const el = document.querySelector<HTMLElement>("#titulo-ventana");
-  if (saludo) saludo.hidden = titulo !== null;
+  if (saludo) {
+    // Oculto a media escritura, `display: none` cancela la animación y `animationend` nunca
+    // llega: sin esto, el saludo se escribiría otra vez al volver a Inicio.
+    if (titulo !== null) terminarSaludo(saludo);
+    saludo.hidden = titulo !== null;
+  }
   if (el) {
     el.hidden = titulo === null;
     if (el.textContent !== (titulo ?? "")) el.textContent = titulo ?? "";
   }
 }
 
-function opcion(v: Ventana, activa: IdVentana): string {
-  const esActiva = v.id === activa;
+function opcion(v: Ventana): string {
   return `
-        <button type="button" class="menu-opcion${esActiva ? " activa" : ""}" data-ventana="${v.id}"${esActiva ? ` aria-current="page"` : ""}>
+        <button type="button" class="menu-opcion" data-ventana="${v.id}">
           <span class="menu-icono" aria-hidden="true">${v.icono}</span>
           <span class="menu-texto">${escapar(v.titulo)}</span>
           ${v.proximamente ? `<span class="menu-pronto">Pronto</span>` : ""}
         </button>`;
 }
 
-export function panelMenu(ventanas: readonly Ventana[], activa: IdVentana, nombre: string): string {
+/**
+ * La ventana activa NO va en este HTML: la marca `marcarVentanaActiva` sobre los botones que
+ * ya existen. Si fuera parte del HTML, elegir otra ventana cambiaría el panel y `main.ts` lo
+ * repintaría justo mientras se cierra, y el panel desaparecería de golpe en vez de deslizarse.
+ */
+export function panelMenu(ventanas: readonly Ventana[], nombre: string): string {
   const de = (grupo: Ventana["grupo"]) =>
-    ventanas.filter((v) => v.grupo === grupo).map((v) => opcion(v, activa)).join("");
+    ventanas.filter((v) => v.grupo === grupo).map(opcion).join("");
   return `
     <div class="menu-velo" data-cerrar-menu></div>
     <nav class="menu-panel" id="menu-panel" aria-label="Menú">
@@ -79,6 +89,25 @@ export function conectarMenu(acciones: {
   document.querySelectorAll("#menu [data-cerrar-menu]").forEach((b) =>
     b.addEventListener("click", acciones.cerrarMenu)
   );
+}
+
+/** Lo que `marcarVentanaActiva` toca de cada botón; así se prueba sin DOM. */
+interface BotonOpcion {
+  dataset: { ventana?: string };
+  classList: { toggle(clase: string, forzar?: boolean): boolean };
+  setAttribute(nombre: string, valor: string): void;
+  removeAttribute(nombre: string): void;
+}
+
+/** Resalta la ventana activa sobre los botones ya pintados, sin rehacer el panel. */
+export function marcarVentanaActiva(botones: ArrayLike<BotonOpcion>, activa: IdVentana): void {
+  for (let i = 0; i < botones.length; i++) {
+    const b = botones[i];
+    const esActiva = b.dataset.ventana === activa;
+    b.classList.toggle("activa", esActiva);
+    if (esActiva) b.setAttribute("aria-current", "page");
+    else b.removeAttribute("aria-current");
+  }
 }
 
 let estabaAbierto = false;

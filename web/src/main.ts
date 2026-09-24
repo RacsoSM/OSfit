@@ -35,7 +35,8 @@ import {
   ventanaActiva,
 } from "./navegacion";
 import {
-  actualizarCabecera, aplicarMenuAbierto, cabecera, conectarCabecera, conectarMenu, panelMenu,
+  actualizarCabecera, aplicarMenuAbierto, cabecera, conectarCabecera, conectarMenu,
+  marcarVentanaActiva, panelMenu,
 } from "./ui/menuLateral";
 import type { VideoConUrl } from "./ui/tarjetaVideos";
 
@@ -257,18 +258,20 @@ async function arrancar(): Promise<void> {
   let firmaMenuPintada: string | null = null;
 
   /**
-   * El panel solo se repinta si cambió lo que muestra (la ventana activa, el nombre). Abrirlo
-   * y cerrarlo es una clase, no un repintado: rehacer el nodo cortaría la transición.
+   * El panel solo se repinta si cambia el nombre. Abrirlo, cerrarlo y cambiar la ventana
+   * activa se hacen sobre los nodos que ya están: rehacerlos cortaría la transición, y elegir
+   * una ventana cierra el panel justo cuando la activa cambia.
    */
   function pintarMenu(activa: IdVentana, nombre: string): void {
     const caja = document.querySelector<HTMLElement>("#menu");
     if (!caja) return;
-    const html = panelMenu(VENTANAS, activa, nombre);
+    const html = panelMenu(VENTANAS, nombre);
     if (html !== firmaMenuPintada) {
       firmaMenuPintada = html;
       caja.innerHTML = html;
       conectarMenu({ abrirVentana, cerrarMenu });
     }
+    marcarVentanaActiva(caja.querySelectorAll<HTMLElement>("[data-ventana]"), activa);
     aplicarMenuAbierto(menuAbierto());
   }
 
