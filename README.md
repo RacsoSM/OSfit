@@ -57,7 +57,7 @@ aparece en el otro en cuanto haya conexión a internet.
 
 ## Web para clientes
 
-Cada cliente tiene una página de solo lectura en `https://osfit-cccfe.web.app`, a la que
+Cada cliente tiene una página de solo lectura, a la que
 entra por un link personal que se comparte desde su ficha ("Compartir acceso web").
 Muestra el día que le toca, su racha, su promedio por sesión y su calendario.
 
