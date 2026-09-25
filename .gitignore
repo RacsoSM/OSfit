@@ -19,3 +19,7 @@ functions/lib/
 
 # Ajustes locales de Claude Code: son de esta maquina, no del equipo.
 .claude/settings.local.json
+
+# Locales: el grafo de graphify es de esta maquina y el backlog nombra a clientes reales.
+graphify-out/
+docs/backlog.md
