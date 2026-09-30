@@ -84,27 +84,12 @@ class ResumenVideoGeneratorTest {
     }
 
     @Test
-    fun `el resumen semanal con desglose de esfuerzo agrega Esfuerzo justo despues de Tiempo`() {
+    fun `el resumen nunca incluye una escena de esfuerzo`() {
         val rango = ResumenClienteCalculator.rangoSemanal(LocalDate.of(2024, 3, 20))
         val desglose = DesgloseEsfuerzo(minutosEntrenando = 16, minutosDescansando = 71, porcentajeEntrenando = 18)
         val escenas = ResumenVideoGenerator.construirEscenas(resumen(rango, desgloseEsfuerzo = desglose))
 
-        assertEquals(6, escenas.size)
-        assertTrue(escenas[0] is EscenaResumen.Saludo)
-        assertTrue(escenas[1] is EscenaResumen.Asistencia)
-        assertTrue(escenas[2] is EscenaResumen.Tiempo)
-        assertTrue(escenas[3] is EscenaResumen.Esfuerzo)
-        assertTrue(escenas[4] is EscenaResumen.DiaFavorito)
-        assertTrue(escenas[5] is EscenaResumen.Despedida)
-    }
-
-    @Test
-    fun `el resumen sin desglose de esfuerzo no agrega la escena Esfuerzo`() {
-        val rango = ResumenClienteCalculator.rangoSemanal(LocalDate.of(2024, 3, 20))
-        val escenas = ResumenVideoGenerator.construirEscenas(resumen(rango, desgloseEsfuerzo = null))
-
         assertEquals(5, escenas.size)
-        assertTrue(escenas.none { it is EscenaResumen.Esfuerzo })
         assertTrue(escenas[0] is EscenaResumen.Saludo)
         assertTrue(escenas[1] is EscenaResumen.Asistencia)
         assertTrue(escenas[2] is EscenaResumen.Tiempo)
@@ -113,31 +98,18 @@ class ResumenVideoGeneratorTest {
     }
 
     @Test
-    fun `la escena Esfuerzo lleva minutosEnGym como minutosTotales y el mismo DesgloseEsfuerzo`() {
-        val rango = ResumenClienteCalculator.rangoSemanal(LocalDate.of(2024, 3, 20))
-        val desglose = DesgloseEsfuerzo(minutosEntrenando = 16, minutosDescansando = 71, porcentajeEntrenando = 18)
-        val datos = resumen(rango, desgloseEsfuerzo = desglose)
-        val escenas = ResumenVideoGenerator.construirEscenas(datos)
-
-        val esfuerzo = escenas[3] as EscenaResumen.Esfuerzo
-        assertEquals(datos.minutosEnGym, esfuerzo.minutosTotales)
-        assertSame(desglose, esfuerzo.desglose)
-    }
-
-    @Test
     fun `el resumen mensual con desglose y racha produce el orden completo`() {
         val rango = ResumenClienteCalculator.rangoMensual(YearMonth.of(2024, 3))
         val desglose = DesgloseEsfuerzo(minutosEntrenando = 16, minutosDescansando = 71, porcentajeEntrenando = 18)
         val escenas = ResumenVideoGenerator.construirEscenas(resumen(rango, racha = 5, desgloseEsfuerzo = desglose))
 
-        assertEquals(7, escenas.size)
+        assertEquals(6, escenas.size)
         assertTrue(escenas[0] is EscenaResumen.Saludo)
         assertTrue(escenas[1] is EscenaResumen.Asistencia)
         assertTrue(escenas[2] is EscenaResumen.Tiempo)
-        assertTrue(escenas[3] is EscenaResumen.Esfuerzo)
-        assertTrue(escenas[4] is EscenaResumen.DiaFavorito)
-        assertTrue(escenas[5] is EscenaResumen.RachaMasLarga)
-        assertTrue(escenas[6] is EscenaResumen.Despedida)
+        assertTrue(escenas[3] is EscenaResumen.DiaFavorito)
+        assertTrue(escenas[4] is EscenaResumen.RachaMasLarga)
+        assertTrue(escenas[5] is EscenaResumen.Despedida)
     }
 
     @Test

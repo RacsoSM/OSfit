@@ -122,8 +122,7 @@ internal const val DESTELLO_MS = 700L
 object ResumenFrameRenderer {
 
     private const val NEGRO = 0xFF000000.toInt()
-    /** Velocidad de máquina de escribir de los textos destacados grandes (Asistencia y Esfuerzo):
-     *  ambos deben "sentirse" igual de rápidos aunque su longitud de texto varíe. */
+    /** Velocidad de máquina de escribir del texto destacado grande de Asistencia. */
     private const val VELOCIDAD_DESTACADO_MS_POR_CARACTER = 2_400.0 / 29.0
     /** Misma velocidad que el saludo ("Hola, <nombre>", 2000ms para ~13 caracteres de
      *  referencia): la usa también la Despedida para que ambas se sientan iguales. */
@@ -338,46 +337,6 @@ object ResumenFrameRenderer {
                 )
             )
         }
-        is EscenaResumen.Esfuerzo -> {
-            val prefijoEntrenando = "Estuviste entrenando "
-            val tiempoEntrenando = formatoDuracion(escena.desglose.minutosEntrenando)
-            val medio = " y descansando "
-            val tiempoDescansando = formatoDuracion(escena.desglose.minutosDescansando)
-            val texto = prefijoEntrenando + tiempoEntrenando + medio + tiempoDescansando
-            val inicioEntrenando = prefijoEntrenando.length
-            val finEntrenando = inicioEntrenando + tiempoEntrenando.length
-            val inicioDescansando = finEntrenando + medio.length
-            val inicioPorcentaje = 900 + (texto.length * VELOCIDAD_DESTACADO_MS_POR_CARACTER).toLong() + 500
-            val duracionPorcentaje = 1_200L
-            listOf(
-                BloqueTexto(
-                    "De tu tiempo asistido, ${formatoDuracion(escena.minutosTotales)}",
-                    inicioMs = 0, duracionMs = 900, y = 460f, tamano = 44f, color = Color.WHITE, estilo = Typeface.NORMAL
-                ),
-                BloqueTexto(
-                    texto,
-                    inicioMs = 900,
-                    duracionMs = (texto.length * VELOCIDAD_DESTACADO_MS_POR_CARACTER).toLong(),
-                    y = 760f, tamano = 72f, color = Color.WHITE, estilo = Typeface.BOLD,
-                    resaltados = listOf(
-                        Resaltado(inicioEntrenando until finEntrenando, paleta.destacado),
-                        Resaltado(inicioDescansando until texto.length, paleta.destacado)
-                    )
-                ),
-                BloqueTexto(
-                    "Lo cual representa un ${escena.desglose.porcentajeEntrenando}% del total del tiempo",
-                    inicioMs = inicioPorcentaje,
-                    duracionMs = duracionPorcentaje, y = 1500f, tamano = 48f, color = Color.LTGRAY, estilo = Typeface.NORMAL
-                ),
-                // Aparece 500ms después de que termina de escribirse la línea del porcentaje.
-                // y = 1580 + 10% de la altura del video (1920 * 0.10 = 192), a pedido del trainer.
-                BloqueTexto(
-                    "No te espantes, lo normal es entre 15% y 25%",
-                    inicioMs = inicioPorcentaje + duracionPorcentaje + 500,
-                    duracionMs = 1_200, y = 1580f + ALTO_DEFECTO * 0.10f, tamano = 40f, color = Color.LTGRAY, estilo = Typeface.NORMAL
-                )
-            )
-        }
         is EscenaResumen.DiaFavorito -> listOf(
             BloqueTexto(
                 mensajeDiaFavorito(escena), inicioMs = 0, duracionMs = 2_200,
@@ -423,17 +382,6 @@ object ResumenFrameRenderer {
             // acá): con 2 o 3 logros cada uno necesita su propia posición X y su propio ancho
             // de párrafo, algo que este bloque de texto centrado a todo el ancho no soporta.
         )
-    }
-
-    /** Formatea un total de minutos como texto legible: "1h 27min", "1h", "16min", "0min". */
-    private fun formatoDuracion(minutos: Int): String {
-        val horas = minutos / 60
-        val mins = minutos % 60
-        return when {
-            horas > 0 && mins > 0 -> "${horas}h ${mins}min"
-            horas > 0 -> "${horas}h"
-            else -> "${mins}min"
-        }
     }
 
     private fun determinante(unidad: String, mayuscula: Boolean = false): String {

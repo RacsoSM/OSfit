@@ -85,11 +85,6 @@ class TimelineResumen(escenas: List<EscenaResumen>) {
         // 8s y no 6s como Asistencia: su frase de entrada es larga y la línea de ranking
         // ("...solamente detrás de: <nombres>") necesita más tiempo en pantalla para leerse.
         is EscenaResumen.Tiempo -> 8_000L
-        // 10.5s y no 8s como Tiempo: además de la línea del porcentaje carga la línea de
-        // "no te espantes" 500ms después de que esa termine de escribirse (con un texto de
-        // entrenando/descansando largo esa cola puede llegar a los ~8.4s), más 1s extra a
-        // pedido del trainer para que la escena no corte justo cuando termina de animarse.
-        is EscenaResumen.Esfuerzo -> 10_500L
         // 7s y no 4s: la dona de días de rutina empieza a aparecer justo cuando termina de
         // escribirse el texto (~2.2s) y necesita quedarse en pantalla un rato para leerse;
         // +2s extra a pedido del trainer sobre los 5s que ya tenía.

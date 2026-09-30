@@ -3,7 +3,6 @@ package com.osfit.app.video
 import android.graphics.Bitmap
 import com.osfit.app.data.model.CategoriaMedallaAutomatica
 import com.osfit.app.domain.ConteoDiaRutina
-import com.osfit.app.domain.DesgloseEsfuerzo
 import com.osfit.app.domain.PuntoTiempoDiario
 import com.osfit.app.domain.RankingResultado
 
@@ -23,10 +22,6 @@ sealed class EscenaResumen {
         val ranking: RankingResultado,
         // Minutos por día del rango, en orden; alimenta la gráfica de línea de la escena.
         val tiempoPorDia: List<PuntoTiempoDiario> = emptyList()
-    ) : EscenaResumen()
-    data class Esfuerzo(
-        val minutosTotales: Int,
-        val desglose: DesgloseEsfuerzo
     ) : EscenaResumen()
     data class DiaFavorito(
         val nombreDia: String?,
