@@ -219,18 +219,27 @@ object ResumenClienteCalculator {
     }
 
     /**
-     * Minutos asistidos por cada día de [rango.inicio] a [rango.fin] (ambos incluidos),
-     * en orden cronológico, 0 en los días sin asistencia. [asistenciasCliente] puede traer
-     * registros no asistidos (soborno) o de fuera del rango; se filtran acá.
+     * Minutos para la gráfica por cada día de [rango.inicio] a [rango.fin] (ambos incluidos),
+     * en orden cronológico. Suma los registros asistidos de cada día y, si su suma es 0,
+     * usa el promedio redondeado de los días asistidos con minutos positivos del rango.
+     * Sin asistencia o sin días con tiempo para promediar, devuelve 0.
+     * Esta estimación solo afecta la gráfica: los totales y rankings conservan el tiempo real.
+     * [asistenciasCliente] puede traer registros no asistidos (soborno) o de fuera del rango;
+     * se filtran acá.
      */
     fun tiempoPorDiaEnRango(asistenciasCliente: List<Asistencia>, rango: RangoResumen): List<PuntoTiempoDiario> {
         val minutosPorFecha = asistenciasCliente
-            .filter { it.asistio }
+            .filter { it.asistio && it.fecha >= rango.inicio.toString() && it.fecha <= rango.fin.toString() }
             .groupingBy { it.fecha }
             .fold(0) { acumulado, asistencia -> acumulado + (asistencia.duracionMinutos ?: 0) }
+        val minutosConTiempo = minutosPorFecha.values.filter { it > 0 }
+        val promedioMinutos = if (minutosConTiempo.isEmpty()) 0 else minutosConTiempo.average().roundToInt()
         return generateSequence(rango.inicio) { it.plusDays(1) }
             .takeWhile { !it.isAfter(rango.fin) }
-            .map { fecha -> PuntoTiempoDiario(fecha, minutosPorFecha[fecha.toString()] ?: 0) }
+            .map { fecha ->
+                val minutos = minutosPorFecha[fecha.toString()]
+                PuntoTiempoDiario(fecha, if (minutos == 0) promedioMinutos else minutos ?: 0)
+            }
             .toList()
     }
 
