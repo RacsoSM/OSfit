@@ -1,6 +1,7 @@
 package com.osfit.app.video
 
 import android.content.Context
+import android.util.Log
 import com.osfit.app.data.AppContainer
 import com.osfit.app.data.model.LogroPersonalCatalogo
 import com.osfit.app.data.model.MedallaCatalogo
@@ -78,13 +79,12 @@ object ResumenVideoGenerator {
             borrarResumenesViejos(carpeta, ahora)
             TimelineResumen(construirEscenas(resumen, medallaEscena, escenasDeLogros))
         }
-        // Una sola lectura por video, no una por frame: la paleta es del periodo y no cambia
-        // mientras se genera.
-        val paleta = AppContainer.configVideoRepository.configDe(resumen.rango.inicio.toString()).paleta
-        // Una instancia de fondo por generación: su bitmap y sus paints son estado mutable,
-        // y dos generaciones solapadas se corromperían los frames si lo compartieran.
-        val fondo = FondoBlobRenderer(paleta)
+        // Una sola lectura por video: estilo y paleta no cambian mientras se genera.
+        val config = AppContainer.configVideoRepository.configDe(resumen.rango.inicio.toString())
+        val estilo = EstilosVideo.paraResumen(resumen.rango.tipo, config.estilo)
+        val renderer = FabricaRendererVideo.crear(estilo, config.paleta, context)
         val cancionArchivo = resumen.cliente.cancionArchivo
+        val inicioGeneracionNs = System.nanoTime()
         ResumenVideoEncoder.generar(
             duracionTotalMs = timeline.duracionTotalMs,
             fps = FPS,
@@ -94,8 +94,11 @@ object ResumenVideoGenerator {
             inicioMusicaSegundos = resumen.cliente.cancionInicioSegundos ?: 0,
             onProgreso = onProgreso
         ) { canvas, tiempoMs ->
-            ResumenFrameRenderer.dibujarFrame(canvas, timeline, fondo, tiempoMs, paleta)
+            renderer.dibujarFrame(canvas, timeline, tiempoMs)
         }
+        val generacionMs = (System.nanoTime() - inicioGeneracionNs) / 1_000_000
+        val ratio = String.format(Locale.ROOT, "%.2f", generacionMs.toDouble() / timeline.duracionTotalMs)
+        Log.i("ResumenVideo", "estilo=${estilo.id} videoMs=${timeline.duracionTotalMs} generacionMs=$generacionMs ratio=$ratio")
         CompartirUtil.compartirVideo(context, salida)
         // Se redondea hacia arriba: la duración sólo rotula el video en la web y truncar
         // dejaría el último segundo empezado fuera de la cuenta.
