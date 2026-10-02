@@ -31,7 +31,7 @@ import com.osfit.app.ui.common.MuestrasPaletaVideo
 @Composable
 fun ConfigVideoScreen(viewModel: ConfigVideoViewModel = viewModel()) {
     val periodos by viewModel.periodos.collectAsState()
-    var periodoEnEdicion by remember { mutableStateOf<PeriodoConPaleta?>(null) }
+    var periodoEnEdicion by remember { mutableStateOf<PeriodoConConfig?>(null) }
 
     LazyColumn(
         modifier = Modifier.fillMaxSize().padding(16.dp),
@@ -79,7 +79,7 @@ fun ConfigVideoScreen(viewModel: ConfigVideoViewModel = viewModel()) {
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clickable {
-                                    viewModel.asignar(periodo.rangoInicio, paleta.id)
+                                    viewModel.asignarPaleta(periodo.rangoInicio, paleta.id)
                                     periodoEnEdicion = null
                                 }
                                 .padding(vertical = 8.dp),
@@ -88,7 +88,7 @@ fun ConfigVideoScreen(viewModel: ConfigVideoViewModel = viewModel()) {
                             RadioButton(
                                 selected = paleta.id == periodo.paleta.id,
                                 onClick = {
-                                    viewModel.asignar(periodo.rangoInicio, paleta.id)
+                                    viewModel.asignarPaleta(periodo.rangoInicio, paleta.id)
                                     periodoEnEdicion = null
                                 }
                             )
