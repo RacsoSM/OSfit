@@ -18,7 +18,6 @@ import android.text.style.ForegroundColorSpan
 import com.osfit.app.data.model.CategoriaMedallaAutomatica
 import com.osfit.app.domain.ConteoDiaRutina
 import com.osfit.app.domain.PuntoTiempoDiario
-import com.osfit.app.domain.RankingResultado
 import java.time.format.DateTimeFormatter
 import kotlin.math.atan2
 import kotlin.math.cos
@@ -190,8 +189,6 @@ object ResumenFrameRenderer {
 
     private const val MEDALLA_INICIO_MS = 2_000L
 
-    private const val TITULO_GRUPAL = "Logros grupales"
-    private const val TITULO_PERSONAL = "Logros personales"
 
     /** Los dos títulos de sección comparten altura para que el corte entre ambas escenas no
      *  desplace nada: el crossfade los superpone y saltarían si no coincidieran. */
@@ -287,7 +284,7 @@ object ResumenFrameRenderer {
 
     private fun bloquesPara(escena: EscenaResumen, paleta: Paleta): List<BloqueTexto> = when (escena) {
         is EscenaResumen.Saludo -> {
-            val prefijo = "Hola, "
+            val prefijo = TextosEscena.SALUDO_PREFIJO
             val texto = prefijo + escena.nombreCliente
             listOf(
                 BloqueTexto(
@@ -297,7 +294,7 @@ object ResumenFrameRenderer {
             )
         }
         is EscenaResumen.Despedida -> {
-            val texto = "Gracias por confiar en nosotros"
+            val texto = TextosEscena.DESPEDIDA
             listOf(
                 BloqueTexto(
                     texto, inicioMs = 0,
@@ -307,11 +304,11 @@ object ResumenFrameRenderer {
             )
         }
         is EscenaResumen.Asistencia -> {
-            val prefijo = "${determinante(escena.unidad, mayuscula = true)} ${escena.unidad} asististe "
-            val diasTexto = "${escena.dias} días"
+            val prefijo = TextosEscena.asistenciaPrefijo(escena)
+            val diasTexto = TextosEscena.asistenciaDias(escena)
             // Los fines de semana no cuentan: el total contra el que se compara son los días
             // hábiles del rango.
-            val sufijo = " de ${escena.diasHabiles} días hábiles"
+            val sufijo = TextosEscena.asistenciaSufijo(escena)
             val texto = prefijo + diasTexto + sufijo
             listOf(
                 BloqueTexto(escena.encabezadoRango, inicioMs = 0, duracionMs = 400, y = 160f, tamano = 44f, color = Color.LTGRAY, estilo = Typeface.NORMAL),
@@ -325,13 +322,11 @@ object ResumenFrameRenderer {
             )
         }
         is EscenaResumen.Tiempo -> {
-            val horas = escena.minutos / 60
-            val minutos = escena.minutos % 60
             listOf(
-                BloqueTexto("Estuviste en el poderoso Focus un total de", inicioMs = 0, duracionMs = 900, y = 500f - DESPLAZAMIENTO_ARRIBA_TIEMPO, tamano = 44f, color = Color.WHITE, estilo = Typeface.NORMAL),
-                BloqueTexto("${horas}h ${minutos}min", inicioMs = 900, duracionMs = 2_400, y = 800f - DESPLAZAMIENTO_ARRIBA_TIEMPO, tamano = 96f, color = paleta.destacado, estilo = Typeface.BOLD),
+                BloqueTexto(TextosEscena.TIEMPO_PREFIJO, inicioMs = 0, duracionMs = 900, y = 500f - DESPLAZAMIENTO_ARRIBA_TIEMPO, tamano = 44f, color = Color.WHITE, estilo = Typeface.NORMAL),
+                BloqueTexto(TextosEscena.tiempoDuracion(escena.minutos), inicioMs = 900, duracionMs = 2_400, y = 800f - DESPLAZAMIENTO_ARRIBA_TIEMPO, tamano = 96f, color = paleta.destacado, estilo = Typeface.BOLD),
                 BloqueTexto(
-                    comparacion(escena.ranking, "¡Vas primero en tiempo asistido!", "tiempo asistido"),
+                    TextosEscena.comparacion(escena.ranking, TextosEscena.TIEMPO_PRIMERO, TextosEscena.TIEMPO_LUGAR),
                     inicioMs = 4_000, duracionMs = 1_500,
                     y = 1500f + DESPLAZAMIENTO_ABAJO - DESPLAZAMIENTO_ARRIBA_TIEMPO, tamano = 48f, color = Color.LTGRAY, estilo = Typeface.NORMAL
                 )
@@ -339,22 +334,22 @@ object ResumenFrameRenderer {
         }
         is EscenaResumen.DiaFavorito -> listOf(
             BloqueTexto(
-                mensajeDiaFavorito(escena), inicioMs = 0, duracionMs = 2_200,
+                TextosEscena.mensajeDiaFavorito(escena), inicioMs = 0, duracionMs = 2_200,
                 y = 860f - DESPLAZAMIENTO_ARRIBA_DIA_FAVORITO, tamano = 64f, color = Color.WHITE, estilo = Typeface.BOLD
             )
         )
         is EscenaResumen.RachaMasLarga -> listOf(
-            BloqueTexto("Tu racha más larga fue de", inicioMs = 0, duracionMs = 300, y = 700f, tamano = 44f, color = Color.WHITE, estilo = Typeface.NORMAL),
-            BloqueTexto("${escena.dias} días seguidos", inicioMs = 300, duracionMs = 1_900, y = 1000f, tamano = 88f, color = paleta.destacado, estilo = Typeface.BOLD),
+            BloqueTexto(TextosEscena.RACHA_PREFIJO, inicioMs = 0, duracionMs = 300, y = 700f, tamano = 44f, color = Color.WHITE, estilo = Typeface.NORMAL),
+            BloqueTexto(TextosEscena.rachaDias(escena.dias), inicioMs = 300, duracionMs = 1_900, y = 1000f, tamano = 88f, color = paleta.destacado, estilo = Typeface.BOLD),
             BloqueTexto(
-                comparacion(escena.ranking, "¡Vas primero en racha este mes!", "racha"),
+                TextosEscena.comparacion(escena.ranking, TextosEscena.RACHA_PRIMERO, TextosEscena.RACHA_LUGAR),
                 inicioMs = 2_600, duracionMs = 600, y = 1500f, tamano = 48f, color = Color.LTGRAY, estilo = Typeface.NORMAL
             )
         )
         is EscenaResumen.Medalla -> buildList {
             if (escena.nombre != null) {
-                add(BloqueTexto(TITULO_GRUPAL, inicioMs = 0, duracionMs = 900, y = TITULO_SECCION_Y, tamano = 48f, color = Color.LTGRAY, estilo = Typeface.BOLD))
-                add(BloqueTexto("¡Felicidades! Te ganaste:", inicioMs = SUBTITULO_MEDALLA_INICIO_MS, duracionMs = 1_800, y = 600f, tamano = 56f, color = Color.WHITE, estilo = Typeface.BOLD))
+                add(BloqueTexto(TextosEscena.TITULO_GRUPAL, inicioMs = 0, duracionMs = 900, y = TITULO_SECCION_Y, tamano = 48f, color = Color.LTGRAY, estilo = Typeface.BOLD))
+                add(BloqueTexto(TextosEscena.MEDALLA_PREFIJO, inicioMs = SUBTITULO_MEDALLA_INICIO_MS, duracionMs = 1_800, y = 600f, tamano = 56f, color = Color.WHITE, estilo = Typeface.BOLD))
             }
             if (escena.mensaje.isNotBlank()) {
                 // Con medalla el mensaje cierra la coreografía: entra 2s después de que la
@@ -376,38 +371,12 @@ object ResumenFrameRenderer {
             }
         }
         is EscenaResumen.LogrosPersonales -> listOf(
-            BloqueTexto(TITULO_PERSONAL, inicioMs = 0, duracionMs = 900, y = TITULO_SECCION_Y, tamano = 48f, color = Color.LTGRAY, estilo = Typeface.BOLD),
-            BloqueTexto("Y contra ti mismo, lograste:", inicioMs = LOGROS_RETRASO_MS, duracionMs = 1_800, y = 600f, tamano = 56f, color = Color.WHITE, estilo = Typeface.BOLD)
+            BloqueTexto(TextosEscena.TITULO_PERSONAL, inicioMs = 0, duracionMs = 900, y = TITULO_SECCION_Y, tamano = 48f, color = Color.LTGRAY, estilo = Typeface.BOLD),
+            BloqueTexto(TextosEscena.LOGROS_PREFIJO, inicioMs = LOGROS_RETRASO_MS, duracionMs = 1_800, y = 600f, tamano = 56f, color = Color.WHITE, estilo = Typeface.BOLD)
             // El nombre y el mensaje de cada logro se dibujan en dibujarLogrosPersonales (no
             // acá): con 2 o 3 logros cada uno necesita su propia posición X y su propio ancho
             // de párrafo, algo que este bloque de texto centrado a todo el ancho no soporta.
         )
-    }
-
-    private fun determinante(unidad: String, mayuscula: Boolean = false): String {
-        val base = if (unidad == "mes") "este" else "esta"
-        return if (mayuscula) base.replaceFirstChar { it.uppercase() } else base
-    }
-
-    /**
-     * [fraseVasPrimero] es el texto exacto ya usado en el renderer de tarjetas estáticas para
-     * el caso "vas primero" de cada tipo de escena (Asistencia incluye "esta semana"/"este mes",
-     * Tiempo no lleva sufijo, Racha lo tiene fijo en "este mes") — se preserva verbatim, no se
-     * genera genéricamente a partir de [etiquetaLugar].
-     */
-    private fun comparacion(ranking: RankingResultado, fraseVasPrimero: String, etiquetaLugar: String): String =
-        if (ranking.nombresPorEncima.isEmpty()) {
-            fraseVasPrimero
-        } else {
-            "Estás en el lugar ${ranking.puesto} de $etiquetaLugar, solamente detrás de: " +
-                ranking.nombresPorEncima.joinToString(", ")
-        }
-
-    private fun mensajeDiaFavorito(t: EscenaResumen.DiaFavorito): String = when {
-        t.nombreDia != null -> "Tu día favorito fue ${t.nombreDia}"
-        t.diasAsistidos == 0 ->
-            "${determinante(t.unidad, mayuscula = true)} ${t.unidad} no viniste, ¡te esperamos la próxima!"
-        else -> "¡Sigue registrando tu día de rutina para descubrir cuál es tu favorito!"
     }
 
     private fun dibujarTexto(
