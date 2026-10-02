@@ -36,9 +36,8 @@ class RendererMancu(context: Context) : RendererVideo {
         if (entrante != null) {
             val alphaEntrante = timeline.alphaEntrante(tiempoMs)
             val visible = if (MancuAnimacion.escenaVisibleEsEntrante(alphaEntrante)) entrante else activo
-            val reloj = if (visible === activo) activo.duracionMs - timeline.ritmo.ventanaTransicionMs / 2L
-                else timeline.relojVisible(visible, tiempoMs)
-            dibujarEscena(canvas, visible.escena, reloj)
+            // relojVisible ya congela a la saliente (salvo la primera, que sigue hasta su fin).
+            dibujarEscena(canvas, visible.escena, timeline.relojVisible(visible, tiempoMs))
             nube.dibujar(canvas, ancho, alto, MancuAnimacion.progresoNube(alphaEntrante))
             val corriendo = MancuAnimacion.viajeCorriendo(alphaEntrante)
             val desplazamiento = MancuAnimacion.viajeDesplazamiento(alphaEntrante) * ancho
