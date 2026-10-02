@@ -80,7 +80,7 @@ object ResumenVideoGenerator {
         }
         // Una sola lectura por video, no una por frame: la paleta es del periodo y no cambia
         // mientras se genera.
-        val paleta = AppContainer.configVideoRepository.paletaDe(resumen.rango.inicio.toString())
+        val paleta = AppContainer.configVideoRepository.configDe(resumen.rango.inicio.toString()).paleta
         // Una instancia de fondo por generación: su bitmap y sus paints son estado mutable,
         // y dos generaciones solapadas se corromperían los frames si lo compartieran.
         val fondo = FondoBlobRenderer(paleta)

@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.osfit.app.data.AppContainer
 import com.osfit.app.data.repository.ConfigVideoRepository
+import com.osfit.app.data.repository.ConfigVideoGuardada
 import com.osfit.app.domain.PeriodosQuincenales
 import com.osfit.app.domain.ResumenClienteCalculator
 import com.osfit.app.paletas.Paleta
@@ -37,16 +38,16 @@ class ConfigVideoViewModel(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), construir(emptyMap()))
 
     fun asignar(rangoInicio: String, paletaId: String) {
-        viewModelScope.launch { repositorio.guardar(rangoInicio, paletaId) }
+        viewModelScope.launch { repositorio.guardarPaleta(rangoInicio, paletaId) }
     }
 
-    private fun construir(paletasPorPeriodo: Map<String, String>): List<PeriodoConPaleta> =
+    private fun construir(paletasPorPeriodo: Map<String, ConfigVideoGuardada>): List<PeriodoConPaleta> =
         PeriodosQuincenales.ultimos(hoy).map { rango ->
             val rangoInicio = rango.inicio.toString()
             PeriodoConPaleta(
                 rangoInicio = rangoInicio,
                 encabezado = rango.encabezado,
-                paleta = Paletas.porIdVideo(paletasPorPeriodo[rangoInicio]),
+                paleta = Paletas.porIdVideo(paletasPorPeriodo[rangoInicio]?.paletaId),
                 esActual = rangoInicio == periodoActual
             )
         }
