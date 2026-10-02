@@ -9,7 +9,7 @@ import kotlin.math.cos
 import kotlin.math.min
 import kotlin.math.sin
 
-class NubeTransicionMancu {
+class NubeTransicionMancu : TransicionMancu {
     private val relleno = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = 0xFFFFF7E3.toInt() }
     private val contorno = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = PaletaMancu.TINTA
@@ -35,6 +35,11 @@ class NubeTransicionMancu {
             this[i * 2] = cos(angulo).toFloat()
             this[i * 2 + 1] = sin(angulo).toFloat()
         }
+    }
+
+    override fun dibujar(canvas: Canvas, ancho: Float, alto: Float, progreso: Float,
+                         a: Float, centroX: Float, centroY: Float) {
+        dibujar(canvas, ancho, alto, progreso)
     }
 
     fun dibujar(canvas: Canvas, ancho: Float, alto: Float, progreso: Float) {

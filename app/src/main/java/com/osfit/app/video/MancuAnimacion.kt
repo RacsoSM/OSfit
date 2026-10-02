@@ -174,6 +174,30 @@ object MancuAnimacion {
 
     fun viajeCorriendo(a: Float): Boolean = a >= 0.15f && a < 0.925f
 
+    fun viajeSaltoY(a: Float): Float {
+        val alpha = a.coerceIn(0f, 1f)
+        if (alpha < 0.5f) {
+            val subida = ((alpha * 2f - 0.3f) / 0.7f).coerceIn(0f, 1f)
+            return -1.2f * subida * subida
+        }
+        val caida = ((alpha - 0.5f) * 2f / 0.85f).coerceIn(0f, 1f)
+        return -1.2f * (1f - caida * caida)
+    }
+
+    fun viajeSaltoEscalaY(a: Float): Float {
+        val alpha = a.coerceIn(0f, 1f)
+        if (alpha < 0.15f) return 1f - 0.2f * alpha / 0.15f
+        val llegada = (alpha - 0.5f) * 2f
+        // Despegue y contacto son impactos deliberados, como en escalaYSalto.
+        return if (llegada < 0.85f) 1.15f else
+            0.8f + 0.2f * ((llegada - 0.85f) / 0.15f).coerceIn(0f, 1f)
+    }
+
+    fun viajeSaltoInclinacion(a: Float): Float {
+        val alpha = a.coerceIn(0f, 1f)
+        return if (alpha < 0.5f) -6f * alpha * 2f else 6f * (1f - alpha) * 2f
+    }
+
     fun fasePaso(tMs: Long, periodoMs: Long): Float {
         require(periodoMs > 0L) { "El periodo de paso debe ser positivo" }
         return Math.floorMod(tMs, periodoMs).toFloat() / periodoMs.toFloat()

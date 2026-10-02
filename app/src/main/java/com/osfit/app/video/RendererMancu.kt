@@ -8,6 +8,9 @@ class RendererMancu(context: Context) : RendererVideo {
     private val tipografias = TipografiasMancu(context)
     private val fondo = FondoPapelRenderer()
     private val nube = NubeTransicionMancu()
+    private val telon = TransicionTelonMancu()
+    private val iris = TransicionIrisMancu()
+    private val brocha = TransicionBrochaMancu()
     private val mancu = MancuDibujo(tipografias)
     private val textos = TextoMancu(tipografias)
     private val saludo = EscenaMancuSaludo()
@@ -20,6 +23,7 @@ class RendererMancu(context: Context) : RendererVideo {
     private val despedida = EscenaMancuDespedida()
     private val actor = ActorMancu()
     private val poseSprint = PoseMancu(Brazos.ORGULLO, Ojos.FELIZ, Boca.ABIERTA)
+    private val poseSalto = PoseMancu(Brazos.ORGULLO, Ojos.FELIZ, Boca.ABIERTA, salto = true)
     private val tintaVelocidad = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = PaletaMancu.TINTA
         strokeWidth = 10f
@@ -38,17 +42,42 @@ class RendererMancu(context: Context) : RendererVideo {
             val visible = if (MancuAnimacion.escenaVisibleEsEntrante(alphaEntrante)) entrante else activo
             // relojVisible ya congela a la saliente (salvo la primera, que sigue hasta su fin).
             dibujarEscena(canvas, visible.escena, timeline.relojVisible(visible, tiempoMs))
-            nube.dibujar(canvas, ancho, alto, MancuAnimacion.progresoNube(alphaEntrante))
-            val corriendo = MancuAnimacion.viajeCorriendo(alphaEntrante)
-            val desplazamiento = MancuAnimacion.viajeDesplazamiento(alphaEntrante) * ancho
-            if (corriendo && actor.presente) {
-                if (alphaEntrante < 0.5f) actor.pose = poseSprint
-                dibujarVelocidad(canvas, alphaEntrante, desplazamiento)
+            var indice = 0
+            while (indice < timeline.tramos.lastIndex && timeline.tramos[indice] !== activo) indice++
+            val tipo = TipoTransicionMancu.paraIndice(indice)
+            val corre = tipo.viaje == EstiloViajeMancu.CORRER
+            val desplazamientoX = if (corre) MancuAnimacion.viajeDesplazamiento(alphaEntrante) * ancho else 0f
+            val desplazamientoY = if (corre) 0f else MancuAnimacion.viajeSaltoY(alphaEntrante) * alto
+            val centroX = if (actor.presente) actor.x + actor.tamano / 2f + desplazamientoX else ancho / 2f
+            val centroY = if (actor.presente) actor.y + actor.tamano * 0.45f + desplazamientoY else alto / 2f
+            val transicion: TransicionMancu = when (tipo) {
+                TipoTransicionMancu.NUBE -> nube
+                TipoTransicionMancu.TELON -> telon
+                TipoTransicionMancu.IRIS -> iris
+                TipoTransicionMancu.BROCHA -> brocha
             }
-            actor.dibujar(canvas, mancu, desplazamiento,
-                MancuAnimacion.viajeInclinacion(alphaEntrante),
-                MancuAnimacion.viajeEscalaY(alphaEntrante),
-                if (corriendo) MancuAnimacion.fasePaso(tiempoMs, 280L) else -1f)
+            transicion.dibujar(canvas, ancho, alto, MancuAnimacion.progresoNube(alphaEntrante),
+                alphaEntrante, centroX, centroY)
+            if (corre) {
+                val corriendo = MancuAnimacion.viajeCorriendo(alphaEntrante)
+                if (corriendo && actor.presente) {
+                    if (alphaEntrante < 0.5f) actor.pose = poseSprint
+                    dibujarVelocidad(canvas, alphaEntrante, desplazamientoX)
+                }
+                actor.dibujar(canvas, mancu, desplazamientoX,
+                    MancuAnimacion.viajeInclinacion(alphaEntrante),
+                    MancuAnimacion.viajeEscalaY(alphaEntrante),
+                    if (corriendo) MancuAnimacion.fasePaso(tiempoMs, 280L) else -1f)
+            } else {
+                if (actor.presente && desplazamientoY < 0f) {
+                    actor.pose = poseSalto
+                    dibujarVelocidadVertical(canvas, alphaEntrante, desplazamientoY)
+                }
+                actor.dibujar(canvas, mancu,
+                    inclinacionExtra = MancuAnimacion.viajeSaltoInclinacion(alphaEntrante),
+                    escalaYExtra = MancuAnimacion.viajeSaltoEscalaY(alphaEntrante),
+                    desplazamientoY = desplazamientoY)
+            }
         } else {
             dibujarEscena(canvas, activo.escena, timeline.relojVisible(activo, tiempoMs))
             actor.dibujar(canvas, mancu)
@@ -66,6 +95,19 @@ class RendererMancu(context: Context) : RendererVideo {
             val y = actor.y + actor.tamano * (0.3f + i * 0.13f)
             canvas.drawLine(borde - 30f - longitud * (1f - i * 0.12f), y,
                 borde - 30f, y, tintaVelocidad)
+        }
+    }
+
+    private fun dibujarVelocidadVertical(canvas: Canvas, a: Float, desplazamientoY: Float) {
+        val subiendo = a < 0.5f
+        val velocidad = if (subiendo) ((a * 2f - 0.3f) / 0.7f).coerceIn(0f, 1f)
+            else ((a - 0.5f) * 2f / 0.85f).coerceIn(0f, 1f)
+        val borde = actor.y + desplazamientoY + if (subiendo) actor.tamano + 30f else -30f
+        val direccion = if (subiendo) 1f else -1f
+        for (i in 0..3) {
+            val x = actor.x + actor.tamano * (0.3f + i * 0.13f)
+            canvas.drawLine(x, borde, x, borde + direccion * 180f * velocidad * (1f - i * 0.12f),
+                tintaVelocidad)
         }
     }
 

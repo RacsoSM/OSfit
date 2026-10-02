@@ -33,11 +33,11 @@ internal class ActorMancu {
 
     fun dibujar(canvas: Canvas, mancu: MancuDibujo, desplazamientoX: Float = 0f,
                 inclinacionExtra: Float = 0f, escalaYExtra: Float = 1f,
-                fasePasoForzada: Float = -1f) {
+                fasePasoForzada: Float = -1f, desplazamientoY: Float = 0f) {
         this.fasePasoForzada = fasePasoForzada
         if (!presente) return
         val guardado = canvas.save()
-        canvas.translate(desplazamientoX, 0f)
+        canvas.translate(desplazamientoX, desplazamientoY)
         val pieX = x + tamano / 2f
         val pieY = y + tamano * 0.96f
         canvas.rotate(rotacion + inclinacionExtra, pieX, pieY)
