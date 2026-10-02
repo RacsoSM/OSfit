@@ -84,9 +84,9 @@ private const val ROTACION_SOBREPASO_GRADOS = 5f
  *  hasta [ONDA_FACTOR_FINAL] veces su radio y se apaga. Es **un** drawCircle por frame durante
  *  medio segundo, no un sistema de partículas: eso es lo que lo hace pagable acá. */
 internal const val ONDA_MS = 520L
-private const val ONDA_FACTOR_FINAL = 2.9f
-private const val ONDA_GROSOR_MAXIMO = 26f
-private const val ONDA_ALPHA_MAXIMO = 210
+internal const val ONDA_FACTOR_FINAL = 2.9f
+internal const val ONDA_GROSOR_MAXIMO = 26f
+internal const val ONDA_ALPHA_MAXIMO = 210
 
 /**
  * El latido posterior al golpe. Tiene que morir **antes** de [MENSAJE_MEDALLA_INICIO_MS]
@@ -115,7 +115,7 @@ internal const val DESTELLO_PICO = 4.2f
 
 /** Cuánto se agranda el radio del halo por cada punto de intensidad por encima de 1. Es la
  *  perilla real del destello, porque el alpha ya está al tope. */
-private const val HALO_CRECIMIENTO_DESTELLO = 0.28f
+internal const val HALO_CRECIMIENTO_DESTELLO = 0.28f
 internal const val DESTELLO_MS = 700L
 
 object ResumenFrameRenderer {
@@ -178,7 +178,7 @@ object ResumenFrameRenderer {
     /** Paleta pastel para las rebanadas de la dona, asignada en orden fijo (día con más
      *  repeticiones primero): así cada rebanada se distingue por color además de por su
      *  etiqueta directa, en vez del esquema anterior de "favorito destacado vs. resto apagado". */
-    private val DONA_PALETA_PASTEL = listOf(
+    internal val DONA_PALETA_PASTEL = listOf(
         0xFFA8E6CF.toInt(), // menta
         0xFFAEC9F0.toInt(), // azul
         0xFFF6D186.toInt(), // amarillo
@@ -187,7 +187,7 @@ object ResumenFrameRenderer {
         0xFFF6B989.toInt() // durazno
     )
 
-    private const val MEDALLA_INICIO_MS = 2_000L
+    internal const val MEDALLA_INICIO_MS = 2_000L
 
 
     /** Los dos títulos de sección comparten altura para que el corte entre ambas escenas no
@@ -199,20 +199,20 @@ object ResumenFrameRenderer {
 
     /** Todo el contenido de la escena de logros personales se corre 1s: primero se lee el
      *  título de sección, después entran insignias y textos. */
-    private const val LOGROS_RETRASO_MS = 1_000L
+    internal const val LOGROS_RETRASO_MS = 1_000L
 
 
     /** Radio del halo respecto del de la insignia, y opacidad máxima de su centro. La medalla
      *  brilla más que los logros personales: la jerarquía tiene que leerse. */
-    private const val HALO_FACTOR_MEDALLA = 1.9f
-    private const val HALO_ALPHA_MEDALLA = 150
-    private const val HALO_FACTOR_LOGRO = 1.45f
-    private const val HALO_ALPHA_LOGRO = 70
+    internal const val HALO_FACTOR_MEDALLA = 1.9f
+    internal const val HALO_ALPHA_MEDALLA = 150
+    internal const val HALO_FACTOR_LOGRO = 1.45f
+    internal const val HALO_ALPHA_LOGRO = 70
 
     /** Mismos colores que [DONA_PALETA_PASTEL], mapeados por categoría (en vez de por índice de
      *  rebanada) para que la insignia por defecto se sienta parte del mismo lenguaje visual del
      *  video. Solo se usa cuando la medalla no tiene imagen propia. */
-    private val COLOR_INSIGNIA_MEDALLA = mapOf(
+    internal val COLOR_INSIGNIA_MEDALLA = mapOf(
         CategoriaMedallaAutomatica.ASISTENCIA to 0xFFA8E6CF.toInt(),
         CategoriaMedallaAutomatica.TIEMPO to 0xFFAEC9F0.toInt(),
         CategoriaMedallaAutomatica.RACHA to 0xFFF6D186.toInt(),
@@ -754,7 +754,7 @@ object ResumenFrameRenderer {
 
     /** Posición y tamaño de la insignia número [indice] de [cantidad] en la escena de logros
      *  personales, más el ancho de párrafo disponible para su mensaje. */
-    private data class PosicionLogro(val cx: Float, val cy: Float, val radio: Float, val anchoTexto: Int)
+    internal data class PosicionLogro(val cx: Float, val cy: Float, val radio: Float, val anchoTexto: Int)
 
     /**
      * 1 logro: centrado, mismo layout grande que la medalla. 2: uno al lado del otro. 3: en
@@ -762,7 +762,7 @@ object ResumenFrameRenderer {
      * antes). El ancho de párrafo de cada uno es el de su columna, para que el mensaje se
      * ajuste de línea sin invadir al logro vecino.
      */
-    private fun posicionesLogros(cantidad: Int, ancho: Int): List<PosicionLogro> = when (cantidad) {
+    internal fun posicionesLogros(cantidad: Int, ancho: Int): List<PosicionLogro> = when (cantidad) {
         1 -> listOf(PosicionLogro(ancho / 2f, 1150f, 220f, ancho - 160))
         2 -> {
             val anchoColumna = ancho / 2f

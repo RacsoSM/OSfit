@@ -87,7 +87,7 @@ internal class TextoMancu(tipografias: TipografiasMancu) {
                       duracionMs: Long, centroX: Float, y: Float, tamano: Float,
                       ancho: Int = 900, esTitulo: Boolean = false,
                       color: Int = PaletaMancu.MARRON, inicioRojo: Int = texto.length,
-                      finRojo: Int = texto.length) {
+                      finRojo: Int = texto.length, altoMaximo: Float = 1840f - y) {
         if (elapsedMs < inicioMs) return
         val visibles = MaquinaEscribir.textoVisible(texto, elapsedMs - inicioMs, duracionMs).length
         parrafo.typeface = if (esTitulo) titulo.typeface else mano.typeface
@@ -101,7 +101,7 @@ internal class TextoMancu(tipografias: TipografiasMancu) {
                 StaticLayout.Builder.obtain(texto, 0, texto.length, parrafo, ancho)
                     .setAlignment(Layout.Alignment.ALIGN_CENTER).setIncludePad(false).build()
             }
-            if (layout.height <= 1840f - y || ajustado <= 1f) break
+            if (layout.height <= altoMaximo || ajustado <= 1f) break
             ajustado *= 0.85f
         } while (true)
         for (linea in 0 until layout.lineCount) {
