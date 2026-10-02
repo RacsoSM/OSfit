@@ -6,6 +6,25 @@ import kotlin.math.cos
 import kotlin.math.sin
 
 object MancuAnimacion {
+    fun transicion(tMs: Long, inicioMs: Long, duracionMs: Long): Float {
+        require(duracionMs > 0L) { "La duracion de transicion debe ser positiva" }
+        val fase = ((tMs - inicioMs) / duracionMs.toFloat()).coerceIn(0f, 1f)
+        return fase * fase * (3f - 2f * fase)
+    }
+
+    // La elevación breve prepara el esfuerzo; el fondo exacto en 600 sincroniza las letras.
+    fun sentadillaAnticipada(tMs: Long): Float {
+        val fase = Math.floorMod(tMs, 1200L)
+        return when {
+            fase < 120L -> -0.15f * transicion(fase, 0L, 120L)
+            fase < 600L -> -0.15f + 1.15f * transicion(fase, 120L, 480L)
+            else -> 1f - transicion(fase, 600L, 600L)
+        }
+    }
+
+    fun balanceoTriste(tMs: Long): Float =
+        3f * sin(2.0 * PI * Math.floorMod(tMs, 2400L) / 2400.0).toFloat()
+
     fun popLetra(edadMs: Long): Float {
         if (edadMs < 0L) return 0f
         if (edadMs >= 260L) return 1f
