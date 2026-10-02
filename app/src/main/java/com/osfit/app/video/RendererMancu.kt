@@ -49,7 +49,8 @@ class RendererMancu(context: Context) : RendererVideo {
             val desplazamientoX = if (corre) MancuAnimacion.viajeDesplazamiento(alphaEntrante) * ancho else 0f
             val desplazamientoY = if (corre) 0f else MancuAnimacion.viajeSaltoY(alphaEntrante) * alto
             val centroX = if (actor.presente) actor.x + actor.tamano / 2f + desplazamientoX else ancho / 2f
-            val centroY = if (actor.presente) actor.y + actor.tamano * 0.45f + desplazamientoY else alto / 2f
+            // Sin el salto: el iris se cierra donde estaba Mancu, no lo persigue fuera de cuadro.
+            val centroY = if (actor.presente) actor.y + actor.tamano * 0.45f else alto / 2f
             val transicion: TransicionMancu = when (tipo) {
                 TipoTransicionMancu.NUBE -> nube
                 TipoTransicionMancu.TELON -> telon
