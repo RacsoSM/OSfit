@@ -52,8 +52,10 @@ class MancuDibujo(tipografias: TipografiasMancu) {
         val respiracion = MancuAnimacion.respiracionEscalaY(tMs)
         canvas.scale(1f / respiracion, respiracion, 100f, 192f)
         piernas(canvas, pose)
-        brazos(canvas, pose)
+        if (pose.brazos != Brazos.LIBRE) brazos(canvas, pose)
         disco(canvas)
+        // Los brazos al frente deben quedar visibles sobre el disco durante el aplauso.
+        if (pose.brazos == Brazos.LIBRE) brazos(canvas, pose)
         cara(canvas, pose.ojos, MancuAnimacion.factorParpadeo(tMs))
         boca(canvas, pose.boca)
         if (pose.sudor) sudor(canvas)
@@ -95,6 +97,11 @@ class MancuDibujo(tipografias: TipografiasMancu) {
                 piernaPaso(canvas, 84f, 76f, avance)
                 piernaPaso(canvas, 116f, 124f, -avance)
             }
+            pose.piernasAbiertas > 0f -> {
+                val apertura = pose.piernasAbiertas.coerceIn(0f, 1f)
+                piernaAbierta(canvas, 84f, 76f - 26f * apertura, -12f * apertura)
+                piernaAbierta(canvas, 116f, 124f + 26f * apertura, 12f * apertura)
+            }
             pose.salto -> {
                 curva(canvas, 84f, 148f, 74f, 168f, 66f, 184f)
                 curva(canvas, 116f, 148f, 126f, 168f, 134f, 184f)
@@ -124,6 +131,50 @@ class MancuDibujo(tipografias: TipografiasMancu) {
     private fun zapato(canvas: Canvas, x: Float, y: Float) = elipse(canvas, x, y, 14f, 7f, rojo, 4f)
     private fun guante(canvas: Canvas, x: Float, y: Float) = elipse(canvas, x, y, 8f, 8f, blanco, 4f)
 
+    private fun piernaAbierta(canvas: Canvas, caderaX: Float, pieX: Float, giro: Float) {
+        curva(canvas, caderaX, 148f, (caderaX + pieX) / 2f, 168f, pieX, 182f)
+        val guardado = canvas.save()
+        canvas.rotate(giro, pieX, 186f)
+        zapato(canvas, pieX, 186f)
+        canvas.restoreToCount(guardado)
+    }
+
+    private fun guante(canvas: Canvas, x: Float, y: Float, tipo: Guante) {
+        guante(canvas, x, y)
+        if (tipo == Guante.ABIERTO) return
+        prepararTrazo(tinta, 2f)
+        canvas.drawLine(x - 3f, y - 3f, x + 2f, y - 3f, trazo)
+        canvas.drawLine(x - 3f, y + 1f, x + 2f, y + 1f, trazo)
+        if (tipo == Guante.PULGAR) elipse(canvas, x + 6f, y - 10f, 4f, 8f, blanco, 3f)
+    }
+
+    private fun brazoLibre(canvas: Canvas, hombroX: Float, angulo: Float, codo: Float,
+                           tipo: Guante, reloj: Boolean) {
+        val radianes = angulo * PI / 180.0
+        val dx = cos(radianes).toFloat()
+        val dy = sin(radianes).toFloat()
+        val desvio = 22f * codo.coerceIn(-1f, 1f)
+        val qx = hombroX + 26f * dx - desvio * dy
+        val qy = 88f + 26f * dy + desvio * dx
+        val manoX = hombroX + 52f * dx
+        val manoY = 88f + 52f * dy
+        curva(canvas, hombroX, 88f, qx, qy, manoX, manoY)
+        guante(canvas, manoX, manoY, tipo)
+        if (reloj) {
+            // Evaluar la misma Bézier en 42/52 mantiene el reloj sobre la manguera curva.
+            val u = 42f / 52f
+            val v = 1f - u
+            val wx = v * v * hombroX + 2f * v * u * qx + u * u * manoX
+            val wy = v * v * 88f + 2f * v * u * qy + u * u * manoY
+            prepararTrazo(rojo, 8f)
+            canvas.drawLine(wx + 7f * dy, wy - 7f * dx, wx - 7f * dy, wy + 7f * dx, trazo)
+            elipse(canvas, wx, wy, 6f, 6f, blanco, 2f)
+            prepararTrazo(tinta, 1.5f)
+            canvas.drawLine(wx, wy, wx, wy - 4f, trazo)
+            canvas.drawLine(wx, wy, wx + 3f, wy + 1f, trazo)
+        }
+    }
+
     private fun piernaPaso(canvas: Canvas, caderaX: Float, pieBaseX: Float, avance: Float) {
         val pieX = pieBaseX + 16f * avance
         val pieY = 186f - 10f * max(0f, avance)
@@ -136,6 +187,33 @@ class MancuDibujo(tipografias: TipografiasMancu) {
 
     private fun brazos(canvas: Canvas, pose: PoseMancu) {
         when (pose.brazos) {
+            Brazos.LIBRE -> {
+                brazoLibre(canvas, 40f, pose.anguloBrazoIzq, pose.codoIzq, pose.guanteIzq, pose.reloj)
+                brazoLibre(canvas, 160f, pose.anguloBrazoDer, pose.codoDer, pose.guanteDer, false)
+                if (pose.impacto > 0f) {
+                    val izq = pose.anguloBrazoIzq * PI / 180.0
+                    val der = pose.anguloBrazoDer * PI / 180.0
+                    val cx = 100f + 26f * (cos(izq) + cos(der)).toFloat()
+                    val cy = 88f + 26f * (sin(izq) + sin(der)).toFloat()
+                    prepararTrazo(tinta, 3f, pose.impacto.coerceIn(0f, 1f))
+                    canvas.drawLine(cx - 12f, cy - 12f, cx - 7f, cy - 7f, trazo)
+                    canvas.drawLine(cx, cy - 19f, cx, cy - 11f, trazo)
+                    canvas.drawLine(cx + 12f, cy - 12f, cx + 7f, cy - 7f, trazo)
+                }
+            }
+            Brazos.MUSCULO -> {
+                curva(canvas, 40f, 88f, 14f, 110f, 14f, 96f)
+                curva(canvas, 14f, 96f, 14f, 72f, 24f, 52f)
+                guante(canvas, 24f, 52f, Guante.PUNO)
+                curva(canvas, 160f, 88f, 186f, 110f, 186f, 96f)
+                curva(canvas, 186f, 96f, 186f, 72f, 176f, 52f)
+                guante(canvas, 176f, 52f, Guante.PUNO)
+                prepararTrazo(tinta, 3f)
+                canvas.drawLine(2f, 66f, 7f, 62f, trazo)
+                canvas.drawLine(0f, 78f, 6f, 78f, trazo)
+                canvas.drawLine(198f, 66f, 193f, 62f, trazo)
+                canvas.drawLine(200f, 78f, 194f, 78f, trazo)
+            }
             Brazos.HOLA -> {
                 curva(canvas, 40f, 92f, 20f, 96f, 14f, 116f)
                 guante(canvas, 14f, 118f)
@@ -219,8 +297,8 @@ class MancuDibujo(tipografias: TipografiasMancu) {
             curva(canvas, 65f, 53f, 76f, 49f, 88f, 45f, 4.5f * s)
             curva(canvas, 112f, 45f, 124f, 49f, 135f, 53f, 4.5f * s)
         }
-        ojo(canvas, 78f, ojos, parpadeo)
-        ojo(canvas, 122f, ojos, parpadeo)
+        ojo(canvas, 78f, if (ojos == Ojos.GUINO) Ojos.NORMAL else ojos, parpadeo)
+        ojo(canvas, 122f, if (ojos == Ojos.GUINO) Ojos.FELIZ else ojos, parpadeo)
     }
 
     private fun ojo(canvas: Canvas, x: Float, ojos: Ojos, parpadeo: Float) {
