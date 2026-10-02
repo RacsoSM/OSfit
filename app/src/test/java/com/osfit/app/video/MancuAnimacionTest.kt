@@ -76,4 +76,34 @@ class MancuAnimacionTest {
         assertTrue(MancuAnimacion.squash(350L).first < 1f)
         assertEquals(1f to 1f, MancuAnimacion.squash(700L))
     }
+    @Test fun `el viaje sale creciente y llega desde la izquierda`() {
+        assertEquals(0f, MancuAnimacion.viajeDesplazamiento(0f), 0f)
+        assertEquals(0f, MancuAnimacion.viajeDesplazamiento(1f), 0f)
+        var anterior = 0f
+        for (i in 0..49) {
+            val x = MancuAnimacion.viajeDesplazamiento(i / 100f)
+            assertTrue(x >= anterior); anterior = x
+            assertTrue(MancuAnimacion.viajeEscalaY(i / 100f) > 0f)
+        }
+        anterior = -1.3f
+        for (i in 50..100) {
+            val x = MancuAnimacion.viajeDesplazamiento(i / 100f)
+            assertTrue(x >= anterior && x <= 0f); anterior = x
+            assertTrue(MancuAnimacion.viajeEscalaY(i / 100f) > 0f)
+        }
+        assertEquals(-1.3f, MancuAnimacion.viajeDesplazamiento(0.5f), 0f)
+        assertEquals(-4f, MancuAnimacion.viajeInclinacion(0.075f), 0.00001f)
+        assertEquals(12f, MancuAnimacion.viajeInclinacion(0.3f), 0f)
+        assertTrue(!MancuAnimacion.viajeCorriendo(0f))
+        assertTrue(MancuAnimacion.viajeCorriendo(0.3f))
+        assertTrue(!MancuAnimacion.viajeCorriendo(1f))
+    }
+
+    @Test fun `la fase de paso es periodica y admite tiempos negativos`() {
+        for (t in listOf(-281L, -1L, 0L, 70L, 279L, 280L)) {
+            val f = MancuAnimacion.fasePaso(t, 280L)
+            assertTrue(f >= 0f && f < 1f)
+            assertEquals(f, MancuAnimacion.fasePaso(t + 280L, 280L), 0f)
+        }
+    }
 }

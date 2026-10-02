@@ -7,12 +7,13 @@ data class EstiloVideo(
     val id: String,
     val nombre: String,
     val descripcion: String,
-    val usaPaleta: Boolean
+    val usaPaleta: Boolean,
+    val ritmo: RitmoVideo
 )
 
 object EstilosVideo {
-    val BLOBS = EstiloVideo("blobs", "Blobs", "Fondo oscuro con blobs de color", usaPaleta = true)
-    val MANCU = EstiloVideo("mancu", "Mancu", "Papel crema y la mascota Mancu", usaPaleta = false)
+    val BLOBS = EstiloVideo("blobs", "Blobs", "Fondo oscuro con blobs de color", usaPaleta = true, ritmo = RitmoVideo.ESTANDAR)
+    val MANCU = EstiloVideo("mancu", "Mancu", "Papel crema y la mascota Mancu", usaPaleta = false, ritmo = RitmosVideo.MANCU)
     val disponibles: List<EstiloVideo> = listOf(BLOBS, MANCU)
 
     fun porId(id: String?): EstiloVideo = disponibles.firstOrNull { it.id == id } ?: BLOBS

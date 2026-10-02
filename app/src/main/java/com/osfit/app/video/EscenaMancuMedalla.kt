@@ -11,7 +11,7 @@ internal class EscenaMancuMedalla {
         if (nombre == null) {
             if (escena.mensaje.isNotBlank()) ctx.textos.bloqueMaquina(c, escena.mensaje,
                 ctx.elapsedMs, 400, 0, centro, 780f, 48f, altoMaximo = 400f)
-            ctx.mancu.dibujar(c, centro - 240f, 1250f, 480f, hola, ctx.elapsedMs)
+            ctx.actor.colocar(centro - 240f, 1250f, 480f, hola)
             return
         }
         ctx.textos.bloqueMaquina(c, TextosEscena.TITULO_GRUPAL, ctx.elapsedMs, 0, 900,
@@ -20,8 +20,8 @@ internal class EscenaMancuMedalla {
             centro, 510f, 56f, esTitulo = true, color = PaletaMancu.TINTA, altoMaximo = 110f)
         val mascota = ComposicionPremiosMancu.mascota(1)
         val alpha = ResumenFrameRenderer.opacidadEntrada(ctx.elapsedMs)
-        ctx.mancu.dibujar(c, mascota.x, mascota.y, mascota.lado,
-            if (alpha > 0f) orgullo else hola, ctx.elapsedMs)
+        ctx.actor.colocar(mascota.x, mascota.y, mascota.lado,
+            if (alpha > 0f) orgullo else hola)
         if (alpha > 0f) {
             val radio = 264f * ResumenFrameRenderer.escalaEntrada(ctx.elapsedMs)
             insignia.halo(c, centro, 1150f, radio, ResumenFrameRenderer.HALO_FACTOR_MEDALLA,

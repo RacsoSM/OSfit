@@ -1,7 +1,5 @@
 package com.osfit.app.video
 
-private const val CROSSFADE_MS = 600L
-
 /**
  * Momento en que el mensaje de la medalla empieza a escribirse, al final de su coreografía:
  * título grupal (0s) → "¡Felicidades! Te ganaste:" (0.5s, tarda ~1.8s) → la medalla entra 1s
@@ -21,17 +19,11 @@ data class TramoEscena(val escena: EscenaResumen, val inicioMs: Long, val duraci
 }
 
 /**
- * Timeline global del video: convierte la lista ordenada de [EscenaResumen] en tramos con
- * tiempos absolutos, y resuelve el crossfade de 600ms entre escenas consecutivas.
- *
- * El crossfade no agrega tiempo: los últimos 600ms de cursor de una escena son, a la vez, los
- * primeros 600ms del reloj de contenido de la escena siguiente, que arranca 600ms antes de su
- * propio `inicioMs` de cursor. Así la escena entrante ya está animando cuando alcanza opacidad
- * completa exactamente en el borde de cursor, y la saliente ya terminó su contenido (elapsed
- * llega a su `duracionMs` tope justo 600ms antes de ese borde) así que se ve congelada mientras
- * se desvanece.
+ * Convierte las escenas en tramos absolutos usando el ritmo del estilo.
+ * La ventana no agrega tiempo: adelanta el contenido entrante y congela el saliente.
+ * El ritmo predeterminado conserva la ventana original de 600 ms.
  */
-class TimelineResumen(escenas: List<EscenaResumen>) {
+class TimelineResumen(escenas: List<EscenaResumen>, val ritmo: RitmoVideo = RitmoVideo.ESTANDAR) {
 
     init {
         require(escenas.isNotEmpty()) { "El timeline necesita al menos una escena" }
@@ -40,7 +32,7 @@ class TimelineResumen(escenas: List<EscenaResumen>) {
     val tramos: List<TramoEscena> = run {
         var cursor = 0L
         escenas.map { escena ->
-            val duracion = duracionParaTipo(escena)
+            val duracion = duracionParaTipo(escena) + ritmo.extraMs(escena)
             TramoEscena(escena, cursor, duracion).also { cursor += duracion }
         }
     }
@@ -52,32 +44,37 @@ class TimelineResumen(escenas: List<EscenaResumen>) {
 
     fun tramoActivo(tiempoGlobalMs: Long): TramoEscena = tramos[indiceActivo(tiempoGlobalMs)]
 
-    /** Próximo tramo si [tiempoGlobalMs] cae en los 600ms previos al cambio de escena; null
+    /** Próximo tramo si [tiempoGlobalMs] cae en la ventana previa al cambio de escena; null
      * fuera de esa ventana o si el tramo activo es el último. */
     fun tramoEntrante(tiempoGlobalMs: Long): TramoEscena? {
         val indice = indiceActivo(tiempoGlobalMs)
         if (indice == tramos.lastIndex) return null
         val activo = tramos[indice]
-        return if (tiempoGlobalMs >= activo.finMs - CROSSFADE_MS) tramos[indice + 1] else null
+        return if (tiempoGlobalMs >= activo.finMs - ritmo.ventanaTransicionMs) tramos[indice + 1] else null
     }
 
     /** 0f al empezar la ventana de crossfade, creciendo a 1f al terminarla. Llamar solo si
      * [tramoEntrante] no es null en ese instante. */
     fun alphaEntrante(tiempoGlobalMs: Long): Float {
         val activo = tramoActivo(tiempoGlobalMs)
-        val inicioVentana = activo.finMs - CROSSFADE_MS
-        val transcurrido = (tiempoGlobalMs - inicioVentana).coerceIn(0L, CROSSFADE_MS)
-        return transcurrido.toFloat() / CROSSFADE_MS.toFloat()
+        val inicioVentana = activo.finMs - ritmo.ventanaTransicionMs
+        val transcurrido = (tiempoGlobalMs - inicioVentana).coerceIn(0L, ritmo.ventanaTransicionMs)
+        return transcurrido.toFloat() / ritmo.ventanaTransicionMs.toFloat()
     }
 
     /** Milisegundos transcurridos dentro del contenido propio de [tramo], acotados a
-     * [0, tramo.duracionMs]. Si [tramo] no es la primera escena, su reloj arranca 600ms antes
+     * [0, tramo.duracionMs]. Si [tramo] no es la primera escena, su reloj arranca una ventana antes
      * de su `inicioMs` de cursor (ver doc de la clase). */
     fun elapsedEnTramo(tramo: TramoEscena, tiempoGlobalMs: Long): Long {
         val esPrimero = tramo.inicioMs == 0L
-        val inicioReloj = if (esPrimero) 0L else tramo.inicioMs - CROSSFADE_MS
+        val inicioReloj = if (esPrimero) 0L else tramo.inicioMs - ritmo.ventanaTransicionMs
         return (tiempoGlobalMs - inicioReloj).coerceIn(0L, tramo.duracionMs)
     }
+
+    /** t=0 cuando la nube destapa la escena; puede ser negativo mientras está cubierta. */
+    fun relojVisible(tramo: TramoEscena, tiempoGlobalMs: Long): Long =
+        elapsedEnTramo(tramo, tiempoGlobalMs) -
+            if (tramo.inicioMs == 0L) 0L else ritmo.ventanaTransicionMs / 2L
 
     private fun duracionParaTipo(escena: EscenaResumen): Long = when (escena) {
         is EscenaResumen.Saludo -> 4_000L

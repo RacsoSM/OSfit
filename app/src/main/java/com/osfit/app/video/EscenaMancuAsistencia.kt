@@ -13,12 +13,8 @@ internal class EscenaMancuAsistencia {
             (texto.length * 2400.0 / 29.0).toLong(), 540f, 430f, 84f,
             esTitulo = true, color = PaletaMancu.TINTA,
             inicioRojo = prefijo.length, finRojo = prefijo.length + dias.length)
-        val guardado = ctx.canvas.save()
-        ctx.canvas.translate(540f, 1420f)
         val (sx, sy) = MancuAnimacion.squash(ctx.elapsedMs - 400)
-        ctx.canvas.scale(sx, sy)
-        ctx.mancu.dibujar(ctx.canvas, -310f, -620f, 620f,
-            if (escena.ranking.puesto == 1) orgullo else hola, ctx.elapsedMs)
-        ctx.canvas.restoreToCount(guardado)
+        ctx.actor.colocar(230f, 800f + 24.8f * (1f - sy), 620f,
+            if (escena.ranking.puesto == 1) orgullo else hola, escalaX = sx, escalaY = sy)
     }
 }

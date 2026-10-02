@@ -46,4 +46,41 @@ object MancuAnimacion {
         val x = 1f + 0.22f * (1f - q) * (1f - q) * cos(2.0 * PI * q).toFloat()
         return x to 1f / x
     }
+
+    fun viajeDesplazamiento(a: Float): Float {
+        val alpha = a.coerceIn(0f, 1f)
+        if (alpha < 0.5f) {
+            val sprint = ((alpha * 2f - 0.3f) / 0.7f).coerceIn(0f, 1f)
+            return 1.3f * sprint * sprint
+        }
+        val restante = 1f - (alpha - 0.5f) * 2f
+        return -1.3f * restante * restante * restante
+    }
+
+    fun viajeInclinacion(a: Float): Float {
+        val alpha = a.coerceIn(0f, 1f)
+        val s = alpha * 2f
+        return if (alpha < 0.5f) {
+            if (s < 0.3f) -8f * s / 0.3f else 12f
+        } else 10f * (1f - (alpha - 0.5f) * 2f)
+    }
+
+    fun viajeEscalaY(a: Float): Float {
+        val alpha = a.coerceIn(0f, 1f)
+        if (alpha < 0.5f) {
+            val s = alpha * 2f
+            return if (s < 0.3f) 1f - 0.18f * s / 0.3f else 1f / 1.2f
+        }
+        val llegada = (alpha - 0.5f) * 2f
+        // La frenada empieza en 0.85 y recupera el volumen al asentarse.
+        return if (llegada < 0.85f) 1f else
+            0.85f + 0.15f * ((llegada - 0.85f) / 0.15f).coerceIn(0f, 1f)
+    }
+
+    fun viajeCorriendo(a: Float): Boolean = a >= 0.15f && a < 0.925f
+
+    fun fasePaso(tMs: Long, periodoMs: Long): Float {
+        require(periodoMs > 0L) { "El periodo de paso debe ser positivo" }
+        return Math.floorMod(tMs, periodoMs).toFloat() / periodoMs.toFloat()
+    }
 }

@@ -13,6 +13,6 @@ internal class EscenaMancuDespedida {
             esTitulo = true, color = PaletaMancu.TINTA)
         val salida = GeometriaMancu.salida(ctx.elapsedMs)
         val paso = if (salida > 0f) abs(sin((ctx.elapsedMs - 4500) * Math.PI / 180)).toFloat() * 28f else 0f
-        ctx.mancu.dibujar(ctx.canvas, 230f + 1200f * salida, 800f - paso, 620f, pose, ctx.elapsedMs)
+        ctx.actor.colocar(230f + 1200f * salida, 800f - paso, 620f, pose)
     }
 }

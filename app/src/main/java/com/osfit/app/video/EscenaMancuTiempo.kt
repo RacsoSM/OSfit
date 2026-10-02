@@ -22,7 +22,7 @@ internal class EscenaMancuTiempo {
             540f, 280f, 54f, esTitulo = true, color = PaletaMancu.TINTA)
         ctx.textos.bloqueMaquina(ctx.canvas, TextosEscena.tiempoDuracion(escena.minutos), ctx.elapsedMs, 900, 2400,
             540f, 490f, 120f, esTitulo = true, color = PaletaMancu.ROJO)
-        ctx.mancu.dibujar(ctx.canvas, 90f, 640f, 300f, pose, ctx.elapsedMs)
+        ctx.actor.colocar(90f, 640f, 300f, pose)
         grafica(ctx, escena)
         ctx.textos.bloqueMaquina(ctx.canvas,
             TextosEscena.comparacion(escena.ranking, TextosEscena.TIEMPO_PRIMERO, TextosEscena.TIEMPO_LUGAR),

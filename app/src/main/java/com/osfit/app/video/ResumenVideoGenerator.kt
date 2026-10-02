@@ -75,13 +75,13 @@ object ResumenVideoGenerator {
             }
             .chunked(3)
             .map { grupo -> EscenaResumen.LogrosPersonales(grupo) }
-        val timeline = withContext(Dispatchers.Default) {
-            borrarResumenesViejos(carpeta, ahora)
-            TimelineResumen(construirEscenas(resumen, medallaEscena, escenasDeLogros))
-        }
         // Una sola lectura por video: estilo y paleta no cambian mientras se genera.
         val config = AppContainer.configVideoRepository.configDe(resumen.rango.inicio.toString())
         val estilo = EstilosVideo.paraResumen(resumen.rango.tipo, config.estilo)
+        val timeline = withContext(Dispatchers.Default) {
+            borrarResumenesViejos(carpeta, ahora)
+            TimelineResumen(construirEscenas(resumen, medallaEscena, escenasDeLogros), estilo.ritmo)
+        }
         val renderer = FabricaRendererVideo.crear(estilo, config.paleta, context)
         val cancionArchivo = resumen.cliente.cancionArchivo
         val inicioGeneracionNs = System.nanoTime()

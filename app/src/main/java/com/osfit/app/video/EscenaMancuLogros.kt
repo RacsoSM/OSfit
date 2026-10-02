@@ -21,7 +21,7 @@ internal class EscenaMancuLogros {
             ResumenFrameRenderer.LOGROS_RETRASO_MS, 1800, ctx.ancho / 2f, 510f, 56f,
             esTitulo = true, color = PaletaMancu.TINTA, altoMaximo = 90f)
         val mascota = ComposicionPremiosMancu.mascota(cantidad)
-        ctx.mancu.dibujar(c, mascota.x, mascota.y, mascota.lado, pose, ctx.elapsedMs)
+        ctx.actor.colocar(mascota.x, mascota.y, mascota.lado, pose)
         escena.logros.forEachIndexed { indice, logro ->
             val alpha = CascadaLogrosMancu.opacidad(cantidad, indice, ctx.elapsedMs)
             if (alpha <= 0f) return@forEachIndexed

@@ -2,6 +2,7 @@ package com.osfit.app.video
 
 import android.content.Context
 import android.graphics.Canvas
+import android.graphics.Paint
 
 class RendererMancu(context: Context) : RendererVideo {
     private val tipografias = TipografiasMancu(context)
@@ -17,6 +18,13 @@ class RendererMancu(context: Context) : RendererVideo {
     private val medalla = EscenaMancuMedalla()
     private val logros = EscenaMancuLogros()
     private val despedida = EscenaMancuDespedida()
+    private val actor = ActorMancu()
+    private val poseSprint = PoseMancu(Brazos.ORGULLO, Ojos.FELIZ, Boca.ABIERTA)
+    private val tintaVelocidad = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = PaletaMancu.TINTA
+        strokeWidth = 10f
+        strokeCap = Paint.Cap.ROUND
+    }
     private val ancho = 1080f
     private val alto = 1920f
 
@@ -28,16 +36,45 @@ class RendererMancu(context: Context) : RendererVideo {
         if (entrante != null) {
             val alphaEntrante = timeline.alphaEntrante(tiempoMs)
             val visible = if (MancuAnimacion.escenaVisibleEsEntrante(alphaEntrante)) entrante else activo
-            dibujarEscena(canvas, visible.escena, timeline.elapsedEnTramo(visible, tiempoMs))
+            val reloj = if (visible === activo) activo.duracionMs - timeline.ritmo.ventanaTransicionMs / 2L
+                else timeline.relojVisible(visible, tiempoMs)
+            dibujarEscena(canvas, visible.escena, reloj)
             nube.dibujar(canvas, ancho, alto, MancuAnimacion.progresoNube(alphaEntrante))
+            val corriendo = MancuAnimacion.viajeCorriendo(alphaEntrante)
+            val desplazamiento = MancuAnimacion.viajeDesplazamiento(alphaEntrante) * ancho
+            if (corriendo && actor.presente) {
+                if (alphaEntrante < 0.5f) actor.pose = poseSprint
+                dibujarVelocidad(canvas, alphaEntrante, desplazamiento)
+            }
+            actor.dibujar(canvas, mancu, desplazamiento,
+                MancuAnimacion.viajeInclinacion(alphaEntrante),
+                MancuAnimacion.viajeEscalaY(alphaEntrante),
+                if (corriendo) MancuAnimacion.fasePaso(tiempoMs, 280L) else -1f)
         } else {
-            dibujarEscena(canvas, activo.escena, timeline.elapsedEnTramo(activo, tiempoMs))
+            dibujarEscena(canvas, activo.escena, timeline.relojVisible(activo, tiempoMs))
+            actor.dibujar(canvas, mancu)
+        }
+    }
+
+    private fun dibujarVelocidad(canvas: Canvas, a: Float, desplazamiento: Float) {
+        // Ambos recorridos avanzan a la derecha: los trazos quedan detrás, hacia la izquierda.
+        // Derivadas de las curvas respecto de su media ventana, normalizadas a su máximo.
+        val velocidad = if (a < 0.5f) ((a * 2f - 0.3f) / 0.7f).coerceIn(0f, 1f)
+            else (1f - (a - 0.5f) * 2f).let { it * it }
+        val longitud = 180f * velocidad
+        val borde = actor.x + desplazamiento
+        for (i in 0..3) {
+            val y = actor.y + actor.tamano * (0.3f + i * 0.13f)
+            canvas.drawLine(borde - 30f - longitud * (1f - i * 0.12f), y,
+                borde - 30f, y, tintaVelocidad)
         }
     }
 
     private fun dibujarEscena(canvas: Canvas, escena: EscenaResumen, elapsedMs: Long) {
         val guardado = canvas.save()
-        val ctx = ContextoEscenaMancu(canvas, ancho, alto, elapsedMs, mancu, tipografias, textos)
+        actor.limpiar()
+        actor.tMs = elapsedMs
+        val ctx = ContextoEscenaMancu(canvas, ancho, alto, elapsedMs, actor, tipografias, textos)
         when (escena) {
             is EscenaResumen.Saludo -> saludo.dibujar(ctx, escena)
             is EscenaResumen.Asistencia -> asistencia.dibujar(ctx, escena)

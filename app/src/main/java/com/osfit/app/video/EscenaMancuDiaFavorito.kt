@@ -78,7 +78,7 @@ internal class EscenaMancuDiaFavorito {
             }
             inicio += barrido
         }
-        ctx.mancu.dibujar(c, 150f, 1530f, 280f, pose, ctx.elapsedMs)
+        ctx.actor.colocar(150f, 1530f, 280f, pose, alpha = alpha)
         // HOLA ya levanta el guante derecho; una flecha desde allí evita añadir otra pose.
         val mayor = conteo.indices.maxByOrNull { conteo[it].veces } ?: 0
         val medioMayor = Math.toRadians((-90f + barridos.take(mayor).sum() + barridos[mayor] / 2).toDouble())

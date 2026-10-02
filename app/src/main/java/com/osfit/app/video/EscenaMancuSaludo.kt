@@ -12,11 +12,9 @@ internal class EscenaMancuSaludo {
         val tamano = 620f
         val desplazamiento = -1_500f * MancuAnimacion.saltoEntrada(ctx.elapsedMs)
         val (escalaX, escalaY) = MancuAnimacion.squash(ctx.elapsedMs)
-        val guardado = ctx.canvas.save()
-        // Escalar desde los pies evita que el aplastamiento desplace el punto de aterrizaje.
-        ctx.canvas.translate(ctx.ancho / 2f, 800f + tamano + desplazamiento)
-        ctx.canvas.scale(escalaX, escalaY)
-        ctx.mancu.dibujar(ctx.canvas, -tamano / 2f, -tamano, tamano, pose, ctx.elapsedMs)
-        ctx.canvas.restoreToCount(guardado)
+        // Compensa el antiguo pivote al borde inferior para conservar el aterrizaje.
+        val y = 800f + desplazamiento + tamano * 0.04f * (1f - escalaY)
+        ctx.actor.colocar(ctx.ancho / 2f - tamano / 2f, y, tamano, pose,
+            escalaX = escalaX, escalaY = escalaY)
     }
 }
