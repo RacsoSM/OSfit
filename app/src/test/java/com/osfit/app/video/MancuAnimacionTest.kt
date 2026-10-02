@@ -5,6 +5,43 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class MancuAnimacionTest {
+    @Test fun `la respiracion estira al subir y sigue el periodo del rebote`() {
+        assertEquals(0.965f, MancuAnimacion.respiracionEscalaY(350L), 0.00001f)
+        assertEquals(1.035f, MancuAnimacion.respiracionEscalaY(1050L), 0.00001f)
+        for (t in -1400L..1400L step 37L) {
+            assertEquals(MancuAnimacion.respiracionEscalaY(t), MancuAnimacion.respiracionEscalaY(t + 1400L), 0.00001f)
+        }
+    }
+
+    @Test fun `el saludo ondea veinte grados cada cuatrocientos milisegundos`() {
+        assertEquals(20f, MancuAnimacion.ondeoBrazo(100L), 0.00001f)
+        assertEquals(-20f, MancuAnimacion.ondeoBrazo(300L), 0.00001f)
+        for (t in -400L..400L step 23L) {
+            assertEquals(MancuAnimacion.ondeoBrazo(t), MancuAnimacion.ondeoBrazo(t + 400L), 0.00001f)
+        }
+    }
+
+    @Test fun `el salto anticipa vuela y aterriza en novecientos milisegundos`() {
+        for (t in listOf(-1L, 901L, Long.MIN_VALUE, Long.MAX_VALUE)) {
+            assertEquals(0f, MancuAnimacion.alturaSalto(t), 0f)
+            assertEquals(1f, MancuAnimacion.escalaYSalto(t), 0f)
+        }
+        assertEquals(1f, MancuAnimacion.escalaYSalto(0L), 0f)
+        assertEquals(0.89f, MancuAnimacion.escalaYSalto(90L), 0.00001f)
+        assertEquals(0.78f, MancuAnimacion.escalaYSalto(179L), 0.0001f)
+        assertEquals(1.12f, MancuAnimacion.escalaYSalto(180L), 0f)
+        assertEquals(1.12f, MancuAnimacion.escalaYSalto(440L), 0f)
+        assertEquals(0.82f, MancuAnimacion.escalaYSalto(700L), 0f)
+        assertEquals(1f, MancuAnimacion.escalaYSalto(900L), 0f)
+        assertEquals(1f, MancuAnimacion.alturaSalto(440L), 0.00001f)
+        for (t in listOf(0L, 179L, 180L, 700L, 900L)) assertEquals(0f, MancuAnimacion.alturaSalto(t), 0f)
+        for (t in 0L..900L) {
+            assertTrue(MancuAnimacion.alturaSalto(t) in 0f..1f)
+            assertTrue(MancuAnimacion.escalaYSalto(t) in 0.78f..1.12f)
+        }
+        assertEquals(MancuAnimacion.alturaSalto(310L), MancuAnimacion.alturaSalto(570L), 0.00001f)
+    }
+
     @Test fun `la nube empieza y termina vacia y tapa todo en el punto medio`() {
         for (alpha in listOf(-1f, 0f, 1f, 2f)) {
             assertEquals(0f, MancuAnimacion.progresoNube(alpha), 0f)

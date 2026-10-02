@@ -5,6 +5,10 @@ import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.RectF
 import kotlin.math.PI
+import kotlin.math.abs
+import kotlin.math.cos
+import kotlin.math.sin
+import kotlin.math.max
 
 /**
  * Portado de clasico/cara/boca/piernas/brazos/disco del prototipo en coordenadas 200×200.
@@ -39,11 +43,16 @@ class MancuDibujo(tipografias: TipografiasMancu) {
         val guardado = canvas.save()
         canvas.translate(x, y)
         canvas.scale(tamano / 200f, tamano / 200f)
-        if (alpha < 1f) canvas.saveLayerAlpha(-4f, -16f, 204f, 204f, (alpha * 255f).toInt())
+        // El dedo extendido y el ondeo pueden sobresalir del espacio base del disco.
+        if (alpha < 1f) canvas.saveLayerAlpha(-40f, -40f, 240f, 220f, (alpha * 255f).toInt())
         elipse(canvas, 100f, 192f, if (pose.salto) 30f else 56f, 5f, tinta, opacidad = 0.18f)
-        canvas.translate(0f, MancuAnimacion.reboteY(tMs) * 5f + if (pose.salto) -12f else 0f)
+        val avance = sin(2.0 * PI * pose.fasePaso).toFloat()
+        val subidaPaso = if (pose.fasePaso >= 0f) 4f * abs(avance) else 0f
+        canvas.translate(0f, MancuAnimacion.reboteY(tMs) * 5f - subidaPaso + if (pose.salto) -12f else 0f)
+        val respiracion = MancuAnimacion.respiracionEscalaY(tMs)
+        canvas.scale(1f / respiracion, respiracion, 100f, 192f)
         piernas(canvas, pose)
-        brazos(canvas, pose.brazos)
+        brazos(canvas, pose)
         disco(canvas)
         cara(canvas, pose.ojos, MancuAnimacion.factorParpadeo(tMs))
         boca(canvas, pose.boca)
@@ -81,6 +90,11 @@ class MancuDibujo(tipografias: TipografiasMancu) {
 
     private fun piernas(canvas: Canvas, pose: PoseMancu) {
         when {
+            pose.fasePaso >= 0f -> {
+                val avance = sin(2.0 * PI * pose.fasePaso).toFloat()
+                piernaPaso(canvas, 84f, 76f, avance)
+                piernaPaso(canvas, 116f, 124f, -avance)
+            }
             pose.salto -> {
                 curva(canvas, 84f, 148f, 74f, 168f, 66f, 184f)
                 curva(canvas, 116f, 148f, 126f, 168f, 134f, 184f)
@@ -110,13 +124,26 @@ class MancuDibujo(tipografias: TipografiasMancu) {
     private fun zapato(canvas: Canvas, x: Float, y: Float) = elipse(canvas, x, y, 14f, 7f, rojo, 4f)
     private fun guante(canvas: Canvas, x: Float, y: Float) = elipse(canvas, x, y, 8f, 8f, blanco, 4f)
 
-    private fun brazos(canvas: Canvas, pose: Brazos) {
-        when (pose) {
+    private fun piernaPaso(canvas: Canvas, caderaX: Float, pieBaseX: Float, avance: Float) {
+        val pieX = pieBaseX + 16f * avance
+        val pieY = 186f - 10f * max(0f, avance)
+        curva(canvas, caderaX, 148f, (caderaX + pieX) / 2f, 168f, pieX, pieY - 4f)
+        val guardado = canvas.save()
+        canvas.rotate(15f * avance, pieX, pieY)
+        zapato(canvas, pieX, pieY)
+        canvas.restoreToCount(guardado)
+    }
+
+    private fun brazos(canvas: Canvas, pose: PoseMancu) {
+        when (pose.brazos) {
             Brazos.HOLA -> {
                 curva(canvas, 40f, 92f, 20f, 96f, 14f, 116f)
                 guante(canvas, 14f, 118f)
+                val guardado = canvas.save()
+                canvas.rotate(pose.ondeo, 160f, 84f)
                 curva(canvas, 160f, 84f, 184f, 74f, 188f, 46f)
                 guante(canvas, 188f, 42f)
+                canvas.restoreToCount(guardado)
             }
             Brazos.ORGULLO -> {
                 curva(canvas, 40f, 86f, 12f, 70f, 10f, 40f)
@@ -129,6 +156,37 @@ class MancuDibujo(tipografias: TipografiasMancu) {
                 guante(canvas, 14f, 134f)
                 curva(canvas, 160f, 94f, 182f, 110f, 186f, 132f)
                 guante(canvas, 186f, 134f)
+            }
+            Brazos.ABAJO -> {
+                curva(canvas, 40f, 94f, 28f, 114f, 30f, 140f)
+                guante(canvas, 30f, 140f)
+                curva(canvas, 160f, 94f, 172f, 114f, 170f, 140f)
+                guante(canvas, 170f, 140f)
+            }
+            Brazos.SENALA -> {
+                val radianes = pose.anguloSenala * PI / 180.0
+                val dx = cos(radianes).toFloat()
+                val dy = sin(radianes).toFloat()
+                // Elegir el hombro según la dirección evita cruzar el disco con el brazo.
+                val izquierda = dx < 0f
+                val lado = if (izquierda) -1f else 1f
+                val hombroX = if (izquierda) 40f else 160f
+                val manoX = hombroX + 52f * dx
+                val manoY = 86f + 52f * dy
+                curva(canvas, hombroX, 86f, hombroX + 26f * dx - 5f * dy * lado,
+                    86f + 26f * dy + 5f * dx * lado, manoX, manoY)
+                val guardado = canvas.save()
+                canvas.rotate(pose.anguloSenala, manoX, manoY)
+                elipse(canvas, manoX + 9f, manoY, 9f, 3.5f, blanco, 3f)
+                guante(canvas, manoX, manoY)
+                canvas.restoreToCount(guardado)
+                if (izquierda) {
+                    curva(canvas, 160f, 86f, 190f, 105f, 170f, 120f)
+                    guante(canvas, 170f, 120f)
+                } else {
+                    curva(canvas, 40f, 86f, 10f, 105f, 30f, 120f)
+                    guante(canvas, 30f, 120f)
+                }
             }
         }
     }
@@ -157,6 +215,10 @@ class MancuDibujo(tipografias: TipografiasMancu) {
             canvas.drawPath(camino, trazo)
         }
         if (ojos == Ojos.LADO) curva(canvas, 110f, 80f, 122f, 72f, 134f, 80f, 4.5f * s)
+        if (ojos == Ojos.TRISTE) {
+            curva(canvas, 65f, 53f, 76f, 49f, 88f, 45f, 4.5f * s)
+            curva(canvas, 112f, 45f, 124f, 49f, 135f, 53f, 4.5f * s)
+        }
         ojo(canvas, 78f, ojos, parpadeo)
         ojo(canvas, 122f, ojos, parpadeo)
     }
@@ -179,6 +241,16 @@ class MancuDibujo(tipografias: TipografiasMancu) {
                 val pupilaX = if (ojos == Ojos.LADO) 6f else s
                 elipse(canvas, pupilaX, 2f * s, 6f * s, 6f * s, tinta)
                 elipse(canvas, pupilaX + 2f * s, -2f * s, 2f * s, 2f * s, blanco)
+                if (ojos == Ojos.TRISTE) {
+                    ovalo.set(-11f * s, -13f * s, 11f * s, 13f * s)
+                    camino.reset()
+                    camino.arcTo(ovalo, 180f, 180f)
+                    camino.close()
+                    relleno.color = 0xff8f9298.toInt()
+                    canvas.drawPath(camino, relleno)
+                    prepararTrazo(tinta, 3.5f * s)
+                    canvas.drawPath(camino, trazo)
+                }
                 canvas.restoreToCount(guardado)
             }
         }
@@ -216,6 +288,7 @@ class MancuDibujo(tipografias: TipografiasMancu) {
                 trazo.strokeCap = Paint.Cap.ROUND
             }
             Boca.O -> elipse(canvas, 100f, 100f, 7f, 9f, 0xff8c2a1c.toInt(), 4f)
+            Boca.TRISTE -> curva(canvas, 87f, 108f, 100f, 96f, 113f, 108f, 4.5f)
         }
     }
 

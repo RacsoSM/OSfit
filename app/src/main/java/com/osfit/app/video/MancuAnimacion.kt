@@ -6,6 +6,30 @@ import kotlin.math.cos
 import kotlin.math.sin
 
 object MancuAnimacion {
+    // Canvas crece hacia abajo: el rebote negativo sube el cuerpo y debe estirarlo.
+    fun respiracionEscalaY(tMs: Long): Float = 1f - 0.035f * reboteY(tMs)
+
+    fun ondeoBrazo(tMs: Long): Float =
+        20f * sin(2.0 * PI * Math.floorMod(tMs, 400L) / 400.0).toFloat()
+
+    fun alturaSalto(tMs: Long): Float {
+        if (tMs <= 180L || tMs >= 700L) return 0f
+        val fase = (tMs - 180L) / 520f
+        return 4f * fase * (1f - fase)
+    }
+
+    fun escalaYSalto(tMs: Long): Float {
+        if (tMs < 0L || tMs > 900L) return 1f
+        // Los cambios al despegar y tocar el piso son impactos deliberados entre fases.
+        if (tMs < 180L) {
+            val fase = tMs / 180f
+            return 1f - 0.22f * fase * fase * (3f - 2f * fase)
+        }
+        if (tMs < 700L) return 1.12f
+        val fase = (tMs - 700L) / 200f
+        return 0.82f + 0.18f * fase * fase * (3f - 2f * fase)
+    }
+
     fun progresoNube(alphaEntrante: Float): Float {
         val alpha = alphaEntrante.coerceIn(0f, 1f)
         val subida = 1f - abs(2f * alpha - 1f)

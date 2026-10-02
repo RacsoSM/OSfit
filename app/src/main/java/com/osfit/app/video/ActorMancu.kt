@@ -34,7 +34,6 @@ internal class ActorMancu {
     fun dibujar(canvas: Canvas, mancu: MancuDibujo, desplazamientoX: Float = 0f,
                 inclinacionExtra: Float = 0f, escalaYExtra: Float = 1f,
                 fasePasoForzada: Float = -1f) {
-        // La tarea de piernas conectará esta fase al dibujo; por ahora conserva el ciclo solicitado.
         this.fasePasoForzada = fasePasoForzada
         if (!presente) return
         val guardado = canvas.save()
@@ -43,7 +42,8 @@ internal class ActorMancu {
         val pieY = y + tamano * 0.96f
         canvas.rotate(rotacion + inclinacionExtra, pieX, pieY)
         canvas.scale(escalaX / escalaYExtra, escalaY * escalaYExtra, pieX, pieY)
-        mancu.dibujar(canvas, x, y, tamano, pose, tMs, alpha)
+        val poseDibujo = if (fasePasoForzada >= 0f) pose.copy(fasePaso = fasePasoForzada) else pose
+        mancu.dibujar(canvas, x, y, tamano, poseDibujo, tMs, alpha)
         canvas.restoreToCount(guardado)
     }
 }
