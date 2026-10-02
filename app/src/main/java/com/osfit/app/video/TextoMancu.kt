@@ -51,6 +51,7 @@ internal class TextoMancu(tipografias: TipografiasMancu) {
     fun parrafoCentrado(canvas: Canvas, texto: String, centroX: Float, y: Float,
                         tamano: Float, ancho: Int, color: Int = PaletaMancu.MARRON) {
         if (ancho <= 0) return
+        parrafo.typeface = mano.typeface
         parrafo.textSize = tamano
         parrafo.color = color
         val clave = ClaveParrafo(texto, tamano, ancho)
@@ -79,6 +80,50 @@ internal class TextoMancu(tipografias: TipografiasMancu) {
         val xNombre = x + titulo.measureText(textoVisible, 0, corte)
         pintarTitulo(canvas, textoVisible, corte, textoVisible.length, xNombre, y,
             ajustado, PaletaMancu.ROJO)
+    }
+
+    /** Cachear el texto completo mantiene quietas las líneas mientras aparecen las letras. */
+    fun bloqueMaquina(canvas: Canvas, texto: String, elapsedMs: Long, inicioMs: Long,
+                      duracionMs: Long, centroX: Float, y: Float, tamano: Float,
+                      ancho: Int = 900, esTitulo: Boolean = false,
+                      color: Int = PaletaMancu.MARRON, inicioRojo: Int = texto.length,
+                      finRojo: Int = texto.length) {
+        if (elapsedMs < inicioMs) return
+        val visibles = MaquinaEscribir.textoVisible(texto, elapsedMs - inicioMs, duracionMs).length
+        parrafo.typeface = if (esTitulo) titulo.typeface else mano.typeface
+        var ajustado = tamano
+        var layout: StaticLayout
+        // El ranking puede traer muchos nombres: reducir también por altura evita cortar el final.
+        do {
+            parrafo.textSize = ajustado
+            val clave = ClaveParrafo((if (esTitulo) "titulo:" else "mano:") + texto, ajustado, ancho)
+            layout = parrafos.getOrPut(clave) {
+                StaticLayout.Builder.obtain(texto, 0, texto.length, parrafo, ancho)
+                    .setAlignment(Layout.Alignment.ALIGN_CENTER).setIncludePad(false).build()
+            }
+            if (layout.height <= 1840f - y || ajustado <= 1f) break
+            ajustado *= 0.85f
+        } while (true)
+        for (linea in 0 until layout.lineCount) {
+            val inicio = layout.getLineStart(linea)
+            val fin = minOf(layout.getLineEnd(linea), visibles)
+            if (fin <= inicio) break
+            val x = centroX - ancho / 2f + layout.getLineLeft(linea)
+            val base = y + layout.getLineBaseline(linea)
+            if (esTitulo) {
+                titulo.textSize = ajustado
+                val rojoInicio = inicioRojo.coerceIn(inicio, fin)
+                val rojoFin = finRojo.coerceIn(rojoInicio, fin)
+                pintarTitulo(canvas, texto, inicio, rojoInicio, x, base, ajustado, color)
+                val xr = x + titulo.measureText(texto, inicio, rojoInicio)
+                pintarTitulo(canvas, texto, rojoInicio, rojoFin, xr, base, ajustado, PaletaMancu.ROJO)
+                pintarTitulo(canvas, texto, rojoFin, fin, xr + titulo.measureText(texto, rojoInicio, rojoFin), base, ajustado, color)
+            } else {
+                mano.textSize = ajustado
+                mano.color = color
+                canvas.drawText(texto, inicio, fin, x, base, mano)
+            }
+        }
     }
 
     private fun pintarTitulo(canvas: Canvas, texto: String, inicio: Int, fin: Int,

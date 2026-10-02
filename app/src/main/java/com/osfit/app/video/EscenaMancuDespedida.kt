@@ -1,16 +1,18 @@
-package com.osfit.app.video
+﻿package com.osfit.app.video
 
-/**
- * PROVISIONAL: se reemplaza en la tarea correspondiente del plan
- */
+import kotlin.math.abs
+import kotlin.math.sin
+
 internal class EscenaMancuDespedida {
     private val pose = PoseMancu(Brazos.HOLA, Ojos.NORMAL, Boca.SONRISA)
-
     @Suppress("UNUSED_PARAMETER")
     fun dibujar(ctx: ContextoEscenaMancu, escena: EscenaResumen.Despedida) {
-        ctx.textos.tituloAjustado(ctx.canvas, "Despedida", ctx.ancho / 2f, 520f,
-            120f, ctx.ancho - 120f)
-        ctx.mancu.dibujar(ctx.canvas, (ctx.ancho - 620f) / 2f, 800f,
-            620f, pose, ctx.elapsedMs)
+        val texto = TextosEscena.DESPEDIDA
+        ctx.textos.bloqueMaquina(ctx.canvas, texto, ctx.elapsedMs, 0,
+            (texto.length * 2000.0 / 13.0).toLong(), 540f, 400f, 100f,
+            esTitulo = true, color = PaletaMancu.TINTA)
+        val salida = GeometriaMancu.salida(ctx.elapsedMs)
+        val paso = if (salida > 0f) abs(sin((ctx.elapsedMs - 4500) * Math.PI / 180)).toFloat() * 28f else 0f
+        ctx.mancu.dibujar(ctx.canvas, 230f + 1200f * salida, 800f - paso, 620f, pose, ctx.elapsedMs)
     }
 }
