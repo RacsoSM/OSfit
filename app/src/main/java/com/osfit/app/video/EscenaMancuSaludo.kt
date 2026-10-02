@@ -13,6 +13,11 @@ internal class EscenaMancuSaludo {
 
         val tamano = 620f
         val t = ctx.elapsedMs
+        if (t >= 3200L) {
+            ctx.actor.actuar(ctx.ancho / 2f - tamano / 2f, 800f, tamano,
+                AccionMancu.PULGAR, t - 3200L, pose)
+            return
+        }
         val salto = t - 2_300L
         val celebrando = salto in 0L..900L
         val desplazamiento = if (t < 900L) -1_500f * MancuAnimacion.saltoEntrada(t)

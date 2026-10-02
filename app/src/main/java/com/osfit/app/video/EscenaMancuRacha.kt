@@ -3,7 +3,6 @@
 internal class EscenaMancuRacha {
     private val pose = PoseMancu(Brazos.ESFUERZO, Ojos.FUERZA, Boca.DIENTES, sudor = true)
     private val celebracion = PoseMancu(Brazos.ORGULLO, Ojos.FELIZ, Boca.ABIERTA, sudor = true)
-    private val hola = PoseMancu(Brazos.HOLA, Ojos.NORMAL, Boca.SONRISA)
     fun dibujar(ctx: ContextoEscenaMancu, escena: EscenaResumen.RachaMasLarga) {
         ctx.textos.bloqueMaquina(ctx.canvas, TextosEscena.RACHA_PREFIJO, ctx.elapsedMs, 0, 300,
             540f, 360f, 56f, esTitulo = true, color = PaletaMancu.TINTA)
@@ -17,11 +16,19 @@ internal class EscenaMancuRacha {
         if (t < 3500L) {
             val sy = 1f - 0.18f * MancuAnimacion.sentadillaAnticipada(t)
             ctx.actor.colocar(230f, 800f, 620f, pose, escalaX = 1f / sy, escalaY = sy)
+        } else if (t >= 4400L) {
+            val primero = escena.ranking.puesto == 1
+            val accion = when {
+                !primero -> AccionMancu.TIJERAS
+                t < 5600L -> AccionMancu.CORRER_SITIO
+                else -> AccionMancu.MUSCULO
+            }
+            val inicio = if (primero && t >= 5600L) 5600L else 4400L
+            ctx.actor.actuar(230f, 800f, 620f, accion, t - inicio, celebracion)
         } else {
             val salto = t - 3500L
             val sy = MancuAnimacion.escalaYSalto(salto)
-            val actuacion = if (salto <= 900L) celebracion.copy(confeti = escena.ranking.puesto == 1)
-                else hola.copy(ondeo = MancuAnimacion.ondeoBrazo(t))
+            val actuacion = celebracion.copy(confeti = escena.ranking.puesto == 1)
             ctx.actor.colocar(230f, 800f - 220f * MancuAnimacion.alturaSalto(salto), 620f,
                 actuacion, escalaX = 1f / sy, escalaY = sy)
         }

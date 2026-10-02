@@ -47,7 +47,8 @@ internal class EscenaMancuTiempo {
             }
             else -> pose
         }
-        ctx.actor.colocar(90f, y, 300f, actuacion, escalaX = 1f / sy, escalaY = sy)
+        if (t >= 6400L) ctx.actor.actuar(90f, 640f, 300f, AccionMancu.RELOJ, t - 6400L, pose)
+        else ctx.actor.colocar(90f, y, 300f, actuacion, escalaX = 1f / sy, escalaY = sy)
         ctx.textos.bloqueMaquina(ctx.canvas,
             TextosEscena.comparacion(escena.ranking, TextosEscena.TIEMPO_PRIMERO, TextosEscena.TIEMPO_LUGAR),
             ctx.elapsedMs, 4000, 1500, 540f, 1588f, 48f)

@@ -1,7 +1,6 @@
 ﻿package com.osfit.app.video
 
 internal class EscenaMancuAsistencia {
-    private val hola = PoseMancu(Brazos.HOLA, Ojos.NORMAL, Boca.SONRISA)
     private val orgullo = PoseMancu(Brazos.ORGULLO, Ojos.FELIZ, Boca.ABIERTA)
     private val mirando = PoseMancu(Brazos.HOLA, Ojos.LADO, Boca.O)
     private val triste = PoseMancu(Brazos.ABAJO, Ojos.TRISTE, Boca.TRISTE)
@@ -29,14 +28,18 @@ internal class EscenaMancuAsistencia {
             }
             else -> {
                 val primero = escena.ranking.puesto == 1
-                // El primer saltito espera 1600 ms desde la reacción inicial, sin cortar su aterrizaje.
-                val salto = if (primero && edad >= 1600L) edad % 1600L else edad
-                val altura = if (primero) { if (edad < 1600L) 200f else 70f } else 160f
-                val sy = MancuAnimacion.escalaYSalto(salto)
-                val pose = if (primero) orgullo.copy(confeti = true)
-                    else if (edad <= 900L) orgullo else hola.copy(ondeo = MancuAnimacion.ondeoBrazo(t))
-                ctx.actor.colocar(230f, 800f - altura * MancuAnimacion.alturaSalto(salto), 620f,
-                    pose, escalaX = 1f / sy, escalaY = sy)
+                if (edad >= 900L) {
+                    val base = if (primero) orgullo.copy(confeti = true) else orgullo
+                    ctx.actor.actuar(230f, 800f, 620f,
+                        if (primero) AccionMancu.BAILAR else AccionMancu.APLAUDIR,
+                        edad - 900L, base)
+                } else {
+                    val sy = MancuAnimacion.escalaYSalto(edad)
+                    val base = if (primero) orgullo.copy(confeti = true) else orgullo
+                    ctx.actor.colocar(230f,
+                        800f - (if (primero) 200f else 160f) * MancuAnimacion.alturaSalto(edad),
+                        620f, base, escalaX = 1f / sy, escalaY = sy)
+                }
             }
         }
     }

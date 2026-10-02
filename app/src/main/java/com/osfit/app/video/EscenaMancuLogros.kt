@@ -1,7 +1,7 @@
 package com.osfit.app.video
 
 internal class EscenaMancuLogros {
-    private val pose = PoseMancu(Brazos.HOLA, Ojos.NORMAL, Boca.SONRISA)
+    private val pose = PoseMancu(Brazos.ABAJO, Ojos.NORMAL, Boca.SONRISA)
     private val insignia = InsigniaMancu()
     private var cantidadAnterior = 0
     private var anchoAnterior = 0
@@ -26,18 +26,16 @@ internal class EscenaMancuLogros {
         for (i in 0 until cantidad) {
             if (t >= CascadaLogrosMancu.inicio(cantidad, i) - 180L) actual = i
         }
-        val celebrando = t >= CascadaLogrosMancu.inicio(cantidad, cantidad - 1) + 1000L
+        val inicioCelebracion = CascadaLogrosMancu.inicio(cantidad, cantidad - 1) + 1000L
+        val celebrando = t >= inicioCelebracion
         // La cascada se solapa cada 500 ms: la insignia más reciente toma la atención y el salto.
         val salto = when {
-            celebrando -> (t - CascadaLogrosMancu.inicio(cantidad, cantidad - 1) - 1000L) % 1600L
             actual >= 0 -> t - CascadaLogrosMancu.inicio(cantidad, actual) + 180L
             else -> -1L
         }
         val sy = MancuAnimacion.escalaYSalto(salto)
-        val y = mascota.y - (if (celebrando) 50f else 90f) * MancuAnimacion.alturaSalto(salto)
+        val y = mascota.y - 90f * MancuAnimacion.alturaSalto(salto)
         val actuacion = when {
-            celebrando -> pose.copy(brazos = Brazos.ORGULLO, ojos = Ojos.FELIZ,
-                boca = Boca.ABIERTA, confeti = true)
             actual >= 0 && t >= CascadaLogrosMancu.inicio(cantidad, actual) -> {
                 val pos = posiciones[actual]
                 // Hombro derecho (160,86) del dibujo 200×200, en coordenadas de pantalla.
@@ -45,9 +43,16 @@ internal class EscenaMancuLogros {
                     anguloSenala = MancuAnimacion.anguloHacia(mascota.x + mascota.lado * 160f / 200f,
                         y + mascota.lado * 86f / 200f, pos.cx, pos.cy))
             }
-            else -> pose.copy(ondeo = MancuAnimacion.ondeoBrazo(t))
+            else -> pose
         }
-        ctx.actor.colocar(mascota.x, y, mascota.lado, actuacion, escalaX = 1f / sy, escalaY = sy)
+        if (celebrando) {
+            val edad = t - inicioCelebracion
+            // La paridad mantiene la alternancia sin depender de estado entre escenas.
+            val accion = if (edad < 900L) AccionMancu.VOLTERETA
+                else if (cantidad % 2 == 1) AccionMancu.BAILAR else AccionMancu.APLAUDIR
+            val inicio = inicioCelebracion + if (edad < 900L) 0L else 900L
+            ctx.actor.actuar(mascota.x, mascota.y, mascota.lado, accion, t - inicio, pose)
+        } else ctx.actor.colocar(mascota.x, y, mascota.lado, actuacion, escalaX = 1f / sy, escalaY = sy)
         escena.logros.forEachIndexed { indice, logro ->
             val alpha = CascadaLogrosMancu.opacidad(cantidad, indice, ctx.elapsedMs)
             if (alpha <= 0f) return@forEachIndexed

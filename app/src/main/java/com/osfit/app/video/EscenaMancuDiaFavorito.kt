@@ -36,7 +36,9 @@ internal class EscenaMancuDiaFavorito {
         val conteo = escena.conteoDias
         val total = conteo.sumOf { it.veces }
         if (conteo.isEmpty() || total <= 0) {
-            ctx.actor.colocar(150f, 1530f, 280f, pose)
+            if (t >= 4600L) ctx.actor.actuar(150f, 1530f, 280f,
+                AccionMancu.ESTIRARSE, t - 4600L, pose)
+            else ctx.actor.colocar(150f, 1530f, 280f, pose)
             return
         }
         if (datos !== escena) {
@@ -65,7 +67,9 @@ internal class EscenaMancuDiaFavorito {
             anguloSenala = MancuAnimacion.anguloHacia(150f + 280f * 160f / 200f,
                 yMancu + 280f * 86f / 200f,
                 540f + (175f + salida) * mayorUx, 1128f + (175f + salida) * mayorUy))
-        ctx.actor.colocar(150f, yMancu, 280f, actuacion, escalaX = 1f / sy, escalaY = sy)
+        if (t >= 4600L) ctx.actor.actuar(150f, 1530f, 280f,
+            AccionMancu.ESTIRARSE, t - 4600L, pose)
+        else ctx.actor.colocar(150f, yMancu, 280f, actuacion, escalaX = 1f / sy, escalaY = sy)
         if (t <= 2400L) return
         etiqueta.typeface = ctx.tipografias.mano
         val c = ctx.canvas
