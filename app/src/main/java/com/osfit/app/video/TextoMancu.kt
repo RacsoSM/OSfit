@@ -17,14 +17,24 @@ internal class TextoMancu(tipografias: TipografiasMancu) {
         color = PaletaMancu.TINTA
     }
     private val sombra = Paint(contorno).apply { style = Paint.Style.FILL_AND_STROKE }
+    private val haloClaro = Paint(contorno).apply {
+        strokeWidth = 5f
+        color = 0xFFFFF7E3.toInt()
+    }
+    private val sombraSuave = Paint(haloClaro).apply {
+        style = Paint.Style.FILL_AND_STROKE
+        color = 0xFFE3B94F.toInt()
+    }
     private val mano = Paint(Paint.ANTI_ALIAS_FLAG).apply { typeface = tipografias.mano }
     private val parrafo = TextPaint(Paint.ANTI_ALIAS_FLAG).apply { typeface = tipografias.mano }
-    private data class ClaveParrafo(val texto: String, val tamano: Float, val ancho: Int)
+    private data class ClaveParrafo(val texto: String, val tamano: Float, val ancho: Int,
+                                  val interletraje: Float = 0f)
     private val parrafos = mutableMapOf<ClaveParrafo, StaticLayout>()
 
     fun titulo(canvas: Canvas, texto: String, centroX: Float, y: Float, tamano: Float,
                color: Int = PaletaMancu.ROJO) {
         titulo.textSize = tamano
+        titulo.letterSpacing = if (ColorMancu.esColorOscuro(color)) 0.03f else 0f
         pintarTitulo(canvas, texto, 0, texto.length, centroX - titulo.measureText(texto) / 2f,
             y, tamano, color)
     }
@@ -38,11 +48,13 @@ internal class TextoMancu(tipografias: TipografiasMancu) {
 
     fun tituloAjustado(canvas: Canvas, texto: String, centroX: Float, y: Float,
                        tamano: Float, anchoMaximo: Float, color: Int = PaletaMancu.ROJO) {
-        titulo(canvas, texto, centroX, y, tamanoQueCabe(texto, tamano, anchoMaximo), color)
+        titulo(canvas, texto, centroX, y, tamanoQueCabe(texto, tamano, anchoMaximo, color), color)
     }
 
-    fun tamanoQueCabe(texto: String, tamano: Float, anchoMaximo: Float): Float {
+    fun tamanoQueCabe(texto: String, tamano: Float, anchoMaximo: Float,
+                      color: Int = PaletaMancu.ROJO): Float {
         titulo.textSize = tamano
+        titulo.letterSpacing = if (ColorMancu.esColorOscuro(color)) 0.03f else 0f
         val anchoTexto = titulo.measureText(texto)
         return if (anchoTexto > anchoMaximo && anchoTexto > 0f) {
             tamano * anchoMaximo.coerceAtLeast(0f) / anchoTexto
@@ -53,6 +65,7 @@ internal class TextoMancu(tipografias: TipografiasMancu) {
                         tamano: Float, ancho: Int, color: Int = PaletaMancu.MARRON) {
         if (ancho <= 0) return
         parrafo.typeface = mano.typeface
+        parrafo.letterSpacing = 0f
         parrafo.textSize = tamano
         parrafo.color = color
         val clave = ClaveParrafo(texto, tamano, ancho)
@@ -75,10 +88,11 @@ internal class TextoMancu(tipografias: TipografiasMancu) {
                         duracionMs: Long, inicioMs: Long = 0L,
                         golpeMs: Long = Long.MIN_VALUE, cascada: Boolean = false) {
         if (elapsedMs < inicioMs) return
-        val ajustado = tamanoQueCabe(textoCompleto, tamano, anchoMaximo)
+        val ajustado = tamanoQueCabe(textoCompleto, tamano, anchoMaximo, PaletaMancu.TINTA)
         titulo.textSize = ajustado
         // El ancho completo mantiene fijo el saludo mientras aparecen sus letras.
-        val x = centroX - titulo.measureText(textoCompleto) / 2f
+        val x = centroX - medirTitulo(textoCompleto, 0, textoCompleto.length,
+            PaletaMancu.TINTA, inicioRojo, textoCompleto.length) / 2f
         pintarLetras(canvas, textoCompleto, 0, textoVisible.length.coerceAtMost(textoCompleto.length),
             x, y, ajustado, true, PaletaMancu.TINTA, inicioRojo, textoCompleto.length,
             elapsedMs, inicioMs, duracionMs, golpeMs, cascada)
@@ -94,12 +108,15 @@ internal class TextoMancu(tipografias: TipografiasMancu) {
         if (elapsedMs < inicioMs) return
         val visibles = MaquinaEscribir.textoVisible(texto, elapsedMs - inicioMs, duracionMs).length
         parrafo.typeface = if (esTitulo) titulo.typeface else mano.typeface
+        // Cortar con el mismo interletraje evita ensanchar las líneas fuera del papel.
+        parrafo.letterSpacing = if (esTitulo && ColorMancu.esColorOscuro(color)) 0.03f else 0f
         var ajustado = tamano
         var layout: StaticLayout
         // El ranking puede traer muchos nombres: reducir también por altura evita cortar el final.
         do {
             parrafo.textSize = ajustado
-            val clave = ClaveParrafo((if (esTitulo) "titulo:" else "mano:") + texto, ajustado, ancho)
+            val clave = ClaveParrafo((if (esTitulo) "titulo:" else "mano:") + texto, ajustado,
+                ancho, parrafo.letterSpacing)
             layout = parrafos.getOrPut(clave) {
                 StaticLayout.Builder.obtain(texto, 0, texto.length, parrafo, ancho)
                     .setAlignment(Layout.Alignment.ALIGN_CENTER).setIncludePad(false).build()
@@ -135,9 +152,13 @@ internal class TextoMancu(tipografias: TipografiasMancu) {
                 ceil((i + 1).toDouble() * duracionMs / texto.length).toLong()
             val edad = elapsedMs - inicioMs - aparicion
             if (edad < 0L) continue
-            val letraX = x + pintura.measureText(texto, inicioLinea, i)
-            val pivoteX = letraX + pintura.measureText(texto, i, i + 1) / 2f
             val roja = esTitulo && i >= inicioRojo && i < finRojo
+            val letraX = x + if (esTitulo) {
+                medirTitulo(texto, inicioLinea, i, color, inicioRojo, finRojo)
+            } else pintura.measureText(texto, inicioLinea, i)
+            if (esTitulo) pintura.letterSpacing =
+                if (!roja && ColorMancu.esColorOscuro(color)) 0.03f else 0f
+            val pivoteX = letraX + pintura.measureText(texto, i, i + 1) / 2f
             val escala = if (cascada) 1f else MancuAnimacion.popLetra(edad)
                 .let { if (esTitulo) it else minOf(it, 1.1f) }
             var desplazamiento = if (cascada) MancuAnimacion.caidaLetra(edad)
@@ -156,11 +177,37 @@ internal class TextoMancu(tipografias: TipografiasMancu) {
         }
     }
 
+    private fun medirTitulo(texto: String, inicio: Int, fin: Int, color: Int,
+                            inicioRojo: Int, finRojo: Int): Float {
+        val interletraje = if (ColorMancu.esColorOscuro(color)) 0.03f else 0f
+        val desdeRojo = inicioRojo.coerceIn(inicio, fin)
+        val hastaRojo = finRojo.coerceIn(desdeRojo, fin)
+        // Un título mixto mide cada tramo con su espaciado para no ensanchar las letras rojas.
+        titulo.letterSpacing = interletraje
+        var ancho = titulo.measureText(texto, inicio, desdeRojo)
+        titulo.letterSpacing = 0f
+        ancho += titulo.measureText(texto, desdeRojo, hastaRojo)
+        titulo.letterSpacing = interletraje
+        return ancho + titulo.measureText(texto, hastaRojo, fin)
+    }
+
     private fun pintarTitulo(canvas: Canvas, texto: String, inicio: Int, fin: Int,
                              x: Float, y: Float, tamano: Float, color: Int) {
         if (inicio == fin) return
         titulo.textSize = tamano
         titulo.color = color
+        val oscuro = ColorMancu.esColorOscuro(color)
+        titulo.letterSpacing = if (oscuro) 0.03f else 0f
+        if (oscuro) {
+            haloClaro.textSize = tamano
+            sombraSuave.textSize = tamano
+            haloClaro.letterSpacing = 0.03f
+            sombraSuave.letterSpacing = 0.03f
+            canvas.drawText(texto, inicio, fin, x + 3f, y + 4f, sombraSuave)
+            canvas.drawText(texto, inicio, fin, x, y, haloClaro)
+            canvas.drawText(texto, inicio, fin, x, y, titulo)
+            return
+        }
         contorno.textSize = tamano
         sombra.textSize = tamano
         canvas.drawText(texto, inicio, fin, x + 4f, y + 5f, sombra)
