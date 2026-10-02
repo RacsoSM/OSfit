@@ -44,7 +44,7 @@ internal class ActorMancu {
             codoIzq = cuadro.codoIzq, codoDer = cuadro.codoDer,
             guanteIzq = cuadro.guanteIzq, guanteDer = cuadro.guanteDer,
             reloj = cuadro.reloj, piernasAbiertas = cuadro.piernasAbiertas,
-            impacto = cuadro.impacto, sudor = cuadro.sudor || base?.sudor == true,
+            impacto = cuadro.impacto, largoBrazos = cuadro.largoBrazos, sudor = cuadro.sudor || base?.sudor == true,
             confeti = cuadro.confeti || base?.confeti == true)
         this.tMs = tMs
         colocar(x, y - cuadro.alturaPx, tamano, pose, escalaX = 1f / cuadro.escalaY,

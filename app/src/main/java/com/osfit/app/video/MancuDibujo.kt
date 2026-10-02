@@ -149,20 +149,20 @@ class MancuDibujo(tipografias: TipografiasMancu) {
     }
 
     private fun brazoLibre(canvas: Canvas, hombroX: Float, angulo: Float, codo: Float,
-                           tipo: Guante, reloj: Boolean) {
+                           tipo: Guante, reloj: Boolean, largo: Float) {
         val radianes = angulo * PI / 180.0
         val dx = cos(radianes).toFloat()
         val dy = sin(radianes).toFloat()
         val desvio = 22f * codo.coerceIn(-1f, 1f)
-        val qx = hombroX + 26f * dx - desvio * dy
-        val qy = 88f + 26f * dy + desvio * dx
-        val manoX = hombroX + 52f * dx
-        val manoY = 88f + 52f * dy
+        val qx = hombroX + largo / 2f * dx - desvio * dy
+        val qy = 88f + largo / 2f * dy + desvio * dx
+        val manoX = hombroX + largo * dx
+        val manoY = 88f + largo * dy
         curva(canvas, hombroX, 88f, qx, qy, manoX, manoY)
         guante(canvas, manoX, manoY, tipo)
         if (reloj) {
-            // Evaluar la misma Bézier en 42/52 mantiene el reloj sobre la manguera curva.
-            val u = 42f / 52f
+            // Evaluar la misma Bézier a 10 unidades de la mano mantiene el reloj sobre la manguera.
+            val u = (largo - 10f) / largo
             val v = 1f - u
             val wx = v * v * hombroX + 2f * v * u * qx + u * u * manoX
             val wy = v * v * 88f + 2f * v * u * qy + u * u * manoY
@@ -188,13 +188,15 @@ class MancuDibujo(tipografias: TipografiasMancu) {
     private fun brazos(canvas: Canvas, pose: PoseMancu) {
         when (pose.brazos) {
             Brazos.LIBRE -> {
-                brazoLibre(canvas, 40f, pose.anguloBrazoIzq, pose.codoIzq, pose.guanteIzq, pose.reloj)
-                brazoLibre(canvas, 160f, pose.anguloBrazoDer, pose.codoDer, pose.guanteDer, false)
+                val largo = pose.largoBrazos
+                brazoLibre(canvas, 40f, pose.anguloBrazoIzq, pose.codoIzq, pose.guanteIzq, pose.reloj, largo)
+                brazoLibre(canvas, 160f, pose.anguloBrazoDer, pose.codoDer, pose.guanteDer, false, largo)
                 if (pose.impacto > 0f) {
                     val izq = pose.anguloBrazoIzq * PI / 180.0
                     val der = pose.anguloBrazoDer * PI / 180.0
-                    val cx = 100f + 26f * (cos(izq) + cos(der)).toFloat()
-                    val cy = 88f + 26f * (sin(izq) + sin(der)).toFloat()
+                    // Punto medio entre las dos manos.
+                    val cx = 100f + largo / 2f * (cos(izq) + cos(der)).toFloat()
+                    val cy = 88f + largo / 2f * (sin(izq) + sin(der)).toFloat()
                     prepararTrazo(tinta, 3f, pose.impacto.coerceIn(0f, 1f))
                     canvas.drawLine(cx - 12f, cy - 12f, cx - 7f, cy - 7f, trazo)
                     canvas.drawLine(cx, cy - 19f, cx, cy - 11f, trazo)

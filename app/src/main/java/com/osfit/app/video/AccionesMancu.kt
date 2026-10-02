@@ -26,7 +26,8 @@ data class CuadroAccion(
     val alturaPx: Float = 0f,
     val rotacion: Float = 0f,
     val escalaY: Float = 1f,
-    val impacto: Float = 0f
+    val impacto: Float = 0f,
+    val largoBrazos: Float = 52f
 )
 
 object AccionesMancu {
@@ -41,9 +42,10 @@ object AccionesMancu {
             ondeo = MancuAnimacion.ondeoBrazo(tMs))
         AccionMancu.APLAUDIR -> {
             val cierre = pulso(tMs, 450)
-            // Dos brazos de 52 y dos guantes de radio 8 cubren los 120 entre hombros.
-            CuadroAccion(ojos = Ojos.FELIZ, anguloBrazoIzq = 55f * (1f - cierre),
-                anguloBrazoDer = 180f - 55f * (1f - cierre),
+            // Brazos de 76 a 38°: las manos se juntan en (100, ~135), frente a la panza y bajo
+            // la boca; con 52 solo se tocarían horizontales, tapadas por la cara.
+            CuadroAccion(ojos = Ojos.FELIZ, anguloBrazoIzq = 38f + 40f * (1f - cierre),
+                anguloBrazoDer = 142f - 40f * (1f - cierre), largoBrazos = 76f,
                 impacto = ((cierre - 0.9f) / 0.1f).coerceIn(0f, 1f))
         }
         AccionMancu.TIJERAS -> {

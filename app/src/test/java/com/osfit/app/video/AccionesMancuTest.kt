@@ -43,8 +43,11 @@ class AccionesMancuTest {
     }
     @Test fun `el aplauso alcanza su impacto al tocarse los guantes`() {
         val c = AccionesMancu.cuadro(AccionMancu.APLAUDIR, 225)
-        assertEquals(0f, c.anguloBrazoIzq, 0f)
-        assertEquals(180f, c.anguloBrazoDer, 0f)
+        assertEquals(38f, c.anguloBrazoIzq, 0f)
+        assertEquals(142f, c.anguloBrazoDer, 0f)
+        // Las manos (largo 76 desde los hombros en x=40 y x=160) se tocan en x≈100, bajo la boca.
+        val manoIzqX = 40f + c.largoBrazos * kotlin.math.cos(Math.toRadians(38.0)).toFloat()
+        assertEquals(100f, manoIzqX, 1f)
         assertEquals(1f, c.impacto, 0f)
         assertEquals(0f, AccionesMancu.cuadro(AccionMancu.APLAUDIR, 0).impacto, 0f)
     }

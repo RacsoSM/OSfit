@@ -23,5 +23,7 @@ data class PoseMancu(
     val guanteDer: Guante = Guante.ABIERTO,
     val reloj: Boolean = false,
     val piernasAbiertas: Float = 0f,
-    val impacto: Float = 0f
+    val impacto: Float = 0f,
+    /** Largo de los brazos LIBRE (hombro → mano) en el espacio 200×200. */
+    val largoBrazos: Float = 52f
 )
