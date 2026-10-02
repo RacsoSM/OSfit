@@ -21,7 +21,33 @@ internal class EscenaMancuLogros {
             ResumenFrameRenderer.LOGROS_RETRASO_MS, 1800, ctx.ancho / 2f, 510f, 56f,
             esTitulo = true, color = PaletaMancu.TINTA, altoMaximo = 90f)
         val mascota = ComposicionPremiosMancu.mascota(cantidad)
-        ctx.actor.colocar(mascota.x, mascota.y, mascota.lado, pose)
+        val t = ctx.elapsedMs
+        var actual = -1
+        for (i in 0 until cantidad) {
+            if (t >= CascadaLogrosMancu.inicio(cantidad, i) - 180L) actual = i
+        }
+        val celebrando = t >= CascadaLogrosMancu.inicio(cantidad, cantidad - 1) + 1000L
+        // La cascada se solapa cada 500 ms: la insignia más reciente toma la atención y el salto.
+        val salto = when {
+            celebrando -> (t - CascadaLogrosMancu.inicio(cantidad, cantidad - 1) - 1000L) % 1600L
+            actual >= 0 -> t - CascadaLogrosMancu.inicio(cantidad, actual) + 180L
+            else -> -1L
+        }
+        val sy = MancuAnimacion.escalaYSalto(salto)
+        val y = mascota.y - (if (celebrando) 50f else 90f) * MancuAnimacion.alturaSalto(salto)
+        val actuacion = when {
+            celebrando -> pose.copy(brazos = Brazos.ORGULLO, ojos = Ojos.FELIZ,
+                boca = Boca.ABIERTA, confeti = true)
+            actual >= 0 && t >= CascadaLogrosMancu.inicio(cantidad, actual) -> {
+                val pos = posiciones[actual]
+                // Hombro derecho (160,86) del dibujo 200×200, en coordenadas de pantalla.
+                pose.copy(brazos = Brazos.SENALA,
+                    anguloSenala = MancuAnimacion.anguloHacia(mascota.x + mascota.lado * 160f / 200f,
+                        y + mascota.lado * 86f / 200f, pos.cx, pos.cy))
+            }
+            else -> pose.copy(ondeo = MancuAnimacion.ondeoBrazo(t))
+        }
+        ctx.actor.colocar(mascota.x, y, mascota.lado, actuacion, escalaX = 1f / sy, escalaY = sy)
         escena.logros.forEachIndexed { indice, logro ->
             val alpha = CascadaLogrosMancu.opacidad(cantidad, indice, ctx.elapsedMs)
             if (alpha <= 0f) return@forEachIndexed
@@ -40,7 +66,8 @@ internal class EscenaMancuLogros {
             ctx.textos.bloqueMaquina(c, logro.nombre, ctx.elapsedMs,
                 CascadaLogrosMancu.inicio(cantidad, indice), 0, pos.cx, yNombre - 25f,
                 if (unico) 44f else 30f, ancho = anchoNombre,
-                esTitulo = true, color = PaletaMancu.ROJO, altoMaximo = 100f)
+                esTitulo = true, color = PaletaMancu.ROJO, altoMaximo = 100f,
+                golpeMs = CascadaLogrosMancu.inicio(cantidad, indice) + 520L)
             // Con varios premios se conserva todo el espacio para sus nombres, como pide el modelo.
             if (unico && logro.mensaje.isNotBlank()) ctx.textos.bloqueMaquina(c, logro.mensaje,
                 ctx.elapsedMs, CascadaLogrosMancu.inicio(cantidad, indice), 0,

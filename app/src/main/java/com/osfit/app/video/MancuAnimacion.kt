@@ -6,6 +6,30 @@ import kotlin.math.cos
 import kotlin.math.sin
 
 object MancuAnimacion {
+    /** Convención de SENALA: derecha = 0°, arriba = -90°; pantalla con y hacia abajo. */
+    fun anguloHacia(x1: Float, y1: Float, x2: Float, y2: Float): Float =
+        Math.toDegrees(kotlin.math.atan2((y2 - y1).toDouble(), (x2 - x1).toDouble())).toFloat()
+
+    fun barridoDona(edadMs: Long): Float {
+        if (edadMs >= 1200L) return 360f
+        val restante = 1f - (edadMs / 1200f).coerceIn(0f, 1f)
+        // Float redondea a 360 antes de tiempo cerca del final; reserva el círculo completo al cierre.
+        return minOf(Math.nextDown(360f), 360f * (1f - restante * restante * restante))
+    }
+
+    /** Inversa del barrido: ceil evita mostrar la etiqueta antes de completar su sector. */
+    fun llegadaBarrido(angulo: Float): Long = kotlin.math.ceil(
+        1200.0 * (1.0 - Math.cbrt(1.0 - angulo.coerceIn(0f, 360f) / 360.0))
+    ).toLong()
+
+    // Una salida con sobrepaso permite que el sector rebote y quede separado, sin volver al centro.
+    fun salidaRebanada(edadMs: Long): Float {
+        if (edadMs <= 0L) return 0f
+        if (edadMs >= 700L) return 18f
+        val q = edadMs / 700f - 1f
+        return 18f * (1f + 2.70158f * q * q * q + 1.70158f * q * q)
+    }
+
     fun transicion(tMs: Long, inicioMs: Long, duracionMs: Long): Float {
         require(duracionMs > 0L) { "La duracion de transicion debe ser positiva" }
         val fase = ((tMs - inicioMs) / duracionMs.toFloat()).coerceIn(0f, 1f)

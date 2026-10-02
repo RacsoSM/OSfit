@@ -2,6 +2,9 @@
 
 import android.graphics.Paint
 import android.graphics.Path
+import android.graphics.PathMeasure
+import kotlin.math.hypot
+import kotlin.math.ceil
 
 internal class EscenaMancuTiempo {
     private val pose = PoseMancu(Brazos.HOLA, Ojos.LADO, Boca.O)
@@ -13,6 +16,10 @@ internal class EscenaMancuTiempo {
     private val punto = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = PaletaMancu.ROJO }
     private val etiqueta = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = PaletaMancu.MARRON; textSize = 26f }
     private val camino = Path()
+    private val medida = PathMeasure()
+    private val revelado = Path()
+    private var distancias = FloatArray(0)
+    private var indiceMaximo = 0
     private var datos: EscenaResumen.Tiempo? = null
     private var fechas = emptyList<String>()
     private var maximo = 120
@@ -22,8 +29,25 @@ internal class EscenaMancuTiempo {
             540f, 280f, 54f, esTitulo = true, color = PaletaMancu.TINTA)
         ctx.textos.bloqueMaquina(ctx.canvas, TextosEscena.tiempoDuracion(escena.minutos), ctx.elapsedMs, 900, 2400,
             540f, 490f, 120f, esTitulo = true, color = PaletaMancu.ROJO)
-        ctx.actor.colocar(90f, 640f, 300f, pose)
         grafica(ctx, escena)
+        val t = ctx.elapsedMs
+        val salto = t - 5500L
+        val sy = MancuAnimacion.escalaYSalto(salto)
+        val y = 640f - 80f * MancuAnimacion.alturaSalto(salto)
+        val valores = escena.tiempoPorDia
+        val actuacion = when {
+            salto in 0L..900L -> pose.copy(brazos = Brazos.ORGULLO, ojos = Ojos.FELIZ, boca = Boca.ABIERTA)
+            t >= 4600L && valores.size >= 2 && valores.maxOf { it.minutos } > 0 -> {
+                val xPunto = 220f + 770f * indiceMaximo / (valores.size - 1)
+                val yPunto = GeometriaMancu.yGrafica(valores[indiceMaximo].minutos, maximo, 956f, 1276f)
+                // Hombro derecho (160,86) del dibujo 200×200, trasladado al actor en pantalla.
+                pose.copy(brazos = Brazos.SENALA, boca = Boca.SONRISA,
+                    anguloSenala = MancuAnimacion.anguloHacia(90f + 300f * 160f / 200f,
+                        y + 300f * 86f / 200f, xPunto, yPunto))
+            }
+            else -> pose
+        }
+        ctx.actor.colocar(90f, y, 300f, actuacion, escalaX = 1f / sy, escalaY = sy)
         ctx.textos.bloqueMaquina(ctx.canvas,
             TextosEscena.comparacion(escena.ranking, TextosEscena.TIEMPO_PRIMERO, TextosEscena.TIEMPO_LUGAR),
             ctx.elapsedMs, 4000, 1500, 540f, 1588f, 48f)
@@ -31,13 +55,29 @@ internal class EscenaMancuTiempo {
     private fun grafica(ctx: ContextoEscenaMancu, escena: EscenaResumen.Tiempo) {
         val valores = escena.tiempoPorDia
         if (valores.size < 2 || valores.maxOf { it.minutos } <= 0) return
-        val alpha = ((ctx.elapsedMs - 3400) / 600f).coerceIn(0f, 1f)
-        if (alpha <= 0f) return
         if (datos !== escena) {
             datos = escena
             fechas = valores.map { GeometriaMancu.fechaEje(it.fecha) }
             maximo = GeometriaMancu.maximoGrafica(valores.map { it.minutos })
+            indiceMaximo = valores.indices.maxBy { valores[it].minutos }
+            distancias = FloatArray(valores.size)
+            camino.reset()
+            var anteriorX = 0f
+            var anteriorY = 0f
+            valores.forEachIndexed { i, valor ->
+                val x = 220f + 770f * i / (valores.size - 1)
+                val y = GeometriaMancu.yGrafica(valor.minutos, maximo, 956f, 1276f)
+                if (i == 0) camino.moveTo(x, y) else {
+                    camino.lineTo(x, y)
+                    distancias[i] = distancias[i - 1] + hypot(x - anteriorX, y - anteriorY)
+                }
+                anteriorX = x
+                anteriorY = y
+            }
+            medida.setPath(camino, false)
         }
+        val alpha = ((ctx.elapsedMs - 3400) / 300f).coerceIn(0f, 1f)
+        if (alpha <= 0f) return
         etiqueta.typeface = ctx.tipografias.mano
         val c = ctx.canvas
         val guardado = c.saveLayerAlpha(80f, 940f, 1000f, 1450f, (alpha * 255).toInt())
@@ -57,17 +97,25 @@ internal class EscenaMancuTiempo {
             etiqueta.textAlign = Paint.Align.RIGHT
             c.drawText("$ref min", izquierda - 12f, y + 8f, etiqueta)
         }
-        camino.reset()
+        vertical(ctx, "Minutos por día", 105f, (arriba + abajo) / 2, Paint.Align.CENTER)
+        c.restoreToCount(guardado)
+        val progreso = ((ctx.elapsedMs - 3400L) / 1200f).coerceIn(0f, 1f)
+        revelado.reset()
+        medida.getSegment(0f, medida.length * progreso, revelado, true)
+        c.drawPath(revelado, linea)
         valores.forEachIndexed { i, valor ->
             val x = izquierda + paso * i
             val y = GeometriaMancu.yGrafica(valor.minutos, maximo, arriba, abajo)
-            if (i == 0) camino.moveTo(x, y) else camino.lineTo(x, y)
-            if (valor.minutos > 0) c.drawCircle(x, y, 9f, punto)
+            // El recorrido acumulado sincroniza cada punto con el extremo real de PathMeasure.
+            val nacimiento = 3400L + ceil(1200.0 * distancias[i] / medida.length).toLong()
+            val escala = MancuAnimacion.popLetra(ctx.elapsedMs - nacimiento)
+            if (escala <= 0f) return@forEachIndexed
+            if (valor.minutos > 0) c.drawCircle(x, y, 9f * escala, punto)
+            val texto = c.save()
+            c.scale(escala, escala, x, abajo + 12f)
             vertical(ctx, fechas[i], x, abajo + 12f, Paint.Align.RIGHT)
+            c.restoreToCount(texto)
         }
-        c.drawPath(camino, linea)
-        vertical(ctx, "Minutos por día", 105f, (arriba + abajo) / 2, Paint.Align.CENTER)
-        c.restoreToCount(guardado)
     }
     private fun vertical(ctx: ContextoEscenaMancu, texto: String, x: Float, y: Float, alineacion: Paint.Align) {
         val guardado = ctx.canvas.save()

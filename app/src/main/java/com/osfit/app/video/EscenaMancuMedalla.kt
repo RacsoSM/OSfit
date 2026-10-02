@@ -8,20 +8,40 @@ internal class EscenaMancuMedalla {
         val c = ctx.canvas
         val centro = ctx.ancho / 2f
         val nombre = escena.nombre
+        val t = ctx.elapsedMs
         if (nombre == null) {
             if (escena.mensaje.isNotBlank()) ctx.textos.bloqueMaquina(c, escena.mensaje,
                 ctx.elapsedMs, 400, 0, centro, 780f, 48f, altoMaximo = 400f)
-            ctx.actor.colocar(centro - 240f, 1250f, 480f, hola)
+            // Este mensaje conserva duración cero: termina de escribirse al aparecer en 400 ms.
+            val actuacion = if (t < 400L) hola.copy(ojos = Ojos.LADO)
+                else hola.copy(ondeo = MancuAnimacion.ondeoBrazo(t))
+            val sy = if (t < 400L) 1f else
+                1f + (MancuAnimacion.squash((t - 400L) % 1400L).second - 1f) * 0.3f
+            ctx.actor.colocar(centro - 240f, 1250f, 480f, actuacion,
+                escalaX = 1f / sy, escalaY = sy)
             return
         }
         ctx.textos.bloqueMaquina(c, TextosEscena.TITULO_GRUPAL, ctx.elapsedMs, 0, 900,
-            centro, 320f, 72f, esTitulo = true, color = PaletaMancu.ROJO, altoMaximo = 130f)
+            centro, 320f, 72f, esTitulo = true, color = PaletaMancu.ROJO, altoMaximo = 130f,
+            golpeMs = MEDALLA_INICIO_GRUPAL_MS + 520L)
         ctx.textos.bloqueMaquina(c, TextosEscena.MEDALLA_PREFIJO, ctx.elapsedMs, 500, 1800,
-            centro, 510f, 56f, esTitulo = true, color = PaletaMancu.TINTA, altoMaximo = 110f)
+            centro, 510f, 56f, esTitulo = true, color = PaletaMancu.TINTA, altoMaximo = 110f,
+            golpeMs = MEDALLA_INICIO_GRUPAL_MS + 520L)
         val mascota = ComposicionPremiosMancu.mascota(1)
         val alpha = ResumenFrameRenderer.opacidadEntrada(ctx.elapsedMs)
-        ctx.actor.colocar(mascota.x, mascota.y, mascota.lado,
-            if (alpha > 0f) orgullo else hola)
+        val inicioSalto = MEDALLA_INICIO_GRUPAL_MS - 180L
+        val mensaje = t >= MENSAJE_MEDALLA_INICIO_MS
+        val salto = if (mensaje) (t - MENSAJE_MEDALLA_INICIO_MS) % 1800L else t - inicioSalto
+        val sy = MancuAnimacion.escalaYSalto(salto)
+        val actuacion = when {
+            mensaje -> hola.copy(ondeo = MancuAnimacion.ondeoBrazo(t))
+            t >= inicioSalto -> orgullo
+            else -> hola.copy(ojos = Ojos.LADO, boca = Boca.O)
+        }
+        ctx.actor.colocar(mascota.x,
+            mascota.y - (if (mensaje) 50f else 140f) * MancuAnimacion.alturaSalto(salto),
+            mascota.lado, actuacion, escalaX = 1f / sy, escalaY = sy,
+            rotacion = if (t < inicioSalto) -6f else 0f)
         if (alpha > 0f) {
             val radio = 264f * ResumenFrameRenderer.escalaEntrada(ctx.elapsedMs)
             insignia.halo(c, centro, 1150f, radio, ResumenFrameRenderer.HALO_FACTOR_MEDALLA,
