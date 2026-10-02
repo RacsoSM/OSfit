@@ -6,6 +6,7 @@ import android.graphics.Canvas
 class RendererMancu(context: Context) : RendererVideo {
     private val tipografias = TipografiasMancu(context)
     private val fondo = FondoPapelRenderer()
+    private val nube = NubeTransicionMancu()
     private val mancu = MancuDibujo(tipografias)
     private val textos = TextoMancu(tipografias)
     private val saludo = EscenaMancuSaludo()
@@ -26,20 +27,16 @@ class RendererMancu(context: Context) : RendererVideo {
         val entrante = timeline.tramoEntrante(tiempoMs)
         if (entrante != null) {
             val alphaEntrante = timeline.alphaEntrante(tiempoMs)
-            dibujarEscena(canvas, activo.escena, timeline.elapsedEnTramo(activo, tiempoMs),
-                1f - alphaEntrante)
-            dibujarEscena(canvas, entrante.escena, timeline.elapsedEnTramo(entrante, tiempoMs),
-                alphaEntrante)
+            val visible = if (MancuAnimacion.escenaVisibleEsEntrante(alphaEntrante)) entrante else activo
+            dibujarEscena(canvas, visible.escena, timeline.elapsedEnTramo(visible, tiempoMs))
+            nube.dibujar(canvas, ancho, alto, MancuAnimacion.progresoNube(alphaEntrante))
         } else {
-            dibujarEscena(canvas, activo.escena, timeline.elapsedEnTramo(activo, tiempoMs), 1f)
+            dibujarEscena(canvas, activo.escena, timeline.elapsedEnTramo(activo, tiempoMs))
         }
     }
 
-    private fun dibujarEscena(canvas: Canvas, escena: EscenaResumen, elapsedMs: Long, alpha: Float) {
-        if (alpha <= 0f) return
-        val guardado = if (alpha < 1f) {
-            canvas.saveLayerAlpha(0f, 0f, ancho, alto, (alpha * 255f).toInt())
-        } else canvas.save()
+    private fun dibujarEscena(canvas: Canvas, escena: EscenaResumen, elapsedMs: Long) {
+        val guardado = canvas.save()
         val ctx = ContextoEscenaMancu(canvas, ancho, alto, elapsedMs, mancu, tipografias, textos)
         when (escena) {
             is EscenaResumen.Saludo -> saludo.dibujar(ctx, escena)

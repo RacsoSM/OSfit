@@ -6,6 +6,14 @@ import kotlin.math.cos
 import kotlin.math.sin
 
 object MancuAnimacion {
+    fun progresoNube(alphaEntrante: Float): Float {
+        val alpha = alphaEntrante.coerceIn(0f, 1f)
+        val subida = 1f - abs(2f * alpha - 1f)
+        return subida * subida * (3f - 2f * subida)
+    }
+
+    fun escenaVisibleEsEntrante(alphaEntrante: Float): Boolean = alphaEntrante >= 0.5f
+
     /** Seno en [-1, 1], periodo 1400 ms y origen en cero; admite tiempos negativos. */
     fun reboteY(tMs: Long): Float = sin(2.0 * PI * Math.floorMod(tMs, 1400L) / 1400.0).toFloat()
 

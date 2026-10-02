@@ -5,6 +5,37 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class MancuAnimacionTest {
+    @Test fun `la nube empieza y termina vacia y tapa todo en el punto medio`() {
+        for (alpha in listOf(-1f, 0f, 1f, 2f)) {
+            assertEquals(0f, MancuAnimacion.progresoNube(alpha), 0f)
+        }
+        assertEquals(1f, MancuAnimacion.progresoNube(0.5f), 0f)
+    }
+
+    @Test fun `la nube es simetrica y crece y decrece monotonamente`() {
+        assertEquals(MancuAnimacion.progresoNube(0.25f),
+            MancuAnimacion.progresoNube(0.75f), 0.00001f)
+        var anterior = 0f
+        for (i in 0..50) {
+            val progreso = MancuAnimacion.progresoNube(i / 100f)
+            assertTrue(progreso >= anterior)
+            assertEquals(progreso, MancuAnimacion.progresoNube(1f - i / 100f), 0.00001f)
+            anterior = progreso
+        }
+        for (i in 51..100) {
+            val progreso = MancuAnimacion.progresoNube(i / 100f)
+            assertTrue(progreso <= anterior)
+            anterior = progreso
+        }
+    }
+
+    @Test fun `la escena cambia exactamente cuando la nube alcanza cobertura total`() {
+        assertTrue(!MancuAnimacion.escenaVisibleEsEntrante(0f))
+        assertTrue(!MancuAnimacion.escenaVisibleEsEntrante(0.499999f))
+        assertTrue(MancuAnimacion.escenaVisibleEsEntrante(0.5f))
+        assertTrue(MancuAnimacion.escenaVisibleEsEntrante(1f))
+    }
+
     @Test fun `el rebote se repite cada 1400 ms y recorre menos uno a uno`() {
         for (t in listOf(-1400L, -1L, 0L, 137L, 350L, 700L, 1050L, 1399L)) {
             assertEquals(MancuAnimacion.reboteY(t), MancuAnimacion.reboteY(t + 1400L), 0.00001f)
