@@ -7,7 +7,8 @@ internal class EscenaMancuSaludo {
         val texto = TextosEscena.SALUDO_PREFIJO + escena.nombreCliente
         val visible = MaquinaEscribir.textoVisible(texto, ctx.elapsedMs, 2_000L)
         ctx.textos.maquinaEscribir(ctx.canvas, visible, texto, ctx.ancho / 2f, 520f,
-            120f, ctx.ancho - 120f, TextosEscena.SALUDO_PREFIJO.length)
+            120f, ctx.ancho - 120f, TextosEscena.SALUDO_PREFIJO.length,
+            elapsedMs = ctx.elapsedMs, duracionMs = 2_000L)
 
         val tamano = 620f
         val desplazamiento = -1_500f * MancuAnimacion.saltoEntrada(ctx.elapsedMs)

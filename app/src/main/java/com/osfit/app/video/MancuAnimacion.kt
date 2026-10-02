@@ -6,6 +6,34 @@ import kotlin.math.cos
 import kotlin.math.sin
 
 object MancuAnimacion {
+    fun popLetra(edadMs: Long): Float {
+        if (edadMs < 0L) return 0f
+        if (edadMs >= 260L) return 1f
+        val fase = if (edadMs <= 150L) edadMs / 150f else (edadMs - 150L) / 110f
+        val suave = fase * fase * (3f - 2f * fase)
+        return if (edadMs <= 150L) 0.3f + 0.95f * suave else 1.25f - 0.25f * suave
+    }
+
+    fun subidaLetra(edadMs: Long): Float {
+        val fase = (edadMs / 260f).coerceIn(0f, 1f)
+        return -12f * (1f - fase * fase * (3f - 2f * fase))
+    }
+
+    // Reducir primero el reloj evita desbordamientos y conserva el periodo con tiempos negativos.
+    fun temblorLetra(tMs: Long, indice: Int): Float =
+        4f * sin(2.0 * PI * (Math.floorMod(tMs, 300L) / 300.0 + indice * 0.13)).toFloat()
+
+    fun temblorLetraY(tMs: Long, indice: Int): Float =
+        3f * sin(2.0 * PI * (Math.floorMod(tMs, 300L) / 300.0 + indice * 0.13)).toFloat()
+
+    /** Primer contacto en 300 ms, un rebote sobre la base y reposo exacto desde 600 ms. */
+    fun caidaLetra(edadMs: Long): Float {
+        if (edadMs <= 0L) return -220f
+        if (edadMs >= 600L) return 0f
+        val fase = edadMs / 600f
+        return -220f * (1f - fase) * (1f - fase) * abs(cos(PI * fase).toFloat())
+    }
+
     // Canvas crece hacia abajo: el rebote negativo sube el cuerpo y debe estirarlo.
     fun respiracionEscalaY(tMs: Long): Float = 1f - 0.035f * reboteY(tMs)
 

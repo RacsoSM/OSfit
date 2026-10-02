@@ -5,6 +5,55 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class MancuAnimacionTest {
+    @Test fun `el pop nace pequeno rebota y queda asentado`() {
+        assertEquals(0f, MancuAnimacion.popLetra(-1L), 0f)
+        assertEquals(0.3f, MancuAnimacion.popLetra(0L), 0f)
+        assertEquals(1.25f, MancuAnimacion.popLetra(150L), 0.00001f)
+        for (t in listOf(260L, 600L, Long.MAX_VALUE)) {
+            assertEquals(1f, MancuAnimacion.popLetra(t), 0f)
+        }
+        for (t in 0L..260L) assertTrue(MancuAnimacion.popLetra(t) in 0.3f..1.25f)
+    }
+
+    @Test fun `la letra baja suavemente hasta su base en doscientos sesenta milisegundos`() {
+        assertEquals(-12f, MancuAnimacion.subidaLetra(0L), 0f)
+        assertEquals(-12f, MancuAnimacion.subidaLetra(-1L), 0f)
+        var anterior = -12f
+        for (t in 0L..260L) {
+            val y = MancuAnimacion.subidaLetra(t)
+            assertTrue(y >= anterior && y <= 0f)
+            anterior = y
+        }
+        assertEquals(0f, MancuAnimacion.subidaLetra(260L), 0f)
+        assertEquals(0f, MancuAnimacion.subidaLetra(Long.MAX_VALUE), 0f)
+    }
+
+    @Test fun `el temblor es periodico acotado y desfasado por letra`() {
+        for (i in 0..80) for (t in -300L..600L step 13L) {
+            val giro = MancuAnimacion.temblorLetra(t, i)
+            val y = MancuAnimacion.temblorLetraY(t, i)
+            assertTrue(giro in -4f..4f)
+            assertTrue(y in -3f..3f)
+            assertEquals(giro, MancuAnimacion.temblorLetra(t + 300L, i), 0.00001f)
+            assertEquals(y, MancuAnimacion.temblorLetraY(t + 300L, i), 0.00001f)
+        }
+        assertEquals(4f, MancuAnimacion.temblorLetra(75L, 0), 0.00001f)
+        assertEquals(3f, MancuAnimacion.temblorLetraY(75L, 0), 0.00001f)
+        assertTrue(MancuAnimacion.temblorLetra(0L, 0) != MancuAnimacion.temblorLetra(0L, 1))
+        assertTrue(MancuAnimacion.temblorLetraY(0L, 0) != MancuAnimacion.temblorLetraY(0L, 1))
+    }
+
+    @Test fun `la cascada cae desde doscientos veinte pixeles rebota una vez y se asienta`() {
+        assertEquals(-220f, MancuAnimacion.caidaLetra(0L), 0f)
+        assertEquals(-220f, MancuAnimacion.caidaLetra(-1L), 0f)
+        assertEquals(0f, MancuAnimacion.caidaLetra(300L), 0.00001f)
+        assertTrue(MancuAnimacion.caidaLetra(400L) < -1f)
+        for (t in 0L..600L) assertTrue(MancuAnimacion.caidaLetra(t) in -220f..0f)
+        for (t in listOf(600L, 601L, Long.MAX_VALUE)) {
+            assertEquals(0f, MancuAnimacion.caidaLetra(t), 0f)
+        }
+    }
+
     @Test fun `la respiracion estira al subir y sigue el periodo del rebote`() {
         assertEquals(0.965f, MancuAnimacion.respiracionEscalaY(350L), 0.00001f)
         assertEquals(1.035f, MancuAnimacion.respiracionEscalaY(1050L), 0.00001f)

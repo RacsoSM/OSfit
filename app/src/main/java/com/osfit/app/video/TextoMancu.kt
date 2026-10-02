@@ -5,6 +5,7 @@ import android.graphics.Paint
 import android.text.Layout
 import android.text.StaticLayout
 import android.text.TextPaint
+import kotlin.math.ceil
 
 internal class TextoMancu(tipografias: TipografiasMancu) {
     private val titulo = Paint(Paint.ANTI_ALIAS_FLAG).apply { typeface = tipografias.titulo }
@@ -70,16 +71,17 @@ internal class TextoMancu(tipografias: TipografiasMancu) {
 
     fun maquinaEscribir(canvas: Canvas, textoVisible: String, textoCompleto: String,
                         centroX: Float, y: Float, tamano: Float, anchoMaximo: Float,
-                        inicioRojo: Int = textoCompleto.length) {
+                        inicioRojo: Int = textoCompleto.length, elapsedMs: Long,
+                        duracionMs: Long, inicioMs: Long = 0L,
+                        golpeMs: Long = Long.MIN_VALUE, cascada: Boolean = false) {
+        if (elapsedMs < inicioMs) return
         val ajustado = tamanoQueCabe(textoCompleto, tamano, anchoMaximo)
         titulo.textSize = ajustado
         // El ancho completo mantiene fijo el saludo mientras aparecen sus letras.
         val x = centroX - titulo.measureText(textoCompleto) / 2f
-        val corte = inicioRojo.coerceIn(0, textoVisible.length)
-        pintarTitulo(canvas, textoVisible, 0, corte, x, y, ajustado, PaletaMancu.TINTA)
-        val xNombre = x + titulo.measureText(textoVisible, 0, corte)
-        pintarTitulo(canvas, textoVisible, corte, textoVisible.length, xNombre, y,
-            ajustado, PaletaMancu.ROJO)
+        pintarLetras(canvas, textoCompleto, 0, textoVisible.length.coerceAtMost(textoCompleto.length),
+            x, y, ajustado, true, PaletaMancu.TINTA, inicioRojo, textoCompleto.length,
+            elapsedMs, inicioMs, duracionMs, golpeMs, cascada)
     }
 
     /** Cachear el texto completo mantiene quietas las líneas mientras aparecen las letras. */
@@ -87,7 +89,8 @@ internal class TextoMancu(tipografias: TipografiasMancu) {
                       duracionMs: Long, centroX: Float, y: Float, tamano: Float,
                       ancho: Int = 900, esTitulo: Boolean = false,
                       color: Int = PaletaMancu.MARRON, inicioRojo: Int = texto.length,
-                      finRojo: Int = texto.length, altoMaximo: Float = 1840f - y) {
+                      finRojo: Int = texto.length, altoMaximo: Float = 1840f - y,
+                      golpeMs: Long = Long.MIN_VALUE, cascada: Boolean = false) {
         if (elapsedMs < inicioMs) return
         val visibles = MaquinaEscribir.textoVisible(texto, elapsedMs - inicioMs, duracionMs).length
         parrafo.typeface = if (esTitulo) titulo.typeface else mano.typeface
@@ -110,19 +113,46 @@ internal class TextoMancu(tipografias: TipografiasMancu) {
             if (fin <= inicio) break
             val x = centroX - ancho / 2f + layout.getLineLeft(linea)
             val base = y + layout.getLineBaseline(linea)
+            pintarLetras(canvas, texto, inicio, fin, x, base, ajustado, esTitulo, color,
+                inicioRojo, finRojo, elapsedMs, inicioMs, duracionMs, golpeMs, cascada)
+        }
+    }
+
+    private fun pintarLetras(canvas: Canvas, texto: String, inicioLinea: Int, fin: Int,
+                             x: Float, base: Float, tamano: Float, esTitulo: Boolean,
+                             color: Int, inicioRojo: Int, finRojo: Int, elapsedMs: Long,
+                             inicioMs: Long, duracionMs: Long, golpeMs: Long, cascada: Boolean) {
+        val pintura = if (esTitulo) titulo else mano
+        pintura.textSize = tamano
+        pintura.color = color
+        val golpe = if (golpeMs != Long.MIN_VALUE && elapsedMs >= golpeMs)
+            MancuAnimacion.squash(elapsedMs - golpeMs) else null
+        for (i in inicioLinea until fin) {
+            if (texto[i] == '\n' || texto[i] == '\r') continue
+            // MaquinaEscribir trunca len*t/duracion: la letra i nace al alcanzar i+1.
+            // Ceil reproduce ese primer milisegundo visible; duración no positiva nace en inicioMs.
+            val aparicion = if (duracionMs <= 0L) 0L else
+                ceil((i + 1).toDouble() * duracionMs / texto.length).toLong()
+            val edad = elapsedMs - inicioMs - aparicion
+            if (edad < 0L) continue
+            val letraX = x + pintura.measureText(texto, inicioLinea, i)
+            val pivoteX = letraX + pintura.measureText(texto, i, i + 1) / 2f
+            val roja = esTitulo && i >= inicioRojo && i < finRojo
+            val escala = if (cascada) 1f else MancuAnimacion.popLetra(edad)
+                .let { if (esTitulo) it else minOf(it, 1.1f) }
+            var desplazamiento = if (cascada) MancuAnimacion.caidaLetra(edad)
+                else MancuAnimacion.subidaLetra(edad)
+            if (roja) desplazamiento += MancuAnimacion.temblorLetraY(elapsedMs, i)
+            val guardado = canvas.save()
+            canvas.translate(0f, desplazamiento)
+            canvas.scale(escala, escala, pivoteX, base)
+            if (golpe != null) canvas.scale(golpe.first, golpe.second, pivoteX, base)
+            if (roja) canvas.rotate(MancuAnimacion.temblorLetra(elapsedMs, i), pivoteX, base)
             if (esTitulo) {
-                titulo.textSize = ajustado
-                val rojoInicio = inicioRojo.coerceIn(inicio, fin)
-                val rojoFin = finRojo.coerceIn(rojoInicio, fin)
-                pintarTitulo(canvas, texto, inicio, rojoInicio, x, base, ajustado, color)
-                val xr = x + titulo.measureText(texto, inicio, rojoInicio)
-                pintarTitulo(canvas, texto, rojoInicio, rojoFin, xr, base, ajustado, PaletaMancu.ROJO)
-                pintarTitulo(canvas, texto, rojoFin, fin, xr + titulo.measureText(texto, rojoInicio, rojoFin), base, ajustado, color)
-            } else {
-                mano.textSize = ajustado
-                mano.color = color
-                canvas.drawText(texto, inicio, fin, x, base, mano)
-            }
+                pintarTitulo(canvas, texto, i, i + 1, letraX, base, tamano,
+                    if (roja) PaletaMancu.ROJO else color)
+            } else canvas.drawText(texto, i, i + 1, letraX, base, mano)
+            canvas.restoreToCount(guardado)
         }
     }
 
