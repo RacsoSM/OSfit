@@ -18,7 +18,7 @@ function datos(campos: Partial<DatosCliente> = {}): DatosCliente {
   return {
     cliente, hoy: HOY, asistencias: conFaltaRota, mesVisible: "2026-09", yaAviso: false,
     medallas: [], logros: [], tiradaEsteMes: null, tiradaMesAnterior: null,
-    ranking: { estado: "cargando" }, ...campos,
+    ranking: { estado: "cargando" }, estilo: "clasico", ...campos,
   };
 }
 
@@ -38,8 +38,8 @@ describe("el registro de ventanas", () => {
     expect(VENTANAS.filter((v) => v.grupo === "pie").map((v) => v.id)).toEqual(["ajustes"]);
   });
 
-  it("Ajustes es la única que está por venir", () => {
-    expect(VENTANAS.filter((v) => v.proximamente).map((v) => v.id)).toEqual(["ajustes"]);
+  it("ya no queda ninguna por venir: Ajustes tiene contenido", () => {
+    expect(VENTANAS.filter((v) => v.proximamente).map((v) => v.id)).toEqual([]);
   });
 
   it("toda ventana tiene con qué pintarse", () => {
@@ -80,8 +80,11 @@ describe("las demás ventanas", () => {
     expect(contenidoDe(ventana("logros"), datos())).toContain("Tus logros personales");
   });
 
-  it("Ajustes dice Muy pronto", () => {
-    expect(contenidoDe(ventana("ajustes"), datos())).toContain("Muy pronto");
+  it("Ajustes trae el combo del estilo, con el elegido marcado", () => {
+    const html = contenidoDe(ventana("ajustes"), datos({ estilo: "pixel" }));
+    expect(html).not.toContain("Muy pronto");
+    expect(html).toContain(`id="selector-estilo"`);
+    expect(html).toContain(`<option value="pixel" selected>`);
   });
 
   it("Ranking pinta la tarjeta del ranking con lo que haya llegado", () => {

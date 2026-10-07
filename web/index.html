@@ -6,6 +6,27 @@
     <meta name="theme-color" content="#121212" />
     <title>OSfit</title>
     <link rel="stylesheet" href="/src/estilos.css" />
+    <!-- Después de `estilos.css`, a propósito: a igual especificidad gana el que va último. -->
+    <link rel="stylesheet" href="/src/estiloPixel.css" />
+    <!--
+      El estilo elegido en Ajustes, puesto antes de que se pinte nada. Va en línea y no en el
+      bundle por lo mismo que el esqueleto: el bundle tarda, y sin esto la página se pintaría
+      primero en clásico y saltaría a pixel a la vista. Gemelo de `CLAVE_ESTILO` y de
+      `URL_FUENTES` (`estilo.ts`, `tarjetaAjustes.ts`). El `try` es porque nombrar
+      `localStorage` puede tirar (ver `almacenesDelNavegador`).
+    -->
+    <script>
+      try {
+        if (localStorage.getItem("osfit.estilo") === "pixel") {
+          document.documentElement.setAttribute("data-estilo", "pixel");
+          var fuentes = document.createElement("link");
+          fuentes.id = "fuentes-pixel";
+          fuentes.rel = "stylesheet";
+          fuentes.href = "https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Pixelify+Sans:wght@400..700&display=swap";
+          document.head.appendChild(fuentes);
+        }
+      } catch (e) {}
+    </script>
   </head>
   <body>
     <!--

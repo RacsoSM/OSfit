@@ -581,3 +581,43 @@ body.menu-abierto { overflow: hidden; }
   height: 40px; border-radius: 10px; background: var(--superficie-alta);
 }
 .ranking-esqueleto div + div { margin-top: 6px; }
+
+/* Ajustes. El combo es un `<select>` nativo (ver `tarjetaAjustes.ts`): acá solo se le cambia
+   la cara de la caja cerrada para que se vea como las `.opcion` de la página. La flecha va
+   aparte porque `appearance: none` se lleva la del sistema. */
+.ajuste-etiqueta { display: block; font-size: 14px; font-weight: 600; margin: 6px 2px 8px; }
+.selector { position: relative; }
+.selector-campo {
+  width: 100%; appearance: none; -webkit-appearance: none;
+  border: 1px solid var(--superficie-alta); border-radius: 12px;
+  padding: 12px 40px 12px 14px; min-height: 48px;
+  background: var(--superficie-alta); color: var(--texto);
+  font: inherit; font-size: 15px; font-weight: 600; cursor: pointer;
+}
+.selector-campo:focus-visible { outline: 2px solid var(--primario); outline-offset: 2px; }
+.selector-flecha {
+  position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+  color: var(--primario); pointer-events: none; font-size: 14px;
+}
+.ajuste-nota { font-size: 13px; margin: 10px 2px 0; }
+.ajuste-tenue { color: var(--texto-tenue); font-size: 12px; margin-top: 4px; }
+
+/* La cortina del cambio de estilo (`cambiarConCortina`). Vive fuera de los estilos porque
+   sirve en las dos direcciones: entrar al pixel y volver al clásico. Cada cuadro crece en
+   cuatro escalones y no de forma continua: crecer suave delataría que no son píxeles. */
+.cortina {
+  --celda-cortina: 180ms;
+  position: fixed; inset: 0; z-index: 200; overflow: hidden; pointer-events: auto;
+  display: grid; grid-template-columns: repeat(var(--columnas, 8), 1fr); align-content: start;
+}
+.cortina i {
+  aspect-ratio: 1; background: var(--primario); transform: scale(0);
+  animation: cortina-cubrir var(--celda-cortina) steps(4, end) var(--retraso, 0ms) forwards;
+}
+.cortina i.oscuro { background: var(--primario-oscuro); }
+.cortina.abriendo i { transform: scale(1); animation-name: cortina-abrir; }
+@keyframes cortina-cubrir { from { transform: scale(0); } to { transform: scale(1.02); } }
+@keyframes cortina-abrir { from { transform: scale(1.02); } to { transform: scale(0); } }
+
+/* El paisaje pixel (`fondoPixel.ts`) solo existe para el estilo pixel; fuera de él, nada. */
+.fondo-pixel { display: none; }

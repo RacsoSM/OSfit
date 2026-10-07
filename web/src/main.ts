@@ -22,6 +22,8 @@ import { mesAnterior, type Tirada } from "./tirada";
 import { obtenerRanking } from "./acciones";
 import { modalRuleta, conectarRuleta } from "./ui/ruleta";
 import { conectarRanking, type EstadoRanking } from "./ui/tarjetaRanking";
+import { almacenDeEstilo, conectarAjustes, ponerEstilo } from "./ui/tarjetaAjustes";
+import { estiloGuardado, type IdEstilo } from "./estilo";
 import { credencialLista, huellaDeLaSesion, iniciarSesion, storage } from "./firebase";
 import { almacenesDelNavegador, saludDeLosAlmacenes } from "./sesion";
 import type { MotivoSinAcceso, ResultadoSesion } from "./sesion";
@@ -43,6 +45,14 @@ import {
 import type { VideoConUrl } from "./ui/tarjetaVideos";
 
 const app = document.querySelector<HTMLElement>("#app")!;
+
+/**
+ * El estilo se pone antes que nada, incluso antes de la sesión: así el candado y la pantalla
+ * de sin conexión también salen en el estilo que eligió. El atributo ya lo puso el script de
+ * `index.html`; esto agrega lo que el CSS del estilo necesita (fuentes, paisaje).
+ */
+let estilo: IdEstilo = estiloGuardado(almacenDeEstilo());
+ponerEstilo(estilo);
 
 /**
  * De qué bundle salió esta pantalla.
@@ -352,7 +362,7 @@ async function arrancar(): Promise<void> {
     actualizarCabecera(activa.id === "inicio" ? null : activa.titulo);
     contenido.innerHTML = contenidoDe(activa, {
       cliente, hoy, asistencias, mesVisible, yaAviso, medallas, logros,
-      tiradaEsteMes, tiradaMesAnterior, ranking,
+      tiradaEsteMes, tiradaMesAnterior, ranking, estilo,
     });
     pintarVideos(activa.contenedorPropio === "videos");
     pintarMenu(activa.id, cliente.nombre);
@@ -370,6 +380,13 @@ async function arrancar(): Promise<void> {
     if (activa.id === "ranking") {
       conectarRanking(pintar, () => {
         cargarRanking();
+        pintar();
+      });
+      return;
+    }
+    if (activa.id === "ajustes") {
+      conectarAjustes(estilo, (nuevo) => {
+        estilo = nuevo;
         pintar();
       });
       return;

@@ -1,4 +1,5 @@
 import type { Asistencia, Cliente, LogroPersonalOtorgado, MedallaOtorgada } from "./datos";
+import type { IdEstilo } from "./estilo";
 import type { Tirada } from "./tirada";
 import { tarjetaDia } from "./ui/tarjetaDia";
 import { tarjetasStats } from "./ui/tarjetasStats";
@@ -7,6 +8,7 @@ import { accionHoyNoPuedo, tarjetaRevivir } from "./ui/accionFalta";
 import { calendario } from "./ui/calendario";
 import { seccionVacia, tarjetaLogrosPersonales, tarjetaMedallas } from "./ui/tarjetaInsignias";
 import { tarjetaRanking, type EstadoRanking } from "./ui/tarjetaRanking";
+import { tarjetaAjustes } from "./ui/tarjetaAjustes";
 
 /**
  * Las ventanas de la página y lo que pinta cada una.
@@ -32,6 +34,8 @@ export interface DatosCliente {
   tiradaMesAnterior: Tirada | null;
   /** Lo último que devolvió `obtenerRanking`; lo carga `main.ts` al entrar a la ventana. */
   ranking: EstadoRanking;
+  /** El estilo elegido en Ajustes. No viene de Firestore: lo guarda el navegador. */
+  estilo: IdEstilo;
 }
 
 export interface Ventana {
@@ -84,7 +88,10 @@ export const VENTANAS: readonly Ventana[] = [
     pintar: (d) => tarjetaLogrosPersonales(d.logros),
   },
   { id: "videos", titulo: "Videos", icono: "🎬", grupo: "principal", contenedorPropio: "videos" },
-  { id: "ajustes", titulo: "Ajustes", icono: "⚙️", grupo: "pie", proximamente: true },
+  {
+    id: "ajustes", titulo: "Ajustes", icono: "⚙️", grupo: "pie",
+    pintar: (d) => tarjetaAjustes(d.estilo),
+  },
 ];
 
 /** Un id que no está en el registro (un `history.state` viejo, por ejemplo) cae en Inicio. */

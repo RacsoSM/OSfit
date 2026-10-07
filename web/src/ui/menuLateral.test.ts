@@ -21,8 +21,10 @@ describe("panelMenu", () => {
     expect(opciones(pie)).toEqual(["Ajustes"]);
   });
 
-  it("las ventanas por venir llevan la etiqueta Pronto", () => {
-    expect(html.match(/class="menu-pronto"/g)).toHaveLength(1);
+  it("las ventanas por venir llevan la etiqueta Pronto, y las demás no", () => {
+    expect(html).not.toContain(`class="menu-pronto"`);
+    const conUnaPorVenir = VENTANAS.map((v) => (v.id === "ajustes" ? { ...v, proximamente: true } : v));
+    expect(panelMenu(conUnaPorVenir, "Ana").match(/class="menu-pronto"/g)).toHaveLength(1);
   });
 
   it("escapa el nombre", () => {

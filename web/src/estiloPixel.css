@@ -1,0 +1,384 @@
+/*
+ * El estilo pixel art. Se elige en Ajustes y cuelga entero de `data-estilo="pixel"` en <html>
+ * (ver `estilo.ts`): sin ese atributo no aplica ni una regla de este archivo, y la página es
+ * exactamente la clásica.
+ *
+ * Se carga DESPUÉS de `estilos.css` (orden de los <link> en `index.html`) y cada regla lleva
+ * `:root[data-estilo="pixel"]`, que suma especificidad. Las dos cosas a la vez: así gana a
+ * las reglas clásicas de dos clases (`.hoy-acciones .boton`) sin un solo `!important`.
+ *
+ * Tres ideas sostienen todo el estilo:
+ *  1. Nada es redondo ni suave. `border-radius: 0` en todo, degradados en franjas con cortes
+ *     duros en vez de transiciones, animaciones con `steps()`.
+ *  2. El borde de "8 bits" no es un `border`: son cuatro sombras sin difuminar, una por lado,
+ *     corridas un píxel (`--px`). Las esquinas quedan sin pintar y eso dibuja la esquina
+ *     mellada de los cuadros de diálogo de los juegos viejos.
+ *  3. La paleta de la clienta se respeta. Cambian los neutros (fondo, superficies) y la forma;
+ *     `--primario*` sigue siendo lo que eligió su entrenador.
+ */
+
+:root[data-estilo="pixel"] {
+  /* El tamaño de un píxel del dibujo en pantalla. Todo borde y toda sombra son múltiplos. */
+  --px: 4px;
+  /* La tinta del contorno: casi negro, con un dejo azul para que no se vea muerto. */
+  --tinta: #05040c;
+  --borde-px: #4a4285;
+  --fondo: #0e0b1f;
+  --superficie: #1b1636;
+  --superficie-alta: #2c2550;
+  --texto: #f4f1ff;
+  /* Sobre `--superficie` da 6.4:1; el clásico (#8A8A8A) quedaba gris sucio sobre el índigo. */
+  --texto-tenue: #a49ecb;
+  /* Los tres del calendario, más saturados: en 8 bits el color va a tope. Siguen diciendo lo
+     mismo (asistió, faltó, justificada) y en el mismo orden de tono. */
+  --verde: #38b764;
+  --rojo: #e43b44;
+  --ambar: #f7b538;
+  --letra-arcade: "Press Start 2P", ui-monospace, monospace;
+  --letra-pixel: "Pixelify Sans", ui-monospace, monospace;
+  /* El puntero, dibujado píxel a píxel (11×17, al doble). Solo se ve en computadora. */
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='34' viewBox='0 0 11 17' shape-rendering='crispEdges'%3E%3Cpath fill='%2305040c' d='M0 0h1v1h-1zM0 1h2v1h-2zM0 2h1v1h-1zM2 2h1v1h-1zM0 3h1v1h-1zM3 3h1v1h-1zM0 4h1v1h-1zM4 4h1v1h-1zM0 5h1v1h-1zM5 5h1v1h-1zM0 6h1v1h-1zM6 6h1v1h-1zM0 7h1v1h-1zM7 7h1v1h-1zM0 8h1v1h-1zM8 8h1v1h-1zM0 9h1v1h-1zM9 9h1v1h-1zM0 10h1v1h-1zM6 10h5v1h-5zM0 11h1v1h-1zM3 11h1v1h-1zM6 11h1v1h-1zM0 12h1v1h-1zM2 12h1v1h-1zM4 12h1v1h-1zM7 12h1v1h-1zM0 13h2v1h-2zM4 13h1v1h-1zM7 13h1v1h-1zM0 14h1v1h-1zM5 14h1v1h-1zM8 14h1v1h-1zM5 15h1v1h-1zM8 15h1v1h-1zM6 16h2v1h-2z'/%3E%3Cpath fill='white' d='M1 2h1v1h-1zM1 3h2v1h-2zM1 4h3v1h-3zM1 5h4v1h-4zM1 6h5v1h-5zM1 7h6v1h-6zM1 8h7v1h-7zM1 9h8v1h-8zM1 10h5v1h-5zM1 11h2v1h-2zM4 11h2v1h-2zM1 12h1v1h-1zM5 12h2v1h-2zM5 13h2v1h-2zM6 14h2v1h-2zM6 15h2v1h-2z'/%3E%3C/svg%3E") 0 0, auto;
+}
+
+:root[data-estilo="pixel"] body {
+  font-family: var(--letra-pixel);
+  font-size: 17px;
+  line-height: 1.4;
+  -webkit-font-smoothing: none;
+  -moz-osx-font-smoothing: unset;
+}
+:root[data-estilo="pixel"] ::selection { background: var(--primario); color: var(--sobre-primario); }
+
+/* Las líneas de un monitor de tubo, encima de todo y sin atrapar toques. Muy tenues: tienen que
+   sentirse, no estorbar la lectura. */
+:root[data-estilo="pixel"] body::after {
+  content: ""; position: fixed; inset: 0; z-index: 300; pointer-events: none;
+  background: repeating-linear-gradient(to bottom, rgba(0, 0, 0, 0.13) 0 1px, transparent 1px 3px);
+}
+
+/* ---------- El fondo: el clásico se va, entra el paisaje de `fondoPixel.ts` ---------- */
+
+:root[data-estilo="pixel"] .fondo { display: none; }
+/* El cielo en franjas, del fondo a un tono con la paleta de la clienta. Franjas y no
+   degradado: así pintaban el cielo las consolas que tenían pocos colores. */
+:root[data-estilo="pixel"] .fondo-pixel {
+  display: block; position: fixed; inset: 0; z-index: -1; pointer-events: none; overflow: hidden;
+  background: linear-gradient(to bottom,
+    var(--fondo) 0 38%,
+    color-mix(in srgb, var(--fondo) 88%, var(--primario-oscuro)) 38% 56%,
+    color-mix(in srgb, var(--fondo) 76%, var(--primario-oscuro)) 56% 70%,
+    color-mix(in srgb, var(--fondo) 62%, var(--primario-oscuro)) 70%);
+}
+/* 120×240 del dibujo a 4 px por píxel (`--px`), repetido. */
+:root[data-estilo="pixel"] .px-estrellas {
+  position: absolute; inset: 0;
+  background-size: 480px 960px; background-position: center top; image-rendering: pixelated;
+}
+:root[data-estilo="pixel"] .px-estrellas.uno { animation: px-titilar 2.4s steps(1, end) infinite; }
+:root[data-estilo="pixel"] .px-estrellas.dos { animation: px-titilar 3.1s steps(1, end) -1.2s infinite; opacity: 0.75; }
+:root[data-estilo="pixel"] .px-estrellas.tres { animation: px-titilar 3.7s steps(1, end) -2.3s infinite; opacity: 0.5; }
+@keyframes px-titilar { 50% { opacity: 0.2; } }
+
+/* Arriba, junto al ☰: es la única franja de cielo que las tarjetas nunca tapan. */
+:root[data-estilo="pixel"] .px-luna {
+  position: absolute; top: calc(14px + env(safe-area-inset-top)); right: max(72px, calc(50% - 240px + 64px));
+  width: 40px; height: 40px;
+}
+:root[data-estilo="pixel"] .px-luna-relleno { fill: #fff6d5; }
+:root[data-estilo="pixel"] .px-luna-borde { fill: #d8c27a; }
+
+/* La estrella fugaz: una cabeza de un píxel y una cola en dos escalones de brillo. Cruza en
+   menos de un segundo cada nueve, a saltos (`steps`), como un sprite. */
+:root[data-estilo="pixel"] .px-fugaz {
+  position: absolute; top: 12%; left: -40px; width: 36px; height: 4px;
+  background: linear-gradient(to left, #fff 0 8px, rgba(255, 255, 255, 0.55) 8px 20px,
+    rgba(255, 255, 255, 0.2) 20px);
+  opacity: 0;
+  animation: px-fugaz 9s infinite;
+}
+@keyframes px-fugaz {
+  0%, 62% { transform: translate(0, 0) rotate(18deg); opacity: 0; animation-timing-function: steps(1, end); }
+  63% { transform: translate(0, 0) rotate(18deg); opacity: 1; animation-timing-function: steps(14, end); }
+  72% { transform: translate(78vw, 26vw) rotate(18deg); opacity: 0; }
+  100% { transform: translate(78vw, 26vw) rotate(18deg); opacity: 0; }
+}
+
+/* Alto fijo y ancho completo, recortado por los lados (`slice` en el SVG): así el píxel del
+   dibujo mide lo mismo en un teléfono que en una computadora, en vez de inflarse. */
+:root[data-estilo="pixel"] .px-paisaje {
+  position: absolute; left: 0; right: 0; bottom: 0;
+  width: 100%; height: clamp(150px, 26vh, 240px);
+}
+:root[data-estilo="pixel"] .px-lejos { fill: color-mix(in srgb, var(--primario-oscuro) 50%, var(--fondo)); }
+:root[data-estilo="pixel"] .px-cerca { fill: color-mix(in srgb, var(--primario-oscuro) 30%, var(--tinta)); }
+:root[data-estilo="pixel"] .px-pinos { fill: color-mix(in srgb, var(--primario-oscuro) 14%, var(--tinta)); }
+
+/* ---------- Letras ---------- */
+
+/* La letra de arcade solo donde hay pocas palabras: títulos, el día y los números. */
+:root[data-estilo="pixel"] .saludo,
+:root[data-estilo="pixel"] .titulo-ventana,
+:root[data-estilo="pixel"] .hoy-dia,
+:root[data-estilo="pixel"] .numero,
+:root[data-estilo="pixel"] .tarjeta-titulo,
+:root[data-estilo="pixel"] .menu-nombre,
+:root[data-estilo="pixel"] .ranking-puesto,
+:root[data-estilo="pixel"] .confirmar-titulo,
+:root[data-estilo="pixel"] .ruleta-pregunta {
+  font-family: var(--letra-arcade);
+  font-weight: 400;
+  letter-spacing: 0;
+}
+:root[data-estilo="pixel"] .saludo { font-size: 17px; line-height: 1.7; margin-top: 10px; max-width: 100%; overflow: hidden; }
+:root[data-estilo="pixel"] .titulo-ventana { font-size: 17px; line-height: 1.7; margin-top: 10px; }
+/* El nombre pierde el degradado (no se puede recortar en franjas sobre texto) y gana una sombra
+   dura de un píxel, que es como se resaltaba un nombre en un juego. */
+:root[data-estilo="pixel"] .saludo-nombre {
+  background: none; color: var(--primario);
+  text-shadow: 2px 2px 0 var(--primario-oscuro);
+}
+/* El cursor de la máquina de escribir pasa a ser un bloque lleno, el de una terminal vieja. */
+:root[data-estilo="pixel"] .saludo.escribiendo,
+:root[data-estilo="pixel"] .saludo.parpadeando { border-right: 0.6em solid var(--primario); }
+
+:root[data-estilo="pixel"] .tarjeta-titulo {
+  font-size: 9px; line-height: 1.6; text-transform: uppercase;
+  display: flex; align-items: center; gap: 8px; margin-bottom: 10px;
+}
+/* El ▸ de los menús de RPG, dibujado en escalones con `clip-path` en vez de un carácter: la
+   letra de arcade no lo trae, y el del sistema saldría suave. */
+:root[data-estilo="pixel"] .tarjeta-titulo::before {
+  content: ""; flex: none; width: 6px; height: 10px; background: currentColor;
+  clip-path: polygon(0 0, 34% 0, 34% 20%, 67% 20%, 67% 40%, 100% 40%, 100% 60%, 67% 60%,
+    67% 80%, 34% 80%, 34% 100%, 0 100%);
+}
+:root[data-estilo="pixel"] .numero { font-size: 22px; line-height: 1.2; margin: 8px 0 4px; }
+
+/* ---------- Tarjetas ---------- */
+
+:root[data-estilo="pixel"] .tarjeta {
+  border-radius: 0;
+  margin: var(--px) var(--px) calc(14px + var(--px) * 2);
+  box-shadow:
+    /* Bisel: luz arriba a la izquierda, sombra abajo a la derecha. */
+    inset var(--px) var(--px) 0 rgba(255, 255, 255, 0.06),
+    inset calc(var(--px) * -1) calc(var(--px) * -1) 0 rgba(0, 0, 0, 0.28),
+    /* El borde mellado: un lado por sombra. */
+    0 calc(var(--px) * -1) 0 var(--borde-px),
+    0 var(--px) 0 var(--borde-px),
+    calc(var(--px) * -1) 0 0 var(--borde-px),
+    var(--px) 0 0 var(--borde-px),
+    /* El grosor de abajo, que despega la tarjeta del fondo. */
+    0 calc(var(--px) * 2) 0 var(--tinta);
+}
+:root[data-estilo="pixel"] .fila { gap: calc(12px + var(--px) * 2); }
+
+/* La tarjeta del día: el degradado de la paleta en cuatro franjas, con un tramado de tablero
+   de ajedrez por encima. Es el dithering con el que las consolas fingían más colores de los
+   que tenían. */
+:root[data-estilo="pixel"] .hoy {
+  --borde-px: var(--primario-claro);
+  background:
+    conic-gradient(rgba(0, 0, 0, 0.1) 25%, transparent 0 50%, rgba(0, 0, 0, 0.1) 0 75%, transparent 0)
+      0 0 / 8px 8px,
+    linear-gradient(165deg,
+      var(--primario-oscuro) 0 28%,
+      color-mix(in srgb, var(--primario-oscuro) 62%, var(--primario)) 28% 52%,
+      color-mix(in srgb, var(--primario-oscuro) 30%, var(--primario)) 52% 76%,
+      var(--primario) 76%);
+  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.35);
+}
+:root[data-estilo="pixel"] .hoy-dia { font-size: 16px; line-height: 1.6; margin: 8px 0; }
+:root[data-estilo="pixel"] .ejercicio { border-top: 2px dashed rgba(255, 255, 255, 0.25); }
+:root[data-estilo="pixel"] .ejercicio-series { border-radius: 0; box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.3); }
+:root[data-estilo="pixel"] .hoy-acciones { border-top: 2px dashed rgba(255, 255, 255, 0.3); }
+
+/* ---------- Botones y controles ---------- */
+
+:root[data-estilo="pixel"] .boton {
+  border: 0; border-radius: 0;
+  font-family: var(--letra-pixel); font-size: 17px; font-weight: 600;
+  margin-bottom: calc(var(--px) * 2);
+  box-shadow:
+    inset 0 calc(var(--px) * -1) 0 rgba(0, 0, 0, 0.35),
+    inset 0 var(--px) 0 rgba(255, 255, 255, 0.28),
+    0 calc(var(--px) * -1) 0 var(--tinta),
+    0 var(--px) 0 var(--tinta),
+    calc(var(--px) * -1) 0 0 var(--tinta),
+    var(--px) 0 0 var(--tinta),
+    0 calc(var(--px) * 2) 0 rgba(0, 0, 0, 0.5);
+}
+/* Al apretarlo baja un píxel y pierde el grosor: se siente como un botón físico, que es lo que
+   el clásico no tiene. */
+:root[data-estilo="pixel"] .boton:active:not(:disabled) {
+  transform: translateY(var(--px));
+  box-shadow:
+    inset 0 var(--px) 0 rgba(0, 0, 0, 0.3),
+    0 calc(var(--px) * -1) 0 var(--tinta),
+    0 var(--px) 0 var(--tinta),
+    calc(var(--px) * -1) 0 0 var(--tinta),
+    var(--px) 0 0 var(--tinta);
+}
+:root[data-estilo="pixel"] .boton:hover:not(:disabled) { filter: brightness(1.1); }
+:root[data-estilo="pixel"] .boton + .boton { margin-top: calc(8px + var(--px) * 2); }
+:root[data-estilo="pixel"] .fila-botones { gap: calc(10px + var(--px) * 2); }
+
+:root[data-estilo="pixel"] .opcion,
+:root[data-estilo="pixel"] .campo-libre {
+  border-radius: 0; border: 2px solid rgba(255, 255, 255, 0.1);
+  font-family: var(--letra-pixel); font-size: 16px;
+}
+:root[data-estilo="pixel"] .opcion.elegida {
+  border-color: var(--primario);
+  box-shadow: var(--px) var(--px) 0 var(--tinta);
+}
+:root[data-estilo="pixel"] .aviso-ok,
+:root[data-estilo="pixel"] .aviso-error { border-radius: 0; border-left-width: calc(var(--px) * 2); }
+
+/* El combo de Ajustes, con el mismo borde mellado de las tarjetas. */
+:root[data-estilo="pixel"] .selector { margin: var(--px); }
+:root[data-estilo="pixel"] .selector-campo {
+  border: 0; border-radius: 0; font-family: var(--letra-pixel); font-size: 17px;
+  background: var(--fondo);
+  box-shadow:
+    inset var(--px) var(--px) 0 rgba(0, 0, 0, 0.35),
+    0 calc(var(--px) * -1) 0 var(--borde-px),
+    0 var(--px) 0 var(--borde-px),
+    calc(var(--px) * -1) 0 0 var(--borde-px),
+    var(--px) 0 0 var(--borde-px);
+}
+:root[data-estilo="pixel"] .selector-campo:focus-visible { outline: var(--px) solid var(--primario); outline-offset: var(--px); }
+:root[data-estilo="pixel"] .selector-campo option { background: var(--superficie); color: var(--texto); }
+/* La flecha también en escalones: el ▾ de texto se esconde y se dibuja un triángulo de píxeles. */
+:root[data-estilo="pixel"] .selector-flecha { font-size: 0; width: 12px; height: 8px; background: var(--primario);
+  clip-path: polygon(0 0, 100% 0, 100% 25%, 84% 25%, 84% 50%, 67% 50%, 67% 75%, 34% 75%,
+    34% 50%, 17% 50%, 17% 25%, 0 25%);
+}
+
+/* ---------- Calendario ---------- */
+
+:root[data-estilo="pixel"] .cal-nav button {
+  border-radius: 0; font-family: var(--letra-arcade); font-size: 12px;
+  box-shadow: inset -2px -2px 0 rgba(0, 0, 0, 0.35), inset 2px 2px 0 rgba(255, 255, 255, 0.12);
+}
+:root[data-estilo="pixel"] .cal span {
+  border-radius: 0; font-size: 14px;
+  box-shadow: inset -2px -2px 0 rgba(0, 0, 0, 0.3), inset 2px 2px 0 rgba(255, 255, 255, 0.07);
+}
+:root[data-estilo="pixel"] .cal span.vacia { box-shadow: none; }
+:root[data-estilo="pixel"] .cal span.ok,
+:root[data-estilo="pixel"] .cal span.no,
+:root[data-estilo="pixel"] .cal span.just {
+  box-shadow: inset -2px -2px 0 rgba(0, 0, 0, 0.3), inset 2px 2px 0 rgba(255, 255, 255, 0.3);
+}
+:root[data-estilo="pixel"] .cal span.hoy-celda { outline: 3px solid var(--primario); outline-offset: 1px; }
+:root[data-estilo="pixel"] .punto { border-radius: 0; }
+
+/* ---------- Insignias, videos, ranking ---------- */
+
+/* Si la imagen viene más chica que su hueco, que se agrande en bloques y no borrosa. */
+:root[data-estilo="pixel"] .insignia-img { image-rendering: pixelated; }
+:root[data-estilo="pixel"] .insignia-img.generica {
+  border-radius: 0;
+  box-shadow: inset calc(var(--px) * -1) calc(var(--px) * -1) 0 rgba(0, 0, 0, 0.3),
+    inset var(--px) var(--px) 0 rgba(255, 255, 255, 0.08);
+}
+:root[data-estilo="pixel"] .video-resumen,
+:root[data-estilo="pixel"] .video-no-disponible { border-radius: 0; }
+
+:root[data-estilo="pixel"] .segmentos { border-radius: 0; }
+:root[data-estilo="pixel"] .segmento { border-radius: 0; font-family: var(--letra-pixel); font-size: 16px; }
+:root[data-estilo="pixel"] .segmento.activo {
+  box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.3), inset 0 3px 0 rgba(255, 255, 255, 0.25);
+}
+:root[data-estilo="pixel"] .ranking-fila { border-radius: 0; }
+:root[data-estilo="pixel"] .ranking-fila.tuya { box-shadow: var(--px) var(--px) 0 var(--tinta); }
+:root[data-estilo="pixel"] .ranking-puesto { font-size: 11px; }
+/* El brillo difuso de las medallas pasa a sombra dura, del mismo metal pero oscuro. */
+:root[data-estilo="pixel"] .nombre-oro { text-shadow: 2px 2px 0 #7a5400; }
+:root[data-estilo="pixel"] .nombre-plata { text-shadow: 2px 2px 0 #4d535c; }
+:root[data-estilo="pixel"] .nombre-bronce { text-shadow: 2px 2px 0 #6e3d12; }
+:root[data-estilo="pixel"] .ranking-esqueleto div { border-radius: 0; }
+
+/* ---------- Cabecera y menú ---------- */
+
+:root[data-estilo="pixel"] .cabecera-menu,
+:root[data-estilo="pixel"] .menu-cerrar { border-radius: 0; }
+:root[data-estilo="pixel"] .cabecera-menu:focus-visible,
+:root[data-estilo="pixel"] .menu-opcion:focus-visible,
+:root[data-estilo="pixel"] .menu-cerrar:focus-visible { outline-width: 3px; outline-offset: 0; }
+
+/* El velo, tramado en vez de traslúcido: un tablero de píxeles negros que deja ver la mitad
+   de la página. Así oscurecían las pausas los juegos que no tenían transparencia. */
+:root[data-estilo="pixel"] .menu-velo {
+  background: conic-gradient(rgba(0, 0, 0, 0.85) 25%, transparent 0 50%, rgba(0, 0, 0, 0.85) 0 75%, transparent 0)
+    0 0 / 4px 4px, rgba(0, 0, 0, 0.25);
+}
+/* El panel es un cuadro de diálogo de RPG: borde claro por dentro, tinta por fuera. */
+:root[data-estilo="pixel"] .menu-panel {
+  box-shadow: inset var(--px) 0 0 var(--borde-px), inset calc(var(--px) * 2) 0 0 var(--tinta);
+  padding-left: calc(12px + var(--px) * 2);
+}
+:root[data-estilo="pixel"] .menu-abierto .menu-panel {
+  box-shadow: inset var(--px) 0 0 var(--borde-px), inset calc(var(--px) * 2) 0 0 var(--tinta),
+    calc(var(--px) * -2) 0 0 rgba(0, 0, 0, 0.5);
+}
+/* El panel entra a saltos, como los menús de los juegos, y no deslizándose suave. */
+:root[data-estilo="pixel"] .menu-panel { transition-timing-function: steps(5, end); }
+:root[data-estilo="pixel"] .menu-velo { transition-timing-function: steps(3, end); }
+:root[data-estilo="pixel"] .menu-nombre { font-size: 12px; line-height: 1.6; }
+:root[data-estilo="pixel"] .menu-opcion { border-radius: 0; font-size: 17px; }
+/* El cursor de selección de los RPG: un ▸ de píxeles que parpadea junto a la ventana activa.
+   Las demás llevan el mismo hueco, invisible, para que el texto no baile al cambiar. */
+:root[data-estilo="pixel"] .menu-opcion::before {
+  content: ""; flex: none; width: 6px; height: 10px; margin-right: -4px; background: currentColor;
+  visibility: hidden;
+  clip-path: polygon(0 0, 34% 0, 34% 20%, 67% 20%, 67% 40%, 100% 40%, 100% 60%, 67% 60%,
+    67% 80%, 34% 80%, 34% 100%, 0 100%);
+}
+:root[data-estilo="pixel"] .menu-opcion.activa {
+  background: var(--superficie-alta);
+  box-shadow: inset calc(var(--px) * -1) calc(var(--px) * -1) 0 rgba(0, 0, 0, 0.3);
+}
+:root[data-estilo="pixel"] .menu-opcion.activa::before {
+  visibility: visible; animation: px-parpadeo 1s steps(1, end) infinite;
+}
+@keyframes px-parpadeo { 50% { opacity: 0; } }
+
+/* ---------- Esqueleto de carga ---------- */
+
+:root[data-estilo="pixel"] .esq-saludo,
+:root[data-estilo="pixel"] .esq-menu,
+:root[data-estilo="pixel"] .esq-linea,
+:root[data-estilo="pixel"] .esq-cal-nav,
+:root[data-estilo="pixel"] .esq-cuadricula span,
+:root[data-estilo="pixel"] .esq-leyenda { border-radius: 0; }
+/* El latido también a saltos. */
+:root[data-estilo="pixel"] .esqueleto { animation-timing-function: steps(4, end); }
+
+/* ---------- La ruleta ---------- */
+
+/* La mesa conserva sus colores de casino (ver `estilos.css`), pero con esquinas en escalón y
+   un marco de latón mellado. La rueda se dibuja sin suavizado: el círculo sale en escalones,
+   como si fuera un sprite. */
+:root[data-estilo="pixel"] .ruleta-caja {
+  border-radius: 0; border: 0;
+  box-shadow:
+    inset 0 0 90px 26px rgba(0, 0, 0, 0.72),
+    0 calc(var(--px) * -1) 0 #c9a24a,
+    0 var(--px) 0 #c9a24a,
+    calc(var(--px) * -1) 0 0 #c9a24a,
+    var(--px) 0 0 #c9a24a,
+    0 calc(var(--px) * 3) 0 var(--tinta);
+}
+:root[data-estilo="pixel"] .ruleta-svg { shape-rendering: crispEdges; }
+:root[data-estilo="pixel"] .ruleta-ficha { border-radius: 0; }
+:root[data-estilo="pixel"] .ruleta-pregunta { font-size: 12px; line-height: 1.7; }
+
+/* ---------- Menos movimiento ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  :root[data-estilo="pixel"] .px-estrellas,
+  :root[data-estilo="pixel"] .menu-opcion.activa::before { animation: none; }
+  :root[data-estilo="pixel"] .px-fugaz { display: none; }
+}
