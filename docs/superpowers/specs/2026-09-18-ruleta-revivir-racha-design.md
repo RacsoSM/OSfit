@@ -354,3 +354,21 @@ cambio es solo de presentación — el servidor no se toca.
 | `app/.../CupoRevivesCalculator.kt` | el castigo como parámetro |
 | `app/.../ClienteDetailViewModel.kt` | leer la ruleta del mes anterior |
 | `app/.../ClienteDetailScreen.kt` | el máximo real y el motivo |
+
+## Rediseño 2026-10-07: rueda de concurso
+
+La ruleta de casino (mesa inclinada, madera, bola) se reemplaza por una rueda de concurso
+copiada de un video de referencia, con los mismos dos colores (rojo y negro):
+
+- **Estilo:** 8 gajos alternos con degradado y destellos, varillas negras, aro dorado con 16
+  focos que parpadean, halo rojo/dorado girando, eje dorado y un pin arriba cuya gema toma el
+  color del gajo que tiene debajo.
+- **Tiempos (medidos del video):** entrada como silueta blanca que crece y se colorea (~0,4 s);
+  arranque de 1 s hasta 2 vueltas/s; giro libre desenfocado (mínimo 3,5 s con el arranque);
+  frenado de 5,5 s con la velocidad inicial igualada a la de crucero; 0,6 s quieta; destello
+  blanco de 0,5 s; los gajos pasan al color ganador uno a uno en horario cada 0,15 s; 1,1 s de
+  pausa; salida de 0,8 s (se encoge, rebota grande en blanco y se apaga).
+- La tirada de prueba hace la secuencia entera y la rueda vuelve con su entrada. Tras la real,
+  la rueda no vuelve: queda el acuse.
+- Código: `web/src/ui/ruletaEfectos.ts` (entrada, desenfoque/gema, final), `ruletaGiro.ts`
+  (geometría, arranque y frenado), `ruleta.ts` (dibujo) y `estilos.css`.

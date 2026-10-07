@@ -4,13 +4,14 @@ import {
   MINIMO_GIRO_LIBRE_MS,
   COLORES,
   SECTORES,
-  arcoDelBorde,
+  anguloActual,
   arcoDelSector,
+  colorBajoElPuntero,
   frenar,
   girarLibre,
-  puntoDelAnillo,
   varillaEn,
 } from "./ruletaGiro";
+import { celebrar, entrar, pintarGema, vigilar } from "./ruletaEfectos";
 import type { Color } from "./ruletaGiro";
 
 /**
@@ -42,8 +43,19 @@ interface Estado {
 
 const estado: Estado = { abierta: false, color: null, fase: { tipo: "propuesta" } };
 
+/**
+ * Si el próximo pintado de la rueda tiene que hacer la entrada. Sólo al abrir el modal y al
+ * volver de una tirada de prueba: cualquier otro repintado (elegir ficha, por ejemplo) rehace
+ * el nodo y no debe volver a presentarla.
+ */
+let entradaPendiente = false;
+
+/** Espera [ms] milisegundos. */
+const esperar = (ms: number) => new Promise((listo) => setTimeout(listo, ms));
+
 export function abrirRuleta(): void {
   estado.abierta = true;
+  entradaPendiente = true;
   estado.color = null;
   estado.fase = { tipo: "propuesta" };
 }
@@ -101,30 +113,78 @@ function acuse(fase: Fase): string {
   }
 }
 
-/** Tachuelas del aro. Van en el aro, que NO gira: en una ruleta de verdad tampoco. */
-const TACHUELAS = 16;
+/** Focos del aro. Van en el aro, que NO gira, y parpadean alternos como en el video. */
+const FOCOS = 16;
+
+/** Destellos sobre los gajos. Giran con ellos: en el video van pegados a la pintura. */
+const DESTELLOS = 18;
 
 /**
- * El disco. Las casillas salen de [SECTORES] y no de un `d` escrito a mano: así el dibujo no
- * puede discrepar del aterrizaje que calcula `rotacionDestino` (entrada 28 del backlog).
+ * Posiciones de los destellos. Pseudoazar con semilla fija, no `Math.random()`: `pintarRuleta`
+ * compara el HTML contra lo último pintado, y un dibujo distinto en cada llamada repintaría la
+ * rueda en cada snapshot de Firestore y la congelaría a media vuelta.
+ */
+function destellos(): string {
+  let semilla = 7;
+  const azar = () => {
+    semilla = (semilla * 16807) % 2147483647;
+    return (semilla - 1) / 2147483646;
+  };
+  return Array.from({ length: DESTELLOS }, (_, i) => {
+    const rad = azar() * 2 * Math.PI;
+    const r = 16 + Math.sqrt(azar()) * 62;
+    const x = (100 + r * Math.cos(rad)).toFixed(1);
+    const y = (100 + r * Math.sin(rad)).toFixed(1);
+    const tam = (1.6 + azar() * 3.2).toFixed(1);
+    const retraso = ((i * 0.37) % 1.6).toFixed(2);
+    return `<circle class="ruleta-destello" cx="${x}" cy="${y}" r="${tam}"
+              style="animation-delay:-${retraso}s"></circle>`;
+  }).join("");
+}
+
+/** El puntero: un pin dorado con la punta hacia abajo, tocando los gajos. */
+const PIN =
+  "M100,24 L89,9 Q86,5 86,0 L86,-9 Q86,-17 94,-17 L106,-17 Q114,-17 114,-9 " +
+  "L114,0 Q114,5 111,9 Z";
+
+/** La gema del pin: un octógono centrado en (100, -4). */
+const GEMA = Array.from({ length: 8 }, (_, i) => {
+  const rad = ((i * 45 + 22.5) * Math.PI) / 180;
+  return `${(100 + 9 * Math.cos(rad)).toFixed(2)},${(-4 + 9 * Math.sin(rad)).toFixed(2)}`;
+}).join(" ");
+
+/** El degradado de un gajo: claro hacia el eje y oscuro hacia el aro, como en el video. */
+function degradado(color: Color, claro: string, medio: string, oscuro: string): string {
+  return `<radialGradient id="ruleta-gajo-${color}" gradientUnits="userSpaceOnUse"
+                          cx="100" cy="100" r="84">
+            <stop offset="0%" stop-color="${claro}"></stop>
+            <stop offset="62%" stop-color="${medio}"></stop>
+            <stop offset="100%" stop-color="${oscuro}"></stop>
+          </radialGradient>`;
+}
+
+/**
+ * La rueda de concurso, copiada del video de referencia con nuestros dos colores: aro dorado
+ * con focos, halo, gajos con destellos separados por varillas negras, eje dorado y un pin
+ * arriba cuya gema toma el color del gajo que tiene debajo.
  *
- * **Qué gira y qué no, que es de lo que depende que parezca metal.** Sólo el `<g>` de las
- * casillas y sus varillas da vueltas. El aro, las tachuelas, el cono, el sombreado de domo, el
- * reflejo y el eje se quedan quietos, porque describen de dónde viene la luz — y una luz que
- * gira con la pieza deja de leerse como luz y pasa a leerse como calcomanía.
+ * **Qué gira y qué no.** Sólo `#ruleta-rueda` (gajos, tintes, varillas y destellos). El aro, los
+ * focos, el eje y el pin se quedan quietos. El grupo que gira necesita `transform-box:
+ * fill-box` en el CSS, o `rotate()` pivota sobre el origen del viewBox.
  *
- * El cono podría ir dentro del grupo, porque en una ruleta gira con ella, pero se deja fuera:
- * es simétrico, nadie puede notar que no rota, y fuera recibe la luz fija sin tener que
- * compensarla.
- *
- * El `<g>` necesita `transform-box: fill-box` en el CSS, o `rotate()` pivota sobre el origen
- * del viewBox en vez de sobre el centro del disco.
+ * Los `ruleta-tinte` son una copia de cada gajo, invisible, que el final (`celebrar`) pinta del
+ * color ganador uno a uno. La silueta `ruleta-blanco` es el destello blanco de la entrada, del
+ * final y de la salida.
  *
  * `aria-hidden` porque es decoración: quien no lo ve se entera por el acuse, que es texto.
  */
-function rueda(parada: boolean): string {
+function rueda(): string {
   const casillas = SECTORES.map(
     (s) => `<path class="ruleta-sector ${s.color}" d="${arcoDelSector(s)}"></path>`
+  ).join("");
+
+  const tintes = SECTORES.map(
+    (s) => `<path class="ruleta-tinte" d="${arcoDelSector(s)}"></path>`
   ).join("");
 
   const varillas = SECTORES.map((s) => {
@@ -132,115 +192,101 @@ function rueda(parada: boolean): string {
     return `<line class="ruleta-varilla" x1="${v.x1}" y1="${v.y1}" x2="${v.x2}" y2="${v.y2}"></line>`;
   }).join("");
 
-  const tachuelas = Array.from({ length: TACHUELAS }, (_, i) => {
-    const rad = (i * 2 * Math.PI) / TACHUELAS;
-    const x = (100 + 94.5 * Math.sin(rad)).toFixed(2);
-    const y = (100 - 94.5 * Math.cos(rad)).toFixed(2);
-    return `<circle class="ruleta-tachuela" cx="${x}" cy="${y}" r="2.1"></circle>`;
+  const focos = Array.from({ length: FOCOS }, (_, i) => {
+    const rad = ((i * 360) / FOCOS + 360 / FOCOS / 2) * (Math.PI / 180);
+    const x = (100 + 91 * Math.sin(rad)).toFixed(2);
+    const y = (100 - 91 * Math.cos(rad)).toFixed(2);
+    return `<circle class="ruleta-foco ${i % 2 ? "impar" : "par"}" cx="${x}" cy="${y}" r="2.7"></circle>`;
   }).join("");
 
-  /**
-   * La bola sólo se dibuja con la rueda quieta, y SIEMPRE a las 12. No hace falta calcular
-   * dónde: el frenado deja la casilla ganadora bajo el puntero, así que las 12 ES la casilla
-   * ganadora. Es lo que quita toda duda sobre dónde cayó, y lo hace siendo más realista y no
-   * menos — en una ruleta lo que dice el resultado es la bola, no una flecha.
-   */
-  const bola = parada
-    ? `<circle class="ruleta-bola" cx="${puntoDelAnillo(0).split(",")[0]}"
-               cy="${puntoDelAnillo(0).split(",")[1]}" r="6.4"></circle>`
-    : "";
+  // El halo: arcos alternos rojo y dorado, desenfocados, dando vueltas despacio alrededor del
+  // aro. Es el arcoíris del video traído a nuestros colores.
+  const halo = Array.from({ length: 12 }, (_, i) => {
+    const desde = ((i * 30 - 90) * Math.PI) / 180;
+    const hasta = (((i + 1) * 30 - 90) * Math.PI) / 180;
+    const p = (a: number) => `${(100 + 100 * Math.cos(a)).toFixed(2)},${(100 + 100 * Math.sin(a)).toFixed(2)}`;
+    return `<path class="ruleta-halo-arco ${i % 2 ? "oro" : "rojo"}"
+                  d="M${p(desde)} A100,100 0 0,1 ${p(hasta)}"></path>`;
+  }).join("");
 
   return `
-    <div class="ruleta-mesa">
-    <svg class="ruleta-svg" viewBox="-26 -26 252 252" aria-hidden="true" focusable="false">
+    <svg class="ruleta-svg" viewBox="-14 -24 228 238" aria-hidden="true" focusable="false">
       <defs>
-        <linearGradient id="ruleta-metal" x1="0.12" y1="0" x2="0.88" y2="1">
-          <stop offset="0%" stop-color="#f8efcb"></stop>
-          <stop offset="22%" stop-color="#cba750"></stop>
-          <stop offset="48%" stop-color="#7f6124"></stop>
-          <stop offset="70%" stop-color="#e7d294"></stop>
-          <stop offset="88%" stop-color="#9b7a2e"></stop>
-          <stop offset="100%" stop-color="#6d551d"></stop>
+        ${degradado("rojo", "#e0434d", "#b81f2c", "#7a1018")}
+        ${degradado("negro", "#4d4d57", "#25252b", "#09090b")}
+        <linearGradient id="ruleta-oro" x1="0.15" y1="0" x2="0.85" y2="1">
+          <stop offset="0%" stop-color="#fff2a8"></stop>
+          <stop offset="30%" stop-color="#f6c534"></stop>
+          <stop offset="55%" stop-color="#d99a12"></stop>
+          <stop offset="80%" stop-color="#f7cf45"></stop>
+          <stop offset="100%" stop-color="#b9780a"></stop>
         </linearGradient>
-        <!-- El domo: luz arriba a la izquierda y el borde de abajo apagándose. Es lo que hace
-             que un dibujo plano pase a parecer una pieza curva. -->
-        <radialGradient id="ruleta-domo" cx="34%" cy="26%" r="80%">
-          <stop offset="0%" stop-color="#ffffff" stop-opacity="0.30"></stop>
-          <stop offset="40%" stop-color="#ffffff" stop-opacity="0.04"></stop>
-          <stop offset="70%" stop-color="#000000" stop-opacity="0.14"></stop>
-          <stop offset="100%" stop-color="#000000" stop-opacity="0.52"></stop>
+        <radialGradient id="ruleta-eje" cx="38%" cy="32%" r="70%">
+          <stop offset="0%" stop-color="#fff8cf"></stop>
+          <stop offset="50%" stop-color="#f1bf35"></stop>
+          <stop offset="100%" stop-color="#a86d08"></stop>
         </radialGradient>
-        <radialGradient id="ruleta-reflejo" cx="50%" cy="38%" r="62%">
-          <stop offset="0%" stop-color="#ffffff" stop-opacity="0.42"></stop>
-          <stop offset="52%" stop-color="#ffffff" stop-opacity="0.16"></stop>
+        <radialGradient id="ruleta-foco-luz" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#ffffff"></stop>
+          <stop offset="45%" stop-color="#fff6c4"></stop>
+          <stop offset="100%" stop-color="#ffd23f"></stop>
+        </radialGradient>
+        <radialGradient id="ruleta-chispa" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#ffffff" stop-opacity="0.95"></stop>
+          <stop offset="35%" stop-color="#ffffff" stop-opacity="0.45"></stop>
           <stop offset="100%" stop-color="#ffffff" stop-opacity="0"></stop>
         </radialGradient>
-        <!-- El cono. Radial CENTRADO a propósito: así es invariante al giro y da igual que la
-             pieza rote o no, que es lo que permite sacarlo del grupo. -->
-        <!-- El cono. Radial CENTRADO a propósito: así es invariante al giro, da igual que la
-             pieza rote o no, y eso es lo que permite sacarlo del grupo que gira. -->
-        <radialGradient id="ruleta-cono" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stop-color="#5b5f68"></stop>
-          <stop offset="55%" stop-color="#3a3d44"></stop>
-          <stop offset="88%" stop-color="#23252a"></stop>
-          <stop offset="100%" stop-color="#4c505a"></stop>
-        </radialGradient>
-        <radialGradient id="ruleta-eje" cx="36%" cy="30%" r="75%">
-          <stop offset="0%" stop-color="#fdf6d8"></stop>
-          <stop offset="55%" stop-color="#c2a049"></stop>
-          <stop offset="100%" stop-color="#6d551d"></stop>
-        </radialGradient>
+        <filter id="ruleta-desenfoque-halo" x="-20%" y="-20%" width="140%" height="140%">
+          <feGaussianBlur stdDeviation="3"></feGaussianBlur>
+        </filter>
+        <filter id="ruleta-estela" x="-10%" y="-10%" width="120%" height="120%">
+          <feGaussianBlur id="ruleta-estela-desenfoque" stdDeviation="0"></feGaussianBlur>
+        </filter>
+        <filter id="ruleta-resplandor" x="-30%" y="-30%" width="160%" height="160%">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="4" result="halo"></feGaussianBlur>
+          <feMerge><feMergeNode in="halo"></feMergeNode><feMergeNode in="SourceGraphic"></feMergeNode></feMerge>
+        </filter>
         <filter id="ruleta-sombra" x="-30%" y="-30%" width="160%" height="160%">
-          <feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="#000" flood-opacity="0.55">
+          <feDropShadow dx="0" dy="3" stdDeviation="3" flood-color="#000" flood-opacity="0.5">
           </feDropShadow>
         </filter>
-        <filter id="ruleta-suavizar" x="-40%" y="-40%" width="180%" height="180%">
-          <feGaussianBlur stdDeviation="3.2"></feGaussianBlur>
-        </filter>
-        <!-- La madera del cubilete. Es el objeto que faltaba: una ruleta de verdad va
-             encastrada en un cuenco pulido, y sin él la rueda flotaba sobre un rectángulo de
-             color por muy bien iluminada que estuviera. -->
-        <linearGradient id="ruleta-madera" x1="0.1" y1="0" x2="0.9" y2="1">
-          <stop offset="0%" stop-color="#7d4a28"></stop>
-          <stop offset="26%" stop-color="#4e2b16"></stop>
-          <stop offset="52%" stop-color="#2f180c"></stop>
-          <stop offset="74%" stop-color="#5d3419"></stop>
-          <stop offset="100%" stop-color="#25120a"></stop>
-        </linearGradient>
-        <clipPath id="ruleta-recorte"><circle cx="100" cy="100" r="92"></circle></clipPath>
       </defs>
 
+      <g class="ruleta-halo" filter="url(#ruleta-desenfoque-halo)">${halo}</g>
+
       <g filter="url(#ruleta-sombra)">
-        <circle class="ruleta-madera" cx="100" cy="100" r="122"></circle>
-        <circle class="ruleta-madera-luz" cx="100" cy="100" r="118"></circle>
-        <circle class="ruleta-madera-hueco" cx="100" cy="100" r="99.5"></circle>
-        <circle class="ruleta-aro" cx="100" cy="100" r="97"></circle>
-        <circle class="ruleta-ranura" cx="100" cy="100" r="92.6"></circle>
+        <circle class="ruleta-aro" cx="100" cy="100" r="91"></circle>
       </g>
-      ${tachuelas}
+      <circle class="ruleta-aro-filo" cx="100" cy="100" r="98"></circle>
+      ${focos}
 
-      <g class="ruleta-rueda" id="ruleta-rueda">
-        ${casillas}
-        ${varillas}
+      <g filter="url(#ruleta-estela)">
+        <g class="ruleta-rueda" id="ruleta-rueda">
+          ${casillas}
+          ${tintes}
+          ${destellos()}
+          ${varillas}
+        </g>
+      </g>
+      <circle class="ruleta-borde" cx="100" cy="100" r="84"></circle>
+
+      <circle class="ruleta-eje" cx="100" cy="100" r="11"></circle>
+      <ellipse class="ruleta-eje-brillo" cx="97" cy="96.5" rx="5" ry="3"
+               transform="rotate(-25 97 96.5)"></ellipse>
+
+      <g class="ruleta-pin" filter="url(#ruleta-sombra)">
+        <path class="ruleta-pin-cuerpo" d="${PIN}"></path>
+        <polygon id="ruleta-gema" class="ruleta-gema ${colorBajoElPuntero(0)}"
+                 points="${GEMA}"></polygon>
+        <ellipse class="ruleta-gema-brillo" cx="97" cy="-7.5" rx="3.6" ry="2.2"></ellipse>
       </g>
 
-      <!-- Encima del material y fuera del grupo: no giran. -->
-      <circle class="ruleta-cono" cx="100" cy="100" r="54.4"></circle>
-      <circle class="ruleta-cono-filo" cx="100" cy="100" r="54.4"></circle>
-      <circle class="ruleta-domo" cx="100" cy="100" r="92"></circle>
-      <g clip-path="url(#ruleta-recorte)" filter="url(#ruleta-suavizar)">
-        <ellipse class="ruleta-reflejo" cx="98" cy="56" rx="54" ry="27"
-                 transform="rotate(-16 98 56)"></ellipse>
+      <!-- La silueta blanca: el destello de la entrada, del final y de la salida. -->
+      <g class="ruleta-blanco" filter="url(#ruleta-resplandor)">
+        <circle cx="100" cy="100" r="99"></circle>
+        <path d="${PIN}"></path>
       </g>
-      <path class="ruleta-rebote" d="${arcoDelBorde(118, 242)}"
-            clip-path="url(#ruleta-recorte)"></path>
-      ${bola}
-      <circle class="ruleta-eje-sombra" cx="100" cy="101.5" r="14"></circle>
-      <circle class="ruleta-eje" cx="100" cy="100" r="13"></circle>
-      <ellipse class="ruleta-eje-brillo" cx="96" cy="95.5" rx="5.2" ry="3.4"
-               transform="rotate(-20 96 95.5)"></ellipse>
-    </svg>
-    </div>`;
+    </svg>`;
 }
 
 export function modalRuleta(): string {
@@ -296,16 +342,17 @@ export function modalRuleta(): string {
          </div>`
       : "";
 
+  // Tras la tirada real la rueda ya se despidió con su salida (`celebrar`), así que no vuelve:
+  // queda el acuse. Tras la de prueba sí vuelve, con su entrada, para poder jugar la de verdad.
+  const marco = terminada ? "" : `<div class="ruleta-marco">${rueda()}</div>`;
+
   return `
     <div class="ruleta-fondo">
       <div class="ruleta-caja" role="dialog" aria-modal="true" aria-label="Te propongo un juego">
         ${salida}
         ${propuesta}
         <div class="ruleta-fichas">${eleccion}</div>
-        <div class="ruleta-marco">
-          <div class="ruleta-puntero"></div>
-          ${rueda(!enJuego)}
-        </div>
+        ${marco}
         ${acuse(estado.fase)}
         ${botones}
       </div>
@@ -328,7 +375,18 @@ function textoDeError(codigo: string | undefined): string {
 export function conectarRuleta(repintar: () => void): void {
   if (!estado.abierta) return;
 
+  const lienzo = () => document.querySelector<SVGSVGElement>("#ruleta .ruleta-svg");
   const disco = () => document.querySelector<SVGGElement>("#ruleta-rueda");
+
+  // La gema se pinta con el ángulo REAL: `pintarRuleta` le rescata a la rueda nueva el ángulo
+  // de la vieja, y el HTML sale con la gema de la rueda sin girar.
+  const svg = lienzo();
+  const r0 = disco();
+  if (svg && r0 && !girando(estado.fase)) pintarGema(svg, colorBajoElPuntero(anguloActual(r0)));
+  if (svg && entradaPendiente) {
+    entradaPendiente = false;
+    entrar(svg);
+  }
 
   for (const c of COLORES) {
     document.querySelector(`#ruleta-color-${c}`)?.addEventListener("click", () => {
@@ -347,20 +405,37 @@ export function conectarRuleta(repintar: () => void): void {
     repintar();
   });
 
-  document.querySelector("#ruleta-prueba")?.addEventListener("click", () => {
+  /**
+   * La tirada entera, la real y la de prueba por igual: arranque y giro libre, frenado hasta
+   * [resultado] y el final del video. La fase se queda en "girando" hasta que termina el final,
+   * así no hay repintado que corte la animación a la mitad.
+   */
+  async function tirar(resultado: Promise<Color>): Promise<Color> {
+    const svg = lienzo();
+    const r = disco();
+    if (r) girarLibre(r);
+    const parar = svg ? vigilar(svg) : () => {};
+    try {
+      const [color] = await Promise.all([resultado, esperar(MINIMO_GIRO_LIBRE_MS)]);
+      if (r) await esperar(frenar(r, color, Math.random()));
+      parar();
+      if (svg) await esperar(celebrar(svg, color));
+      return color;
+    } finally {
+      parar();
+    }
+  }
+
+  document.querySelector("#ruleta-prueba")?.addEventListener("click", async () => {
+    // La prueba no toca el servidor: el color lo decide el navegador y no tiene ninguna
+    // relación con el sorteo real, que vive entero en la función.
     const color: Color = COLORES[Math.random() < 0.5 ? 0 : 1];
     marcarResultado({ tipo: "girando-prueba" });
     repintar();
-    const r = disco();
-    if (!r) return;
-    girarLibre(r);
-    // La prueba no toca el servidor: el color lo decide el navegador y no tiene ninguna
-    // relación con el sorteo real, que vive entero en la función.
-    const ms = frenar(r, color, Math.random());
-    setTimeout(() => {
-      marcarResultado({ tipo: "prueba", color });
-      repintar();
-    }, ms);
+    await tirar(Promise.resolve(color));
+    entradaPendiente = true;
+    marcarResultado({ tipo: "prueba", color });
+    repintar();
   });
 
   document.querySelector("#ruleta-jugar")?.addEventListener("click", async () => {
@@ -369,27 +444,22 @@ export function conectarRuleta(repintar: () => void): void {
 
     marcarResultado({ tipo: "girando-real" });
     repintar();
-    const r = disco();
-    if (r) girarLibre(r);
 
-    // El giro libre dura un mínimo fijo aunque el servidor responda antes: así el frenado
-    // siempre tiene la misma forma y la duración de la espera no delata el resultado.
-    const espera = new Promise((listo) => setTimeout(listo, MINIMO_GIRO_LIBRE_MS));
-
+    let gano = false;
     try {
-      const [respuesta] = await Promise.all([jugarRuleta({ color: apostado }), espera]);
-      const { gano, color } = respuesta.data;
-      const ms = r ? frenar(r, color as Color, Math.random()) : 0;
-      setTimeout(() => {
-        marcarResultado({ tipo: gano ? "gano" : "perdio", color: color as Color });
-        repintar();
-      }, ms);
+      const color = await tirar(
+        jugarRuleta({ color: apostado }).then((respuesta) => {
+          gano = respuesta.data.gano;
+          return respuesta.data.color as Color;
+        })
+      );
+      marcarResultado({ tipo: gano ? "gano" : "perdio", color });
     } catch (error) {
       marcarResultado({
         tipo: "error",
         texto: textoDeError((error as { code?: string }).code),
       });
-      repintar();
     }
+    repintar();
   });
 }

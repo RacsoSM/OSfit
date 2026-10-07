@@ -14,30 +14,22 @@ export type Color = (typeof COLORES)[number];
  * dejaría dos del mismo color juntas en la costura del 0 y el reparto dejaría de ser mitad y
  * mitad.
  *
- * **Doce, no treinta y seis.** Se probó con 36, que es lo realista, y el color bajo el puntero
- * quedaba en una franja de 10° que además la perspectiva comprime: había que entornar los ojos
- * para saber si se había ganado, que es justo la única pregunta que la clienta se hace. Con 30°
- * por casilla se lee de un vistazo. El realismo y la legibilidad tiran en contra acá, y gana la
- * legibilidad.
+ * **Ocho** (2026-10-07): la rueda dejó de ser una ruleta de casino y pasó a ser una rueda de
+ * concurso, copiada del video de referencia, que tiene ocho gajos. Con 45° por gajo el color
+ * bajo el puntero se lee de un vistazo, que es la única pregunta que la clienta se hace.
  */
-export const CASILLAS = 12;
+export const CASILLAS = 8;
 
-/** Lo que ocupa cada casilla. Con 36 son 10°. */
+/** Lo que ocupa cada casilla. Con 8 son 45°. */
 export const GRADOS_POR_CASILLA = 360 / CASILLAS;
 
 /**
  * El reparto del dibujo. **Esta constante es el contrato:** de acá salen a la vez los `<path>`
  * del SVG que pinta `modalRuleta` y el aterrizaje que calcula `rotacionDestino`, así que
- * moverlo mueve las dos cosas juntas y no pueden discrepar.
+ * moverlo mueve las dos cosas juntas y no pueden discrepar (entradas 25 §4 y 28 del backlog).
  *
- * Antes no era así. El reparto vivía en un `conic-gradient` de `estilos.css` y el test lo
- * reimplementaba a mano, de modo que invertir los colores habría dejado el test en verde y al
- * puntero señalando el color contrario al que anunciaba el acuse (entradas 25 §4 y 28).
- *
- * **Sigue siendo mitad y mitad**, que es lo que pide el spec: 18 casillas de cada color. Que
- * sean muchas y alternas en vez de dos medias tartas es como funciona una ruleta de verdad
- * —la bola cae en UNA casilla y apostar al color sigue siendo binario— y es lo que hace que
- * el dibujo se lea como ruleta y no como gráfico de sectores.
+ * **Sigue siendo mitad y mitad**, que es lo que pide el spec: la mitad de los gajos de cada
+ * color, alternos.
  *
  * Los grados se miden desde las 12 en horario, que es donde el puntero está fijo.
  */
@@ -48,51 +40,32 @@ export const SECTORES: ReadonlyArray<{ color: Color; desde: number; hasta: numbe
     hasta: (i + 1) * GRADOS_POR_CASILLA,
   }));
 
-/** Borde exterior de las casillas, dentro del `viewBox` de 200×200. El aro va por fuera. */
-const RADIO = 92;
+/** Radio de los gajos, dentro del `viewBox`: el centro es (100, 100). El aro va por fuera. */
+export const RADIO = 84;
 
-/**
- * Donde acaban las casillas y empieza el cono. Las casillas de una ruleta viven en un ANILLO,
- * no en porciones que llegan al eje: con 36 porciones completas el centro sería una estrella
- * de picos y se volvería a leer como gráfico.
- */
-const RADIO_INTERIOR = 54;
-
-/** Un punto del borde a [r] del centro. 0° son las 12 y crece en horario, como todo acá. */
+/** Un punto a [r] del centro. 0° son las 12 y crece en horario, como todo acá. */
 function punto(grados: number, r: number): string {
   const rad = ((grados - 90) * Math.PI) / 180;
   return `${(100 + r * Math.cos(rad)).toFixed(2)},${(100 + r * Math.sin(rad)).toFixed(2)}`;
 }
 
 /**
- * El `d` de una casilla: un trozo de anillo. Se GENERA desde [SECTORES] en vez de escribirse a
- * mano en el marcado, que es lo que impide que el dibujo y el aterrizaje se separen.
+ * El `d` de un gajo: una porción entera, del eje al borde, como en la rueda de referencia. Se
+ * GENERA desde [SECTORES] en vez de escribirse a mano, que es lo que impide que el dibujo y el
+ * aterrizaje se separen.
  */
 export function arcoDelSector(sector: { desde: number; hasta: number }): string {
   const grande = sector.hasta - sector.desde > 180 ? 1 : 0;
   return (
-    `M${punto(sector.desde, RADIO)} A${RADIO},${RADIO} 0 ${grande},1 ${punto(sector.hasta, RADIO)}` +
-    ` L${punto(sector.hasta, RADIO_INTERIOR)}` +
-    ` A${RADIO_INTERIOR},${RADIO_INTERIOR} 0 ${grande},0 ${punto(sector.desde, RADIO_INTERIOR)} Z`
+    `M100,100 L${punto(sector.desde, RADIO)}` +
+    ` A${RADIO},${RADIO} 0 ${grande},1 ${punto(sector.hasta, RADIO)} Z`
   );
 }
 
-/** Sólo el arco del borde exterior, sin cerrar: para trazar filos y luces sobre el canto. */
-export function arcoDelBorde(desde: number, hasta: number): string {
-  const grande = hasta - desde > 180 ? 1 : 0;
-  return `M${punto(desde, RADIO)} A${RADIO},${RADIO} 0 ${grande},1 ${punto(hasta, RADIO)}`;
-}
-
-/** El punto medio del anillo de casillas, que es donde descansa la bola. */
-export function puntoDelAnillo(grados: number): string {
-  return punto(grados, (RADIO + RADIO_INTERIOR) / 2);
-}
-
-/** La varilla que separa dos casillas: del anillo interior al exterior. */
+/** La varilla negra que separa dos gajos: del eje al borde. */
 export function varillaEn(grados: number): { x1: string; y1: string; x2: string; y2: string } {
-  const [x1, y1] = punto(grados, RADIO_INTERIOR).split(",");
   const [x2, y2] = punto(grados, RADIO).split(",");
-  return { x1, y1, x2, y2 };
+  return { x1: "100", y1: "100", x2, y2 };
 }
 
 /** Qué color está pintado en ese punto del dibujo, medido desde las 12 en horario. */
@@ -109,14 +82,43 @@ export function colorBajoElPuntero(rotacion: number): Color {
   return colorEnElDibujo(360 - (((rotacion % 360) + 360) % 360));
 }
 
-/** Milisegundos de giro libre antes de empezar a frenar, aunque el servidor responda antes. */
-export const MINIMO_GIRO_LIBRE_MS = 800;
+/**
+ * Los tiempos salen del video de referencia (2026-10-07): la rueda acelera durante un segundo,
+ * gira desenfocada a toda velocidad, frena a lo largo de unos cinco segundos y medio y se
+ * detiene a los ~9 s de haber arrancado.
+ */
 
-/** Vueltas completas que dura el frenado. Tres es lo que absorbe la corrección sin que se vea. */
-export const VUELTAS_DE_FRENADO = 3;
+/** Lo que dura el arranque, de parada a velocidad de crucero. Gemelo de `ruleta-arranque`. */
+export const MS_DE_ARRANQUE = 1000;
+
+/** Velocidad de crucero, en grados por milisegundo: dos vueltas por segundo. Gemela de
+ *  `ruleta-libre` (0.5s por vuelta) en el CSS. */
+export const VELOCIDAD_LIBRE = 360 / 500;
+
+/**
+ * Milisegundos de giro libre (arranque incluido) antes de empezar a frenar, aunque el servidor
+ * responda antes: así el frenado siempre tiene la misma forma y la espera no delata nada.
+ */
+export const MINIMO_GIRO_LIBRE_MS = 3500;
+
+/** Vueltas completas que dura el frenado, más la corrección hasta la casilla. */
+export const VUELTAS_DE_FRENADO = 4;
 
 /** Duración del frenado. La curva de salida hace que las últimas vueltas sean las lentas. */
-export const MS_DE_FRENADO = 4000;
+export const MS_DE_FRENADO = 5500;
+
+/**
+ * La curva del frenado, hecha a medida de cuánto tiene que recorrer. Una `cubic-bezier`
+ * arranca con pendiente `y1/x1`, y la velocidad inicial del frenado es esa pendiente por
+ * `grados / ms`; igualarla a [VELOCIDAD_LIBRE] es lo que hace que el relevo entre el giro libre
+ * y el frenado no se note — con una curva fija la rueda daba un tirón justo ahí.
+ */
+export function curvaDeFrenado(grados: number, ms: number): string {
+  const x1 = 0.2;
+  const pendiente = (VELOCIDAD_LIBRE * ms) / grados;
+  const y1 = Math.min(1, x1 * pendiente);
+  return `cubic-bezier(${x1}, ${y1.toFixed(3)}, 0.3, 1)`;
+}
 
 /**
  * La ROTACIÓN que hay que darle a la rueda para que el puntero caiga en el color que mandó
@@ -131,12 +133,12 @@ export const MS_DE_FRENADO = 4000;
  *
  * **Aterriza en el CENTRO de una casilla.** Antes elegía un punto al azar de medio círculo y
  * hacía falta un margen de 10° para no parar pegada a la costura, donde el puntero quedaba
- * ambiguo. Con casillas, el centro es el único sitio sensato —la bola se queda en la casilla,
+ * ambiguo. Con casillas, el centro es el único sitio sensato —el puntero queda en el gajo,
  * no encima de la varilla— y la ambigüedad desaparece sin margen que mantener.
  *
  * [azar] entra como parámetro (0 a 1) en vez de llamar a `Math.random()` acá para poder
  * probarlo. No decide nada del resultado: el color ya viene decidido, esto sólo elige EN CUÁL
- * de las 18 casillas de ese color se detiene, para que dos tiradas iguales no se vean iguales.
+ * de las casillas de ese color se detiene, para que dos tiradas iguales no se vean iguales.
  */
 export function rotacionDestino(color: Color, azar: number): number {
   const suyas = SECTORES.filter((s) => s.color === color);
@@ -166,11 +168,14 @@ export function anguloDesdeTransform(transformComputado: string): number {
 }
 
 /** El ángulo en el que está la rueda AHORA, leído de la matriz de transformación calculada. */
-function anguloActual(rueda: SVGElement): number {
+export function anguloActual(rueda: SVGElement): number {
   return anguloDesdeTransform(getComputedStyle(rueda).transform);
 }
 
-/** Fase 1: rotación pareja e infinita, desde el instante en que el cliente toca "Jugar". */
+/**
+ * Fase 1: arranca (un segundo acelerando) y sigue a velocidad pareja e infinita, desde el
+ * instante en que el cliente toca "Jugar". Las dos animaciones viven en el CSS (`.girando`).
+ */
 export function girarLibre(rueda: SVGElement): void {
   rueda.style.transition = "none";
   // El `transform` inline que dejó el frenado anterior se borra antes de animar: el keyframe
@@ -182,10 +187,10 @@ export function girarLibre(rueda: SVGElement): void {
 
 /**
  * Quien pidió menos movimiento no ve el frenado (lo corta `estilos.css`), así que esperar los
- * 4 segundos antes del acuse sería dejarla mirando una rueda ya parada en su color: le
+ * segundos del frenado antes del acuse sería dejarla mirando una rueda ya parada en su color: le
  * adelanta el resultado y recién entonces se lo deja leer.
  */
-function prefiereMenosMovimiento(): boolean {
+export function prefiereMenosMovimiento(): boolean {
   return (
     typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches
   );
@@ -219,7 +224,7 @@ export function frenar(rueda: SVGElement, color: Color, azar: number): number {
   // `offsetWidth` —es de `HTMLElement`—, así que desde que la rueda es un `<g>` aquello se
   // evaluaba a `undefined` y no forzaba nada, devolviendo el salto en silencio.
   void rueda.getBoundingClientRect().width;
-  rueda.style.transition = `transform ${MS_DE_FRENADO}ms cubic-bezier(0.17, 0.67, 0.2, 1)`;
+  rueda.style.transition = `transform ${MS_DE_FRENADO}ms ${curvaDeFrenado(hasta - desde, MS_DE_FRENADO)}`;
   rueda.style.transform = `rotate(${hasta}deg)`;
   return prefiereMenosMovimiento() ? MS_DE_FUNDIDO : MS_DE_FRENADO;
 }

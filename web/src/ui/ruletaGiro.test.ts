@@ -8,7 +8,10 @@ import {
   arcoDelSector,
   colorBajoElPuntero,
   colorEnElDibujo,
+  curvaDeFrenado,
+  MS_DE_FRENADO,
   rotacionDestino,
+  VELOCIDAD_LIBRE,
 } from "./ruletaGiro";
 
 /**
@@ -53,7 +56,7 @@ describe("rotacionDestino", () => {
     }
   });
 
-  // 18 de cada color: el sorteo es 70/30 pero el DIBUJO tiene que verse justo (ver el spec).
+  // Mitad de cada color: el sorteo es 70/30 pero el DIBUJO tiene que verse justo (ver el spec).
   it("el dibujo sigue siendo mitad y mitad", () => {
     expect(SECTORES).toHaveLength(CASILLAS);
     expect(CASILLAS % 2).toBe(0);
@@ -69,7 +72,7 @@ describe("rotacionDestino", () => {
     }
   });
 
-  // Con 18 casillas por color, tiradas distintas tienen que poder caer en casillas distintas.
+  // Con varias casillas por color, tiradas distintas tienen que poder caer en casillas distintas.
   it("usa mas de una casilla del color, no siempre la misma", () => {
     const vistas = new Set([0, 0.2, 0.4, 0.6, 0.8, 0.99].map((a) => rotacionDestino("rojo", a)));
     expect(vistas.size).toBeGreaterThan(3);
@@ -96,23 +99,38 @@ describe("el dibujo sale de SECTORES", () => {
     expect(colorBajoElPuntero(360)).toBe(SECTORES[0].color);
   });
 
-  // El arco empieza y termina en el borde del disco, en los grados que declara el sector.
-  // Con dos medias vueltas los dos extremos son las 12 y las 6, y el flag de arco grande va
-  // en 0: si alguien mete un sector de más de media vuelta, tiene que pasar a 1.
-  // La casilla es un trozo de ANILLO, no una porción que llegue al eje: arranca en el borde
-  // exterior, vuelve por el interior y cierra. Si alguien la convierte en porción, el centro
-  // se llena de picos y el dibujo vuelve a leerse como gráfico de sectores.
-  it("la casilla es un trozo de anillo, no una porcion", () => {
+  // El gajo es una porción entera, del eje al borde, como en la rueda de concurso del video
+  // de referencia: arranca en el centro, sale al borde en el grado que declara el sector,
+  // recorre el arco y cierra.
+  it("el gajo es una porcion del eje al borde", () => {
     const d = arcoDelSector(SECTORES[0]);
-    expect(d.startsWith("M100,100")).toBe(false);
-    expect(d).toMatch(/^M100\.00,8\.00 A92,92 /);
-    expect(d).toContain("A54,54");
+    expect(d).toMatch(/^M100,100 L100\.00,16\.00 A84,84 /);
     expect(d.endsWith("Z")).toBe(true);
   });
 
-  it("una casilla de mas de media vuelta pide el flag de arco grande", () => {
-    expect(arcoDelSector({ desde: 0, hasta: 270 })).toContain("A92,92 0 1,1");
-    expect(arcoDelSector({ desde: 0, hasta: 90 })).toContain("A92,92 0 0,1");
+  it("un gajo de mas de media vuelta pide el flag de arco grande", () => {
+    expect(arcoDelSector({ desde: 0, hasta: 270 })).toContain("A84,84 0 1,1");
+    expect(arcoDelSector({ desde: 0, hasta: 90 })).toContain("A84,84 0 0,1");
+  });
+});
+
+describe("curvaDeFrenado", () => {
+  // El relevo entre el giro libre y el frenado no puede dar tirón: la pendiente inicial de la
+  // curva por grados/ms tiene que dar la velocidad de crucero.
+  it("arranca a la velocidad del giro libre", () => {
+    for (const grados of [1440, 1600, 1799]) {
+      const [x1, y1] = curvaDeFrenado(grados, MS_DE_FRENADO)
+        .replace(/[^\d.,]/g, "")
+        .split(",")
+        .map(Number);
+      expect((y1 / x1) * (grados / MS_DE_FRENADO)).toBeCloseTo(VELOCIDAD_LIBRE, 2);
+    }
+  });
+
+  // Una `cubic-bezier` con y1 > 1 se pasaría de largo y volvería: la rueda iría para atrás.
+  it("nunca pide una curva que se pase de largo", () => {
+    const y1 = Number(curvaDeFrenado(10, MS_DE_FRENADO).split(",")[1]);
+    expect(y1).toBeLessThanOrEqual(1);
   });
 });
 
