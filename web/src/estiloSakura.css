@@ -1,0 +1,237 @@
+/*
+ * El estilo sakura: primavera en Japón, como una estampa ukiyo-e. Cuelga entero de
+ * `data-estilo="sakura"` en <html> (ver `estilo.ts`); sin ese atributo no aplica ni una regla.
+ *
+ * Lo que lo hace distinto de los demás:
+ *  - El paisaje (`sakura.ts`): sol rosado, Fuji, un cerezo de tinta en flor y una rama que entra
+ *    por arriba, meciéndose con la brisa.
+ *  - Los pétalos (`petalos.ts`): caen en dos capas, detrás y delante de las tarjetas, y se
+ *    apartan del dedo cuando la clienta toca la pantalla.
+ *  - Es el ÚNICO estilo que no usa la paleta de la clienta: manda el rosa del cerezo, que es lo
+ *    que lo define. Por eso acá no aparece `--primario*` (ojo: `paleta.ts` escribe esas
+ *    variables en línea sobre <html>, y redefinirlas en esta hoja no serviría de nada: el
+ *    estilo en línea gana). Todo sale de las `--sk-*`.
+ *  - Los tres del calendario pasan a colores tradicionales japoneses que dicen lo mismo:
+ *    matcha (asististe), bermellón shu (faltaste) y amarillo yamabuki (justificada).
+ */
+
+:root[data-estilo="sakura"] {
+  color-scheme: light;
+  --sk-tinta: #3b2a30;
+  /* 5.3:1 sobre blanco. */
+  --sk-tenue: #7d6168;
+  /* El rosa hondo para TEXTO: 4.9:1 sobre blanco. El rosa de la flor no llega ni a 2:1. */
+  --sk-acento: #c2456a;
+  --sk-hondo: #b8375f;
+  --sk-flor: #f7a1bb;
+  --sk-palido: #ffe4ec;
+  --fondo: #fff0f4;
+  --superficie: rgba(255, 251, 252, 0.9);
+  --superficie-alta: #fbe3ea;
+  --texto: var(--sk-tinta);
+  --texto-tenue: var(--sk-tenue);
+  --verde: #5f9e6e;
+  --rojo: #c8323c;
+  --ambar: #d9a441;
+  --sk-mincho: "Shippori Mincho", "Hiragino Mincho ProN", "Yu Mincho", serif;
+  --sk-maru: "Zen Maru Gothic", system-ui, sans-serif;
+  /* El cielo de amanecer. En <html> y no en <body>: el fondo de <body> se pintaría encima del
+     paisaje, que va con `z-index: -1`. */
+  background: linear-gradient(to bottom, #ffe6ee 0%, #fff4f7 45%, #ffe1ea 100%) fixed;
+}
+:root[data-estilo="sakura"] body {
+  background: transparent; color: var(--sk-tinta);
+  font-family: var(--sk-maru); font-size: 16.5px;
+}
+:root[data-estilo="sakura"] ::selection { background: var(--sk-flor); color: var(--sk-tinta); }
+:root[data-estilo="sakura"] .fondo { display: none; }
+
+/* ---------- El paisaje ---------- */
+
+:root[data-estilo="sakura"] .fondo-sakura {
+  display: block; position: fixed; inset: 0; z-index: -1; pointer-events: none; overflow: hidden;
+}
+:root[data-estilo="sakura"] .sk-sol {
+  position: absolute; top: 9vh; right: 6vw; width: min(48vw, 240px); aspect-ratio: 1; border-radius: 50%;
+  background: radial-gradient(circle, #ffadc2 0%, #ffc4d3 52%, rgba(255, 196, 211, 0) 71%);
+  opacity: 0.75;
+}
+:root[data-estilo="sakura"] .sk-fuji { position: absolute; right: 0; bottom: 0; width: min(92vw, 540px); height: auto; }
+:root[data-estilo="sakura"] .sk-monte { fill: #efc3d0; opacity: 0.7; }
+:root[data-estilo="sakura"] .sk-nieve { fill: #fffafb; opacity: 0.95; }
+/* La bruma de abajo, que asienta el monte y el tronco en vez de dejarlos cortados en seco. */
+:root[data-estilo="sakura"] .sk-bruma {
+  position: absolute; left: 0; right: 0; bottom: 0; height: 26vh;
+  background: linear-gradient(to top, rgba(255, 226, 235, 0.95), rgba(255, 226, 235, 0));
+}
+:root[data-estilo="sakura"] .sk-arbol {
+  position: absolute; left: 0; bottom: 0; height: 100vh; width: min(100vw, 52vh);
+  transform-origin: 8% 100%;
+  animation: sk-mecer-arbol 9s ease-in-out infinite alternate;
+}
+:root[data-estilo="sakura"] .sk-rama {
+  position: absolute; top: 0; right: 0; width: min(82vw, 400px); height: auto;
+  transform-origin: 100% 4%;
+  animation: sk-mecer-rama 6.5s ease-in-out infinite alternate;
+}
+/* El tronco en tinta, como pincel sobre papel: casi negro con un dejo ciruela. */
+:root[data-estilo="sakura"] .sk-tronco { stroke: #4a2f37; opacity: 0.92; }
+@keyframes sk-mecer-arbol { from { transform: rotate(-0.5deg); } to { transform: rotate(0.7deg); } }
+@keyframes sk-mecer-rama { from { transform: rotate(-1.4deg); } to { transform: rotate(1.6deg); } }
+:root[data-estilo="sakura"] .petalos-fondo { position: absolute; inset: 0; width: 100%; height: 100%; }
+/* Los de adelante: desenfocados como si pasaran cerca de la cámara, encima del contenido pero
+   sin atrapar un solo toque. Debajo del velo de las transiciones (200). */
+:root[data-estilo="sakura"] .petalos-frente {
+  display: block; position: fixed; inset: 0; width: 100%; height: 100%;
+  z-index: 150; pointer-events: none; filter: blur(1.3px); opacity: 0.9;
+}
+
+/* El sello rojo con 桜 (sakura), junto al ☰, como el hanko con que se firma una estampa. */
+:root[data-estilo="sakura"] body::after {
+  content: "桜";
+  position: fixed; z-index: -1; pointer-events: none;
+  top: calc(16px + env(safe-area-inset-top)); right: max(68px, calc(50% - 240px + 60px));
+  width: 38px; height: 38px; display: grid; place-items: center;
+  background: #c8323c; color: #fff4f0; border-radius: 6px;
+  font-family: var(--sk-mincho); font-weight: 800; font-size: 23px; line-height: 1;
+  box-shadow: inset 0 0 0 2px rgba(255, 244, 240, 0.4);
+  transform: rotate(-6deg); opacity: 0.92;
+}
+
+/* ---------- Letras ---------- */
+
+:root[data-estilo="sakura"] .saludo,
+:root[data-estilo="sakura"] .titulo-ventana {
+  font-family: var(--sk-mincho); font-weight: 800; font-size: 29px; letter-spacing: 0.01em;
+  margin-top: 10px; color: var(--sk-tinta);
+}
+:root[data-estilo="sakura"] .saludo-hola { color: var(--sk-tenue); font-weight: 600; }
+:root[data-estilo="sakura"] .saludo-nombre { background: none; color: var(--sk-acento); }
+:root[data-estilo="sakura"] .saludo.escribiendo,
+:root[data-estilo="sakura"] .saludo.parpadeando { border-right-color: var(--sk-acento); }
+
+/* El título de cada tarjeta lleva una florecita delante. */
+:root[data-estilo="sakura"] .tarjeta-titulo {
+  color: var(--sk-acento); font-weight: 700; letter-spacing: 0.16em;
+  display: flex; align-items: center; gap: 6px;
+}
+:root[data-estilo="sakura"] .tarjeta-titulo::before {
+  content: ""; width: 13px; height: 13px; flex: none;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-14 -14 28 28'%3E%3Cg fill='%23f7a1bb'%3E%3Cpath d='M0 0C5 -2 6 -8 2 -12L0 -10L-2 -12C-6 -8 -5 -2 0 0Z'/%3E%3Cpath transform='rotate(72)' d='M0 0C5 -2 6 -8 2 -12L0 -10L-2 -12C-6 -8 -5 -2 0 0Z'/%3E%3Cpath transform='rotate(144)' d='M0 0C5 -2 6 -8 2 -12L0 -10L-2 -12C-6 -8 -5 -2 0 0Z'/%3E%3Cpath transform='rotate(216)' d='M0 0C5 -2 6 -8 2 -12L0 -10L-2 -12C-6 -8 -5 -2 0 0Z'/%3E%3Cpath transform='rotate(288)' d='M0 0C5 -2 6 -8 2 -12L0 -10L-2 -12C-6 -8 -5 -2 0 0Z'/%3E%3C/g%3E%3Ccircle r='2.4' fill='%23c2456a'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+:root[data-estilo="sakura"] .hoy .tarjeta-titulo { color: rgba(255, 255, 255, 0.88); }
+:root[data-estilo="sakura"] .numero { font-family: var(--sk-mincho); font-weight: 800; font-size: 38px; }
+
+/* ---------- Tarjetas ---------- */
+
+:root[data-estilo="sakura"] .tarjeta {
+  background: var(--superficie);
+  border: 1px solid rgba(194, 69, 106, 0.14); border-radius: 18px;
+  box-shadow: 0 14px 34px -22px rgba(160, 40, 80, 0.45);
+}
+
+/* La del día: rosa hondo con olas seigaiha (el patrón de olas de los kimonos) y una flor
+   grande que gira muy despacio en la esquina. */
+:root[data-estilo="sakura"] .hoy {
+  position: relative; overflow: hidden; isolation: isolate; border: 0;
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='20'%3E%3Cg fill='none' stroke='white' stroke-opacity='0.13'%3E%3Ccircle cx='20' cy='20' r='18'/%3E%3Ccircle cx='20' cy='20' r='13'/%3E%3Ccircle cx='20' cy='20' r='8'/%3E%3Ccircle cx='0' cy='10' r='18'/%3E%3Ccircle cx='40' cy='10' r='18'/%3E%3Ccircle cx='0' cy='10' r='13'/%3E%3Ccircle cx='40' cy='10' r='13'/%3E%3C/g%3E%3C/svg%3E"),
+    linear-gradient(150deg, var(--sk-hondo) 0%, #d45c82 55%, #e27c9c 100%);
+  box-shadow: 0 18px 36px -20px rgba(184, 55, 95, 0.75);
+}
+:root[data-estilo="sakura"] .hoy::before {
+  content: ""; position: absolute; z-index: -1; right: -42px; top: -42px; width: 170px; height: 170px;
+  opacity: 0.16;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-14 -14 28 28'%3E%3Cg fill='white'%3E%3Cpath d='M0 0C5 -2 6 -8 2 -12L0 -10L-2 -12C-6 -8 -5 -2 0 0Z'/%3E%3Cpath transform='rotate(72)' d='M0 0C5 -2 6 -8 2 -12L0 -10L-2 -12C-6 -8 -5 -2 0 0Z'/%3E%3Cpath transform='rotate(144)' d='M0 0C5 -2 6 -8 2 -12L0 -10L-2 -12C-6 -8 -5 -2 0 0Z'/%3E%3Cpath transform='rotate(216)' d='M0 0C5 -2 6 -8 2 -12L0 -10L-2 -12C-6 -8 -5 -2 0 0Z'/%3E%3Cpath transform='rotate(288)' d='M0 0C5 -2 6 -8 2 -12L0 -10L-2 -12C-6 -8 -5 -2 0 0Z'/%3E%3C/g%3E%3C/svg%3E") center / contain no-repeat;
+  animation: sk-girar 60s linear infinite;
+}
+@keyframes sk-girar { to { transform: rotate(360deg); } }
+:root[data-estilo="sakura"] .hoy-dia { font-family: var(--sk-mincho); font-weight: 800; font-size: 31px; }
+:root[data-estilo="sakura"] .ejercicio-series { background: rgba(255, 255, 255, 0.2); }
+
+/* ---------- Botones y controles ---------- */
+
+/* Fuera de la ruleta, que tiene sus colores propios sobre el tapete (entrada 26 del backlog). */
+:root[data-estilo="sakura"] .boton:not(.ruleta-caja .boton) {
+  border: 0; border-radius: 999px;
+  background: linear-gradient(180deg, #e0658c, #c23f67); color: #fff;
+  font-family: var(--sk-maru); font-weight: 700;
+  box-shadow: 0 8px 18px -10px rgba(194, 63, 103, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  transition: transform 120ms ease;
+}
+:root[data-estilo="sakura"] .boton:not(.ruleta-caja .boton):active:not(:disabled) { transform: scale(0.98); }
+:root[data-estilo="sakura"] .boton.secundario:not(.ruleta-caja .boton) {
+  background: #fff; color: var(--sk-acento); box-shadow: inset 0 0 0 1.5px rgba(194, 69, 106, 0.4);
+}
+/* Sobre la tarjeta del día, que ya es rosa: el principal se invierte a blanco. */
+:root[data-estilo="sakura"] .hoy-acciones .boton:not(.ruleta-caja .boton) { background: #fff; color: var(--sk-hondo); }
+:root[data-estilo="sakura"] .hoy-acciones .boton.secundario:not(.ruleta-caja .boton) {
+  background: rgba(255, 255, 255, 0.12); color: #fff; box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, 0.55);
+}
+
+:root[data-estilo="sakura"] .opcion {
+  background: #fff; color: var(--sk-tinta); border: 1.5px solid rgba(194, 69, 106, 0.2); border-radius: 14px;
+  font-family: var(--sk-maru);
+}
+:root[data-estilo="sakura"] .opcion.elegida { background: #fff0f4; border-color: var(--sk-acento); color: var(--sk-acento); }
+:root[data-estilo="sakura"] .campo-libre {
+  background: #fff; color: var(--sk-tinta); border: 1.5px solid rgba(194, 69, 106, 0.25); border-radius: 14px;
+  font-family: var(--sk-maru);
+}
+:root[data-estilo="sakura"] .aviso-ok,
+:root[data-estilo="sakura"] .aviso-error { background: #fff; color: var(--sk-tinta); border-radius: 12px; }
+
+:root[data-estilo="sakura"] .selector-campo {
+  background: #fff; color: var(--sk-tinta); border: 1.5px solid rgba(194, 69, 106, 0.35); border-radius: 14px;
+  font-family: var(--sk-maru); font-weight: 700;
+}
+:root[data-estilo="sakura"] .selector-flecha { color: var(--sk-acento); }
+:root[data-estilo="sakura"] .cabecera-menu:focus-visible,
+:root[data-estilo="sakura"] .menu-opcion:focus-visible,
+:root[data-estilo="sakura"] .menu-cerrar:focus-visible,
+:root[data-estilo="sakura"] .selector-campo:focus-visible { outline-color: var(--sk-acento); }
+
+/* ---------- Calendario ---------- */
+
+:root[data-estilo="sakura"] .cal-nav button { background: var(--sk-palido); color: var(--sk-acento); border-radius: 999px; }
+:root[data-estilo="sakura"] .cal span { background: rgba(251, 227, 234, 0.75); border-radius: 10px; color: var(--sk-tenue); }
+:root[data-estilo="sakura"] .cal span.vacia { background: transparent; }
+:root[data-estilo="sakura"] .cal span.ok { background: var(--verde); color: #fff; }
+:root[data-estilo="sakura"] .cal span.no { background: var(--rojo); color: #fff; }
+:root[data-estilo="sakura"] .cal span.just { background: var(--ambar); color: #3b2a00; }
+:root[data-estilo="sakura"] .cal span.hoy-celda { outline: 2px solid var(--sk-acento); outline-offset: 1px; color: var(--sk-acento); font-weight: 800; }
+
+/* ---------- Insignias, videos, ranking ---------- */
+
+:root[data-estilo="sakura"] .insignia-img.generica { background: var(--sk-palido); }
+:root[data-estilo="sakura"] .video-resumen { border-radius: 14px; }
+:root[data-estilo="sakura"] .segmentos { background: var(--sk-palido); border-radius: 999px; }
+:root[data-estilo="sakura"] .segmento { border-radius: 999px; color: var(--sk-tenue); font-family: var(--sk-maru); }
+:root[data-estilo="sakura"] .segmento.activo { background: linear-gradient(180deg, #e0658c, #c23f67); color: #fff; }
+:root[data-estilo="sakura"] .ranking-fila { border-radius: 14px; }
+:root[data-estilo="sakura"] .ranking-fila.tuya { background: linear-gradient(150deg, var(--sk-hondo), #d45c82); }
+/* Las medallas con brillo eran para fondo oscuro; sobre papel van en metal oscuro. */
+:root[data-estilo="sakura"] .nombre-oro { color: #9a7100; text-shadow: none; }
+:root[data-estilo="sakura"] .nombre-plata { color: #5f6670; text-shadow: none; }
+:root[data-estilo="sakura"] .nombre-bronce { color: #a0522d; text-shadow: none; }
+:root[data-estilo="sakura"] .ranking-fila.tuya :is(.nombre-oro, .nombre-plata, .nombre-bronce) { color: #fff; }
+
+/* ---------- Menú ---------- */
+
+:root[data-estilo="sakura"] .cabecera-menu { color: var(--sk-tinta); }
+:root[data-estilo="sakura"] .menu-velo { background: rgba(120, 40, 70, 0.22); backdrop-filter: blur(3px); }
+:root[data-estilo="sakura"] .menu-panel { background: #fff7f9; border-left: 1px solid rgba(194, 69, 106, 0.18); }
+:root[data-estilo="sakura"] .menu-abierto .menu-panel { box-shadow: -14px 0 40px rgba(160, 40, 80, 0.18); }
+:root[data-estilo="sakura"] .menu-nombre { font-family: var(--sk-mincho); font-weight: 800; font-size: 20px; }
+:root[data-estilo="sakura"] .menu-cerrar { color: var(--sk-tenue); }
+:root[data-estilo="sakura"] .menu-opcion { font-family: var(--sk-maru); }
+:root[data-estilo="sakura"] .menu-opcion.activa { background: var(--sk-palido); color: var(--sk-hondo); font-weight: 700; }
+
+/* ---------- Menos movimiento ---------- */
+
+/* Los pétalos ni arrancan (`iniciarPetalos`); acá se quedan quietos el árbol, la rama y la flor. */
+@media (prefers-reduced-motion: reduce) {
+  :root[data-estilo="sakura"] .sk-arbol,
+  :root[data-estilo="sakura"] .sk-rama,
+  :root[data-estilo="sakura"] .hoy::before { animation: none; }
+}

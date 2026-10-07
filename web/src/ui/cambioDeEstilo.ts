@@ -1,5 +1,7 @@
 import { FUENTES, aplicarEstilo, onomatopeya, retrasosDeCortina, type IdEstilo } from "../estilo";
 import { fondoPixel } from "./fondoPixel";
+import { fondoSakura } from "./sakura";
+import { detenerPetalos, iniciarPetalos, rafagaDePetalos } from "./petalos";
 
 /**
  * Lo que pasa en el DOM al cambiar de estilo: el atributo, las fuentes, el paisaje del pixel y
@@ -26,6 +28,7 @@ const COLOR_BARRA: Record<IdEstilo, string> = {
   neon: "#07030F",
   comic: "#FFF4D6",
   minimalista: "#F5F5F3",
+  sakura: "#FFF0F4",
 };
 
 /**
@@ -37,10 +40,26 @@ export function ponerEstilo(id: IdEstilo): void {
   aplicarEstilo(id, document.documentElement);
   document.querySelector('meta[name="theme-color"]')?.setAttribute("content", COLOR_BARRA[id]);
   pedirFuentes(id);
-  // El paisaje del pixel es el único fondo que necesita nodos: los demás son CSS puro.
+  // Pixel y sakura son los únicos fondos que necesitan nodos: los demás son CSS puro.
   if (id === "pixel" && !document.getElementById("fondo-pixel")) {
     document.body.insertAdjacentHTML("afterbegin", fondoPixel());
   }
+  if (id !== "sakura") {
+    // Fuera del sakura los pétalos se detienen de verdad, no solo se esconden: una animación
+    // escondida seguiría gastando batería en cada cuadro.
+    detenerPetalos();
+    return;
+  }
+  if (!document.getElementById("fondo-sakura")) {
+    document.body.insertAdjacentHTML("afterbegin", fondoSakura());
+    // La capa de adelante va al FINAL de <body>, fuera del fondo: el fondo es su propio
+    // contexto de apilado con `z-index: -1`, y nada de adentro puede pasar delante del contenido.
+    document.body.insertAdjacentHTML("beforeend", `<canvas class="petalos-frente" id="petalos-frente" aria-hidden="true"></canvas>`);
+  }
+  iniciarPetalos(
+    document.querySelector<HTMLCanvasElement>("#petalos-fondo"),
+    document.querySelector<HTMLCanvasElement>("#petalos-frente")
+  );
 }
 
 function pedirFuentes(id: IdEstilo): void {
@@ -140,6 +159,22 @@ const vinetaComic: Transicion = {
   },
 };
 
+/**
+ * Una ráfaga de pétalos que cruza la pantalla mientras todo se tiñe de rosa, y se aclara con
+ * los pétalos todavía volando. Gemela de `.transicion-sakura` en el CSS.
+ */
+const rafagaSakura: Transicion = {
+  cubrir: (velo) => {
+    velo.classList.add("transicion-sakura");
+    velo.innerHTML = rafagaDePetalos(46).map((estilo) => `<i style="${estilo}"></i>`).join("");
+    return 520;
+  },
+  destapar: (velo) => {
+    velo.classList.add("abriendo");
+    return 900;
+  },
+};
+
 /** La transición la decide el estilo al que se LLEGA: es el que se está presentando. */
 const TRANSICIONES: Record<IdEstilo, Transicion> = {
   clasico: fundido("#121212"),
@@ -147,6 +182,7 @@ const TRANSICIONES: Record<IdEstilo, Transicion> = {
   neon: encendidoNeon,
   comic: vinetaComic,
   minimalista: fundido("#F5F5F3"),
+  sakura: rafagaSakura,
 };
 
 /**

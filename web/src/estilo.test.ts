@@ -37,8 +37,8 @@ describe("el catálogo de estilos", () => {
     expect(ESTILOS[0].id).toBe("clasico");
   });
 
-  it("trae clásico, pixel art, neón, cómic y minimalista, en ese orden", () => {
-    expect(ESTILOS.map((e) => e.nombre)).toEqual(["Clásico", "Pixel art", "Neón", "Cómic", "Minimalista"]);
+  it("trae clásico, pixel art, neón, cómic, minimalista y sakura, en ese orden", () => {
+    expect(ESTILOS.map((e) => e.nombre)).toEqual(["Clásico", "Pixel art", "Neón", "Cómic", "Minimalista", "Sakura"]);
   });
 
   it("tiene ids únicos", () => {
@@ -119,7 +119,7 @@ describe("guardarEstilo", () => {
 
 describe("aplicarEstilo", () => {
   it("cada estilo que no es el clásico se marca en la raíz", () => {
-    for (const id of ["pixel", "neon", "comic", "minimalista"] as const) {
+    for (const id of ["pixel", "neon", "comic", "minimalista", "sakura"] as const) {
       const r = raiz();
       aplicarEstilo(id, r);
       expect(r.atributos.get("data-estilo")).toBe(id);

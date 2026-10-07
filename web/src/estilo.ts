@@ -11,7 +11,7 @@
  * regla nueva en el camino, y nadie que no toque el combo ve un píxel distinto.
  */
 
-export type IdEstilo = "clasico" | "pixel" | "neon" | "comic" | "minimalista";
+export type IdEstilo = "clasico" | "pixel" | "neon" | "comic" | "minimalista" | "sakura";
 
 export interface Estilo {
   id: IdEstilo;
@@ -45,6 +45,11 @@ export const ESTILOS: readonly Estilo[] = [
     nombre: "Minimalista",
     descripcion: "Claro y limpio: fondo blanco, mucho aire y un solo acento de color. Se lee bien a pleno sol.",
   },
+  {
+    id: "sakura",
+    nombre: "Sakura",
+    descripcion: "Primavera en Japón: un cerezo en flor y pétalos que caen mientras navegas. Toca la pantalla y sóplalos.",
+  },
 ];
 
 /**
@@ -61,6 +66,10 @@ export const FUENTES: Record<Exclude<IdEstilo, "clasico">, string> = {
   // Bangers es la rotulación de las viñetas; Comic Neue, la letra de los globos.
   comic: "https://fonts.googleapis.com/css2?family=Bangers&family=Comic+Neue:wght@400;700&display=swap",
   minimalista: "https://fonts.googleapis.com/css2?family=Inter:wght@300..700&display=swap",
+  // Shippori Mincho es la letra de pincel de los títulos (y la del sello 桜); Zen Maru Gothic,
+  // redondeada y suave, la del texto. Las dos traen latín: Google parte las japonesas por
+  // `unicode-range`, así que solo se baja el trozo de los caracteres que se usan.
+  sakura: "https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@600;800&family=Zen+Maru+Gothic:wght@400;500;700&display=swap",
 };
 
 export const ESTILO_POR_DEFECTO: IdEstilo = "clasico";
