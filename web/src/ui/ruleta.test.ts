@@ -56,6 +56,15 @@ describe("modalRuleta", () => {
     expect(html).not.toMatch(/^Perdiste\.?$/);
   });
 
+  // Tras la tirada real la rueda vuelve y se queda junto al acuse; no desaparece del modal.
+  it("tras la tirada real la rueda sigue en pantalla", () => {
+    for (const tipo of ["gano", "perdio"] as const) {
+      abrirRuleta();
+      marcarResultado({ tipo, color: "rojo" });
+      expect(modalRuleta()).toContain(`id="ruleta-rueda"`);
+    }
+  });
+
   it("al ganar lo dice y no menciona castigo", () => {
     abrirRuleta();
     marcarResultado({ tipo: "gano", color: "rojo" });

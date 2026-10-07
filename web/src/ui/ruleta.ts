@@ -342,9 +342,9 @@ export function modalRuleta(): string {
          </div>`
       : "";
 
-  // Tras la tirada real la rueda ya se despidió con su salida (`celebrar`), así que no vuelve:
-  // queda el acuse. Tras la de prueba sí vuelve, con su entrada, para poder jugar la de verdad.
-  const marco = terminada ? "" : `<div class="ruleta-marco">${rueda()}</div>`;
+  // La rueda se queda siempre, también tras la tirada real: después de su salida (`celebrar`)
+  // vuelve con su entrada, quieta en el gajo donde cayó, junto al acuse.
+  const marco = `<div class="ruleta-marco">${rueda()}</div>`;
 
   return `
     <div class="ruleta-fondo">
@@ -453,6 +453,7 @@ export function conectarRuleta(repintar: () => void): void {
           return respuesta.data.color as Color;
         })
       );
+      entradaPendiente = true;
       marcarResultado({ tipo: gano ? "gano" : "perdio", color });
     } catch (error) {
       marcarResultado({

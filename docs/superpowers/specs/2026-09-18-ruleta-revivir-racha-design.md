@@ -368,7 +368,7 @@ copiada de un video de referencia, con los mismos dos colores (rojo y negro):
   frenado de 5,5 s con la velocidad inicial igualada a la de crucero; 0,6 s quieta; destello
   blanco de 0,5 s; los gajos pasan al color ganador uno a uno en horario cada 0,15 s; 1,1 s de
   pausa; salida de 0,8 s (se encoge, rebota grande en blanco y se apaga).
-- La tirada de prueba hace la secuencia entera y la rueda vuelve con su entrada. Tras la real,
-  la rueda no vuelve: queda el acuse.
+- Las dos tiradas (prueba y real) hacen la secuencia entera y la rueda vuelve con su entrada,
+  quieta en el gajo donde cayó, junto al acuse.
 - Código: `web/src/ui/ruletaEfectos.ts` (entrada, desenfoque/gema, final), `ruletaGiro.ts`
   (geometría, arranque y frenado), `ruleta.ts` (dibujo) y `estilos.css`.
