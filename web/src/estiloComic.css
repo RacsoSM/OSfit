@@ -1,0 +1,242 @@
+/*
+ * El estilo cómic: la página como una historieta. Cuelga entero de `data-estilo="comic"` en
+ * <html> (ver `estilo.ts`); sin ese atributo no aplica ni una regla.
+ *
+ * Las reglas del dibujo, que se repiten en todo:
+ *  - Todo lleva tinta: contorno negro grueso (`--tinta`) y una sombra dura desplazada, sin
+ *    difuminar, como la impresión de un cómic barato.
+ *  - Los rellenos van en trama de puntos (Ben-Day), no en degradado.
+ *  - Los títulos de las tarjetas son el recuadro amarillo del narrador ("MIENTRAS TANTO...").
+ *  - Los botones principales son amarillos con letra negra en TODAS las paletas: es el par de
+ *    más contraste posible, y no depende de qué tan claro sea el primario de la clienta.
+ *
+ * Es un tema claro. El primario de las paletas está pensado para fondo oscuro y como texto
+ * sobre papel no se lee, así que acá la paleta va en rellenos (la tarjeta del día, tu fila del
+ * ranking) y el texto queda en tinta.
+ */
+
+:root[data-estilo="comic"] {
+  color-scheme: light;
+  --tinta: #141414;
+  --amarillo: #ffe14d;
+  --fondo: #fff4d6;
+  --superficie: #ffffff;
+  --superficie-alta: #f2ead4;
+  --texto: #141414;
+  /* 7.4:1 sobre blanco. */
+  --texto-tenue: #5a5346;
+  --verde: #22a45d;
+  --rojo: #e23b3b;
+  --ambar: #f5b301;
+  --letra-rotulo: "Bangers", Impact, "Arial Narrow", sans-serif;
+  --letra-globo: "Comic Neue", "Comic Sans MS", system-ui, sans-serif;
+  --trama: radial-gradient(rgba(20, 20, 20, 0.08) 1.3px, transparent 1.7px) 0 0 / 11px 11px;
+}
+:root[data-estilo="comic"] body {
+  font-family: var(--letra-globo); font-size: 17px;
+  background: var(--trama), var(--fondo);
+}
+:root[data-estilo="comic"] ::selection { background: var(--amarillo); color: var(--tinta); }
+:root[data-estilo="comic"] .fondo { display: none; }
+
+/* El "¡POW!" que estalla junto al ☰. Son dos estrellas apiladas, la negra un poco más grande
+   detrás de la amarilla, porque `clip-path` recorta también el borde: así se dibuja el
+   contorno. Detrás de todo, para que nunca tape un toque. */
+:root[data-estilo="comic"] body::before,
+:root[data-estilo="comic"] body::after {
+  position: fixed; z-index: -1; pointer-events: none;
+  top: calc(6px + env(safe-area-inset-top)); right: max(60px, calc(50% - 240px + 52px));
+  width: 84px; aspect-ratio: 1;
+  clip-path: polygon(50% 0, 59% 22%, 82% 9%, 76% 33%, 100% 35%, 80% 52%, 98% 70%, 74% 70%,
+    80% 95%, 58% 80%, 47% 100%, 39% 78%, 15% 92%, 22% 68%, 0 62%, 19% 48%, 3% 28%, 27% 29%,
+    22% 5%, 42% 20%);
+  transform: rotate(-12deg);
+}
+:root[data-estilo="comic"] body::before { content: ""; background: var(--tinta); }
+:root[data-estilo="comic"] body::after {
+  content: "¡POW!";
+  display: grid; place-items: center;
+  background: var(--amarillo);
+  font-family: var(--letra-rotulo); font-size: 17px; letter-spacing: 1px; color: var(--rojo);
+  /* Un poco más chica que la negra: lo que sobra de la negra es el contorno. */
+  scale: 0.86;
+}
+
+/* ---------- Letras ---------- */
+
+:root[data-estilo="comic"] .saludo,
+:root[data-estilo="comic"] .titulo-ventana {
+  font-family: var(--letra-rotulo); font-weight: 400; font-size: 38px; letter-spacing: 1.5px;
+  line-height: 1.15; margin-top: 10px;
+}
+:root[data-estilo="comic"] .titulo-ventana { color: var(--tinta); text-shadow: 3px 3px 0 var(--primario); }
+/* El nombre con contorno de tinta: así el primario se lee sobre el papel aunque sea claro. */
+:root[data-estilo="comic"] .saludo-nombre {
+  background: none; color: var(--primario); font-weight: 400;
+  -webkit-text-stroke: 2px var(--tinta); paint-order: stroke fill;
+  text-shadow: 3px 3px 0 var(--tinta);
+}
+:root[data-estilo="comic"] .saludo.escribiendo,
+:root[data-estilo="comic"] .saludo.parpadeando { border-right: 4px solid var(--tinta); }
+
+/* El recuadro del narrador, colgado de la esquina de la viñeta y un poco torcido. */
+:root[data-estilo="comic"] .tarjeta-titulo {
+  display: inline-block; position: relative; top: -26px; left: -28px; margin-bottom: -14px;
+  padding: 3px 10px 1px;
+  background: var(--amarillo); color: var(--tinta);
+  border: 2.5px solid var(--tinta); box-shadow: 3px 3px 0 var(--tinta);
+  font-family: var(--letra-rotulo); font-size: 15px; letter-spacing: 1.5px; text-transform: uppercase;
+  transform: rotate(-2deg);
+}
+:root[data-estilo="comic"] .numero { font-family: var(--letra-rotulo); font-weight: 400; font-size: 46px; letter-spacing: 1px; }
+
+/* ---------- Viñetas ---------- */
+
+:root[data-estilo="comic"] .tarjeta {
+  background: var(--superficie);
+  border: 3px solid var(--tinta); border-radius: 4px;
+  box-shadow: 6px 6px 0 var(--tinta);
+  /* Lugar arriba para el recuadro del narrador, que sobresale. */
+  margin-top: 22px; margin-bottom: 20px;
+}
+:root[data-estilo="comic"] .fila { gap: 16px; }
+/* Las tarjetas vacías no tienen narrador arriba: les sobraría el aire. */
+:root[data-estilo="comic"] .tarjeta.vacio { margin-top: 12px; }
+
+/* La del día: el color de la paleta con trama de puntos claros encima. */
+:root[data-estilo="comic"] .hoy {
+  background:
+    radial-gradient(rgba(255, 255, 255, 0.16) 2px, transparent 2.6px) 0 0 / 10px 10px,
+    var(--primario-oscuro);
+  color: #fff;
+}
+:root[data-estilo="comic"] .hoy-dia {
+  font-family: var(--letra-rotulo); font-weight: 400; font-size: 40px; letter-spacing: 1.5px;
+  line-height: 1.05; text-shadow: 3px 3px 0 var(--tinta);
+}
+:root[data-estilo="comic"] .ejercicio { border-top: 2px dashed rgba(255, 255, 255, 0.4); }
+:root[data-estilo="comic"] .ejercicio-nombre { font-weight: 700; }
+:root[data-estilo="comic"] .ejercicio-series {
+  background: #fff; color: var(--tinta); border: 2px solid var(--tinta); box-shadow: 2px 2px 0 var(--tinta);
+}
+:root[data-estilo="comic"] .hoy-acciones { border-top: 2px dashed rgba(255, 255, 255, 0.45); }
+
+/* ---------- Botones y controles ---------- */
+
+/* Fuera de la ruleta, que tiene sus colores propios sobre el tapete (entrada 26 del backlog). */
+:root[data-estilo="comic"] .boton:not(.ruleta-caja .boton) {
+  background: var(--amarillo); color: var(--tinta);
+  border: 3px solid var(--tinta); border-radius: 10px;
+  box-shadow: 4px 4px 0 var(--tinta);
+  font-family: var(--letra-rotulo); font-weight: 400; font-size: 21px; letter-spacing: 1.2px;
+  margin-bottom: 4px;
+}
+/* Al apretarlo se "imprime" sobre su sombra. */
+:root[data-estilo="comic"] .boton:not(.ruleta-caja .boton):active:not(:disabled) {
+  transform: translate(4px, 4px); box-shadow: none;
+}
+:root[data-estilo="comic"] .boton.secundario:not(.ruleta-caja .boton) { background: #fff; color: var(--tinta); }
+:root[data-estilo="comic"] .boton:not(.ruleta-caja .boton):disabled { opacity: 0.55; box-shadow: 2px 2px 0 var(--tinta); }
+:root[data-estilo="comic"] .boton + .boton { margin-top: 12px; }
+
+:root[data-estilo="comic"] .opcion {
+  background: #fff; color: var(--tinta);
+  border: 2.5px solid var(--tinta); border-radius: 8px;
+  font-family: var(--letra-globo); font-weight: 700;
+}
+:root[data-estilo="comic"] .opcion.elegida {
+  background: var(--amarillo); color: var(--tinta); border-color: var(--tinta);
+  box-shadow: 3px 3px 0 var(--tinta);
+}
+:root[data-estilo="comic"] .campo-libre {
+  background: #fff; color: var(--tinta); border: 2.5px solid var(--tinta); border-radius: 8px;
+  font-family: var(--letra-globo);
+}
+:root[data-estilo="comic"] .aviso-ok,
+:root[data-estilo="comic"] .aviso-error {
+  background: #fff; color: var(--tinta);
+  border: 2.5px solid var(--tinta); border-left-width: 8px; border-radius: 6px;
+}
+:root[data-estilo="comic"] .aviso-ok { border-left-color: var(--verde); }
+:root[data-estilo="comic"] .aviso-error { border-left-color: var(--rojo); }
+
+:root[data-estilo="comic"] .selector-campo {
+  background: #fff; color: var(--tinta);
+  border: 3px solid var(--tinta); border-radius: 10px; box-shadow: 4px 4px 0 var(--tinta);
+  font-family: var(--letra-globo); font-weight: 700; font-size: 18px;
+}
+:root[data-estilo="comic"] .selector-flecha { color: var(--tinta); }
+:root[data-estilo="comic"] .ajuste-etiqueta { font-weight: 700; }
+
+/* ---------- Calendario ---------- */
+
+:root[data-estilo="comic"] .cal-dias { font-family: var(--letra-rotulo); font-size: 15px; color: var(--tinta); }
+:root[data-estilo="comic"] .cal-nav button {
+  background: #fff; color: var(--tinta); border: 2.5px solid var(--tinta); box-shadow: 2px 2px 0 var(--tinta);
+  font-weight: 700;
+}
+:root[data-estilo="comic"] .cal span {
+  background: #fff; color: var(--tinta); border: 2px solid var(--tinta); border-radius: 6px;
+  font-weight: 700; font-size: 13px;
+}
+:root[data-estilo="comic"] .cal span.vacia { border: 0; background: transparent; }
+:root[data-estilo="comic"] .cal span.ok { background: var(--verde); color: #fff; text-shadow: 1px 1px 0 var(--tinta); }
+:root[data-estilo="comic"] .cal span.no { background: var(--rojo); color: #fff; text-shadow: 1px 1px 0 var(--tinta); }
+:root[data-estilo="comic"] .cal span.just { background: var(--ambar); color: var(--tinta); }
+:root[data-estilo="comic"] .cal span.hoy-celda {
+  outline: 3px solid var(--tinta); outline-offset: 2px; box-shadow: 3px 3px 0 var(--primario);
+}
+:root[data-estilo="comic"] .punto { border: 1.5px solid var(--tinta); }
+
+/* ---------- Insignias, videos, ranking ---------- */
+
+:root[data-estilo="comic"] .insignia-img.generica {
+  background: var(--trama), var(--amarillo); border: 3px solid var(--tinta); box-shadow: 3px 3px 0 var(--tinta);
+}
+:root[data-estilo="comic"] .insignia-nombre { font-family: var(--letra-rotulo); font-weight: 400; font-size: 15px; letter-spacing: 0.8px; }
+:root[data-estilo="comic"] .video-resumen,
+:root[data-estilo="comic"] .video-no-disponible { border: 3px solid var(--tinta); border-radius: 4px; }
+
+:root[data-estilo="comic"] .segmentos { background: #fff; border: 2.5px solid var(--tinta); border-radius: 10px; }
+:root[data-estilo="comic"] .segmento { color: var(--tinta); font-family: var(--letra-rotulo); font-weight: 400; font-size: 17px; letter-spacing: 1px; }
+:root[data-estilo="comic"] .segmento.activo { background: var(--amarillo); color: var(--tinta); box-shadow: inset 0 0 0 2px var(--tinta); }
+:root[data-estilo="comic"] .ranking-fila.tuya {
+  background: var(--primario-oscuro); border: 2.5px solid var(--tinta); box-shadow: 3px 3px 0 var(--tinta);
+}
+:root[data-estilo="comic"] .ranking-puesto { font-family: var(--letra-rotulo); font-size: 18px; color: var(--tinta); }
+:root[data-estilo="comic"] .ranking-fila.tuya .ranking-puesto { color: #fff; }
+/* El oro, la plata y el bronce sobre papel no se leían (#FFD54A sobre blanco): pasan a ser
+   marcatexto del color de su medalla, con el nombre en tinta. Se lee igual sobre tu fila. */
+:root[data-estilo="comic"] .nombre-oro,
+:root[data-estilo="comic"] .nombre-plata,
+:root[data-estilo="comic"] .nombre-bronce {
+  color: var(--tinta); text-shadow: none; padding: 0 5px; border-radius: 3px;
+  /* La clase va en la celda del nombre, que se estira para empujar la racha a la derecha: sin
+     esto el marcatexto pintaba la fila entera. Ahora abraza el texto y el empuje lo hace el
+     margen. */
+  flex: 0 1 auto; margin-right: auto;
+  -webkit-box-decoration-break: clone; box-decoration-break: clone;
+}
+:root[data-estilo="comic"] .nombre-oro { background: #ffd54a; }
+:root[data-estilo="comic"] .nombre-plata { background: #dde1e7; }
+:root[data-estilo="comic"] .nombre-bronce { background: #f0b27a; }
+
+/* ---------- Cabecera y menú ---------- */
+
+:root[data-estilo="comic"] .cabecera-menu { color: var(--tinta); font-weight: 700; }
+:root[data-estilo="comic"] .cabecera-menu:focus-visible,
+:root[data-estilo="comic"] .menu-opcion:focus-visible,
+:root[data-estilo="comic"] .menu-cerrar:focus-visible,
+:root[data-estilo="comic"] .selector-campo:focus-visible { outline: 3px solid var(--tinta); outline-offset: 2px; }
+/* El velo, en trama de puntos negros: la página de atrás sigue viéndose, impresa más oscura. */
+:root[data-estilo="comic"] .menu-velo {
+  background: radial-gradient(rgba(0, 0, 0, 0.55) 2px, transparent 2.6px) 0 0 / 8px 8px, rgba(0, 0, 0, 0.2);
+}
+:root[data-estilo="comic"] .menu-panel { background: var(--trama), #fff; border-left: 4px solid var(--tinta); }
+:root[data-estilo="comic"] .menu-abierto .menu-panel { box-shadow: -6px 0 0 var(--tinta); }
+:root[data-estilo="comic"] .menu-nombre { font-family: var(--letra-rotulo); font-weight: 400; font-size: 26px; letter-spacing: 1px; }
+:root[data-estilo="comic"] .menu-cerrar { color: var(--tinta); font-weight: 700; }
+:root[data-estilo="comic"] .menu-opcion { font-family: var(--letra-globo); font-weight: 700; border: 2.5px solid transparent; border-radius: 8px; }
+:root[data-estilo="comic"] .menu-opcion.activa {
+  background: var(--amarillo); color: var(--tinta); border-color: var(--tinta); box-shadow: 3px 3px 0 var(--tinta);
+}

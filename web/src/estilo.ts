@@ -11,7 +11,7 @@
  * regla nueva en el camino, y nadie que no toque el combo ve un píxel distinto.
  */
 
-export type IdEstilo = "clasico" | "pixel";
+export type IdEstilo = "clasico" | "pixel" | "neon" | "comic" | "minimalista";
 
 export interface Estilo {
   id: IdEstilo;
@@ -30,7 +30,38 @@ export const ESTILOS: readonly Estilo[] = [
     nombre: "Pixel art",
     descripcion: "Como un videojuego de 8 bits: bloques, letras pixeladas y un paisaje nocturno.",
   },
+  {
+    id: "neon",
+    nombre: "Neón",
+    descripcion: "Gimnasio de noche: tubos de neón, una cuadrícula que corre al horizonte y un sol retro.",
+  },
+  {
+    id: "comic",
+    nombre: "Cómic",
+    descripcion: "Como una historieta: viñetas con tinta, tramas de puntos y onomatopeyas.",
+  },
+  {
+    id: "minimalista",
+    nombre: "Minimalista",
+    descripcion: "Claro y limpio: fondo blanco, mucho aire y un solo acento de color. Se lee bien a pleno sol.",
+  },
 ];
+
+/**
+ * Las fuentes de cada estilo, de Google Fonts. Se piden solo al elegir ese estilo: quien se
+ * queda en el clásico no descarga ninguna. Gemelas del script en línea de `index.html`, que
+ * las pide antes de que llegue el bundle; `estilo.test.ts` revisa que coincidan.
+ */
+export const FUENTES: Record<Exclude<IdEstilo, "clasico">, string> = {
+  // Press Start 2P es la de arcade, pero en párrafos se vuelve ilegible en un teléfono: va solo
+  // en títulos y números, y el texto corrido usa Pixelify Sans.
+  pixel: "https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Pixelify+Sans:wght@400..700&display=swap",
+  // Monoton dibuja los tubos, pero solo se lee en grande; Tilt Neon es neón legible a 16 px.
+  neon: "https://fonts.googleapis.com/css2?family=Monoton&family=Tilt+Neon&display=swap",
+  // Bangers es la rotulación de las viñetas; Comic Neue, la letra de los globos.
+  comic: "https://fonts.googleapis.com/css2?family=Bangers&family=Comic+Neue:wght@400;700&display=swap",
+  minimalista: "https://fonts.googleapis.com/css2?family=Inter:wght@300..700&display=swap",
+};
 
 export const ESTILO_POR_DEFECTO: IdEstilo = "clasico";
 
@@ -108,4 +139,11 @@ export function retrasosDeCortina(
     }
   }
   return retrasos;
+}
+
+export const ONOMATOPEYAS = ["¡ZAS!", "¡POW!", "¡BAM!", "¡BOOM!", "¡KAPOW!"] as const;
+
+/** La que grita la transición del cómic. `azar` entra para que la prueba sea determinista. */
+export function onomatopeya(azar: () => number = Math.random): string {
+  return ONOMATOPEYAS[Math.min(ONOMATOPEYAS.length - 1, Math.floor(azar() * ONOMATOPEYAS.length))];
 }

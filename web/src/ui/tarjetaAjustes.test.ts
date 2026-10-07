@@ -6,6 +6,9 @@ describe("tarjetaAjustes", () => {
     const html = tarjetaAjustes("clasico");
     expect(html).toContain(`<option value="clasico" selected>Clásico</option>`);
     expect(html).toContain(`<option value="pixel">Pixel art</option>`);
+    expect(html).toContain(`<option value="neon">Neón</option>`);
+    expect(html).toContain(`<option value="comic">Cómic</option>`);
+    expect(html).toContain(`<option value="minimalista">Minimalista</option>`);
   });
 
   it("marca el elegido y muestra su descripción", () => {

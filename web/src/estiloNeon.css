@@ -1,0 +1,261 @@
+/*
+ * El estilo neón: un gimnasio de noche a lo synthwave de los 80. Cuelga entero de
+ * `data-estilo="neon"` en <html> (ver `estilo.ts`); sin ese atributo no aplica ni una regla.
+ *
+ * La idea que lo ordena: cada borde es un TUBO. Un tubo encendido es un filo claro
+ * (`--primario-claro`, el núcleo blanco del gas) con un halo del color de la paleta alrededor
+ * (`--brillo-caja`). Un tubo apagado es el mismo filo sin halo y casi transparente. Por eso los
+ * botones deshabilitados y los secundarios "están apagados": el estado se lee como luz.
+ *
+ * La paleta de la clienta es el color del gas: cambia de clienta a clienta como en el clásico.
+ */
+
+:root[data-estilo="neon"] {
+  color-scheme: dark;
+  --fondo: #07030f;
+  /* Apenas traslúcida: más transparente, las franjas del sol se cruzaban con los números. */
+  --superficie: rgba(14, 7, 30, 0.93);
+  --superficie-alta: #1d1135;
+  --texto: #f3ecff;
+  /* 7:1 sobre la superficie, que es casi negra. */
+  --texto-tenue: #ab9fcb;
+  /* Los del calendario, como gas de neón: mismo significado y mismo orden de tono. */
+  --verde: #3dff8e;
+  --rojo: #ff3d6e;
+  --ambar: #ffc53d;
+  --letra-neon: "Tilt Neon", system-ui, sans-serif;
+  --letra-tubos: "Monoton", "Tilt Neon", system-ui, sans-serif;
+  --halo: color-mix(in srgb, var(--primario) 55%, transparent);
+  --brillo-caja:
+    0 0 3px var(--primario),
+    0 0 14px var(--halo),
+    inset 0 0 10px color-mix(in srgb, var(--primario) 30%, transparent);
+  --brillo-texto: 0 0 2px #fff, 0 0 8px var(--primario), 0 0 20px var(--primario);
+  /* El cielo: un resplandor de la paleta que sube desde el horizonte. Va en <html> y no en
+     <body>: el fondo de <body> se pintaría ENCIMA del sol y la cuadrícula (`z-index: -1`). */
+  background:
+    radial-gradient(ellipse 120% 45% at 50% 72%, color-mix(in srgb, var(--primario-oscuro) 55%, transparent), transparent 70%),
+    linear-gradient(to bottom, #07030f 0%, #12062a 60%, #07030f 100%);
+  background-attachment: fixed;
+}
+:root[data-estilo="neon"] body { background: transparent; font-family: var(--letra-neon); }
+:root[data-estilo="neon"] ::selection { background: var(--primario); color: var(--sobre-primario); }
+:root[data-estilo="neon"] .fondo { display: none; }
+
+/* ---------- El fondo: sol retro y cuadrícula que corre hacia la clienta ---------- */
+
+/* El sol, cortado en franjas cada vez más anchas hacia abajo: así se dibuja en cada portada de
+   synthwave. Las franjas son una máscara, así que se ve el cielo a través. */
+:root[data-estilo="neon"] body::before {
+  content: ""; position: fixed; z-index: -1; pointer-events: none;
+  /* Asentado en el horizonte de la cuadrícula, que con su perspectiva cae al 13 % de abajo. */
+  left: 50%; bottom: 12vh; width: min(62vw, 300px); aspect-ratio: 1;
+  transform: translate(-50%, 0);
+  border-radius: 50%;
+  background: linear-gradient(to bottom, #ffe66d 0%, #ff8a5c 38%, #ff3d8b 64%, var(--primario) 100%);
+  box-shadow: 0 0 60px 6px rgba(255, 61, 139, 0.35);
+  -webkit-mask-image: linear-gradient(to bottom,
+    #000 0 52%, transparent 52% 55%, #000 55% 64%, transparent 64% 68%, #000 68% 76%,
+    transparent 76% 81%, #000 81% 88%, transparent 88% 94%, #000 94%);
+  mask-image: linear-gradient(to bottom,
+    #000 0 52%, transparent 52% 55%, #000 55% 64%, transparent 64% 68%, #000 68% 76%,
+    transparent 76% 81%, #000 81% 88%, transparent 88% 94%, #000 94%);
+  opacity: 0.85;
+}
+/* La cuadrícula: un plano inclinado con perspectiva, más ancho que la pantalla para que las
+   líneas lleguen a los bordes, que se desvanece hacia el horizonte. Se mueve corriendo el
+   fondo una celda entera, así el bucle no da salto. */
+:root[data-estilo="neon"] body::after {
+  content: ""; position: fixed; z-index: -1; pointer-events: none;
+  left: -60%; right: -60%; bottom: 0; height: 75vh;
+  background-image:
+    linear-gradient(var(--primario) 2px, transparent 2px),
+    linear-gradient(90deg, var(--primario) 2px, transparent 2px);
+  background-size: 52px 52px;
+  background-position: center 0;
+  transform: perspective(300px) rotateX(62deg);
+  transform-origin: 50% 100%;
+  -webkit-mask-image: linear-gradient(to top, #000 45%, transparent 100%);
+  mask-image: linear-gradient(to top, #000 45%, transparent 100%);
+  filter: drop-shadow(0 0 4px var(--primario));
+  opacity: 0.6;
+  animation: neon-rejilla 1.4s linear infinite;
+}
+@keyframes neon-rejilla { to { background-position: center 52px; } }
+
+/* ---------- Letras ---------- */
+
+/* Monoton dibuja tubos, pero solo se lee en grande: va únicamente en el saludo y el título. */
+:root[data-estilo="neon"] .saludo,
+:root[data-estilo="neon"] .titulo-ventana {
+  font-family: var(--letra-tubos); font-weight: 400; font-size: 24px; letter-spacing: 1px;
+  line-height: 1.5; margin-top: 8px;
+}
+:root[data-estilo="neon"] .titulo-ventana { color: #fff; text-shadow: var(--brillo-texto); }
+:root[data-estilo="neon"] .saludo-hola { color: var(--primario-claro); text-shadow: 0 0 8px var(--primario); }
+/* El nombre es el letrero principal: tubo blanco con halo, y un falso contacto de vez en cuando. */
+:root[data-estilo="neon"] .saludo-nombre {
+  background: none; color: #fff; font-weight: 400;
+  text-shadow: var(--brillo-texto);
+  animation: neon-falso-contacto 7s linear infinite;
+}
+@keyframes neon-falso-contacto {
+  0%, 90%, 92%, 95%, 100% { opacity: 1; }
+  91% { opacity: 0.35; }
+  94% { opacity: 0.6; }
+}
+:root[data-estilo="neon"] .saludo.escribiendo,
+:root[data-estilo="neon"] .saludo.parpadeando {
+  border-right-color: #fff; filter: drop-shadow(0 0 4px var(--primario));
+}
+
+:root[data-estilo="neon"] .tarjeta-titulo {
+  color: var(--primario-claro); letter-spacing: 2.5px; font-size: 11px;
+  text-shadow: 0 0 6px var(--primario);
+}
+:root[data-estilo="neon"] .numero { font-size: 36px; font-weight: 400; color: #fff; text-shadow: var(--brillo-texto); }
+
+/* ---------- Tarjetas ---------- */
+
+:root[data-estilo="neon"] .tarjeta {
+  background: var(--superficie);
+  border: 1.5px solid color-mix(in srgb, var(--primario-claro) 70%, transparent);
+  border-radius: 14px;
+  box-shadow: var(--brillo-caja);
+}
+/* La del día es el letrero que más brilla: doble tubo y halo más ancho. */
+:root[data-estilo="neon"] .hoy {
+  background: linear-gradient(160deg, color-mix(in srgb, var(--primario-oscuro) 50%, #07030f), rgba(7, 3, 15, 0.92));
+  border: 2px solid var(--primario-claro);
+  box-shadow:
+    0 0 4px var(--primario), 0 0 22px var(--halo), 0 0 46px color-mix(in srgb, var(--primario) 25%, transparent),
+    inset 0 0 18px color-mix(in srgb, var(--primario) 35%, transparent);
+}
+:root[data-estilo="neon"] .hoy .tarjeta-titulo { color: var(--primario-claro); }
+:root[data-estilo="neon"] .hoy-dia { font-size: 30px; font-weight: 400; color: #fff; text-shadow: var(--brillo-texto); }
+:root[data-estilo="neon"] .ejercicio { border-top-color: color-mix(in srgb, var(--primario) 35%, transparent); }
+:root[data-estilo="neon"] .ejercicio-series {
+  background: transparent; border: 1px solid var(--primario-claro);
+  box-shadow: 0 0 6px var(--halo);
+}
+
+/* ---------- Botones y controles ---------- */
+
+/* Fuera de la ruleta: sobre su tapete verde, un tubo del color de la paleta se camuflaría
+   (es la entrada 26 del backlog). Ahí el botón sigue siendo de latón. */
+:root[data-estilo="neon"] .boton:not(.ruleta-caja .boton) {
+  background: rgba(7, 3, 15, 0.35); color: #fff;
+  border: 2px solid var(--primario-claro); border-radius: 999px;
+  font-family: var(--letra-neon); font-weight: 400; font-size: 17px; letter-spacing: 0.5px;
+  text-shadow: 0 0 6px var(--primario);
+  box-shadow: var(--brillo-caja);
+  transition: box-shadow 160ms ease, transform 100ms ease;
+}
+:root[data-estilo="neon"] .boton:not(.ruleta-caja .boton):hover:not(:disabled) {
+  box-shadow: 0 0 4px var(--primario), 0 0 24px var(--primario), inset 0 0 14px var(--halo);
+}
+:root[data-estilo="neon"] .boton:not(.ruleta-caja .boton):active:not(:disabled) { transform: scale(0.98); }
+/* El secundario y el deshabilitado son tubos apagados: el filo se ve, la luz no. */
+:root[data-estilo="neon"] .boton.secundario:not(.ruleta-caja .boton) {
+  border-color: rgba(255, 255, 255, 0.28); color: var(--texto); text-shadow: none; box-shadow: none;
+}
+:root[data-estilo="neon"] .boton:not(.ruleta-caja .boton):disabled {
+  opacity: 0.4; box-shadow: none; text-shadow: none; border-color: rgba(255, 255, 255, 0.25);
+}
+
+:root[data-estilo="neon"] .opcion {
+  background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 10px; font-family: var(--letra-neon);
+}
+:root[data-estilo="neon"] .opcion.elegida {
+  border-color: var(--primario-claro); color: #fff; text-shadow: 0 0 6px var(--primario);
+  box-shadow: var(--brillo-caja);
+}
+:root[data-estilo="neon"] .campo-libre {
+  background: rgba(0, 0, 0, 0.4); border-color: color-mix(in srgb, var(--primario-claro) 50%, transparent);
+  font-family: var(--letra-neon);
+}
+:root[data-estilo="neon"] .aviso-ok { box-shadow: -4px 0 12px -4px var(--verde); }
+:root[data-estilo="neon"] .aviso-error { box-shadow: -4px 0 12px -4px var(--rojo); }
+
+:root[data-estilo="neon"] .selector-campo {
+  background: rgba(0, 0, 0, 0.4); border: 1.5px solid var(--primario-claro);
+  font-family: var(--letra-neon); font-weight: 400; font-size: 17px;
+  box-shadow: var(--brillo-caja);
+}
+:root[data-estilo="neon"] .selector-campo option { background: #12082a; color: var(--texto); }
+:root[data-estilo="neon"] .selector-flecha { color: #fff; text-shadow: var(--brillo-texto); }
+
+/* ---------- Calendario ---------- */
+
+:root[data-estilo="neon"] .cal-nav button {
+  background: transparent; border: 1.5px solid color-mix(in srgb, var(--primario-claro) 70%, transparent);
+  color: #fff; box-shadow: 0 0 8px var(--halo);
+}
+:root[data-estilo="neon"] .cal-nav button:disabled { box-shadow: none; }
+:root[data-estilo="neon"] .cal span {
+  background: rgba(255, 255, 255, 0.035); border: 1px solid rgba(255, 255, 255, 0.07);
+  font-size: 13px;
+}
+:root[data-estilo="neon"] .cal span.vacia { border-color: transparent; background: transparent; }
+/* Cada día marcado es un tubo de su color: el mismo verde/rojo/ámbar de siempre, encendido. */
+:root[data-estilo="neon"] .cal span.ok,
+:root[data-estilo="neon"] .cal span.no,
+:root[data-estilo="neon"] .cal span.just {
+  --tubo: var(--verde);
+  background: color-mix(in srgb, var(--tubo) 12%, transparent);
+  border: 1.5px solid var(--tubo); color: #fff;
+  text-shadow: 0 0 6px var(--tubo);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--tubo) 70%, transparent), inset 0 0 6px color-mix(in srgb, var(--tubo) 45%, transparent);
+}
+:root[data-estilo="neon"] .cal span.no { --tubo: var(--rojo); }
+:root[data-estilo="neon"] .cal span.just { --tubo: var(--ambar); }
+:root[data-estilo="neon"] .cal span.hoy-celda {
+  outline: 2px solid #fff; outline-offset: 1px; color: #fff;
+  box-shadow: 0 0 10px var(--primario), 0 0 3px #fff;
+}
+
+/* ---------- Insignias, videos, ranking ---------- */
+
+:root[data-estilo="neon"] .insignia-img.generica {
+  background: transparent; border: 1.5px solid var(--primario-claro); box-shadow: var(--brillo-caja);
+}
+:root[data-estilo="neon"] .video-resumen { box-shadow: 0 0 0 1.5px var(--primario-claro), 0 0 16px var(--halo); }
+
+:root[data-estilo="neon"] .segmentos {
+  background: rgba(0, 0, 0, 0.35); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 999px;
+}
+:root[data-estilo="neon"] .segmento { border-radius: 999px; font-family: var(--letra-neon); font-weight: 400; }
+:root[data-estilo="neon"] .segmento.activo {
+  background: transparent; color: #fff; text-shadow: 0 0 6px var(--primario);
+  box-shadow: inset 0 0 0 1.5px var(--primario-claro), var(--brillo-caja);
+}
+:root[data-estilo="neon"] .ranking-fila.tuya {
+  background: color-mix(in srgb, var(--primario-oscuro) 40%, transparent);
+  box-shadow: inset 0 0 0 1.5px var(--primario-claro), 0 0 12px var(--halo);
+}
+
+/* ---------- Cabecera y menú ---------- */
+
+:root[data-estilo="neon"] .cabecera-menu { color: #fff; text-shadow: var(--brillo-texto); }
+:root[data-estilo="neon"] .menu-velo { background: rgba(4, 2, 10, 0.72); backdrop-filter: blur(2px); }
+:root[data-estilo="neon"] .menu-panel {
+  background: rgba(10, 5, 22, 0.97);
+  border-left: 2px solid var(--primario-claro);
+}
+:root[data-estilo="neon"] .menu-abierto .menu-panel { box-shadow: -4px 0 26px var(--halo); }
+/* Sin halo: el nombre recorta con `overflow: hidden` (para los puntos suspensivos) y el halo
+   recortado se veía como una caja oscura detrás del texto. */
+:root[data-estilo="neon"] .menu-nombre { font-weight: 400; color: var(--primario-claro); }
+:root[data-estilo="neon"] .menu-opcion { font-family: var(--letra-neon); }
+:root[data-estilo="neon"] .menu-opcion.activa {
+  background: transparent; color: #fff; font-weight: 400; text-shadow: 0 0 8px var(--primario);
+  box-shadow: inset 0 0 0 1.5px var(--primario-claro), 0 0 12px var(--halo);
+}
+
+/* ---------- Menos movimiento ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  :root[data-estilo="neon"] body::after,
+  :root[data-estilo="neon"] .saludo-nombre { animation: none; }
+}

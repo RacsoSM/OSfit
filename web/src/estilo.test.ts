@@ -1,8 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
-  CLAVE_ESTILO, ESTILOS, ESTILO_POR_DEFECTO, aplicarEstilo, estiloGuardado, guardarEstilo,
-  retrasosDeCortina, type AlmacenEstilo,
+  CLAVE_ESTILO, ESTILOS, ESTILO_POR_DEFECTO, FUENTES, ONOMATOPEYAS, aplicarEstilo, estiloGuardado,
+  guardarEstilo, onomatopeya, retrasosDeCortina, type AlmacenEstilo,
 } from "./estilo";
+
+import indexHtml from "../index.html?raw";
+
 
 function almacen(inicial: Record<string, string> = {}): AlmacenEstilo & { datos: Record<string, string> } {
   const datos = { ...inicial };
@@ -34,8 +37,48 @@ describe("el catálogo de estilos", () => {
     expect(ESTILOS[0].id).toBe("clasico");
   });
 
-  it("trae el pixel art", () => {
-    expect(ESTILOS.map((e) => e.nombre)).toContain("Pixel art");
+  it("trae clásico, pixel art, neón, cómic y minimalista, en ese orden", () => {
+    expect(ESTILOS.map((e) => e.nombre)).toEqual(["Clásico", "Pixel art", "Neón", "Cómic", "Minimalista"]);
+  });
+
+  it("tiene ids únicos", () => {
+    expect(new Set(ESTILOS.map((e) => e.id)).size).toBe(ESTILOS.length);
+  });
+});
+
+/**
+ * El script en línea de `index.html` repite la clave y las fuentes, porque corre antes de que
+ * exista el bundle. Si se desincronizan, el estilo parpadea al cargar o pide la letra
+ * equivocada, y nada más lo avisaría.
+ */
+describe("index.html y los estilos van de la mano", () => {
+  const html = indexHtml;
+  const otros = ESTILOS.filter((e) => e.id !== "clasico");
+
+  it("el script de arranque usa la misma clave", () => {
+    expect(html).toContain(`localStorage.getItem("${CLAVE_ESTILO}")`);
+  });
+
+  it.each(otros.map((e) => e.id))("%s: el script pide las mismas fuentes", (id) => {
+    expect(html).toContain(`${id}: "${FUENTES[id as keyof typeof FUENTES]}"`);
+  });
+
+  it.each(otros.map((e) => e.id))("%s: su hoja está enlazada", (id) => {
+    expect(html).toContain(`href="/src/estilo${id[0].toUpperCase()}${id.slice(1)}.css"`);
+  });
+
+  it("las hojas de estilo van después de la clásica, para ganarle a igual especificidad", () => {
+    const clasica = html.indexOf(`href="/src/estilos.css"`);
+    for (const e of otros) {
+      expect(html.indexOf(`/src/estilo${e.id[0].toUpperCase()}${e.id.slice(1)}.css`)).toBeGreaterThan(clasica);
+    }
+  });
+});
+
+describe("onomatopeya", () => {
+  it("siempre grita una de la lista, en los dos extremos del azar", () => {
+    expect(onomatopeya(() => 0)).toBe(ONOMATOPEYAS[0]);
+    expect(onomatopeya(() => 0.9999)).toBe(ONOMATOPEYAS[ONOMATOPEYAS.length - 1]);
   });
 });
 
@@ -46,6 +89,10 @@ describe("estiloGuardado", () => {
 
   it("devuelve lo que se guardó", () => {
     expect(estiloGuardado(almacen({ [CLAVE_ESTILO]: "pixel" }))).toBe("pixel");
+  });
+
+  it("recuerda cualquiera de los estilos", () => {
+    for (const e of ESTILOS) expect(estiloGuardado(almacen({ [CLAVE_ESTILO]: e.id }))).toBe(e.id);
   });
 
   it("un estilo que ya no existe cae en el clásico", () => {
@@ -71,10 +118,19 @@ describe("guardarEstilo", () => {
 });
 
 describe("aplicarEstilo", () => {
-  it("el pixel se marca en la raíz", () => {
+  it("cada estilo que no es el clásico se marca en la raíz", () => {
+    for (const id of ["pixel", "neon", "comic", "minimalista"] as const) {
+      const r = raiz();
+      aplicarEstilo(id, r);
+      expect(r.atributos.get("data-estilo")).toBe(id);
+    }
+  });
+
+  it("cambiar de un estilo a otro deja solo el último", () => {
     const r = raiz();
-    aplicarEstilo("pixel", r);
-    expect(r.atributos.get("data-estilo")).toBe("pixel");
+    aplicarEstilo("neon", r);
+    aplicarEstilo("comic", r);
+    expect(r.atributos.get("data-estilo")).toBe("comic");
   });
 
   it("el clásico no deja atributo: su CSS es exactamente el de siempre", () => {

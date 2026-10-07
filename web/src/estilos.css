@@ -602,12 +602,21 @@ body.menu-abierto { overflow: hidden; }
 .ajuste-nota { font-size: 13px; margin: 10px 2px 0; }
 .ajuste-tenue { color: var(--texto-tenue); font-size: 12px; margin-top: 4px; }
 
-/* La cortina del cambio de estilo (`cambiarConCortina`). Vive fuera de los estilos porque
-   sirve en las dos direcciones: entrar al pixel y volver al clásico. Cada cuadro crece en
-   cuatro escalones y no de forma continua: crecer suave delataría que no son píxeles. */
-.cortina {
+/* Las transiciones del cambio de estilo (`cambioDeEstilo.ts`). Viven acá y no en la hoja de
+   cada estilo porque la mitad que tapa corre con el estilo VIEJO todavía puesto: colgadas de
+   `data-estilo` no se verían. */
+.velo-estilo { position: fixed; inset: 0; z-index: 200; pointer-events: auto; overflow: hidden; }
+
+/* Fundido (clásico y minimalista): el color lo pone el JS, el del estilo al que se llega. */
+.velo-estilo.fundido { opacity: 0; animation: velo-entrar 260ms ease-out forwards; }
+.velo-estilo.fundido.abriendo { opacity: 1; animation: velo-salir 380ms ease-in forwards; }
+@keyframes velo-entrar { to { opacity: 1; } }
+@keyframes velo-salir { from { opacity: 1; } to { opacity: 0; } }
+
+/* La cortina del pixel. Cada cuadro crece en cuatro escalones y no de forma continua: crecer
+   suave delataría que no son píxeles. */
+.velo-estilo.cortina {
   --celda-cortina: 180ms;
-  position: fixed; inset: 0; z-index: 200; overflow: hidden; pointer-events: auto;
   display: grid; grid-template-columns: repeat(var(--columnas, 8), 1fr); align-content: start;
 }
 .cortina i {
@@ -618,6 +627,63 @@ body.menu-abierto { overflow: hidden; }
 .cortina.abriendo i { transform: scale(1); animation-name: cortina-abrir; }
 @keyframes cortina-cubrir { from { transform: scale(0); } to { transform: scale(1.02); } }
 @keyframes cortina-abrir { from { transform: scale(1.02); } to { transform: scale(0); } }
+
+/* El neón: la luz se va a tirones, como un tubo que falla (420 ms), y vuelve como un monitor
+   que enciende: una raya en el centro que se abre hasta llenar la pantalla (620 ms). */
+.velo-estilo.transicion-neon { background: #07030f; animation: neon-apagon 420ms linear forwards; }
+@keyframes neon-apagon {
+  0% { opacity: 0; } 20% { opacity: 0.8; } 30% { opacity: 0.1; } 45% { opacity: 0.9; }
+  55% { opacity: 0.4; } 100% { opacity: 1; }
+}
+.velo-estilo.transicion-neon::after {
+  content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 100%;
+  background: linear-gradient(to bottom, transparent, #fff 49%, #fff 51%, transparent);
+  box-shadow: 0 0 40px 12px var(--primario);
+  transform: translateY(-50%) scaleY(0); opacity: 0;
+}
+.velo-estilo.transicion-neon.abriendo { opacity: 1; animation: neon-encender 620ms ease-in forwards; }
+.velo-estilo.transicion-neon.abriendo::after { animation: neon-raya 620ms ease-out forwards; }
+@keyframes neon-encender { 0%, 35% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes neon-raya {
+  0% { transform: translateY(-50%) scaleX(0.02) scaleY(0.004); opacity: 1; }
+  30% { transform: translateY(-50%) scaleX(1) scaleY(0.004); opacity: 1; }
+  100% { transform: translateY(-50%) scaleX(1) scaleY(1.2); opacity: 0; }
+}
+
+/* El cómic: trama de puntos amarilla, la onomatopeya que estalla y la viñeta que sale volando
+   como una página que se pasa. */
+.velo-estilo.transicion-comic {
+  display: flex; align-items: center; justify-content: center;
+  background:
+    radial-gradient(rgba(0, 0, 0, 0.16) 2px, transparent 2.5px) 0 0 / 12px 12px,
+    #ffe14d;
+  transform-origin: left center;
+  animation: comic-entrar 220ms cubic-bezier(0.2, 0.9, 0.3, 1.2) forwards;
+}
+@keyframes comic-entrar { from { clip-path: circle(0 at 50% 50%); } to { clip-path: circle(80vmax at 50% 50%); } }
+.comic-estallido {
+  display: grid; place-items: center; width: min(78vw, 360px); aspect-ratio: 1;
+  background: #ff3b3b;
+  /* Una explosión de doce puntas. */
+  clip-path: polygon(50% 0, 59% 22%, 82% 9%, 76% 33%, 100% 35%, 80% 52%, 98% 70%, 74% 70%,
+    80% 95%, 58% 80%, 47% 100%, 39% 78%, 15% 92%, 22% 68%, 0 62%, 19% 48%, 3% 28%, 27% 29%,
+    22% 5%, 42% 20%);
+  transform: scale(0) rotate(-20deg);
+  animation: comic-estallar 340ms cubic-bezier(0.3, 1.6, 0.5, 1) 140ms forwards;
+}
+.comic-estallido b {
+  font-family: "Bangers", Impact, sans-serif; font-weight: 400; font-size: clamp(44px, 14vw, 72px);
+  letter-spacing: 2px; color: #ffe14d; transform: rotate(-8deg);
+  -webkit-text-stroke: 3px #111; paint-order: stroke fill;
+  text-shadow: 5px 5px 0 #111;
+}
+@keyframes comic-estallar { to { transform: scale(1) rotate(-6deg); } }
+.velo-estilo.transicion-comic.abriendo { animation: comic-pasar 460ms cubic-bezier(0.6, 0, 0.8, 0.4) forwards; }
+.velo-estilo.transicion-comic.abriendo .comic-estallido { transform: scale(1) rotate(-6deg); animation: none; }
+@keyframes comic-pasar {
+  from { transform: none; }
+  to { transform: translateX(-110%) rotate(-8deg) skewY(4deg); }
+}
 
 /* El paisaje pixel (`fondoPixel.ts`) solo existe para el estilo pixel; fuera de él, nada. */
 .fondo-pixel { display: none; }

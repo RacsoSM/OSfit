@@ -1,0 +1,155 @@
+/*
+ * El estilo minimalista: claro, con mucho aire y un solo acento de color. Cuelga entero de
+ * `data-estilo="minimalista"` en <html> (ver `estilo.ts`); sin ese atributo no aplica ni una
+ * regla.
+ *
+ * Es el único que existe por una razón práctica y no solo de gusto: la página se abre parada en
+ * el gimnasio, a veces al aire libre, y un tema oscuro a pleno sol se lee mal.
+ *
+ * Lo que hay que saber para tocarlo: las paletas del entrenador están pensadas para fondo
+ * oscuro, así que su `--primario` es claro (#B388FF en la de siempre) y como texto sobre
+ * blanco no llega ni a 3:1. Acá el acento de texto es `--primario-oscuro`, y `--primario` solo
+ * va de relleno detrás de su propio `--sobre-primario`, que es el par que la paleta garantiza.
+ */
+
+:root[data-estilo="minimalista"] {
+  color-scheme: light;
+  --fondo: #f5f5f3;
+  --superficie: #ffffff;
+  --superficie-alta: #eeeeeb;
+  --texto: #161616;
+  /* 5.2:1 sobre blanco y 4.8:1 sobre el fondo. */
+  --texto-tenue: #6b6b66;
+  --verde: #2e9e4f;
+  --rojo: #c4453d;
+  --ambar: #c99a2e;
+  --linea: rgba(0, 0, 0, 0.07);
+  --acento: var(--primario-oscuro);
+}
+:root[data-estilo="minimalista"] body {
+  font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  letter-spacing: -0.011em;
+}
+:root[data-estilo="minimalista"] ::selection { background: var(--primario-claro); color: var(--texto); }
+/* Sin fondo pintado: el aire es el adorno. */
+:root[data-estilo="minimalista"] .fondo { display: none; }
+
+/* ---------- Letras ---------- */
+
+/* Títulos grandes y finos, y el peso donde importa: el nombre. */
+:root[data-estilo="minimalista"] .saludo,
+:root[data-estilo="minimalista"] .titulo-ventana {
+  font-weight: 300; font-size: 30px; letter-spacing: -0.03em; margin-top: 8px;
+}
+:root[data-estilo="minimalista"] .titulo-ventana { font-weight: 600; }
+:root[data-estilo="minimalista"] .saludo-hola { color: var(--texto-tenue); }
+:root[data-estilo="minimalista"] .saludo-nombre {
+  background: none; color: var(--texto); font-weight: 650;
+}
+:root[data-estilo="minimalista"] .saludo.escribiendo,
+:root[data-estilo="minimalista"] .saludo.parpadeando { border-right: 2px solid var(--acento); }
+
+:root[data-estilo="minimalista"] .tarjeta-titulo {
+  color: var(--texto-tenue); font-size: 11px; font-weight: 600; letter-spacing: 0.09em;
+}
+:root[data-estilo="minimalista"] .numero { font-weight: 300; font-size: 40px; letter-spacing: -0.04em; }
+
+/* ---------- Tarjetas ---------- */
+
+:root[data-estilo="minimalista"] .tarjeta {
+  background: var(--superficie);
+  border: 1px solid var(--linea); border-radius: 18px;
+  padding: 18px 20px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03), 0 8px 24px -12px rgba(0, 0, 0, 0.08);
+  margin-bottom: 14px;
+}
+:root[data-estilo="minimalista"] .fila { gap: 14px; }
+/* La del día es la única tarjeta con color: plano, sin degradado. Es el acento de la página. */
+:root[data-estilo="minimalista"] .hoy {
+  background: var(--acento); border-color: transparent;
+  box-shadow: 0 12px 30px -14px color-mix(in srgb, var(--acento) 70%, transparent);
+}
+:root[data-estilo="minimalista"] .hoy .tarjeta-titulo { color: rgba(255, 255, 255, 0.7); }
+:root[data-estilo="minimalista"] .hoy-dia { font-weight: 600; font-size: 28px; letter-spacing: -0.03em; }
+:root[data-estilo="minimalista"] .ejercicio { border-top-color: rgba(255, 255, 255, 0.14); padding: 9px 0; }
+:root[data-estilo="minimalista"] .ejercicio-nombre { font-weight: 500; }
+:root[data-estilo="minimalista"] .ejercicio-series { background: rgba(255, 255, 255, 0.14); font-weight: 600; }
+:root[data-estilo="minimalista"] .hoy-acciones { border-top-color: rgba(255, 255, 255, 0.16); }
+
+/* ---------- Botones y controles ---------- */
+
+/* Fuera de la ruleta, que tiene sus colores propios sobre el tapete (entrada 26 del backlog). */
+:root[data-estilo="minimalista"] .boton:not(.ruleta-caja .boton) {
+  border-radius: 999px; font-weight: 600; letter-spacing: -0.01em;
+  background: var(--acento); color: #fff; border: 0;
+  transition: transform 120ms ease, opacity 120ms ease;
+}
+:root[data-estilo="minimalista"] .boton:not(.ruleta-caja .boton):active:not(:disabled) { transform: scale(0.98); }
+:root[data-estilo="minimalista"] .boton.secundario:not(.ruleta-caja .boton) {
+  background: transparent; color: var(--texto); box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.14);
+}
+/* Dentro de la tarjeta del día el fondo YA es el acento: ahí el principal se invierte a blanco
+   y el secundario es un contorno claro, o desaparecerían. */
+:root[data-estilo="minimalista"] .hoy-acciones .boton:not(.ruleta-caja .boton) { background: #fff; color: var(--acento); }
+:root[data-estilo="minimalista"] .hoy-acciones .boton.secundario:not(.ruleta-caja .boton) {
+  background: transparent; color: #fff; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.4);
+}
+
+:root[data-estilo="minimalista"] .opcion {
+  background: transparent; border: 1px solid rgba(0, 0, 0, 0.12); border-radius: 12px;
+}
+:root[data-estilo="minimalista"] .opcion.elegida { border-color: var(--acento); color: var(--acento); box-shadow: inset 0 0 0 1px var(--acento); }
+:root[data-estilo="minimalista"] .campo-libre { background: var(--fondo); border-color: rgba(0, 0, 0, 0.12); border-radius: 12px; }
+:root[data-estilo="minimalista"] .aviso-ok,
+:root[data-estilo="minimalista"] .aviso-error { background: var(--fondo); border-radius: 12px; }
+
+:root[data-estilo="minimalista"] .selector-campo {
+  background: var(--fondo); border: 1px solid rgba(0, 0, 0, 0.1); border-radius: 14px; font-weight: 500;
+}
+:root[data-estilo="minimalista"] .selector-flecha { color: var(--texto-tenue); }
+
+:root[data-estilo="minimalista"] .cabecera-menu:focus-visible,
+:root[data-estilo="minimalista"] .menu-opcion:focus-visible,
+:root[data-estilo="minimalista"] .menu-cerrar:focus-visible,
+:root[data-estilo="minimalista"] .selector-campo:focus-visible { outline-color: var(--acento); }
+
+/* ---------- Calendario ---------- */
+
+/* Los días sin marcar son solo un número: el color se reserva para lo que pasó. */
+:root[data-estilo="minimalista"] .cal-nav button { background: var(--fondo); border-radius: 999px; }
+:root[data-estilo="minimalista"] .cal-dias { font-weight: 500; }
+:root[data-estilo="minimalista"] .cal span { background: transparent; border-radius: 999px; font-weight: 500; }
+:root[data-estilo="minimalista"] .cal span.ok { background: var(--verde); }
+:root[data-estilo="minimalista"] .cal span.no { background: var(--rojo); }
+:root[data-estilo="minimalista"] .cal span.just { background: var(--ambar); }
+:root[data-estilo="minimalista"] .cal span.hoy-celda { outline: 1.5px solid var(--acento); outline-offset: -1.5px; color: var(--acento); font-weight: 700; }
+:root[data-estilo="minimalista"] .punto { border-radius: 50%; }
+
+/* ---------- Insignias, videos, ranking ---------- */
+
+:root[data-estilo="minimalista"] .insignia-img.generica { background: var(--fondo); }
+:root[data-estilo="minimalista"] .insignia-nombre { font-weight: 600; }
+:root[data-estilo="minimalista"] .video-resumen { border-radius: 14px; }
+
+:root[data-estilo="minimalista"] .segmentos { background: var(--fondo); border-radius: 999px; }
+:root[data-estilo="minimalista"] .segmento { border-radius: 999px; font-weight: 500; }
+:root[data-estilo="minimalista"] .segmento.activo {
+  background: #fff; color: var(--texto); font-weight: 600;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+:root[data-estilo="minimalista"] .ranking-fila { border-radius: 12px; }
+:root[data-estilo="minimalista"] .ranking-fila.tuya { background: var(--acento); }
+/* El oro, la plata y el bronce con brillo eran para fondo oscuro; sobre blanco el oro ni se
+   veía. Acá van en tonos de metal oscuros, sin brillo, que se leen en blanco y en tu fila. */
+:root[data-estilo="minimalista"] .nombre-oro { color: #9a7100; text-shadow: none; }
+:root[data-estilo="minimalista"] .nombre-plata { color: #5f6670; text-shadow: none; }
+:root[data-estilo="minimalista"] .nombre-bronce { color: #a0522d; text-shadow: none; }
+:root[data-estilo="minimalista"] .ranking-fila.tuya :is(.nombre-oro, .nombre-plata, .nombre-bronce) { color: #fff; }
+
+/* ---------- Menú ---------- */
+
+:root[data-estilo="minimalista"] .menu-velo { background: rgba(20, 20, 20, 0.25); backdrop-filter: blur(3px); }
+:root[data-estilo="minimalista"] .menu-abierto .menu-panel { box-shadow: -12px 0 40px rgba(0, 0, 0, 0.12); }
+:root[data-estilo="minimalista"] .menu-nombre { font-weight: 650; letter-spacing: -0.02em; }
+:root[data-estilo="minimalista"] .menu-opcion { font-weight: 500; }
+:root[data-estilo="minimalista"] .menu-opcion.activa { background: var(--fondo); color: var(--acento); font-weight: 650; }

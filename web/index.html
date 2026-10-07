@@ -6,23 +6,37 @@
     <meta name="theme-color" content="#121212" />
     <title>OSfit</title>
     <link rel="stylesheet" href="/src/estilos.css" />
-    <!-- Después de `estilos.css`, a propósito: a igual especificidad gana el que va último. -->
+    <!--
+      Las hojas de los estilos de Ajustes, después de `estilos.css` a propósito: a igual
+      especificidad gana el que va último. Cada una cuelga de su propio `data-estilo`, así que
+      entre ellas no se pisan.
+    -->
     <link rel="stylesheet" href="/src/estiloPixel.css" />
+    <link rel="stylesheet" href="/src/estiloNeon.css" />
+    <link rel="stylesheet" href="/src/estiloComic.css" />
+    <link rel="stylesheet" href="/src/estiloMinimalista.css" />
     <!--
       El estilo elegido en Ajustes, puesto antes de que se pinte nada. Va en línea y no en el
       bundle por lo mismo que el esqueleto: el bundle tarda, y sin esto la página se pintaría
-      primero en clásico y saltaría a pixel a la vista. Gemelo de `CLAVE_ESTILO` y de
-      `URL_FUENTES` (`estilo.ts`, `tarjetaAjustes.ts`). El `try` es porque nombrar
+      primero en clásico y saltaría al estilo elegido a la vista. Gemelo de `CLAVE_ESTILO` y de
+      `FUENTES` en `estilo.ts` (lo revisa `estilo.test.ts`). El `try` es porque nombrar
       `localStorage` puede tirar (ver `almacenesDelNavegador`).
     -->
     <script>
       try {
-        if (localStorage.getItem("osfit.estilo") === "pixel") {
-          document.documentElement.setAttribute("data-estilo", "pixel");
+        var fuentesDeEstilo = {
+          pixel: "https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Pixelify+Sans:wght@400..700&display=swap",
+          neon: "https://fonts.googleapis.com/css2?family=Monoton&family=Tilt+Neon&display=swap",
+          comic: "https://fonts.googleapis.com/css2?family=Bangers&family=Comic+Neue:wght@400;700&display=swap",
+          minimalista: "https://fonts.googleapis.com/css2?family=Inter:wght@300..700&display=swap"
+        };
+        var estilo = localStorage.getItem("osfit.estilo");
+        if (estilo && Object.prototype.hasOwnProperty.call(fuentesDeEstilo, estilo)) {
+          document.documentElement.setAttribute("data-estilo", estilo);
           var fuentes = document.createElement("link");
-          fuentes.id = "fuentes-pixel";
+          fuentes.id = "fuentes-" + estilo;
           fuentes.rel = "stylesheet";
-          fuentes.href = "https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Pixelify+Sans:wght@400..700&display=swap";
+          fuentes.href = fuentesDeEstilo[estilo];
           document.head.appendChild(fuentes);
         }
       } catch (e) {}
