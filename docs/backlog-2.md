@@ -49,8 +49,7 @@ Resumen:
   días". Se queda en rojo hasta que se registre el pago.
 - Sin cambios en `firestore.rules` ni en `functions/`.
 
-Spec: `superpowers/specs/2026-10-07-recordatorio-pago-web-design.md` (por ahora en la rama
-`ccr-d1c56144-kzwcds`, todavía no en `main`).
+Spec: `superpowers/specs/2026-10-07-recordatorio-pago-web-design.md`.
 
 Pendiente: confirmar las dos decisiones abiertas del spec (el día del pago cuenta como
 vigente; el texto cambia a "venció hace N días") y escribir el plan.
