@@ -7,14 +7,23 @@
  */
 const ZONA = "America/Mazatlan";
 
-/** Fecha de hoy en formato ISO (AAAA-MM-DD) según la zona del gimnasio. */
-export function hoyEnMazatlan(): string {
+/**
+ * El día (AAAA-MM-DD) que es `fecha` en la zona del gimnasio. Lo usa el recordatorio de pago
+ * para pasar `fechaProximoPago` a día: con la zona del navegador, una clienta de viaje vería un
+ * vencimiento distinto del que ve el entrenador.
+ */
+export function fechaEnMazatlan(fecha: Date): string {
   return new Intl.DateTimeFormat("en-CA", {
     timeZone: ZONA,
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
-  }).format(new Date());
+  }).format(fecha);
+}
+
+/** Fecha de hoy en formato ISO (AAAA-MM-DD) según la zona del gimnasio. */
+export function hoyEnMazatlan(): string {
+  return fechaEnMazatlan(new Date());
 }
 
 /**
