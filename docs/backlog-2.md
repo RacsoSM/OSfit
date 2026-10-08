@@ -137,3 +137,38 @@ Relacionado con el punto 1 (PWA): una versión instalada con service worker abri
 instante desde caché.
 
 Pendiente: medir y luego escribir el spec.
+
+## 6. Revocar el enlace de un cliente de verdad
+
+> "agrega al backlog el revocar el enlace de un cliente"
+
+**Lo que ya existe:** la ficha del cliente tiene "Revocar acceso"
+(`ClienteDetailScreen` → `AccesoWebRepository.revocarAcceso`). Borra el documento de
+`accesosWeb` y apaga `tieneAccesoWeb`. Desde ese momento el link ya no se puede canjear, y
+"Volver a compartir" genera uno nuevo.
+
+**Lo que falta (sin verificar en dispositivo; sale de leer el código):**
+
+- **Las sesiones ya abiertas siguen vivas.** Revocar solo impide canjear el link otra vez. Un
+  teléfono que ya había entrado conserva su sesión de Firebase: el SDK la renueva sola cada
+  hora, el claim `clienteId` sigue dentro, y las reglas (`esCliente`) solo miran ese claim.
+  O sea que quien ya tenía la página abierta o guardada puede seguir viéndola indefinidamente.
+- **Sin confirmación.** El botón revoca al primer toque; un toque accidental obliga a mandarle
+  un link nuevo al cliente.
+- **No dice a quién afecta.** No se ve cuándo fue el último acceso antes de revocar
+  (`AccesoWeb.ultimoAcceso` ya existe y se podría mostrar).
+
+Idea para cerrar la sesión de verdad (a decidir en el spec):
+
+- Al borrar el acceso, un trigger (`onDocumentDeleted("accesosWeb/{token}")`) llama a
+  `getAuth().revokeRefreshTokens(clienteId)`: la sesión deja de poder renovarse.
+- Eso no corta el token que ya tiene en la mano, que dura hasta una hora. Para cortarlo al
+  instante, guardar `accesoRevocadoEn` en `clientes/{id}` y que `esCliente` exija
+  `request.auth.token.auth_time` posterior a esa fecha. Un link nuevo canjeado después sí
+  pasa. Es un cambio en `firestore.rules` y `storage.rules`: leerlas completas antes.
+- La web debería mostrar el candado ("Tu acceso ya no está activo") en vez de errores de
+  permisos, y olvidar el token recordado.
+- Si ya existe el punto 1 (notificaciones), borrar también sus `dispositivos` para que no le
+  sigan llegando avisos.
+
+Pendiente: spec de diseño.
