@@ -32,7 +32,7 @@ const COLOR_BARRA: Record<IdEstilo, string> = {
   comic: "#FFF4D6",
   minimalista: "#F5F5F3",
   sakura: "#FFF0F4",
-  halloween: "#1A0B2E",
+  halloween: "#0A0410",
 };
 
 /**
