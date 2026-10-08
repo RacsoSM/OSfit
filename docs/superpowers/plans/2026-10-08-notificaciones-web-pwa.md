@@ -595,7 +595,7 @@ y leer `locationId`.
 
 Anotar el valor elegido como `REGION_FIRESTORE` en el Step 2. **No asumir `REGION` (`us-west1`)**: si no coincide, el despliegue falla o el trigger nunca dispara.
 
-- [ ] **Step 2: Implementación**
+- [x] **Step 2: Implementación**
 
 `functions/src/enviarNotificacion.ts` (reemplazar `"<locationId>"` por lo del Step 1):
 
@@ -708,7 +708,7 @@ En `functions/src/index.ts`, al final:
 export { enviarNotificacion } from "./enviarNotificacion";
 ```
 
-- [ ] **Step 3: Reglas**
+- [x] **Step 3: Reglas**
 
 En `firestore.rules`, dentro de `match /clientes/{cid} { ... }`, junto a `pagos`:
 
@@ -731,7 +731,7 @@ Y a nivel raíz, junto a los catálogos del final:
 
 Leer `firestore.rules` completo antes de tocarlo (lo pide `AGENTS.md`).
 
-- [ ] **Step 4: Tests y build**
+- [x] **Step 4: Tests y build**
 
 Run: `cd functions && npm test && npm run build`
 Expected: PASS y build sin errores.

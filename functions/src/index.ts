@@ -5,3 +5,4 @@ export { avisarFalta } from "./avisarFalta";
 export { jugarRuleta } from "./jugarRuleta";
 export { obtenerRanking } from "./ranking";
 export { registrarDispositivo } from "./registrarDispositivo";
+export { enviarNotificacion } from "./enviarNotificacion";

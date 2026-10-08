@@ -39,6 +39,12 @@ service cloud.firestore {
       match /personal_records/{doc} {
         allow read, write: if esEntrenador();
       }
+      // Los tokens de notificaciones de sus teléfonos. Solo el entrenador: la clienta no
+      // necesita leerlos, y el token es lo único que permite mandarle avisos a su teléfono.
+      // Los escribe la función `registrarDispositivo` con el Admin SDK.
+      match /dispositivos/{doc} {
+        allow read, write: if esEntrenador();
+      }
     }
 
     match /asistencias/{doc} {
@@ -93,5 +99,9 @@ service cloud.firestore {
     match /medallas/{doc} { allow read, write: if esEntrenador(); }
     match /logrosPersonales/{doc} { allow read, write: if esEntrenador(); }
     match /configVideo/{doc} { allow read, write: if esEntrenador(); }
+
+    // Avisos que el entrenador manda desde la app. Son cola y a la vez historial: la función
+    // `enviarNotificacion` los toma al crearse y les anota el resultado.
+    match /notificaciones/{doc} { allow read, write: if esEntrenador(); }
   }
 }
