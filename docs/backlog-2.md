@@ -34,3 +34,23 @@ Lo que hay que saber antes de diseñarlo:
 - Android/Chrome sale casi gratis con lo mismo; el caso difícil es iOS.
 
 Pendiente: spec de diseño.
+
+## 2. Recordatorio de pago en la web del cliente
+
+> "quiero que, desde mi app móvil tenga un botón nuevo en el apartado de Web de cada cliente, ese botón debe de ser "recordatorios de pago" y solamente debe de ser si o no, por defecto será no, ese botón lo que hará es que el que lo tenga activado, de recibirá un nuevo card en su inicio de la app, está card solo se activará cuando falten dos días o menos para que se termine su periodo de pago, y solamente dirá, Tu periodo de entrenamiento vence en x días, estando de verde si está vigente o rojo si ya venció, pero este card deberá aparecer solamente a los que yo seleccione desde la app, crea el spec"
+
+Resumen:
+
+- **App:** interruptor "Recordatorios de pago" (sí/no, apagado por defecto) en el apartado
+  **Web** de cada cliente. Se guarda como `recordatorioPago` en `clientes/{id}`.
+- **Web:** tarjeta hasta arriba de **Inicio**, solo para quien tenga el interruptor prendido
+  y fecha de próximo pago, cuando falten 2 días o menos o ya haya vencido.
+- **Texto y color:** verde "vence en 2 días / en 1 día / hoy"; rojo "venció ayer / hace N
+  días". Se queda en rojo hasta que se registre el pago.
+- Sin cambios en `firestore.rules` ni en `functions/`.
+
+Spec: `superpowers/specs/2026-10-07-recordatorio-pago-web-design.md` (por ahora en la rama
+`ccr-d1c56144-kzwcds`, todavía no en `main`).
+
+Pendiente: confirmar las dos decisiones abiertas del spec (el día del pago cuenta como
+vigente; el texto cambia a "venció hace N días") y escribir el plan.
