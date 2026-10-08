@@ -13,13 +13,10 @@ import {
 
 /**
  * Region del trigger. No es `REGION` (`us-west1`): un trigger de Firestore tiene que vivir
- * donde vive la base, y sale de `firebase firestore:databases:get`.
- *
- * PENDIENTE: la sesion donde se escribio no tenia acceso a Firebase para leerla. Hasta que
- * se ponga la region real, el despliegue falla a proposito en vez de crear un trigger que
- * nunca dispara (Task 4, Step 1 del plan).
+ * donde vive la base. La base esta en `nam5` (multirregion de EE. UU.), y para `nam5` los
+ * triggers van en `us-central1`.
  */
-const REGION_FIRESTORE = "<locationId>";
+const REGION_FIRESTORE = "us-central1";
 
 /**
  * Cuanto espera FCM a un telefono apagado antes de tirar el aviso. Cuatro horas: un "ya

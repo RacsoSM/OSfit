@@ -7,7 +7,8 @@ import { tokenEnLaUrl } from "./sesion";
  * Clave pública VAPID del proyecto (consola de Firebase → Cloud Messaging → Certificados de
  * push web). Es pública, como `firebaseConfig`: identifica al remitente, no da permisos.
  */
-const CLAVE_VAPID = "PEGAR_CLAVE_VAPID";
+const CLAVE_VAPID =
+  "BDh1iV8skQEMAaDMfL6QBODsJnCQaNkDw88Njb3Gfj1c7gfEtGoI-LmAImK8sVmYGJP4gqRiQmwvPhECyIipaXA";
 
 export function entornoDelNavegador(): EntornoNotificaciones {
   const tienePush =

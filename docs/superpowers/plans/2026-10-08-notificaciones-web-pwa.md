@@ -584,7 +584,7 @@ git push origin main
 - Consumes: todo lo de `./notificaciones` (Task 2), `db` de `./comun`.
 - Produces: trigger `enviarNotificacion` sobre `notificaciones/{id}`.
 
-- [ ] **Step 1: Averiguar la región del trigger**
+- [x] **Step 1: Averiguar la región del trigger**
 
 Los triggers de Firestore tienen que vivir donde vive la base. Run:
 `firebase firestore:databases:get "(default)" --project osfit-cccfe`
