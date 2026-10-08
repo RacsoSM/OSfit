@@ -2030,3 +2030,6 @@ git push origin main
   desde `/c/<token>` en Safari, abierta desde el ícono, entra sin candado; también al cerrarla
   y reabrirla. Desplegados hosting, reglas, `registrarDispositivo` (`us-west1`) y
   `enviarNotificacion` (`us-central1`); app con Avisos instalada en el teléfono del entrenador.
+- 2026-10-08 — Aviso de punta a punta verificado en ese iPhone: mandado desde Avisos en la app,
+  llegó como notificación. Sin verificar todavía: interruptor apagado → no llega, texto con
+  HTML, y Android/Chrome.

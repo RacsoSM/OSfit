@@ -55,6 +55,8 @@ Estado (2026-10-08):
   Safari, la abrió desde el ícono y entró a su página sin candado, también al cerrarla y
   volver a abrirla. Era la puerta del plan (Task 1, Step 8). Modelo y versión de iOS sin
   anotar.
+- **Verificado de punta a punta (2026-10-08):** un aviso mandado desde Avisos en la app le
+  llegó como notificación al iPhone de la clienta.
 
 El entrenador dio el punto por terminado. La lista de abajo era el orden de verificación; lo
 que no está marcado arriba como verificado queda como comprobación pendiente:
