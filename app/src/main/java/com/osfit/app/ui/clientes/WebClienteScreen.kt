@@ -11,6 +11,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FitnessCenter
+import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.VideoLibrary
@@ -35,19 +36,28 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.osfit.app.data.AppContainer
 import com.osfit.app.data.model.Cliente
 import com.osfit.app.data.repository.ClienteRepository
+import com.osfit.app.data.repository.DispositivoRepository
 import com.osfit.app.ui.common.AccionCard
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class WebClienteViewModel(
     private val clienteId: String,
-    private val clienteRepository: ClienteRepository = AppContainer.clienteRepository
+    private val clienteRepository: ClienteRepository = AppContainer.clienteRepository,
+    dispositivoRepository: DispositivoRepository = AppContainer.dispositivoRepository
 ) : ViewModel() {
 
     private val _cliente = MutableStateFlow<Cliente?>(null)
     val cliente: StateFlow<Cliente?> = _cliente
+
+    /** En cuántos teléfonos activó las notificaciones; un error de red cuenta como cero. */
+    val dispositivos: StateFlow<Int> = dispositivoRepository.contarDispositivos(clienteId)
+        .catch { emit(0) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0)
 
     init {
         viewModelScope.launch {
@@ -66,6 +76,13 @@ class WebClienteViewModel(
             runCatching { clienteRepository.actualizarRecordatorioPago(clienteId, activo) }
         }
     }
+
+    fun cambiarNotificacionesWeb(habilitada: Boolean) {
+        _cliente.value = _cliente.value?.copy(notificacionesWeb = habilitada)
+        viewModelScope.launch {
+            runCatching { clienteRepository.actualizarNotificacionesWeb(clienteId, habilitada) }
+        }
+    }
 }
 
 /**
@@ -75,8 +92,9 @@ class WebClienteViewModel(
  * por aquí y no por ahí. Cuando haya que administrar algo más de la web, se agrega un elemento
  * a [seccionesWeb] y la ficha no se toca — que es exactamente como entró la paleta.
  *
- * La excepción es el interruptor de recordatorio de pago: es un sí/no que se cambia ahí mismo y
- * no abre ninguna pantalla, así que va como fila aparte debajo de la rejilla.
+ * Lo que navega entra por [seccionesWeb]. Los sí/no (recordatorio de pago, notificaciones) se
+ * cambian ahí mismo y no abren ninguna pantalla, así que van como tarjetas con interruptor
+ * debajo de la rejilla.
  */
 @Composable
 fun WebClienteScreen(
@@ -89,6 +107,7 @@ fun WebClienteScreen(
         factory = viewModelFactory { initializer { WebClienteViewModel(clienteId) } }
     )
     val cliente by viewModel.cliente.collectAsState()
+    val dispositivos by viewModel.dispositivos.collectAsState()
     val secciones = seccionesWeb(
         onVerVideosWeb = onVerVideosWeb,
         onVerPaletaWeb = onVerPaletaWeb,
@@ -122,6 +141,14 @@ fun WebClienteScreen(
                     tieneFechaPago = cliente?.fechaProximoPago != null,
                     habilitado = cliente != null,
                     onCambiar = viewModel::cambiarRecordatorioPago
+                )
+            }
+            item {
+                FilaNotificaciones(
+                    habilitada = cliente?.notificacionesWeb == true,
+                    dispositivos = dispositivos,
+                    habilitado = cliente != null,
+                    onCambiar = viewModel::cambiarNotificacionesWeb
                 )
             }
         }
@@ -182,6 +209,39 @@ private fun FilaRecordatorioPago(
                 )
             }
             Switch(checked = activo, onCheckedChange = onCambiar, enabled = habilitado)
+        }
+    }
+}
+
+@Composable
+private fun FilaNotificaciones(
+    habilitada: Boolean,
+    dispositivos: Int,
+    habilitado: Boolean,
+    onCambiar: (Boolean) -> Unit
+) {
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Icon(Icons.Filled.NotificationsActive, contentDescription = null)
+            Column(modifier = Modifier.weight(1f)) {
+                Text("Notificaciones", style = MaterialTheme.typography.titleMedium)
+                Text(
+                    // Prendido no basta: también ella tiene que activarlas en su teléfono. Se dice
+                    // aquí para que el entrenador sepa si de verdad le van a llegar los avisos.
+                    when {
+                        !habilitada -> "Apagado: no recibe los avisos que mandes desde Avisos."
+                        dispositivos == 0 -> "Todavía no las activó en su teléfono. En iPhone tiene que instalar la página en su inicio y abrirla desde ahí."
+                        dispositivos == 1 -> "Activadas en 1 teléfono."
+                        else -> "Activadas en $dispositivos teléfonos."
+                    },
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
+            Switch(checked = habilitada, onCheckedChange = onCambiar, enabled = habilitado)
         }
     }
 }

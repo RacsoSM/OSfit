@@ -1739,7 +1739,7 @@ git push origin main
 
 **Nota:** si el plan del recordatorio de pago ya se ejecutó, `WebClienteViewModel` ya existe con el interruptor de recordatorio: **agregar** a ese ViewModel `dispositivos` y `cambiarNotificacionesWeb`, y poner esta tarjeta debajo de la del recordatorio. Si no existe, crearlo como abajo.
 
-- [ ] **Step 1: ViewModel**
+- [x] **Step 1: ViewModel**
 
 En el mismo archivo (como `PaletaWebClienteViewModel` en el suyo):
 
@@ -1766,7 +1766,7 @@ class WebClienteViewModel(
 }
 ```
 
-- [ ] **Step 2: Tarjeta con el interruptor**
+- [x] **Step 2: Tarjeta con el interruptor**
 
 En `WebClienteScreen`, obtener el ViewModel:
 
@@ -1813,7 +1813,7 @@ Imports nuevos: `Card`, `Column`, `Switch`, `Alignment`, `collectAsState`, `getV
 
 Actualizar el comentario de cabecera de `WebClienteScreen`: lo que navega entra por `seccionesWeb`; los sí/no van como tarjetas con interruptor debajo de la rejilla.
 
-- [ ] **Step 3: Compilar**
+- [x] **Step 3: Compilar**
 
 Run: `./gradlew assembleDebug`
 Expected: BUILD SUCCESSFUL.
