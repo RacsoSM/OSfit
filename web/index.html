@@ -5,6 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#121212" />
     <title>OSfit</title>
+    <!--
+      Instalable. El manifest NO declara `start_url` a propósito: sin él, la página instalada
+      abre en la dirección desde la que se instaló, que es el `/c/<token>` de la clienta, y
+      entra sola por el escalón 1 de `resolverSesion`. La página instalada en iPhone no
+      comparte almacenamiento con Safari, así que sin el token en la dirección abriría en el
+      candado. Ver docs/superpowers/specs/2026-10-08-notificaciones-web-pwa-design.md.
+    -->
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="/icono-180.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="OSfit" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <link rel="stylesheet" href="/src/estilos.css" />
     <!--
       Las hojas de los estilos de Ajustes, después de `estilos.css` a propósito: a igual

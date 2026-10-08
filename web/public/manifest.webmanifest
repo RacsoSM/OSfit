@@ -1,0 +1,14 @@
+{
+  "name": "OSfit",
+  "short_name": "OSfit",
+  "description": "Tu rutina, tu racha y los avisos de tus coaches.",
+  "display": "standalone",
+  "scope": "/",
+  "background_color": "#121212",
+  "theme_color": "#121212",
+  "icons": [
+    { "src": "/icono-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icono-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/icono-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

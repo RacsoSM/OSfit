@@ -94,7 +94,7 @@ Esta task va primero porque valida el supuesto del que depende todo: que la pág
 - Create: `web/public/manifest.webmanifest`, `web/public/icono-180.png`, `web/public/icono-192.png`, `web/public/icono-512.png`
 - Modify: `web/index.html`, `firebase.json`
 
-- [ ] **Step 1: Íconos**
+- [x] **Step 1: Íconos**
 
 Con el logo del entrenador, generar tres PNG cuadrados: 180, 192 y 512 px, **sin transparencia** (iOS pinta de negro lo transparente), con el fondo `#121212`.
 
@@ -115,7 +115,7 @@ for t in 180 192 512; do npx --yes sharp-cli --input icono.svg --output icono-$t
 
 (Cualquier otra herramienta que exporte PNG sirve; lo que importa son los tres tamaños y el fondo opaco.)
 
-- [ ] **Step 2: Manifest**
+- [x] **Step 2: Manifest**
 
 `web/public/manifest.webmanifest`:
 
@@ -138,7 +138,7 @@ for t in 180 192 512; do npx --yes sharp-cli --input icono.svg --output icono-$t
 
 **No agregar `start_url` ni `id`.** JSON no admite comentarios, así que el porqué va en `index.html` (Step 3).
 
-- [ ] **Step 3: Etiquetas en `web/index.html`**
+- [x] **Step 3: Etiquetas en `web/index.html`**
 
 Dentro de `<head>`, justo después de `<title>OSfit</title>`:
 
@@ -159,7 +159,7 @@ Dentro de `<head>`, justo después de `<title>OSfit</title>`:
 
 (El comentario va en español con acentos si se prefiere; en `web/` sí se usan. Lo que importa es que diga el porqué.)
 
-- [ ] **Step 4: Sin caché para el manifest y el service worker**
+- [x] **Step 4: Sin caché para el manifest y el service worker**
 
 En `firebase.json`, dentro de `hosting.headers`, agregar antes de la entrada de `/assets/**`:
 
@@ -177,12 +177,12 @@ En `firebase.json`, dentro de `hosting.headers`, agregar antes de la entrada de 
 
 El service worker todavía no existe (Task 6); la regla se deja lista para que su primera versión ya salga sin caché.
 
-- [ ] **Step 5: Build**
+- [x] **Step 5: Build**
 
 Run: `cd web && npm run build && ls dist | grep -E "manifest|icono"`
 Expected: el build pasa y aparecen `manifest.webmanifest`, `icono-180.png`, `icono-192.png`, `icono-512.png`.
 
-- [ ] **Step 6: Commit y push**
+- [x] **Step 6: Commit y push**
 
 ```bash
 git add web/public web/index.html firebase.json
