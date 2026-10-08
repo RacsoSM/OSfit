@@ -6,7 +6,7 @@ nombres de clientes reales: si una entrada necesita nombrar a alguien, va en `ba
 Misma convención que el otro backlog: las entradas se marcan (`— ✅ HECHO (fecha)`), no se
 borran.
 
-## 1. Notificaciones en iPhone: convertir la web en PWA
+## 1. Notificaciones en iPhone: convertir la web en PWA — ✅ HECHO (2026-10-08)
 
 > "agrega al backlog de este proyecto el activar las notificaciones haciendo la web una pwa para ios"
 
@@ -51,8 +51,13 @@ Estado (2026-10-08):
   `service-754891137796@gcp-sa-pubsub…`, e Invocador de Cloud Run y Receptor de eventos de
   Eventarc a `754891137796-compute@…`.
 - **App con Avisos instalada** en el teléfono del entrenador.
+- **Verificado en iPhone (2026-10-08):** una clienta instaló la página desde su link en
+  Safari, la abrió desde el ícono y entró a su página sin candado, también al cerrarla y
+  volver a abrirla. Era la puerta del plan (Task 1, Step 8). Modelo y versión de iOS sin
+  anotar.
 
-Lo que sigue, en orden:
+El entrenador dio el punto por terminado. La lista de abajo era el orden de verificación; lo
+que no está marcado arriba como verificado queda como comprobación pendiente:
 
 1. **La puerta (Task 1, Step 8):** en un iPhone, abrir el link `/c/<token>` de una clienta de
    prueba en Safari → Compartir → Agregar a inicio → cerrar Safari → abrir desde el ícono.

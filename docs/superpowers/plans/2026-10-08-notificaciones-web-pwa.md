@@ -190,11 +190,11 @@ git commit -m "feat: make the client web installable without a fixed start_url"
 git push origin main
 ```
 
-- [ ] **Step 7: Pedir confirmación y desplegar hosting**
+- [x] **Step 7: Pedir confirmación y desplegar hosting**
 
 Preguntar al entrenador antes. Con su sí: `firebase deploy --only hosting`.
 
-- [ ] **Step 8: Prueba en iPhone (la puerta)**
+- [x] **Step 8: Prueba en iPhone (la puerta)**
 
 1. Abrir el link `/c/<token>` en **Safari** (si viene de WhatsApp: ⋯ → "Abrir en Safari").
 2. Compartir → "Agregar a inicio" → "Agregar". Comprobar ícono y nombre "OSfit".
@@ -2021,3 +2021,12 @@ git add docs
 git commit -m "docs: record device verification of client push notifications"
 git push origin main
 ```
+
+---
+
+## Registro de verificación
+
+- 2026-10-08 — Task 1 verificada en iPhone (modelo y versión de iOS sin anotar): instalada
+  desde `/c/<token>` en Safari, abierta desde el ícono, entra sin candado; también al cerrarla
+  y reabrirla. Desplegados hosting, reglas, `registrarDispositivo` (`us-west1`) y
+  `enviarNotificacion` (`us-central1`); app con Avisos instalada en el teléfono del entrenador.
