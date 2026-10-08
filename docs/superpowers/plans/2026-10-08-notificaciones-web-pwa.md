@@ -224,7 +224,7 @@ Si entra: anotar "Task 1 verificada en iPhone <modelo>, iOS <versión>" al final
   - `enTandas<T>(xs: T[], tamano?: number): T[][]`
   - `esTokenMuerto(codigo: string | undefined): boolean`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `functions/src/notificaciones.test.ts`:
 
@@ -322,12 +322,12 @@ describe("lectura de documentos", () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `cd functions && npx vitest run src/notificaciones.test.ts`
 Expected: FAIL — no existe `./notificaciones`.
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 `functions/src/notificaciones.ts`:
 
@@ -417,7 +417,7 @@ export function esTokenMuerto(codigo: string | undefined): boolean {
 }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `cd functions && npx vitest run src/notificaciones.test.ts`
 Expected: PASS.
