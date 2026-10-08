@@ -1,5 +1,5 @@
 import { collection, doc, onSnapshot, query, where } from "firebase/firestore";
-import type { FirestoreError } from "firebase/firestore";
+import type { FirestoreError, Timestamp } from "firebase/firestore";
 import { db, renovarCredencial } from "./firebase";
 import type { PaletaWeb } from "./paleta";
 import type { Tirada } from "./tirada";
@@ -46,6 +46,13 @@ export interface Cliente {
    * se le asignó una no tiene el campo, y entonces la página se queda con el morado de :root.
    */
   paletaWeb?: PaletaWeb;
+  /**
+   * Si el entrenador le prendió la tarjeta "Tu periodo vence en X días". Opcional por la razón
+   * de siempre: Firestore omite los campos que nunca se escribieron, y ausente es "no".
+   */
+  recordatorioPago?: boolean;
+  /** Cuándo vence su periodo. Lo escribe la app al registrar un pago; puede no existir. */
+  fechaProximoPago?: Timestamp | null;
 }
 
 export interface Asistencia {

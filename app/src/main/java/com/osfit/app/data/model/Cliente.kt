@@ -58,5 +58,8 @@ data class Cliente(
     val ultimoDiaEsAncla: Boolean = false,
     // Comodidad de UI: si está desincronizado, la ficha ofrece "Compartir" en vez de
     // "Copiar link". La verdad sobre el acceso vive en la colección accesosWeb.
-    val tieneAccesoWeb: Boolean = false
+    val tieneAccesoWeb: Boolean = false,
+    // Si la web le muestra la tarjeta "Tu periodo vence en X días". Apagado por defecto: el
+    // entrenador lo prende solo para las clientas a las que quiere recordarles el pago.
+    val recordatorioPago: Boolean = false
 )

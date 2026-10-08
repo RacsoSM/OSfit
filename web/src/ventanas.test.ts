@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import type { Timestamp } from "firebase/firestore";
 import type { Asistencia, Cliente } from "./datos";
 import { VENTANAS, contenidoDe, ventana, type DatosCliente, type IdVentana } from "./ventanas";
 
@@ -55,6 +56,23 @@ describe("el registro de ventanas", () => {
 
 describe("la ventana Inicio", () => {
   const html = contenidoDe(ventana("inicio"), datos());
+
+  it("el recordatorio de pago va arriba de todo, antes de la tarjeta del día", () => {
+    const conRecordatorio = {
+      ...cliente,
+      recordatorioPago: true,
+      fechaProximoPago: { toDate: () => new Date("2026-09-19T19:00:00Z") } as Timestamp,
+    } as Cliente;
+    const h = contenidoDe(ventana("inicio"), datos({ cliente: conRecordatorio }));
+    const aviso = h.indexOf("Tu periodo de entrenamiento vence en 1 día");
+    const dia = h.indexOf("Todavía no tienes rutina");
+    expect(aviso).toBeGreaterThan(-1);
+    expect(aviso).toBeLessThan(dia);
+  });
+
+  it("sin el interruptor no aparece", () => {
+    expect(html).not.toContain("recordatorio-pago");
+  });
 
   it("va día, racha, revivir y calendario, en ese orden", () => {
     const dia = html.indexOf("Todavía no tienes rutina");

@@ -1,7 +1,9 @@
 import type { Asistencia, Cliente, LogroPersonalOtorgado, MedallaOtorgada } from "./datos";
 import type { IdEstilo } from "./estilo";
 import type { Tirada } from "./tirada";
+import { recordatorioPago } from "./pago";
 import { tarjetaDia } from "./ui/tarjetaDia";
+import { tarjetaRecordatorioPago } from "./ui/tarjetaRecordatorioPago";
 import { tarjetasStats } from "./ui/tarjetasStats";
 import { accionDia, hojaDeMotivosAbierta } from "./ui/accionDia";
 import { accionHoyNoPuedo, tarjetaRevivir } from "./ui/accionFalta";
@@ -56,9 +58,11 @@ export interface Ventana {
 }
 
 /**
- * Lo que hoy es "hoy": el día con sus dos acciones, la racha, revivirla y el calendario, en
- * ese orden. Cada acción vive junto al dato del que habla: cambiar el día y avisar que hoy no
- * se puede van dentro de la tarjeta del día; revivir la racha va debajo de la racha.
+ * Lo que hoy es "hoy": el recordatorio de pago (si toca), el día con sus dos acciones, la
+ * racha, revivirla y el calendario, en ese orden. El recordatorio va primero porque es lo único
+ * de la página con fecha límite; abajo del calendario nadie lo vería. Cada acción vive junto al
+ * dato del que habla: cambiar el día y avisar que hoy no se puede van dentro de la tarjeta del
+ * día; revivir la racha va debajo de la racha.
  */
 function inicio(d: DatosCliente): string {
   const yaAsistioHoy = d.asistencias.some((a) => a.fecha === d.hoy && a.asistio);
@@ -66,6 +70,7 @@ function inicio(d: DatosCliente): string {
       ${accionDia(d.cliente, d.hoy, yaAsistioHoy)}
       ${hojaDeMotivosAbierta() ? "" : accionHoyNoPuedo(d.cliente, d.hoy, d.yaAviso)}`;
   return `
+      ${tarjetaRecordatorioPago(recordatorioPago(d.cliente, d.hoy))}
       ${tarjetaDia(d.cliente, d.hoy, acciones, d.asistencias)}
       ${tarjetasStats(d.asistencias, d.hoy)}
       ${tarjetaRevivir(d.cliente, d.hoy, d.asistencias, d.tiradaEsteMes, d.tiradaMesAnterior)}

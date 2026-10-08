@@ -93,6 +93,10 @@ class FirestoreClienteRepository(
         coleccion.document(clienteId).update("activo", activo).await()
     }
 
+    override suspend fun actualizarRecordatorioPago(clienteId: String, activo: Boolean) {
+        coleccion.document(clienteId).update("recordatorioPago", activo).await()
+    }
+
     override suspend fun actualizarCancion(
         clienteId: String,
         archivo: String?,

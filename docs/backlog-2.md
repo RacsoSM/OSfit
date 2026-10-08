@@ -62,7 +62,11 @@ Spec: `superpowers/specs/2026-10-07-recordatorio-pago-web-design.md`.
 Decisiones confirmadas (2026-10-08): el día del pago va en verde ("vence hoy"); ya vencido
 dice "Tu periodo de entrenamiento venció hace X días".
 
-Pendiente: escribir el plan.
+Plan: `superpowers/plans/2026-10-08-recordatorio-pago-web.md`. Implementado (web con tests;
+app sin compilar todavía: la sesión donde se hizo no tenía Android SDK).
+
+Pendiente: compilar e instalar la app (`./gradlew test installDebug`), probar el interruptor
+con una clienta de prueba y desplegar la web (pedir confirmación al entrenador).
 
 ## 3. GIF para cada ejercicio
 
