@@ -1620,7 +1620,7 @@ git push origin main
 **Interfaces:**
 - Produces: `object Avisos { val RAPIDOS: List<String>; const val LARGO_MAXIMO = 500; fun destinatarias(clientes: List<Cliente>, elegidos: Set<String>?): List<Cliente>; fun resumen(n: Notificacion): String }`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `app/src/test/java/com/osfit/app/domain/AvisosTest.kt`:
 
@@ -1664,12 +1664,12 @@ class AvisosTest {
 }
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `./gradlew test --tests "com.osfit.app.domain.AvisosTest"`
 Expected: FAIL (no compila: no existe `Avisos`).
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 `app/.../domain/Avisos.kt`:
 
@@ -1717,7 +1717,7 @@ object Avisos {
 }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `./gradlew test --tests "com.osfit.app.domain.AvisosTest"`
 Expected: PASS.
