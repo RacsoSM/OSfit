@@ -50,14 +50,16 @@ Resumen:
   **Web** de cada cliente. Se guarda como `recordatorioPago` en `clientes/{id}`.
 - **Web:** tarjeta hasta arriba de **Inicio**, solo para quien tenga el interruptor prendido
   y fecha de próximo pago, cuando falten 2 días o menos o ya haya vencido.
-- **Texto y color:** verde "vence en 2 días / en 1 día / hoy"; rojo "venció ayer / hace N
-  días". Se queda en rojo hasta que se registre el pago.
+- **Texto y color:** verde "vence en 2 días / en 1 día / hoy"; rojo "venció hace N días"
+  (singular con 1). Se queda en rojo hasta que se registre el pago.
 - Sin cambios en `firestore.rules` ni en `functions/`.
 
 Spec: `superpowers/specs/2026-10-07-recordatorio-pago-web-design.md`.
 
-Pendiente: confirmar las dos decisiones abiertas del spec (el día del pago cuenta como
-vigente; el texto cambia a "venció hace N días") y escribir el plan.
+Decisiones confirmadas (2026-10-08): el día del pago va en verde ("vence hoy"); ya vencido
+dice "Tu periodo de entrenamiento venció hace X días".
+
+Pendiente: escribir el plan.
 
 ## 3. GIF para cada ejercicio
 

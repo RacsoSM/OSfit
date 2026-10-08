@@ -20,7 +20,10 @@ desde la app, en el apartado **Web** de su ficha.
   apareciendo si ya venció. Coincide con el umbral del rojo de la lista de la app
   (`diasParaPago < 3`), así que el entrenador y la clienta ven la alarma el mismo día.
 - **Verde si sigue vigente, rojo si ya venció.** El día del pago (0 días) cuenta como
-  vigente: el periodo vence *ese* día, todavía no se pasó.
+  vigente: el periodo vence *ese* día, todavía no se pasó. Confirmado por el entrenador el
+  2026-10-08.
+- **Ya vencido dice "venció hace X días"**, también los días que pasen después del primero
+  (nada de "ayer"). Confirmado por el entrenador el 2026-10-08.
 - **Mientras esté vencido, la tarjeta se queda** (en rojo) hasta que el entrenador registre
   el pago o mueva la fecha. Registrar el pago ya actualiza `fechaProximoPago`, así que la
   tarjeta desaparece sola sin pasos extra.
@@ -149,11 +152,11 @@ visible.
 | 2 | verde | Tu periodo de entrenamiento vence en 2 días |
 | 1 | verde | Tu periodo de entrenamiento vence en 1 día |
 | 0 | verde | Tu periodo de entrenamiento vence hoy |
-| -1 | rojo | Tu periodo de entrenamiento venció ayer |
+| -1 | rojo | Tu periodo de entrenamiento venció hace 1 día |
 | -N | rojo | Tu periodo de entrenamiento venció hace N días |
 
 - "en 0 días" y "en -3 días" se leen como un error, por eso hoy y vencido tienen su propia
-  frase. El singular "1 día" por lo mismo.
+  frase. El singular "1 día" (en las dos direcciones) por lo mismo.
 - Colores con las variables que ya existen, `--verde` y `--rojo` (`estilos.css`), mediante
   clases `.recordatorio-pago.vigente` / `.recordatorio-pago.vencido`, para que cada estilo
   (neón, cómic, pixel, sakura, minimalista) pueda ajustarlas si las sobreescribe.
