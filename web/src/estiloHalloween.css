@@ -93,12 +93,12 @@
   21%, 100% { transform: translate(560%, -100%) rotate(-12deg); opacity: 0; }
 }
 :root[data-estilo="halloween"] .hw-nube {
-  position: absolute; height: 22%; border-radius: 999px; filter: blur(5px);
-  background: rgba(60, 30, 80, 0.75);
+  position: absolute; height: 12%; border-radius: 999px; filter: blur(7px);
+  background: rgba(90, 55, 120, 0.45);
   animation: hw-nube 30s ease-in-out infinite alternate;
 }
-:root[data-estilo="halloween"] .hw-nube.uno { top: 58%; left: -30%; width: 90%; }
-:root[data-estilo="halloween"] .hw-nube.dos { top: 22%; left: 50%; width: 70%; height: 16%; opacity: 0.7; animation-duration: 38s; animation-direction: alternate-reverse; }
+:root[data-estilo="halloween"] .hw-nube.uno { top: 64%; left: -40%; width: 80%; }
+:root[data-estilo="halloween"] .hw-nube.dos { top: 26%; left: 60%; width: 60%; height: 9%; opacity: 0.6; animation-duration: 38s; animation-direction: alternate-reverse; }
 @keyframes hw-nube { to { translate: 40% 0; } }
 
 /* Los murciélagos: aletean (las alas se aplastan y se abren) y cruzan la pantalla subiendo y
@@ -251,15 +251,16 @@
 
 /* ---------- Tarjetas ---------- */
 
-/* Vidrio oscuro con un filo de luz naranja, y una telaraña colgando de la esquina de arriba a
-   la derecha. */
+/* Vidrio oscuro con un filo de luz naranja. */
 :root[data-estilo="halloween"] .tarjeta {
   position: relative; background: var(--superficie);
   border: 1px solid rgba(255, 154, 60, 0.18); border-radius: 18px;
   box-shadow: 0 16px 36px -20px rgba(0, 0, 0, 0.8), 0 0 24px -12px rgba(255, 140, 30, 0.35);
   backdrop-filter: blur(4px);
 }
-:root[data-estilo="halloween"] .tarjeta::after {
+/* Una telaraña colgando de la esquina de la tarjeta del día. Solo ahí: en todas las tarjetas
+   (las dos de números, el esqueleto de carga) se volvía ruido. */
+:root[data-estilo="halloween"] .tarjeta.hoy::after {
   content: ""; position: absolute; top: 0; right: 0; width: 46px; height: 46px; pointer-events: none;
   border-top-right-radius: 18px; opacity: 0.45;
   background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40' fill='none' stroke='%23d8d0f0' stroke-width='0.7'%3E%3Cpath d='M40 0L-16.0 0.0M40 0L-11.7 21.4M40 0L0.4 39.6M40 0L18.6 51.7M40 0L40.0 56.0M31.0 0.0Q32.9 1.4 31.7 3.4Q34.0 4.0 33.6 6.4Q36.0 6.0 36.6 8.3Q38.6 7.1 40.0 9.0M22.0 0.0Q25.9 2.8 23.4 6.9Q28.0 8.0 27.3 12.7Q32.0 12.0 33.1 16.6Q37.2 14.1 40.0 18.0M12.0 0.0Q18.0 4.4 14.1 10.7Q21.4 12.4 20.2 19.8Q27.6 18.6 29.3 25.9Q35.6 22.0 40.0 28.0M2.0 0.0Q10.2 5.9 4.9 14.5Q14.7 16.9 13.1 26.9Q23.1 25.3 25.5 35.1Q34.1 29.8 40.0 38.0'/%3E%3C/svg%3E") top right / contain no-repeat;
@@ -364,3 +365,7 @@
   :root[data-estilo="halloween"] .hw-arana { transform: translateY(90px); }
   :root[data-estilo="halloween"] .hw-asomado { transform: translateY(-38px); }
 }
+
+/* Al llegar al final de la página se asoma el cementerio entero: sin este aire, la última
+   tarjeta (el calendario) tapaba las calabazas justo donde la vista termina. */
+:root[data-estilo="halloween"] #contenido { padding-bottom: clamp(110px, 20vh, 200px); }
