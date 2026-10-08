@@ -21,7 +21,14 @@ body {
   font-size: 16px;
   line-height: 1.45;
 }
-main { max-width: 480px; margin: 0 auto; padding: 16px 14px 48px; }
+/* Los `env(safe-area-inset-*)` son por la página instalada en iPhone: con
+   `black-translucent` se dibuja debajo de la barra de estado, y sin ellos el ☰ quedaba bajo
+   el reloj, donde iOS se queda con los toques. En Safari normal valen 0 y no cambian nada. */
+main {
+  max-width: 480px; margin: 0 auto;
+  padding: calc(16px + env(safe-area-inset-top)) calc(14px + env(safe-area-inset-right))
+           calc(48px + env(safe-area-inset-bottom)) calc(14px + env(safe-area-inset-left));
+}
 /* El fondo pintado, clavado al viewport y detrás de todo. `fixed` y no `absolute` para que
    no crezca con la página ni se repita al hacer scroll: es una sola pintura, no un patrón. */
 .fondo {
