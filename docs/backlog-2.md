@@ -54,3 +54,25 @@ Spec: `superpowers/specs/2026-10-07-recordatorio-pago-web-design.md` (por ahora 
 
 Pendiente: confirmar las dos decisiones abiertas del spec (el día del pago cuenta como
 vigente; el texto cambia a "venció hace N días") y escribir el plan.
+
+## 3. GIF para cada ejercicio
+
+> "agrega también el agregar gifs para cada ejercicio al backlog"
+
+Idea: que cada ejercicio tenga un GIF que muestre cómo se hace, visible en la rutina de la
+web del cliente (y posiblemente en la app).
+
+A decidir en el spec:
+
+- **Dónde se asocia el GIF.** `Ejercicio` vive copiado dentro de cada rutina y plantilla, así
+  que poner el GIF ahí obliga a repetirlo en cada copia. Lo natural es un catálogo por nombre
+  normalizado (como `pesoPorEjercicio`, ver `domain/PesosPropios.kt`), para subirlo una vez y
+  que aparezca en todas las rutinas.
+- **De dónde salen los GIF:** subidos por el entrenador desde la app a Storage, o una
+  biblioteca externa. Si son de terceros, revisar licencia (ver `docs/licencias/`).
+- **Peso y formato:** un GIF pesa mucho para datos móviles; considerar MP4/WebM corto en
+  bucle, que pesa varias veces menos y se ve igual.
+- **Acceso:** reglas de Storage para que cualquier clienta con sesión pueda leerlos (no son
+  datos personales), y guardar la ruta, no la URL de descarga, como con canciones y videos.
+
+Pendiente: spec de diseño.
