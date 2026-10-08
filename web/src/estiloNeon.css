@@ -259,3 +259,6 @@
   :root[data-estilo="neon"] body::after,
   :root[data-estilo="neon"] .saludo-nombre { animation: none; }
 }
+
+/* El verde neón es tan claro que el texto blanco del recordatorio de pago no se lee encima. */
+:root[data-estilo="neon"] .tarjeta.recordatorio-pago.vigente { color: #0b0b0b; text-shadow: none; }

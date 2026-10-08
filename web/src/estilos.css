@@ -114,6 +114,14 @@ main { max-width: 480px; margin: 0 auto; padding: 16px 14px 48px; }
   font-size: 11px; text-transform: uppercase; letter-spacing: 1px;
   color: var(--primario); margin: 0 0 6px;
 }
+/* Recordatorio de pago. Usa --verde y --rojo para que cada estilo (neón, cómic, pixel, sakura,
+   minimalista) lo tiña con los suyos sin reglas extra. El `:root .tarjeta` del selector no
+   sobra: cada estilo pinta su `.tarjeta` con `:root[data-estilo="…"] .tarjeta`, y sin él ese
+   fondo le ganaría al verde y al rojo. */
+:root .tarjeta.recordatorio-pago { color: #fff; }
+:root .tarjeta.recordatorio-pago.vigente { background: var(--verde); }
+:root .tarjeta.recordatorio-pago.vencido { background: var(--rojo); }
+.recordatorio-pago-texto { margin: 0; font-weight: 700; font-size: 16px; line-height: 1.3; }
 .hoy { background: linear-gradient(150deg, var(--primario-oscuro), var(--primario)); color: #fff; }
 .hoy .tarjeta-titulo { color: rgba(255, 255, 255, 0.82); }
 .hoy-dia { font-size: 26px; font-weight: 800; margin: 2px 0 4px; line-height: 1.15; }
