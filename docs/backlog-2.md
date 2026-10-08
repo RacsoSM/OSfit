@@ -38,7 +38,10 @@ avisos escritos a mano por el entrenador desde la app ("ya llegamos", "ya nos fu
 "llegaremos más tarde" o texto libre), solo a clientas habilitadas por él y que además
 dieron permiso en su teléfono.
 
-Pendiente: revisar el spec y escribir el plan.
+Plan: `superpowers/plans/2026-10-08-notificaciones-web-pwa.md`. La Task 1 es la puerta:
+instalar en un iPhone real desde `/c/<token>` y comprobar que entra sin candado.
+
+Pendiente: ejecutar el plan.
 
 ## 2. Recordatorio de pago en la web del cliente
 

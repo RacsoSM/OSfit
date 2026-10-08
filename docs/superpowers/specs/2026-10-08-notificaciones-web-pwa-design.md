@@ -134,8 +134,10 @@ local de Firestore y sale sola al volver la red.
    las `clientesElegidos` que además estén habilitadas. **Una clienta elegida pero no
    habilitada no recibe**: la llave del entrenador manda siempre.
 2. Lee los `dispositivos` de cada una.
-3. `getMessaging().sendEachForMulticast` en tandas de 500 (límite de FCM), con
-   `notification: { title, body }` y `webpush.fcmOptions.link = "/"`.
+3. `getMessaging().sendEachForMulticast` en tandas de 500 (límite de FCM), con mensajes
+   **solo de datos** (`data: { titulo, texto }`): el service worker arma la notificación,
+   así no se ve doble en navegadores que mostrarían `notification` por su cuenta. TTL de
+   **4 horas**: un "ya llegamos" que llega al día siguiente confunde más de lo que avisa.
 4. Los tokens que FCM rechaza como no registrados (`messaging/registration-token-not-registered`,
    `invalid-argument`) se **borran**: la clienta desinstaló o revocó el permiso.
 5. Actualiza `estado`, `enviadas`, `fallidas`.
@@ -238,8 +240,8 @@ Para: (•) Todas las habilitadas (7)   ( ) Elegir…
                               [ Enviar ]
 
 Enviados
-· Hoy 6:02  "Ya llegamos"           7 de 7
-· Ayer 21:15 "Ya nos fuimos"        6 de 7  (1 falló)
+· Hoy 6:02  "Ya llegamos"           Llegó a 7 teléfonos
+· Ayer 21:15 "Ya nos fuimos"        Llegó a 6 teléfonos · 1 falló
 ```
 
 - Los botones rápidos **llenan el campo**, no envían: así "Llegaremos más tarde" se completa
@@ -248,7 +250,8 @@ Enviados
   aviso enviado no se puede retirar.
 - "Elegir…" abre la lista de clientas habilitadas con casillas.
 - El historial lee `notificaciones` ordenado por `creada`, con el estado que escribe la
-  función.
+  función. Los números son de **teléfonos**, no de clientas: una con teléfono y tablet suma
+  dos.
 - Nuevo `NotificacionRepository` (clase plana, como los demás) registrado en `AppContainer`, y
   `AvisosViewModel`.
 - Los textos rápidos van como código (lista en `domain/`), no en Firestore: son tres y cambian
