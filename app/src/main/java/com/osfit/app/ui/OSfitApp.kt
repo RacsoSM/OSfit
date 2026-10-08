@@ -90,6 +90,16 @@ private fun OSfitContent() {
             drawerContent = {
                 CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
                     ModalDrawerSheet(modifier = Modifier.fillMaxWidth(0.6f)) {
+                        // Primera: es lo que más se usa a diario, antes que "Top".
+                        NavigationDrawerItem(
+                            label = { Text("Avisos") },
+                            selected = rutaActual == Screen.Avisos.route,
+                            onClick = {
+                                scope.launch { drawerState.close() }
+                                navController.navigate(Screen.Avisos.route)
+                            },
+                            modifier = Modifier.padding(12.dp)
+                        )
                         NavigationDrawerItem(
                             label = { Text("Top") },
                             selected = rutaActual == Screen.Top.route,

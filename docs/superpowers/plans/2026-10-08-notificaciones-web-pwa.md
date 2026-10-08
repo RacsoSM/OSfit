@@ -1834,7 +1834,7 @@ git push origin main
 - Create: `app/.../ui/avisos/AvisosViewModel.kt`, `app/.../ui/avisos/AvisosScreen.kt`
 - Modify: `app/.../ui/navigation/Screen.kt`, `app/.../ui/navigation/OSfitNavHost.kt`, `app/.../ui/OSfitApp.kt`
 
-- [ ] **Step 1: ViewModel**
+- [x] **Step 1: ViewModel**
 
 `app/.../ui/avisos/AvisosViewModel.kt`:
 
@@ -1909,7 +1909,7 @@ class AvisosViewModel(
 }
 ```
 
-- [ ] **Step 2: Pantalla**
+- [x] **Step 2: Pantalla**
 
 `app/.../ui/avisos/AvisosScreen.kt` — Compose con, de arriba abajo:
 
@@ -1926,7 +1926,7 @@ Todo el texto del aviso se pinta con `Text(...)` (nunca HTML), así que no hay n
 
 El ViewModel se obtiene con `viewModel()` (constructor sin argumentos obligatorios).
 
-- [ ] **Step 3: Navegación**
+- [x] **Step 3: Navegación**
 
 `Screen.kt`, junto a `ConfigVideo`:
 
@@ -1956,7 +1956,7 @@ El ViewModel se obtiene con `viewModel()` (constructor sin argumentos obligatori
                         )
 ```
 
-- [ ] **Step 4: Compilar y tests**
+- [x] **Step 4: Compilar y tests**
 
 Run: `./gradlew test assembleDebug`
 Expected: BUILD SUCCESSFUL, tests en verde.

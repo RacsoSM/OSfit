@@ -129,6 +129,9 @@ fun OSfitNavHost(navController: NavHostController, modifier: Modifier = Modifier
             val clienteId = backStackEntry.arguments?.getString("clienteId") ?: return@composable
             com.osfit.app.ui.clientes.LogrosPersonalesClienteScreen(clienteId = clienteId)
         }
+        composable(Screen.Avisos.route) {
+            com.osfit.app.ui.avisos.AvisosScreen()
+        }
         composable(Screen.Top.route) {
             com.osfit.app.ui.top.TopScreen()
         }

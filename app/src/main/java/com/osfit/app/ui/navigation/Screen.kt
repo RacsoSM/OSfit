@@ -69,6 +69,7 @@ sealed class Screen(val route: String) {
     }
 
     data object ConfigVideo : Screen("config_video")
+    data object Avisos : Screen("avisos")
 }
 
 val screensConBarraInferior = listOf(Screen.Clientes, Screen.Calendario, Screen.Rutinas)
