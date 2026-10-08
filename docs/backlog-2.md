@@ -77,8 +77,7 @@ Cabos sueltos que salieron al desplegar:
 - **Limpieza de imágenes en `us-central1`:** Firebase no pudo configurar la política que borra
   las imágenes viejas de las funciones. No afecta el funcionamiento; sin ella se acumulan unos
   centavos de almacenamiento al mes. Se arregla con `firebase functions:artifacts:setpolicy`.
-- **Ícono provisional** ("OS" morado sobre negro). Cambiarlo por el logo cuando haya uno en PNG
-  de 512×512 o más (`web/public/icono-*.png`).
+- **Ícono provisional** ("OS" morado sobre negro). Pasó a su propia entrada: punto 7.
 
 ## 2. Recordatorio de pago en la web del cliente — ✅ HECHO (2026-10-08)
 
@@ -217,3 +216,31 @@ Idea para cerrar la sesión de verdad (a decidir en el spec):
   sigan llegando avisos.
 
 Pendiente: spec de diseño.
+
+## 7. Ícono de la PWA
+
+> "agrega al backlog agregar el icono de la pwa"
+
+Hoy la página instalada usa un ícono provisional ("OS" morado sobre negro). Hay que cambiarlo
+por el logo de verdad.
+
+Lo que hay hoy:
+
+- `web/public/icono.svg` (fuente) y los PNG `icono-180.png`, `icono-192.png` e
+  `icono-512.png`.
+- `web/index.html` usa `icono-180.png` como `apple-touch-icon` (el que se ve en iPhone).
+- `web/public/manifest.webmanifest` usa el de 192 y el de 512. El de 512 está marcado también
+  como `maskable` (Android lo recorta en círculo o en otras formas).
+
+Lo que hace falta:
+
+- **El logo en PNG de 512×512 o más**, cuadrado, de preferencia con fondo sólido: iOS rellena
+  la transparencia con negro y redondea las esquinas solo.
+- **Versión maskable aparte:** el logo dentro del círculo central (el 80 % del lienzo), para
+  que Android no le corte los bordes. Hoy se reutiliza el mismo PNG de 512.
+- Regenerar los tres tamaños (180, 192, 512) con los mismos nombres, así no hay que tocar
+  `index.html` ni el manifest. Si se cambian los nombres, actualizar las dos referencias.
+- **Caché:** iOS guarda el ícono al momento de instalar. Quien ya la tenga instalada debe
+  quitarla de inicio y volver a agregarla para ver el ícono nuevo.
+
+Pendiente: que el entrenador mande el logo.
