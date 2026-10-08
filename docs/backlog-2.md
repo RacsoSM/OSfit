@@ -43,7 +43,7 @@ instalar en un iPhone real desde `/c/<token>` y comprobar que entra sin candado.
 
 Pendiente: ejecutar el plan.
 
-## 2. Recordatorio de pago en la web del cliente
+## 2. Recordatorio de pago en la web del cliente — ✅ HECHO (2026-10-08)
 
 > "quiero que, desde mi app móvil tenga un botón nuevo en el apartado de Web de cada cliente, ese botón debe de ser "recordatorios de pago" y solamente debe de ser si o no, por defecto será no, ese botón lo que hará es que el que lo tenga activado, de recibirá un nuevo card en su inicio de la app, está card solo se activará cuando falten dos días o menos para que se termine su periodo de pago, y solamente dirá, Tu periodo de entrenamiento vence en x días, estando de verde si está vigente o rojo si ya venció, pero este card deberá aparecer solamente a los que yo seleccione desde la app, crea el spec"
 
@@ -65,8 +65,7 @@ dice "Tu periodo de entrenamiento venció hace X días".
 Plan: `superpowers/plans/2026-10-08-recordatorio-pago-web.md`. Implementado (web con tests;
 app sin compilar todavía: la sesión donde se hizo no tenía Android SDK).
 
-Pendiente: compilar e instalar la app (`./gradlew test installDebug`), probar el interruptor
-con una clienta de prueba y desplegar la web (pedir confirmación al entrenador).
+Verificado por el entrenador (2026-10-08).
 
 ## 3. GIF para cada ejercicio
 
