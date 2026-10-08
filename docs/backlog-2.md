@@ -33,7 +33,12 @@ Lo que hay que saber antes de diseñarlo:
   hace falta una función programada (cron en Mazatlán) que decida a quién avisar.
 - Android/Chrome sale casi gratis con lo mismo; el caso difícil es iOS.
 
-Pendiente: spec de diseño.
+Spec: `superpowers/specs/2026-10-08-notificaciones-web-pwa-design.md`. Alcance definido:
+avisos escritos a mano por el entrenador desde la app ("ya llegamos", "ya nos fuimos",
+"llegaremos más tarde" o texto libre), solo a clientas habilitadas por él y que además
+dieron permiso en su teléfono.
+
+Pendiente: revisar el spec y escribir el plan.
 
 ## 2. Recordatorio de pago en la web del cliente
 
