@@ -763,7 +763,7 @@ git push origin main
 
 **Nota sobre el spec:** el spec listaba `abrir-en-safari` aparte de `instalar`. Desde la página no se distingue con certeza Safari del navegador interno de WhatsApp en iOS, así que se juntan en `instalar`, cuyos pasos empiezan por "si estás dentro de WhatsApp, ábrelo en Safari". Se agrega `instalar-desde-link` para el caso `/mi` sin token. El spec se actualiza en el Step 5.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `web/src/notificaciones.test.ts`:
 
@@ -840,12 +840,12 @@ describe("versionIos y plataforma", () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `cd web && npx vitest run src/notificaciones.test.ts`
 Expected: FAIL — no existe `./notificaciones`.
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 `web/src/notificaciones.ts`:
 
@@ -910,12 +910,12 @@ export function estadoNotificaciones(
 }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `cd web && npx vitest run src/notificaciones.test.ts`
 Expected: PASS.
 
-- [ ] **Step 5: Ajustar el spec**
+- [x] **Step 5: Ajustar el spec**
 
 En `docs/superpowers/specs/2026-10-08-notificaciones-web-pwa-design.md`, sección "`web/src/notificaciones.ts`", reemplazar la lista de estados por la de este archivo y explicar en una línea por qué `abrir-en-safari` se juntó con `instalar` (no se distingue con certeza) y para qué es `instalar-desde-link`.
 

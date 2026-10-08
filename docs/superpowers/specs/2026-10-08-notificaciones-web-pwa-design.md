@@ -182,13 +182,18 @@ Decide qué ofrecer, como función pura testeable:
 ```ts
 type EstadoNotificaciones =
   | "no-habilitada"        // el entrenador no la habilitó: no se muestra nada
-  | "abrir-en-safari"      // iOS dentro de WhatsApp u otro navegador embebido
-  | "instalar"             // iOS en Safari, sin instalar
+  | "instalar"             // iOS sin instalar (en Safari o dentro de WhatsApp), con token en la ruta
+  | "instalar-desde-link"  // iOS sin instalar en `/mi`: primero abrir su link de WhatsApp
   | "no-soportado"         // iOS < 16.4 o navegador sin Push API
   | "pedir-permiso"        // se puede: mostrar el botón
   | "activadas"            // permiso dado y token registrado
   | "bloqueadas";          // la clienta dijo que no: explicar cómo reactivarlas en Ajustes del teléfono
 ```
+
+`abrir-en-safari` se juntó con `instalar`: desde la página no se distingue con certeza Safari
+del navegador interno de WhatsApp, así que los pasos de instalar empiezan por "si estás dentro
+de WhatsApp, ábrelo en Safari". `instalar-desde-link` existe porque instalar desde `/mi` deja
+una página sin token con qué entrar (ver la sección de sesión).
 
 Entradas: `cliente.notificacionesWeb`, el user agent, `display-mode: standalone` /
 `navigator.standalone`, `Notification.permission`, si hay token en la ruta.
