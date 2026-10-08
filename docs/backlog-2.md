@@ -84,8 +84,10 @@ Cabos sueltos que salieron al desplegar:
 - **Limpieza de imágenes en `us-central1`:** Firebase no pudo configurar la política que borra
   las imágenes viejas de las funciones. No afecta el funcionamiento; sin ella se acumulan unos
   centavos de almacenamiento al mes. Se arregla con `firebase functions:artifacts:setpolicy`.
-- **Ícono provisional** ("OS" morado sobre negro). Cambiarlo por el logo cuando haya uno en PNG
-  de 512×512 o más (`web/public/icono-*.png`).
+- ~~Ícono provisional~~ — ✅ HECHO (2026-10-08): logo del entrenador (silueta blanca sobre
+  `#7B1E3A`). iOS guarda el ícono al instalar y no lo actualiza: quien ya la instaló con el
+  provisional tiene que borrarla, volver a agregarla desde su link y reactivar las
+  notificaciones.
 
 ## 2. Recordatorio de pago en la web del cliente — ✅ HECHO (2026-10-08)
 
