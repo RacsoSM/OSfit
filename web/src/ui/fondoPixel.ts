@@ -64,7 +64,7 @@ export function estrellas(cantidad: number, semilla = 20261007): string[] {
  * estrella medía once píxeles. Repetido a tamaño fijo (`background-size` en el CSS), el píxel
  * mide lo mismo en cualquier pantalla.
  */
-function capaDeEstrellas(d: string, clase: string): string {
+export function capaDeEstrellas(d: string, clase: string): string {
   const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='${ANCHO_CIELO}' height='${ALTO_CIELO}' ` +
     `viewBox='0 0 ${ANCHO_CIELO} ${ALTO_CIELO}' shape-rendering='crispEdges'>` +
     `<path fill='white' d='${d}'/></svg>`;

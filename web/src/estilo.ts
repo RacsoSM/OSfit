@@ -11,7 +11,7 @@
  * regla nueva en el camino, y nadie que no toque el combo ve un píxel distinto.
  */
 
-export type IdEstilo = "clasico" | "pixel" | "neon" | "comic" | "minimalista" | "sakura";
+export type IdEstilo = "clasico" | "pixel" | "neon" | "comic" | "minimalista" | "sakura" | "halloween";
 
 export interface Estilo {
   id: IdEstilo;
@@ -50,6 +50,11 @@ export const ESTILOS: readonly Estilo[] = [
     nombre: "Sakura",
     descripcion: "Primavera en Japón: un cerezo en flor y pétalos que caen mientras navegas. Toca la pantalla y sóplalos.",
   },
+  {
+    id: "halloween",
+    nombre: "Halloween",
+    descripcion: "Noche de brujas en pixel art: calabazas encendidas, fantasmas, murciélagos y telarañas. Toca la pantalla y suelta un fantasma.",
+  },
 ];
 
 /**
@@ -70,6 +75,9 @@ export const FUENTES: Record<Exclude<IdEstilo, "clasico">, string> = {
   // redondeada y suave, la del texto. Las dos traen latín: Google parte las japonesas por
   // `unicode-range`, así que solo se baja el trozo de los caracteres que se usan.
   sakura: "https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@600;800&family=Zen+Maru+Gothic:wght@400;500;700&display=swap",
+  // Creepster, la letra que chorrea de los carteles de terror, solo en títulos grandes; el texto
+  // va en Pixelify Sans, la misma del pixel art, que se lee bien a 16 px.
+  halloween: "https://fonts.googleapis.com/css2?family=Creepster&family=Pixelify+Sans:wght@400..700&display=swap",
 };
 
 export const ESTILO_POR_DEFECTO: IdEstilo = "clasico";

@@ -2,6 +2,9 @@ import { FUENTES, aplicarEstilo, onomatopeya, retrasosDeCortina, type IdEstilo }
 import { fondoPixel } from "./fondoPixel";
 import { fondoSakura } from "./sakura";
 import { detenerPetalos, iniciarPetalos, rafagaDePetalos } from "./petalos";
+import {
+  IMAGEN_CALABAZA, IMAGEN_MURCIELAGO, bandadaDeMurcielagos, detenerSustos, fondoHalloween, iniciarSustos,
+} from "./halloween";
 
 /**
  * Lo que pasa en el DOM al cambiar de estilo: el atributo, las fuentes, el paisaje del pixel y
@@ -29,6 +32,7 @@ const COLOR_BARRA: Record<IdEstilo, string> = {
   comic: "#FFF4D6",
   minimalista: "#F5F5F3",
   sakura: "#FFF0F4",
+  halloween: "#1A0B2E",
 };
 
 /**
@@ -40,9 +44,17 @@ export function ponerEstilo(id: IdEstilo): void {
   aplicarEstilo(id, document.documentElement);
   document.querySelector('meta[name="theme-color"]')?.setAttribute("content", COLOR_BARRA[id]);
   pedirFuentes(id);
-  // Pixel y sakura son los únicos fondos que necesitan nodos: los demás son CSS puro.
+  // Pixel, sakura y halloween son los únicos fondos que necesitan nodos: los demás son CSS puro.
   if (id === "pixel" && !document.getElementById("fondo-pixel")) {
     document.body.insertAdjacentHTML("afterbegin", fondoPixel());
+  }
+  if (id === "halloween") {
+    if (!document.getElementById("fondo-halloween")) {
+      document.body.insertAdjacentHTML("afterbegin", fondoHalloween());
+    }
+    iniciarSustos();
+  } else {
+    detenerSustos();
   }
   if (id !== "sakura") {
     // Fuera del sakura los pétalos se detienen de verdad, no solo se esconden: una animación
@@ -175,6 +187,25 @@ const rafagaSakura: Transicion = {
   },
 };
 
+/**
+ * Una bandada de murciélagos cruza la pantalla mientras cae la noche, y en el centro se
+ * enciende una calabaza enorme, a saltos, como un sprite. Gemela de `.transicion-halloween`.
+ */
+const nocheDeBrujas: Transicion = {
+  cubrir: (velo) => {
+    velo.classList.add("transicion-halloween");
+    velo.style.setProperty("--murcielago", IMAGEN_MURCIELAGO());
+    velo.style.setProperty("--calabaza", IMAGEN_CALABAZA());
+    velo.innerHTML = `<span class="hw-calabaza-grande"></span>` +
+      bandadaDeMurcielagos(22).map((estilo) => `<i style="${estilo}"></i>`).join("");
+    return 560;
+  },
+  destapar: (velo) => {
+    velo.classList.add("abriendo");
+    return 700;
+  },
+};
+
 /** La transición la decide el estilo al que se LLEGA: es el que se está presentando. */
 const TRANSICIONES: Record<IdEstilo, Transicion> = {
   clasico: fundido("#121212"),
@@ -183,6 +214,7 @@ const TRANSICIONES: Record<IdEstilo, Transicion> = {
   comic: vinetaComic,
   minimalista: fundido("#F5F5F3"),
   sakura: rafagaSakura,
+  halloween: nocheDeBrujas,
 };
 
 /**

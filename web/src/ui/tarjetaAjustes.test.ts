@@ -10,6 +10,7 @@ describe("tarjetaAjustes", () => {
     expect(html).toContain(`<option value="comic">Cómic</option>`);
     expect(html).toContain(`<option value="minimalista">Minimalista</option>`);
     expect(html).toContain(`<option value="sakura">Sakura</option>`);
+    expect(html).toContain(`<option value="halloween">Halloween</option>`);
   });
 
   it("marca el elegido y muestra su descripción", () => {

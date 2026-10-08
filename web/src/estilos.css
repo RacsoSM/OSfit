@@ -725,8 +725,42 @@ body.menu-abierto { overflow: hidden; }
   to { transform: translate(115vw, var(--caida)) rotate(var(--vueltas)); }
 }
 
-/* Los fondos con nodos (`fondoPixel.ts`, `sakura.ts`) solo existen para su estilo; fuera, nada. */
-.fondo-pixel, .fondo-sakura, .petalos-frente { display: none; }
+/* Halloween: cae la noche (el velo se tiñe de morado), una bandada de murciélagos cruza de
+   derecha a izquierda y en el centro se enciende una calabaza enorme, a saltos de sprite. La
+   tira del murciélago y la calabaza llegan como variables (`nocheDeBrujas` en
+   `cambioDeEstilo.ts`); cada murciélago trae su altura, subida, retraso y tamaño
+   (`bandadaDeMurcielagos` en `halloween.ts`). */
+.velo-estilo.transicion-halloween {
+  display: grid; place-items: center;
+  background: radial-gradient(circle at 50% 55%, #4a1d5e 0%, #1a0b2e 65%);
+  animation: halloween-anochecer 560ms steps(6, end) forwards;
+}
+@keyframes halloween-anochecer { from { opacity: 0; } to { opacity: 1; } }
+.velo-estilo.transicion-halloween.abriendo { opacity: 1; animation: halloween-amanecer 700ms ease-in forwards; }
+@keyframes halloween-amanecer { 0%, 30% { opacity: 1; } 100% { opacity: 0; } }
+.hw-calabaza-grande {
+  width: min(56vw, 256px); aspect-ratio: 16 / 14;
+  background: var(--calabaza) center / contain no-repeat; image-rendering: pixelated;
+  filter: drop-shadow(0 0 28px rgba(255, 140, 30, 0.75));
+  transform: scale(0);
+  animation: halloween-calabaza 420ms steps(5, end) 120ms forwards;
+}
+@keyframes halloween-calabaza { to { transform: scale(1); } }
+.transicion-halloween i {
+  position: absolute; left: 0; top: var(--y);
+  width: calc(39px * var(--escala)); height: calc(18px * var(--escala));
+  background: var(--murcielago) 0 0 / 200% 100% no-repeat; image-rendering: pixelated;
+  transform: translate(105vw, 0);
+  animation:
+    halloween-aletear 180ms steps(1, end) infinite,
+    halloween-bandada 1100ms cubic-bezier(0.4, 0.1, 0.6, 1) var(--retraso) forwards;
+}
+@keyframes halloween-aletear { 50% { background-position: 100% 0; } }
+@keyframes halloween-bandada { to { transform: translate(-15vw, var(--subida)); } }
+
+/* Los fondos con nodos (`fondoPixel.ts`, `sakura.ts`, `halloween.ts`) solo existen para su
+   estilo; fuera, nada. */
+.fondo-pixel, .fondo-sakura, .fondo-halloween, .petalos-frente, .hw-susto { display: none; }
 
 /* Pasos para instalar la página en iPhone (Ajustes → Notificaciones). */
 .pasos-instalar {
