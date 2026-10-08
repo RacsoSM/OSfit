@@ -102,3 +102,34 @@ A decidir en el spec:
 - **Registro:** entrada nueva en `ventanas.ts`.
 
 Pendiente: spec de diseño.
+
+## 5. Que la web cargue más rápido al abrirla
+
+> "agrega al backlog el hacer que la carga de la web no tarde tanto en cuanto abre"
+
+Problema: la página del cliente tarda en mostrar algo útil al abrirla, sobre todo desde el
+link de WhatsApp.
+
+**Primer paso: medir antes de cambiar nada.** Abrirla desde el link de WhatsApp en un
+teléfono real (iPhone y Android) y ver en qué se va el tiempo. Sin medición, cualquier
+"optimización" es adivinar.
+
+Sospechosos a revisar (sin confirmar):
+
+- **Arranque en frío de la función `sesion`.** En el navegador que abre WhatsApp no
+  sobrevive la sesión guardada, así que cada apertura vuelve a canjear el token llamando a
+  `sesion` (`us-west1`, sin instancias mínimas). Si la función estaba dormida, eso puede
+  sumar varios segundos. Opción: `minInstances: 1` (cuesta dinero al mes) o acortar lo que
+  hace la función al arrancar.
+- **Todo espera a la sesión.** Nada se pinta hasta que `iniciarSesion()` termina; se podría
+  mostrar antes el esqueleto con lo que haya en caché.
+- **Las cinco hojas de estilos alternativos** (pixel, neón, cómic, minimalista, sakura) se
+  cargan siempre aunque la clienta use el clásico.
+- **Tamaño del bundle:** Firebase completo (auth, firestore, functions, storage). Revisar
+  qué pesa y cargar aparte lo que no se usa en Inicio (storage solo hace falta en Videos).
+- **Los videos:** comprobar que pedir las URLs de descarga no retrase el primer pintado.
+
+Relacionado con el punto 1 (PWA): una versión instalada con service worker abriría casi al
+instante desde caché.
+
+Pendiente: medir y luego escribir el spec.
