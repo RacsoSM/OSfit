@@ -446,7 +446,7 @@ git push origin main
   - `registroValido(data: unknown): { token: string; plataforma: "ios" | "android" | "otro" } | null`
   - callable `registrarDispositivo({ token, plataforma })` → `{ ok: true }`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `functions/src/registrarDispositivo.test.ts`:
 
@@ -485,12 +485,12 @@ describe("registroValido", () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `cd functions && npx vitest run src/registrarDispositivo.test.ts`
 Expected: FAIL — no existe el módulo.
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 `functions/src/registrarDispositivo.ts`:
 
@@ -559,7 +559,7 @@ En `functions/src/index.ts`, al final:
 export { registrarDispositivo } from "./registrarDispositivo";
 ```
 
-- [ ] **Step 4: Run tests and build**
+- [x] **Step 4: Run tests and build**
 
 Run: `cd functions && npm test && npm run build`
 Expected: PASS y el build sin errores.
