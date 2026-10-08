@@ -1432,7 +1432,7 @@ git push origin main
 - Modify: `app/.../data/model/Cliente.kt`, `app/.../data/repository/ClienteRepository.kt`, `FirestoreClienteRepository.kt`, `app/.../data/fake/FakeClienteRepository.kt`, `app/.../data/AppContainer.kt`
 - Create: `app/.../data/model/Notificacion.kt`, `app/.../data/repository/NotificacionRepository.kt`, `app/.../data/repository/DispositivoRepository.kt`
 
-- [ ] **Step 1: Campo en `Cliente`**
+- [x] **Step 1: Campo en `Cliente`**
 
 Después de `tieneAccesoWeb`:
 
@@ -1443,7 +1443,7 @@ Después de `tieneAccesoWeb`:
     val notificacionesWeb: Boolean = false
 ```
 
-- [ ] **Step 2: Repositorio de clientes**
+- [x] **Step 2: Repositorio de clientes**
 
 En `ClienteRepository`, después de `actualizarTieneAccesoWeb`:
 
@@ -1467,7 +1467,7 @@ En `FakeClienteRepository`:
     }
 ```
 
-- [ ] **Step 3: Modelo `Notificacion`**
+- [x] **Step 3: Modelo `Notificacion`**
 
 `app/.../data/model/Notificacion.kt`:
 
@@ -1507,7 +1507,7 @@ data class Notificacion(
 }
 ```
 
-- [ ] **Step 4: `NotificacionRepository`**
+- [x] **Step 4: `NotificacionRepository`**
 
 `app/.../data/repository/NotificacionRepository.kt`:
 
@@ -1553,7 +1553,7 @@ class NotificacionRepository(
 }
 ```
 
-- [ ] **Step 5: `DispositivoRepository`**
+- [x] **Step 5: `DispositivoRepository`**
 
 `app/.../data/repository/DispositivoRepository.kt`:
 
@@ -1587,7 +1587,7 @@ class DispositivoRepository(
 }
 ```
 
-- [ ] **Step 6: `AppContainer`**
+- [x] **Step 6: `AppContainer`**
 
 Agregar los imports y:
 
@@ -1596,7 +1596,7 @@ Agregar los imports y:
     val dispositivoRepository: DispositivoRepository by lazy { DispositivoRepository() }
 ```
 
-- [ ] **Step 7: Compilar**
+- [x] **Step 7: Compilar**
 
 Run: `./gradlew assembleDebug`
 Expected: BUILD SUCCESSFUL.

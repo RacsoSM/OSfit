@@ -35,6 +35,7 @@ interface ClienteRepository {
     suspend fun actualizarActivo(clienteId: String, activo: Boolean)
     /** Prende o apaga la tarjeta de recordatorio de pago en la web de la clienta. */
     suspend fun actualizarRecordatorioPago(clienteId: String, activo: Boolean)
+    suspend fun actualizarNotificacionesWeb(clienteId: String, habilitada: Boolean)
     suspend fun actualizarCancion(clienteId: String, archivo: String?, ruta: String?, inicioSegundos: Int?)
     /**
      * Escribe SÓLO `cancionRuta`. Lo usa el respaldo cuando la subida termina, que puede ser

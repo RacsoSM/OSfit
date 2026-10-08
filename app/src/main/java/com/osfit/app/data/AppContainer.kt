@@ -7,11 +7,13 @@ import com.osfit.app.data.repository.CambioDiaWebRepository
 import com.osfit.app.data.repository.CancionStorageRepository
 import com.osfit.app.data.repository.ClienteRepository
 import com.osfit.app.data.repository.ConfigVideoRepository
+import com.osfit.app.data.repository.DispositivoRepository
 import com.osfit.app.data.repository.FirestoreAsistenciaRepository
 import com.osfit.app.data.repository.FirestoreClienteRepository
 import com.osfit.app.data.repository.InsigniaStorageRepository
 import com.osfit.app.data.repository.LogroPersonalRepository
 import com.osfit.app.data.repository.MedallaRepository
+import com.osfit.app.data.repository.NotificacionRepository
 import com.osfit.app.data.repository.PagoRepository
 import com.osfit.app.data.repository.RecordPersonalRepository
 import com.osfit.app.data.repository.ResumenStorageRepository
@@ -35,6 +37,8 @@ object AppContainer {
     val avisoFaltaWebRepository: AvisoFaltaWebRepository by lazy { AvisoFaltaWebRepository() }
     val videoPublicadoRepository: VideoPublicadoRepository by lazy { VideoPublicadoRepository() }
     val resumenStorageRepository: ResumenStorageRepository by lazy { ResumenStorageRepository() }
+    val notificacionRepository: NotificacionRepository by lazy { NotificacionRepository() }
+    val dispositivoRepository: DispositivoRepository by lazy { DispositivoRepository() }
     val sincronizadorDiaWeb: SincronizadorDiaWeb by lazy {
         SincronizadorDiaWeb(clienteRepository, asistenciaRepository)
     }

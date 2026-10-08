@@ -197,6 +197,10 @@ class FakeClienteRepository : ClienteRepository {
         actualizarCliente(clienteId) { it.copy(recordatorioPago = activo) }
     }
 
+    override suspend fun actualizarNotificacionesWeb(clienteId: String, habilitada: Boolean) {
+        actualizarCliente(clienteId) { it.copy(notificacionesWeb = habilitada) }
+    }
+
     override suspend fun actualizarCancion(
         clienteId: String,
         archivo: String?,

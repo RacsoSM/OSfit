@@ -61,5 +61,9 @@ data class Cliente(
     val tieneAccesoWeb: Boolean = false,
     // Si la web le muestra la tarjeta "Tu periodo vence en X días". Apagado por defecto: el
     // entrenador lo prende solo para las clientas a las que quiere recordarles el pago.
-    val recordatorioPago: Boolean = false
+    val recordatorioPago: Boolean = false,
+    // Llave del entrenador para las notificaciones de la web. Apagada por defecto: solo
+    // reciben avisos las clientas que él habilite, además de que ellas den permiso en su
+    // teléfono. La función `enviarNotificacion` la vuelve a revisar al enviar.
+    val notificacionesWeb: Boolean = false
 )
