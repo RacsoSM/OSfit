@@ -53,7 +53,7 @@ export const ESTILOS: readonly Estilo[] = [
   {
     id: "halloween",
     nombre: "Halloween",
-    descripcion: "Noche de brujas en pixel art: calabazas encendidas, fantasmas, murciélagos y telarañas. Toca la pantalla y suelta un fantasma.",
+    descripcion: "Noche de brujas: luna llena, calabazas encendidas, fantasmas, murciélagos y telarañas. Toca la pantalla y suelta un fantasma.",
   },
 ];
 
@@ -76,8 +76,8 @@ export const FUENTES: Record<Exclude<IdEstilo, "clasico">, string> = {
   // `unicode-range`, así que solo se baja el trozo de los caracteres que se usan.
   sakura: "https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@600;800&family=Zen+Maru+Gothic:wght@400;500;700&display=swap",
   // Creepster, la letra que chorrea de los carteles de terror, solo en títulos grandes; el texto
-  // va en Pixelify Sans, la misma del pixel art, que se lee bien a 16 px.
-  halloween: "https://fonts.googleapis.com/css2?family=Creepster&family=Pixelify+Sans:wght@400..700&display=swap",
+  // va en Grandstander, redondeada y juguetona, que se lee bien a 16 px.
+  halloween: "https://fonts.googleapis.com/css2?family=Creepster&family=Grandstander:wght@400;600;800&display=swap",
 };
 
 export const ESTILO_POR_DEFECTO: IdEstilo = "clasico";
