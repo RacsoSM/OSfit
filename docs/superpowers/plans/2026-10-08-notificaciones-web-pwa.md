@@ -1983,7 +1983,7 @@ cd .. && ./gradlew test assembleDebug
 
 Expected: todo en verde.
 
-- [ ] **Step 2: Pedir confirmación y desplegar**
+- [x] **Step 2: Pedir confirmación y desplegar**
 
 Preguntar al entrenador. Con su sí:
 

@@ -41,10 +41,44 @@ dieron permiso en su teléfono.
 Plan: `superpowers/plans/2026-10-08-notificaciones-web-pwa.md`. La Task 1 es la puerta:
 instalar en un iPhone real desde `/c/<token>` y comprobar que entra sin candado.
 
-Código de las Tasks 1–11 escrito (2026-10-08), con tests de `functions/`, `web/` y la app en
-verde y la app compilada. Clave VAPID y región de Firestore (`nam5` → trigger
-en `us-central1`) ya puestas. Pendiente: desplegar y la prueba en iPhone (Task 1, Step 8 y
-Task 12).
+Estado (2026-10-08):
+
+- Código de las Tasks 1–11 escrito, con los tests de `functions/`, `web/` y la app en verde.
+  La clave VAPID y la región del trigger (Firestore en `nam5` → `us-central1`) ya están puestas.
+- **Desplegado:** web (hosting), reglas de Firestore, `registrarDispositivo` (`us-west1`) y
+  `enviarNotificacion` (`us-central1`). Para el trigger hubo que dar a mano tres roles a cuentas
+  internas de Google: Creador de tokens de cuenta de servicio a
+  `service-754891137796@gcp-sa-pubsub…`, e Invocador de Cloud Run y Receptor de eventos de
+  Eventarc a `754891137796-compute@…`.
+- **App con Avisos instalada** en el teléfono del entrenador.
+
+Lo que sigue, en orden:
+
+1. **La puerta (Task 1, Step 8):** en un iPhone, abrir el link `/c/<token>` de una clienta de
+   prueba en Safari → Compartir → Agregar a inicio → cerrar Safari → abrir desde el ícono.
+   Tiene que entrar sin candado; cerrar, esperar un minuto y volver a abrir. Si abre en el
+   candado, se para todo y se revisa la sesión antes de seguir.
+2. **Un aviso de punta a punta (Task 12, Step 3):** prender "Notificaciones" en el apartado Web
+   de la clienta → en el iPhone, "Activar notificaciones" y aceptar el permiso → la app dice
+   "Activadas en 1 teléfono" → mandar "Ya llegamos" desde Avisos → llega con la página cerrada
+   y la pantalla bloqueada, y el historial dice "Llegó a 1 teléfono".
+3. **Que la llave del entrenador manda:** apagar el interruptor de esa clienta → mandar otro
+   aviso → no le llega. Mandar `<b>hola</b>` → llega como texto, sin negritas.
+4. **Android/Chrome (Task 12, Step 4):** abrir el link en Chrome → Ajustes → botón directo, sin
+   pasos de instalación → activar → mandar un aviso → llega.
+5. **Cerrar:** anotar en el plan qué se verificó y en qué modelos y versiones, y marcar este
+   punto como hecho.
+
+Cabos sueltos que salieron al desplegar:
+
+- **`guardarEstilo`** está desplegada en Firebase (`us-west1`) pero no existe en el repo ni en
+  su historial. Averiguar de dónde salió. Mientras tanto, desplegar funciones siempre por
+  nombre (`--only functions:<nombre>`): un `--only functions` a secas intentaría borrarla.
+- **Limpieza de imágenes en `us-central1`:** Firebase no pudo configurar la política que borra
+  las imágenes viejas de las funciones. No afecta el funcionamiento; sin ella se acumulan unos
+  centavos de almacenamiento al mes. Se arregla con `firebase functions:artifacts:setpolicy`.
+- **Ícono provisional** ("OS" morado sobre negro). Cambiarlo por el logo cuando haya uno en PNG
+  de 512×512 o más (`web/public/icono-*.png`).
 
 ## 2. Recordatorio de pago en la web del cliente — ✅ HECHO (2026-10-08)
 
