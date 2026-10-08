@@ -53,6 +53,11 @@ export interface Cliente {
   recordatorioPago?: boolean;
   /** Cuándo vence su periodo. Lo escribe la app al registrar un pago; puede no existir. */
   fechaProximoPago?: Timestamp | null;
+  /**
+   * La llave del entrenador para las notificaciones. Opcional por la razón de siempre:
+   * Firestore omite los campos que nunca se escribieron, y ausente es "no habilitada".
+   */
+  notificacionesWeb?: boolean;
 }
 
 export interface Asistencia {

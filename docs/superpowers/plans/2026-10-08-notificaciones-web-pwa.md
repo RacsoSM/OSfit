@@ -946,7 +946,7 @@ git push origin main
 
 Sin tests unitarios: todo esto toca el navegador. Se verifica en dispositivo (Task 12).
 
-- [ ] **Step 1: Service worker**
+- [x] **Step 1: Service worker**
 
 `web/public/sw.js`:
 
@@ -999,7 +999,7 @@ self.addEventListener("notificationclick", (evento) => {
 });
 ```
 
-- [ ] **Step 2: Campo en `datos.ts`**
+- [x] **Step 2: Campo en `datos.ts`**
 
 En `interface Cliente`, después de `paletaWeb?`:
 
@@ -1011,7 +1011,7 @@ En `interface Cliente`, después de `paletaWeb?`:
   notificacionesWeb?: boolean;
 ```
 
-- [ ] **Step 3: Callable en `acciones.ts`**
+- [x] **Step 3: Callable en `acciones.ts`**
 
 Al final:
 
@@ -1028,7 +1028,7 @@ export const registrarDispositivo = httpsCallable<
 
 Y en el comentario de cabecera del archivo, cambiar "cuatro escrituras y la lectura del ranking" por "cinco escrituras y la lectura del ranking".
 
-- [ ] **Step 4: `web/src/notificacionesNavegador.ts`**
+- [x] **Step 4: `web/src/notificacionesNavegador.ts`**
 
 Reemplazar `PEGAR_CLAVE_VAPID` por la clave pública que dio el entrenador.
 
@@ -1103,7 +1103,7 @@ export async function sincronizarToken(): Promise<void> {
 }
 ```
 
-- [ ] **Step 5: Build**
+- [x] **Step 5: Build**
 
 Run: `cd web && npm test && npm run build`
 Expected: PASS; build sin errores. `firebase/messaging` aparece como chunk aparte en `dist/assets`, no dentro del bundle principal.
