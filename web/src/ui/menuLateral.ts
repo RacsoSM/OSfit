@@ -52,7 +52,6 @@ export function actualizarCabecera(titulo: string | null): void {
 function opcion(v: Ventana): string {
   return `
         <button type="button" class="menu-opcion" data-ventana="${v.id}">
-          <span class="menu-icono" aria-hidden="true">${v.icono}</span>
           <span class="menu-texto">${escapar(v.titulo)}</span>
           ${v.proximamente ? `<span class="menu-pronto">Pronto</span>` : ""}
         </button>`;

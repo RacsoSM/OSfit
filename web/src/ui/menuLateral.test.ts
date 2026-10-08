@@ -16,6 +16,11 @@ describe("panelMenu", () => {
     );
   });
 
+  it("las opciones van solo con su nombre, sin emojis", () => {
+    const lista = html.slice(html.indexOf(`class="menu-lista"`));
+    expect(lista).not.toMatch(/\p{Extended_Pictographic}/u);
+  });
+
   it("Ajustes va en el bloque del pie", () => {
     const pie = html.slice(html.indexOf(`class="menu-pie"`));
     expect(opciones(pie)).toEqual(["Ajustes"]);
