@@ -1132,7 +1132,7 @@ git push origin main
   - `conectarNotificaciones(alActivar: () => void, alDescartar: () => void): void`
   - `DatosCliente` gana `notificaciones: EstadoNotificaciones; invitacionDescartada: boolean; activandoNotificaciones: boolean`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `web/src/ui/tarjetaNotificaciones.test.ts`:
 
@@ -1188,12 +1188,12 @@ describe("invitacionNotificaciones (Inicio)", () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `cd web && npx vitest run src/ui/tarjetaNotificaciones.test.ts`
 Expected: FAIL — no existe el módulo.
 
-- [ ] **Step 3: Implementación de la tarjeta**
+- [x] **Step 3: Implementación de la tarjeta**
 
 `web/src/ui/tarjetaNotificaciones.ts`:
 
@@ -1267,12 +1267,12 @@ export function conectarNotificaciones(alActivar: () => void, alDescartar: () =>
 
 Verificar que `.boton-texto` exista en `estilos.css` (`grep -n "boton-texto" web/src/estilos.css`). Si no existe, agregar en el Step 6 un estilo de botón de solo texto acorde a los demás.
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `cd web && npx vitest run src/ui/tarjetaNotificaciones.test.ts`
 Expected: PASS.
 
-- [ ] **Step 5: Registro de ventanas**
+- [x] **Step 5: Registro de ventanas**
 
 En `web/src/ventanas.ts`:
 
@@ -1314,7 +1314,7 @@ y un test:
 
 Run: `cd web && npx vitest run src/ventanas.test.ts` → Expected: PASS.
 
-- [ ] **Step 6: `main.ts` y estilos**
+- [x] **Step 6: `main.ts` y estilos**
 
 Imports nuevos:
 
@@ -1411,7 +1411,7 @@ En `web/src/estilos.css`, al final:
 }
 ```
 
-- [ ] **Step 7: Suite completa y build**
+- [x] **Step 7: Suite completa y build**
 
 Run: `cd web && npm test && npm run build`
 Expected: PASS y build sin errores.

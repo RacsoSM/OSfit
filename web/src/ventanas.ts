@@ -11,6 +11,8 @@ import { calendario } from "./ui/calendario";
 import { seccionVacia, tarjetaLogrosPersonales, tarjetaMedallas } from "./ui/tarjetaInsignias";
 import { tarjetaRanking, type EstadoRanking } from "./ui/tarjetaRanking";
 import { tarjetaAjustes } from "./ui/tarjetaAjustes";
+import { invitacionNotificaciones, seccionNotificaciones } from "./ui/tarjetaNotificaciones";
+import type { EstadoNotificaciones } from "./notificaciones";
 
 /**
  * Las ventanas de la página y lo que pinta cada una.
@@ -38,6 +40,12 @@ export interface DatosCliente {
   ranking: EstadoRanking;
   /** El estilo elegido en Ajustes. No viene de Firestore: lo guarda el navegador. */
   estilo: IdEstilo;
+  /** Qué ofrecerle sobre notificaciones; lo calcula `main.ts` en cada repintado. */
+  notificaciones: EstadoNotificaciones;
+  /** Si ya dijo "Ahora no" a la invitación de Inicio. Lo guarda el navegador. */
+  invitacionDescartada: boolean;
+  /** Mientras el permiso y el registro están en curso: el botón se deshabilita. */
+  activandoNotificaciones: boolean;
 }
 
 export interface Ventana {
@@ -59,7 +67,8 @@ export interface Ventana {
 
 /**
  * Lo que hoy es "hoy": el recordatorio de pago (si toca), el día con sus dos acciones, la
- * racha, revivirla y el calendario, en ese orden. El recordatorio va primero porque es lo único
+ * invitación a activar las notificaciones (si toca), la racha, revivirla y el calendario, en
+ * ese orden. El recordatorio va primero porque es lo único
  * de la página con fecha límite; abajo del calendario nadie lo vería. Cada acción vive junto al
  * dato del que habla: cambiar el día y avisar que hoy no se puede van dentro de la tarjeta del
  * día; revivir la racha va debajo de la racha.
@@ -72,6 +81,7 @@ function inicio(d: DatosCliente): string {
   return `
       ${tarjetaRecordatorioPago(recordatorioPago(d.cliente, d.hoy))}
       ${tarjetaDia(d.cliente, d.hoy, acciones, d.asistencias)}
+      ${invitacionNotificaciones(d.notificaciones, d.invitacionDescartada)}
       ${tarjetasStats(d.asistencias, d.hoy)}
       ${tarjetaRevivir(d.cliente, d.hoy, d.asistencias, d.tiradaEsteMes, d.tiradaMesAnterior)}
       ${calendario(d.asistencias, d.mesVisible, d.hoy)}
@@ -95,7 +105,7 @@ export const VENTANAS: readonly Ventana[] = [
   { id: "videos", titulo: "Videos", icono: "🎬", grupo: "principal", contenedorPropio: "videos" },
   {
     id: "ajustes", titulo: "Ajustes", icono: "⚙️", grupo: "pie",
-    pintar: (d) => tarjetaAjustes(d.estilo),
+    pintar: (d) => tarjetaAjustes(d.estilo) + seccionNotificaciones(d.notificaciones, d.activandoNotificaciones),
   },
 ];
 

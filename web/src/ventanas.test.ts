@@ -19,7 +19,9 @@ function datos(campos: Partial<DatosCliente> = {}): DatosCliente {
   return {
     cliente, hoy: HOY, asistencias: conFaltaRota, mesVisible: "2026-09", yaAviso: false,
     medallas: [], logros: [], tiradaEsteMes: null, tiradaMesAnterior: null,
-    ranking: { estado: "cargando" }, estilo: "clasico", ...campos,
+    ranking: { estado: "cargando" }, estilo: "clasico",
+    notificaciones: "no-habilitada", invitacionDescartada: false, activandoNotificaciones: false,
+    ...campos,
   };
 }
 
@@ -103,6 +105,12 @@ describe("las demás ventanas", () => {
     expect(html).not.toContain("Muy pronto");
     expect(html).toContain(`id="selector-estilo"`);
     expect(html).toContain(`<option value="pixel" selected>`);
+  });
+
+  it("Ajustes muestra la sección de notificaciones solo si está habilitada", () => {
+    expect(contenidoDe(ventana("ajustes"), datos())).not.toContain("Notificaciones");
+    expect(contenidoDe(ventana("ajustes"), datos({ notificaciones: "pedir-permiso" })))
+      .toContain(`id="activar-notificaciones"`);
   });
 
   it("Ranking pinta la tarjeta del ranking con lo que haya llegado", () => {

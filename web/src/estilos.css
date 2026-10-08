@@ -720,3 +720,21 @@ body.menu-abierto { overflow: hidden; }
 
 /* Los fondos con nodos (`fondoPixel.ts`, `sakura.ts`) solo existen para su estilo; fuera, nada. */
 .fondo-pixel, .fondo-sakura, .petalos-frente { display: none; }
+
+/* Pasos para instalar la página en iPhone (Ajustes → Notificaciones). */
+.pasos-instalar {
+  margin: 8px 0 0;
+  padding-left: 20px;
+  color: var(--texto);
+  font-size: 14px;
+  line-height: 1.5;
+}
+.pasos-instalar li + li {
+  margin-top: 6px;
+}
+/* "Ahora no" de la invitación de Inicio: una salida discreta, que no compita con el botón. */
+.boton-texto {
+  display: block; width: 100%; margin-top: 8px; padding: 10px;
+  border: 0; background: none; font: inherit; font-size: 14px;
+  color: var(--texto-tenue); cursor: pointer;
+}

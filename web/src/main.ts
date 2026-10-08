@@ -23,6 +23,9 @@ import { obtenerRanking } from "./acciones";
 import { modalRuleta, conectarRuleta } from "./ui/ruleta";
 import { conectarRanking, type EstadoRanking } from "./ui/tarjetaRanking";
 import { conectarAjustes } from "./ui/tarjetaAjustes";
+import { estadoNotificaciones } from "./notificaciones";
+import { activarNotificaciones, entornoDelNavegador, sincronizarToken } from "./notificacionesNavegador";
+import { conectarNotificaciones } from "./ui/tarjetaNotificaciones";
 import { almacenDeEstilo, ponerEstilo } from "./ui/cambioDeEstilo";
 import { estiloGuardado, type IdEstilo } from "./estilo";
 import { credencialLista, huellaDeLaSesion, iniciarSesion, storage } from "./firebase";
@@ -165,6 +168,33 @@ async function arrancar(): Promise<void> {
   let ranking: EstadoRanking = { estado: "cargando" };
   /** Número del último pedido: una respuesta de un pedido viejo no pisa a la más nueva. */
   let pedidoRanking = 0;
+
+  /** Llave en el navegador para "Ahora no". Se pierde si borran datos: vuelve a salir, no es grave. */
+  const LLAVE_INVITACION = "osfit:notificaciones-descartada";
+  let invitacionDescartada = (() => {
+    try { return localStorage.getItem(LLAVE_INVITACION) === "1"; } catch { return false; }
+  })();
+  let activandoNotificaciones = false;
+  /** El token se resincroniza una vez por carga, no en cada snapshot del cliente. */
+  let tokenSincronizado = false;
+
+  function alActivarNotificaciones(): void {
+    // Sin `await` antes de `activarNotificaciones`: ahí adentro, `requestPermission` tiene
+    // que ser lo primero para que iOS lo cuente como respuesta al toque.
+    const intento = activarNotificaciones();
+    activandoNotificaciones = true;
+    pintar();
+    intento.finally(() => {
+      activandoNotificaciones = false;
+      pintar();
+    });
+  }
+
+  function alDescartarInvitacion(): void {
+    invitacionDescartada = true;
+    try { localStorage.setItem(LLAVE_INVITACION, "1"); } catch { /* se pierde el recuerdo, no la página */ }
+    pintar();
+  }
 
   /**
    * Pide el ranking cada vez que se entra a la ventana: no hay listener que lo mantenga al día,
@@ -364,6 +394,9 @@ async function arrancar(): Promise<void> {
     contenido.innerHTML = contenidoDe(activa, {
       cliente, hoy, asistencias, mesVisible, yaAviso, medallas, logros,
       tiradaEsteMes, tiradaMesAnterior, ranking, estilo,
+      notificaciones: estadoNotificaciones(cliente.notificacionesWeb === true, entornoDelNavegador()),
+      invitacionDescartada,
+      activandoNotificaciones,
     });
     pintarVideos(activa.contenedorPropio === "videos");
     pintarMenu(activa.id, cliente.nombre);
@@ -390,11 +423,13 @@ async function arrancar(): Promise<void> {
         estilo = nuevo;
         pintar();
       });
+      conectarNotificaciones(alActivarNotificaciones, alDescartarInvitacion);
       return;
     }
     if (activa.id !== "inicio") return;
     conectarAccionDia(pintar);
     conectarAccionFalta(hoy, asistencias, pintar);
+    conectarNotificaciones(alActivarNotificaciones, alDescartarInvitacion);
     document.querySelector("#mes-anterior")?.addEventListener("click", () => {
       mesVisible = moverMes(mesVisible, -1);
       pintar();
@@ -456,6 +491,14 @@ async function arrancar(): Promise<void> {
     // Antes de pintar: así el primer repintado ya sale con los colores buenos y la página no
     // parpadea de morado al color de la clienta.
     aplicarPaleta(c?.paletaWeb, document.documentElement);
+    // Con el permiso ya dado, se manda el token vigente una vez por carga: FCM puede rotarlo
+    // y así el servidor nunca se queda con uno muerto. Si falla, no se le muestra nada a la
+    // clienta; la próxima carga lo vuelve a intentar.
+    if (!tokenSincronizado && c?.notificacionesWeb === true &&
+        estadoNotificaciones(true, entornoDelNavegador()) === "activadas") {
+      tokenSincronizado = true;
+      sincronizarToken().catch(() => {});
+    }
     pintar();
   });
   observarAsistencias(clienteId, (a) => { asistencias = a; pintar(); });
