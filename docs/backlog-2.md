@@ -76,3 +76,29 @@ A decidir en el spec:
   datos personales), y guardar la ruta, no la URL de descarga, como con canciones y videos.
 
 Pendiente: spec de diseño.
+
+## 4. Mapa muscular: ventana con el cuerpo coloreado por nivel
+
+> "agrega al backlog también el agregar una ventana nueva donde aparezca el esqueleto de un hombre o mujer dependiendo el caso y colorear cada músculo según su nivel de fuerza o desarrollo como en algunas apps de gimnasios que rankean músculos"
+
+Idea: una ventana nueva en la web del cliente con una figura de cuerpo (hombre o mujer, de
+frente y de espalda) donde cada grupo muscular se pinta según su nivel, al estilo de las
+apps que "rankean" músculos.
+
+A decidir en el spec:
+
+- **Hombre o mujer:** `Cliente` no tiene ese dato hoy. Hace falta un campo nuevo que el
+  entrenador asigne desde la app (opcional, por la regla de siempre de Firestore).
+- **De dónde sale el nivel de cada músculo.** Es la decisión grande. Hoy solo hay
+  `RecordPersonal.marca` (texto libre) y `pesoONota` (texto libre), así que no hay números
+  confiables. Opciones: que el entrenador asigne el nivel a mano por músculo; o calcularlo de
+  récords con peso numérico, relativo al peso corporal (`Cliente.peso`).
+- **Qué ejercicio entrena qué músculo:** un catálogo ejercicio → músculos, por nombre
+  normalizado. Puede ser el mismo catálogo del punto 3 (GIFs).
+- **Escala:** cuántos niveles (por ejemplo, 5 de gris a color fuerte) y que se lea bien en
+  todos los estilos de la web (neón, cómic, pixel, sakura, minimalista).
+- **Dibujo:** SVG con un `path` por músculo, para pintarlo con CSS desde una función pura
+  en `ui/` (testeable como las demás). Si las figuras son de terceros, revisar licencia.
+- **Registro:** entrada nueva en `ventanas.ts`.
+
+Pendiente: spec de diseño.
