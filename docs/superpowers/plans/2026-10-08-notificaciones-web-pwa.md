@@ -1973,7 +1973,7 @@ git push origin main
 
 ### Task 12: Despliegue y verificación en dispositivos (con confirmación)
 
-- [ ] **Step 1: Suites y builds**
+- [x] **Step 1: Suites y builds**
 
 ```bash
 cd functions && npm test && npm run build

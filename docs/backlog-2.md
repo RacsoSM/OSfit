@@ -41,7 +41,11 @@ dieron permiso en su teléfono.
 Plan: `superpowers/plans/2026-10-08-notificaciones-web-pwa.md`. La Task 1 es la puerta:
 instalar en un iPhone real desde `/c/<token>` y comprobar que entra sin candado.
 
-Pendiente: ejecutar el plan.
+Código de las Tasks 1–11 escrito (2026-10-08), con tests de `functions/`, `web/` y la app en
+verde y la app compilada. Pendiente: la clave VAPID (`CLAVE_VAPID` en
+`web/src/notificacionesNavegador.ts`), la región de Firestore (`REGION_FIRESTORE` en
+`functions/src/enviarNotificacion.ts`), desplegar y la prueba en iPhone (Task 1, Step 8 y
+Task 12).
 
 ## 2. Recordatorio de pago en la web del cliente — ✅ HECHO (2026-10-08)
 
