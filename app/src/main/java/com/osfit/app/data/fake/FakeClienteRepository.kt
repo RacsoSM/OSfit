@@ -193,6 +193,10 @@ class FakeClienteRepository : ClienteRepository {
         actualizarCliente(clienteId) { it.copy(activo = activo) }
     }
 
+    override suspend fun actualizarRecordatorioPago(clienteId: String, activo: Boolean) {
+        actualizarCliente(clienteId) { it.copy(recordatorioPago = activo) }
+    }
+
     override suspend fun actualizarCancion(
         clienteId: String,
         archivo: String?,
