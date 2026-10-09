@@ -28,8 +28,14 @@ Cómo funciona, por si hay que tocarlo:
   la línea blanca de la foto y cada una se retira lo mismo. Los blancos anchos (cintura, rodillas,
   la cuña del tríceps) se conservan. La columna va siempre centrada en el eje.
 - **Formas lisas:** las cabezas de la pantorrilla y la franja de fuera del muslo se rehacen con
-  pocos armónicos de Fourier (`PANT_ARMONICOS`); del glúteo y el antebrazo solo se alisa el borde
-  que da al blanco.
+  pocos armónicos de Fourier (`PANT_ARMONICOS`), y el antebrazo igual.
+- **Glúteo:** forma lisa sacada del trazado (`GLUTEO_ARMONICOS`), con su lado de la columna recto.
+  La lumbar y el isquiotibial siguen su borde con la separación de siempre allí donde la línea de
+  la foto es fina; donde la foto deja un blanco ancho (hacia la cadera), se conserva.
+- **Tríceps:** su borde de fuera sigue el contorno del brazo con el borde de siempre (en la foto
+  ese blanco es brillo del contorno, `TRICEPS_MARGEN`). La cuña blanca entre sus dos ramas se
+  conserva. Las puntas de las ramas se trazan con un umbral de verde más bajo
+  (`LN_TRICEPS_UMBRAL` en `mascaras.py`), porque se aclaran.
 - **`lineas.py`:** la T blanca del cuello (anchura medida fila a fila) y las líneas de la mano,
   que en la referencia es un dibujo de líneas: aquí es gris con contorno fino y las líneas encima,
   como la mano de frente.

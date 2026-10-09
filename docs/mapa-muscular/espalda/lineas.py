@@ -28,3 +28,6 @@ CUELLO_T = [(97, 8.8), (104, 8.7), (112, 8.5), (120, 8.7), (123, 9.4), (126, 10.
             (145, 2.5), (149, 1.7)]
 
 PANT_ARMONICOS = 10  # armónicos con que se rehace cada cabeza de la pantorrilla (menos = más liso)
+GLUTEO_ARMONICOS = 8  # armónicos con que se rehace el glúteo (menos = más liso)
+TRICEPS_MARGEN = 12   # px de la foto: blanco entre tríceps y fondo que se rellena (en la foto es brillo del borde)
+TRICEPS_ARMONICOS = 16 # armónicos con que se rehace el tríceps (tiene forma de U: necesita más)

@@ -8,6 +8,7 @@ h0, w0 = im.shape[:2]
 H, W = h0 * S, w0 * S
 yy = np.arange(H)[:, None]; xx = np.arange(W)[None, :]
 AX = EJE * S                         # eje de simetría (en la imagen volteada)
+LN_TRICEPS_UMBRAL = 9                # verde mínimo de las puntas del tríceps (el de siempre es 22)
 
 
 def k(r): return cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2 * r + 1, 2 * r + 1))
@@ -77,6 +78,13 @@ for m, (cx, cy) in partir(lim(verde & izq & dentro), c_verde, 52, 15):
     # deltoide arriba y afuera, infraespinoso hacia la columna, tríceps en el brazo (un mismo
     # músculo puede salir en varios trozos si tiene varios núcleos: se juntan)
     G.setdefault('hombro' if cy < 185 and cx < 185 else 'infraespinoso' if cx > 185 and cy < 225 else 'triceps', []).append(m)
+# El tríceps se aclara hacia las puntas de sus ramas: con el umbral de siempre las puntas salen
+# romas. Se le añade el verde tenue que le queda pegado (sin pasar a los otros verdes).
+verde_tenue = (G_ - np.maximum(R_, B_) > LN_TRICEPS_UMBRAL) & (lum < 225)
+otros_verdes = np.any(G.get('hombro', []) + G.get('infraespinoso', []), 0).astype(np.uint8)
+tri = np.any(G['triceps'], 0).astype(np.uint8)
+extra = verde_tenue & izq & (dentro > 0) & (cv2.dilate(tri, k(3 * S)) > 0) & (cv2.dilate(otros_verdes, k(2 * S)) == 0)
+G['triceps'] = [cv2.morphologyEx((tri | extra).astype(np.uint8), cv2.MORPH_OPEN, k(S))]
 for m, (cx, cy) in piezas(lim(azul & izq & dentro), 20):
     if cy < 455: G.setdefault('gluteo', []).append(m)
 # la franja de fuera del muslo es un huso que se aclara hacia las puntas: umbral más bajo

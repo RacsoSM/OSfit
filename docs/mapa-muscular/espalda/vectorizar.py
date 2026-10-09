@@ -260,14 +260,51 @@ for n in [n for n in norm if grupo(n) == 'antebrazo' and n.endswith('-der')]:
     otras = np.any([m for o, m in norm.items() if o != n and o.endswith('-der')], 0).astype(np.uint8)
     norm[n] = (fourier(norm[n], 12) & (d_fondo > BORDE) & (cv2.distanceTransform(1 - otras, cv2.DIST_L2, 5) > HUECO)).astype(np.uint8)
     norm[n[:-4] + '-izq'] = espejar(norm[n])
-# El glúteo: solo se alisa su borde libre (el que da al blanco de la cadera); donde toca la
-# columna, la lumbar o el isquiotibial se queda como está.
+# Glúteo: forma lisa sacada del trazado (pocos armónicos de Fourier). Para que su lado de la
+# columna quede recto, antes de alisar se prolonga a través del eje y después se corta en la
+# costura. Sus vecinos (lumbar, isquiotibial) siguen luego su borde con la separación de siempre.
+from scipy.ndimage import distance_transform_edt
 for n in [n for n in norm if grupo(n) == 'gluteo' and n.endswith('-der')]:
-    vec = np.any([m for o, m in norm.items() if o != n and grupo(o) != 'gluteo' and o.endswith('-der')], 0).astype(np.uint8)
-    junto = (cv2.distanceTransform(1 - vec, cv2.DIST_L2, 5) < 2.5 * HUECO) | (xx > AX - 2.5 * HUECO)
-    nuevo = np.where(junto, norm[n], fourier(norm[n], 10)).astype(np.uint8)
-    nuevo = (suave(nuevo, 1.0 * S) & (cv2.distanceTransform(1 - vec, cv2.DIST_L2, 5) > HUECO) & (xx < AX - HUECO / 2) & (d_fondo > BORDE)).astype(np.uint8)
-    norm[n] = nuevo; norm[n[:-4] + '-izq'] = espejar(nuevo)
+    ext = piezas[n].copy()
+    for r in np.nonzero(ext.any(1))[0]:
+        xs_ = np.nonzero(ext[r])[0]
+        if xs_.max() > AX - 6 * S: ext[r, xs_.max():int(AX + 6 * S)] = 1
+    lisa = (fourier(ext, LN.GLUTEO_ARMONICOS) & (xx < AX - HUECO / 2) & (d_fondo > BORDE)).astype(np.uint8)
+    norm[n] = lisa; norm[n[:-4] + '-izq'] = espejar(lisa)
+
+
+def seguir(pieza, ref):
+    """La pieza llega hasta HUECO de 'ref' en los tramos donde estaban a menos de JUNTOS (las
+    líneas finas de la foto), y nunca se le acerca más; donde el blanco es ancho no se toca."""
+    dr = cv2.distanceTransform(1 - ref, cv2.DIST_L2, 5); dp = cv2.distanceTransform(1 - pieza, cv2.DIST_L2, 5)
+    hueco = fig.astype(bool) & ~pieza.astype(bool) & ~ref.astype(bool) & (dp + dr <= JUNTOS)
+    nueva = (pieza.astype(bool) | hueco) & (dr > HUECO) & (d_fondo > BORDE)
+    # alisado: quita los quiebres donde el relleno se junta con el borde que ya tenía
+    return (suave(nueva, 1.5 * U) & (dr > HUECO) & (d_fondo > BORDE)).astype(np.uint8)
+
+
+glu = norm[[n for n in norm if grupo(n) == 'gluteo' and n.endswith('-der')][0]]
+for n in [n for n in norm if grupo(n) in ('lumbar', 'isquiotibiales') and n.endswith('-der')]:
+    norm[n] = (seguir(norm[n], glu) & (xx < AX - HUECO / 2)).astype(np.uint8)
+    norm[n[:-4] + '-izq'] = espejar(norm[n])
+
+# Tríceps: su borde de fuera sigue el contorno del brazo con el borde de siempre. Se rellena lo
+# blanco que queda ENTRE el tríceps y el fondo (los dos más cercanos en direcciones opuestas);
+# la cuña blanca entre sus dos ramas y el codo no cumplen eso y quedan como en la foto.
+for n in [n for n in norm if grupo(n) == 'triceps' and n.endswith('-der')]:
+    tri = norm[n].astype(np.uint8)
+    otras = np.any([m for o, m in norm.items() if o != n and o.endswith('-der')], 0).astype(np.uint8)
+    dt, it = distance_transform_edt(1 - tri, return_indices=True)
+    df, if_ = distance_transform_edt(fig, return_indices=True)
+    vy1, vx1 = it[0] - yy, it[1] - xx; vy2, vx2 = if_[0] - yy, if_[1] - xx
+    cos = (vy1 * vy2 + vx1 * vx2) / np.maximum(np.hypot(vy1, vx1) * np.hypot(vy2, vx2), 1e-6)
+    entre = (cos < -0.6) & (dt + df <= LN.TRICEPS_MARGEN * S) & ~tri.astype(bool)
+    del dt, it, df, if_, vy1, vx1, vy2, vx2, cos
+    nuevo = (tri.astype(bool) | entre) & (d_fondo > BORDE) & (cv2.distanceTransform(1 - otras, cv2.DIST_L2, 5) > HUECO)
+    nuevo = fourier(mayor(nuevo.astype(np.uint8)), LN.TRICEPS_ARMONICOS)
+    nuevo = suave(nuevo, 0.8 * U) & (d_fondo > BORDE) & (cv2.distanceTransform(1 - otras, cv2.DIST_L2, 5) > HUECO)
+    norm[n] = mayor(nuevo.astype(np.uint8)); norm[n[:-4] + '-izq'] = espejar(norm[n])
+
 todas_c = np.any([norm[n] for n in cabezas], 0).astype(np.uint8)
 for n in [n for n in norm if grupo(n) == 'gris-pierna' and n.endswith('-der')]:
     norm[n] = (norm[n] & (cv2.distanceTransform(1 - todas_c, cv2.DIST_L2, 5) > HUECO)).astype(np.uint8)
