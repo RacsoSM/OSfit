@@ -226,3 +226,41 @@ Idea para cerrar la sesión de verdad (a decidir en el spec):
   sigan llegando avisos.
 
 Pendiente: spec de diseño.
+
+## 7. Iniciar entrenamiento: para cuando el cliente viene solo
+
+> "agrega al backlog un módulo de iniciar entrenamiento para cuando los clientes vengan solos"
+
+Idea: un botón "Iniciar entrenamiento" en la web del cliente para los días que entrena sin
+el entrenador. Lo guía por la rutina del día y, al terminar, deja registrada la asistencia.
+
+Hoy la asistencia la marca solo el entrenador desde la app (`TomarAsistenciaScreen` →
+`FirestoreAsistenciaRepository`). La web es de solo lectura: todo lo que escribe pasa por
+una Cloud Function (`acciones.ts`). Así que esto necesita al menos una función nueva.
+
+Lo que tendría el módulo (a confirmar en el spec):
+
+- **Paso a paso del día que le toca:** un ejercicio a la vez, con series y repeticiones, y
+  su peso propio si lo tiene (`pesosPropios.ts`).
+- **Marcar cada serie hecha**, con un temporizador de descanso entre series.
+- **Terminar:** resumen corto y la asistencia registrada. Avanza el día que toca
+  (`ultimoDia`) igual que cuando la marca el entrenador.
+
+A decidir en el spec:
+
+- **Cómo se evita marcar asistencia desde la casa.** Es la decisión grande. Opciones: que
+  cuente como "pendiente" hasta que el entrenador la confirme en la app; un código QR pegado
+  en el gimnasio; o la ubicación del teléfono. Cada una tiene su costo en fricción.
+- **Si cuenta igual para la racha, el ranking y las medallas** que una asistencia marcada
+  por el entrenador, o si queda marcada como "vino solo".
+- **Qué pasa si se cierra la página a medias:** guardar el avance en el navegador para
+  retomarlo, o descartarlo.
+- **Aviso al entrenador:** una notificación cuando alguien empieza o termina solo (reusa el
+  envío del punto 1).
+- **Si puede anotar el peso que usó** en cada ejercicio, y si eso actualiza
+  `pesoPorEjercicio` o queda como propuesta para que el entrenador la acepte.
+- **Vista en la app:** que el entrenador vea en la ficha del cliente qué hizo en esas sesiones.
+- **Registro:** botón en la tarjeta del día (`tarjetaDia.ts`) o una entrada nueva en
+  `ventanas.ts`.
+
+Pendiente: spec de diseño.
