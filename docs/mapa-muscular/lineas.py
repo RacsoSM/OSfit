@@ -82,11 +82,34 @@ FRONTERAS = [
                           (165, 265.6), (170, 263.3), (175.5, 257.8), (180, 254.4),
                           (186.7, 251.7), (193.3, 248.9), (EJE, 247.2)]),
     ('abdomen', 'cuadriceps', [(147, 386.4), (150.7, 387), (160.7, 392), (167.9, 397),
-                               (175, 404.3), (180.7, 410), (185, 417), (187.9, 423),
-                               (192, 434), (195, 441)]),
+                               (175, 404.3), (180.7, 410), (185, 417), (187.9, 423)]),
 ]
+
+# Entrepierna: junto a la punta del abdomen el blanco es más ancho que una separación normal;
+# ahí no se igualan huecos y los muslos conservan su borde trazado (cae recto).
+ENTREPIERNA = (424, 470, 14)   # desde y, hasta y, media anchura alrededor del eje
+# Borde interno del muslo en la entrepierna: de y0 a y1 pasa en una sola curva suave de seguir
+# al abdomen a caer recto en x = X_RECTO (medido en la foto), y sigue recto hasta y2.
+ENTREPIERNA_BORDE = (418, 442, 470, 190.6)
 
 # --- Trapecio: banda triangular entre el contorno, el cuello y el pecho --------------------
 TRAPECIO = [(143.8, 174.2), (147.8, 169.4), (153.4, 164.8), (158.8, 161.2), (163.8, 158.2),
             (168.4, 156.1), (171.8, 155.6), (173, 158.5), (173.1, 166.5), (172.9, 173.8),
             (171.2, 175.6), (160, 175.6), (150, 175.9), (145.5, 176)]
+
+# --- Mano: se calca de referencia-mano.png (la misma mano, más nítida). MANO_TRANSF la lleva
+# encima de la mano de la foto (escala, giro en radianes, desplazamiento x, y en px de la foto);
+# se obtuvo maximizando el solape con la mano de referencia.png (91.5 %). De ella salen la
+# silueta y las cuñas blancas entre dedos; el contorno y las líneas tienen grosor fijo.
+MANO_TRANSF = (0.20247, -0.00842, -18.206, 365.843)
+MANO_CONTORNO = 2.6   # grosor del contorno blanco de la mano
+MANO_LINEA = 2.2      # grosor de las líneas entre dedos y de la palma
+# Líneas blancas de la mano, sacadas del eje de las de referencia-mano.png (ya en px de la
+# foto): la de la palma, que nace entre pulgar e índice, y las tres entre dedos. Los extremos
+# que quedan cerca del contorno se alargan solos hasta tocarlo.
+MANO_LINEAS = [
+    [(48, 405), (41, 410), (33, 412.4), (26, 414), (20.5, 418), (16.5, 423.5)],      # palma
+    [(25, 433), (21.5, 438.5), (18, 444), (16.9, 450), (15.2, 455.5)],              # índice / medio
+    [(36.2, 437.5), (33.6, 443.4), (32.4, 449.5), (31.6, 456), (30.4, 462)],        # medio / anular
+    [(48, 437.8), (47.6, 441.5), (46.6, 445.5)],                                    # anular / meñique
+]

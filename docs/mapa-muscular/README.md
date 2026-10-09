@@ -30,6 +30,12 @@ Cómo funciona, por si hay que tocarlo:
   `lineas.py` como curvas suaves por puntos medidos sobre la foto. Cuando una línea nace de
   otra comparte el punto exacto, así que siempre conectan; y se recortan con la forma de su
   músculo (`clipPath`), por eso terminan justo en el borde.
+- **Mano:** se calca de `referencia-mano.png`, una versión más nítida de la misma mano que
+  compartió el entrenador. Se escala y gira encima de la mano de la foto (`MANO_TRANSF`). De
+  esa imagen salen la silueta y las cuñas blancas entre dedos; el contorno (2.6 px) y las
+  líneas de la palma y entre dedos (`MANO_LINEAS`) tienen grosor fijo.
+- **Entrepierna:** el borde interno del muslo baja en una sola curva y la punta del abdomen
+  se redondea, para que no quede un pico de color hacia el aductor.
 - **Retoques:** la foto es tan borrosa en la rodilla y en el arranque del muslo que el trazado
   pierde puntas finas; `MUSLO_PARCHES` en `lineas.py` las completa.
 
