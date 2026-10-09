@@ -159,28 +159,21 @@ A decidir en el spec:
   en `ui/` (testeable como las demás). Si las figuras son de terceros, revisar licencia.
 - **Registro:** entrada nueva en `ventanas.ts`.
 
-**Referencia visual (2026-10-09).** El entrenador compartió una imagen que sirve como
-referencia "casi exacta" del estilo buscado (un meme de un cuerpo de frente; la imagen no se
-versiona porque es de terceros). Lo que define:
+**Referencia visual (2026-10-09).** El entrenador compartió una imagen libre de uso como
+referencia "casi exacta" del estilo buscado: `docs/mapa-muscular/referencia.png`.
 
-- Figura de frente, de pie, brazos un poco separados, sobre fondo negro.
-- Silueta gris claro; cabeza, manos, rodillas y pies quedan grises, sin colorear.
-- Cada músculo es una forma plana con contorno blanco grueso, sin sombras ni degradados, y
-  con líneas blancas internas que marcan las divisiones (los cuadritos del abdomen, las
-  cabezas del cuádriceps, la división del pecho).
-- Grupos que se pintan: hombros (deltoides), pecho, bíceps, antebrazos, abdomen con
-  oblicuos (un solo bloque), cuádriceps y pantorrillas. Trapecio asoma sobre los hombros.
+Dibujo calcado de esa imagen: `web/public/mapa-muscular-frente.svg` (hombre de frente). Se
+genera con los scripts de `docs/mapa-muscular/` (ver su README). Cada músculo es un `path` con
+`id` (`musculo-pecho-der`, `musculo-abdomen`…) y `data-musculo`, para pintarlo por nivel desde
+CSS; las líneas internas y el contorno van aparte y no cambian de color.
+
 - En la imagen el color identifica el grupo (hombro verde, pecho rojo, bíceps azul claro,
   antebrazo morado, abdomen amarillo, pierna azul, pantorrilla roja). En OSfit el color debe
-  salir del **nivel**, no del grupo: el spec tiene que decidir si se respeta esa paleta tal
-  cual o si solo se toma el dibujo y la escala de color la pone el nivel.
+  salir del **nivel**: el spec tiene que decidir si se respeta esa paleta o si solo se toma
+  el dibujo y la escala la pone el nivel. El SVG trae la paleta de la foto como valor por
+  defecto.
 - Falta la vista de espalda (dorsales, glúteos, isquios, tríceps) y la versión de mujer: la
   referencia solo cubre hombre de frente.
-
-Dibujo propio hecho a partir de esa referencia: `web/public/mapa-muscular-frente.svg` (hombre
-de frente). Cada músculo es un `path` con `id` (`musculo-pecho-der`, `musculo-abdomen`…) y
-`data-musculo`, para pintarlo por nivel desde CSS. Lleva los colores de la referencia solo
-como valor por defecto.
 
 Pendiente: spec de diseño.
 
