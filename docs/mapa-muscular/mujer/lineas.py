@@ -84,4 +84,4 @@ CUELLO_V = [(169.8, 200), (171.8, 206), (174.5, 212), (177.0, 219), (179.5, 226)
 # Tobillo: empieza recto a esta altura (debajo es gris) y lleva una línea blanca hasta el pie.
 TOBILLO_ARRIBA = 951.5
 TOBILLO = [(132, 976.2), (145, 975.2), (155, 975.0), (165, 975.6), (175, 976.5), (188, 977.8)]
-LINEAS_GRIS = {'gris-cabeza': [CUELLO_V], 'gris-pies': [TOBILLO]}
+LINEAS_GRIS = {'gris-cuello': [CUELLO_V], 'gris-pies': [TOBILLO]}

@@ -114,4 +114,36 @@ n_, cc_, st_, _ = cv2.connectedComponentsWithStats(huecos, 4)
 cara = (cc_ == 1 + np.argmax(st_[1:, 4])).astype(np.uint8)
 cuello = fig & (yy >= 200 * S) & (yy < 262 * S) & (np.abs(xx - AX) < 48 * S) & (1 - musculos_) & (1 - cv2.dilate(cara, k(3 * S)))
 out['gris_cabeza'] = (cab | cuello).astype(np.uint8)
+# --- Peinado: de referencia-peinado.png (coleta alta) ----------------------------------------
+# Esa imagen es un dibujo de líneas blancas. Las zonas oscuras que encierran son la cara, el pelo
+# (entre el contorno de la cabeza y la línea del nacimiento del pelo) y la coleta (del lazo de
+# arriba hasta la punta). PEINADO_TRANSF la pone encima de la cara de esta foto (escala y
+# desplazamiento, ajustados maximizando el solape de las dos caras); el cuello y el resto del
+# cuerpo siguen siendo de esta foto.
+PEINADO_TRANSF = (0.9452, -0.571, 16.4263)
+CORTE_CUELLO = 200                   # sobre esta altura, la cabeza es la del peinado nuevo
+r2 = np.array(Image.open('referencia-peinado.png').convert('RGB')).astype(np.float32)
+linea2 = (r2.mean(2) > 110).astype(np.uint8)
+n2, cc2 = cv2.connectedComponents((1 - linea2).astype(np.uint8), connectivity=4)
+zona2 = lambda x, y: (cc2 == cc2[y, x]).astype(np.uint8)       # zona oscura que contiene (x, y)
+cara2, pelo2, coleta2 = zona2(210, 140), zona2(165, 70), zona2(283, 100)
+# silueta del peinado: todo lo que no es fondo (relleno desde las esquinas), por encima de la
+# barbilla; así entran también las puntas de la coleta, que son solo línea
+fondo2 = (1 - linea2).copy(); msk2 = np.zeros((fondo2.shape[0] + 2, fondo2.shape[1] + 2), np.uint8)
+for esquina in [(0, 0), (fondo2.shape[1] - 1, 0)]:
+    cv2.floodFill(fondo2, msk2, esquina, 2)
+cabeza2 = ((fondo2 != 2) & (np.arange(fondo2.shape[0])[:, None] < 199)).astype(np.uint8)
+s2, tx2, ty2 = PEINADO_TRANSF
+M2 = np.float32([[s2 * S, 0, tx2 * S], [0, s2 * S, ty2 * S]])
+calcar = lambda m: (cv2.warpAffine(m.astype(np.float32), M2, (W, H), flags=cv2.INTER_LINEAR) > 0.5).astype(np.uint8)
+cabeza = calcar(cabeza2) & (yy < 215 * S)
+fig = (((fig > 0) & (yy >= CORTE_CUELLO * S)) | (cabeza > 0)).astype(np.uint8)
+union = cv2.morphologyEx(fig, cv2.MORPH_CLOSE, k(3 * S))           # sin rendijas en la unión
+fig = np.where((yy > (CORTE_CUELLO - 8) * S) & (yy < (CORTE_CUELLO + 8) * S) & (np.abs(xx - AX) < 40 * S), union, fig).astype(np.uint8)
+out['gris_pelo'] = calcar(pelo2)
+out['gris_coleta'] = calcar(coleta2)
+# el cuello empieza justo debajo de la línea de la barbilla del peinado nuevo
+out['gris_cuello'] = (out.pop('gris_cabeza') & (yy >= CORTE_CUELLO * S) & (1 - calcar(cabeza2))).astype(np.uint8)
+# líneas del peinado, para que las separaciones caigan en su centro (como el mapa de crestas)
+out['linea_peinado'] = (calcar(linea2) & (yy < 215 * S)).astype(np.uint8)
 np.savez_compressed('masks.npz', AX=AX, fig=fig, **out)

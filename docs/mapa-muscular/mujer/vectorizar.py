@@ -8,9 +8,10 @@ import lineas as LN
 S = 4
 D = np.load('masks.npz'); AX = float(D['AX']); fig = D['fig'].astype(np.uint8); H, W = fig.shape
 xx = np.arange(W)[None, :]; yy = np.arange(H)[:, None]
-# Misma altura de figura que el hombre (780 unidades), para que líneas y huecos midan lo mismo.
+# Unidades SVG por píxel de la foto: sin contar la coleta, la figura mide 780 unidades, como la
+# del hombre, así que líneas y huecos miden lo mismo en los dos. La coleta sube un poco más.
 ys, xs = np.where(fig)
-K = 780.25 / ((ys.max() - ys.min()) / S)            # unidades SVG por píxel de la foto
+K = 0.7635
 M = 10 / K * S
 half = max(AX - xs.min(), xs.max() - AX) + M
 x0 = AX - half; y0 = ys.min() - M
@@ -85,7 +86,8 @@ for poli in getattr(LN, 'MUSLO_PARCHES', []):
     pm = np.zeros((H, W), np.uint8); cv2.fillPoly(pm, [np.round(np.array(poli) * S).astype(np.int32)], 1)
     pm &= fig
     piezas['cuadriceps-der'] |= pm; piezas['cuadriceps-izq'] |= espejar(pm)
-piezas['gris-cabeza'] = suave(D['gris_cabeza'], 1.0 * S)
+for n in ('cuello', 'pelo', 'coleta'):
+    piezas['gris-' + n] = suave(D['gris_' + n], 1.0 * S)
 for z in ('manos', 'pies'):
     m = suave(D['gris_' + z], 1.0 * S) & izq
     piezas[f'gris-{z}-der'] = m; piezas[f'gris-{z}-izq'] = espejar(m)
@@ -164,7 +166,10 @@ sep = fig.astype(bool) & (d1 > 0) & (d1 + d2 <= JUNTOS)
 # fondo no compite nadie: la pieza llega hasta el contorno y luego se retira BORDE.
 from skimage.segmentation import watershed
 cresta = cv2.GaussianBlur(np.load('ridge.npy'), (0, 0), 1.0 * S)
-nucleo = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (int(4 * S) + 1,) * 2)
+# en la cabeza mandan las líneas del peinado nuevo, no las de esta foto
+lp = D['linea_peinado'].astype(np.float32)
+cresta = np.where(cv2.dilate(D['linea_peinado'], nucleo := cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (int(4 * S) + 1,) * 2)) > 0,
+                  cv2.GaussianBlur(lp, (0, 0), 1.0 * S), np.where(yy < 215 * S, 0, cresta)).astype(np.float32)
 marcas = np.zeros((H, W), np.int32)
 for i, n in enumerate(nombres[:-1]):
     marcas[cv2.erode(piezas[n], nucleo) > 0] = i + 1
@@ -289,7 +294,8 @@ for gr, lineas_g in LN.LINEAS_GRIS.items():
 svg = f'''<?xml version="1.0" encoding="UTF-8"?>
 <!--
   Mapa muscular, vista de frente (mujer). Calcado de docs/mapa-muscular/mujer/referencia.png
-  con los scripts de esa carpeta; no se edita a mano. Misma estructura que el del hombre.
+  (el peinado, de referencia-peinado.png) con los scripts de esa carpeta; no se edita a mano.
+  Misma estructura que el del hombre.
 
   Cada músculo es un path con clase "musculo", data-musculo (grupo) y un id único:
     musculo-GRUPO-der / musculo-GRUPO-izq   (derecha/izquierda DE LA PERSONA:

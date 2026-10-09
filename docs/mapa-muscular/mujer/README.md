@@ -18,6 +18,8 @@ Cómo funciona, por si hay que tocarlo:
 - **Simetría:** el eje está en x = 198 de la foto (las dos mitades coinciden en un 98.7 %). Se
   trabaja con la mitad izquierda del dibujo y se refleja; la cabeza no, porque la coleta va a un
   lado.
+- **Escala:** sin contar la coleta, la figura mide 780 unidades, como la del hombre, así que
+  líneas y huecos miden lo mismo en los dos.
 - **Bordes de cada color:** donde el color cruza la mitad de su transición hacia el blanco (rojo,
   morado y lila por separado), no por la etiqueta más cercana, que deja fuera el halo del borde.
 - **Separaciones:** entre dos músculos, la frontera es el centro de la línea blanca de la foto
@@ -29,8 +31,14 @@ Cómo funciona, por si hay que tocarlo:
   curvas suaves por puntos medidos en la foto; fronteras medidas (pecho/abdomen e ingle), que
   mandan sobre el trazado; el borde de abajo del muslo y de la pantorrilla, medido columna a
   columna; y el parche de la parte alta del muslo, que en la foto es casi blanca.
-- Una segunda imagen del entrenador, con el torso más nítido, sirvió para confirmar cómo se
-  conectan las líneas del abdomen y del cuello. No se calca de ella: tiene otras proporciones.
+- **Peinado:** la cabeza (pelo, coleta alta y cara) se calca de `referencia-peinado.png`, otra
+  imagen del entrenador, porque le gustaba más que el moño de la primera. Es un dibujo de
+  líneas: las zonas que encierran son el pelo, la coleta y la cara. `PEINADO_TRANSF`
+  (`mascaras.py`) la pone encima de la cara de la primera foto (solapan un 82 %); del cuello para
+  abajo todo sigue siendo de la primera. Pelo y coleta son grises, separados por la línea del
+  contorno de la cabeza.
+- Esa misma imagen, con el torso más nítido, sirvió para confirmar cómo se conectan las líneas
+  del abdomen y del cuello. El torso no se calca de ella: tiene otras proporciones.
 
 Para mover una línea o un borde, se cambian sus puntos en `lineas.py` y se vuelve a correr el
 paso 4.
