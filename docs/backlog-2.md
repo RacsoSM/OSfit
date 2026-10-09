@@ -180,7 +180,9 @@ CSS; las líneas internas y el contorno van aparte y no cambian de color.
   frente. Músculos nuevos: trapecio, infraespinoso, tríceps, dorsal, lumbar, glúteo e
   isquiotibiales; los que también salen de frente (hombro, antebrazo, cuádriceps, pantorrilla)
   usan el mismo id, así que un nivel pinta las dos vistas.
-- Falta la vista de espalda de la mujer.
+- Vista de espalda de la mujer (2026-10-09): `web/public/mapa-muscular-espalda-mujer.svg`, con los
+  scripts de `docs/mapa-muscular/espalda-mujer/`. Mismos ids que la espalda del hombre (sin
+  lumbar). Con esto están las cuatro vistas: hombre y mujer, de frente y de espaldas.
 
 Pendiente: spec de diseño.
 
