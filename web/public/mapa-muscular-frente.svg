@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Mapa muscular, vista de frente (hombre). Dibujo original de OSfit, hecho a partir de una
+  referencia de estilo (ver docs/backlog-2.md, punto 4); no copia ningún archivo de terceros.
+
+  Cada músculo es un <path> con clase "musculo", data-musculo (grupo) y un id único:
+    musculo-<grupo>-der / musculo-<grupo>-izq   (derecha/izquierda DE LA PERSONA:
+                                                 su derecha queda a la izquierda del dibujo)
+  El abdomen es un solo bloque central: musculo-abdomen.
+  Para pintar por nivel, basta con cambiar el fill desde CSS, por ejemplo:
+    [data-musculo="pecho"] { fill: #ff8800; }
+  Los colores de abajo son los de la referencia y solo sirven por defecto.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 860" role="img" aria-label="Mapa muscular de frente">
+  <style>
+    .fondo { fill: #000; }
+    .silueta { fill: #c9cacf; stroke: #c9cacf; stroke-width: 2; stroke-linejoin: round; }
+    .sin-color { fill: #c9cacf; stroke: #fff; stroke-width: 3; stroke-linejoin: round; }
+    .musculo { stroke: #fff; stroke-width: 4; stroke-linejoin: round; }
+    .detalle { fill: none; stroke: #fff; stroke-width: 2.5; stroke-linecap: round; }
+    [data-musculo="trapecio"]   { fill: #8fb6e8; }
+    [data-musculo="hombro"]     { fill: #19c24a; }
+    [data-musculo="pecho"]      { fill: #e0161b; }
+    [data-musculo="biceps"]     { fill: #5aa2ee; }
+    [data-musculo="antebrazo"]  { fill: #a88ef0; }
+    [data-musculo="abdomen"]    { fill: #f2cf6b; }
+    [data-musculo="cuadriceps"] { fill: #1f52d6; }
+    [data-musculo="pantorrilla"]{ fill: #d5121a; }
+  </style>
+  <rect class="fondo" width="400" height="860"/>
+  <g id="silueta">
+    <path class="silueta" d="M200,126 Q160,132 128,144 Q84,150 80,190 L78,296 L64,378 L98,380 L118,290 L126,212 Q124,264 139,322 Q132,370 141,404 Q120,490 128,560 L140,614 L142,652 Q128,720 148,786 L186,786 Q194,720 190,652 L190,614 Q200,520 200,446 Q200,520 210,614 L210,652 Q206,720 214,786 L252,786 Q272,720 258,652 L260,614 L272,560 Q280,490 259,404 Q268,370 261,322 Q276,264 274,212 L282,290 L302,380 L336,378 L322,296 L320,190 Q316,150 272,144 Q240,132 200,126 Z"/>
+    <ellipse class="sin-color" cx="200" cy="70" rx="37" ry="47"/>
+    <path class="sin-color" d="M181,108 L219,108 L223,150 L177,150 Z"/>
+    <path class="sin-color" d="M68,378 L95,378 Q101,400 97,420 L93,446 L87,447 L86,428 L82,452 L75,452 L76,430 L70,449 L63,446 L66,424 L57,440 L51,435 Q57,402 68,378 Z"/>
+    <path class="sin-color" d="M332,378 L305,378 Q299,400 303,420 L307,446 L313,447 L314,428 L318,452 L325,452 L324,430 L330,449 L337,446 L334,424 L343,440 L349,435 Q343,402 332,378 Z"/>
+    <path class="sin-color" d="M150,784 L182,784 Q186,810 192,830 Q170,842 140,838 Q138,816 150,784 Z"/>
+    <path class="sin-color" d="M250,784 L218,784 Q214,810 208,830 Q230,842 260,838 Q262,816 250,784 Z"/>
+  </g>
+  <g id="musculos">
+    <path id="musculo-trapecio-der" class="musculo" data-musculo="trapecio" d="M186,124 Q172,140 130,148 Q165,150 200,154 L200,128 Z"/>
+    <path id="musculo-trapecio-izq" class="musculo" data-musculo="trapecio" d="M214,124 Q228,140 270,148 Q235,150 200,154 L200,128 Z"/>
+    <path id="musculo-hombro-der" class="musculo" data-musculo="hombro" d="M130,150 Q92,146 84,186 Q80,206 88,226 Q104,208 126,204 Q124,176 130,150 Z"/>
+    <path id="musculo-hombro-izq" class="musculo" data-musculo="hombro" d="M270,150 Q308,146 316,186 Q320,206 312,226 Q296,208 274,204 Q276,176 270,150 Z"/>
+    <path id="musculo-pecho-der" class="musculo" data-musculo="pecho" d="M134,152 Q168,150 197,160 L197,232 Q168,242 142,232 Q130,220 130,204 Q128,176 134,152 Z"/>
+    <path id="musculo-pecho-izq" class="musculo" data-musculo="pecho" d="M266,152 Q232,150 203,160 L203,232 Q232,242 258,232 Q270,220 270,204 Q272,176 266,152 Z"/>
+    <path id="musculo-biceps-der" class="musculo" data-musculo="biceps" d="M90,230 Q106,212 124,208 Q128,246 117,282 Q100,298 82,290 Q76,256 90,230 Z"/>
+    <path id="musculo-biceps-izq" class="musculo" data-musculo="biceps" d="M310,230 Q294,212 276,208 Q272,246 283,282 Q300,298 318,290 Q324,256 310,230 Z"/>
+    <path id="musculo-antebrazo-der" class="musculo" data-musculo="antebrazo" d="M82,296 Q100,302 115,288 Q112,334 95,374 Q82,382 68,376 Q66,334 82,296 Z"/>
+    <path id="musculo-antebrazo-izq" class="musculo" data-musculo="antebrazo" d="M318,296 Q300,302 285,288 Q288,334 305,374 Q318,382 332,376 Q334,334 318,296 Z"/>
+    <path id="musculo-cuadriceps-der" class="musculo" data-musculo="cuadriceps" d="M141,404 Q164,426 195,450 Q198,525 188,594 Q168,616 148,610 Q130,598 130,560 Q124,480 141,404 Z"/>
+    <path id="musculo-cuadriceps-izq" class="musculo" data-musculo="cuadriceps" d="M259,404 Q236,426 205,450 Q202,525 212,594 Q232,616 252,610 Q270,598 270,560 Q276,480 259,404 Z"/>
+    <path id="musculo-abdomen" class="musculo" data-musculo="abdomen" d="M200,236 Q170,246 141,238 Q130,226 127,212 Q124,264 139,322 Q132,370 148,400 Q174,432 200,446 Q226,432 252,400 Q268,370 261,322 Q276,264 273,212 Q270,226 259,238 Q230,246 200,236 Z"/>
+    <path id="musculo-pantorrilla-der" class="musculo" data-musculo="pantorrilla" d="M146,660 Q130,710 144,772 L154,772 Q162,716 160,662 Q153,656 146,660 Z M172,662 Q186,700 184,766 L176,772 Q168,716 168,666 Q170,660 172,662 Z"/>
+    <path id="musculo-pantorrilla-izq" class="musculo" data-musculo="pantorrilla" d="M254,660 Q270,710 256,772 L246,772 Q238,716 240,662 Q247,656 254,660 Z M228,662 Q214,700 216,766 L224,772 Q232,716 232,666 Q230,660 228,662 Z"/>
+  </g>
+  <g id="detalles">
+    <path class="detalle" d="M110,156 Q102,182 106,206"/>
+    <path class="detalle" d="M104,214 Q110,252 100,292"/>
+    <path class="detalle" d="M96,302 Q86,340 80,378"/>
+    <path class="detalle" d="M172,246 Q168,330 176,420"/>
+    <path class="detalle" d="M174,282 Q188,286 200,282"/>
+    <path class="detalle" d="M172,322 Q187,326 200,322"/>
+    <path class="detalle" d="M172,362 Q187,366 200,362"/>
+    <path class="detalle" d="M132,252 Q148,262 166,258"/>
+    <path class="detalle" d="M134,280 Q150,290 168,286"/>
+    <path class="detalle" d="M140,330 Q156,370 172,404"/>
+    <path class="detalle" d="M150,418 Q164,500 160,604"/>
+    <path class="detalle" d="M180,444 Q176,520 182,592"/>
+    <path class="detalle" d="M144,412 Q184,470 192,530"/>
+    <path class="detalle" d="M290,156 Q298,182 294,206"/>
+    <path class="detalle" d="M296,214 Q290,252 300,292"/>
+    <path class="detalle" d="M304,302 Q314,340 320,378"/>
+    <path class="detalle" d="M228,246 Q232,330 224,420"/>
+    <path class="detalle" d="M226,282 Q212,286 200,282"/>
+    <path class="detalle" d="M228,322 Q213,326 200,322"/>
+    <path class="detalle" d="M228,362 Q213,366 200,362"/>
+    <path class="detalle" d="M268,252 Q252,262 234,258"/>
+    <path class="detalle" d="M266,280 Q250,290 232,286"/>
+    <path class="detalle" d="M260,330 Q244,370 228,404"/>
+    <path class="detalle" d="M250,418 Q236,500 240,604"/>
+    <path class="detalle" d="M220,444 Q224,520 218,592"/>
+    <path class="detalle" d="M256,412 Q216,470 208,530"/>
+    <path class="detalle" d="M200,246 L200,430"/>
+  </g>
+</svg>

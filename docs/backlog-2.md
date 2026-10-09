@@ -177,6 +177,11 @@ versiona porque es de terceros). Lo que define:
 - Falta la vista de espalda (dorsales, glúteos, isquios, tríceps) y la versión de mujer: la
   referencia solo cubre hombre de frente.
 
+Dibujo propio hecho a partir de esa referencia: `web/public/mapa-muscular-frente.svg` (hombre
+de frente). Cada músculo es un `path` con `id` (`musculo-pecho-der`, `musculo-abdomen`…) y
+`data-musculo`, para pintarlo por nivel desde CSS. Lleva los colores de la referencia solo
+como valor por defecto.
+
 Pendiente: spec de diseño.
 
 ## 5. Que la web cargue más rápido al abrirla
