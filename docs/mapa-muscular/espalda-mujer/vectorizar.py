@@ -261,22 +261,34 @@ for n in [n for n in norm if grupo(n) == 'gluteo' and n.endswith('-der')]:
     for r in np.nonzero(ext.any(1))[0]:
         xs_ = np.nonzero(ext[r])[0]
         if xs_.max() > AX - 6 * S: ext[r, xs_.max():int(AX + 6 * S)] = 1
-    lisa = (fourier(ext, LN.GLUTEO_ARMONICOS) & (xx < AX - HUECO / 2) & (d_fondo > BORDE)).astype(np.uint8)
+    huevo = fourier(ext, LN.GLUTEO_ARMONICOS)
+    # Se agranda por igual (sigue redondo) hasta que su lado de fuera queda a BORDE del contorno
+    # donde más se acerca; donde el contorno se abre (la cadera) queda la cuña blanca de la foto.
+    dh = cv2.distanceTransform(1 - huevo, cv2.DIST_L2, 5)
+    fuera = (dh > 0) & (d_fondo <= BORDE) & (yy < LN.GLUTEO_CRECER_HASTA * S)
+    crecer = float(dh[fuera].min()) if fuera.any() else 0.0     # lo justo para tocar donde más se acerca
+    lisa = ((huevo.astype(bool) | (dh <= crecer)) & (xx < AX - HUECO / 2) & (d_fondo > BORDE)).astype(np.uint8)
     norm[n] = lisa; norm[n[:-4] + '-izq'] = espejar(lisa)
+    norm_gluteo_fijo = lisa.copy()       # la forma final: el paso de bordes no la toca
 
 
 def seguir(pieza, ref, limite=JUNTOS):
     """La pieza llega hasta HUECO de 'ref' en los tramos donde estaban a menos de 'limite' (las
     líneas finas de la foto), y nunca se le acerca más; donde el blanco es ancho no se toca."""
     dr = cv2.distanceTransform(1 - ref, cv2.DIST_L2, 5); dp = cv2.distanceTransform(1 - pieza, cv2.DIST_L2, 5)
-    hueco = fig.astype(bool) & ~pieza.astype(bool) & ~ref.astype(bool) & (dp + dr <= limite)
+    # solo el blanco que da a 'ref': si otra pieza queda más cerca, esa línea no es de este par
+    resto = np.any([m for m in norm.values() if not (m is pieza or m is ref) and not np.array_equal(m, pieza) and not np.array_equal(m, ref)], 0).astype(np.uint8)
+    d_resto = cv2.distanceTransform(1 - resto, cv2.DIST_L2, 5)
+    hueco = fig.astype(bool) & ~pieza.astype(bool) & ~ref.astype(bool) & (dp + dr <= limite) & (dr < d_resto) & (dp < d_resto)
     nueva = (pieza.astype(bool) | hueco) & (dr > HUECO) & (d_fondo > BORDE)
     return (suave(nueva, 1.5 * U) & (dr > HUECO) & (d_fondo > BORDE)).astype(np.uint8)
 
 
 glu = norm[[n for n in norm if grupo(n) == 'gluteo' and n.endswith('-der')][0]]
 for n in [n for n in norm if grupo(n) in ('dorsal', 'isquiotibiales', 'cuadriceps') and n.endswith('-der')]:
-    norm[n] = (seguir(norm[n], glu) & (xx < AX - HUECO / 2)).astype(np.uint8)
+    # (las piezas de debajo llegan desde más lejos: el glúteo redondo deja más hueco en sus esquinas)
+    lim_ = LN.GLUTEO_SEGUIR * S if grupo(n) != 'dorsal' else JUNTOS
+    norm[n] = (seguir(norm[n], glu, lim_) & (xx < AX - HUECO / 2)).astype(np.uint8)
     norm[n[:-4] + '-izq'] = espejar(norm[n])
 
 # Cuello: bajo la cabeza la foto aclara el lila casi hasta el blanco y el trazado se queda corto;
@@ -304,7 +316,7 @@ for n in [n for n in norm if grupo(n) == 'trapecio']:
 # tobillos, que está entre dos piezas, queda como en la foto.
 df_, if_ = distance_transform_edt(fig, return_indices=True)
 vy2, vx2 = if_[0] - yy, if_[1] - xx
-for n in [n for n in norm if n.endswith('-der') or grupo(n) == 'trapecio']:
+for n in [n for n in norm if (n.endswith('-der') or grupo(n) == 'trapecio') and grupo(n) != 'gluteo']:
     p = norm[n].astype(np.uint8)
     otras = np.any([m for o, m in norm.items() if o != n], 0).astype(np.uint8)
     dt, it = distance_transform_edt(1 - p, return_indices=True)
@@ -329,6 +341,37 @@ for n in [n for n in norm if grupo(n) in ('gris-pie', 'pantorrilla') and n.endsw
     lisa = fourier(base, LN.PIERNA_ARMONICOS if grupo(n) == 'gris-pie' else LN.PANT_ARMONICOS) & (d_fondo > BORDE) & (cv2.distanceTransform(1 - otras, cv2.DIST_L2, 5) > HUECO)
     norm[n] = mayor(lisa.astype(np.uint8)); norm[n[:-4] + '-izq'] = espejar(norm[n])
 
+
+# --- Separaciones finas (lineas.py, PARES_FINOS): cada pieza del par se acerca a la otra hasta que
+# entre ellas queda SEPARACION_FINA, sin acercarse a ninguna tercera pieza ni al contorno.
+FINO = LN.SEPARACION_FINA * U
+pares = {tuple(sorted(p)) for p in LN.PARES_FINOS}
+lista = list(norm)
+dist_n = {n: cv2.distanceTransform((1 - norm[n]).astype(np.uint8), cv2.DIST_L2, 5) for n in lista}
+# las tres piezas más cercanas a cada píxel (para saber a qué distancia queda una tercera)
+d3 = np.full((3, H, W), np.inf, np.float32); orden3 = np.full((3, H, W), -1, np.int16)
+for i, n in enumerate(lista):
+    d = dist_n[n]
+    for k_ in range(3):     # inserta d en la lista ordenada de las tres menores
+        menor = d < d3[k_]
+        if not menor.any(): continue
+        for j in range(2, k_, -1):
+            d3[j] = np.where(menor, d3[j - 1], d3[j]); orden3[j] = np.where(menor, orden3[j - 1], orden3[j])
+        d3[k_] = np.where(menor, d, d3[k_]); orden3[k_] = np.where(menor, i, orden3[k_])
+        d = np.where(menor, np.inf, d)
+ocup = np.any([norm[n] for n in lista], 0)
+nuevos = {n: norm[n].astype(bool).copy() for n in lista}
+for ia, a in enumerate(lista):
+    for ib, b in enumerate(lista):
+        if a >= b or tuple(sorted((grupo(a), grupo(b)))) not in pares: continue
+        if a.rsplit('-', 1)[-1] != b.rsplit('-', 1)[-1]: continue          # mismo lado
+        da, db = dist_n[a], dist_n[b]
+        linea = ~ocup & fig.astype(bool) & (da + db <= HUECO + 1.0 * S) & (d_fondo > BORDE)
+        if not linea.any(): continue
+        tercera = np.where(np.isin(orden3[0], (ia, ib)), np.where(np.isin(orden3[1], (ia, ib)), d3[2], d3[1]), d3[0])
+        for n, dn, do in ((a, da, db), (b, db, da)):
+            nuevos[n] |= linea & (dn <= (HUECO - FINO) / 2 + 0.25 * S) & (dn < do) & (tercera > HUECO)
+for n in norm: norm[n] = nuevos[n].astype(np.uint8)
 
 # --- SVG -----------------------------------------------------------------------------------
 por_grupo = {}
@@ -356,6 +399,14 @@ for g, lin in LN.LINEAS.items():
         pts = [F(p) for p in linea]; trazos += [catmull(pts, False), catmull([mirror(p) for p in pts], False)]
     lineas.append(f'    <path class="linea" clip-path="url(#recorte-{g})" d="{" ".join(trazos)}"/>')
 contorno = area_paths(suave(fig, 0.8 * S), sigma=0.5 * S, eps=0.15 * S, minarea=0)
+# Las de la mano se recortan con la silueta (no con el gris): así llegan justo al borde del hueco
+# del pulgar; donde pasan por encima del blanco de la muñeca no se ven.
+for g, lin in LN.LINEAS_GRIS.items():
+    defs.append(f'    <clipPath id="recorte-{g}"><path d="{contorno}"/></clipPath>')
+    trazos = []
+    for linea in lin:
+        pts = [F(p) for p in linea]; trazos += [catmull(pts, False), catmull([mirror(p) for p in pts], False)]
+    lineas.append(f'    <path class="linea-mano" clip-path="url(#recorte-{g})" d="{" ".join(trazos)}"/>')
 for g, lin in LN.LINEAS_SIN_REFLEJO.items():
     m = norm[g] if g in norm else None
     if m is None: continue
@@ -385,6 +436,7 @@ svg = f'''<?xml version="1.0" encoding="UTF-8"?>
     .contorno {{ fill: #f7f5f5; }}
     .sin-color {{ fill: #c6c7d9; }}
     .linea {{ fill: none; stroke: #f7f5f5; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }}
+    .linea-mano {{ fill: none; stroke: #f7f5f5; stroke-width: {LN.MANO_LINEA}; stroke-linecap: round; stroke-linejoin: round; }}
     [data-musculo="trapecio"]       {{ fill: #a68ce0; }}
     [data-musculo="infraespinoso"]  {{ fill: #a68ce0; }}
     [data-musculo="dorsal"]         {{ fill: #a68ce0; }}

@@ -27,8 +27,15 @@ Lo que cambia respecto a la del hombre:
 - **Bordes:** en esta foto el blanco entre cada pieza y el contorno mide 7-9 px (brillo del
   contorno); cada pieza se lleva hasta el contorno con el borde de siempre (`MARGEN_FONDO`), sin
   tocar el blanco de codos, rodillas y tobillos.
-- **Formas lisas:** glúteo, pantorrillas y pie se rehacen con pocos armónicos de Fourier; el
-  dorsal, el isquiotibial y la franja de fuera del muslo siguen el borde del glúteo.
+- **Glúteo:** el óvalo del trazado (pocos armónicos de Fourier), agrandado por igual hasta tocar
+  el contorno con el borde de siempre donde más se acerca: sigue redondo y no se cuadra. Las
+  piezas de debajo (isquiotibial y franja del muslo) suben hasta él con una línea fina
+  (`GLUTEO_SEGUIR`), así que sus esquinas de abajo no dejan manchas blancas.
+- **Formas lisas:** pantorrillas y pie también se rehacen con pocos armónicos.
+- **Líneas finas:** las del hombro y omóplato y las del isquiotibial miden 2 unidades en vez de 3
+  (`PARES_FINOS`, `SEPARACION_FINA`).
+- **Mano:** lleva la línea que separa el pulgar de la palma (medida en la foto) y otra por el
+  medio de los dedos, que en la foto van juntos (`LINEAS_GRIS`), más finas que las demás.
 - **Columna:** lleva el huso blanco de arriba medido en la foto (`COLUMNA_HUSO`), centrado.
 - **Ids:** los mismos que la espalda del hombre, sin `lumbar` (aquí es parte del dorsal). En la
   rodilla, la punta de la franja de fuera del muslo queda cortada por el cruce de líneas, como en

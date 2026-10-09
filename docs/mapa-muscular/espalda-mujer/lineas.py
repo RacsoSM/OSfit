@@ -17,3 +17,20 @@ COLUMNA_HUSO = [(194, 1.5), (198, 3.0), (202, 4.6), (206, 5.9), (210, 6.1), (214
                 (222, 3.8), (226, 3.4), (230, 2.9), (234, 2.5), (238, 2.1), (244, 1.6)]
 PIERNA_ARMONICOS = 12  # armónicos con que se rehace el pie (menos = más liso)
 PANT_ARMONICOS = 8      # ídem para las pantorrillas
+GLUTEO_CRECER_HASTA = 455  # el glúteo crece hasta tocar el contorno por encima de esta altura (más abajo se abre la cadera)
+GLUTEO_SEGUIR = 16         # px de la foto: hueco bajo el glúteo que rellenan el isquiotibial y la franja del muslo
+# Mano: la línea que separa el pulgar de la palma (de la muñeca al hueco del pulgar, medida en la
+# foto) y una por el medio de los dedos, que en la foto van juntos, para que se lean como en las
+# otras manos. Se dibujan más finas que las demás (MANO_LINEA) y recortadas con la silueta.
+MANO_LINEA = 2.2
+LINEAS_GRIS = {'gris-mano': [
+    [(64.7, 448.6), (64.8, 452), (64.6, 459), (63.6, 465), (61.4, 469.5), (59.9, 473.5), (59.2, 478), (58.4, 482), (57.4, 488)],
+    [(47.6, 476), (47.4, 486), (48, 495), (49.6, 503), (51.6, 510), (53, 514)],
+]}
+# Separaciones más finas (unidades SVG) entre estos pares de grupos: hombro y omóplato, e
+# isquiotibial con sus vecinos.
+SEPARACION_FINA = 2.0
+PARES_FINOS = [('hombro', 'trapecio'), ('hombro', 'infraespinoso'), ('hombro', 'triceps'),
+               ('infraespinoso', 'trapecio'), ('infraespinoso', 'dorsal'), ('infraespinoso', 'triceps'),
+               ('trapecio', 'dorsal'),
+               ('isquiotibiales', 'cuadriceps'), ('isquiotibiales', 'gluteo'), ('isquiotibiales', 'pantorrilla')]
