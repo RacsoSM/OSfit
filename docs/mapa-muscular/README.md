@@ -1,5 +1,7 @@
 # Mapa muscular: cómo se genera el SVG
 
+(Hombre. El de la mujer está en `mujer/`, con su propio README.)
+
 `web/public/mapa-muscular-frente.svg` está calcado de `referencia.png` (imagen libre de uso
 que compartió el entrenador; ver `docs/backlog-2.md`, punto 4). No está dibujado a mano: sale
 de estos scripts, así que para retocarlo se cambia el script y se vuelve a generar.

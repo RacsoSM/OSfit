@@ -172,8 +172,10 @@ CSS; las líneas internas y el contorno van aparte y no cambian de color.
   salir del **nivel**: el spec tiene que decidir si se respeta esa paleta o si solo se toma
   el dibujo y la escala la pone el nivel. El SVG trae la paleta de la foto como valor por
   defecto.
-- Falta la vista de espalda (dorsales, glúteos, isquios, tríceps) y la versión de mujer: la
-  referencia solo cubre hombre de frente.
+- Versión de mujer (2026-10-09): `web/public/mapa-muscular-frente-mujer.svg`, calcada de otra
+  referencia del entrenador con los scripts de `docs/mapa-muscular/mujer/`. Mismos ids que el
+  del hombre, salvo que no tiene trapecio (en esa referencia esa zona es gris).
+- Falta la vista de espalda (dorsales, glúteos, isquios, tríceps), de hombre y de mujer.
 
 Pendiente: spec de diseño.
 
