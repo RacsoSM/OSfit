@@ -1,7 +1,6 @@
 /**
- * El paisaje del estilo Halloween, ilustrado como un cuento de terror: una noche casi negra con
- * el horizonte rojo sangre y relámpagos lejanos, una luna de sangre con nubes que pasan y una
- * bruja que la cruza en su escoba, ojos rojos que miran desde la oscuridad,
+ * El paisaje del estilo Halloween, ilustrado como un cuento de miedo: un cielo morado con
+ * estrellas, una luna llena con nubes que pasan y una bruja que la cruza en su escoba,
  * murciélagos, telarañas con su araña colgando, fantasmas que flotan y, abajo, un cementerio
  * con una casa embrujada en la colina, árboles secos, lápidas, un fantasma que se asoma y
  * calabazas con la cara encendida.
@@ -28,8 +27,7 @@ const r1 = (n: number) => Math.round(n * 10) / 10;
 // ---------- Las figuras ----------
 
 /**
- * Una calabaza tallada con cara de malas intenciones (cejas fruncidas y una sonrisa de colmillos),
- * en una caja de 100×90. La cara (`hw-cara`) es la luz de la vela: el CSS
+ * Una calabaza tallada, en una caja de 100×90. La cara (`hw-cara`) es la luz de la vela: el CSS
  * la hace titilar. `p` es el prefijo de los ids de sus degradados, para que dos calabazas en
  * documentos distintos (el fondo y la imagen de la transición) no se pisen.
  */
@@ -37,31 +35,28 @@ export function calabaza(p: string): string {
   return `
     <defs>
       <radialGradient id="${p}-piel" cx="0.4" cy="0.35" r="0.75">
-        <stop offset="0" stop-color="#f08a35"/><stop offset="0.6" stop-color="#c9520f"/><stop offset="1" stop-color="#6e2306"/>
+        <stop offset="0" stop-color="#ffab45"/><stop offset="0.6" stop-color="#f2711c"/><stop offset="1" stop-color="#b8460c"/>
       </radialGradient>
       <radialGradient id="${p}-luz" cx="0.5" cy="0.5" r="0.6">
-        <stop offset="0" stop-color="#fff1a0"/><stop offset="0.5" stop-color="#ffa21f"/><stop offset="1" stop-color="#d9360f"/>
+        <stop offset="0" stop-color="#fff6b0"/><stop offset="0.55" stop-color="#ffd23f"/><stop offset="1" stop-color="#ff9a1a"/>
       </radialGradient>
     </defs>
-    <path d="M47 24C46 15 50 8 58 4L61 8C55 11 54 17 55 25Z" fill="#33361a"/>
-    <path d="M56 9C64 6 70 9 72 14" fill="none" stroke="#3f4520" stroke-width="2" stroke-linecap="round"/>
-    <g fill="url(#${p}-piel)" stroke="#5a1d05" stroke-width="1.6">
+    <path d="M47 24C46 15 50 8 58 4L61 8C55 11 54 17 55 25Z" fill="#4e6b2c"/>
+    <path d="M56 9C64 6 70 9 72 14" fill="none" stroke="#5f8a34" stroke-width="2" stroke-linecap="round"/>
+    <g fill="url(#${p}-piel)" stroke="#a8450c" stroke-width="1.6">
       <ellipse cx="28" cy="56" rx="24" ry="31"/>
       <ellipse cx="72" cy="56" rx="24" ry="31"/>
       <ellipse cx="50" cy="56" rx="20" ry="33"/>
     </g>
     <g class="hw-cara" fill="url(#${p}-luz)">
-      <path d="M23 43L43 35L41 50Q31 51 23 43Z"/>
-      <path d="M77 43L57 35L59 50Q69 51 77 43Z"/>
-      <path d="M50 50L45 59L50 56L55 59Z"/>
-      <path d="M17 57Q50 94 83 57L77 61L73 69L68 62L62 73L57 64L50 77L43 64L38 73L32 62L27 69L23 61Z"/>
+      <path d="M27 47L37 33L44 48Q35 51 27 47Z"/>
+      <path d="M73 47L63 33L56 48Q65 51 73 47Z"/>
+      <path d="M50 51L45 59H55Z"/>
+      <path d="M22 62Q50 86 78 62L71 64L67 70L61 66L55 74L50 68L45 74L39 66L33 70L29 64Z"/>
     </g>`;
 }
 
-/**
- * La sábana del fantasma, en una caja de 60×74: cúpula arriba y el ruedo ondulado que se
- * deshace en el aire. Ojos huecos y la boca abierta en un lamento.
- */
+/** La sábana del fantasma, en una caja de 60×74: cúpula arriba y el ruedo ondulado. */
 export function fantasma(p: string): string {
   const ondas = 5;
   let ruedo = "";
@@ -73,15 +68,15 @@ export function fantasma(p: string): string {
   return `
     <defs>
       <linearGradient id="${p}-sabana" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0" stop-color="#f2f4ff" stop-opacity="0.95"/>
-        <stop offset="0.6" stop-color="#c9d4f0" stop-opacity="0.75"/>
-        <stop offset="1" stop-color="#9fb0d8" stop-opacity="0.1"/>
+        <stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#cfc4f2"/>
       </linearGradient>
     </defs>
     <path d="M6 68V30C6 13 17 3 30 3C43 3 54 13 54 30V68${ruedo}Z" fill="url(#${p}-sabana)"/>
-    <ellipse cx="21" cy="28" rx="4.4" ry="7.5" fill="#07040c" transform="rotate(-8 21 28)"/>
-    <ellipse cx="39" cy="28" rx="4.4" ry="7.5" fill="#07040c" transform="rotate(8 39 28)"/>
-    <ellipse cx="30" cy="48" rx="4.6" ry="9.5" fill="#07040c"/>`;
+    <ellipse cx="22" cy="29" rx="3.4" ry="5" fill="#2a1a40"/>
+    <ellipse cx="38" cy="29" rx="3.4" ry="5" fill="#2a1a40"/>
+    <ellipse cx="30" cy="42" rx="3.6" ry="5.4" fill="#2a1a40"/>
+    <circle cx="16" cy="37" r="3.4" fill="#ff8fb1" opacity="0.5"/>
+    <circle cx="44" cy="37" r="3.4" fill="#ff8fb1" opacity="0.5"/>`;
 }
 
 /** Un murciélago de alas festoneadas, en una caja de 100×44. */
@@ -224,24 +219,6 @@ const CASA = `
     <path class="hw-ventana tenue" d="M43 4h6v8h-6z"/>
   </g>`;
 
-/**
- * Ojos rojos que miran desde la oscuridad del cementerio y parpadean de vez en cuando: la x
- * del ojo izquierdo, cuánto por encima del suelo y la separación (más chica = más lejos).
- */
-export const OJOS_EN_LA_OSCURIDAD: readonly [number, number, number][] = [
-  [356, 10, 9], [548, 6, 7], [742, 30, 6], [884, 8, 8], [1148, 12, 9], [196, 9, 8],
-];
-
-function ojos([x, alto, separacion]: readonly [number, number, number], i: number): string {
-  const y = r1(suelo(x) - alto);
-  const r = separacion / 3;
-  return `<g class="hw-ojos o${i % 4}" transform="translate(${x} ${y})">
-      <circle cx="${r1(separacion / 2)}" cy="0" r="${r1(separacion * 1.4)}" fill="url(#hw-fulgor-ojo)"/>
-      <ellipse class="hw-pupila" cx="0" cy="0" rx="${r1(r)}" ry="${r1(r * 0.6)}"/>
-      <ellipse class="hw-pupila" cx="${separacion}" cy="0" rx="${r1(r)}" ry="${r1(r * 0.6)}"/>
-    </g>`;
-}
-
 /** Dónde van las calabazas del cementerio: la x de su centro y su escala. */
 export const CALABAZAS_DEL_SUELO: readonly [number, number][] = [
   [470, 0.9], [690, 0.55], [860, 0.75], [240, 0.7], [1010, 0.8],
@@ -304,13 +281,9 @@ export function fondoHalloween(): string {
       <svg class="hw-paisaje" viewBox="0 0 ${ANCHO} ${ALTO}" preserveAspectRatio="xMidYMax slice">
         <defs>
           <radialGradient id="hw-brillo">
-            <stop offset="0" stop-color="#ff8a2e" stop-opacity="0.6"/>
-            <stop offset="0.5" stop-color="#c2260f" stop-opacity="0.2"/>
-            <stop offset="1" stop-color="#c2260f" stop-opacity="0"/>
-          </radialGradient>
-          <radialGradient id="hw-fulgor-ojo">
-            <stop offset="0" stop-color="#ff2a2a" stop-opacity="0.7"/>
-            <stop offset="1" stop-color="#ff2a2a" stop-opacity="0"/>
+            <stop offset="0" stop-color="#ffb347" stop-opacity="0.55"/>
+            <stop offset="0.5" stop-color="#ff7a1a" stop-opacity="0.18"/>
+            <stop offset="1" stop-color="#ff7a1a" stop-opacity="0"/>
           </radialGradient>
         </defs>
         <path class="hw-lejos" d="${colina((x) => 200 + 18 * Math.sin(x / 160 + 1) + 8 * Math.sin(x / 61))}"/>
@@ -322,13 +295,10 @@ export function fondoHalloween(): string {
         ${lapida(760, 32, 46, 5)}${cruz(812, 58, -4)}${lapida(310, 30, 44, -3)}
         ${lapida(905, 36, 52, 3)}${cruz(965, 60, 2)}${lapida(60, 34, 48, -2)}
         ${reja(140, 210)}${reja(1100, 1180)}
-        ${OJOS_EN_LA_OSCURIDAD.map(ojos).join("")}
         ${CALABAZAS_DEL_SUELO.map(([x, escala], i) => calabazaEnElSuelo(x, escala, i)).join("")}
       </svg>
       <i class="hw-niebla uno"></i>
       <i class="hw-niebla dos"></i>
-      <i class="hw-vineta"></i>
-      <i class="hw-relampago"></i>
     </div>`;
 }
 

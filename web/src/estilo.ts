@@ -53,7 +53,7 @@ export const ESTILOS: readonly Estilo[] = [
   {
     id: "halloween",
     nombre: "Halloween",
-    descripcion: "Noche de terror: luna de sangre, calabazas malvadas, fantasmas, ojos que te miran desde la oscuridad y telarañas. Toca la pantalla y suelta un fantasma.",
+    descripcion: "Noche de brujas: luna llena, calabazas encendidas, fantasmas, murciélagos y telarañas. Toca la pantalla y suelta un fantasma.",
   },
 ];
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  CALABAZAS_DEL_SUELO, OJOS_EN_LA_OSCURIDAD, arbolSeco, bandadaDeMurcielagos, calabaza, estrellas, fantasma, fondoHalloween, suelo, telarana,
+  CALABAZAS_DEL_SUELO, arbolSeco, bandadaDeMurcielagos, calabaza, estrellas, fantasma, fondoHalloween, suelo, telarana,
 } from "./halloween";
 
 describe("las figuras", () => {
@@ -70,16 +70,6 @@ describe("fondoHalloween", () => {
       expect(html).toContain(clase);
     }
     expect(html.match(/class="hw-resplandor/g)).toHaveLength(CALABAZAS_DEL_SUELO.length);
-  });
-
-  it("de la oscuridad miran pares de ojos rojos: dos pupilas por par", () => {
-    expect(html.match(/class="hw-ojos/g)).toHaveLength(OJOS_EN_LA_OSCURIDAD.length);
-    expect(html.match(/class="hw-pupila"/g)).toHaveLength(OJOS_EN_LA_OSCURIDAD.length * 2);
-  });
-
-  it("trae la viñeta y el relámpago", () => {
-    expect(html).toContain(`class="hw-vineta"`);
-    expect(html).toContain(`class="hw-relampago"`);
   });
 
   it("no es pixel art: nada se dibuja con bordes duros", () => {

@@ -1,5 +1,5 @@
 /*
- * El estilo Halloween: noche de brujas ilustrada, como un cuento de terror. Cuelga entero de
+ * El estilo Halloween: noche de brujas ilustrada, como un cuento de miedo. Cuelga entero de
  * `data-estilo="halloween"` en <html> (ver `estilo.ts`); sin ese atributo no aplica ni una regla.
  *
  * Lo que lo hace distinto de los demás:
@@ -24,20 +24,19 @@
   --hw-hondo: #e8641b;
   --hw-lila: #c9a7f0;
   --fondo: var(--hw-noche);
-  --hw-sangre: #c8102e;
-  --superficie: rgba(16, 7, 22, 0.86);
-  --superficie-alta: #261433;
-  --texto: #efe8f2;
-  /* 7:1 sobre `--superficie`. */
-  --texto-tenue: #a99bb6;
+  --superficie: rgba(33, 16, 54, 0.82);
+  --superficie-alta: #35205a;
+  --texto: #f6eefc;
+  /* 6.1:1 sobre `--superficie`. */
+  --texto-tenue: #b9a7d6;
   --verde: #58c46a;
   --rojo: #e5394a;
   --ambar: #ff9f1c;
   --hw-terror: "Creepster", Impact, fantasy;
   --hw-letra: "Grandstander", system-ui, sans-serif;
-  /* El cielo, casi negro arriba y rojo sangre en el horizonte. En <html> y no en <body>,
+  /* El cielo, del morado de medianoche al rojizo del horizonte. En <html> y no en <body>,
      igual que el sakura: el fondo de <body> se pintaría encima del paisaje (`z-index: -1`). */
-  background: linear-gradient(to bottom, #030105 0%, #0a0410 35%, #150818 60%, #2c0a17 82%, #4f0f15 100%) fixed;
+  background: linear-gradient(to bottom, #0e0619 0%, #1a0b2e 38%, #2e1145 66%, #52204f 88%, #6b2a3f 100%) fixed;
 }
 :root[data-estilo="halloween"] body {
   background: transparent; color: var(--texto);
@@ -57,7 +56,7 @@
 :root[data-estilo="halloween"] .hw-estrellas .tres { opacity: 0.35; animation: hw-titilar 4.4s ease-in-out -2.4s infinite alternate; }
 @keyframes hw-titilar { to { opacity: 0.1; } }
 
-/* La luna de sangre, con su halo rojo y unas nubes que la cruzan. En el teléfono va a media altura,
+/* La luna llena, con su halo y unas nubes que la cruzan. En el teléfono va a media altura,
    donde las tarjetas de arriba no la tapan al abrir; en pantallas anchas, a la izquierda de la
    columna de tarjetas. La bruja la cruza cada 26 segundos. */
 :root[data-estilo="halloween"] .hw-cielo-luna {
@@ -69,19 +68,19 @@
 }
 :root[data-estilo="halloween"] .hw-halo {
   position: absolute; inset: -55%; border-radius: 50%;
-  background: radial-gradient(circle, rgba(230, 70, 40, 0.42) 0%, rgba(170, 20, 20, 0.14) 42%, rgba(170, 20, 20, 0) 68%);
+  background: radial-gradient(circle, rgba(255, 200, 110, 0.4) 0%, rgba(255, 130, 50, 0.13) 42%, rgba(255, 130, 50, 0) 68%);
   animation: hw-halo 6s ease-in-out infinite alternate;
 }
 @keyframes hw-halo { to { transform: scale(1.08); opacity: 0.8; } }
 :root[data-estilo="halloween"] .hw-luna {
   position: absolute; inset: 0; border-radius: 50%;
   background:
-    radial-gradient(circle at 34% 40%, rgba(110, 20, 10, 0.4) 0 9%, transparent 10%),
-    radial-gradient(circle at 62% 66%, rgba(110, 20, 10, 0.35) 0 7%, transparent 8%),
-    radial-gradient(circle at 68% 30%, rgba(110, 20, 10, 0.3) 0 5%, transparent 6%),
-    radial-gradient(circle at 40% 72%, rgba(110, 20, 10, 0.28) 0 4%, transparent 5%),
-    radial-gradient(circle at 38% 34%, #ffd2b8 0%, #e3784c 45%, #9e2a1a 100%);
-  box-shadow: 0 0 50px rgba(220, 50, 30, 0.55), inset -14px -16px 30px rgba(60, 5, 5, 0.55);
+    radial-gradient(circle at 34% 40%, rgba(214, 150, 60, 0.45) 0 9%, transparent 10%),
+    radial-gradient(circle at 62% 66%, rgba(214, 150, 60, 0.4) 0 7%, transparent 8%),
+    radial-gradient(circle at 68% 30%, rgba(214, 150, 60, 0.35) 0 5%, transparent 6%),
+    radial-gradient(circle at 40% 72%, rgba(214, 150, 60, 0.3) 0 4%, transparent 5%),
+    radial-gradient(circle at 38% 34%, #fff4c9 0%, #ffd98a 55%, #f0ae4e 100%);
+  box-shadow: 0 0 40px rgba(255, 190, 90, 0.5), inset -10px -12px 24px rgba(180, 100, 30, 0.35);
 }
 :root[data-estilo="halloween"] .hw-bruja {
   position: absolute; top: 30%; left: -70%; width: 50%; height: auto; opacity: 0;
@@ -95,7 +94,7 @@
 }
 :root[data-estilo="halloween"] .hw-nube {
   position: absolute; height: 12%; border-radius: 999px; filter: blur(7px);
-  background: rgba(18, 6, 20, 0.7);
+  background: rgba(90, 55, 120, 0.45);
   animation: hw-nube 30s ease-in-out infinite alternate;
 }
 :root[data-estilo="halloween"] .hw-nube.uno { top: 64%; left: -40%; width: 80%; }
@@ -126,7 +125,7 @@
 /* Las telarañas de las esquinas de arriba: hilos finos y plateados. La derecha, espejada. */
 :root[data-estilo="halloween"] .hw-telarana {
   position: absolute; top: 0; width: 170px; height: 170px;
-  fill: none; stroke: #d9d4e4; stroke-width: 0.9; stroke-linecap: round; opacity: 0.6;
+  fill: none; stroke: #e2dcf5; stroke-width: 0.9; stroke-linecap: round; opacity: 0.5;
 }
 :root[data-estilo="halloween"] .hw-telarana.izquierda { left: 0; }
 :root[data-estilo="halloween"] .hw-telarana.derecha { right: 0; width: 120px; height: 120px; transform: scaleX(-1); opacity: 0.35; }
@@ -146,41 +145,28 @@
    transparentes. */
 :root[data-estilo="halloween"] .hw-fantasma {
   position: absolute; width: 50px; height: auto;
-  filter: drop-shadow(0 0 12px rgba(170, 215, 255, 0.5));
+  filter: drop-shadow(0 0 10px rgba(220, 210, 255, 0.45));
   animation: hw-flotar 3.4s ease-in-out infinite alternate, hw-desvanecer 9s ease-in-out infinite;
 }
 :root[data-estilo="halloween"] .hw-fantasma.f1 { top: 34vh; right: 7vw; }
 :root[data-estilo="halloween"] .hw-fantasma.f2 { top: 60vh; left: 5vw; width: 38px; animation-delay: -1.4s, -3s; }
 :root[data-estilo="halloween"] .hw-fantasma.f3 { top: 19vh; right: 32vw; width: 26px; animation-delay: -0.6s, -6s; }
 @keyframes hw-flotar { from { transform: translateY(0) rotate(-4deg); } to { transform: translateY(-18px) rotate(4deg); } }
-@keyframes hw-desvanecer { 0%, 100% { opacity: 0.8; } 45% { opacity: 0.12; } 50% { opacity: 0.5; } 55% { opacity: 0.1; } }
+@keyframes hw-desvanecer { 0%, 100% { opacity: 0.92; } 50% { opacity: 0.4; } }
 
 /* El cementerio: alto fijo y recortado por los lados, como el paisaje del pixel. */
 :root[data-estilo="halloween"] .hw-paisaje {
   position: absolute; left: 0; right: 0; bottom: 0; width: 100%; height: clamp(190px, 32vh, 300px);
 }
-:root[data-estilo="halloween"] .hw-lejos { fill: #160a1c; }
-:root[data-estilo="halloween"] .hw-cerca { fill: #040106; }
-:root[data-estilo="halloween"] .hw-tronco { stroke: #040106; }
-:root[data-estilo="halloween"] .hw-hierro { fill: #040106; }
-:root[data-estilo="halloween"] .hw-piedra { fill: #241d2e; stroke: #383046; stroke-width: 1.5; }
-:root[data-estilo="halloween"] .hw-grabado { fill: none; stroke: #110c17; stroke-width: 3; stroke-linecap: round; }
-/* Las ventanas de la casa: una luz que tiembla y otra que se apaga de golpe, como si alguien
-   (o algo) pasara por delante. */
-:root[data-estilo="halloween"] .hw-ventana { fill: #ffb347; animation: hw-ventana 3.2s ease-in-out infinite; }
-:root[data-estilo="halloween"] .hw-ventana.tenue { fill: #ff5a2a; animation: hw-apagarse 7s steps(1, end) infinite; }
-@keyframes hw-ventana { 0%, 100% { fill: #ffb347; } 40% { fill: #c2551a; } 45% { fill: #ffcf6a; } 70% { fill: #e07a2a; } }
-@keyframes hw-apagarse { 0%, 60% { opacity: 0.9; } 62%, 70% { opacity: 0; } 72%, 100% { opacity: 0.9; } }
-
-/* Los ojos en la oscuridad: rojos, quietos, y de vez en cuando parpadean. Cada par a su ritmo. */
-:root[data-estilo="halloween"] .hw-pupila {
-  fill: #ff2a2a; transform-box: fill-box; transform-origin: center;
-  animation: hw-parpadeo 5s ease-in-out infinite;
-}
-:root[data-estilo="halloween"] .o1 .hw-pupila { animation-duration: 7s; animation-delay: -2s; }
-:root[data-estilo="halloween"] .o2 .hw-pupila { animation-duration: 4.2s; animation-delay: -3.1s; }
-:root[data-estilo="halloween"] .o3 .hw-pupila { animation-duration: 8.5s; animation-delay: -5s; }
-@keyframes hw-parpadeo { 0%, 92%, 100% { transform: scaleY(1); } 95% { transform: scaleY(0.05); } }
+:root[data-estilo="halloween"] .hw-lejos { fill: #2a1440; }
+:root[data-estilo="halloween"] .hw-cerca { fill: #0f0818; }
+:root[data-estilo="halloween"] .hw-tronco { stroke: #0f0818; }
+:root[data-estilo="halloween"] .hw-hierro { fill: #0f0818; }
+:root[data-estilo="halloween"] .hw-piedra { fill: #3b3056; stroke: #57497a; stroke-width: 1.5; }
+:root[data-estilo="halloween"] .hw-grabado { fill: none; stroke: #241b38; stroke-width: 3; stroke-linecap: round; }
+:root[data-estilo="halloween"] .hw-ventana { fill: #ffcf5a; animation: hw-ventana 4s ease-in-out infinite alternate; }
+:root[data-estilo="halloween"] .hw-ventana.tenue { opacity: 0.6; animation-duration: 2.3s; }
+@keyframes hw-ventana { 50% { fill: #ffa63d; } to { fill: #ffe08a; } }
 /* El fantasma de detrás de la lápida se asoma hasta mostrar los ojos, mira y se vuelve a
    esconder. Las unidades son las del dibujo. */
 :root[data-estilo="halloween"] .hw-asomado { animation: hw-asomarse 8s ease-in-out infinite; }
@@ -204,30 +190,15 @@
 :root[data-estilo="halloween"] .hw-niebla {
   position: absolute; left: -50%; right: -50%; bottom: -10px; height: 70px;
   background:
-    radial-gradient(ellipse 140px 34px at 10% 60%, rgba(175, 165, 195, 0.6), transparent),
-    radial-gradient(ellipse 180px 38px at 35% 50%, rgba(175, 165, 195, 0.55), transparent),
-    radial-gradient(ellipse 150px 32px at 62% 65%, rgba(175, 165, 195, 0.6), transparent),
-    radial-gradient(ellipse 190px 40px at 88% 55%, rgba(175, 165, 195, 0.55), transparent);
-  filter: blur(7px); opacity: 0.45;
+    radial-gradient(ellipse 120px 30px at 10% 60%, rgba(210, 195, 245, 0.5), transparent),
+    radial-gradient(ellipse 160px 34px at 35% 50%, rgba(210, 195, 245, 0.45), transparent),
+    radial-gradient(ellipse 130px 28px at 62% 65%, rgba(210, 195, 245, 0.5), transparent),
+    radial-gradient(ellipse 170px 36px at 88% 55%, rgba(210, 195, 245, 0.45), transparent);
+  filter: blur(6px); opacity: 0.35;
   animation: hw-niebla 40s ease-in-out infinite alternate;
 }
-:root[data-estilo="halloween"] .hw-niebla.dos { bottom: 18px; opacity: 0.28; animation-duration: 55s; animation-direction: alternate-reverse; }
+:root[data-estilo="halloween"] .hw-niebla.dos { bottom: 18px; opacity: 0.2; animation-duration: 55s; animation-direction: alternate-reverse; }
 @keyframes hw-niebla { to { transform: translateX(25%); } }
-
-/* La viñeta: las orillas de la pantalla se hunden en la oscuridad. */
-:root[data-estilo="halloween"] .hw-vineta {
-  position: absolute; inset: 0;
-  background: radial-gradient(ellipse 75% 70% at 50% 45%, transparent 45%, rgba(0, 0, 0, 0.65) 100%);
-}
-/* Un relámpago lejano cada tanto: dos destellos tenues y seguidos, nada que encandile. */
-:root[data-estilo="halloween"] .hw-relampago {
-  position: absolute; inset: 0; background: #c9c2ff; opacity: 0;
-  animation: hw-relampago 14s linear 4s infinite;
-}
-@keyframes hw-relampago {
-  0%, 70% { opacity: 0; } 70.5% { opacity: 0.16; } 71.2% { opacity: 0.02; }
-  71.8% { opacity: 0.11; } 73.5%, 100% { opacity: 0; }
-}
 
 /* El fantasmita del toque: sale del dedo, sube meciéndose y se desvanece. Encima del contenido
    pero sin atrapar un solo toque, debajo del velo de las transiciones (200). */
@@ -235,12 +206,12 @@
   display: block; position: fixed; z-index: 150; pointer-events: none;
   width: 38px; height: 47px; margin: -24px 0 0 -19px;
   background: center / contain no-repeat;
-  filter: drop-shadow(0 0 10px rgba(170, 215, 255, 0.7));
+  filter: drop-shadow(0 0 8px rgba(220, 210, 255, 0.6));
   animation: hw-susto 1.6s ease-out forwards;
 }
 :root[data-estilo="halloween"] .hw-susto::after {
   content: "¡Bu!"; position: absolute; left: 75%; top: -16px; white-space: nowrap;
-  font-family: var(--hw-terror); font-size: 21px; color: #ff3b3b;
+  font-family: var(--hw-terror); font-size: 21px; color: var(--hw-naranja);
   text-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
 }
 @keyframes hw-susto {
@@ -256,12 +227,12 @@
 :root[data-estilo="halloween"] .saludo,
 :root[data-estilo="halloween"] .titulo-ventana {
   font-family: var(--hw-terror); font-weight: 400; font-size: 36px; letter-spacing: 0.04em;
-  margin-top: 10px; color: var(--texto); text-shadow: 0 0 14px rgba(200, 16, 46, 0.55), 0 3px 10px rgba(0, 0, 0, 0.8);
+  margin-top: 10px; color: var(--texto); text-shadow: 0 3px 10px rgba(0, 0, 0, 0.6);
 }
-:root[data-estilo="halloween"] .saludo-hola { color: #b3a6bf; }
+:root[data-estilo="halloween"] .saludo-hola { color: var(--hw-lila); }
 :root[data-estilo="halloween"] .saludo-nombre {
-  background: none; color: #ff5a2a;
-  text-shadow: 0 0 18px rgba(200, 16, 46, 0.8), 0 3px 10px rgba(0, 0, 0, 0.8);
+  background: none; color: var(--hw-naranja);
+  text-shadow: 0 0 16px rgba(255, 140, 30, 0.6), 0 3px 10px rgba(0, 0, 0, 0.6);
 }
 :root[data-estilo="halloween"] .saludo.escribiendo,
 :root[data-estilo="halloween"] .saludo.parpadeando { border-right-color: var(--hw-naranja); }
@@ -283,8 +254,8 @@
 /* Vidrio oscuro con un filo de luz naranja. */
 :root[data-estilo="halloween"] .tarjeta {
   position: relative; background: var(--superficie);
-  border: 1px solid rgba(200, 16, 46, 0.25); border-radius: 18px;
-  box-shadow: 0 16px 36px -20px rgba(0, 0, 0, 0.9), 0 0 26px -12px rgba(200, 16, 46, 0.45);
+  border: 1px solid rgba(255, 154, 60, 0.18); border-radius: 18px;
+  box-shadow: 0 16px 36px -20px rgba(0, 0, 0, 0.8), 0 0 24px -12px rgba(255, 140, 30, 0.35);
   backdrop-filter: blur(4px);
 }
 /* Una telaraña colgando de la esquina de la tarjeta del día. Solo ahí: en todas las tarjetas
@@ -295,13 +266,13 @@
   background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40' fill='none' stroke='%23d8d0f0' stroke-width='0.7'%3E%3Cpath d='M40 0L-16.0 0.0M40 0L-11.7 21.4M40 0L0.4 39.6M40 0L18.6 51.7M40 0L40.0 56.0M31.0 0.0Q32.9 1.4 31.7 3.4Q34.0 4.0 33.6 6.4Q36.0 6.0 36.6 8.3Q38.6 7.1 40.0 9.0M22.0 0.0Q25.9 2.8 23.4 6.9Q28.0 8.0 27.3 12.7Q32.0 12.0 33.1 16.6Q37.2 14.1 40.0 18.0M12.0 0.0Q18.0 4.4 14.1 10.7Q21.4 12.4 20.2 19.8Q27.6 18.6 29.3 25.9Q35.6 22.0 40.0 28.0M2.0 0.0Q10.2 5.9 4.9 14.5Q14.7 16.9 13.1 26.9Q23.1 25.3 25.5 35.1Q34.1 29.8 40.0 38.0'/%3E%3C/svg%3E") top right / contain no-repeat;
 }
 
-/* La del día: brasa de calabaza que se hunde en la oscuridad, con la luz de una vela abajo. */
+/* La del día: naranja calabaza que se oscurece hacia la esquina, con la luz de una vela. */
 :root[data-estilo="halloween"] .hoy {
   overflow: hidden; border: 0;
   background:
-    radial-gradient(circle at 85% 115%, rgba(255, 170, 60, 0.45), transparent 55%),
-    linear-gradient(150deg, #1c0406 0%, #5c120b 45%, #a8360d 100%);
-  color: #fff; box-shadow: 0 18px 36px -18px rgba(200, 16, 46, 0.8);
+    radial-gradient(circle at 85% 110%, rgba(255, 225, 120, 0.45), transparent 55%),
+    linear-gradient(150deg, #7a250c 0%, #c4470f 50%, #f07a26 100%);
+  color: #fff; box-shadow: 0 18px 36px -18px rgba(232, 100, 27, 0.7);
 }
 :root[data-estilo="halloween"] .hoy-dia { font-family: var(--hw-terror); font-weight: 400; font-size: 34px; letter-spacing: 0.04em; }
 :root[data-estilo="halloween"] .ejercicio-series { background: rgba(43, 22, 8, 0.28); }
@@ -311,14 +282,14 @@
 /* Fuera de la ruleta, que tiene sus colores propios sobre el tapete (entrada 26 del backlog). */
 :root[data-estilo="halloween"] .boton:not(.ruleta-caja .boton) {
   border: 0; border-radius: 999px;
-  background: linear-gradient(180deg, #e4561a, #9e1f0a); color: #fff;
+  background: linear-gradient(180deg, #ff8a2a, #d9520f); color: #fff;
   font-family: var(--hw-letra); font-weight: 800;
-  box-shadow: 0 8px 20px -10px rgba(200, 16, 46, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  box-shadow: 0 8px 20px -10px rgba(255, 120, 30, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.35);
   transition: transform 120ms ease;
 }
 :root[data-estilo="halloween"] .boton:not(.ruleta-caja .boton):active:not(:disabled) { transform: scale(0.98); }
 :root[data-estilo="halloween"] .boton.secundario:not(.ruleta-caja .boton) {
-  background: rgba(38, 20, 51, 0.9); color: var(--hw-naranja); box-shadow: inset 0 0 0 1.5px rgba(200, 16, 46, 0.5);
+  background: rgba(53, 32, 90, 0.9); color: var(--hw-naranja); box-shadow: inset 0 0 0 1.5px rgba(255, 154, 60, 0.45);
 }
 /* Sobre la tarjeta del día, que ya es naranja: el principal se vuelve noche. */
 :root[data-estilo="halloween"] .hoy-acciones .boton:not(.ruleta-caja .boton) { background: var(--hw-noche); color: var(--hw-naranja); }
@@ -352,7 +323,7 @@
 /* ---------- Calendario ---------- */
 
 :root[data-estilo="halloween"] .cal-nav button { background: var(--superficie-alta); color: var(--hw-naranja); border-radius: 999px; }
-:root[data-estilo="halloween"] .cal span { background: rgba(38, 20, 51, 0.75); border-radius: 10px; color: var(--texto-tenue); }
+:root[data-estilo="halloween"] .cal span { background: rgba(53, 32, 90, 0.7); border-radius: 10px; color: var(--texto-tenue); }
 :root[data-estilo="halloween"] .cal span.vacia { background: transparent; }
 :root[data-estilo="halloween"] .cal span.ok { background: var(--verde); color: var(--hw-tinta); }
 :root[data-estilo="halloween"] .cal span.no { background: var(--rojo); color: #fff; }
@@ -365,15 +336,15 @@
 :root[data-estilo="halloween"] .video-resumen { border-radius: 14px; }
 :root[data-estilo="halloween"] .segmentos { background: var(--superficie-alta); border-radius: 999px; }
 :root[data-estilo="halloween"] .segmento { border-radius: 999px; color: var(--texto-tenue); font-family: var(--hw-letra); }
-:root[data-estilo="halloween"] .segmento.activo { background: linear-gradient(180deg, #e4561a, #9e1f0a); color: #fff; }
+:root[data-estilo="halloween"] .segmento.activo { background: linear-gradient(180deg, #ff8a2a, #d9520f); color: #fff; }
 :root[data-estilo="halloween"] .ranking-fila { border-radius: 14px; }
-:root[data-estilo="halloween"] .ranking-fila.tuya { background: linear-gradient(150deg, #5c120b, #a8360d); }
+:root[data-estilo="halloween"] .ranking-fila.tuya { background: linear-gradient(150deg, #c4470f, #f07a26); }
 
 /* ---------- Menú ---------- */
 
 :root[data-estilo="halloween"] .cabecera-menu { color: var(--texto); }
 :root[data-estilo="halloween"] .menu-velo { background: rgba(11, 6, 18, 0.5); backdrop-filter: blur(3px); }
-:root[data-estilo="halloween"] .menu-panel { background: #0d0612; border-left: 1px solid rgba(200, 16, 46, 0.3); }
+:root[data-estilo="halloween"] .menu-panel { background: #1d0f31; border-left: 1px solid rgba(255, 154, 60, 0.2); }
 :root[data-estilo="halloween"] .menu-abierto .menu-panel { box-shadow: -14px 0 40px rgba(0, 0, 0, 0.5); }
 :root[data-estilo="halloween"] .menu-nombre { font-family: var(--hw-terror); font-weight: 400; font-size: 26px; color: var(--hw-naranja); }
 :root[data-estilo="halloween"] .menu-cerrar { color: var(--texto-tenue); }
@@ -393,7 +364,6 @@
   :root[data-estilo="halloween"] .hw-murcielago.m4 { transform: translateX(85vw); }
   :root[data-estilo="halloween"] .hw-arana { transform: translateY(90px); }
   :root[data-estilo="halloween"] .hw-asomado { transform: translateY(-38px); }
-  :root[data-estilo="halloween"] .hw-relampago { display: none; }
 }
 
 /* Al llegar al final de la página se asoma el cementerio entero: sin este aire, la última
