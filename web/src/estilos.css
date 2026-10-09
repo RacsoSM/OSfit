@@ -759,6 +759,8 @@ body.menu-abierto { overflow: hidden; }
 /* Los fondos con nodos (`fondoPixel.ts`, `sakura.ts`, `halloween.ts`) solo existen para su
    estilo; fuera, nada. */
 .fondo-pixel, .fondo-sakura, .fondo-halloween, .petalos-frente, .hw-susto { display: none; }
+/* Los fantasmitas de la tarjeta del día (`tarjetaDia.ts`) solo se ven en Halloween. */
+.hoy-fantasmitas { display: none; }
 
 /* Pasos para instalar la página en iPhone (Ajustes → Notificaciones). */
 .pasos-instalar {

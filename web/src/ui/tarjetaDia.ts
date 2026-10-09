@@ -148,6 +148,7 @@ export function tarjetaDia(
   // toca hoy — cambiarlo o avisar que no viene — así que se leen junto al día del que hablan.
   return `
     <div class="tarjeta hoy">
+      <span class="hoy-fantasmitas" aria-hidden="true"><i></i><i></i><i></i></span>
       <p class="tarjeta-titulo">Hoy te toca</p>
       <p class="hoy-dia">Día ${indice + 1}<br>${escapar(dias[indice]?.nombreDia ?? "")}</p>
       ${listaEjercicios(
