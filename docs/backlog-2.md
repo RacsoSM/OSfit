@@ -159,6 +159,24 @@ A decidir en el spec:
   en `ui/` (testeable como las demás). Si las figuras son de terceros, revisar licencia.
 - **Registro:** entrada nueva en `ventanas.ts`.
 
+**Referencia visual (2026-10-09).** El entrenador compartió una imagen que sirve como
+referencia "casi exacta" del estilo buscado (un meme de un cuerpo de frente; la imagen no se
+versiona porque es de terceros). Lo que define:
+
+- Figura de frente, de pie, brazos un poco separados, sobre fondo negro.
+- Silueta gris claro; cabeza, manos, rodillas y pies quedan grises, sin colorear.
+- Cada músculo es una forma plana con contorno blanco grueso, sin sombras ni degradados, y
+  con líneas blancas internas que marcan las divisiones (los cuadritos del abdomen, las
+  cabezas del cuádriceps, la división del pecho).
+- Grupos que se pintan: hombros (deltoides), pecho, bíceps, antebrazos, abdomen con
+  oblicuos (un solo bloque), cuádriceps y pantorrillas. Trapecio asoma sobre los hombros.
+- En la imagen el color identifica el grupo (hombro verde, pecho rojo, bíceps azul claro,
+  antebrazo morado, abdomen amarillo, pierna azul, pantorrilla roja). En OSfit el color debe
+  salir del **nivel**, no del grupo: el spec tiene que decidir si se respeta esa paleta tal
+  cual o si solo se toma el dibujo y la escala de color la pone el nivel.
+- Falta la vista de espalda (dorsales, glúteos, isquios, tríceps) y la versión de mujer: la
+  referencia solo cubre hombre de frente.
+
 Pendiente: spec de diseño.
 
 ## 5. Que la web cargue más rápido al abrirla
