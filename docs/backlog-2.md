@@ -175,7 +175,12 @@ CSS; las líneas internas y el contorno van aparte y no cambian de color.
 - Versión de mujer (2026-10-09): `web/public/mapa-muscular-frente-mujer.svg`, calcada de otra
   referencia del entrenador con los scripts de `docs/mapa-muscular/mujer/`. Mismos ids que el
   del hombre, salvo que no tiene trapecio (en esa referencia esa zona es gris).
-- Falta la vista de espalda (dorsales, glúteos, isquios, tríceps), de hombre y de mujer.
+- Vista de espalda del hombre (2026-10-09): `web/public/mapa-muscular-espalda.svg`, calcada de
+  otra referencia con los scripts de `docs/mapa-muscular/espalda/`. Misma escala que la de
+  frente. Músculos nuevos: trapecio, infraespinoso, tríceps, dorsal, lumbar, glúteo e
+  isquiotibiales; los que también salen de frente (hombro, antebrazo, cuádriceps, pantorrilla)
+  usan el mismo id, así que un nivel pinta las dos vistas.
+- Falta la vista de espalda de la mujer.
 
 Pendiente: spec de diseño.
 
