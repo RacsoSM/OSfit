@@ -40,5 +40,15 @@ Cómo funciona, por si hay que tocarlo:
 - Esa misma imagen, con el torso más nítido, sirvió para confirmar cómo se conectan las líneas
   del abdomen y del cuello. El torso no se calca de ella: tiene otras proporciones.
 
+- **Líneas lisas:** las del muslo, la pantorrilla y la ingle se ajustaron a curvas suaves con
+  `alisar.py` (los puntos medidos traían 1-2 px de ruido, que se veía como pulso tembloroso). Las
+  dos cabezas de la pantorrilla se rehacen como husos lisos (pocos armónicos de Fourier,
+  `PANT_ARMONICOS`) y se separan a lo largo de la línea `PANTORRILLA` con el ancho de siempre.
+- **Pecho:** el borde de arriba sigue una curva medida (frontera con el cuello) y la costura entre
+  los dos pechos va sobre el eje con el ancho de las demás separaciones (`COSTURAS`); el cuello es
+  simétrico. Así arriba se forma una "Y" limpia en el esternón.
+- `TRAMOS_LIBRES`: trozos de línea que se dibujan sin recorte donde nacen justo en el borde de su
+  músculo (vértice de la cadera, muesca de abajo del muslo), para que no quede un hilo de color.
+
 Para mover una línea o un borde, se cambian sus puntos en `lineas.py` y se vuelve a correr el
 paso 4.

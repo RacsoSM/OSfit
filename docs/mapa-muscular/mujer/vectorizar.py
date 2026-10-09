@@ -112,7 +112,10 @@ def curva_y(pts, lado):
     return yl, (xx >= c[:, 0].min()) & (xx <= c[:, 0].max())
 
 
-def nombre(g, lado): return g if g == 'abdomen' else f'{g}-{lado}'
+UNICAS = ('abdomen', 'gris-cuello')   # piezas de una sola pieza, sobre el eje
+
+
+def nombre(g, lado): return g if g in UNICAS else f'{g}-{lado}'
 
 
 # Las fronteras medidas son límites duros para lo trazado: nada del primero por debajo de su
@@ -179,15 +182,28 @@ region = {n: (ws == i + 1) for i, n in enumerate(nombres[:-1])}
 
 
 # Fronteras medidas (lineas.py): en una franja de 7 px alrededor de la curva, lo de arriba es
-# del primero y lo de abajo del segundo. Solo se tocan píxeles de esos dos o de separación.
-for arriba, abajo, pts in LN.FRONTERAS:
-    for lado in ('der', 'izq'):
-        yl_, rango_ = curva_y(pts, lado)
-        na, nb = nombre(arriba, lado), nombre(abajo, lado)
-        libre = region[na] | region[nb] | (sep & ~np.any([r for n, r in region.items() if n not in (na, nb)], 0))
-        franja = rango_ & (np.abs(yy - yl_) < 7 * S) & libre & fig.astype(bool)
-        region[na] = (region[na] & ~(franja & (yy >= yl_))) | (franja & (yy < yl_))
-        region[nb] = (region[nb] & ~(franja & (yy < yl_))) | (franja & (yy >= yl_))
+# del primero y lo de abajo del segundo. Solo se tocan píxeles de esos dos o de separación. Se
+# aplica tras la inundación y otra vez tras rellenar uniones y suavizar, que podrían saltársela.
+def aplicar_fronteras(region, libres):
+    for arriba, abajo, pts in LN.FRONTERAS:
+        for lado in ('der', 'izq'):
+            yl_, rango_ = curva_y(pts, lado)
+            na, nb = nombre(arriba, lado), nombre(abajo, lado)
+            libre = region[na] | region[nb] | (libres & ~np.any([r for n, r in region.items() if n not in (na, nb)], 0))
+            franja = rango_ & (np.abs(yy - yl_) < 7 * S) & libre & fig.astype(bool)
+            region[na] = (region[na] & ~(franja & (yy >= yl_))) | (franja & (yy < yl_))
+            region[nb] = (region[nb] & ~(franja & (yy < yl_))) | (franja & (yy >= yl_))
+
+
+    for g, y0c, y1c in LN.COSTURAS:
+        nd, ni = f'{g}-der', f'{g}-izq'
+        otros = np.any([r for n, r in region.items() if n not in (nd, ni)], 0)
+        franja = (np.abs(xx - AX) < 7 * S) & (yy >= y0c * S) & (yy <= y1c * S) & fig.astype(bool) & ~otros
+        region[nd] = (region[nd] & ~franja) | (franja & (xx < AX))
+        region[ni] = (region[ni] & ~franja) | (franja & (xx >= AX))
+
+
+aplicar_fronteras(region, sep)
 
 
 def separar(region):
@@ -227,6 +243,7 @@ for i, n in enumerate(etiquetas):
     b_ = cv2.GaussianBlur(indic[n].astype(np.float32), (0, 0), SUAVIZADO)
     m_ = b_ > mejor_v; mejor_v[m_] = b_[m_]; mejor_i[m_] = i
 region = {n: (mejor_i == i) & fig.astype(bool) for i, n in enumerate(etiquetas[:-2])}
+aplicar_fronteras(region, sep | manchas.astype(bool))
 norm = separar(region)
 for g in CORTES:
     for lado in ('der', 'izq'):
@@ -249,9 +266,41 @@ for n in norm:
     gr = n[:-4] if n.endswith(('-der', '-izq')) else n
     if not gr.startswith('gris'): norm[n] = mayores(norm[n], n_piezas.get(gr, 1))
 # simetría exacta
-for n in list(norm):
-    if n.endswith('-der'): norm[n[:-4] + '-izq'] = espejar(norm[n])
-norm['abdomen'] = (norm['abdomen'] & (xx < AX + 2)) | espejar(norm['abdomen'] & (xx < AX + 2))
+for n in list(norm):   # la mitad derecha nunca pasa de media costura antes del eje
+    if n.endswith('-der'):
+        norm[n] = (norm[n] & (xx < AX - HUECO / 2)).astype(np.uint8)
+        norm[n[:-4] + '-izq'] = espejar(norm[n])
+for n in UNICAS:
+    norm[n] = (norm[n] & (xx < AX + 2)) | espejar(norm[n] & (xx < AX + 2))
+
+
+def fourier(m, armonicos):
+    """Contorno exterior de m rehecho con pocos armónicos de Fourier: una forma lisa, sin el
+    temblor del trazado, que conserva el tamaño y la orientación."""
+    cs, _ = cv2.findContours(m.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+    c = max(cs, key=cv2.contourArea)[:, 0, :].astype(float)
+    s = np.r_[0, np.cumsum(np.hypot(*np.diff(np.vstack([c, c[:1]]), axis=0).T))]
+    t = np.linspace(0, s[-1], 512, endpoint=False)
+    z = np.interp(t, s, np.r_[c[:, 0], c[0, 0]]) + 1j * np.interp(t, s, np.r_[c[:, 1], c[0, 1]])
+    F = np.fft.fft(z); F[armonicos + 1:-armonicos] = 0
+    z = np.fft.ifft(F)
+    o = np.zeros((H, W), np.uint8)
+    cv2.fillPoly(o, [np.round(np.column_stack([z.real, z.imag])).astype(np.int32)], 1)
+    return o
+
+
+# Pantorrilla: dos cabezas en forma de huso, separadas a lo largo de la línea PANTORRILLA. Cada
+# cabeza se rehace lisa (Fourier) y entre ellas queda una separación del ancho de siempre.
+c = muestrear(LN.PANTORRILLA) * S
+dv = c[-1] - c[-8]; c = np.vstack([c[0] - (c[8] - c[0]) * 6, c, c[-1] + dv * 6])     # hasta salir de la pierna
+xl = np.interp(np.arange(H), c[:, 1], c[:, 0])[:, None]
+p = norm['pantorrilla-der']
+cabezas = [(p & (xx < xl)).astype(np.uint8), (p & (xx >= xl)).astype(np.uint8)]
+pant = np.any([fourier(cab, LN.PANT_ARMONICOS) for cab in cabezas if cab.sum() > 0], 0).astype(np.uint8)
+eje_p = np.zeros((H, W), np.uint8)                       # separación entre cabezas: ancho fijo
+cv2.polylines(eje_p, [np.round(c).astype(np.int32)], False, 1, 1)
+norm['pantorrilla-der'] = (pant & (cv2.distanceTransform(1 - eje_p, cv2.DIST_L2, 5) > HUECO / 2)).astype(np.uint8)
+norm['pantorrilla-izq'] = espejar(norm['pantorrilla-der'])
 
 musculos, clips = [], []
 for g in grupos:
@@ -276,6 +325,14 @@ for g, ds in clips:
     for linea in LN.LINEAS_EJE.get(g, []):
         trazos.append(catmull([F(p) for p in linea], False))
     lineas.append(f'    <path class="linea" clip-path="url(#recorte-{g})" d="{" ".join(trazos)}"/>')
+
+libres = []
+for nombre_l, extremo, largo in LN.TRAMOS_LIBRES:
+    d_ = muestrear(getattr(LN, nombre_l)); s_ = np.r_[0, np.cumsum(np.hypot(*np.diff(d_, axis=0).T))]
+    tramo = d_[s_ <= largo] if extremo == 'inicio' else d_[s_ >= s_[-1] - largo]
+    pts = [F(p) for p in tramo[::4]] + [F(tramo[-1])]
+    libres += [catmull(pts, False), catmull([mirror(p) for p in pts], False)]
+lineas.append(f'    <path class="linea" d="{" ".join(libres)}"/>')
 
 contorno = area_paths(suave(fig, 0.8 * S), sigma=0.5 * S, eps=0.15 * S, minarea=0)
 gris_d = {}

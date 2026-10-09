@@ -1,5 +1,7 @@
 # Líneas blancas internas de la mujer, medidas sobre referencia.png (eje del mapa de crestas),
-# en píxeles de la foto. Solo la mitad izquierda del dibujo (lado derecho de la persona); el eje
+# en píxeles de la foto. Las del muslo, la pantorrilla y la ingle se ajustaron después a curvas
+# suaves (polinomios por longitud de arco, ver alisar.py) respetando sus puntos de unión: los
+# puntos medidos traían 1-2 px de ruido que se veía como pulso tembloroso. Solo la mitad izquierda del dibujo (lado derecho de la persona); el eje
 # está en x = 198 y el otro lado se obtiene reflejando. Mismo sistema que ../lineas.py (hombre):
 # curvas suaves por estos puntos; cuando una línea nace de otra comparte el punto exacto, y los
 # extremos que tocan el borde de su músculo se alargan un poco porque el recorte los deja justo
@@ -23,18 +25,11 @@ ABD_CENTRO = [(EJE, 334), (EJE, 358.2), (EJE, 390.5), (EJE, 425.0), (EJE, 441)] 
 M_F = (160.4, 588.4)          # bifurcación de la línea central
 M_P = (141.6, 669.3)          # donde se juntan la exterior (A) y la rama izquierda
 M_V = (130.5, 457.0)          # vértice de la cadera: de aquí salen la ingle, A y B
-MUSLO_A = [M_V, (130.2, 468), (129.0, 478), (126.6, 489), (123.8, 501), (121.2, 519.8), (119.2, 538.5),
-           (117.5, 557.2), (117.5, 576), (119.0, 594.8), (120.8, 613.5), (125.0, 632.2), (131.0, 651),
-           (136.2, 661), M_P]
-MUSLO_B = [M_V, (133.5, 467), (136.4, 477), (138.8, 485.5), (142.2, 493.8), (144.2, 504.2), (146.5, 514.8),
-           (149.2, 525.2), (150.8, 535.8), (153.2, 546.2), (155.2, 556.8), (157.2, 567.2),
-           (159.0, 577.8), M_F]
-MUSLO_C_IZQ = [M_F, (157.0, 596.5), (155.5, 604.5), (153.2, 612.5), (151.2, 620.5), (149.5, 628.5),
-               (147.8, 636.5), (146.5, 644.5), (145.5, 652.5), (144.0, 660.5), M_P]
-MUSLO_C_DER = [M_F, (162.5, 590.0), (165.8, 597), (167.5, 604.5), (169.5, 612), (170.5, 619.5),
-               (173.0, 627), (173.8, 634.5), (175.0, 642), (177.2, 649.5), (179.0, 656.5), (181.6, 662),
-               (184.5, 665.5)]                                   # acaba en el borde interno
-MUSLO_ABAJO = [M_P, (142.6, 676), (143.4, 683), (144.0, 690), (144.3, 697)]   # hasta la muesca de abajo
+MUSLO_A = [M_V, (125.8, 492.9), (120.5, 528.6), (117.4, 564.8), (118.8, 601.2), (126.4, 636.7), M_P]
+MUSLO_B = [M_V, (137.2, 478.5), (143.1, 500.2), (148.3, 522), (152.9, 544), (156.9, 566.2), M_F]
+MUSLO_C_IZQ = [M_F, (155.9, 601.5), (152.4, 614.9), (149.6, 628.5), (147.1, 642.1), (144.6, 655.8), M_P]
+MUSLO_C_DER = [M_F, (166.5, 600.2), (170, 613.2), (172.3, 626.8), (174.6, 640.5), (178.3, 653.5), (184.5, 665.5)]   # acaba en el borde interno
+MUSLO_ABAJO = [M_P, (142.3, 673.9), (142.9, 678.5), (143.4, 683.1), (143.8, 687.7), (144.1, 692.4), (144.3, 697)]   # hasta la muesca de abajo
 # Borde de abajo del muslo (donde acaba el lila, medido columna a columna): dos lóbulos redondos
 # con la muesca de la línea de abajo entre ellos. Lo que queda por debajo es rodilla (blanco).
 MUSLO_FONDO = [(110, 674), (113, 680.5), (116, 688.2), (119, 692.8), (122, 696.4), (125, 700.9),
@@ -47,22 +42,31 @@ MUSLO_FONDO = [(110, 674), (113, 680.5), (116, 688.2), (119, 692.8), (122, 696.4
 # (arriba, abajo, puntos): lo de arriba de la curva es del primero y lo de abajo del segundo, así
 # que la separación sigue la curva exactamente. Son también límites duros para lo trazado.
 FRONTERAS = [
+    # borde de arriba del pecho, contra el gris del cuello: del hombro hasta el esternón, donde
+    # se juntan con la V del cuello y empieza la costura (una "Y", como en la segunda imagen)
+    ('gris-cuello', 'pecho', [(136, 239.5), (141, 239.5), (150, 240), (160, 241.5), (166, 243.3),
+                              (172, 245.6), (178, 248.2), (184, 250.8), (190, 252.6), (194, 253.3),
+                              (198, 253.5)]),
     ('pecho', 'abdomen', [(128, 339.6), (134, 343.0), (140, 345.2), (146, 346.5), (152, 346.9),
                           (158, 346.4), (164, 345.3), (170, 343.5), (176, 341.3), (182, 338.7),
                           (188, 335.9), (194, 332.8), (198, 330.8)]),
     # ingle: del vértice de la cadera hasta la entrepierna, pasando por el final del recto
-    ('abdomen', 'cuadriceps', [(127, 449.5), (133, 456.5), (136.7, 465.8), (143.3, 471.7), (150, 480),
-                               (155, 488.3), (160, 496.7), (165, 502), (167.6, 503.4), (170, 512),
-                               (175, 523), (180, 533), (185, 545), (188.3, 554), (190, 560)]),
+    ('abdomen', 'cuadriceps', [(127, 449.5), (136.6, 463.4), (146.5, 477.1), (156.9, 490.4), (167.6, 503.4), (173.4, 517.5), (179, 531.6), (184.6, 545.8), (190, 560)]),
 ]
+# Costuras sobre el eje entre las dos mitades de un músculo (grupo, desde y, hasta y): en ese
+# tramo cada mitad llega hasta el centro y la costura queda del mismo ancho que las demás
+# separaciones, sin las esquinas redondeadas del trazado.
+COSTURAS = [('pecho', 252, 334)]
+
 # La parte alta del muslo, junto a la cadera, es casi blanca en la foto y el trazado la pierde;
 # este polígono la completa hasta el vértice de la cadera (lo que cae fuera de la silueta o al
 # otro lado de la ingle se recorta solo).
 MUSLO_PARCHES = [[(108, 494), (108, 470), (121, 452), (128, 447), (138, 463), (148, 477), (157, 494)]]
 
-# --- Pantorrilla: línea entre las dos cabezas (donde el lila baja, medido fila a fila) ----------
-PANTORRILLA = [(144.5, 780), (145.0, 796), (145.6, 814), (146.4, 826), (147.4, 838), (148.8, 850),
-               (150.0, 862), (151.0, 874), (152.0, 886), (153.3, 900), (154.4, 910), (155.4, 917)]
+# --- Pantorrilla: eje de la separación entre sus dos cabezas (donde el lila baja, medido fila a
+# fila). No se dibuja: las dos cabezas se separan a lo largo de él.
+PANTORRILLA = [(144.5, 780), (145.5, 802.9), (146.8, 825.8), (148.4, 848.6), (150.4, 871.4), (152.7, 894.2), (155.4, 917)]
+PANT_ARMONICOS = 7   # armónicos con que se rehace cada cabeza (más = más fiel, menos = más liso)
 # Borde de abajo de la pantorrilla (donde acaba el lila): las dos puntas, con la muesca de la
 # línea entre ellas. Lo de abajo es blanco hasta el tobillo.
 PANT_FONDO = [(128, 852), (132, 865.9), (134, 872.2), (136, 881.5), (138, 888.1), (140, 893.2),
@@ -73,9 +77,12 @@ PANT_FONDO = [(128, 852), (132, 865.9), (134, 872.2), (136, 881.5), (138, 888.1)
 LINEAS = {
     'abdomen': [ABD_RECTO, ABD_H1, ABD_H2, ABD_H3],
     'cuadriceps': [MUSLO_A, MUSLO_B, MUSLO_C_IZQ, MUSLO_C_DER, MUSLO_ABAJO],
-    'pantorrilla': [PANTORRILLA],
 }
 LINEAS_EJE = {'abdomen': [ABD_CENTRO]}
+# Tramos (línea, 'inicio' o 'fin', largo en px) que se dibujan sin recorte: donde una línea nace
+# justo en el borde de su músculo, el borde del relleno y el del recorte coinciden y el antialias
+# deja un hilo de color.
+TRAMOS_LIBRES = [('MUSLO_A', 'inicio', 14), ('MUSLO_B', 'inicio', 14), ('MUSLO_ABAJO', 'fin', 18)]
 
 # --- Partes grises -----------------------------------------------------------------------
 # Cuello: la V del esternocleidomastoideo, de debajo de la oreja al centro, sobre el esternón.

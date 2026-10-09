@@ -143,7 +143,10 @@ fig = np.where((yy > (CORTE_CUELLO - 8) * S) & (yy < (CORTE_CUELLO + 8) * S) & (
 out['gris_pelo'] = calcar(pelo2)
 out['gris_coleta'] = calcar(coleta2)
 # el cuello empieza justo debajo de la línea de la barbilla del peinado nuevo
-out['gris_cuello'] = (out.pop('gris_cabeza') & (yy >= CORTE_CUELLO * S) & (1 - calcar(cabeza2))).astype(np.uint8)
+cuello = (out.pop('gris_cabeza') & (yy >= CORTE_CUELLO * S) & (1 - calcar(cabeza2)) & izq).astype(np.uint8)
+xs_ = np.arange(W); mx_ = np.round(2 * AX - xs_).astype(int); s_ = (xs_ > AX) & (mx_ >= 0)
+cuello[:, xs_[s_]] = cuello[:, mx_[s_]]            # simétrico, como el resto del cuerpo
+out['gris_cuello'] = cuello
 # líneas del peinado, para que las separaciones caigan en su centro (como el mapa de crestas)
 out['linea_peinado'] = (calcar(linea2) & (yy < 215 * S)).astype(np.uint8)
 np.savez_compressed('masks.npz', AX=AX, fig=fig, **out)
