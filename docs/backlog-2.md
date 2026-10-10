@@ -217,7 +217,7 @@ Sospechosos a revisar (sin confirmar):
 Relacionado con el punto 1 (PWA): una versión instalada con service worker abriría casi al
 instante desde caché.
 
-Hecho (2026-10-10), primera ronda, sin desplegar todavía:
+Hecho y desplegado a producción (2026-10-10), primera ronda:
 
 - **Auth ya no carga el iframe de Google.** `getAuth` trae el soporte de inicio de sesión con
   ventana emergente (Google, Facebook…), que la página no usa. En teléfonos y Safari, el SDK
@@ -241,7 +241,8 @@ Pendiente:
 - **Probar en el canal de vista previa** `https://osfit-cccfe--prueba-carga-wn1toy30.web.app`
   (vence el 2026-10-17) con un link real, desde WhatsApp y desde la página instalada, en
   iPhone y Android; revisar que los videos se reproduzcan. Medido contra la `sesion` real:
-  arranque en frío de ~3.5 s, ~0.8 s ya despierta. Si sale bien, `firebase deploy --only hosting`.
+  arranque en frío de ~3.5 s, ~0.8 s ya despierta. Ya está en producción: falta confirmar en
+  teléfono real con una clienta.
 - **Arranque en frío de `sesion`:** sigue siendo el sospechoso más grande. Si medido sigue
   tardando, `minInstances: 1` lo quita (cuesta al mes). Además `sesion` espera a escribir el
   contador de entradas (`contarEntrada`) antes de responder: una escritura más en el camino.
