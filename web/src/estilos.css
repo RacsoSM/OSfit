@@ -854,7 +854,14 @@ main:has(#barra) { padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
 /* El músculo tocado se agranda y toma el color del estilo; el resto se apaga para que
    destaque. La cara de atrás no recibe toques: girada, sigue ahí aunque no se vea. */
 .mapa-giro.con-seleccion .musculo:not(.seleccionado) { opacity: 0.35; }
-.mapa-cuerpo .musculo.seleccionado { fill: var(--primario); transform: scale(1.15); }
+.mapa-cuerpo .musculo.seleccionado {
+  fill: var(--primario); transform: scale(1.15);
+  /* Un borde que contraste lo encierra, para que se lea qué músculo es aunque el color del
+     estilo se parezca al gris de los demás. Va por encima de sus vecinos porque
+     `marcarSeleccion` lo pasa al final del grupo. */
+  stroke: var(--borde-musculo, #000); stroke-width: 6; stroke-linejoin: round;
+  paint-order: stroke fill;
+}
 .mapa-cara[aria-hidden="true"] { pointer-events: none; }
 /* Solo el ícono, chico, en la esquina de abajo a la derecha del dibujo: así el cuerpo
    ocupa casi toda la pantalla. El nombre lo dice `aria-label`. */
