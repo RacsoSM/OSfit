@@ -376,6 +376,8 @@ Hecho (2026-10-10), cuarta parte — **grid agrupado por músculo**:
 
 - Grupos leídos del nombre del día; luego los demás grupos; sin buscador.
 - App: menú → **Ejercicios por grupo** (agregar, quitar, reordenar; una lista para todas).
+- Desplegado (2026-10-10): regla de `configEjercicios`, banco recargado con `grupo` y web.
+  APK de la app entregado; falta instalarlo y verificarlo en el teléfono.
 
 Plan: `superpowers/plans/2026-10-10-banco-ejercicios-gifs.md`.
 **Desplegado (2026-10-10):** reglas, banco cargado (91 de 91), función `registrarSesion` y web.
