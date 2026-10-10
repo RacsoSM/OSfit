@@ -13,6 +13,7 @@ import { tarjetaRanking, type EstadoRanking } from "./ui/tarjetaRanking";
 import { tarjetaAjustes } from "./ui/tarjetaAjustes";
 import { invitacionNotificaciones, seccionNotificaciones } from "./ui/tarjetaNotificaciones";
 import type { EstadoNotificaciones } from "./notificaciones";
+import { tarjetaMusculos, type EstadoSvg } from "./ui/mapaMuscular";
 
 /**
  * Las ventanas de la página y lo que pinta cada una.
@@ -23,7 +24,9 @@ import type { EstadoNotificaciones } from "./notificaciones";
  * su listener en `main.ts`. Ver `docs/superpowers/specs/2026-09-24-menu-lateral-ventanas-design.md`.
  */
 
-export type IdVentana = "inicio" | "ranking" | "medallas" | "logros" | "videos" | "ajustes";
+export type IdVentana =
+  | "inicio" | "musculos" | "registro"
+  | "ranking" | "medallas" | "logros" | "videos" | "ajustes";
 
 /** Todo lo que los listeners de Firestore tienen a mano en cada repintado. */
 export interface DatosCliente {
@@ -46,14 +49,19 @@ export interface DatosCliente {
   invitacionDescartada: boolean;
   /** Mientras el permiso y el registro están en curso: el botón se deshabilita. */
   activandoNotificaciones: boolean;
+  /** Los SVG del mapa muscular por archivo; los pide `main.ts` al entrar a Músculos. */
+  mapas: Readonly<Record<string, EstadoSvg>>;
 }
 
 export interface Ventana {
   id: IdVentana;
   titulo: string;
   icono: string;
-  /** `pie` se pega al fondo del menú, separado del resto. */
-  grupo: "principal" | "pie";
+  /**
+   * `pie` se pega al fondo del menú, separado del resto. `barra` no sale en el menú: vive solo
+   * en la barra de abajo (ver `BARRA`).
+   */
+  grupo: "principal" | "pie" | "barra";
   /** Se puede abrir, pero todavía muestra "Muy pronto". */
   proximamente?: boolean;
   /** Lo que va dentro de `#contenido`. */
@@ -91,6 +99,17 @@ function inicio(d: DatosCliente): string {
 export const VENTANAS: readonly Ventana[] = [
   { id: "inicio", titulo: "Inicio", icono: "🏠", grupo: "principal", pintar: inicio },
   {
+    id: "musculos", titulo: "Músculos", icono: "💪", grupo: "barra",
+    pintar: (d) => tarjetaMusculos(d.cliente.sexo, d.mapas),
+  },
+  {
+    id: "registro", titulo: "Registro", icono: "📝", grupo: "barra", proximamente: true,
+    pintar: () => seccionVacia(
+      "Tu registro", "📝", "Muy pronto",
+      "Aquí vas a anotar tus series, repeticiones y pesos."
+    ),
+  },
+  {
     id: "ranking", titulo: "Ranking", icono: "🏆", grupo: "principal",
     pintar: (d) => tarjetaRanking(d.ranking),
   },
@@ -108,6 +127,13 @@ export const VENTANAS: readonly Ventana[] = [
     pintar: (d) => tarjetaAjustes(d.estilo) + seccionNotificaciones(d.notificaciones, d.activandoNotificaciones),
   },
 ];
+
+/**
+ * Lo que va en la barra de abajo, en ese orden. Es lo fuerte de la app y por eso está a la
+ * vista y no en el menú. Entrenar (el modo guiado) no va aquí: se abre desde la tarjeta del
+ * día de Inicio, que ya sabe qué día toca.
+ */
+export const BARRA: readonly IdVentana[] = ["inicio", "musculos", "registro"];
 
 /** Un id que no está en el registro (un `history.state` viejo, por ejemplo) cae en Inicio. */
 export function ventana(id: IdVentana): Ventana {

@@ -779,3 +779,50 @@ body.menu-abierto { overflow: hidden; }
   border: 0; background: none; font: inherit; font-size: 14px;
   color: var(--texto-tenue); cursor: pointer;
 }
+
+/* La barra de abajo: Inicio, Músculos y Registro, siempre a la vista. Fija al fondo con el
+   área segura del iPhone instalado; debajo del velo del menú (z 20), que la tapa al abrirse. */
+.barra {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 10;
+  display: flex; justify-content: center;
+  padding: 6px calc(8px + env(safe-area-inset-right)) calc(6px + env(safe-area-inset-bottom))
+           calc(8px + env(safe-area-inset-left));
+  background: var(--superficie);
+  border-top: 1px solid var(--superficie-alta);
+}
+.barra-opcion {
+  flex: 1; max-width: 160px; min-height: 52px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  border: 0; border-radius: 12px; background: transparent;
+  color: var(--texto-tenue); font: inherit; font-size: 12px; cursor: pointer;
+}
+.barra-icono { font-size: 22px; line-height: 1; filter: grayscale(0.6); opacity: 0.8; }
+.barra-opcion.activa { color: var(--primario); font-weight: 700; }
+.barra-opcion.activa .barra-icono { filter: none; opacity: 1; }
+.barra-opcion:focus-visible { outline: 2px solid var(--primario); outline-offset: -2px; }
+/* Que lo último de la página no quede tapado por la barra. */
+main:has(#barra) { padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
+
+/* El mapa muscular. Los SVG traen su propio contorno y líneas (ver `prepararSvg`); aquí va
+   solo el color de los músculos, que mientras no haya registros es el gris "sin datos". */
+.mapa-vistas { display: flex; gap: 10px; justify-content: center; }
+.mapa-vista { flex: 1; min-width: 0; margin: 0; text-align: center; }
+.mapa-vista figcaption { margin-top: 6px; font-size: 13px; color: var(--texto-tenue); }
+.mapa-dibujo {
+  border-radius: 14px; overflow: hidden; background: #000;
+  aspect-ratio: 420 / 800; display: flex; align-items: center; justify-content: center;
+}
+.mapa-svg { display: block; width: 100%; height: 100%; }
+.mapa-cuerpo .musculo { fill: #8f90a6; }
+.mapa-cargando {
+  width: 60%; height: 80%; border-radius: 40px;
+  background: var(--superficie-alta); animation: mapa-pulso 1.2s ease-in-out infinite alternate;
+}
+@keyframes mapa-pulso { from { opacity: 0.4; } to { opacity: 0.9; } }
+.mapa-aviso { color: var(--texto-tenue); font-size: 13px; padding: 12px; }
+.mapa-leyenda {
+  display: flex; align-items: center; gap: 8px; margin: 12px 2px 0;
+  font-size: 13px; color: var(--texto-tenue);
+}
+.mapa-muestra { flex: none; width: 14px; height: 14px; border-radius: 4px; background: #8f90a6; }
+@media (prefers-reduced-motion: reduce) { .mapa-cargando { animation: none; } }

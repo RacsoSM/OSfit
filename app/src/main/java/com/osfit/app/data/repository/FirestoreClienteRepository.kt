@@ -73,6 +73,7 @@ class FirestoreClienteRepository(
         peso: Double?,
         altura: Double?,
         edad: Int?,
+        sexo: String?,
         segundosPorEjercicio: Int?,
         minutosDescanso: Double?
     ) {
@@ -83,6 +84,7 @@ class FirestoreClienteRepository(
                 "peso" to peso,
                 "altura" to altura,
                 "edad" to edad,
+                "sexo" to sexo,
                 "segundosPorEjercicio" to segundosPorEjercicio,
                 "minutosDescanso" to minutosDescanso
             )

@@ -298,4 +298,14 @@ Borrador de spec: `superpowers/specs/2026-10-10-mapa-fuerza-entrenamiento-design
 (**propuesta, sin aprobar todavía**). Abierto: quién llena los estándares por ejercicio, de
 dónde salen los GIFs, y si avisar al entrenador cuando se registre un peso fuera de lo normal.
 
-Pendiente: aprobar el spec.
+Hecho (2026-10-10), primera parte:
+
+- **Barra de abajo** con Inicio, Músculos y Registro (`ui/barraInferior.ts`, `BARRA` en
+  `ventanas.ts`). Registro dice "Muy pronto".
+- **Músculos** muestra frente y espalda según el sexo, en gris "sin datos"
+  (`ui/mapaMuscular.ts`). Los SVG se piden al entrar y se meten en línea con ids prefijados,
+  listos para pintarse por nivel. Sin sexo, avisa que falta completar el perfil.
+- **App:** `Cliente.sexo` ("H"/"M") y el selector "Sexo" en Editar cliente.
+
+Pendiente: aprobar el resto del spec (banco de ejercicios, Registro, modo guiado, cálculo
+de fuerza).

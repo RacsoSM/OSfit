@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Timestamp } from "firebase/firestore";
 import type { Asistencia, Cliente } from "./datos";
-import { VENTANAS, contenidoDe, ventana, type DatosCliente, type IdVentana } from "./ventanas";
+import { BARRA, VENTANAS, contenidoDe, ventana, type DatosCliente, type IdVentana } from "./ventanas";
 
 const HOY = "2026-09-18"; // viernes
 
@@ -21,6 +21,7 @@ function datos(campos: Partial<DatosCliente> = {}): DatosCliente {
     medallas: [], logros: [], tiradaEsteMes: null, tiradaMesAnterior: null,
     ranking: { estado: "cargando" }, estilo: "clasico",
     notificaciones: "no-habilitada", invitacionDescartada: false, activandoNotificaciones: false,
+    mapas: {},
     ...campos,
   };
 }
@@ -31,18 +32,28 @@ describe("el registro de ventanas", () => {
     expect(new Set(ids).size).toBe(ids.length);
   });
 
-  it("va Inicio, Ranking, Medallas, Logros, Videos y Ajustes al final", () => {
+  it("va Inicio, Músculos, Registro, Ranking, Medallas, Logros, Videos y Ajustes al final", () => {
     expect(VENTANAS.map((v) => v.id)).toEqual(
-      ["inicio", "ranking", "medallas", "logros", "videos", "ajustes"]
+      ["inicio", "musculos", "registro", "ranking", "medallas", "logros", "videos", "ajustes"]
     );
+  });
+
+  it("la barra de abajo lleva Inicio, Músculos y Registro, y nada más", () => {
+    expect(BARRA).toEqual(["inicio", "musculos", "registro"]);
+    for (const id of BARRA) expect(ventana(id).id).toBe(id);
+  });
+
+  it("Músculos y Registro viven solo en la barra, no en el menú", () => {
+    expect(VENTANAS.filter((v) => v.grupo === "barra").map((v) => v.id))
+      .toEqual(["musculos", "registro"]);
   });
 
   it("Ajustes es la única del pie", () => {
     expect(VENTANAS.filter((v) => v.grupo === "pie").map((v) => v.id)).toEqual(["ajustes"]);
   });
 
-  it("ya no queda ninguna por venir: Ajustes tiene contenido", () => {
-    expect(VENTANAS.filter((v) => v.proximamente).map((v) => v.id)).toEqual([]);
+  it("solo Registro está por venir", () => {
+    expect(VENTANAS.filter((v) => v.proximamente).map((v) => v.id)).toEqual(["registro"]);
   });
 
   it("toda ventana tiene con qué pintarse", () => {
@@ -123,5 +134,25 @@ describe("las demás ventanas", () => {
 
   it("Videos no pinta nada en #contenido: vive en su propio contenedor", () => {
     expect(contenidoDe(ventana("videos"), datos())).toBe("");
+  });
+});
+
+describe("la ventana Músculos", () => {
+  it("sin sexo avisa en vez de adivinar el mapa", () => {
+    const h = contenidoDe(ventana("musculos"), datos());
+    expect(h).toContain("Tu entrenador tiene que completar tu perfil");
+    expect(h).not.toContain("mapa-vistas");
+  });
+
+  it("con sexo pinta frente y espalda", () => {
+    const h = contenidoDe(ventana("musculos"), datos({ cliente: { ...cliente, sexo: "M" } }));
+    expect(h).toContain("Frente");
+    expect(h).toContain("Espalda");
+  });
+});
+
+describe("la ventana Registro", () => {
+  it("dice que viene pronto", () => {
+    expect(contenidoDe(ventana("registro"), datos())).toContain("Muy pronto");
   });
 });

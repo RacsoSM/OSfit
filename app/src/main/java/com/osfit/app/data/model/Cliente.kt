@@ -39,6 +39,12 @@ data class Cliente(
     val peso: Double? = null,
     val altura: Double? = null,
     val edad: Int? = null,
+    /**
+     * "H" o "M": qué mapa muscular le toca en la web (frente y espalda de hombre o de mujer).
+     * Lo elige el entrenador en "Editar cliente". null = clienta anterior al campo o sin
+     * elegir; la web le muestra un aviso en vez del mapa. Ver [Sexo].
+     */
+    val sexo: String? = null,
     val segundosPorEjercicio: Int? = null,
     val minutosDescanso: Double? = null,
     // Nombre del archivo dentro de filesDir/canciones/ (no la URI original: se copia al

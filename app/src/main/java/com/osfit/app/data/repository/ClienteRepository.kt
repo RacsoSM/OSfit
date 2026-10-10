@@ -29,6 +29,7 @@ interface ClienteRepository {
         peso: Double?,
         altura: Double?,
         edad: Int?,
+        sexo: String?,
         segundosPorEjercicio: Int?,
         minutosDescanso: Double?
     )

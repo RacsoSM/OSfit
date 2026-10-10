@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -22,6 +23,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
@@ -36,11 +38,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import com.osfit.app.data.model.Sexo
 import com.osfit.app.util.CancionUtil
 import java.io.File
 import kotlinx.coroutines.delay
@@ -66,6 +70,7 @@ fun ClienteEditarScreen(
     var peso by remember { mutableStateOf(clienteActual.peso?.toString() ?: "") }
     var altura by remember { mutableStateOf(clienteActual.altura?.toString() ?: "") }
     var edad by remember { mutableStateOf(clienteActual.edad?.toString() ?: "") }
+    var sexo by remember { mutableStateOf(clienteActual.sexo) }
     var segundosPorEjercicio by remember { mutableStateOf(clienteActual.segundosPorEjercicio?.toString() ?: "") }
     var minutosDescanso by remember { mutableStateOf(clienteActual.minutosDescanso?.toString() ?: "") }
     var cancionArchivo by remember { mutableStateOf(clienteActual.cancionArchivo) }
@@ -116,6 +121,7 @@ fun ClienteEditarScreen(
                         peso = peso.toDoubleOrNull(),
                         altura = altura.toDoubleOrNull(),
                         edad = edad.toIntOrNull(),
+                        sexo = sexo,
                         segundosPorEjercicio = segundosPorEjercicio.toIntOrNull(),
                         minutosDescanso = minutosDescanso.toDoubleOrNull()
                     )
@@ -177,6 +183,7 @@ fun ClienteEditarScreen(
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 modifier = Modifier.fillMaxWidth()
             )
+            SelectorSexo(sexo = sexo, onCambio = { sexo = it })
             OutlinedTextField(
                 value = segundosPorEjercicio,
                 onValueChange = { segundosPorEjercicio = it },
@@ -216,6 +223,30 @@ fun ClienteEditarScreen(
                     inicioSegundos = inicioSegundos,
                     onInicioSegundosChange = { inicioSegundos = it }
                 )
+            }
+        }
+    }
+}
+
+/**
+ * Decide qué mapa muscular ve en la web. Sin elegir (null) se queda así hasta que el
+ * entrenador escoja: no hay opción para volver a "sin elegir" porque no hace falta.
+ */
+@Composable
+private fun SelectorSexo(sexo: String?, onCambio: (String) -> Unit) {
+    Column {
+        Text("Sexo (para su mapa muscular)", style = MaterialTheme.typography.bodyMedium)
+        Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            listOf(Sexo.HOMBRE to "Hombre", Sexo.MUJER to "Mujer").forEach { (valor, texto) ->
+                Row(
+                    modifier = Modifier
+                        .selectable(selected = sexo == valor, role = Role.RadioButton) { onCambio(valor) }
+                        .padding(vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    RadioButton(selected = sexo == valor, onClick = null)
+                    Text(texto)
+                }
             }
         }
     }

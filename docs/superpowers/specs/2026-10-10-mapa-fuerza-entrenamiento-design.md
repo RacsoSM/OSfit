@@ -70,9 +70,8 @@ una **barra de navegación abajo, fija y visible en toda la web**, tipo WhatsApp
 
 ### Músculos
 
-- Muestra frente y espalda según `cliente.sexo`, con un selector Frente/Espalda (o
-  deslizando). Sin `sexo` usa el del hombre y avisa con discreción que el entrenador puede
-  ajustarlo.
+- Muestra frente y espalda **lado a lado** según `cliente.sexo`. Sin `sexo` no adivina:
+  avisa que el entrenador tiene que completar su perfil.
 - Cada grupo se pinta con el color de su nivel, 0–5, de la paleta del estilo activo; los
   músculos sin datos van con el gris de `.sin-color`. Abajo hay una leyenda.
 - Al tocar un músculo se abre una hoja con su nivel, su mejor marca reciente y los

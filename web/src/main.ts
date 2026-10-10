@@ -37,7 +37,9 @@ import { conectarAccionDia } from "./ui/accionDia";
 import { conectarAccionFalta } from "./ui/accionFalta";
 import { moverMes } from "./ui/calendario";
 import { tarjetaVideos, ultimosRangoDescendente, firmaVideos, MAXIMO_VIDEOS } from "./ui/tarjetaVideos";
-import { VENTANAS, contenidoDe, ventana, type IdVentana } from "./ventanas";
+import { BARRA, VENTANAS, contenidoDe, ventana, type IdVentana } from "./ventanas";
+import { barraInferior, conectarBarra } from "./ui/barraInferior";
+import { archivosMapa, type EstadoSvg } from "./ui/mapaMuscular";
 import {
   abrirMenu, abrirVentana, cerrarMenu, historialDelNavegador, iniciarNavegacion, menuAbierto,
   ventanaActiva,
@@ -168,6 +170,8 @@ async function arrancar(): Promise<void> {
   let ranking: EstadoRanking = { estado: "cargando" };
   /** Número del último pedido: una respuesta de un pedido viejo no pisa a la más nueva. */
   let pedidoRanking = 0;
+  /** Los SVG del mapa muscular ya pedidos, por archivo. Viven lo que dura la página. */
+  const mapas: Record<string, EstadoSvg> = {};
 
   /** Llave en el navegador para "Ahora no". Se pierde si borran datos: vuelve a salir, no es grave. */
   const LLAVE_INVITACION = "osfit:notificaciones-descartada";
@@ -194,6 +198,29 @@ async function arrancar(): Promise<void> {
     invitacionDescartada = true;
     try { localStorage.setItem(LLAVE_INVITACION, "1"); } catch { /* se pierde el recuerdo, no la página */ }
     pintar();
+  }
+
+  /**
+   * Pide los dos mapas que le tocan, solo la primera vez: una vez listos se quedan en `mapas`
+   * y los repintados ya no van a la red. Si falla, se reintenta solo al volver a entrar
+   * (`reintentar`): reintentar en cada repintado sería un ciclo, porque el fallo repinta.
+   */
+  function cargarMapas(reintentar: boolean): void {
+    const sexo = cliente?.sexo;
+    if (sexo !== "H" && sexo !== "M") return;
+    const { frente, espalda } = archivosMapa(sexo);
+    for (const archivo of [frente, espalda]) {
+      const e = mapas[archivo];
+      if (e && (e.estado !== "error" || !reintentar)) continue;
+      mapas[archivo] = { estado: "cargando" };
+      fetch(archivo)
+        .then((r) => (r.ok ? r.text() : Promise.reject(new Error(String(r.status)))))
+        .then(
+          (svg) => { mapas[archivo] = { estado: "listo", svg }; },
+          () => { mapas[archivo] = { estado: "error" }; }
+        )
+        .finally(() => pintar());
+    }
   }
 
   /**
@@ -255,10 +282,13 @@ async function arrancar(): Promise<void> {
     // La cabecera (☰ + saludo) y el menú viven fuera de `#contenido` por lo mismo que el
     // saludo: sus nodos tienen estado (la animación, la transición del panel) que un
     // repintado destruiría.
+    const barra = barraInferior(BARRA.map(ventana));
     app.innerHTML = `${cabecera(saludo(nombre))}<div id="contenido"></div>` +
-      `<div id="videos" hidden></div><div id="menu"></div><div id="ruleta"></div>`;
+      `<div id="videos" hidden></div><div id="barra">${barra}</div>` +
+      `<div id="menu"></div><div id="ruleta"></div>`;
     conectarSaludo();
     conectarCabecera(abrirMenu);
+    conectarBarra(abrirVentana);
   }
 
   /** Lo último que se pintó en `#videos`; `null` mientras no se pintó nada. */
@@ -390,6 +420,9 @@ async function arrancar(): Promise<void> {
     const activa = ventana(ventanaActiva());
     // Al entrar a Ranking se pide antes de pintar, así un error viejo ya sale como "cargando".
     if (activa.id === "ranking" && activa.id !== ventanaPintada) cargarRanking();
+    // Cada vez y no solo al entrar: si el entrenador le pone el sexo con la ventana abierta,
+    // el snapshot del cliente llega aquí y el mapa aparece sin salir y volver.
+    if (activa.id === "musculos") cargarMapas(activa.id !== ventanaPintada);
     actualizarCabecera(activa.id === "inicio" ? null : activa.titulo);
     contenido.innerHTML = contenidoDe(activa, {
       cliente, hoy, asistencias, mesVisible, yaAviso, medallas, logros,
@@ -397,9 +430,11 @@ async function arrancar(): Promise<void> {
       notificaciones: estadoNotificaciones(cliente.notificacionesWeb === true, entornoDelNavegador()),
       invitacionDescartada,
       activandoNotificaciones,
+      mapas,
     });
     pintarVideos(activa.contenedorPropio === "videos");
     pintarMenu(activa.id, cliente.nombre);
+    marcarVentanaActiva(document.querySelectorAll<HTMLElement>("#barra [data-ventana]"), activa.id);
     pintarRuleta();
     if (activa.id !== ventanaPintada) {
       // Cada ventana arranca arriba. Solo al cambiar: un snapshot no debe mover el scroll.

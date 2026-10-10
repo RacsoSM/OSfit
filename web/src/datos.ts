@@ -24,6 +24,9 @@ export interface DiaRutina {
 }
 export interface Rutina { id: string; nombre: string; dias: DiaRutina[]; reinicioSemanal?: boolean; }
 
+/** "H" o "M". Gemelo de `Sexo` en `data/model/Sexo.kt`. */
+export type Sexo = "H" | "M";
+
 export interface Cliente {
   nombre: string;
   activo: boolean;
@@ -58,6 +61,11 @@ export interface Cliente {
    * Firestore omite los campos que nunca se escribieron, y ausente es "no habilitada".
    */
   notificacionesWeb?: boolean;
+  /**
+   * Qué mapa muscular le toca. Lo elige el entrenador en "Editar cliente". Opcional por la
+   * razón de siempre; ausente, la ventana Músculos le avisa en vez de adivinar.
+   */
+  sexo?: Sexo | null;
 }
 
 export interface Asistencia {
