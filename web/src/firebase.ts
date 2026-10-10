@@ -5,6 +5,7 @@ import {
   indexedDBLocalPersistence,
   initializeAuth,
   signInWithCustomToken,
+  signOut,
 } from "firebase/auth";
 import { initializeFirestore, persistentLocalCache } from "firebase/firestore";
 import { getFunctions } from "firebase/functions";
@@ -178,18 +179,38 @@ export async function credencialLista(): Promise<void> {
  *
  * Reintentar la lectura sin esto no sirve de nada: la misma credencial vencida da denegado
  * las veces que haga falta.
+ *
+ * Devuelve en qué quedó: `sin-acceso` es el acceso revocado —la renovación falló porque el
+ * entrenador anuló la sesión, y el link ya no se puede canjear—, y quien llama deja de
+ * insistir y muestra el candado.
  */
-export async function renovarCredencial(): Promise<boolean> {
+export async function renovarCredencial(): Promise<ResultadoSesion["estado"]> {
   try {
     if (auth.currentUser) {
       await auth.currentUser.getIdToken(true);
-      return true;
+      return "lista";
     }
   } catch {
     /* Renovar falló: queda el canje de abajo, que no depende del token viejo. */
   }
-  const resultado = await iniciarSesion();
-  return resultado.estado === "lista";
+  return (await iniciarSesion()).estado;
+}
+
+/**
+ * Olvida todo lo que la dejaba entrar: la sesión del SDK y el token recordado. Para cuando
+ * perdió el acceso; sin esto, la siguiente apertura intentaría entrar con lo de antes.
+ */
+export async function cerrarSesion(): Promise<void> {
+  try {
+    memoriaToken(almacenesDelNavegador()).olvidar();
+  } catch {
+    /* El canje lo va a rechazar igual. */
+  }
+  try {
+    await signOut(auth);
+  } catch {
+    /* Ídem: la sesión ya no se puede renovar. */
+  }
 }
 
 /**

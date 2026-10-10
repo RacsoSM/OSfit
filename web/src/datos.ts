@@ -120,6 +120,17 @@ export function alFallarDatos(escucha: (origen: string, error: FirestoreError) =
   reportarFallo = escucha;
 }
 
+let reportarPerdida: () => void = () => {};
+
+/**
+ * El acceso se perdió de verdad: denegado, y ni renovando ni canjeando otra vez se recupera.
+ * Es el entrenador que lo revocó. La pantalla pone el candado; los listeners dejan de
+ * insistir.
+ */
+export function alPerderAcceso(escucha: () => void): void {
+  reportarPerdida = escucha;
+}
+
 /** El otro lado: un listener que se había caído y volvió. La pantalla borra su error. */
 export function alVolverDatos(escucha: (origen: string) => void): void {
   reportarVuelta = escucha;
@@ -160,8 +171,16 @@ function escuchar(
         const listo =
           error.code === "permission-denied" && intentos === 1
             ? renovarCredencial()
-            : Promise.resolve(true);
-        listo.then(() => setTimeout(() => vivo && conectar(), 400 * intentos));
+            : Promise.resolve("lista");
+        listo.then((estado) => {
+          // Sin acceso: revocado. Insistir no lo va a cambiar.
+          if (estado === "sin-acceso") {
+            vivo = false;
+            reportarPerdida();
+            return;
+          }
+          setTimeout(() => vivo && conectar(), 400 * intentos);
+        });
       }
     );
   };

@@ -1,5 +1,6 @@
 import {
   alFallarDatos,
+  alPerderAcceso,
   alVolverDatos,
   observarCliente,
   observarAsistencias,
@@ -27,7 +28,7 @@ import { activarNotificaciones, entornoDelNavegador, sincronizarToken } from "./
 import { conectarNotificaciones } from "./ui/tarjetaNotificaciones";
 import { almacenDeEstilo, ponerEstilo } from "./ui/cambioDeEstilo";
 import { estiloGuardado, type IdEstilo } from "./estilo";
-import { credencialLista, huellaDeLaSesion, iniciarSesion, urlDeDescarga } from "./firebase";
+import { cerrarSesion, credencialLista, huellaDeLaSesion, iniciarSesion, urlDeDescarga } from "./firebase";
 import { almacenesDelNavegador, saludDeLosAlmacenes } from "./sesion";
 import type { MotivoSinAcceso, ResultadoSesion } from "./sesion";
 import { aplicarPaleta } from "./paleta";
@@ -87,15 +88,25 @@ function mostrarEnlaceInvalido(motivo?: MotivoSinAcceso): void {
   // mandarla a pedir uno nuevo sería mentirle, porque el suyo sigue vivo. Lo único que
   // necesita es volver a abrirlo.
   const perdida = motivo === "sin-rastro";
+  // Revocado con la página abierta: lo decidió el entrenador, y se dice tal cual.
+  const revocado = motivo === "revocado";
   app.innerHTML = `
     <div class="tarjeta vacio">
       <div class="vacio-emoji">${perdida ? "🔗" : "🔒"}</div>
-      <p>${perdida ? "Abre tu link otra vez." : "Este enlace ya no es válido."}</p>
+      <p>${
+        perdida
+          ? "Abre tu link otra vez."
+          : revocado
+            ? "Tu acceso ya no está activo."
+            : "Este enlace ya no es válido."
+      }</p>
       <p style="color: var(--texto-tenue); font-size: 14px">
         ${
           perdida
             ? "Búscalo en tu chat de WhatsApp con tu entrenador: el mismo de siempre sirve."
-            : "Pídele a tu entrenador que te comparta uno nuevo."
+            : revocado
+              ? "Pídele a tu entrenador un link nuevo."
+              : "Pídele a tu entrenador que te comparta uno nuevo."
         }
       </p>
       <p style="color: var(--texto-tenue); font-size: 11px; opacity: 0.7">
@@ -377,6 +388,8 @@ async function arrancar(): Promise<void> {
   let ventanaPintada: IdVentana | null = null;
 
   function pintar(): void {
+    // Con el candado de revocado puesto, ningún listener rezagado lo tapa.
+    if (accesoPerdido) return;
     if (!cliente) {
       // Se tira la estructura entera, así que las firmas de videos y ruleta dejan de
       // describir nada.
@@ -490,6 +503,8 @@ async function arrancar(): Promise<void> {
   let falloSecundario: string | null = null;
   /** Qué traía la sesión cuando denegaron. Se pide una sola vez, y solo si deniegan. */
   let huella: string | null = null;
+  /** El entrenador revocó el acceso con la página abierta: queda el candado y nada más. */
+  let accesoPerdido = false;
 
   // La credencial antes que los listeners: pedir datos en el hueco entre entrar y que el
   // cliente de Firestore se entere vuelve como `permission-denied`.
@@ -500,6 +515,13 @@ async function arrancar(): Promise<void> {
     // antena puesta aunque los datos ya estuvieran llegando.
     if (origen === "cliente") falloDatos = null;
     else if (falloSecundario?.startsWith(`${origen}:`)) falloSecundario = null;
+  });
+
+  alPerderAcceso(() => {
+    if (accesoPerdido) return;
+    accesoPerdido = true;
+    cerrarSesion();
+    mostrarEnlaceInvalido("revocado");
   });
 
   alFallarDatos((origen, error) => {
