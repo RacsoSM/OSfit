@@ -6,6 +6,7 @@
 # líneas (mapa de crestas, ridge.npy: corre antes ridge.py), no del color.
 import numpy as np, cv2
 from skimage.segmentation import watershed
+from scipy.ndimage import gaussian_filter1d
 from cargar import cargar, EJE
 S = 4
 im = cargar()
@@ -90,21 +91,35 @@ for g, ms in G.items():
     else:
         out[g] = np.any(ms, 0).astype(np.uint8)
 for g in sorted(out): print(g, int(out[g].sum() // (S * S)))
-# La mano toca la cadera en la foto: en el dibujo se separan con una franja negra de MANO_HUECO
-# px, para que no parezca pegada al cuerpo. La franja va por donde la mano y el cuerpo están a la
-# misma distancia, solo donde se juntan (allí donde la suma de distancias es pequeña).
-MANO_HUECO = 2.0                     # px de la foto (≈ 2 unidades del SVG)
-mano_ = (out['gris-mano'] | out['antebrazo']).astype(np.uint8)
-cuerpo_ = np.any([out[g] for g in ('gluteo', 'cuadriceps', 'dorsal')], 0).astype(np.uint8)
-dm = cv2.distanceTransform(1 - mano_, cv2.DIST_L2, 5); dc = cv2.distanceTransform(1 - cuerpo_, cv2.DIST_L2, 5)
-corte = (np.abs(dm - dc) < MANO_HUECO * S) & (dm + dc < 26 * S) & (yy > 430 * S) & izq
-# del lado de la mano, la silueta es solo la mano con su contorno (MANO_BORDE_FOTO px alrededor del
-# gris): el brillo del contorno de la cadera que quedaba de ese lado pasa a fondo
-MANO_BORDE_FOTO = 4.0
-lado_mano = (dm < dc) & (yy > 440 * S) & izq & (dm > MANO_BORDE_FOTO * S) & (dm + dc < 26 * S)
-fig = (fig & ~corte & ~lado_mano).astype(np.uint8)
-zona_m = (yy > 440 * S) & (dm < dc + MANO_HUECO * S) & izq      # el contorno de la mano, liso
-fig = np.where(zona_m, cv2.GaussianBlur(fig.astype(np.float32), (0, 0), 1.2 * S) > 0.5, fig).astype(np.uint8)
+# La mano toca la cadera en la foto (filas 465-475): en el dibujo se separan con una franja negra
+# de MANO_HUECO px. La cadera conserva su contorno natural: su borde se ajusta con una curva suave
+# a las filas donde se ve libre (encima y debajo de la mano), y la franja va justo por fuera de esa
+# curva, así que la cadera no se hunde y solo la mano pierde, como mucho, un píxel.
+MANO_HUECO = 2.2                     # px de la foto (≈ 2 unidades del SVG)
+CADERA_FILAS = (430, 512)            # tramo donde la mano está junto a la cadera
+filas, bordes = [], []
+for y in range(CADERA_FILAS[0] * S, CADERA_FILAS[1] * S, S):
+    x = int(100 * S)
+    while x > 0 and fig[y, x - 1]: x -= 1                   # hacia fuera hasta salir de la silueta
+    if x > 72 * S:                                          # fila libre: ahí acaba la cadera
+        filas.append(y); bordes.append(x)
+cadera = np.polyfit(np.array(filas, float), np.array(bordes, float), 3)
+for y in range(CADERA_FILAS[0] * S, CADERA_FILAS[1] * S):
+    xb = int(round(np.polyval(cadera, y)))
+    fig[y, xb:int(100 * S)] = 1                             # la cadera, entera hasta su borde
+    fig[y, max(0, xb - int(MANO_HUECO * S)):xb] = 0         # y la franja negra por fuera
+# Donde se tocaban, el borde de la mano que mira a la cadera quedaría recto y con una esquina
+# arriba: ese borde (columna donde acaba la mano, fila a fila) se alisa como una sola curva, sin
+# acercarse a la cadera más que MANO_HUECO.
+MANO_FILAS = (444, 504)
+MANO_SUAVIZADO = 5                   # px de la foto
+ys_ = np.arange(MANO_FILAS[0] * S, MANO_FILAS[1] * S)
+tope = np.round(np.polyval(cadera, ys_)).astype(int) - int(MANO_HUECO * S)
+borde = np.array([np.where(fig[y, :t])[0].max() + 1 for y, t in zip(ys_, tope)])
+liso = np.minimum(np.round(gaussian_filter1d(borde.astype(float), MANO_SUAVIZADO * S, mode='nearest')).astype(int), tope)
+for y, a, b in zip(ys_, borde, liso):
+    if b > a: fig[y, a:b] = 1
+    else: fig[y, b:a] = 0
 n, cc, st, _ = cv2.connectedComponentsWithStats(fig, 8); fig = (cc == 1 + np.argmax(st[1:, 4])).astype(np.uint8)
 fig = simetrica(fig)
 np.savez_compressed('masks.npz', AX=AX, fig=fig, **out)

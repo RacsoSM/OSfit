@@ -34,9 +34,11 @@ Lo que cambia respecto a la del hombre:
 - **Formas lisas:** pantorrillas y pie también se rehacen con pocos armónicos.
 - **Líneas finas:** las del hombro y omóplato y las del isquiotibial miden 2 unidades en vez de 3
   (`PARES_FINOS`, `SEPARACION_FINA`).
-- **Mano separada del cuerpo:** en la foto la mano toca la cadera; aquí se corta la silueta entre
-  las dos con una franja negra (`MANO_HUECO` en `mascaras.py`), así que la mano tiene su propio
-  contorno y queda a unas 4.5 unidades de la cadera.
+- **Mano separada del cuerpo:** en la foto la mano toca la cadera. El borde de la cadera se ajusta
+  con una curva suave a las filas donde se ve libre, y la franja negra (`MANO_HUECO` en
+  `mascaras.py`) va justo por fuera de esa curva: la cadera conserva su forma redonda y la mano
+  pierde como mucho un píxel. Después, el borde de la mano que mira a la cadera se alisa como una
+  sola curva (`MANO_SUAVIZADO`). Entre los dos contornos blancos quedan unas 2 unidades de negro.
 - **Mano:** lleva la línea que separa el pulgar de la palma (medida en la foto) y otra por el
   medio de los dedos, que en la foto van juntos (`LINEAS_GRIS`), más finas que las demás.
 - **Columna:** lleva el huso blanco de arriba medido en la foto (`COLUMNA_HUSO`), centrado.
