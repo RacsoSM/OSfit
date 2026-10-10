@@ -1,7 +1,6 @@
 import { onRequest } from "firebase-functions/v2/https";
 import { getAuth } from "firebase-admin/auth";
 import { REGION, db } from "./comun";
-import { contarEntrada } from "./contador";
 
 /**
  * Canjea el token del link magico por un custom token de Firebase con el claim `clienteId`.
@@ -36,9 +35,8 @@ export const sesion = onRequest(
     const clienteId = doc.get("clienteId") as string;
     const customToken = await getAuth().createCustomToken(clienteId, { clienteId });
 
-    // Se cuenta con el canje ya resuelto: si contar se cae, la sesion ya esta hecha.
-    await contarEntrada(doc.ref);
-
+    // Aqui ya no se cuentan entradas: lo hace `registrarEntrada`, que la pagina llama en cada
+    // apertura (tambien en las que no canjean, como la pagina instalada).
     res.json({ customToken, clienteId });
   }
 );
