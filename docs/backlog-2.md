@@ -388,6 +388,13 @@ Hecho y desplegado (2026-10-10), quinta parte — **Registro por entrenamientos*
 - "Iniciar entrenamiento" → agregar ejercicios → "Terminar entrenamiento" (guarda hora de
   inicio y fin). Lo ya elegido sale en gris y deshabilitado. "Tu historial" es pantalla aparte.
 
+Hecho (2026-10-10) — **video por ejercicio**: el banco acepta `videoRuta`
+(`ejercicios/<id>.mp4`, lo sube `functions/scripts/subirVideoEjercicio.mjs`). Se reproduce mudo y
+en bucle donde el ejercicio se ve en grande (Registro y la app); el resto sigue con el GIF.
+Piloto: press de banca con el "camino 1" (las 2 poses del GIF escaladas con Real-ESRGAN y un
+fundido, 720 px). Pendiente decidir la fuente para los demás (camino 1, video generado con
+Gemini/ChatGPT o ExerciseDB).
+
 Plan: `superpowers/plans/2026-10-10-banco-ejercicios-gifs.md`.
 **Desplegado (2026-10-10):** reglas, banco cargado (91 de 91), función `registrarSesion` y web.
 Falta que el entrenador lo verifique en su teléfono.
