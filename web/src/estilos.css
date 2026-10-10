@@ -855,7 +855,7 @@ main:has(#barra) { padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
    destaque. La cara de atrás no recibe toques: girada, sigue ahí aunque no se vea. */
 .mapa-giro.con-seleccion .musculo:not(.seleccionado) { opacity: 0.35; }
 .mapa-cuerpo .musculo.seleccionado {
-  fill: var(--primario); transform: scale(1.15);
+  fill: var(--primario);
   /* Un borde que contraste lo encierra, para que se lea qué músculo es aunque el color del
      estilo se parezca al gris de los demás. Va por encima de sus vecinos porque
      `marcarSeleccion` lo pasa al final del grupo. */
@@ -863,6 +863,15 @@ main:has(#barra) { padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
   paint-order: stroke fill;
 }
 .mapa-cara[aria-hidden="true"] { pointer-events: none; }
+/* El músculo tocado crece con sus líneas (ver `elevar`): las líneas, en negro como su borde,
+   reemplazan a las blancas. Las líneas no reciben toques: tocar justo sobre una raya debe
+   tocar el músculo de abajo, no soltarlo. */
+.mapa-svg .musculo-elevado {
+  transform-box: view-box; transition: transform 220ms ease;
+}
+.mapa-svg .musculo-elevado.crecido { transform: scale(1.15); }
+.mapa-svg .linea.oculta { visibility: hidden; }
+.mapa-svg .linea, .mapa-svg .linea-mano, .mapa-svg .linea-elevada { pointer-events: none; }
 /* Solo el ícono, chico, en la esquina de abajo a la derecha del dibujo: así el cuerpo
    ocupa casi toda la pantalla. El nombre lo dice `aria-label`. */
 .mapa-girar {
@@ -906,5 +915,5 @@ main:has(#barra) { padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
 .mapa-muestra { flex: none; width: 14px; height: 14px; border-radius: 4px; background: #8f90a6; }
 @media (prefers-reduced-motion: reduce) {
   .mapa-cargando { animation: none; }
-  .mapa-giro, .mapa-marco, .mapa-cuerpo .musculo { transition: none; }
+  .mapa-giro, .mapa-marco, .mapa-cuerpo .musculo, .mapa-svg .musculo-elevado { transition: none; }
 }

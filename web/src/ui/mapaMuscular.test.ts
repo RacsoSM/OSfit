@@ -69,6 +69,27 @@ describe("prepararSvg", () => {
     expect(listo).not.toContain("fondo");
   });
 
+  it("cada línea interna dice de qué músculo es, en los cuatro mapas", () => {
+    for (const [archivo, texto] of Object.entries(SVGS)) {
+      const listo2 = prepararSvg(texto, "m");
+      const grupos = new Set([...listo2.matchAll(/data-musculo="([^"]+)"/g)].map((m) => m[1]));
+      for (const l of listo2.matchAll(/<path class="linea"([^>]*)>/g)) {
+        const de = l[1].match(/data-de="([^"]+)"/)?.[1];
+        const recorte = l[1].match(/url\(#m-recorte-([^)]+)\)/)?.[1];
+        if (recorte?.startsWith("gris")) {
+          expect(de, `${archivo}: ${recorte}`).toBeUndefined();
+        } else {
+          expect(de && grupos.has(de), `${archivo}: ${de}`).toBe(true);
+          if (recorte) expect(de).toBe(recorte);
+        }
+      }
+    }
+  });
+
+  it("los tramos sueltos sin recorte son del cuádriceps", () => {
+    expect(listo).toMatch(/<path class="linea" data-de="cuadriceps" d=/);
+  });
+
   it("sin declaración XML ni comentarios", () => {
     expect(listo).not.toContain("<?xml");
     expect(listo).not.toContain("<!--");

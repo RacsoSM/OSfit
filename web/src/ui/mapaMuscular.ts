@@ -40,12 +40,20 @@ export function archivosMapa(sexo: Sexo): ArchivosMapa {
  * - **Sin el rectángulo negro de fondo.** El cuerpo va directo sobre el fondo de la página
  *   (y `.fondo` ya es el fondo pintado de la página, con `position: fixed`).
  * - Sin la declaración XML ni los comentarios, que no van dentro de HTML.
+ * - **Cada línea interna dice de qué músculo es** (`data-de`), para pintarla de negro con él
+ *   al tocarlo. Se saca de su recorte (`recorte-<grupo>`); las de las partes grises
+ *   (`recorte-gris-…`) no son de ningún músculo. Las que van sin recorte son los tramos
+ *   sueltos del muslo (`TRAMOS_LIBRES` / `LINEAS_LIBRES` en los generadores de
+ *   `docs/mapa-muscular/`): son del cuádriceps.
  */
 export function prepararSvg(texto: string, prefijo: string): string {
   let s = texto
     .replace(/<\?xml[\s\S]*?\?>/g, "")
     .replace(/<!--[\s\S]*?-->/g, "")
-    .replace(/<rect class="fondo"[^>]*\/>/g, "");
+    .replace(/<rect class="fondo"[^>]*\/>/g, "")
+    .replace(/<path class="linea" clip-path="url\(#recorte-(?!gris)([^)]+)\)"/g,
+      '<path class="linea" data-de="$1" clip-path="url(#recorte-$1)"')
+    .replace(/<path class="linea" d=/g, '<path class="linea" data-de="cuadriceps" d=');
   s = s.replace(/<style>([\s\S]*?)<\/style>/, (_, css: string) => {
     const reglas = css
       .split("\n")
@@ -167,17 +175,78 @@ export function tarjetaMusculos(
     </section>`;
 }
 
+const SVG_NS = "http://www.w3.org/2000/svg";
+
+/** Deshace `elevar`: el músculo vuelve a su grupo y su copia de líneas desaparece. */
+function bajar(svg: Element): void {
+  svg.querySelectorAll(".musculo-elevado").forEach((g) => {
+    const m = g.querySelector(".musculo");
+    if (m) g.parentNode?.insertBefore(m, g);
+    g.remove();
+  });
+  svg.querySelectorAll(".recorte-elevado").forEach((c) => c.remove());
+  svg.querySelectorAll(".linea.oculta").forEach((l) => l.classList.remove("oculta"));
+}
+
 /**
- * Marca el grupo tocado sobre los paths que ya están. Los pasa al final de su grupo para que,
- * al agrandarse, queden encima de sus vecinos: en SVG lo último que se dibuja es lo de arriba.
+ * Pone el músculo dentro de un grupo que crece desde su centro, junto con una copia de sus
+ * líneas internas en negro, recortada con su propia forma. Como el recorte se lee en el
+ * espacio del grupo, crece con él y las líneas siguen cayendo justo dentro del músculo. Las
+ * líneas blancas originales de ese músculo se esconden: se dibujan encima de los músculos y,
+ * sin crecer, quedarían corridas.
  */
-function marcarSeleccion(): void {
+function elevar(m: SVGGraphicsElement, animar: boolean): void {
+  const svg = m.ownerSVGElement;
+  if (!svg || !m.id) return;
+  const caja = m.getBBox();
+  const g = document.createElementNS(SVG_NS, "g");
+  g.setAttribute("class", "musculo-elevado");
+  g.style.transformOrigin = `${caja.x + caja.width / 2}px ${caja.y + caja.height / 2}px`;
+  m.parentNode?.appendChild(g); // al final: queda encima de sus vecinos
+  g.appendChild(m);
+
+  const recorte = document.createElementNS(SVG_NS, "clipPath");
+  recorte.setAttribute("id", `${m.id}-elevado`);
+  recorte.setAttribute("class", "recorte-elevado");
+  const uso = document.createElementNS(SVG_NS, "use");
+  uso.setAttribute("href", `#${m.id}`);
+  recorte.appendChild(uso);
+  svg.appendChild(recorte);
+
+  const lineas = document.createElementNS(SVG_NS, "g");
+  lineas.setAttribute("clip-path", `url(#${m.id}-elevado)`);
+  svg.querySelectorAll<SVGElement>(`.linea[data-de="${m.dataset.musculo}"]`).forEach((l) => {
+    if (l.closest(".musculo-elevado")) return;
+    const copia = l.cloneNode() as SVGElement;
+    copia.removeAttribute("clip-path");
+    // El otro lado del mismo músculo ya la escondió: la copia no hereda eso.
+    copia.classList.remove("oculta");
+    copia.classList.add("linea-elevada");
+    // En línea y no en CSS: el `<style>` del SVG pinta `#mapa-… .linea` de blanco, y un id
+    // le gana a cualquier regla de `estilos.css`.
+    copia.style.stroke = "var(--borde-musculo, #000)";
+    lineas.appendChild(copia);
+    l.classList.add("oculta");
+  });
+  g.appendChild(lineas);
+
+  // Sin animar (un repintado) entra ya crecido; al tocar, crece con la transición.
+  if (animar) g.getBoundingClientRect();
+  g.classList.add("crecido");
+}
+
+/**
+ * Marca el grupo tocado sobre los paths que ya están: lo agranda con sus líneas en negro
+ * (`elevar`) y apaga a los demás.
+ */
+function marcarSeleccion(animar: boolean): void {
   document.querySelector("#mapa-giro")?.classList.toggle("con-seleccion", seleccionado !== null);
   document.querySelector(".mapa-cuerpo")?.classList.toggle("con-detalle", seleccionado !== null);
-  document.querySelectorAll<SVGElement>("#mapa-giro .musculo").forEach((m) => {
+  document.querySelectorAll("#mapa-giro .mapa-svg").forEach(bajar);
+  document.querySelectorAll<SVGGraphicsElement>("#mapa-giro .musculo").forEach((m) => {
     const es = m.dataset.musculo === seleccionado;
     m.classList.toggle("seleccionado", es);
-    if (es) m.parentNode?.appendChild(m);
+    if (es) elevar(m, animar);
   });
 }
 
@@ -199,11 +268,11 @@ export function conectarMapa(
   };
   const elegir = (grupo: string | null) => {
     seleccionado = grupo;
-    marcarSeleccion();
+    marcarSeleccion(true);
     pintarDetalle();
   };
 
-  marcarSeleccion();
+  marcarSeleccion(false);
   document.querySelector("#cerrar-detalle")?.addEventListener("click", () => elegir(null));
   document.querySelector("#mapa-giro")?.addEventListener("click", (e) => {
     const m = (e.target as Element).closest<SVGElement>(".musculo");
