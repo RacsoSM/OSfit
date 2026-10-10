@@ -38,11 +38,13 @@ service firebase.storage {
       allow write: if esEntrenador();
     }
 
-    // Los GIF del banco de ejercicios (`ejercicios/<id>.webp`). Igual que las insignias: no
-    // son datos personales, así que cualquier sesión los lee. El documento guarda la ruta y
-    // la página pide la URL al SDK (ver `gifRuta` en firestore `ejercicios/{id}`).
+    // Los GIF del banco de ejercicios (`ejercicios/<id>.webp`). Son catálogo, no datos
+    // personales, y se leen SIN sesión a propósito: la página arma la URL pública directo
+    // (`urlGif` en web/src/banco.ts) en vez de pedir un `getDownloadURL` por cada GIF del
+    // grid de Registro. Un `<img src>` no manda credencial, así que exigir sesión aquí
+    // obligaría a volver a esas llamadas. No expone nada que una URL con token no expusiera.
     match /ejercicios/{archivo} {
-      allow read: if request.auth != null;
+      allow read: if true;
       allow write: if esEntrenador();
     }
 

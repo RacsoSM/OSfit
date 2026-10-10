@@ -10,6 +10,7 @@ import {
   observarVideos,
   observarTirada,
   observarBanco,
+  observarSesiones,
 } from "./datos";
 import type {
   Cliente,
@@ -17,10 +18,12 @@ import type {
   MedallaOtorgada,
   LogroPersonalOtorgado,
   VideoResumen,
+  EjercicioBanco,
+  Sesion,
 } from "./datos";
 import { hoyEnMazatlan } from "./fecha";
 import { mesAnterior, type Tirada } from "./tirada";
-import { obtenerRanking, registrarEntrada } from "./acciones";
+import { obtenerRanking, registrarEntrada, registrarSesion } from "./acciones";
 import { modalRuleta, conectarRuleta } from "./ui/ruleta";
 import { conectarRanking, type EstadoRanking } from "./ui/tarjetaRanking";
 import { conectarAjustes } from "./ui/tarjetaAjustes";
@@ -33,13 +36,14 @@ import { cerrarSesion, credencialLista, huellaDeLaSesion, iniciarSesion, urlDeDe
 import { almacenesDelNavegador, saludDeLosAlmacenes } from "./sesion";
 import type { MotivoSinAcceso, ResultadoSesion } from "./sesion";
 import { aplicarPaleta } from "./paleta";
-import { gifsPorRuta, indiceBanco, rutasDeGifs, type IndiceBanco } from "./banco";
+import { indiceBanco, type IndiceBanco } from "./banco";
 import { saludo, conectarSaludo, actualizarNombre } from "./ui/saludo";
 import { conectarAccionDia } from "./ui/accionDia";
 import { conectarAccionFalta } from "./ui/accionFalta";
 import { moverMes } from "./ui/calendario";
 import { tarjetaVideos, ultimosRangoDescendente, firmaVideos, MAXIMO_VIDEOS } from "./ui/tarjetaVideos";
-import { BARRA, VENTANAS, contenidoDe, ventana, type IdVentana } from "./ventanas";
+import { BARRA, VENTANAS, contenidoDe, datosRegistro, ventana, type IdVentana } from "./ventanas";
+import { conectarRegistro } from "./ui/registro";
 import { barraInferior, conectarBarra } from "./ui/barraInferior";
 import { archivosMapa, conectarMapa, type EstadoSvg } from "./ui/mapaMuscular";
 import {
@@ -184,12 +188,11 @@ async function arrancar(): Promise<void> {
   let pedidoRanking = 0;
   /** Los SVG del mapa muscular ya pedidos, por archivo. Viven lo que dura la página. */
   const mapas: Record<string, EstadoSvg> = {};
-  /** El banco de ejercicios por nombre y alias normalizados; vacío hasta que llega. */
-  let banco: IndiceBanco = new Map();
-  /** URL de descarga de cada GIF ya resuelto, por su ruta en Storage. */
-  const urlsGif: Record<string, string> = {};
-  /** Las rutas ya pedidas, salgan bien o mal: un GIF que falla no se reintenta en cada snapshot. */
-  const gifsPedidos = new Set<string>();
+  /** El banco de ejercicios, y por nombre y alias normalizados; vacíos hasta que llega. */
+  let banco: EjercicioBanco[] = [];
+  let indice: IndiceBanco = new Map();
+  /** Sus sesiones de Registro; null hasta que llegan. */
+  let sesiones: Sesion[] | null = null;
 
   /** Llave en el navegador para "Ahora no". Se pierde si borran datos: vuelve a salir, no es grave. */
   const LLAVE_INVITACION = "osfit:notificaciones-descartada";
@@ -284,27 +287,6 @@ async function arrancar(): Promise<void> {
       })
     );
     pintar();
-  }
-
-  /**
-   * Pide las URLs de los GIF de su rutina que todavía no se pidieron, como `resolverVideos`:
-   * el HTML se arma síncrono con lo que ya hay. Se llama cuando llega el banco y cuando llega
-   * el cliente, porque cualquiera de los dos puede cambiar qué GIF le tocan. Repinta una vez
-   * por tanda y no por GIF, para no rehacer la página veinte veces seguidas.
-   */
-  function resolverGifs(): void {
-    const nuevas = rutasDeGifs(cliente?.rutinaAsignada, banco).filter((r) => !gifsPedidos.has(r));
-    if (nuevas.length === 0) return;
-    for (const ruta of nuevas) gifsPedidos.add(ruta);
-    Promise.all(
-      nuevas.map((ruta) =>
-        urlDeDescarga(ruta).then(
-          (url) => { urlsGif[ruta] = url; },
-          // Sin GIF esa fila se ve como siempre; no vale la pena avisarle a la clienta.
-          () => {}
-        )
-      )
-    ).then(() => pintar());
   }
 
   /**
@@ -465,15 +447,18 @@ async function arrancar(): Promise<void> {
     // el snapshot del cliente llega aquí y el mapa aparece sin salir y volver.
     if (activa.id === "musculos") cargarMapas(activa.id !== ventanaPintada);
     actualizarCabecera(activa.id === "inicio" ? null : activa.titulo);
-    contenido.innerHTML = contenidoDe(activa, {
+    const datos = {
       cliente, hoy, asistencias, mesVisible, yaAviso, medallas, logros,
       tiradaEsteMes, tiradaMesAnterior, ranking, estilo,
       notificaciones: estadoNotificaciones(cliente.notificacionesWeb === true, entornoDelNavegador()),
       invitacionDescartada,
       activandoNotificaciones,
       mapas,
-      gifDe: gifsPorRuta(banco, urlsGif),
-    });
+      banco,
+      indiceBanco: indice,
+      sesiones,
+    };
+    contenido.innerHTML = contenidoDe(activa, datos);
     pintarVideos(activa.contenedorPropio === "videos");
     pintarMenu(activa.id, cliente.nombre);
     marcarVentanaActiva(document.querySelectorAll<HTMLElement>("#barra [data-ventana]"), activa.id);
@@ -490,6 +475,10 @@ async function arrancar(): Promise<void> {
     // snapshot a destiempo no lo borre.
     if (activa.id === "musculos") {
       conectarMapa(cliente.sexo);
+      return;
+    }
+    if (activa.id === "registro") {
+      conectarRegistro(datosRegistro(datos), pintar, (envio) => registrarSesion(envio));
       return;
     }
     if (activa.id === "ranking") {
@@ -593,7 +582,6 @@ async function arrancar(): Promise<void> {
       tokenSincronizado = true;
       sincronizarToken().catch(() => {});
     }
-    resolverGifs();
     pintar();
   });
   observarAsistencias(clienteId, (a) => { asistencias = a; pintar(); });
@@ -602,9 +590,11 @@ async function arrancar(): Promise<void> {
   observarLogrosPersonales(clienteId, (l) => { logros = l; pintar(); });
   observarVideos(clienteId, (v) => { resolverVideos(v); });
   observarBanco((b) => {
-    banco = indiceBanco(b);
-    resolverGifs();
+    banco = b;
+    indice = indiceBanco(b);
+    pintar();
   });
+  observarSesiones(clienteId, (s) => { sesiones = s; pintar(); });
   observarTirada(clienteId, hoy.slice(0, 7), (t) => { tiradaEsteMes = t; pintar(); });
   observarTirada(clienteId, mesAnterior(hoy.slice(0, 7)), (t) => {
     tiradaMesAnterior = t;

@@ -1,6 +1,7 @@
 import { httpsCallable } from "firebase/functions";
 import { functions } from "./firebase";
 import type { Ranking } from "./datos";
+import type { Envio } from "./registro";
 
 /**
  * Las llamadas a funciones que puede hacer el cliente: las escrituras y la lectura del
@@ -65,3 +66,12 @@ export const registrarEntrada = httpsCallable<
   { plataforma: "ios" | "android" | "otro" },
   { ok: true }
 >(functions, "registrarEntrada");
+
+/**
+ * Guarda lo que anotó en Registro. El servidor valida contra el banco y pone la fecha; el id
+ * viene del borrador, así que reintentar después de un error no duplica la sesión.
+ */
+export const registrarSesion = httpsCallable<Envio, { ok: true; id: string; fecha: string }>(
+  functions,
+  "registrarSesion"
+);

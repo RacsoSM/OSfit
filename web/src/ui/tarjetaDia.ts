@@ -88,6 +88,33 @@ function listaEjercicios(ejercicios: Ejercicio[]): string {
   return `<ul class="hoy-ejercicios">${filas}</ul>`;
 }
 
+/**
+ * El día que le toca hoy y sus ejercicios, o null si hoy no toca nada (sin rutina, fin de
+ * semana o descanso). Es la misma cuenta que pinta la tarjeta; la usa Registro para ofrecer
+ * primero los ejercicios del día.
+ */
+export function diaDeHoy(
+  cliente: Cliente,
+  hoy: string,
+  asistencias: Asistencia[] = []
+): { nombreDia: string; ejercicios: Ejercicio[] } | null {
+  const dias = cliente.rutinaAsignada?.dias ?? [];
+  if (dias.length === 0 || esFinDeSemana(hoy)) return null;
+  const trio = {
+    dia: cliente.ultimoDia,
+    fecha: cliente.ultimoDiaFecha,
+    esAncla: cliente.ultimoDiaEsAncla,
+  };
+  const indice = interpretar(trio, dias.length, hoy, cliente.rutinaAsignada?.reinicioSemanal ?? false);
+  if (indice === DESCANSO || indice === null) return null;
+  const dia = dias[indice];
+  if (!dia) return null;
+  return {
+    nombreDia: dia.nombreDia ?? "",
+    ejercicios: conSusPesos(cliente, ejerciciosDeHoy(dia, indice, asistencias, hoy)),
+  };
+}
+
 export function tarjetaDia(
   cliente: Cliente,
   hoy: string,

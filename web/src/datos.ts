@@ -1,4 +1,4 @@
-import { collection, doc, onSnapshot, query, where } from "firebase/firestore";
+import { collection, doc, limit, onSnapshot, orderBy, query, where } from "firebase/firestore";
 import type { FirestoreError, Timestamp } from "firebase/firestore";
 import { db, renovarCredencial } from "./firebase";
 import type { PaletaWeb } from "./paleta";
@@ -217,6 +217,43 @@ export function observarCliente(clienteId: string, alCambiar: (c: Cliente | null
       (snap) => {
         alLlegar();
         alCambiar(snap.exists() ? (snap.data() as Cliente) : null);
+      },
+      alFallar
+    )
+  );
+}
+
+/** Una serie como la guarda `registrarSesion`. En los de tiempo, `reps` son segundos. */
+export interface SerieSesion { reps: number; peso: number | null; }
+
+/**
+ * Lo que registró en un entrenamiento: `clientes/{cid}/sesiones/{id}`. Lo escribe solo la
+ * función `registrarSesion`; `nombre` es copia del banco al momento de guardar.
+ */
+export interface Sesion {
+  id: string;
+  fecha: string;
+  origen: "manual" | "guiado";
+  ejercicios: { ejercicioId: string; nombre: string; series: SerieSesion[] }[];
+}
+
+/**
+ * Sus últimas sesiones, de la más nueva a la más vieja. Con 30 alcanza para el historial y
+ * para prellenar lo que hizo la última vez; las 8 semanas del mapa de fuerza pedirán su
+ * propia consulta cuando lleguen.
+ */
+export function observarSesiones(clienteId: string, alCambiar: (s: Sesion[]) => void) {
+  const consulta = query(
+    collection(db, "clientes", clienteId, "sesiones"),
+    orderBy("creada", "desc"),
+    limit(30)
+  );
+  return escuchar("sesiones", (alLlegar, alFallar) =>
+    onSnapshot(
+      consulta,
+      (snap) => {
+        alLlegar();
+        alCambiar(snap.docs.map((d) => ({ ...(d.data() as Omit<Sesion, "id">), id: d.id })));
       },
       alFallar
     )

@@ -1,8 +1,10 @@
-import type { Asistencia, Cliente, LogroPersonalOtorgado, MedallaOtorgada } from "./datos";
+import type { Asistencia, Cliente, EjercicioBanco, LogroPersonalOtorgado, MedallaOtorgada, Sesion } from "./datos";
 import type { IdEstilo } from "./estilo";
 import type { Tirada } from "./tirada";
 import { recordatorioPago } from "./pago";
-import { tarjetaDia } from "./ui/tarjetaDia";
+import { diaDeHoy, tarjetaDia } from "./ui/tarjetaDia";
+import { ventanaRegistro, type DatosRegistro } from "./ui/registro";
+import type { IndiceBanco } from "./banco";
 import { tarjetaRecordatorioPago } from "./ui/tarjetaRecordatorioPago";
 import { tarjetasStats } from "./ui/tarjetasStats";
 import { accionDia, hojaDeMotivosAbierta } from "./ui/accionDia";
@@ -51,6 +53,22 @@ export interface DatosCliente {
   activandoNotificaciones: boolean;
   /** Los SVG del mapa muscular por archivo; los pide `main.ts` al entrar a Músculos. */
   mapas: Readonly<Record<string, EstadoSvg>>;
+  /** El banco de ejercicios; vacío mientras no llega. */
+  banco: readonly EjercicioBanco[];
+  indiceBanco: IndiceBanco;
+  /** Sus últimas sesiones registradas; null mientras no llegan. */
+  sesiones: Sesion[] | null;
+}
+
+/** Lo que necesita Registro, armado de lo que hay en cada repintado. Lo usa también `main.ts`. */
+export function datosRegistro(d: DatosCliente): DatosRegistro {
+  return {
+    hoy: d.hoy,
+    dia: diaDeHoy(d.cliente, d.hoy, d.asistencias),
+    banco: d.banco,
+    indice: d.indiceBanco,
+    sesiones: d.sesiones,
+  };
 }
 
 export interface Ventana {
@@ -103,11 +121,8 @@ export const VENTANAS: readonly Ventana[] = [
     pintar: (d) => tarjetaMusculos(d.cliente.sexo, d.mapas),
   },
   {
-    id: "registro", titulo: "Registro", icono: "📝", grupo: "barra", proximamente: true,
-    pintar: () => seccionVacia(
-      "Tu registro", "📝", "Muy pronto",
-      "Aquí vas a anotar tus series, repeticiones y pesos."
-    ),
+    id: "registro", titulo: "Registro", icono: "📝", grupo: "barra",
+    pintar: (d) => ventanaRegistro(datosRegistro(d)),
   },
   {
     id: "ranking", titulo: "Ranking", icono: "🏆", grupo: "principal",

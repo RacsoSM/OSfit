@@ -1,8 +1,8 @@
-import type { EjercicioBanco, Rutina } from "./datos";
+import type { EjercicioBanco } from "./datos";
 
 /**
  * El banco de ejercicios del lado de la página: ligar por nombre los ejercicios de la rutina
- * con su entrada del banco, para mostrar su GIF.
+ * con su entrada del banco, buscar en él y armar la URL de cada GIF. Lo usa Registro.
  *
  * Por nombre y no por un id guardado en la rutina: las rutinas que ya existen no tienen ese id,
  * y el entrenador escribe el nombre como le sale. El `Ejercicio.ejercicioId` del spec llegará
@@ -37,38 +37,51 @@ export function indiceBanco(banco: readonly EjercicioBanco[]): IndiceBanco {
   return indice;
 }
 
-/** Todos los nombres de la rutina, de todos los días y variaciones. */
-export function nombresDeLaRutina(rutina: Rutina | null | undefined): string[] {
-  return (rutina?.dias ?? []).flatMap((d) =>
-    [d.ejercicios ?? [], ...(d.variaciones ?? []).map((v) => v.ejercicios ?? [])]
-      .flat()
-      .map((e) => e.nombre ?? "")
-  );
-}
-
 /**
- * Los GIF que hay que pedirle a Storage: los de su rutina, no los del banco entero. Cada URL
- * cuesta un viaje, y la rutina de una clienta toca una veintena de ejercicios de cien.
+ * Los ejercicios del banco que corresponden a esos nombres, en ese orden y sin repetir. Un
+ * nombre que no casa con nada se queda fuera: sin entrada en el banco no hay GIF ni se puede
+ * registrar contra el mapa de fuerza.
  */
-export function rutasDeGifs(rutina: Rutina | null | undefined, indice: IndiceBanco): string[] {
-  const rutas = new Set<string>();
-  for (const nombre of nombresDeLaRutina(rutina)) {
-    const ruta = indice.get(claveBanco(nombre))?.gifRuta;
-    if (ruta) rutas.add(ruta);
+export function delBanco(nombres: readonly string[], indice: IndiceBanco): EjercicioBanco[] {
+  const vistos = new Set<string>();
+  const salida: EjercicioBanco[] = [];
+  for (const nombre of nombres) {
+    const e = indice.get(claveBanco(nombre));
+    if (e && !vistos.has(e.id)) {
+      vistos.add(e.id);
+      salida.push(e);
+    }
   }
-  return [...rutas];
+  return salida;
 }
 
 /**
- * Nombre de ejercicio → URL de su GIF, o null. Null también mientras la URL no se resolvió:
- * la fila se pinta sin imagen y aparece en el repintado siguiente, en vez de un cuadro roto.
+ * Los ejercicios cuyo nombre o algún alias contiene todas las palabras buscadas, ordenados por
+ * nombre. Por palabras y no por frase exacta: "curl manc" tiene que encontrar "Curl con
+ * mancuernas". Vacío si no se buscó nada, para no tirar el banco entero de golpe en el grid.
  */
-export function gifsPorRuta(
-  indice: IndiceBanco,
-  urls: Readonly<Record<string, string>>
-): (nombre: string) => string | null {
-  return (nombre) => {
-    const ruta = indice.get(claveBanco(nombre))?.gifRuta;
-    return (ruta && urls[ruta]) || null;
-  };
+export function buscarEnBanco(texto: string, banco: readonly EjercicioBanco[]): EjercicioBanco[] {
+  const palabras = claveBanco(texto).split(" ").filter(Boolean);
+  if (palabras.length === 0) return [];
+  return banco
+    .filter((e) => {
+      const textos = [e.nombre, ...(e.alias ?? [])].map(claveBanco);
+      return palabras.every((p) => textos.some((t) => t.includes(p)));
+    })
+    .sort((a, b) => a.nombre.localeCompare(b.nombre, "es"));
+}
+
+/**
+ * La URL pública del GIF, armada sin preguntarle a Storage. Los GIF del banco son catálogo y
+ * `storage.rules` los deja leer sin sesión justo para esto: un grid de veinte ejercicios
+ * serían veinte `getDownloadURL` antes de poder pintar, y además no hace falta cargar el SDK
+ * de Storage en la página.
+ *
+ * GEMELO del bucket: `storageBucket` en `firebase.ts`.
+ */
+const BUCKET = "osfit-cccfe.firebasestorage.app";
+
+export function urlGif(ruta: string | null | undefined): string | null {
+  if (!ruta) return null;
+  return `https://firebasestorage.googleapis.com/v0/b/${BUCKET}/o/${encodeURIComponent(ruta)}?alt=media`;
 }

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Asistencia, Cliente, Ejercicio } from "../datos";
-import { tarjetaDia } from "./tarjetaDia";
+import { diaDeHoy, tarjetaDia } from "./tarjetaDia";
 
 /** 2026-09-15 es lunes; 2026-09-19 viernes; 2026-09-20 domingo. */
 const LUNES = "2026-09-15";
@@ -213,5 +213,18 @@ describe("tarjetaDia", () => {
 
     expect(html).toContain("Hoy toca descansar");
     expect(html).toContain("Pecho y espalda");
+  });
+});
+
+describe("diaDeHoy", () => {
+  it("da el día que toca con sus ejercicios", () => {
+    const r = diaDeHoy(cliente([ejercicio({ nombre: "Sentadilla" })]), LUNES);
+    expect(r?.nombreDia).toBe("Pecho y espalda");
+    expect(r?.ejercicios.map((e) => e.nombre)).toEqual(["Sentadilla"]);
+  });
+
+  it("fin de semana o sin rutina no hay día", () => {
+    expect(diaDeHoy(cliente([ejercicio()]), DOMINGO)).toBeNull();
+    expect(diaDeHoy(cliente([], { rutinaAsignada: null }), LUNES)).toBeNull();
   });
 });

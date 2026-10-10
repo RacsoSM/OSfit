@@ -917,3 +917,67 @@ main:has(#barra) { padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
   .mapa-cargando { animation: none; }
   .mapa-giro, .mapa-marco, .mapa-cuerpo .musculo, .mapa-svg .musculo-elevado { transition: none; }
 }
+
+/* ── Registro ─────────────────────────────────────────────────────────────────
+   Las animaciones vienen sobre blanco, así que cada GIF va en su cuadrito blanco: sobre
+   cualquier paleta oscura se lee como una ficha y no como un hueco. */
+.registro-subtitulo { margin-top: 18px; }
+.registro-agregar { margin-bottom: 4px; }
+.registro-volver { width: auto; margin: 0 0 6px -10px; text-align: left; }
+.registro-hist { list-style: none; margin: 4px 0 0; padding: 0; }
+.registro-hist-ej { padding: 6px 0; border-top: 1px solid var(--superficie-alta); }
+.registro-hist-ej:first-child { border-top: 0; }
+.registro-hist-nombre { display: block; font-weight: 600; font-size: 15px; }
+.registro-hist-series { font-size: 13px; color: var(--texto-tenue); }
+
+/* Dos columnas en el teléfono, más si cabe: el GIF tiene que verse lo bastante grande para
+   reconocer el movimiento. */
+.registro-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
+.registro-opcion {
+  position: relative; display: flex; flex-direction: column; align-items: stretch; gap: 6px;
+  padding: 8px; border: 2px solid transparent; border-radius: 14px;
+  background: var(--superficie); color: var(--texto); font: inherit; text-align: left; cursor: pointer;
+}
+.registro-opcion.agregado { border-color: var(--primario); }
+.registro-opcion-gif {
+  width: 100%; height: auto; aspect-ratio: 1; border-radius: 10px; background: #fff; object-fit: cover;
+}
+.registro-opcion-nombre { font-size: 14px; font-weight: 600; line-height: 1.25; }
+.registro-opcion-ya {
+  position: absolute; top: 12px; right: 12px; padding: 2px 8px; border-radius: 999px;
+  background: var(--primario); color: var(--sobre-primario); font-size: 11px; font-weight: 700;
+}
+.registro-sin-gif {
+  display: flex; align-items: center; justify-content: center; font-size: 32px;
+  background: var(--superficie-alta);
+}
+.registro-opcion .registro-sin-gif { background: var(--superficie-alta); }
+
+.registro-ej-cabecera { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
+.registro-ej-gif { width: 64px; height: 64px; flex: none; border-radius: 10px; background: #fff; object-fit: cover; }
+.registro-ej-nombre { flex: 1; font-size: 16px; }
+.registro-serie { display: flex; align-items: center; gap: 8px; padding: 6px 0; }
+.registro-serie-num {
+  width: 24px; height: 24px; flex: none; border-radius: 50%; display: flex; align-items: center;
+  justify-content: center; background: var(--superficie-alta); font-size: 12px; font-weight: 700;
+}
+.registro-campo {
+  flex: 1; min-width: 0; display: flex; align-items: center; gap: 4px;
+  background: var(--fondo); border: 1px solid var(--superficie-alta); border-radius: 10px; padding: 0 10px;
+}
+.registro-campo input {
+  width: 100%; min-width: 0; border: 0; background: none; color: var(--texto);
+  font: inherit; font-size: 17px; font-weight: 700; padding: 9px 0; text-align: right;
+}
+.registro-campo input:focus { outline: none; }
+.registro-campo:focus-within { border-color: var(--primario); }
+.registro-campo span { font-size: 12px; color: var(--texto-tenue); }
+.registro-por { color: var(--texto-tenue); }
+.registro-quitar {
+  width: 32px; height: 32px; flex: none; border: 0; border-radius: 8px; background: none;
+  color: var(--texto-tenue); font-size: 14px; cursor: pointer;
+}
+.registro-mas-serie {
+  margin-top: 4px; padding: 8px 12px; border: 1px dashed var(--superficie-alta); border-radius: 10px;
+  background: none; color: var(--primario); font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; width: 100%;
+}

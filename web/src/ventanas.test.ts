@@ -21,7 +21,7 @@ function datos(campos: Partial<DatosCliente> = {}): DatosCliente {
     medallas: [], logros: [], tiradaEsteMes: null, tiradaMesAnterior: null,
     ranking: { estado: "cargando" }, estilo: "clasico",
     notificaciones: "no-habilitada", invitacionDescartada: false, activandoNotificaciones: false,
-    mapas: {},
+    mapas: {}, banco: [], indiceBanco: new Map(), sesiones: null,
     ...campos,
   };
 }
@@ -52,8 +52,8 @@ describe("el registro de ventanas", () => {
     expect(VENTANAS.filter((v) => v.grupo === "pie").map((v) => v.id)).toEqual(["ajustes"]);
   });
 
-  it("solo Registro está por venir", () => {
-    expect(VENTANAS.filter((v) => v.proximamente).map((v) => v.id)).toEqual(["registro"]);
+  it("ya no queda ninguna ventana por venir", () => {
+    expect(VENTANAS.filter((v) => v.proximamente).map((v) => v.id)).toEqual([]);
   });
 
   it("toda ventana tiene con qué pintarse", () => {
@@ -153,7 +153,10 @@ describe("la ventana Músculos", () => {
 });
 
 describe("la ventana Registro", () => {
-  it("dice que viene pronto", () => {
-    expect(contenidoDe(ventana("registro"), datos())).toContain("Muy pronto");
+  it("abre en su historial con el botón para agregar un ejercicio", () => {
+    const html = contenidoDe(ventana("registro"), datos({ sesiones: [] }));
+    expect(html).toContain("+ Agregar ejercicio");
+    expect(html).toContain("Todavía no registras nada");
+    expect(html).not.toContain("Muy pronto");
   });
 });
