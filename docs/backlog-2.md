@@ -283,10 +283,13 @@ Idea para cerrar la sesión de verdad (a decidir en el spec):
 - Si ya existe el punto 1 (notificaciones), borrar también sus `dispositivos` para que no le
   sigan llegando avisos.
 
-Spec: `superpowers/specs/2026-10-10-revocar-acceso-design.md` (**propuesta, sin aprobar
-todavía**). Urge más desde el punto 5: la página instalada ya entra con su sesión guardada sin
-volver a canjear, así que revocar no la saca. Abierto: si apagar "Notificaciones" al revocar,
-si mostrar "Acceso revocado el…" en la ficha y el texto del candado.
+Spec: `superpowers/specs/2026-10-10-revocar-acceso-design.md`, **aprobado (2026-10-10)**.
+Urge más desde el punto 5: la página instalada ya entra con su sesión guardada sin volver a
+canjear, así que revocar no la saca. Decidido: "Notificaciones" no se toca al revocar, la ficha
+muestra "Acceso revocado el…", y el candado dice "Tu acceso ya no está activo. Pídele a tu
+entrenador un link nuevo."
+
+Plan: `superpowers/plans/2026-10-10-revocar-acceso.md` (7 tasks; desplegar pide confirmación).
 
 ## 7. Barra de abajo con Músculos y Registro, y Entrenar en Inicio — 🔴 URGENTE
 

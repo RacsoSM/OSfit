@@ -1,6 +1,8 @@
 # Revocar el acceso de una clienta de verdad
 
-Punto 6 de `docs/backlog-2.md`. **Propuesta, sin aprobar todavía.**
+Punto 6 de `docs/backlog-2.md`. **Aprobado por el entrenador (2026-10-10).**
+
+Plan: `docs/superpowers/plans/2026-10-10-revocar-acceso.md`.
 
 ## Contexto y problema
 
@@ -54,7 +56,7 @@ En `firestore.rules`:
 ```
 function sesionVigente(cid) {
   let corte = get(/databases/$(database)/documents/clientes/$(cid)).data.get('accesoRevocadoEn', null);
-  return corte == null || request.auth.token.auth_time > corte.toMillis() / 1000;
+  return corte == null || request.auth.token.auth_time * 1000 > corte.toMillis();
 }
 
 function esCliente(cid) {
@@ -174,15 +176,13 @@ repite para que se vea en el momento de decidir.
 Probar con una clienta de prueba: entrar, instalar, revocar con la página abierta, ver el
 candado; mandar link nuevo, entrar; confirmar que un aviso ya no le llega al teléfono viejo.
 
-## Por decidir (entrenador)
+## Decisiones (entrenador, 2026-10-10)
 
-1. **¿Apagar también "Notificaciones" (`notificacionesWeb`) al revocar?** La propuesta es no
-   tocarla: los teléfonos se borran igual, y si le mandas un link nuevo sigue habilitada sin
-   que tengas que acordarte. Si prefieres que quede apagada, es una línea más en el trigger.
-2. **¿Mostrar en la ficha "Acceso revocado el {fecha}"** cuando no tiene acceso y hay
-   `accesoRevocadoEn`? Ayuda a no confundir "nunca le compartí" con "se lo quité".
-3. **El texto del candado** de revocado: "Tu acceso ya no está activo. Pídele a tu entrenador
-   un link nuevo." ¿Así, o prefieres otro?
+1. **"Notificaciones" (`notificacionesWeb`) no se toca al revocar.** Los teléfonos se borran
+   igual, y si le mandas un link nuevo sigue habilitada sin que tengas que acordarte.
+2. **La ficha muestra "Acceso revocado el {fecha}"** cuando no tiene acceso y existe
+   `accesoRevocadoEn`, para no confundir "nunca le compartí" con "se lo quité".
+3. **Texto del candado:** "Tu acceso ya no está activo. Pídele a tu entrenador un link nuevo."
 
 ## Fuera de alcance
 
