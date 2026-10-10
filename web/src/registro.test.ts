@@ -9,6 +9,7 @@ import {
   paraEnviar,
   quitarEjercicio,
   quitarSerie,
+  resumenSeries,
   ultimasSeries,
 } from "./registro";
 
@@ -143,5 +144,22 @@ describe("hora de inicio", () => {
     b = cambiarSerie(cambiarSerie(b, 0, 0, "reps", "8"), 0, 0, "peso", "40");
     const r = paraEnviar(b);
     expect(r.ok && "iniciadaEn" in r.datos).toBe(false);
+  });
+});
+
+describe("resumenSeries", () => {
+  it("resume lo anotado para la fila comprimida", () => {
+    let b = agregarEjercicio(vacio(), ej(), null, 3);
+    b = cambiarSerie(cambiarSerie(b, 0, 0, "peso", "40"), 0, 0, "reps", "10");
+    b = cambiarSerie(cambiarSerie(b, 0, 1, "peso", "42,5"), 0, 1, "reps", "8");
+    expect(resumenSeries(b.ejercicios[0])).toBe("2 series · 40 kg × 10, 42.5 kg × 8");
+  });
+
+  it("sin nada anotado lo dice; corporales sin lastre y de tiempo en su forma", () => {
+    expect(resumenSeries(agregarEjercicio(vacio(), ej(), null, 3).ejercicios[0])).toBe("Sin anotar");
+    let b = agregarEjercicio(agregarEjercicio(vacio(), dominadas, null, 1), plancha, null, 1);
+    b = cambiarSerie(cambiarSerie(b, 0, 0, "reps", "6"), 1, 0, "reps", "45");
+    expect(resumenSeries(b.ejercicios[0])).toBe("1 serie · × 6");
+    expect(resumenSeries(b.ejercicios[1])).toBe("1 serie · 45 s");
   });
 });

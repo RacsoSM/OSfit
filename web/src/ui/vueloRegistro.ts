@@ -64,15 +64,21 @@ export function despegar(origen: HTMLElement | null): HTMLElement | null {
 }
 
 /**
- * Lleva el clon hasta el GIF de la tarjeta nueva. El destino se esconde mientras el clon vuela
+ * Lleva el clon hasta el GIF de la tarjeta activa (la recién elegida en el grid, o la que se
+ * abrió desde su fila comprimida). El destino se esconde mientras el clon vuela
  * y aparece justo cuando aterriza, para que se vea como el mismo objeto. Si no hubo despegue,
  * solo trae la tarjeta a la vista.
  */
-export function aterrizar(clon: HTMLElement | null, tarjeta: HTMLElement | null): void {
+export function aterrizar(
+  clon: HTMLElement | null,
+  tarjeta: HTMLElement | null,
+  desdeAbajo = true
+): void {
   const destino = tarjeta?.querySelector<HTMLElement>(".registro-ej-gif") ?? null;
   // Instantáneo y antes de medir: el clon está fijo en pantalla, así que mover la página no
-  // lo afecta, y el destino tiene que estar ya donde va a quedar.
-  tarjeta?.scrollIntoView({ block: "center" });
+  // lo afecta, y el destino tiene que estar ya donde va a quedar. Arriba (con el margen de
+  // `scroll-margin-top`): la tarjeta activa es alta y lo primero que tiene que verse es su GIF.
+  tarjeta?.scrollIntoView({ block: "start" });
 
   if (!clon || !tarjeta || !destino) {
     clon?.remove();
@@ -84,21 +90,31 @@ export function aterrizar(clon: HTMLElement | null, tarjeta: HTMLElement | null)
     width: parseFloat(clon.style.width), height: parseFloat(clon.style.height),
   };
   const { medio, fin } = trayectoria(desde, destino.getBoundingClientRect());
-  const radio = getComputedStyle(destino).borderRadius || "10px";
+  // El redondeo se escala junto con el clon: para que al aterrizar coincida con el del destino
+  // hay que dividirlo entre la escala. Sin esto, un GIF chico que crece se vuelve un círculo.
+  const radioDestino = parseFloat(getComputedStyle(destino).borderRadius) || 10;
+  const radioOrigen = parseFloat(getComputedStyle(clon).borderRadius) || 10;
   destino.style.visibility = "hidden";
 
   const contenido = tarjeta.closest<HTMLElement>("#registro");
   contenido?.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 260, easing: "ease-out" });
   tarjeta.animate(
-    [{ opacity: 0, transform: "translateY(14px)" }, { opacity: 1, transform: "none" }],
+    // Entra desde abajo al avanzar en el entrenamiento y desde arriba al volver.
+    [{ opacity: 0, transform: `translateY(${desdeAbajo ? 18 : -18}px)` }, { opacity: 1, transform: "none" }],
     { duration: 380, delay: 160, easing: "cubic-bezier(.2,.8,.2,1)", fill: "backwards" }
   );
 
   const vuelo = clon.animate(
     [
-      { transform: `translate(0, 0) scale(${ELEVADO})`, boxShadow: SOMBRA },
-      { transform: `translate(${medio.x}px, ${medio.y}px) scale(${medio.escala})`, boxShadow: SOMBRA, offset: 0.55 },
-      { transform: `translate(${fin.x}px, ${fin.y}px) scale(${fin.escala})`, boxShadow: "none", borderRadius: radio },
+      { transform: `translate(0, 0) scale(${ELEVADO})`, boxShadow: SOMBRA, borderRadius: `${radioOrigen}px` },
+      {
+        transform: `translate(${medio.x}px, ${medio.y}px) scale(${medio.escala})`, boxShadow: SOMBRA,
+        borderRadius: `${(radioOrigen + radioDestino) / 2 / medio.escala}px`, offset: 0.55,
+      },
+      {
+        transform: `translate(${fin.x}px, ${fin.y}px) scale(${fin.escala})`, boxShadow: "none",
+        borderRadius: `${radioDestino / fin.escala}px`,
+      },
     ],
     { duration: 620, easing: "cubic-bezier(.45,.05,.25,1)", fill: "forwards" }
   );

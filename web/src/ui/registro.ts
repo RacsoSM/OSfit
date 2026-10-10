@@ -11,6 +11,7 @@ import {
   paraEnviar,
   quitarEjercicio,
   quitarSerie,
+  resumenSeries,
   ultimasSeries,
   type Borrador,
   type EjercicioBorrador,
@@ -28,8 +29,10 @@ import { aterrizar, despegar } from "./vueloRegistro";
  *
  * Vistas dentro de la misma ventana:
  *  - **inicio**: el botón "Iniciar entrenamiento" y la entrada al historial.
- *  - **capturar**: el entrenamiento en curso, con sus ejercicios y las series de peso y reps.
- *    Mientras hay uno abierto, Registro se abre aquí.
+ *  - **capturar**: el entrenamiento en curso. Un ejercicio a la vez en grande (GIF, series de
+ *    peso y reps, "+ Serie", Anterior/Siguiente); los anteriores comprimidos arriba y los
+ *    siguientes abajo, y al tocar uno su GIF vuela y crece hasta el lugar del activo.
+ *    Mientras hay un entrenamiento abierto, Registro se abre aquí.
  *  - **elegir**: un grid con nombre y GIF, agrupado: primero los grupos que le tocan hoy según
  *    el nombre del día ("Pecho, hombro y tríceps" → Pecho, Hombro, Tríceps), con los
  *    ejercicios que el entrenador configuró para cada uno; luego los demás grupos. Lo que ya
@@ -69,6 +72,13 @@ interface Estado {
   enfocar: number | null;
   /** El GIF que va volando del grid a su tarjeta (ver `vueloRegistro.ts`); null si no hay. */
   vuelo: HTMLElement | null;
+  /**
+   * El ejercicio abierto en grande en el entrenamiento; los demás van comprimidos arriba y
+   * abajo. null = el último agregado.
+   */
+  activo: number | null;
+  /** Hacia dónde se movió la última vez: la tarjeta entra desde abajo al avanzar, desde arriba al volver. */
+  avanzando: boolean;
 }
 
 const LLAVE_BORRADOR = "osfit:registro-borrador";
@@ -83,11 +93,13 @@ const estado: Estado = {
   guardado: false,
   enfocar: null,
   vuelo: null,
+  activo: null,
+  avanzando: true,
 };
 
 /** Solo para los tests: poner la ventana en una vista y con un borrador dados. */
-export function ponerEstadoRegistro(parcial: Partial<Pick<Estado, "vista" | "borrador" | "error">>): void {
-  Object.assign(estado, { guardado: false, enVuelo: false, error: null }, parcial);
+export function ponerEstadoRegistro(parcial: Partial<Pick<Estado, "vista" | "borrador" | "error" | "activo">>): void {
+  Object.assign(estado, { guardado: false, enVuelo: false, error: null, activo: null }, parcial);
 }
 
 function guardarBorrador(b: Borrador | null): void {
@@ -272,21 +284,62 @@ function filaSerie(e: EjercicioBorrador, i: number, s: SerieBorrador, j: number)
     </div>`;
 }
 
-function tarjetaCaptura(e: EjercicioBorrador, i: number): string {
+/** El índice del ejercicio abierto en grande, dentro de rango. */
+function indiceActivo(b: Borrador): number {
+  const ultimo = b.ejercicios.length - 1;
+  return Math.min(Math.max(estado.activo ?? ultimo, 0), ultimo);
+}
+
+/**
+ * El ejercicio activo, en grande: el GIF a lo ancho, sus series y cómo moverse al anterior o
+ * al siguiente. Es el único con campos: los demás solo muestran su resumen.
+ */
+function tarjetaActiva(e: EjercicioBorrador, i: number, total: number): string {
   const nota = e.tipo === "corporal"
     ? `<p class="accion-nota">Con tu peso corporal. En kg, solo si agregaste peso extra.</p>`
     : "";
+  const nav = total > 1 ? `
+      <div class="registro-nav">
+        <button class="registro-nav-boton" data-activar="${i - 1}" ${i === 0 ? "disabled" : ""}>‹ Anterior</button>
+        <span class="registro-nav-cuenta">${i + 1} de ${total}</span>
+        <button class="registro-nav-boton" data-activar="${i + 1}" ${i === total - 1 ? "disabled" : ""}>Siguiente ›</button>
+      </div>` : "";
   return `
-    <div class="tarjeta registro-ejercicio" data-indice="${i}">
-      <div class="registro-ej-cabecera">
-        ${gif(e.gifRuta, "registro-ej-gif", 64)}
-        <strong class="registro-ej-nombre">${escapar(e.nombre)}</strong>
-        <button class="registro-quitar" data-quitar-ej="${i}" aria-label="Quitar ${escapar(e.nombre)}">✕</button>
+    <div class="tarjeta registro-ejercicio activo" data-indice="${i}">
+      <div class="registro-activo-gif">
+        ${gif(e.gifRuta, "registro-ej-gif", 240)}
+        <button class="registro-quitar registro-quitar-ej" data-quitar-ej="${i}" aria-label="Quitar ${escapar(e.nombre)}">✕</button>
       </div>
+      <p class="registro-activo-nombre">${escapar(e.nombre)}</p>
       ${nota}
       ${e.series.map((s, j) => filaSerie(e, i, s, j)).join("")}
       <button class="registro-mas-serie" data-agregar-serie="${i}">+ Serie</button>
+      ${nav}
     </div>`;
+}
+
+/** Un ejercicio que no es el activo: una fila delgada que al tocarse se abre en grande. */
+function filaCompacta(e: EjercicioBorrador, i: number): string {
+  return `
+    <button class="registro-compacto" data-activar="${i}" aria-label="Abrir ${escapar(e.nombre)}">
+      ${gif(e.gifRuta, "registro-compacto-gif", 44)}
+      <span class="registro-compacto-texto">
+        <span class="registro-compacto-nombre">${escapar(e.nombre)}</span>
+        <span class="registro-compacto-resumen">${escapar(resumenSeries(e))}</span>
+      </span>
+      <span class="registro-compacto-flecha" aria-hidden="true">›</span>
+    </button>`;
+}
+
+/** Arriba los anteriores comprimidos, en medio el activo en grande, abajo los siguientes. */
+function ejerciciosDelEntrenamiento(b: Borrador): string {
+  const a = indiceActivo(b);
+  const arriba = b.ejercicios.slice(0, a).map((e, i) => filaCompacta(e, i)).join("");
+  const abajo = b.ejercicios.slice(a + 1).map((e, k) => filaCompacta(e, a + 1 + k)).join("");
+  return `
+    ${arriba ? `<div class="registro-compactos">${arriba}</div>` : ""}
+    ${tarjetaActiva(b.ejercicios[a], a, b.ejercicios.length)}
+    ${abajo ? `<div class="registro-compactos">${abajo}</div>` : ""}`;
 }
 
 function vistaCapturar(): string {
@@ -306,7 +359,7 @@ function vistaCapturar(): string {
       <p class="confirmar-titulo">Entrenamiento en curso</p>
       <p class="accion-nota" style="margin:2px 0 12px">${escapar(enPalabras(b.fecha))}${desde ? ` · desde las ${escapar(desde)}` : ""}</p>
     </div>
-    ${b.ejercicios.map(tarjetaCaptura).join("")}
+    ${hay ? ejerciciosDelEntrenamiento(b) : ""}
     ${vacio}
     ${error}
     <button class="boton${hay ? " secundario" : ""}" data-accion="agregar" ${off}>+ Agregar ejercicio</button>
@@ -401,6 +454,22 @@ export function conectarRegistro(
       return;
     }
 
+    // Abrir en grande otro ejercicio del entrenamiento: tocando su fila comprimida o con
+    // Anterior/Siguiente. Su GIF chico vuela y crece hasta el lugar del activo.
+    if (el.dataset.activar !== undefined && b) {
+      const i = Number(el.dataset.activar);
+      const actual = indiceActivo(b);
+      if (!Number.isInteger(i) || i < 0 || i >= b.ejercicios.length || i === actual) return;
+      const origen = raiz.querySelector<HTMLElement>(`.registro-compacto[data-activar="${i}"] .registro-compacto-gif`);
+      estado.vuelo?.remove();
+      estado.vuelo = despegar(origen);
+      estado.avanzando = i > actual;
+      estado.activo = i;
+      estado.enfocar = i;
+      repintar();
+      return;
+    }
+
     const id = el.dataset.agregar;
     if (id && b) {
       const e = d.banco.find((x) => x.id === id);
@@ -410,6 +479,9 @@ export function conectarRegistro(
         guardarBorrador(agregarEjercicio(b, e, ultimasSeries(d.sesiones ?? [], id), seriesDeLaRutina(d, e)));
       }
       estado.enfocar = ya < 0 ? (estado.borrador?.ejercicios.length ?? 1) - 1 : ya;
+      // El que acaba de elegir pasa a ser el activo, en grande.
+      estado.activo = estado.enfocar;
+      estado.avanzando = true;
       // Antes de repintar: el grid desaparece en el repintado y el clon tiene que medirse aquí.
       estado.vuelo?.remove();
       estado.vuelo = despegar(el.querySelector<HTMLElement>(".registro-opcion-gif"));
@@ -420,7 +492,11 @@ export function conectarRegistro(
     }
     if (!b) return;
     if (el.dataset.quitarEj !== undefined) {
-      guardarBorrador(quitarEjercicio(b, Number(el.dataset.quitarEj)));
+      const quitado = Number(el.dataset.quitarEj);
+      const actual = indiceActivo(b);
+      guardarBorrador(quitarEjercicio(b, quitado));
+      // Queda abierto el que estaba debajo (o el anterior si era el último).
+      estado.activo = quitado < actual ? actual - 1 : actual;
       repintar();
       return;
     }
@@ -449,6 +525,6 @@ export function conectarRegistro(
     const clon = estado.vuelo;
     estado.enfocar = null;
     estado.vuelo = null;
-    aterrizar(clon, tarjeta);
+    aterrizar(clon, tarjeta, estado.avanzando);
   }
 }

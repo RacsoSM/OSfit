@@ -115,15 +115,37 @@ describe("elegir", () => {
 });
 
 describe("capturar", () => {
-  it("pide kg y reps en los de peso, y solo segundos en los de tiempo", () => {
+  it("el activo va en grande con sus campos; los demás comprimidos arriba y abajo", () => {
+    let b = agregarEjercicio(nuevoBorrador("b1234567", "2026-10-12"), press, null, 2);
+    b = agregarEjercicio(b, plancha, null, 1);
+    b = agregarEjercicio(b, { ...press, id: "otro", nombre: "Otro" }, null, 1);
+    ponerEstadoRegistro({ vista: "capturar", borrador: b, activo: 1 });
+    const html = ventanaRegistro(datos());
+    // Solo la plancha (activa) tiene campos: segundos y sin kg.
+    expect(html.match(/data-campo="reps"/g)).toHaveLength(1);
+    expect(html).not.toContain('data-campo="peso"');
+    expect(html).toContain(">seg<");
+    // Press arriba, Otro abajo, comprimidos.
+    expect(html.indexOf('class="registro-compacto" data-activar="0"')).toBeLessThan(html.indexOf("registro-ejercicio activo"));
+    expect(html.indexOf("registro-ejercicio activo")).toBeLessThan(html.indexOf('class="registro-compacto" data-activar="2"'));
+    expect(html).toContain("2 de 3");
+    expect(html).toContain("Sin anotar");
+  });
+
+  it("sin elegir uno, el activo es el último agregado", () => {
     let b = agregarEjercicio(nuevoBorrador("b1234567", "2026-10-12"), press, null, 2);
     b = agregarEjercicio(b, plancha, null, 1);
     ponerEstadoRegistro({ vista: "capturar", borrador: b });
     const html = ventanaRegistro(datos());
+    expect(html).toMatch(/registro-ejercicio activo" data-indice="1"/);
+    expect(html).toContain('data-activar="0"');
+  });
+
+  it("con un solo ejercicio no muestra Anterior/Siguiente", () => {
+    ponerEstadoRegistro({ vista: "capturar", borrador: agregarEjercicio(nuevoBorrador("b1234567", "2026-10-12"), press, null, 2) });
+    const html = ventanaRegistro(datos());
+    expect(html).not.toContain("Siguiente");
     expect(html.match(/data-campo="peso"/g)).toHaveLength(2);
-    expect(html.match(/data-campo="reps"/g)).toHaveLength(3);
-    expect(html).toContain(">seg<");
-    expect(html).toContain("Terminar entrenamiento");
   });
 
   it("termina el entrenamiento en vez de solo guardarlo", () => {

@@ -102,6 +102,11 @@ gym, siga o no la rutina de la app. Los GIF se usan aquí, **no en la tarjeta de
   entrenamiento"**; solo con uno abierto se pueden agregar ejercicios, y se cierra con
   **"Terminar entrenamiento"**. Se guarda la hora de inicio (`iniciada`) y la de fin
   (`creada`). Mientras haya uno abierto, Registro se abre en él.
+- **Entrenamiento en curso** (decidido 2026-10-10): **un ejercicio a la vez en grande** (GIF
+  a lo ancho, series de kg × reps, "+ Serie", "‹ Anterior · Siguiente ›"); los anteriores
+  **comprimidos arriba** y los siguientes **abajo** (GIF chico, nombre y resumen de lo
+  anotado). Al tocar uno comprimido, su GIF vuela y crece hasta el lugar del activo, y la
+  tarjeta entra desde abajo al avanzar o desde arriba al volver.
 - **Historial:** pantalla aparte ("Tu historial") con cada entrenamiento: fecha, horario,
   duración, ejercicios y series, del más reciente al más viejo.
 - **Elegir (grid):** tarjetas con el **GIF y el nombre**, **agrupadas** (decidido 2026-10-10):

@@ -151,6 +151,22 @@ export function paraEnviar(b: Borrador): { ok: true; datos: Envio } | { ok: fals
   return { ok: true, datos };
 }
 
+/**
+ * "2 series · 40 kg × 10, 42.5 kg × 8": lo anotado de un ejercicio, para su fila comprimida
+ * cuando no es el activo. Cuenta solo las series con algo escrito.
+ */
+export function resumenSeries(e: EjercicioBorrador): string {
+  const llenas = e.series.filter((s) => s.reps.trim() !== "" || s.peso.trim() !== "");
+  if (llenas.length === 0) return "Sin anotar";
+  const texto = llenas.map((s) => {
+    const reps = s.reps.trim() || "?";
+    if (e.tipo === "tiempo") return `${reps} s`;
+    const peso = s.peso.trim().replace(",", ".");
+    return peso === "" ? `× ${reps}` : `${peso} kg × ${reps}`;
+  });
+  return `${llenas.length === 1 ? "1 serie" : `${llenas.length} series`} · ${texto.join(", ")}`;
+}
+
 /** Las series de la sesión más reciente que tenga ese ejercicio (llegan de nueva a vieja). */
 export function ultimasSeries(sesiones: readonly Sesion[], ejercicioId: string): SerieSesion[] | null {
   for (const s of sesiones) {

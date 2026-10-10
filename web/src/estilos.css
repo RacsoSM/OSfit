@@ -954,9 +954,44 @@ main:has(#barra) { padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
 }
 .registro-opcion .registro-sin-gif { background: var(--superficie-alta); }
 
-.registro-ej-cabecera { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
-.registro-ej-gif { width: 64px; height: 64px; flex: none; border-radius: 10px; background: #fff; object-fit: cover; }
-.registro-ej-nombre { flex: 1; font-size: 16px; }
+/* El ejercicio activo del entrenamiento: el GIF a lo ancho, para ver bien el movimiento.
+   `scroll-margin-top` deja aire arriba cuando se le lleva la vista (`aterrizar`). */
+.registro-ejercicio.activo { scroll-margin-top: 12px; }
+.registro-activo-gif { position: relative; display: flex; justify-content: center; margin-bottom: 10px; }
+.registro-activo-gif .registro-ej-gif {
+  width: min(100%, 240px); height: auto; aspect-ratio: 1; border-radius: 16px; background: #fff; object-fit: cover;
+}
+.registro-activo-gif .registro-sin-gif { font-size: 56px; }
+.registro-quitar-ej { position: absolute; top: 0; right: 0; }
+.registro-activo-nombre { margin: 0 0 6px; font-size: 19px; font-weight: 800; text-align: center; }
+.registro-nav {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--superficie-alta);
+}
+.registro-nav-boton {
+  border: 0; background: none; color: var(--primario); font: inherit; font-size: 14px; font-weight: 700;
+  padding: 8px 4px; cursor: pointer;
+}
+.registro-nav-boton:disabled { color: var(--texto-tenue); opacity: 0.4; cursor: default; }
+.registro-nav-cuenta { font-size: 12px; color: var(--texto-tenue); }
+
+/* Los demás ejercicios del entrenamiento, comprimidos arriba y abajo del activo. */
+.registro-compactos { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+.registro-compacto {
+  display: flex; align-items: center; gap: 12px; width: 100%; padding: 8px 10px;
+  border: 0; border-radius: 14px; background: var(--superficie); color: var(--texto);
+  font: inherit; text-align: left; cursor: pointer; transition: transform 0.12s ease-out;
+}
+.registro-compacto:active { transform: scale(0.98); }
+.registro-compacto-gif { width: 44px; height: 44px; flex: none; border-radius: 8px; background: #fff; object-fit: cover; }
+.registro-compacto .registro-sin-gif { font-size: 20px; }
+.registro-compacto-texto { flex: 1; min-width: 0; }
+.registro-compacto-nombre { display: block; font-size: 15px; font-weight: 700; }
+.registro-compacto-resumen {
+  display: block; font-size: 12px; color: var(--texto-tenue);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.registro-compacto-flecha { font-size: 22px; color: var(--texto-tenue); }
 .registro-serie { display: flex; align-items: center; gap: 8px; padding: 6px 0; }
 .registro-serie-num {
   width: 24px; height: 24px; flex: none; border-radius: 50%; display: flex; align-items: center;
