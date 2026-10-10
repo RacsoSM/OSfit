@@ -5,10 +5,14 @@ import {
   lecturaDelStatus,
   memoriaToken,
   resolverSesion,
+  RUTA_CON_TOKEN,
   saludDeLosAlmacenes,
   saludDelAlmacen,
   tokenEnLaUrl,
+  URL_SESION,
 } from "./sesion";
+
+import indexHtml from "../index.html?raw";
 
 /** Un `Storage` de mentiras, con la opción de tirar como tira el modo privado. */
 function almacen(opciones: { tira?: boolean } = {}): Storage {
@@ -290,5 +294,20 @@ describe("saludDelAlmacen", () => {
 
   it("las dos saludes caben en un renglón", () => {
     expect(saludDeLosAlmacenes([almacen(), null])).toBe("s+lx");
+  });
+});
+
+/**
+ * El script en línea de `index.html` adelanta el canje antes de que exista el bundle, así que
+ * repite la ruta del link y la URL de `sesion`. Si se desincronizan, el canje adelantado se
+ * pierde en silencio (o le pega a otra función) y la página vuelve a tardar lo de antes.
+ */
+describe("index.html adelanta el canje igual que el bundle", () => {
+  it("reconoce la misma ruta del link", () => {
+    expect(indexHtml).toContain(`location.pathname.match(/${RUTA_CON_TOKEN.source}/)`);
+  });
+
+  it("le pega a la misma función", () => {
+    expect(indexHtml).toContain(`fetch("${URL_SESION}"`);
   });
 });

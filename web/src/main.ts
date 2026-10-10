@@ -1,4 +1,3 @@
-import { getDownloadURL, ref } from "firebase/storage";
 import {
   alFallarDatos,
   alVolverDatos,
@@ -28,7 +27,7 @@ import { activarNotificaciones, entornoDelNavegador, sincronizarToken } from "./
 import { conectarNotificaciones } from "./ui/tarjetaNotificaciones";
 import { almacenDeEstilo, ponerEstilo } from "./ui/cambioDeEstilo";
 import { estiloGuardado, type IdEstilo } from "./estilo";
-import { credencialLista, huellaDeLaSesion, iniciarSesion, storage } from "./firebase";
+import { credencialLista, huellaDeLaSesion, iniciarSesion, urlDeDescarga } from "./firebase";
 import { almacenesDelNavegador, saludDeLosAlmacenes } from "./sesion";
 import type { MotivoSinAcceso, ResultadoSesion } from "./sesion";
 import { aplicarPaleta } from "./paleta";
@@ -258,7 +257,7 @@ async function arrancar(): Promise<void> {
     videos = await Promise.all(
       recientes.map(async (v) => {
         try {
-          const url = await getDownloadURL(ref(storage, v.rutaStorage));
+          const url = await urlDeDescarga(v.rutaStorage);
           return { ...v, url };
         } catch {
           return { ...v, url: null };

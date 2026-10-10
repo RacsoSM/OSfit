@@ -217,7 +217,29 @@ Sospechosos a revisar (sin confirmar):
 Relacionado con el punto 1 (PWA): una versión instalada con service worker abriría casi al
 instante desde caché.
 
-Pendiente: medir y luego escribir el spec.
+Hecho (2026-10-10), primera ronda, sin desplegar todavía:
+
+- **Auth ya no carga el iframe de Google.** `getAuth` trae el soporte de inicio de sesión con
+  ventana emergente (Google, Facebook…), que la página no usa. En teléfonos y Safari, el SDK
+  *esperaba* a bajar un script de apis.google.com y un iframe de `authDomain` antes de
+  restaurar la sesión, en cada apertura. Ahora es `initializeAuth` con la misma persistencia.
+- **El canje del link arranca desde el HTML**, sin esperar al bundle: la descarga del JS y el
+  viaje a `sesion` van a la vez. Más `preconnect` a Identity Toolkit y Firestore.
+- **Bundle principal: 216 → 162 kB gzip (−25 %).** Fuera `re2js` (motor de regex que Firestore
+  importa solo para consultas "pipeline", que no usamos; ver `web/src/re2jsVacio.ts`), el
+  soporte de ventana emergente de Auth y Storage, que ahora se carga solo si hay videos.
+- Medido en Chromium con user agent de iPhone, bajando el bundle en 1.5 s y `sesion` en 2 s:
+  el canje empezaba a los 1,645 ms y ahora a los 40 ms; la página pasaba de 3,992 a 2,452 ms.
+
+Pendiente:
+
+- **Desplegar** (`firebase deploy --only hosting`) y medir en un teléfono real desde WhatsApp.
+- **Arranque en frío de `sesion`:** sigue siendo el sospechoso más grande. Si medido sigue
+  tardando, `minInstances: 1` lo quita (cuesta al mes). Además `sesion` espera a escribir el
+  contador de entradas (`contarEntrada`) antes de responder: una escritura más en el camino.
+- **Hojas de estilos alternativos:** las seis se cargan siempre (≈ 91 kB, 18 kB gzip, todo el
+  CSS junto). Cargar solo la del estilo elegido ahorraría unos 10 kB gzip, a cambio de
+  sacarlas del bundle de Vite; poco premio, se dejó para después.
 
 ## 6. Revocar el enlace de un cliente de verdad
 

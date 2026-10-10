@@ -1,13 +1,19 @@
 import { initializeApp } from "firebase/app";
-import { getAuth, signInWithCustomToken } from "firebase/auth";
+import {
+  browserLocalPersistence,
+  browserSessionPersistence,
+  indexedDBLocalPersistence,
+  initializeAuth,
+  signInWithCustomToken,
+} from "firebase/auth";
 import { initializeFirestore, persistentLocalCache } from "firebase/firestore";
 import { getFunctions } from "firebase/functions";
-import { getStorage } from "firebase/storage";
 import {
   almacenesDelNavegador,
   lecturaDelStatus,
   memoriaToken,
   resolverSesion,
+  URL_SESION,
 } from "./sesion";
 import type { ResultadoSesion } from "./sesion";
 
@@ -19,8 +25,6 @@ const firebaseConfig = {
   messagingSenderId: "754891137796",
   appId: "1:754891137796:web:79f6422b58e8217de82651",
 };
-
-const URL_SESION = "https://sesion-cuzhc6pwiq-uw.a.run.app";
 
 export const app = initializeApp(firebaseConfig);
 /**
@@ -44,7 +48,18 @@ export const app = initializeApp(firebaseConfig);
  * la ventaja, nunca la página.
  */
 export const db = initializeFirestore(app, { localCache: persistentLocalCache() });
-export const storage = getStorage(app);
+
+/**
+ * La URL de descarga de un archivo de Storage.
+ *
+ * Storage se carga aparte, la primera vez que se pide algo: solo lo usan los videos, y metido
+ * en el bundle principal retrasaba el arranque de todas las clientas, tengan videos o no. Si
+ * esa carga falla, tira como cualquier otro `getDownloadURL` fallido.
+ */
+export async function urlDeDescarga(ruta: string): Promise<string> {
+  const { getDownloadURL, getStorage, ref } = await import("firebase/storage");
+  return getDownloadURL(ref(getStorage(app), ruta));
+}
 
 /**
  * La región tiene que ser la misma con la que se desplegaron las funciones (`REGION` en
@@ -72,8 +87,17 @@ export const functions = getFunctions(app, "us-west1");
  * sesión.
  *
  * Quitándolo, la sesión se queda quieta donde el SDK la puso.
+ *
+ * `initializeAuth` y no `getAuth`, con la misma jerarquía de arriba escrita a mano: lo único
+ * que `getAuth` agrega es el soporte de inicio de sesión con ventana emergente o redirección
+ * (Google, Facebook…), que esta página no usa —entra con custom token—. Y no salía gratis:
+ * en teléfonos y en Safari, el SDK *espera* a cargar un script de apis.google.com y un iframe
+ * de `authDomain` antes de restaurar la sesión, así que `authStateReady` y el canje del link
+ * pagaban esos viajes en cada apertura. Además pesa unos 20 kB gzip del bundle.
  */
-const auth = getAuth(app);
+const auth = initializeAuth(app, {
+  persistence: [indexedDBLocalPersistence, browserLocalPersistence, browserSessionPersistence],
+});
 
 /**
  * Mete a la clienta a su sesión y devuelve en qué quedó el intento.
@@ -199,11 +223,12 @@ export async function huellaDeLaSesion(): Promise<string> {
 async function canjear(token: string): Promise<ResultadoSesion> {
   let respuesta: Response;
   try {
-    respuesta = await fetch(URL_SESION, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ token }),
-    });
+    respuesta = await (canjeAdelantado(token) ??
+      fetch(URL_SESION, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token }),
+      }));
   } catch {
     // `fetch` solo rechaza cuando la petición no llegó a ningún lado: sin señal, DNS caído,
     // la función sin desplegar. Nada de eso dice nada sobre el token.
@@ -223,6 +248,26 @@ async function canjear(token: string): Promise<ResultadoSesion> {
     // (duran una hora), un canje nuevo lo arregla y ese también pasa por acá.
     return { estado: esFalloDeRed(error) ? "sin-conexion" : "sin-acceso" };
   }
+}
+
+declare global {
+  interface Window {
+    osfitCanjeAdelantado?: { token: string; respuesta: Promise<Response> };
+  }
+}
+
+/**
+ * El canje que el script de `index.html` ya mandó, si es de este token.
+ *
+ * Al abrir `/c/<token>` el canje siempre ocurre (escalón 1 de `resolverSesion`), así que el
+ * HTML lo lanza en cuanto llega, sin esperar al bundle: la descarga del JS y el viaje a
+ * `sesion` —que en frío tarda segundos— van en paralelo en vez de uno tras otro. Se usa una
+ * sola vez: un reintento o una renovación posterior pide un canje nuevo.
+ */
+function canjeAdelantado(token: string): Promise<Response> | null {
+  const adelantado = window.osfitCanjeAdelantado;
+  delete window.osfitCanjeAdelantado;
+  return adelantado?.token === token ? adelantado.respuesta : null;
 }
 
 function esFalloDeRed(error: unknown): boolean {

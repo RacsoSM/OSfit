@@ -12,6 +12,34 @@
       comparte almacenamiento con Safari, así que sin el token en la dirección abriría en el
       candado. Ver docs/superpowers/specs/2026-10-08-notificaciones-web-pwa-design.md.
     -->
+    <!--
+      Canje adelantado. Al abrir el link `/c/<token>` la página siempre canjea el token con la
+      función `sesion` (escalón 1 de `resolverSesion`), y eso solo podía empezar cuando ya se
+      había bajado y arrancado el bundle. Lanzándolo desde acá, la descarga del JS y el viaje
+      a `sesion` —que en frío tarda segundos— van a la vez. `canjeAdelantado` en
+      `firebase.ts` recoge la respuesta. La ruta y la URL son gemelas de `RUTA_CON_TOKEN` y
+      `URL_SESION` en `sesion.ts` (lo revisa `sesion.test.ts`).
+    -->
+    <script>
+      (function () {
+        var token = location.pathname.match(/^\/c\/([A-Za-z0-9]+)$/);
+        if (!token || !window.fetch) return;
+        var respuesta = fetch("https://sesion-cuzhc6pwiq-uw.a.run.app", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token: token[1] })
+        });
+        // Quien la recoge maneja el error; esto solo evita el aviso de promesa sin atender.
+        respuesta.catch(function () {});
+        window.osfitCanjeAdelantado = { token: token[1], respuesta: respuesta };
+      })();
+    </script>
+    <!--
+      Conexiones que el arranque va a necesitar, abiertas desde ya: Identity Toolkit para
+      entrar con el token canjeado y Firestore para los datos.
+    -->
+    <link rel="preconnect" href="https://identitytoolkit.googleapis.com" crossorigin />
+    <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin />
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="apple-touch-icon" href="/icono-180.png" />
     <meta name="apple-mobile-web-app-capable" content="yes" />

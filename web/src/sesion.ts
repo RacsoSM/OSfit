@@ -31,7 +31,14 @@ export type ResultadoSesion =
  */
 export type MotivoSinAcceso = "link-rechazado" | "sin-rastro" | "recordado-rechazado";
 
-const RUTA_CON_TOKEN = /^\/c\/([A-Za-z0-9]+)$/;
+/**
+ * La ruta del link mágico. Exportada porque el script en línea de `index.html` la repite para
+ * adelantar el canje (ver `canjeAdelantado`); `sesion.test.ts` revisa que sigan iguales.
+ */
+export const RUTA_CON_TOKEN = /^\/c\/([A-Za-z0-9]+)$/;
+
+/** La función `sesion`, que canjea el token del link. También la repite `index.html`. */
+export const URL_SESION = "https://sesion-cuzhc6pwiq-uw.a.run.app";
 
 /** El token del link mágico si la ruta es la del link; `null` en cualquier otra. */
 export function tokenEnLaUrl(ruta: string): string | null {
