@@ -3,6 +3,7 @@ import type { IdEstilo } from "./estilo";
 import type { Tirada } from "./tirada";
 import { recordatorioPago } from "./pago";
 import { tarjetaDia } from "./ui/tarjetaDia";
+import type { GifDe } from "./ui/tarjetaDia";
 import { tarjetaRecordatorioPago } from "./ui/tarjetaRecordatorioPago";
 import { tarjetasStats } from "./ui/tarjetasStats";
 import { accionDia, hojaDeMotivosAbierta } from "./ui/accionDia";
@@ -51,6 +52,8 @@ export interface DatosCliente {
   activandoNotificaciones: boolean;
   /** Los SVG del mapa muscular por archivo; los pide `main.ts` al entrar a Músculos. */
   mapas: Readonly<Record<string, EstadoSvg>>;
+  /** El GIF del banco de cada ejercicio, ya con su URL; lo arma `main.ts` (ver `banco.ts`). */
+  gifDe: GifDe;
 }
 
 export interface Ventana {
@@ -88,7 +91,7 @@ function inicio(d: DatosCliente): string {
       ${hojaDeMotivosAbierta() ? "" : accionHoyNoPuedo(d.cliente, d.hoy, d.yaAviso)}`;
   return `
       ${tarjetaRecordatorioPago(recordatorioPago(d.cliente, d.hoy))}
-      ${tarjetaDia(d.cliente, d.hoy, acciones, d.asistencias)}
+      ${tarjetaDia(d.cliente, d.hoy, acciones, d.asistencias, d.gifDe)}
       ${invitacionNotificaciones(d.notificaciones, d.invitacionDescartada)}
       ${tarjetasStats(d.asistencias, d.hoy)}
       ${tarjetaRevivir(d.cliente, d.hoy, d.asistencias, d.tiradaEsteMes, d.tiradaMesAnterior)}

@@ -147,6 +147,16 @@ main {
 }
 /* La nota ocupa su propio renglón: es texto libre y puede ser larga ("bajarle, se lastimó"). */
 .ejercicio-nota { flex: 1 0 100%; font-size: 12px; color: rgba(255, 255, 255, 0.78); }
+/* Con GIF, la imagen va colgada a la izquierda y la fila se corre: así el renglón de nombre y
+   series y el de la nota siguen igual que sin GIF, y los estilos que tocan `.ejercicio` no se
+   enteran. Fondo blanco porque las animaciones vienen sobre blanco y así se ven como tarjetita
+   sobre cualquier paleta. */
+.ejercicio.con-gif { position: relative; padding-left: 76px; min-height: 78px; align-content: center; }
+.ejercicio-gif {
+  position: absolute; left: 0; top: 7px; width: 64px; height: 64px;
+  border-radius: 12px; background: #fff; object-fit: cover;
+}
+.ejercicio-credito { margin: 6px 0 0; font-size: 10px; color: rgba(255, 255, 255, 0.6); text-align: right; }
 .hoy-sin-ejercicios {
   font-size: 13px; color: rgba(255, 255, 255, 0.78); margin: 8px 0 0;
 }

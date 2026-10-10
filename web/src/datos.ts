@@ -24,6 +24,25 @@ export interface DiaRutina {
 }
 export interface Rutina { id: string; nombre: string; dias: DiaRutina[]; reinicioSemanal?: boolean; }
 
+/**
+ * Un ejercicio del banco, `ejercicios/{id}`: el catálogo con el que se ligan por nombre los
+ * ejercicios de las rutinas (ver `banco.ts`). Lo carga el entrenador con
+ * `functions/scripts/cargarBancoEjercicios.mjs`.
+ */
+export interface EjercicioBanco {
+  id: string;
+  nombre: string;
+  /** Otras formas de escribirlo ("bulgaras", "split squat"). Opcional: un doc a mano puede no traerlo. */
+  alias?: string[];
+  tipo: "peso" | "corporal" | "tiempo";
+  /** Grupo del SVG (`data-musculo`) → 1 principal, 0.5 secundario. */
+  musculos: Record<string, number>;
+  /** Ruta en Storage, no URL (como los videos). Ausente o null = todavía sin GIF. */
+  gifRuta?: string | null;
+  /** El crédito que piden los dueños del GIF; acompaña a la imagen donde se muestre. */
+  atribucion?: string | null;
+}
+
 /** "H" o "M". Gemelo de `Sexo` en `data/model/Sexo.kt`. */
 export type Sexo = "H" | "M";
 
@@ -198,6 +217,23 @@ export function observarCliente(clienteId: string, alCambiar: (c: Cliente | null
       (snap) => {
         alLlegar();
         alCambiar(snap.exists() ? (snap.data() as Cliente) : null);
+      },
+      alFallar
+    )
+  );
+}
+
+/**
+ * El banco completo. Son menos de cien documentos y casi nunca cambian: con el caché en
+ * IndexedDB de `firebase.ts`, desde la segunda visita sale del teléfono sin gastar lecturas.
+ */
+export function observarBanco(alCambiar: (b: EjercicioBanco[]) => void) {
+  return escuchar("banco", (alLlegar, alFallar) =>
+    onSnapshot(
+      collection(db, "ejercicios"),
+      (snap) => {
+        alLlegar();
+        alCambiar(snap.docs.map((d) => ({ ...(d.data() as Omit<EjercicioBanco, "id">), id: d.id })));
       },
       alFallar
     )

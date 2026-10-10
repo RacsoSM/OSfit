@@ -215,3 +215,27 @@ describe("tarjetaDia", () => {
     expect(html).toContain("Pecho y espalda");
   });
 });
+
+describe("tarjetaDia con GIFs del banco", () => {
+  const gifDe = (nombre: string) => (nombre === "Press banca" ? "https://gif/press.webp" : null);
+
+  it("muestra el GIF de los ejercicios que lo tienen y no inventa los demás", () => {
+    const html = tarjetaDia(
+      cliente([ejercicio({ nombre: "Press banca" }), ejercicio({ nombre: "Caminar" })]),
+      LUNES, "", [], gifDe
+    );
+    expect(html.match(/class="ejercicio-gif"/g)).toHaveLength(1);
+    expect(html).toContain('src="https://gif/press.webp"');
+  });
+
+  it("acredita a Gym visual cuando sale al menos un GIF", () => {
+    const html = tarjetaDia(cliente([ejercicio()]), LUNES, "", [], gifDe);
+    expect(html).toContain("Gym visual");
+  });
+
+  it("sin GIFs no hay crédito ni imágenes", () => {
+    const html = tarjetaDia(cliente([ejercicio()]), LUNES);
+    expect(html).not.toContain("ejercicio-gif");
+    expect(html).not.toContain("Gym visual");
+  });
+});
