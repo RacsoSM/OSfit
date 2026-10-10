@@ -77,8 +77,13 @@ una **barra de navegación abajo, fija y visible en toda la web**, tipo WhatsApp
   avisa que el entrenador tiene que completar su perfil.
 - Cada grupo se pinta con el color de su nivel, 0–5, de la paleta del estilo activo; los
   músculos sin datos van con el gris de `.sin-color`. Abajo hay una leyenda.
-- Al tocar un músculo se abre una hoja con su nivel, su mejor marca reciente y los
-  ejercicios que lo alimentan.
+- **Al tocar un músculo** (hecho 2026-10-10): crece y toma el color del estilo, los demás se
+  apagan, el cuerpo se encoge un poco y abajo sale un panel con su nombre, su **rango**
+  (Principiante, Novato, Intermedio, Avanzado, Élite, cortes en los niveles 0–4) y **"más
+  fuerte que el X % de las personas"**, con una barra. Sin datos dice cómo conseguirlos.
+  Tocar el mismo, fuera de los músculos o ✕ lo suelta. Rangos y porcentajes en
+  `web/src/fuerza.ts` (convención de las tablas públicas: 5/20/50/80/95 %). Más adelante:
+  su mejor marca reciente y los ejercicios que lo alimentan.
 - El SVG se inserta inline (fetch + `innerHTML` una sola vez, cacheado) para poder ponerle
   clases o `style.fill` a cada `[data-musculo]`.
 

@@ -306,6 +306,8 @@ Hecho (2026-10-10), primera parte:
   la espalda, sin tarjeta alrededor, en gris "sin datos"
   (`ui/mapaMuscular.ts`). Los SVG se piden al entrar y se meten en línea con ids prefijados,
   listos para pintarse por nivel. Sin sexo, avisa que falta completar el perfil.
+- **Tocar un músculo** lo agranda y muestra su rango y "más fuerte que el X %" contra la
+  población (`fuerza.ts`). Hasta que exista el registro, dice "sin datos".
 - **App:** `Cliente.sexo` ("H"/"M") y el selector "Sexo" en Editar cliente.
 
 Pendiente: aprobar el resto del spec (banco de ejercicios, Registro, modo guiado, cálculo

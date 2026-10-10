@@ -1,5 +1,7 @@
-import { describe, expect, it } from "vitest";
-import { archivosMapa, prepararSvg, tarjetaMusculos } from "./mapaMuscular";
+import { beforeEach, describe, expect, it } from "vitest";
+import {
+  archivosMapa, detalleMusculo, prepararSvg, reiniciarMapa, tarjetaMusculos,
+} from "./mapaMuscular";
 import frenteH from "../../public/mapa-muscular-frente.svg?raw";
 import espaldaH from "../../public/mapa-muscular-espalda.svg?raw";
 import frenteM from "../../public/mapa-muscular-frente-mujer.svg?raw";
@@ -84,6 +86,8 @@ describe("prepararSvg", () => {
 });
 
 describe("tarjetaMusculos", () => {
+  beforeEach(reiniciarMapa);
+
   const listos = {
     "/mapa-muscular-frente.svg": { estado: "listo", svg: frenteH },
     "/mapa-muscular-espalda.svg": { estado: "listo", svg: espaldaH },
@@ -121,5 +125,37 @@ describe("tarjetaMusculos", () => {
     });
     expect(h).toContain("mujer");
     expect(h).not.toContain("hombre");
+  });
+});
+
+describe("detalleMusculo", () => {
+  it("sin músculo tocado, la leyenda invita a tocar", () => {
+    const h = detalleMusculo(null, undefined, "M");
+    expect(h).toContain("Toca un músculo");
+    expect(h).not.toContain("mapa-detalle\"");
+  });
+
+  it("sin datos, dice el músculo y cómo conseguir su rango", () => {
+    const h = detalleMusculo("pecho", undefined, "M");
+    expect(h).toContain("Pecho");
+    expect(h).toContain("sin datos");
+    expect(h).toContain("Registra ejercicios de pecho");
+    expect(h).toContain("comparada");
+  });
+
+  it("a él se le habla en masculino", () => {
+    expect(detalleMusculo("pecho", undefined, "H")).toContain("comparado");
+  });
+
+  it("con datos, su rango y qué tan fuerte es contra la población", () => {
+    const h = detalleMusculo("cuadriceps", { nivel: 2.5 }, "M");
+    expect(h).toContain("Cuádriceps");
+    expect(h).toContain("Intermedio");
+    expect(h).toContain("Más fuerte que el <strong>65 %</strong>");
+    expect(h).toContain("width: 65%");
+  });
+
+  it("siempre trae con qué cerrarlo", () => {
+    expect(detalleMusculo("gluteo", undefined, "M")).toContain('id="cerrar-detalle"');
   });
 });

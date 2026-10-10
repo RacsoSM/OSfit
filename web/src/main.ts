@@ -447,7 +447,7 @@ async function arrancar(): Promise<void> {
     // estado de las dos acciones no vive acá, sino dentro de sus módulos, justo para que un
     // snapshot a destiempo no lo borre.
     if (activa.id === "musculos") {
-      conectarMapa();
+      conectarMapa(cliente.sexo);
       return;
     }
     if (activa.id === "ranking") {

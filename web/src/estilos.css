@@ -818,6 +818,12 @@ main:has(#barra) { padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
 .mapa-marco {
   position: relative;
   width: min(100%, calc(min(72vh, 720px) * 420 / 800)); aspect-ratio: 420 / 800;
+  transition: width 220ms ease;
+}
+/* Con un músculo tocado el cuerpo se encoge lo justo para que el panel quepa entero arriba de
+   la barra, sin tener que desplazar la página. */
+.mapa-cuerpo.con-detalle .mapa-marco {
+  width: min(100%, calc((min(72vh, 720px) - 120px) * 420 / 800));
 }
 .mapa-giro {
   position: absolute; inset: 0;
@@ -838,7 +844,18 @@ main:has(#barra) { padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
   display: block; width: 100%; height: 100%;
   filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.45)) drop-shadow(0 0 0.5px rgba(0, 0, 0, 0.45));
 }
-.mapa-cuerpo .musculo { fill: #8f90a6; }
+.mapa-cuerpo .musculo {
+  fill: #8f90a6; cursor: pointer;
+  /* Crece desde su propio centro, no desde la esquina del dibujo. */
+  transform-box: fill-box; transform-origin: center;
+  transition: transform 220ms ease, fill 220ms ease, opacity 220ms ease;
+  -webkit-tap-highlight-color: transparent;
+}
+/* El músculo tocado se agranda y toma el color del estilo; el resto se apaga para que
+   destaque. La cara de atrás no recibe toques: girada, sigue ahí aunque no se vea. */
+.mapa-giro.con-seleccion .musculo:not(.seleccionado) { opacity: 0.35; }
+.mapa-cuerpo .musculo.seleccionado { fill: var(--primario); transform: scale(1.15); }
+.mapa-cara[aria-hidden="true"] { pointer-events: none; }
 /* Solo el ícono, chico, en la esquina de abajo a la derecha del dibujo: así el cuerpo
    ocupa casi toda la pantalla. El nombre lo dice `aria-label`. */
 .mapa-girar {
@@ -856,6 +873,25 @@ main:has(#barra) { padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
 }
 @keyframes mapa-pulso { from { opacity: 0.4; } to { opacity: 0.9; } }
 .mapa-aviso { color: var(--texto-tenue); font-size: 13px; padding: 12px; }
+#mapa-detalle { width: 100%; }
+.mapa-detalle {
+  position: relative; margin-top: 12px; padding: 12px 44px 12px 14px;
+  border-radius: 14px; background: var(--superficie); text-align: left;
+}
+.mapa-detalle p { margin: 0; }
+.mapa-detalle-nombre { font-size: 20px; font-weight: 800; color: var(--primario); }
+.mapa-detalle-rango { margin-top: 2px !important; font-size: 15px; }
+.mapa-detalle-texto { margin-top: 6px !important; font-size: 14px; color: var(--texto-tenue); }
+.mapa-detalle-barra {
+  margin-top: 10px; height: 8px; border-radius: 999px;
+  background: var(--superficie-alta); overflow: hidden;
+}
+.mapa-detalle-barra span { display: block; height: 100%; border-radius: inherit; background: var(--primario); }
+.mapa-detalle-cerrar {
+  position: absolute; top: 4px; right: 4px; width: 40px; height: 40px;
+  border: 0; border-radius: 12px; background: transparent;
+  color: var(--texto-tenue); font-size: 16px; cursor: pointer;
+}
 .mapa-leyenda {
   display: flex; align-items: center; gap: 8px; margin: 14px 2px 0;
   font-size: 13px; color: var(--texto-tenue); text-align: left;
@@ -863,5 +899,5 @@ main:has(#barra) { padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
 .mapa-muestra { flex: none; width: 14px; height: 14px; border-radius: 4px; background: #8f90a6; }
 @media (prefers-reduced-motion: reduce) {
   .mapa-cargando { animation: none; }
-  .mapa-giro { transition: none; }
+  .mapa-giro, .mapa-marco, .mapa-cuerpo .musculo { transition: none; }
 }
