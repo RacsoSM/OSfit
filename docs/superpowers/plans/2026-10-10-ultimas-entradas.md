@@ -63,4 +63,11 @@
 
 ## Registro de verificación
 
-(Se llena en Task 4.)
+**2026-10-10:** `functions/` 114 tests, `web/` 434 tests, app `testDebugUnitTest` (45
+archivos, sin fallas) y `assembleDebug` en verde.
+
+Desplegado en orden: `registrarEntrada`, hosting, `sesion`. Prueba de punta a punta en
+producción con una clienta temporal (creada y borrada por el script de prueba, junto con su
+acceso y su usuario de Auth): abrir `/c/<token>` como iPhone y como Android dejó `entradas: 2`
+y dos `ultimasEntradas` con su hora y `ios` / `android`. Que sean 2 y no 4 confirma que
+`sesion` ya no cuenta. APK entregado al entrenador; falta que vea el bloque en su teléfono.

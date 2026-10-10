@@ -372,3 +372,6 @@ así que el contador contaba de menos). Decidido: no se distingue instalada de n
 
 Spec: `superpowers/specs/2026-10-10-ultimas-entradas-design.md`, **aprobado (2026-10-10)**.
 Plan: `superpowers/plans/2026-10-10-ultimas-entradas.md`.
+
+Implementado y desplegado (2026-10-10): funciones, web y `sesion` en producción, probado de
+punta a punta con una clienta temporal; APK entregado. Falta que el entrenador lo vea en la app.
