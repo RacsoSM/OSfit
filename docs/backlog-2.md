@@ -354,7 +354,7 @@ Hecho (2026-10-10), segunda parte — **GIFs vinculados a los ejercicios** (cier
 - **Fuente:** `hasaneyldrm/exercises-dataset` en GitHub (1,324 animaciones © Gym visual),
   fijado a un commit. La licencia de los medios la está viendo el entrenador con Gym visual
   (ver `docs/licencias/GymVisual.md`).
-- **Banco semilla:** 93 ejercicios comunes (91 + jalón con triángulo y jalón supino, 2026-10-10) en `functions/semilla/ejercicios.json`, con nombre
+- **Banco semilla:** 94 ejercicios comunes (91 + jalón con triángulo, jalón supino y remo en T con apoyo de pecho, 2026-10-10) en `functions/semilla/ejercicios.json`, con nombre
   y alias en español, músculos (claves de los SVG) y tipo. Sin `estandares` todavía.
 - **Carga:** `functions/scripts/cargarBancoEjercicios.mjs` convierte cada GIF a WebP animado
   (~40 kB en vez de ~125 kB), lo sube a `ejercicios/<id>.webp` y escribe `ejercicios/{id}`.
