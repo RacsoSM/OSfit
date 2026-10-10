@@ -1,7 +1,10 @@
 package com.osfit.app.util
 
 import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
+import java.util.Locale
 
 /**
  * El renglón de la tarjeta "Acceso web": cuántas veces se canjeó su link y cuándo fue la
@@ -25,6 +28,16 @@ object TextoEntradas {
         val cuando = ultimoAcceso?.let { " · ${haceCuanto(it, ahora)}" } ?: ""
         return "$veces$cuando"
     }
+
+    /**
+     * El renglón de una clienta a la que se le revocó el acceso, para no confundir "nunca le
+     * compartí" con "se lo quité". La fecha va en la zona del gimnasio, no la del teléfono.
+     */
+    fun revocado(momento: Instant, zona: ZoneId): String =
+        "Acceso revocado el " + FECHA.format(momento.atZone(zona))
+
+    private val FECHA: DateTimeFormatter =
+        DateTimeFormatter.ofPattern("d 'de' MMMM 'de' yyyy", Locale.forLanguageTag("es-MX"))
 
     private fun haceCuanto(momento: Instant, ahora: Instant): String {
         val dias = ChronoUnit.DAYS.between(momento, ahora)

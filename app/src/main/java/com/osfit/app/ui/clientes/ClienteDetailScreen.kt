@@ -57,6 +57,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import com.osfit.app.data.SincronizadorDiaWeb
 import com.osfit.app.data.model.Cliente
 import com.osfit.app.data.model.MedallaCatalogo
 import com.osfit.app.data.model.Rutina
@@ -125,6 +126,7 @@ fun ClienteDetailScreen(
     // La plantilla que el entrenador eligió y todavía no confirmó, cuando el cliente
     // tiene rutina propia y asignarla le borraría lo suyo.
     var plantillaPorConfirmar by remember { mutableStateOf<Rutina?>(null) }
+    var confirmarRevocar by remember { mutableStateOf(false) }
     var mostrarDialogoAsignarDia by remember { mutableStateOf(false) }
     var mostrarDialogoSoborno by remember { mutableStateOf(false) }
     var mostrarConfirmacionActivo by remember { mutableStateOf(false) }
@@ -407,8 +409,14 @@ fun ClienteDetailScreen(
                 Card(modifier = Modifier.fillMaxWidth()) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text("Acceso web", style = MaterialTheme.typography.titleMedium)
+                        val revocadoEn = clienteActual.accesoRevocadoEn
                         Text(
-                            if (acceso == null) {
+                            if (acceso == null && revocadoEn != null) {
+                                TextoEntradas.revocado(
+                                    revocadoEn.toDate().toInstant(),
+                                    SincronizadorDiaWeb.ZONA
+                                )
+                            } else if (acceso == null) {
                                 "Todavía no le compartiste su página personal."
                             } else {
                                 WhatsAppUtil.urlAccesoWeb(acceso!!.token)
@@ -464,12 +472,53 @@ fun ClienteDetailScreen(
                                 )
                             }
                         }
-                        if (acceso != null) {
+                        acceso?.let { accesoActual ->
                             TextButton(
-                                onClick = { viewModel.revocarAccesoWeb() },
+                                onClick = { confirmarRevocar = true },
                                 modifier = Modifier.fillMaxWidth()
                             ) {
                                 Text("Revocar acceso", color = MaterialTheme.colorScheme.error)
+                            }
+                            // Confirmar porque no tiene vuelta: el link muere, se cierra su
+                            // página en todos sus teléfonos y hay que mandarle uno nuevo.
+                            if (confirmarRevocar) {
+                                AlertDialog(
+                                    onDismissRequest = { confirmarRevocar = false },
+                                    title = { Text("¿Revocar el acceso de ${clienteActual.nombre}?") },
+                                    text = {
+                                        Column {
+                                            Text(
+                                                "Su link dejará de servir y se cerrará su página " +
+                                                    "en todos sus teléfonos. Para que vuelva a " +
+                                                    "entrar tendrás que mandarle un link nuevo."
+                                            )
+                                            Text(
+                                                "Último acceso: " + TextoEntradas.resumen(
+                                                    entradas = accesoActual.entradas,
+                                                    ultimoAcceso = accesoActual.ultimoAcceso?.toDate()?.toInstant(),
+                                                    ahora = Instant.now()
+                                                ),
+                                                style = MaterialTheme.typography.bodySmall,
+                                                modifier = Modifier.padding(top = 12.dp)
+                                            )
+                                        }
+                                    },
+                                    confirmButton = {
+                                        TextButton(
+                                            onClick = {
+                                                confirmarRevocar = false
+                                                viewModel.revocarAccesoWeb()
+                                            }
+                                        ) {
+                                            Text("Revocar", color = MaterialTheme.colorScheme.error)
+                                        }
+                                    },
+                                    dismissButton = {
+                                        TextButton(onClick = { confirmarRevocar = false }) {
+                                            Text("Cancelar")
+                                        }
+                                    }
+                                )
                             }
                         }
                     }

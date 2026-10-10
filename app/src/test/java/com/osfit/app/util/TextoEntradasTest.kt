@@ -1,6 +1,7 @@
 package com.osfit.app.util
 
 import java.time.Instant
+import java.time.ZoneId
 import java.time.temporal.ChronoUnit
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -45,5 +46,14 @@ class TextoEntradasTest {
     @Test
     fun `con entradas pero sin marca, no se inventa la fecha`() {
         assertEquals("3 entradas", TextoEntradas.resumen(3, null, ahora))
+    }
+
+    @Test
+    fun `revocado dice la fecha en la zona del gimnasio`() {
+        val momento = Instant.parse("2026-10-11T03:00:00Z") // 10 de octubre, 8 pm en Mazatlán
+        assertEquals(
+            "Acceso revocado el 10 de octubre de 2026",
+            TextoEntradas.revocado(momento, ZoneId.of("America/Mazatlan"))
+        )
     }
 }
