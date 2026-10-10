@@ -381,6 +381,13 @@ Hecho (2026-10-10), cuarta parte — **grid agrupado por músculo**:
 - Desplegado (2026-10-10): regla de `configEjercicios`, banco recargado con `grupo` y web.
   APK de la app entregado; falta instalarlo y verificarlo en el teléfono.
 
+Hecho y desplegado (2026-10-10), quinta parte — **Registro por entrenamientos**:
+
+> "quiero que en el apartado de registro, se guarde como por ciclos de entrenamiento, entonces debe haber un botón como de "iniciar entrenamiento" [...] el primero este en gris, señalando que está inhábil por qué ya se eligió [...] habrá un apartado para revisar ese historial"
+
+- "Iniciar entrenamiento" → agregar ejercicios → "Terminar entrenamiento" (guarda hora de
+  inicio y fin). Lo ya elegido sale en gris y deshabilitado. "Tu historial" es pantalla aparte.
+
 Plan: `superpowers/plans/2026-10-10-banco-ejercicios-gifs.md`.
 **Desplegado (2026-10-10):** reglas, banco cargado (91 de 91), función `registrarSesion` y web.
 Falta que el entrenador lo verifique en su teléfono.

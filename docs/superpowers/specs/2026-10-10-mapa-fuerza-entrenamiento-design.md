@@ -98,12 +98,16 @@ una **barra de navegación abajo, fija y visible en toda la web**, tipo WhatsApp
 **Decidido (entrenador, 2026-10-10):** Registro es para anotar lo que el coach le dice en el
 gym, siga o no la rutina de la app. Los GIF se usan aquí, **no en la tarjeta de Inicio**.
 
-- **Historial:** sus sesiones de la más reciente a la más vieja: fecha, ejercicios y series.
-  Arriba, el botón **"+ Agregar ejercicio"**.
+- **Por entrenamientos** (decidido 2026-10-10): Registro abre con **"▶ Iniciar
+  entrenamiento"**; solo con uno abierto se pueden agregar ejercicios, y se cierra con
+  **"Terminar entrenamiento"**. Se guarda la hora de inicio (`iniciada`) y la de fin
+  (`creada`). Mientras haya uno abierto, Registro se abre en él.
+- **Historial:** pantalla aparte ("Tu historial") con cada entrenamiento: fecha, horario,
+  duración, ejercicios y series, del más reciente al más viejo.
 - **Elegir (grid):** tarjetas con el **GIF y el nombre**, **agrupadas** (decidido 2026-10-10):
   si hoy le toca "Pecho, hombro y tríceps", sale "Pecho" con sus ejercicios, luego "Hombro",
-  luego "Tríceps", y después todos los demás grupos y "Otros". Sin buscador. Lo ya agregado
-  sale marcado.
+  luego "Tríceps", y después todos los demás grupos y "Otros". Sin buscador. Lo que ya está
+  en el entrenamiento sale **en gris y deshabilitado**.
   - Los grupos del día **se leen del nombre del día** (`web/src/grupos.ts`): "Pierna" y
     "Superior completo" se expanden; lo nombrado directo va primero ("Pierna (Glúteo)" →
     Glúteo y luego el resto de la pierna).
