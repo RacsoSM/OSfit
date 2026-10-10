@@ -283,7 +283,10 @@ Idea para cerrar la sesión de verdad (a decidir en el spec):
 - Si ya existe el punto 1 (notificaciones), borrar también sus `dispositivos` para que no le
   sigan llegando avisos.
 
-Pendiente: spec de diseño.
+Spec: `superpowers/specs/2026-10-10-revocar-acceso-design.md` (**propuesta, sin aprobar
+todavía**). Urge más desde el punto 5: la página instalada ya entra con su sesión guardada sin
+volver a canjear, así que revocar no la saca. Abierto: si apagar "Notificaciones" al revocar,
+si mostrar "Acceso revocado el…" en la ficha y el texto del candado.
 
 ## 7. Barra de abajo con Músculos y Registro, y Entrenar en Inicio — 🔴 URGENTE
 
