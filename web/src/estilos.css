@@ -1052,5 +1052,5 @@ main:has(#barra) { padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
    el menú de mantener presionada la imagen). */
 .registro-ejercicio.activo .registro-ej-gif { -webkit-user-drag: none; user-select: none; -webkit-touch-callout: none; }
 /* El video del ejercicio activo: viene en 720 px, así que se puede mostrar más grande que el
-   GIF (180 px nativos) sin pixelarse. */
-.registro-activo-gif .registro-ej-video { width: min(100%, 260px); }
+   GIF (180 px nativos) sin pixelarse. 320 px a pedido del entrenador (2026-10-10). */
+.registro-activo-gif .registro-ej-video { width: min(100%, 320px); }
