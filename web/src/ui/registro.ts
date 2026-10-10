@@ -308,7 +308,7 @@ function medioGrande(e: EjercicioBorrador, delBanco: EjercicioBanco | undefined)
   if (!video) return gif(gifRuta, "registro-ej-gif", 180);
   const poster = urlGif(gifRuta);
   return `<video class="registro-ej-gif registro-ej-video" src="${escapar(video)}"
-      ${poster ? `poster="${escapar(poster)}"` : ""} width="320" height="320"
+      ${poster ? `poster="${escapar(poster)}"` : ""} width="300" height="300"
       autoplay muted loop playsinline preload="auto" disablepictureinpicture aria-hidden="true"></video>`;
 }
 
@@ -368,7 +368,6 @@ function vistaCapturar(d: DatosRegistro): string {
   const b = estado.borrador;
   if (!b) return "";
   const error = estado.error ? `<p class="aviso-error" style="margin:0 0 12px">${escapar(estado.error)}</p>` : "";
-  const desde = horaDeMs(b.iniciado);
   const hay = b.ejercicios.length > 0;
   const vacio = hay ? "" : `
     <div class="tarjeta vacio">
@@ -377,10 +376,6 @@ function vistaCapturar(d: DatosRegistro): string {
     </div>`;
   const off = estado.enVuelo ? "disabled" : "";
   return `
-    <div class="registro-en-curso">
-      <p class="confirmar-titulo">Entrenamiento en curso</p>
-      <p class="accion-nota" style="margin:2px 0 12px">${escapar(enPalabras(b.fecha))}${desde ? ` · desde las ${escapar(desde)}` : ""}</p>
-    </div>
     ${hay ? ejerciciosDelEntrenamiento(b, d.banco) : ""}
     ${vacio}
     ${error}
@@ -388,6 +383,22 @@ function vistaCapturar(d: DatosRegistro): string {
     ${hay ? `<button class="boton" data-accion="guardar" ${off}>${estado.enVuelo ? "Guardando…" : "Terminar entrenamiento"}</button>` : ""}
     <button class="boton-texto" data-accion="descartar" ${off}>Descartar entrenamiento</button>
     ${hay ? CREDITO : ""}`;
+}
+
+/**
+ * Lo que va en la cabecera, junto al ☰, con un entrenamiento abierto: "Entrenamiento en curso"
+ * y desde cuándo. Arriba y no dentro del contenido, a pedido del entrenador (2026-10-10): así
+ * el espacio de abajo es del ejercicio. Null en las demás vistas: la cabecera queda vacía.
+ * Se llama después de `ventanaRegistro`, que es la que decide en qué vista se queda.
+ */
+export function cabeceraRegistro(): { titulo: string; detalle: string } | null {
+  const b = estado.borrador;
+  if (estado.vista !== "capturar" || !b) return null;
+  const desde = horaDeMs(b.iniciado);
+  return {
+    titulo: "Entrenamiento en curso",
+    detalle: `${enPalabras(b.fecha)}${desde ? ` · desde las ${desde}` : ""}`,
+  };
 }
 
 /** Lo que va en `#contenido` con Registro abierto. */

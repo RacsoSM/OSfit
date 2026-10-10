@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import type { EjercicioBanco, Sesion } from "../datos";
 import { indiceBanco } from "../banco";
 import { agregarEjercicio, nuevoBorrador } from "../registro";
-import { ponerEstadoRegistro, ventanaRegistro, type DatosRegistro } from "./registro";
+import { cabeceraRegistro, ponerEstadoRegistro, ventanaRegistro, type DatosRegistro } from "./registro";
 
 const press: EjercicioBanco = {
   id: "press-banca", nombre: "Press de banca", alias: ["press banca"], tipo: "peso", grupo: "pecho",
@@ -50,10 +50,17 @@ describe("inicio", () => {
   it("con un entrenamiento abierto, Registro se abre en él", () => {
     ponerEstadoRegistro({ vista: "inicio", borrador: nuevoBorrador("b1234567", "2026-10-12", Date.UTC(2026, 9, 12, 17, 32)) });
     const html = ventanaRegistro(datos());
-    expect(html).toContain("Entrenamiento en curso");
-    expect(html).toContain("desde las 10:32");
     expect(html).toContain("Agrega tu primer ejercicio");
     expect(html).not.toContain("Iniciar entrenamiento");
+    // El título va arriba, en la cabecera junto al ☰, no dentro del contenido.
+    expect(html).not.toContain("Entrenamiento en curso");
+    expect(cabeceraRegistro()?.titulo).toBe("Entrenamiento en curso");
+    expect(cabeceraRegistro()?.detalle).toMatch(/^lunes, 12 de octubre · desde las 10:32/);
+  });
+
+  it("sin entrenamiento abierto la cabecera queda vacía", () => {
+    ventanaRegistro(datos());
+    expect(cabeceraRegistro()).toBeNull();
   });
 });
 

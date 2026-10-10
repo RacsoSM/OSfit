@@ -20,6 +20,7 @@ export function cabecera(saludoHtml: string): string {
       <div class="cabecera-texto">
         ${saludoHtml}
         <h1 class="titulo-ventana" id="titulo-ventana" hidden></h1>
+        <p class="detalle-ventana" id="detalle-ventana" hidden></p>
       </div>
       <button type="button" class="cabecera-menu" id="abrir-menu"
               aria-label="Abrir menú" aria-controls="menu-panel" aria-expanded="false">☰</button>
@@ -34,8 +35,11 @@ export function conectarCabecera(abrirMenu: () => void): void {
  * `null`: el saludo (Inicio). `""`: nada (Músculos y Registro). Un texto: el nombre de la
  * ventana. Ver `tituloCabecera` en `ventanas.ts`. El saludo se oculta y no se destruye:
  * rehacerlo lo volvería a escribir letra por letra al regresar.
+ *
+ * Con `detalle`, el título va más chico y con un segundo renglón debajo (el entrenamiento en
+ * curso de Registro: ver `cabeceraRegistro`).
  */
-export function actualizarCabecera(titulo: string | null): void {
+export function actualizarCabecera(titulo: string | null, detalle: string | null = null): void {
   const saludo = document.querySelector<HTMLElement>("#saludo");
   const el = document.querySelector<HTMLElement>("#titulo-ventana");
   if (saludo) {
@@ -48,6 +52,12 @@ export function actualizarCabecera(titulo: string | null): void {
     // `""` (ventanas de la barra) esconde las dos cosas: ni saludo ni título.
     el.hidden = !titulo;
     if (el.textContent !== (titulo ?? "")) el.textContent = titulo ?? "";
+    el.classList.toggle("con-detalle", !!titulo && !!detalle);
+  }
+  const det = document.querySelector<HTMLElement>("#detalle-ventana");
+  if (det) {
+    det.hidden = !titulo || !detalle;
+    if (det.textContent !== (detalle ?? "")) det.textContent = detalle ?? "";
   }
 }
 

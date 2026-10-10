@@ -45,7 +45,7 @@ import { conectarAccionFalta } from "./ui/accionFalta";
 import { moverMes } from "./ui/calendario";
 import { tarjetaVideos, ultimosRangoDescendente, firmaVideos, MAXIMO_VIDEOS } from "./ui/tarjetaVideos";
 import { BARRA, VENTANAS, contenidoDe, datosRegistro, tituloCabecera, ventana, type IdVentana } from "./ventanas";
-import { conectarRegistro } from "./ui/registro";
+import { cabeceraRegistro, conectarRegistro } from "./ui/registro";
 import { barraInferior, conectarBarra } from "./ui/barraInferior";
 import { archivosMapa, conectarMapa, type EstadoSvg } from "./ui/mapaMuscular";
 import {
@@ -483,6 +483,10 @@ async function arrancar(): Promise<void> {
       return;
     }
     if (activa.id === "registro") {
+      // Después de pintar: `ventanaRegistro` decide en qué vista queda (con un entrenamiento
+      // abierto se va a él), y de eso depende lo que va en la cabecera.
+      const enCurso = cabeceraRegistro();
+      if (enCurso) actualizarCabecera(enCurso.titulo, enCurso.detalle);
       conectarRegistro(datosRegistro(datos), pintar, (envio) => registrarSesion(envio));
       return;
     }
