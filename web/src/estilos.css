@@ -785,13 +785,16 @@ body.menu-abierto { overflow: hidden; }
 .barra {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 10;
   display: flex; justify-content: center;
-  padding: 6px calc(8px + env(safe-area-inset-right)) calc(6px + env(safe-area-inset-bottom))
-           calc(8px + env(safe-area-inset-left));
+  /* Abajo, el área de la rayita de inicio del iPhone (~34 px) se usa a medias: completa,
+     más el relleno, la barra medía ~94 px y se comía el dibujo. Con 12 px menos la rayita
+     sigue sin tapar el texto. En Android y en Safari sin instalar vale 0 y quedan 4 px. */
+  padding: 2px calc(8px + env(safe-area-inset-right))
+           max(4px, calc(env(safe-area-inset-bottom) - 12px)) calc(8px + env(safe-area-inset-left));
   background: var(--superficie);
   border-top: 1px solid var(--superficie-alta);
 }
 .barra-opcion {
-  flex: 1; max-width: 160px; min-height: 48px;
+  flex: 1; max-width: 160px; min-height: 44px;
   display: flex; align-items: center; justify-content: center;
   border: 0; border-radius: 12px; background: transparent;
   color: var(--texto-tenue); font: inherit; font-size: 15px; cursor: pointer;
@@ -799,7 +802,7 @@ body.menu-abierto { overflow: hidden; }
 .barra-opcion.activa { color: var(--primario); font-weight: 700; }
 .barra-opcion:focus-visible { outline: 2px solid var(--primario); outline-offset: -2px; }
 /* Que lo último de la página no quede tapado por la barra. */
-main:has(#barra) { padding-bottom: calc(84px + env(safe-area-inset-bottom)); }
+main:has(#barra) { padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
 
 /* El mapa muscular: un solo cuerpo grande, directo sobre el fondo de la página, y un botón
    que lo gira. Las dos caras están una detrás de la otra y girar es rotar el contenedor:
