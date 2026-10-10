@@ -10,9 +10,11 @@ describe("barraInferior", () => {
     expect(ids).toEqual(["inicio", "musculos", "registro"]);
   });
 
-  it("con su ícono y su nombre", () => {
-    expect(html).toContain("💪");
+  it("solo con el nombre, sin íconos", () => {
     expect(html).toContain("Músculos");
+    expect(html).not.toContain("💪");
+    expect(html).not.toContain("🏠");
+    expect(html).not.toContain("📝");
   });
 
   it("no trae la activa marcada: la marca marcarVentanaActiva", () => {

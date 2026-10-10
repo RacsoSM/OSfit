@@ -791,17 +791,15 @@ body.menu-abierto { overflow: hidden; }
   border-top: 1px solid var(--superficie-alta);
 }
 .barra-opcion {
-  flex: 1; max-width: 160px; min-height: 52px;
-  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  flex: 1; max-width: 160px; min-height: 48px;
+  display: flex; align-items: center; justify-content: center;
   border: 0; border-radius: 12px; background: transparent;
-  color: var(--texto-tenue); font: inherit; font-size: 12px; cursor: pointer;
+  color: var(--texto-tenue); font: inherit; font-size: 15px; cursor: pointer;
 }
-.barra-icono { font-size: 22px; line-height: 1; filter: grayscale(0.6); opacity: 0.8; }
 .barra-opcion.activa { color: var(--primario); font-weight: 700; }
-.barra-opcion.activa .barra-icono { filter: none; opacity: 1; }
 .barra-opcion:focus-visible { outline: 2px solid var(--primario); outline-offset: -2px; }
 /* Que lo último de la página no quede tapado por la barra. */
-main:has(#barra) { padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
+main:has(#barra) { padding-bottom: calc(84px + env(safe-area-inset-bottom)); }
 
 /* El mapa muscular: un solo cuerpo grande, directo sobre el fondo de la página, y un botón
    que lo gira. Las dos caras están una detrás de la otra y girar es rotar el contenedor:

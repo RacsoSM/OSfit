@@ -12,10 +12,7 @@ export function barraInferior(ventanas: readonly Ventana[]): string {
   const botones = ventanas
     .map(
       (v) => `
-      <button type="button" class="barra-opcion" data-ventana="${v.id}">
-        <span class="barra-icono" aria-hidden="true">${v.icono}</span>
-        <span class="barra-texto">${escapar(v.titulo)}</span>
-      </button>`
+      <button type="button" class="barra-opcion" data-ventana="${v.id}">${escapar(v.titulo)}</button>`
     )
     .join("");
   return `<nav class="barra" aria-label="Secciones">${botones}</nav>`;
