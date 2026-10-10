@@ -360,3 +360,15 @@ En la app, apartado Web de cada clienta: tarjeta "Avisos automáticos" con un in
 tipo. Racha perdida: 3+ días, solo días hábiles, texto según vidas/ruleta. Pago: 2 días antes
 y el día.
 
+
+## 9. Últimas 5 entradas a la web, con hora y teléfono
+
+> "desde mi app de administrador, quiero además de poder ver la última vez que cada cliente abrió la web, quiero poder ver las últimas 5 y desde que dispositivo se hizo, es decir con que diga iPhone o android me basta, es eso posible? y la hora exacta"
+
+En la ficha, las últimas 5 aperturas de su página con hora exacta (Mazatlán) e iPhone/Android.
+La página avisa al abrirse a una callable nueva, `registrarEntrada`, que pasa a ser la única que
+cuenta (antes contaba `sesion` al canjear, y desde el punto 5 la página instalada ya no canjea,
+así que el contador contaba de menos). Decidido: no se distingue instalada de navegador.
+
+Spec: `superpowers/specs/2026-10-10-ultimas-entradas-design.md` (**propuesta, sin aprobar
+todavía**).
