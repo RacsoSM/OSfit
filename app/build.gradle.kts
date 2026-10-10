@@ -91,6 +91,11 @@ dependencies {
     implementation("com.google.firebase:firebase-messaging-ktx")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.9.0")
 
+    // Para ver el GIF de cada ejercicio del banco (WebP animado) en "Ejercicios por grupo".
+    // coil-gif trae el decodificador animado; sin él Coil muestra solo el primer cuadro.
+    implementation("io.coil-kt:coil-compose:2.7.0")
+    implementation("io.coil-kt:coil-gif:2.7.0")
+
     testImplementation("junit:junit:4.13.2")
 
     debugImplementation("androidx.compose.ui:ui-tooling")

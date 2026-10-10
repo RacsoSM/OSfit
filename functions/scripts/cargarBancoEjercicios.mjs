@@ -14,7 +14,8 @@
  * `GOOGLE_APPLICATION_CREDENTIALS` apuntando a la llave de una cuenta de servicio.
  *
  * Se puede correr las veces que haga falta: escribe con `merge` (no borra los `estandares`
- * que se agreguen después) y vuelve a subir el mismo archivo.
+ * que se agreguen después), vuelve a subir el mismo archivo y respeta los nombres que el
+ * entrenador cambió desde la app.
  *
  * **Por qué WebP y no el GIF tal cual:** el mismo GIF de 180×180 pasa de ~125 kB a ~40 kB
  * con los mismos cuadros, y la página la abren con datos móviles. Todos los navegadores que
@@ -97,7 +98,9 @@ async function main() {
           // el navegador lo puede guardar mucho tiempo y no lo vuelve a bajar en cada visita.
           metadata: { cacheControl: "public, max-age=2592000" },
         });
-        await db.collection("ejercicios").doc(e.id).set(documentoDe(e, true), { merge: true });
+        const ref = db.collection("ejercicios").doc(e.id);
+        const existente = (await ref.get()).data() ?? null;
+        await ref.set(documentoDe(e, true, existente), { merge: true });
       }
       console.log(`✓ ${e.id} (${Math.round(webp.length / 1024)} kB)`);
     } catch (err) {

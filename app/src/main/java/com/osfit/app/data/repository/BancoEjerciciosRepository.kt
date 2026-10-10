@@ -54,6 +54,16 @@ class BancoEjerciciosRepository(
         config.set(mapOf("porGrupo" to mapOf(grupo to ids)), SetOptions.merge()).await()
     }
 
+    /**
+     * Le cambia el nombre a un ejercicio. Marca `editadoEnApp` para que volver a correr la
+     * carga del banco no le regrese el nombre de la semilla.
+     */
+    suspend fun renombrar(id: String, nombre: String, alias: List<String>) {
+        ejercicios.document(id).update(
+            mapOf("nombre" to nombre, "alias" to alias, "editadoEnApp" to true)
+        ).await()
+    }
+
     /** Vuelve el grupo a "los del banco": borra su llave en vez de guardar una lista. */
     suspend fun restablecerGrupo(grupo: String) {
         config.update("porGrupo.$grupo", com.google.firebase.firestore.FieldValue.delete()).await()

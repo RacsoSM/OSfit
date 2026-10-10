@@ -43,6 +43,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.osfit.app.data.model.EjercicioBanco
+import com.osfit.app.ui.common.GifEjercicio
 import java.text.Normalizer
 
 /**
@@ -83,7 +84,8 @@ private fun ListaGrupos(grupos: List<FilaGrupo>, alAbrir: (String) -> Unit) {
         item {
             Text(
                 "Lo que ve la clienta al registrar un ejercicio en la web: primero los grupos que le " +
-                    "tocan ese día (según el nombre del día) y luego los demás. Toca un grupo para elegir sus ejercicios y su orden.",
+                    "tocan ese día (según el nombre del día) y luego los demás. Toca un grupo para elegir sus ejercicios y su orden; " +
+                    "toca un ejercicio para ver su GIF o cambiarle el nombre.",
                 style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
@@ -121,6 +123,8 @@ private fun DetalleGrupo(
     alVolver: () -> Unit
 ) {
     var agregando by remember { mutableStateOf(false) }
+    /** El ejercicio abierto en grande (GIF + cambiar nombre), por id: así el nombre se refresca. */
+    var viendo by remember { mutableStateOf<String?>(null) }
     val grupo = fila.grupo.id
 
     LazyColumn(
@@ -151,7 +155,14 @@ private fun DetalleGrupo(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text("${i + 1}.", modifier = Modifier.width(28.dp))
-                    Text(e.nombre, modifier = Modifier.weight(1f))
+                    GifEjercicio(
+                        e.gifRuta, 48.dp,
+                        Modifier.padding(vertical = 6.dp).clickable { viendo = e.id }
+                    )
+                    Text(
+                        e.nombre,
+                        modifier = Modifier.weight(1f).padding(start = 10.dp).clickable { viendo = e.id }
+                    )
                     IconButton(onClick = { viewModel.mover(grupo, i, i - 1) }, enabled = i > 0) {
                         Icon(Icons.Filled.ArrowUpward, contentDescription = "Subir ${e.nombre}")
                     }
@@ -182,9 +193,64 @@ private fun DetalleGrupo(
             banco = banco,
             elegidos = fila.ejercicios.map { it.id }.toSet(),
             alCambiar = { id, marcado -> if (marcado) viewModel.agregar(grupo, id) else viewModel.quitar(grupo, id) },
+            alVer = { viendo = it },
             alCerrar = { agregando = false }
         )
     }
+
+    banco.firstOrNull { it.id == viendo }?.let { e ->
+        VistaEjercicio(e, alRenombrar = { viewModel.renombrar(e.id, it) }, alCerrar = { viendo = null })
+    }
+}
+
+/**
+ * El ejercicio en grande: su GIF, para saber de cuál se trata, y su nombre editable. El nombre
+ * nuevo es el que ven las clientas en el grid; el viejo se queda como alias para no despegar
+ * las rutinas que lo usan.
+ */
+@Composable
+private fun VistaEjercicio(
+    e: EjercicioBanco,
+    alRenombrar: (String) -> String?,
+    alCerrar: () -> Unit
+) {
+    var nombre by remember(e.id) { mutableStateOf(e.nombre) }
+    var problema by remember(e.id) { mutableStateOf<String?>(null) }
+    AlertDialog(
+        onDismissRequest = alCerrar,
+        title = { Text(e.nombre) },
+        text = {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                GifEjercicio(e.gifRuta, 220.dp)
+                OutlinedTextField(
+                    value = nombre,
+                    onValueChange = { nombre = it; problema = null },
+                    label = { Text("Nombre") },
+                    singleLine = true,
+                    isError = problema != null,
+                    supportingText = problema?.let { { Text(it) } },
+                    modifier = Modifier.fillMaxWidth().padding(top = 12.dp)
+                )
+                if (e.alias.isNotEmpty()) {
+                    Text(
+                        "También lo reconoce como: " + e.alias.joinToString(", "),
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.fillMaxWidth().padding(top = 4.dp)
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    val error = alRenombrar(nombre)
+                    if (error == null) alCerrar() else problema = error
+                },
+                enabled = nombre.trim() != e.nombre
+            ) { Text("Guardar nombre") }
+        },
+        dismissButton = { TextButton(onClick = alCerrar) { Text("Cerrar") } }
+    )
 }
 
 private fun sinAcentos(texto: String): String =
@@ -197,6 +263,7 @@ private fun SelectorEjercicios(
     banco: List<EjercicioBanco>,
     elegidos: Set<String>,
     alCambiar: (String, Boolean) -> Unit,
+    alVer: (String) -> Unit,
     alCerrar: () -> Unit
 ) {
     var buscar by remember { mutableStateOf("") }
@@ -224,7 +291,9 @@ private fun SelectorEjercicios(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Checkbox(checked = marcado, onCheckedChange = { alCambiar(e.id, it) })
-                            Text(e.nombre)
+                            // Tocar la miniatura la abre en grande en vez de marcarla.
+                            GifEjercicio(e.gifRuta, 40.dp, Modifier.clickable { alVer(e.id) })
+                            Text(e.nombre, modifier = Modifier.padding(start = 8.dp))
                         }
                     }
                 }

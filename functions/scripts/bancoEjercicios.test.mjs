@@ -62,6 +62,18 @@ describe("documentoDe", () => {
     expect(doc.grupo).toBe("pecho");
   });
 
+  it("no pisa el nombre ni los alias que el entrenador cambió desde la app", () => {
+    const doc = documentoDe(ejercicio(), true, { editadoEnApp: true });
+    expect(doc).not.toHaveProperty("nombre");
+    expect(doc).not.toHaveProperty("alias");
+    expect(doc.gifRuta).toBe("ejercicios/press-banca.webp");
+  });
+
+  it("sin editar en la app, la semilla manda", () => {
+    expect(documentoDe(ejercicio(), true, { editadoEnApp: false }).nombre).toBe("Press de banca");
+    expect(documentoDe(ejercicio(), true, null).nombre).toBe("Press de banca");
+  });
+
   it("sin GIF deja la ruta en null para que la página muestre el marcador", () => {
     expect(documentoDe(ejercicio(), false).gifRuta).toBeNull();
   });

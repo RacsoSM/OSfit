@@ -122,15 +122,19 @@ export function rutaGif(id) {
  * El documento `ejercicios/{id}`. Sin `estandares`: todavía no se decide quién los llena
  * (pregunta abierta del spec), y la carga escribe con `merge` para no borrarlos cuando
  * lleguen. `gifOrigen` tampoco va: es dato de la carga, no de la página.
+ *
+ * Si el entrenador renombró el ejercicio desde la app (`editadoEnApp` en el documento que ya
+ * existe), no se escriben `nombre` ni `alias`: volver a correr la carga le regresaría el
+ * nombre de la semilla sin que él se enterara.
  */
-export function documentoDe(e, conGif) {
-  return {
-    nombre: e.nombre,
-    alias: e.alias ?? [],
+export function documentoDe(e, conGif, existente = null) {
+  const doc = {
     tipo: e.tipo,
     grupo: e.grupo,
     musculos: e.musculos,
     gifRuta: conGif ? rutaGif(e.id) : null,
     atribucion: conGif ? ATRIBUCION : null,
   };
+  if (existente?.editadoEnApp === true) return doc;
+  return { nombre: e.nombre, alias: e.alias ?? [], ...doc };
 }

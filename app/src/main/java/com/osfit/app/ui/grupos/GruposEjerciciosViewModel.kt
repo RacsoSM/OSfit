@@ -7,6 +7,7 @@ import com.osfit.app.data.model.EjercicioBanco
 import com.osfit.app.data.repository.BancoEjerciciosRepository
 import com.osfit.app.domain.GrupoEjercicio
 import com.osfit.app.domain.GruposEjercicio
+import com.osfit.app.domain.NombresBanco
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
@@ -73,6 +74,20 @@ class GruposEjerciciosViewModel(
     fun quitar(grupo: String, id: String) = guardar(grupo, GruposEjercicio.quitar(idsDe(grupo), id))
 
     fun agregar(grupo: String, id: String) = guardar(grupo, GruposEjercicio.agregar(idsDe(grupo), id))
+
+    /**
+     * Cambia el nombre si se puede. Devuelve por qué no (nombre vacío, ya usado por otro) o
+     * null si lo mandó a guardar. El nombre viejo se queda como alias: ver [NombresBanco].
+     */
+    fun renombrar(id: String, nuevo: String): String? {
+        val actual = ultimoBanco.firstOrNull { it.id == id } ?: return "Ese ejercicio ya no existe."
+        NombresBanco.problemaCon(nuevo, id, ultimoBanco)?.let { return it }
+        val limpio = nuevo.trim()
+        if (limpio == actual.nombre) return null
+        val alias = NombresBanco.aliasTrasRenombrar(actual.alias, actual.nombre, limpio)
+        viewModelScope.launch { runCatching { repositorio.renombrar(id, limpio, alias) } }
+        return null
+    }
 
     fun restablecer(grupo: String) {
         viewModelScope.launch { runCatching { repositorio.restablecerGrupo(grupo) } }
