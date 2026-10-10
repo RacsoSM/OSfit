@@ -186,6 +186,34 @@ describe("resolverSesion", () => {
     });
   });
 
+  /**
+   * La página instalada en la pantalla de inicio abre siempre en `/c/<token>`. Con la sesión
+   * de la vez anterior viva, canjear otra vez solo costaba el arranque en frío de `sesion`.
+   */
+  it("el mismo link con la sesión guardada viva entra sin canjear", async () => {
+    const e = entorno({ ruta: "/c/tok1", recordado: "tok1", guardada: "c1" });
+    expect(await resolverSesion(e)).toEqual({ estado: "lista", clienteId: "c1" });
+    expect(e.canjes).toEqual([]);
+  });
+
+  it("el mismo link sin sesión guardada se canjea como siempre", async () => {
+    const e = entorno({ ruta: "/c/tok1", recordado: "tok1", guardada: null });
+    expect(await resolverSesion(e)).toEqual({ estado: "lista", clienteId: "c1" });
+    expect(e.canjes).toEqual(["tok1"]);
+  });
+
+  it("un link distinto al recordado se canjea aunque haya sesión guardada", async () => {
+    const e = entorno({
+      ruta: "/c/tok2",
+      recordado: "tok1",
+      guardada: "c1",
+      canje: () => ({ estado: "lista", clienteId: "c2" }),
+    });
+    expect(await resolverSesion(e)).toEqual({ estado: "lista", clienteId: "c2" });
+    expect(e.canjes).toEqual(["tok2"]);
+    expect(e.memoria.recordado()).toBe("tok2");
+  });
+
   it("un link muerto no se recuerda ni esconde el token", async () => {
     const e = entorno({ ruta: "/c/muerto", canje: () => ({ estado: "sin-acceso" }) });
     expect(await resolverSesion(e)).toEqual({ estado: "sin-acceso", motivo: "link-rechazado" });
@@ -305,6 +333,10 @@ describe("saludDelAlmacen", () => {
 describe("index.html adelanta el canje igual que el bundle", () => {
   it("reconoce la misma ruta del link", () => {
     expect(indexHtml).toContain(`location.pathname.match(/${RUTA_CON_TOKEN.source}/)`);
+  });
+
+  it("no lo adelanta si el token ya estaba recordado, con la misma llave", () => {
+    expect(indexHtml).toContain(`getItem("${LLAVE_TOKEN}")`);
   });
 
   it("le pega a la misma función", () => {

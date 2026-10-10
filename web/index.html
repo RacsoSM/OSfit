@@ -18,12 +18,20 @@
       había bajado y arrancado el bundle. Lanzándolo desde acá, la descarga del JS y el viaje
       a `sesion` —que en frío tarda segundos— van a la vez. `canjeAdelantado` en
       `firebase.ts` recoge la respuesta. La ruta y la URL son gemelas de `RUTA_CON_TOKEN` y
-      `URL_SESION` en `sesion.ts` (lo revisa `sesion.test.ts`).
+      `URL_SESION` en `sesion.ts` (lo revisa `sesion.test.ts`). No se lanza si el link ya
+      estaba recordado: la página instalada entra con su sesión guardada, sin canjear.
     -->
     <script>
       (function () {
         var token = location.pathname.match(/^\/c\/([A-Za-z0-9]+)$/);
         if (!token || !window.fetch) return;
+        // Si este link ya entró antes en este navegador (la página instalada abre siempre
+        // aquí), lo más seguro es que su sesión siga viva y no haga falta canjear: se deja a
+        // `resolverSesion` decidir. Mismos almacenes y llave que `memoriaToken`.
+        function recordado(almacen) {
+          try { return window[almacen].getItem("osfit:acceso"); } catch (e) { return null; }
+        }
+        if (recordado("sessionStorage") === token[1] || recordado("localStorage") === token[1]) return;
         var respuesta = fetch("https://sesion-cuzhc6pwiq-uw.a.run.app", {
           method: "POST",
           headers: { "Content-Type": "application/json" },

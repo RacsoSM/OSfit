@@ -199,8 +199,9 @@ export interface EntornoSesion {
  * La escalera del arranque: tres formas de probar que es ella, de la más a la mano a la
  * menos.
  *
- * 1. **Token en la ruta.** Vino del link de WhatsApp. Se canjea y se recuerda, y la ruta se
- *    queda como está: `/c/<token>`.
+ * 1. **Token en la ruta.** Vino del link de WhatsApp o de la página instalada. Se canjea y
+ *    se recuerda, y la ruta se queda como está: `/c/<token>`. Si es el mismo token que ya
+ *    se recordaba y la sesión guardada sirve, se entra con ella sin canjear.
  *
  *    Antes de acá el token se borraba de la barra con un `replaceState` a `/mi`, para que no
  *    quedara a la vista en una captura. Salía caro y por un lado que no se veía venir: todo
@@ -233,6 +234,15 @@ export interface EntornoSesion {
 export async function resolverSesion(entorno: EntornoSesion): Promise<ResultadoSesion> {
   const deLaUrl = tokenEnLaUrl(entorno.rutaActual());
   if (deLaUrl) {
+    // El mismo link con el que ya entró: si la sesión de esa vez sigue viva, no hace falta
+    // canjearlo otra vez. Es el caso de la página instalada en la pantalla de inicio, que
+    // abre siempre en `/c/<token>`: sin esto, cada apertura iba a `sesion` y pagaba su
+    // arranque en frío (medido: ~3.5 s). Un token distinto sí se canjea: puede ser de otra
+    // clienta en el mismo teléfono.
+    if (entorno.memoria.recordado() === deLaUrl) {
+      const guardada = await entorno.sesionGuardada();
+      if (guardada) return { estado: "lista", clienteId: guardada };
+    }
     const resultado = await entorno.canjear(deLaUrl);
     if (resultado.estado === "lista") entorno.memoria.recordar(deLaUrl);
     return resultado.estado === "sin-acceso"

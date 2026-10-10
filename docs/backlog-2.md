@@ -228,12 +228,20 @@ Hecho (2026-10-10), primera ronda, sin desplegar todavía:
 - **Bundle principal: 216 → 162 kB gzip (−25 %).** Fuera `re2js` (motor de regex que Firestore
   importa solo para consultas "pipeline", que no usamos; ver `web/src/re2jsVacio.ts`), el
   soporte de ventana emergente de Auth y Storage, que ahora se carga solo si hay videos.
+- **La página instalada ya no canjea en cada apertura.** Abre siempre en `/c/<token>`, y antes
+  eso obligaba a canjear aunque tuviera una sesión guardada viva. Ahora, si es el mismo token
+  que ya entró y la sesión sirve, entra directo sin llamar a `sesion` (y sin su arranque en
+  frío). Ojo: así, revocar el acceso no la saca hasta que pierda la sesión; cerrarlo es el
+  punto 6.
 - Medido en Chromium con user agent de iPhone, bajando el bundle en 1.5 s y `sesion` en 2 s:
   el canje empezaba a los 1,645 ms y ahora a los 40 ms; la página pasaba de 3,992 a 2,452 ms.
 
 Pendiente:
 
-- **Desplegar** (`firebase deploy --only hosting`) y medir en un teléfono real desde WhatsApp.
+- **Probar en el canal de vista previa** `https://osfit-cccfe--prueba-carga-wn1toy30.web.app`
+  (vence el 2026-10-17) con un link real, desde WhatsApp y desde la página instalada, en
+  iPhone y Android; revisar que los videos se reproduzcan. Medido contra la `sesion` real:
+  arranque en frío de ~3.5 s, ~0.8 s ya despierta. Si sale bien, `firebase deploy --only hosting`.
 - **Arranque en frío de `sesion`:** sigue siendo el sospechoso más grande. Si medido sigue
   tardando, `minInstances: 1` lo quita (cuesta al mes). Además `sesion` espera a escribir el
   contador de entradas (`contarEntrada`) antes de responder: una escritura más en el camino.
