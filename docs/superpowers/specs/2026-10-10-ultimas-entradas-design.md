@@ -1,6 +1,6 @@
 # Últimas entradas a la web, con hora y teléfono
 
-**Propuesta, sin aprobar todavía.**
+**Aprobado por el entrenador (2026-10-10).** Plan: `docs/superpowers/plans/2026-10-10-ultimas-entradas.md`.
 
 > "desde mi app de administrador, quiero además de poder ver la última vez que cada cliente
 > abrió la web, quiero poder ver las últimas 5 y desde que dispositivo se hizo, es decir con

@@ -370,5 +370,5 @@ La página avisa al abrirse a una callable nueva, `registrarEntrada`, que pasa a
 cuenta (antes contaba `sesion` al canjear, y desde el punto 5 la página instalada ya no canjea,
 así que el contador contaba de menos). Decidido: no se distingue instalada de navegador.
 
-Spec: `superpowers/specs/2026-10-10-ultimas-entradas-design.md` (**propuesta, sin aprobar
-todavía**).
+Spec: `superpowers/specs/2026-10-10-ultimas-entradas-design.md`, **aprobado (2026-10-10)**.
+Plan: `superpowers/plans/2026-10-10-ultimas-entradas.md`.
