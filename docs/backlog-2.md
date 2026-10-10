@@ -113,7 +113,7 @@ app sin compilar todavía: la sesión donde se hizo no tenía Android SDK).
 
 Verificado por el entrenador (2026-10-08).
 
-## 3. GIF para cada ejercicio — ✅ HECHO dentro del punto 7 (2026-10-10), falta desplegar
+## 3. GIF para cada ejercicio — ✅ HECHO dentro del punto 7 (2026-10-10), desplegado
 
 > "agrega también el agregar gifs para cada ejercicio al backlog"
 
@@ -370,8 +370,9 @@ Hecho (2026-10-10), tercera parte — **Registro**:
   luego buscador del banco) → captura de peso y reps por serie → "Guardar entrenamiento".
 - Función nueva `registrarSesion` (valida contra el banco) y `clientes/{id}/sesiones`.
 
-Plan y pasos para desplegar: `superpowers/plans/2026-10-10-banco-ejercicios-gifs.md`.
-**Sin desplegar todavía.**
+Plan: `superpowers/plans/2026-10-10-banco-ejercicios-gifs.md`.
+**Desplegado (2026-10-10):** reglas, banco cargado (91 de 91), función `registrarSesion` y web.
+Falta que el entrenador lo verifique en su teléfono.
 
 Pendiente: borrar una sesión del día, modo guiado, cálculo de fuerza y estándares por
 ejercicio (para colorear el mapa), ver las sesiones desde la app, y `Ejercicio.ejercicioId`

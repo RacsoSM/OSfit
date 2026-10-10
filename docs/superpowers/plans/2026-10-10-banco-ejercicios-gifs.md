@@ -52,7 +52,7 @@ de los medios: `docs/licencias/GymVisual.md`.
 - [x] **6. Web: Registro** — `registro.ts` (el borrador, puro, + test) y `ui/registro.ts`
   (historial, grid, captura; + test). `diaDeHoy` sale de `tarjetaDia.ts` para ofrecer
   primero los ejercicios del día.
-- [ ] **7. Desplegar** (lo hace el entrenador, en este orden):
+- [x] **7. Desplegar** — hecho el 2026-10-10 en este orden (falta el paso 5, en el teléfono):
 
   1. Reglas primero, para que la página pueda leer el banco en cuanto exista:
      ```bash
