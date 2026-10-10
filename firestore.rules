@@ -130,6 +130,15 @@ service cloud.firestore {
     match /logrosPersonales/{doc} { allow read, write: if esEntrenador(); }
     match /configVideo/{doc} { allow read, write: if esEntrenador(); }
 
+    // El banco de ejercicios (nombre, alias, músculos y la RUTA de su GIF). Es catálogo, no
+    // dato personal: lo lee cualquier sesión, como las insignias en storage.rules, y por eso
+    // no paga el `get` de `sesionVigente`. Lo escribe el script de carga del entrenador
+    // (functions/scripts/cargarBancoEjercicios.mjs) con el Admin SDK.
+    match /ejercicios/{doc} {
+      allow read: if request.auth != null;
+      allow write: if esEntrenador();
+    }
+
     // Avisos que el entrenador manda desde la app. Son cola y a la vez historial: la función
     // `enviarNotificacion` los toma al crearse y les anota el resultado.
     match /notificaciones/{doc} { allow read, write: if esEntrenador(); }

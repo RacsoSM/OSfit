@@ -38,6 +38,14 @@ service firebase.storage {
       allow write: if esEntrenador();
     }
 
+    // Los GIF del banco de ejercicios (`ejercicios/<id>.webp`). Igual que las insignias: no
+    // son datos personales, así que cualquier sesión los lee. El documento guarda la ruta y
+    // la página pide la URL al SDK (ver `gifRuta` en firestore `ejercicios/{id}`).
+    match /ejercicios/{archivo} {
+      allow read: if request.auth != null;
+      allow write: if esEntrenador();
+    }
+
     // Los resúmenes sí son personales. Acá la regla es la que manda de verdad: el documento
     // en Firestore guarda la RUTA, no una URL, así que para ver un video hay que pedirle la
     // URL al SDK — y eso pasa por esta regla. Sin el claim de esa clienta, no hay URL.
