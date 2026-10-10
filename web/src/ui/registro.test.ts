@@ -160,3 +160,28 @@ describe("capturar", () => {
     expect(ventanaRegistro(datos())).toContain("Iniciar entrenamiento");
   });
 });
+
+describe("video del ejercicio", () => {
+  const conVideo: EjercicioBanco = { ...press, videoRuta: "ejercicios/press-banca.mp4" };
+
+  it("el activo con video lo reproduce en bucle, sin sonido y en línea, con el GIF de póster", () => {
+    ponerEstadoRegistro({ vista: "capturar", borrador: agregarEjercicio(nuevoBorrador("b1234567", "2026-10-12"), press, null, 1) });
+    const html = ventanaRegistro(datos({ banco: [conVideo, plancha], indice: indiceBanco([conVideo, plancha]) }));
+    expect(html).toMatch(/<video[^>]*class="registro-ej-gif registro-ej-video"/);
+    expect(html).toContain("ejercicios%2Fpress-banca.mp4?alt=media");
+    for (const attr of ["autoplay", "muted", "loop", "playsinline"]) expect(html).toMatch(new RegExp(`<video[^>]*\\s${attr}[\\s>]`));
+    expect(html).toMatch(/<video[^>]*poster="[^"]*press-banca\.webp/);
+  });
+
+  it("toma el video del banco aunque el entrenamiento se haya empezado antes de que existiera", () => {
+    ponerEstadoRegistro({ vista: "capturar", borrador: agregarEjercicio(nuevoBorrador("b1234567", "2026-10-12"), press, null, 1) });
+    expect(ventanaRegistro(datos({ banco: [conVideo], indice: indiceBanco([conVideo]) }))).toContain("<video");
+  });
+
+  it("sin video sigue el GIF, y el grid nunca carga videos", () => {
+    ponerEstadoRegistro({ vista: "capturar", borrador: agregarEjercicio(nuevoBorrador("b1234567", "2026-10-12"), press, null, 1) });
+    expect(ventanaRegistro(datos())).not.toContain("<video");
+    ponerEstadoRegistro({ vista: "elegir", borrador: nuevoBorrador("b1234567", "2026-10-12") });
+    expect(ventanaRegistro(datos({ banco: [conVideo], indice: indiceBanco([conVideo]) }))).not.toContain("<video");
+  });
+});

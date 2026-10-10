@@ -34,7 +34,7 @@ object GruposEjercicio {
     )
 
     private val porNombre: Comparator<EjercicioBanco> =
-        compareBy(Collator.getInstance(Locale("es"))) { it.nombre }
+        compareBy(Collator.getInstance(Locale.forLanguageTag("es"))) { it.nombre }
 
     /** Los ejercicios del grupo: la lista configurada en su orden, o los del banco por nombre. */
     fun listaDeGrupo(

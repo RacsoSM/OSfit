@@ -44,6 +44,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.osfit.app.data.model.EjercicioBanco
 import com.osfit.app.ui.common.GifEjercicio
+import com.osfit.app.ui.common.VideoEjercicio
 import java.text.Normalizer
 
 /**
@@ -221,7 +222,7 @@ private fun VistaEjercicio(
         title = { Text(e.nombre) },
         text = {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                GifEjercicio(e.gifRuta, 220.dp)
+                VideoEjercicio(e.gifRuta, e.videoRuta, 220.dp)
                 OutlinedTextField(
                     value = nombre,
                     onValueChange = { nombre = it; problema = null },

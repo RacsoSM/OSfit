@@ -1,5 +1,5 @@
 import type { ConfigGrupos, Ejercicio, EjercicioBanco, Sesion } from "../datos";
-import { claveBanco, urlGif, type IndiceBanco } from "../banco";
+import { claveBanco, urlGif, urlVideo, type IndiceBanco } from "../banco";
 import { seccionesRegistro } from "../grupos";
 import {
   agregarEjercicio,
@@ -295,10 +295,28 @@ function indiceActivo(b: Borrador): number {
 }
 
 /**
+ * Lo que se ve en grande: el video en bucle si el ejercicio lo tiene, si no el GIF. Mudo,
+ * en bucle, en línea y solo: así lo deja reproducir iOS sin que la clienta toque nada. El
+ * GIF va de póster para que no haya un hueco mientras el video carga.
+ *
+ * Las rutas se toman del banco vivo y no de la copia del borrador: un video subido con el
+ * entrenamiento ya abierto aparece sin tener que empezar otro.
+ */
+function medioGrande(e: EjercicioBorrador, delBanco: EjercicioBanco | undefined): string {
+  const gifRuta = delBanco?.gifRuta ?? e.gifRuta;
+  const video = urlVideo(delBanco?.videoRuta);
+  if (!video) return gif(gifRuta, "registro-ej-gif", 180);
+  const poster = urlGif(gifRuta);
+  return `<video class="registro-ej-gif registro-ej-video" src="${escapar(video)}"
+      ${poster ? `poster="${escapar(poster)}"` : ""} width="260" height="260"
+      autoplay muted loop playsinline preload="auto" disablepictureinpicture aria-hidden="true"></video>`;
+}
+
+/**
  * El ejercicio activo, en grande: el GIF a lo ancho, sus series y cómo moverse al anterior o
  * al siguiente. Es el único con campos: los demás solo muestran su resumen.
  */
-function tarjetaActiva(e: EjercicioBorrador, i: number, total: number): string {
+function tarjetaActiva(e: EjercicioBorrador, i: number, total: number, delBanco?: EjercicioBanco): string {
   const nota = e.tipo === "corporal"
     ? `<p class="accion-nota">Con tu peso corporal. En kg, solo si agregaste peso extra.</p>`
     : "";
@@ -311,7 +329,7 @@ function tarjetaActiva(e: EjercicioBorrador, i: number, total: number): string {
   return `
     <div class="tarjeta registro-ejercicio activo" data-indice="${i}">
       <div class="registro-activo-gif">
-        ${gif(e.gifRuta, "registro-ej-gif", 180)}
+        ${medioGrande(e, delBanco)}
         <button class="registro-quitar registro-quitar-ej" data-quitar-ej="${i}" aria-label="Quitar ${escapar(e.nombre)}">✕</button>
       </div>
       <p class="registro-activo-nombre">${escapar(e.nombre)}</p>
@@ -336,17 +354,17 @@ function filaCompacta(e: EjercicioBorrador, i: number): string {
 }
 
 /** Arriba los anteriores comprimidos, en medio el activo en grande, abajo los siguientes. */
-function ejerciciosDelEntrenamiento(b: Borrador): string {
+function ejerciciosDelEntrenamiento(b: Borrador, banco: readonly EjercicioBanco[]): string {
   const a = indiceActivo(b);
   const arriba = b.ejercicios.slice(0, a).map((e, i) => filaCompacta(e, i)).join("");
   const abajo = b.ejercicios.slice(a + 1).map((e, k) => filaCompacta(e, a + 1 + k)).join("");
   return `
     ${arriba ? `<div class="registro-compactos">${arriba}</div>` : ""}
-    ${tarjetaActiva(b.ejercicios[a], a, b.ejercicios.length)}
+    ${tarjetaActiva(b.ejercicios[a], a, b.ejercicios.length, banco.find((x) => x.id === b.ejercicios[a].ejercicioId))}
     ${abajo ? `<div class="registro-compactos">${abajo}</div>` : ""}`;
 }
 
-function vistaCapturar(): string {
+function vistaCapturar(d: DatosRegistro): string {
   const b = estado.borrador;
   if (!b) return "";
   const error = estado.error ? `<p class="aviso-error" style="margin:0 0 12px">${escapar(estado.error)}</p>` : "";
@@ -363,7 +381,7 @@ function vistaCapturar(): string {
       <p class="confirmar-titulo">Entrenamiento en curso</p>
       <p class="accion-nota" style="margin:2px 0 12px">${escapar(enPalabras(b.fecha))}${desde ? ` · desde las ${escapar(desde)}` : ""}</p>
     </div>
-    ${hay ? ejerciciosDelEntrenamiento(b) : ""}
+    ${hay ? ejerciciosDelEntrenamiento(b, d.banco) : ""}
     ${vacio}
     ${error}
     <button class="boton${hay ? " secundario" : ""}" data-accion="agregar" ${off}>+ Agregar ejercicio</button>
@@ -378,7 +396,7 @@ export function ventanaRegistro(d: DatosRegistro): string {
   if (estado.vista === "inicio" && estado.borrador) estado.vista = "capturar";
   if ((estado.vista === "capturar" || estado.vista === "elegir") && !estado.borrador) estado.vista = "inicio";
   const cuerpo = estado.vista === "elegir" ? vistaElegir(d)
-    : estado.vista === "capturar" ? vistaCapturar()
+    : estado.vista === "capturar" ? vistaCapturar(d)
     : estado.vista === "historial" ? vistaHistorial(d)
     : vistaInicio(d);
   return `<div id="registro" class="registro">${cuerpo}</div>`;

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { EjercicioBanco } from "./datos";
-import { claveBanco, indiceBanco, urlGif } from "./banco";
+import { claveBanco, indiceBanco, urlGif, urlVideo } from "./banco";
 
 function ej(campos: Partial<EjercicioBanco> = {}): EjercicioBanco {
   return {
@@ -45,5 +45,14 @@ describe("urlGif", () => {
   it("sin ruta no hay URL", () => {
     expect(urlGif(null)).toBeNull();
     expect(urlGif(undefined)).toBeNull();
+  });
+});
+
+describe("urlVideo", () => {
+  it("arma la URL pública del video igual que la del GIF", () => {
+    expect(urlVideo("ejercicios/press-banca.mp4")).toBe(
+      "https://firebasestorage.googleapis.com/v0/b/osfit-cccfe.firebasestorage.app/o/ejercicios%2Fpress-banca.mp4?alt=media"
+    );
+    expect(urlVideo(null)).toBeNull();
   });
 });

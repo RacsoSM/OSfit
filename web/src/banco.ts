@@ -38,7 +38,7 @@ export function indiceBanco(banco: readonly EjercicioBanco[]): IndiceBanco {
 }
 
 /**
- * La URL pública del GIF, armada sin preguntarle a Storage. Los GIF del banco son catálogo y
+ * La URL pública de un GIF o video del banco, armada sin preguntarle a Storage. Los GIF del banco son catálogo y
  * `storage.rules` los deja leer sin sesión justo para esto: un grid de veinte ejercicios
  * serían veinte `getDownloadURL` antes de poder pintar, y además no hace falta cargar el SDK
  * de Storage en la página.
@@ -47,7 +47,16 @@ export function indiceBanco(banco: readonly EjercicioBanco[]): IndiceBanco {
  */
 const BUCKET = "osfit-cccfe.firebasestorage.app";
 
-export function urlGif(ruta: string | null | undefined): string | null {
+function urlPublica(ruta: string | null | undefined): string | null {
   if (!ruta) return null;
   return `https://firebasestorage.googleapis.com/v0/b/${BUCKET}/o/${encodeURIComponent(ruta)}?alt=media`;
+}
+
+export function urlGif(ruta: string | null | undefined): string | null {
+  return urlPublica(ruta);
+}
+
+/** Igual que `urlGif`: los videos viven en la misma carpeta pública `ejercicios/`. */
+export function urlVideo(ruta: string | null | undefined): string | null {
+  return urlPublica(ruta);
 }

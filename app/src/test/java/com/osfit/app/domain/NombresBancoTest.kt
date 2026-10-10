@@ -60,4 +60,13 @@ class NombresBancoTest {
         )
         assertNull(NombresBanco.urlGif(null))
     }
+
+    @Test
+    fun `la URL del video es la publica de Storage como la del GIF`() {
+        assertEquals(
+            "https://firebasestorage.googleapis.com/v0/b/osfit-cccfe.firebasestorage.app/o/ejercicios%2Fpress-banca.mp4?alt=media",
+            NombresBanco.urlVideo("ejercicios/press-banca.mp4")
+        )
+        assertNull(NombresBanco.urlVideo(null))
+    }
 }

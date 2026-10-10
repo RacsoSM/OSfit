@@ -41,6 +41,11 @@ export interface EjercicioBanco {
   musculos: Record<string, number>;
   /** Ruta en Storage, no URL (como los videos). Ausente o null = todavía sin GIF. */
   gifRuta?: string | null;
+  /**
+   * Video corto en bucle (`ejercicios/<id>.mp4`), de mejor calidad que el GIF. Opcional: hoy
+   * solo algunos lo tienen. Se usa donde el ejercicio se ve en grande; el resto usa el GIF.
+   */
+  videoRuta?: string | null;
   /** El crédito que piden los dueños del GIF; acompaña a la imagen donde se muestre. */
   atribucion?: string | null;
 }

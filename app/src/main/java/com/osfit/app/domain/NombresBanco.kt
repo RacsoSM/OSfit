@@ -60,6 +60,9 @@ object NombresBanco {
      */
     private const val BUCKET = "osfit-cccfe.firebasestorage.app"
 
+    /** Igual que [urlGif]: los videos viven en la misma carpeta pública `ejercicios/`. */
+    fun urlVideo(ruta: String?): String? = urlGif(ruta)
+
     fun urlGif(ruta: String?): String? {
         if (ruta.isNullOrBlank()) return null
         val codificada = URLEncoder.encode(ruta, "UTF-8").replace("+", "%20")

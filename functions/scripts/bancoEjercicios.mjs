@@ -113,6 +113,15 @@ export function validarSemilla(semilla, idsDelDataset) {
   return errores;
 }
 
+/**
+ * Donde vive el video de un ejercicio en Storage. Lo sube `subirVideoEjercicio.mjs`; la carga
+ * del banco no lo toca (escribe con `merge` y sin `videoRuta`), así que no se pierde al
+ * recargar el banco.
+ */
+export function rutaVideo(id) {
+  return `ejercicios/${id}.mp4`;
+}
+
 /** Donde vive el GIF de un ejercicio en Storage. */
 export function rutaGif(id) {
   return `ejercicios/${id}.webp`;

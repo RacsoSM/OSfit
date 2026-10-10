@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { claveBanco, documentoDe, validarSemilla } from "./bancoEjercicios.mjs";
+import { claveBanco, documentoDe, rutaVideo, validarSemilla } from "./bancoEjercicios.mjs";
 
 const semilla = JSON.parse(
   readFileSync(new URL("../semilla/ejercicios.json", import.meta.url), "utf8")
@@ -76,5 +76,15 @@ describe("documentoDe", () => {
 
   it("sin GIF deja la ruta en null para que la página muestre el marcador", () => {
     expect(documentoDe(ejercicio(), false).gifRuta).toBeNull();
+  });
+});
+
+describe("rutaVideo", () => {
+  it("el video vive junto al GIF, con extensión mp4", () => {
+    expect(rutaVideo("press-banca")).toBe("ejercicios/press-banca.mp4");
+  });
+
+  it("la carga del banco no toca el video: sin videoRuta en el documento, merge lo conserva", () => {
+    expect(documentoDe(ejercicio(), true)).not.toHaveProperty("videoRuta");
   });
 });

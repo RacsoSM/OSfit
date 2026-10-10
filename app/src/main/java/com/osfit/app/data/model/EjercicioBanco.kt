@@ -17,6 +17,8 @@ data class EjercicioBanco(
     val alias: List<String> = emptyList(),
     /** Ruta del GIF en Storage (`ejercicios/<id>.webp`); null si no tiene. */
     val gifRuta: String? = null,
+    /** Video corto en bucle (`ejercicios/<id>.mp4`), de mejor calidad; null si no tiene. */
+    val videoRuta: String? = null,
     /** El entrenador le cambió el nombre desde la app: la carga del banco ya no lo pisa. */
     val editadoEnApp: Boolean = false
 )
