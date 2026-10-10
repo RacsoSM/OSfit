@@ -1,30 +1,42 @@
 /**
- * Rangos de fuerza por músculo y la comparación con la población.
+ * Rangos de fuerza por músculo y la comparación con TODA la población (no solo con quienes
+ * entrenan).
  *
  * El nivel de un músculo es un número continuo de 0 a 5 que sale de comparar su mejor marca
- * (1RM estimado / peso corporal) con los estándares de cada ejercicio por sexo. Ese cálculo
- * llega con el registro de ejercicios; aquí solo se traduce el nivel a lo que ve la clienta.
+ * (1RM estimado / peso corporal) con los cinco estándares de cada ejercicio por sexo: nivel 0
+ * es no levantar nada, y los niveles 1 a 5 son los estándares de Principiante, Novato,
+ * Intermedio, Avanzado y Élite. Ese cálculo llega con el registro de ejercicios; aquí solo
+ * se traduce el nivel a lo que ve la clienta.
  * Ver `docs/superpowers/specs/2026-10-10-mapa-fuerza-entrenamiento-design.md`.
  *
- * Los porcentajes siguen la convención de las tablas públicas de estándares de fuerza: el
- * corte de Principiante es más fuerte que ~5 % de las personas, Novato ~20 %, Intermedio
- * ~50 %, Avanzado ~80 % y Élite ~95 %. Entre cortes se interpola en línea recta.
+ * **Porcentajes contra toda la población (estimación).** Las tablas públicas de estándares
+ * comparan contra gente que entrena (Principiante supera al ~5 % de ellos, Novato ~20 %,
+ * Intermedio ~50 %, Avanzado ~80 %, Élite ~95 %). Para llevarlo a toda la población:
+ * - el estándar de Principiante es, en esas tablas, lo que levanta un adulto que no entrena:
+ *   se toma como la mediana, el 50 %;
+ * - solo ~1 de cada 4 adultos entrena fuerza, así que los que superan un estándar más alto
+ *   son casi todos de ese cuarto: Novato ≈ 78 %, Intermedio ≈ 88 %, Avanzado ≈ 95 %,
+ *   Élite ≈ 99 %.
+ * Por debajo del estándar de Principiante baja en línea recta hasta el 1 % en el nivel 0.
  */
 
 export interface Rango { nombre: string; desde: number; }
 
-/** Ordenados por `desde`: el rango es el último cuyo corte ya se alcanzó. */
+/**
+ * Ordenados por `desde`: el rango es el último cuyo estándar ya se alcanzó. Principiante va
+ * desde 0 porque es donde está todo el que todavía no llega al estándar de Novato.
+ */
 export const RANGOS: readonly Rango[] = [
   { nombre: "Principiante", desde: 0 },
-  { nombre: "Novato", desde: 1 },
-  { nombre: "Intermedio", desde: 2 },
-  { nombre: "Avanzado", desde: 3 },
-  { nombre: "Élite", desde: 4 },
+  { nombre: "Novato", desde: 2 },
+  { nombre: "Intermedio", desde: 3 },
+  { nombre: "Avanzado", desde: 4 },
+  { nombre: "Élite", desde: 5 },
 ];
 
-/** Nivel → porcentaje de la población por debajo. El último punto es el techo de la escala. */
+/** Nivel → porcentaje de toda la población que queda por debajo. */
 const PERCENTILES: readonly (readonly [number, number])[] = [
-  [0, 5], [1, 20], [2, 50], [3, 80], [4, 95], [5, 99],
+  [0, 1], [1, 50], [2, 78], [3, 88], [4, 95], [5, 99],
 ];
 
 const acotar = (n: number) => Math.min(5, Math.max(0, n));

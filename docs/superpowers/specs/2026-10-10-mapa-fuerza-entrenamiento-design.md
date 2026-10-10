@@ -79,11 +79,15 @@ una **barra de navegación abajo, fija y visible en toda la web**, tipo WhatsApp
   músculos sin datos van con el gris de `.sin-color`. Abajo hay una leyenda.
 - **Al tocar un músculo** (hecho 2026-10-10): crece y toma el color del estilo, los demás se
   apagan, el cuerpo se encoge un poco y abajo sale un panel con su nombre, su **rango**
-  (Principiante, Novato, Intermedio, Avanzado, Élite, cortes en los niveles 0–4) y **"más
-  fuerte que el X % de las personas"**, con una barra. Sin datos dice cómo conseguirlos.
-  Tocar el mismo, fuera de los músculos o ✕ lo suelta. Rangos y porcentajes en
-  `web/src/fuerza.ts` (convención de las tablas públicas: 5/20/50/80/95 %). Más adelante:
-  su mejor marca reciente y los ejercicios que lo alimentan.
+  y **"más fuerte que el X % de la población"**, con una barra. Sin datos dice cómo
+  conseguirlos. Tocar el mismo, fuera de los músculos o ✕ lo suelta. Más adelante: su mejor
+  marca reciente y los ejercicios que lo alimentan.
+- **Rangos y porcentaje contra TODA la población** (decidido 2026-10-10, `web/src/fuerza.ts`).
+  Nivel 0 = no levantar nada; niveles 1–5 = estándares de Principiante, Novato, Intermedio,
+  Avanzado y Élite. Cada rango empieza al alcanzar su estándar (Principiante desde 0). El
+  estándar de Principiante equivale al adulto promedio que no entrena (50 %); como solo ~1 de
+  cada 4 adultos entrena fuerza, los demás quedan en Novato ≈ 78 %, Intermedio ≈ 88 %,
+  Avanzado ≈ 95 % y Élite ≈ 99 %. Es una estimación, no una medición.
 - El SVG se inserta inline (fetch + `innerHTML` una sola vez, cacheado) para poder ponerle
   clases o `style.fill` a cada `[data-musculo]`.
 
@@ -172,7 +176,8 @@ Va en un módulo puro y probado, `web/src/fuerza.ts`, con su gemelo en Kotlin
 2. **Por serie con peso:** 1RM estimado (Epley) `e1rm = peso × (1 + reps/30)`, con reps
    topadas en 12 (más arriba la fórmula se infla).
 3. **Por ejercicio:** la mejor `e1rm` de la ventana, dividida entre `cliente.peso`. Se
-   ubica entre los `estandares[sexo]` del ejercicio y da un nivel continuo de 0 a 5.
+   ubica entre los `estandares[sexo]` del ejercicio y da un nivel continuo de 0 a 5 (0 = nada,
+   1–5 = cada estándar alcanzado).
 4. **Corporales:** el nivel sale de las reps máximas contra su propio estándar de reps.
    Los de `tiempo` no alimentan el mapa (por ahora).
 5. **Por músculo:** se queda con el **máximo** de `nivelEjercicio × peso del músculo` entre

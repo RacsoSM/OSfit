@@ -148,11 +148,11 @@ describe("detalleMusculo", () => {
   });
 
   it("con datos, su rango y qué tan fuerte es contra la población", () => {
-    const h = detalleMusculo("cuadriceps", { nivel: 2.5 }, "M");
+    const h = detalleMusculo("cuadriceps", { nivel: 3.5 }, "M");
     expect(h).toContain("Cuádriceps");
     expect(h).toContain("Intermedio");
-    expect(h).toContain("Más fuerte que el <strong>65 %</strong>");
-    expect(h).toContain("width: 65%");
+    expect(h).toContain("Más fuerte que el <strong>92 %</strong> de la población");
+    expect(h).toContain("width: 92%");
   });
 
   it("siempre trae con qué cerrarlo", () => {

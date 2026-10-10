@@ -126,7 +126,7 @@ export function detalleMusculo(
         ${cerrar}
         <p class="mapa-detalle-nombre">${nombre}</p>
         <p class="mapa-detalle-rango">Rango: <strong>${rango.nombre}</strong></p>
-        <p class="mapa-detalle-texto">Más fuerte que el <strong>${p} %</strong> de las personas.</p>
+        <p class="mapa-detalle-texto">Más fuerte que el <strong>${p} %</strong> de la población.</p>
         <div class="mapa-detalle-barra" aria-hidden="true"><span style="width: ${p}%"></span></div>
       </div>`;
 }
