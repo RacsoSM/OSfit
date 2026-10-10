@@ -6,3 +6,4 @@ export { jugarRuleta } from "./jugarRuleta";
 export { obtenerRanking } from "./ranking";
 export { registrarDispositivo } from "./registrarDispositivo";
 export { enviarNotificacion } from "./enviarNotificacion";
+export { programarAvisos } from "./programarAvisos";

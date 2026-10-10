@@ -2,6 +2,7 @@ package com.osfit.app.data.repository
 
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.FirebaseFirestore
+import com.osfit.app.data.model.AvisoAutomatico
 import com.osfit.app.data.model.Cliente
 import com.osfit.app.data.model.DiaDenormalizado
 import com.osfit.app.data.model.Rutina
@@ -101,6 +102,11 @@ class FirestoreClienteRepository(
 
     override suspend fun actualizarNotificacionesWeb(clienteId: String, habilitada: Boolean) {
         coleccion.document(clienteId).update("notificacionesWeb", habilitada).await()
+    }
+
+    override suspend fun actualizarAvisoAutomatico(clienteId: String, aviso: AvisoAutomatico, activo: Boolean) {
+        // Por ruta con punto: cambia solo esa llave y deja las demás del mapa como estaban.
+        coleccion.document(clienteId).update("avisosAutomaticos.${aviso.llave}", activo).await()
     }
 
     override suspend fun actualizarCancion(

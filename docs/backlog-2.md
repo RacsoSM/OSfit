@@ -312,3 +312,14 @@ Hecho (2026-10-10), primera parte:
 
 Pendiente: aprobar el resto del spec (banco de ejercicios, Registro, modo guiado, cálculo
 de fuerza).
+
+## 8. Avisos automáticos: racha perdida y recordatorio de pago — ✅ HECHO (2026-10-10)
+
+> "el siguiente paso es poder automatizar algunas notificaciones, por ejemplo cuando x persona pierda su racha, quiero que le llegue una notificación automática, pero solo para las personas que yo decida [...] otra que tengo en mente es la de recordatorios de pago"
+
+Spec: `superpowers/specs/2026-10-10-avisos-automaticos-design.md`. Una función programada
+(9:00 am Mazatlán) encola los avisos en `notificaciones/` y los manda `enviarNotificacion`.
+En la app, apartado Web de cada clienta: tarjeta "Avisos automáticos" con un interruptor por
+tipo. Racha perdida: 3+ días, solo días hábiles, texto según vidas/ruleta. Pago: 2 días antes
+y el día.
+

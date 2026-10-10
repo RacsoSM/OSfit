@@ -32,6 +32,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.osfit.app.data.model.AvisoAutomatico
 import com.osfit.app.data.model.Notificacion
 import com.osfit.app.domain.Avisos
 import java.time.ZoneId
@@ -178,6 +179,9 @@ private fun FilaHistorial(aviso: Notificacion) {
                 fecha?.format(FormatoFecha) ?: "Ahora",
                 style = MaterialTheme.typography.labelSmall
             )
+            AvisoAutomatico.deLlave(aviso.automatico)?.let {
+                Text("Automático · ${it.titulo}", style = MaterialTheme.typography.labelSmall)
+            }
             Text(aviso.texto, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Text(Avisos.resumen(aviso), style = MaterialTheme.typography.bodySmall)
         }

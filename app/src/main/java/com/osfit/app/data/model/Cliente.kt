@@ -71,5 +71,8 @@ data class Cliente(
     // Llave del entrenador para las notificaciones de la web. Apagada por defecto: solo
     // reciben avisos las clientas que él habilite, además de que ellas den permiso en su
     // teléfono. La función `enviarNotificacion` la vuelve a revisar al enviar.
-    val notificacionesWeb: Boolean = false
+    val notificacionesWeb: Boolean = false,
+    // Qué avisos automáticos le llegan, por llave de [AvisoAutomatico]. Ausente = apagado. Solo
+    // salen además con [notificacionesWeb] prendido: esa llave sigue mandando sobre todo.
+    val avisosAutomaticos: Map<String, Boolean> = emptyMap()
 )

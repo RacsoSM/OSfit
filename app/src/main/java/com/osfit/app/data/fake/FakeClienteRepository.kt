@@ -1,6 +1,7 @@
 package com.osfit.app.data.fake
 
 import com.google.firebase.Timestamp
+import com.osfit.app.data.model.AvisoAutomatico
 import com.osfit.app.data.model.Cliente
 import com.osfit.app.data.model.DiaDenormalizado
 import com.osfit.app.data.model.DiaRutina
@@ -201,6 +202,10 @@ class FakeClienteRepository : ClienteRepository {
 
     override suspend fun actualizarNotificacionesWeb(clienteId: String, habilitada: Boolean) {
         actualizarCliente(clienteId) { it.copy(notificacionesWeb = habilitada) }
+    }
+
+    override suspend fun actualizarAvisoAutomatico(clienteId: String, aviso: AvisoAutomatico, activo: Boolean) {
+        actualizarCliente(clienteId) { it.copy(avisosAutomaticos = it.avisosAutomaticos + (aviso.llave to activo)) }
     }
 
     override suspend fun actualizarCancion(

@@ -1,6 +1,7 @@
 package com.osfit.app.data.repository
 
 import com.google.firebase.Timestamp
+import com.osfit.app.data.model.AvisoAutomatico
 import com.osfit.app.data.model.Cliente
 import com.osfit.app.data.model.DiaDenormalizado
 import com.osfit.app.data.model.Rutina
@@ -37,6 +38,8 @@ interface ClienteRepository {
     /** Prende o apaga la tarjeta de recordatorio de pago en la web de la clienta. */
     suspend fun actualizarRecordatorioPago(clienteId: String, activo: Boolean)
     suspend fun actualizarNotificacionesWeb(clienteId: String, habilitada: Boolean)
+    /** Prende o apaga un aviso automático; solo toca esa llave del mapa. */
+    suspend fun actualizarAvisoAutomatico(clienteId: String, aviso: AvisoAutomatico, activo: Boolean)
     suspend fun actualizarCancion(clienteId: String, archivo: String?, ruta: String?, inicioSegundos: Int?)
     /**
      * Escribe SÓLO `cancionRuta`. Lo usa el respaldo cuando la subida termina, que puede ser

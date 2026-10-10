@@ -11,6 +11,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FitnessCenter
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Palette
@@ -34,6 +35,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.osfit.app.data.AppContainer
+import com.osfit.app.data.model.AvisoAutomatico
 import com.osfit.app.data.model.Cliente
 import com.osfit.app.data.repository.ClienteRepository
 import com.osfit.app.data.repository.DispositivoRepository
@@ -74,6 +76,15 @@ class WebClienteViewModel(
         _cliente.value = _cliente.value?.copy(recordatorioPago = activo)
         viewModelScope.launch {
             runCatching { clienteRepository.actualizarRecordatorioPago(clienteId, activo) }
+        }
+    }
+
+    fun cambiarAvisoAutomatico(aviso: AvisoAutomatico, activo: Boolean) {
+        _cliente.value = _cliente.value?.let {
+            it.copy(avisosAutomaticos = it.avisosAutomaticos + (aviso.llave to activo))
+        }
+        viewModelScope.launch {
+            runCatching { clienteRepository.actualizarAvisoAutomatico(clienteId, aviso, activo) }
         }
     }
 
@@ -151,6 +162,14 @@ fun WebClienteScreen(
                     onCambiar = viewModel::cambiarNotificacionesWeb
                 )
             }
+            item {
+                TarjetaAvisosAutomaticos(
+                    activos = cliente?.avisosAutomaticos.orEmpty(),
+                    notificacionesPrendidas = cliente?.notificacionesWeb == true,
+                    habilitado = cliente != null,
+                    onCambiar = viewModel::cambiarAvisoAutomatico
+                )
+            }
         }
     }
 }
@@ -200,7 +219,7 @@ private fun FilaRecordatorioPago(
         ) {
             Icon(Icons.Filled.Notifications, contentDescription = null)
             Column(modifier = Modifier.weight(1f)) {
-                Text("Recordatorios de pago", style = MaterialTheme.typography.titleMedium)
+                Text("Tarjeta de pago en su inicio", style = MaterialTheme.typography.titleMedium)
                 Text(
                     // Sin fecha, prenderlo no muestra nada; se dice para que no parezca roto.
                     if (tieneFechaPago) "Muestra en su inicio cuántos días le quedan cuando faltan 2 o menos."
@@ -242,6 +261,53 @@ private fun FilaNotificaciones(
                 )
             }
             Switch(checked = habilitada, onCheckedChange = onCambiar, enabled = habilitado)
+        }
+    }
+}
+
+/**
+ * Los avisos que salen solos cada mañana. Uno por fila, cada uno con su interruptor: se
+ * prenden clienta por clienta. Agregar un tipo es agregarlo a [AvisoAutomatico].
+ *
+ * Con Notificaciones apagado los interruptores se ven pero no se pueden mover: esa llave manda
+ * sobre todo, y la función tampoco los mandaría.
+ */
+@Composable
+private fun TarjetaAvisosAutomaticos(
+    activos: Map<String, Boolean>,
+    notificacionesPrendidas: Boolean,
+    habilitado: Boolean,
+    onCambiar: (AvisoAutomatico, Boolean) -> Unit
+) {
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Icon(Icons.Filled.Schedule, contentDescription = null)
+                Column {
+                    Text("Avisos automáticos", style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        if (notificacionesPrendidas) "Le llegan solos, a las 9:00 am."
+                        else "Prende Notificaciones para poder activarlos.",
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+            }
+            AvisoAutomatico.entries.forEach { aviso ->
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(aviso.titulo, style = MaterialTheme.typography.bodyLarge)
+                        Text(aviso.descripcion, style = MaterialTheme.typography.bodySmall)
+                    }
+                    Switch(
+                        checked = activos[aviso.llave] == true,
+                        onCheckedChange = { onCambiar(aviso, it) },
+                        enabled = habilitado && notificacionesPrendidas
+                    )
+                }
+            }
         }
     }
 }

@@ -20,7 +20,9 @@ data class Notificacion(
     @ServerTimestamp val creada: Timestamp? = null,
     val estado: String = ESTADO_PENDIENTE,
     val enviadas: Int = 0,
-    val fallidas: Int = 0
+    val fallidas: Int = 0,
+    /** Llave de [AvisoAutomatico] si lo mandó `programarAvisos`; vacío si lo escribió el entrenador. */
+    val automatico: String = ""
 ) {
     companion object {
         const val DESTINO_TODAS = "todas"
