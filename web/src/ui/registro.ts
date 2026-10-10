@@ -18,6 +18,7 @@ import {
   type SerieBorrador,
 } from "../registro";
 import { escapar } from "./tarjetaDia";
+import { aterrizar, despegar } from "./vueloRegistro";
 
 /**
  * La ventana Registro: la clienta anota lo que entrenó con su coach en el gym, por
@@ -66,6 +67,8 @@ interface Estado {
   guardado: boolean;
   /** El ejercicio recién agregado, para llevarle la vista al pintar. */
   enfocar: number | null;
+  /** El GIF que va volando del grid a su tarjeta (ver `vueloRegistro.ts`); null si no hay. */
+  vuelo: HTMLElement | null;
 }
 
 const LLAVE_BORRADOR = "osfit:registro-borrador";
@@ -79,6 +82,7 @@ const estado: Estado = {
   error: null,
   guardado: false,
   enfocar: null,
+  vuelo: null,
 };
 
 /** Solo para los tests: poner la ventana en una vista y con un borrador dados. */
@@ -406,6 +410,9 @@ export function conectarRegistro(
         guardarBorrador(agregarEjercicio(b, e, ultimasSeries(d.sesiones ?? [], id), seriesDeLaRutina(d, e)));
       }
       estado.enfocar = ya < 0 ? (estado.borrador?.ejercicios.length ?? 1) - 1 : ya;
+      // Antes de repintar: el grid desaparece en el repintado y el clon tiene que medirse aquí.
+      estado.vuelo?.remove();
+      estado.vuelo = despegar(el.querySelector<HTMLElement>(".registro-opcion-gif"));
       estado.vista = "capturar";
       estado.error = null;
       repintar();
@@ -439,7 +446,9 @@ export function conectarRegistro(
 
   if (estado.vista === "capturar" && estado.enfocar !== null) {
     const tarjeta = raiz.querySelector<HTMLElement>(`.registro-ejercicio[data-indice="${estado.enfocar}"]`);
+    const clon = estado.vuelo;
     estado.enfocar = null;
-    tarjeta?.scrollIntoView({ block: "start", behavior: "smooth" });
+    estado.vuelo = null;
+    aterrizar(clon, tarjeta);
   }
 }

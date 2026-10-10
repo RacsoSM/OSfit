@@ -1000,3 +1000,9 @@ main:has(#barra) { padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
 .registro-ir-historial .tarjeta-titulo { display: block; margin: 0 0 2px; }
 .registro-ir-detalle { display: block; font-size: 14px; }
 .registro-hist-horario { margin: -2px 0 6px; font-size: 13px; color: var(--texto-tenue); }
+/* El GIF en vuelo del grid a su tarjeta (`vueloRegistro.ts`). Encima de todo y sin recibir
+   toques; el origen de la transformación en la esquina, que es como se calcula el recorrido. */
+.registro-vuelo { z-index: 50; pointer-events: none; transform-origin: top left; will-change: transform; }
+/* Al tocar una tarjeta del grid se hunde un poco antes de despegar. */
+.registro-opcion { transition: transform 0.12s ease-out; }
+.registro-opcion:not(:disabled):active { transform: scale(0.97); }
