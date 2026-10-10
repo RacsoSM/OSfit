@@ -46,3 +46,6 @@ graphify-out/cache/last_query_stamp
 
 # Log que escribe firebase-tools cuando falla un despliegue.
 firebase-debug.log
+
+# Los .webp que deja `cargarBancoEjercicios.mjs --prueba`: son medios de Gym visual, no se versionan.
+functions/scripts/salida/
