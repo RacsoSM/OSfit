@@ -113,7 +113,7 @@ app sin compilar todavía: la sesión donde se hizo no tenía Android SDK).
 
 Verificado por el entrenador (2026-10-08).
 
-## 3. GIF para cada ejercicio
+## 3. GIF para cada ejercicio — ✅ HECHO dentro del punto 7 (2026-10-10), falta desplegar
 
 > "agrega también el agregar gifs para cada ejercicio al backlog"
 
@@ -133,7 +133,7 @@ A decidir en el spec:
 - **Acceso:** reglas de Storage para que cualquier clienta con sesión pueda leerlos (no son
   datos personales), y guardar la ruta, no la URL de descarga, como con canciones y videos.
 
-Pendiente: spec de diseño. Se resuelve dentro del punto 7 (banco de ejercicios con `gifRuta`).
+Se resuelve dentro del punto 7 (banco de ejercicios con `gifRuta`): **GIFs vinculados (2026-10-10)**, ver allá.
 
 ## 4. Mapa muscular: ventana con el cuerpo coloreado por nivel — 🎨 DIBUJO HECHO (2026-10-09), falta vincularlo
 
@@ -347,8 +347,26 @@ Hecho (2026-10-10), primera parte:
   población (`fuerza.ts`). Hasta que exista el registro, dice "sin datos".
 - **App:** `Cliente.sexo` ("H"/"M") y el selector "Sexo" en Editar cliente.
 
-Pendiente: aprobar el resto del spec (banco de ejercicios, Registro, modo guiado, cálculo
-de fuerza).
+Hecho (2026-10-10), segunda parte — **GIFs vinculados a los ejercicios** (cierra el punto 3):
+
+> "es el de gymvisual, no te preocupes por la licencia que yo estoy en contacto con ellos"
+
+- **Fuente:** `hasaneyldrm/exercises-dataset` en GitHub (1,324 animaciones © Gym visual),
+  fijado a un commit. La licencia de los medios la está viendo el entrenador con Gym visual
+  (ver `docs/licencias/GymVisual.md`).
+- **Banco semilla:** 91 ejercicios comunes en `functions/semilla/ejercicios.json`, con nombre
+  y alias en español, músculos (claves de los SVG) y tipo. Sin `estandares` todavía.
+- **Carga:** `functions/scripts/cargarBancoEjercicios.mjs` convierte cada GIF a WebP animado
+  (~40 kB en vez de ~125 kB), lo sube a `ejercicios/<id>.webp` y escribe `ejercicios/{id}`.
+- **Reglas:** cualquier sesión lee `ejercicios` (Firestore y Storage); solo escribe el entrenador.
+- **Web:** la tarjeta del día muestra el GIF junto a cada ejercicio que case por nombre o alias
+  (sin importar acentos) con el banco, y el crédito "Animaciones © Gym visual".
+
+Plan y pasos para desplegar: `superpowers/plans/2026-10-10-banco-ejercicios-gifs.md`.
+**Sin desplegar todavía.**
+
+Pendiente: aprobar el resto del spec (Registro, modo guiado, cálculo de fuerza, estándares
+por ejercicio, `Ejercicio.ejercicioId` con buscador en el editor de rutinas).
 
 ## 8. Avisos automáticos: racha perdida y recordatorio de pago — ✅ HECHO (2026-10-10)
 

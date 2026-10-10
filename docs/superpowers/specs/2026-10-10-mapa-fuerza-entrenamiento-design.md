@@ -218,6 +218,8 @@ cortes.
 
 - ¿Quién llena los estándares por ejercicio: el entrenador, o se proponen valores de tablas
   públicas para que él los revise?
-- GIFs: ¿grabación propia o dataset con licencia? No bloquea ninguna fase.
+- ~~GIFs: ¿grabación propia o dataset con licencia?~~ **Decidido (2026-10-10):** las
+  animaciones de Gym visual vía `hasaneyldrm/exercises-dataset`, en WebP en
+  `ejercicios/<id>.webp`. Ver `docs/superpowers/plans/2026-10-10-banco-ejercicios-gifs.md`.
 - ¿Debe el entrenador ver una alerta cuando una clienta registra un peso muy por encima de
   lo esperado (error de captura o riesgo)?
