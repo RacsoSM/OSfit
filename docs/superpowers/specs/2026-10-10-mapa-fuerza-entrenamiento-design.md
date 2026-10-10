@@ -107,6 +107,8 @@ gym, siga o no la rutina de la app. Los GIF se usan aquí, **no en la tarjeta de
   **comprimidos arriba** y los siguientes **abajo** (GIF chico, nombre y resumen de lo
   anotado). Al tocar uno comprimido, su GIF vuela y crece hasta el lugar del activo, y la
   tarjeta entra desde abajo al avanzar o desde arriba al volver.
+  También se cambia **deslizando la tarjeta de lado** (izquierda = siguiente, derecha =
+  anterior); de lado y no vertical para no chocar con el scroll de la página.
 - **Historial:** pantalla aparte ("Tu historial") con cada entrenamiento: fecha, horario,
   duración, ejercicios y series, del más reciente al más viejo.
 - **Elegir (grid):** tarjetas con el **GIF y el nombre**, **agrupadas** (decidido 2026-10-10):

@@ -20,6 +20,7 @@ import {
 } from "../registro";
 import { escapar } from "./tarjetaDia";
 import { aterrizar, despegar } from "./vueloRegistro";
+import { conectarDeslizar } from "./deslizarRegistro";
 
 /**
  * La ventana Registro: la clienta anota lo que entrenó con su coach en el gym, por
@@ -79,6 +80,8 @@ interface Estado {
   activo: number | null;
   /** Hacia dónde se movió la última vez: la tarjeta entra desde abajo al avanzar, desde arriba al volver. */
   avanzando: boolean;
+  /** El último cambio fue deslizando de lado: la tarjeta nueva entra de lado y no de abajo. */
+  lateral: boolean;
 }
 
 const LLAVE_BORRADOR = "osfit:registro-borrador";
@@ -95,6 +98,7 @@ const estado: Estado = {
   vuelo: null,
   activo: null,
   avanzando: true,
+  lateral: false,
 };
 
 /** Solo para los tests: poner la ventana en una vista y con un borrador dados. */
@@ -301,7 +305,7 @@ function tarjetaActiva(e: EjercicioBorrador, i: number, total: number): string {
   const nav = total > 1 ? `
       <div class="registro-nav">
         <button class="registro-nav-boton" data-activar="${i - 1}" ${i === 0 ? "disabled" : ""}>‹ Anterior</button>
-        <span class="registro-nav-cuenta">${i + 1} de ${total}</span>
+        <span class="registro-nav-cuenta">${i + 1} de ${total}<span class="registro-nav-pista">desliza ‹ ›</span></span>
         <button class="registro-nav-boton" data-activar="${i + 1}" ${i === total - 1 ? "disabled" : ""}>Siguiente ›</button>
       </div>` : "";
   return `
@@ -409,6 +413,26 @@ export function conectarRegistro(
     window.scrollTo(0, 0);
   };
 
+  /**
+   * Abre en grande otro ejercicio del entrenamiento: tocando su fila comprimida, con
+   * Anterior/Siguiente o deslizando la tarjeta (`lateral`). Su GIF chico vuela y crece hasta
+   * el lugar del activo.
+   */
+  const activar = (i: number, lateral: boolean) => {
+    const b = estado.borrador;
+    if (!b) return;
+    const actual = indiceActivo(b);
+    if (!Number.isInteger(i) || i < 0 || i >= b.ejercicios.length || i === actual) return;
+    const origen = raiz.querySelector<HTMLElement>(`.registro-compacto[data-activar="${i}"] .registro-compacto-gif`);
+    estado.vuelo?.remove();
+    estado.vuelo = despegar(origen);
+    estado.avanzando = i > actual;
+    estado.lateral = lateral;
+    estado.activo = i;
+    estado.enfocar = i;
+    repintar();
+  };
+
   raiz.addEventListener("click", (ev) => {
     const el = (ev.target as HTMLElement).closest<HTMLElement>("button");
     if (!el || el.hasAttribute("disabled")) return;
@@ -456,17 +480,8 @@ export function conectarRegistro(
 
     // Abrir en grande otro ejercicio del entrenamiento: tocando su fila comprimida o con
     // Anterior/Siguiente. Su GIF chico vuela y crece hasta el lugar del activo.
-    if (el.dataset.activar !== undefined && b) {
-      const i = Number(el.dataset.activar);
-      const actual = indiceActivo(b);
-      if (!Number.isInteger(i) || i < 0 || i >= b.ejercicios.length || i === actual) return;
-      const origen = raiz.querySelector<HTMLElement>(`.registro-compacto[data-activar="${i}"] .registro-compacto-gif`);
-      estado.vuelo?.remove();
-      estado.vuelo = despegar(origen);
-      estado.avanzando = i > actual;
-      estado.activo = i;
-      estado.enfocar = i;
-      repintar();
+    if (el.dataset.activar !== undefined) {
+      activar(Number(el.dataset.activar), false);
       return;
     }
 
@@ -482,6 +497,7 @@ export function conectarRegistro(
       // El que acaba de elegir pasa a ser el activo, en grande.
       estado.activo = estado.enfocar;
       estado.avanzando = true;
+      estado.lateral = false;
       // Antes de repintar: el grid desaparece en el repintado y el clon tiene que medirse aquí.
       estado.vuelo?.remove();
       estado.vuelo = despegar(el.querySelector<HTMLElement>(".registro-opcion-gif"));
@@ -525,6 +541,14 @@ export function conectarRegistro(
     const clon = estado.vuelo;
     estado.enfocar = null;
     estado.vuelo = null;
-    aterrizar(clon, tarjeta, estado.avanzando);
+    aterrizar(clon, tarjeta, estado.avanzando, estado.lateral);
+  }
+
+  if (estado.vista === "capturar" && estado.borrador) {
+    const a = indiceActivo(estado.borrador);
+    conectarDeslizar(
+      raiz.querySelector<HTMLElement>(".registro-ejercicio.activo"),
+      (hacia) => activar(hacia === "siguiente" ? a + 1 : a - 1, true)
+    );
   }
 }

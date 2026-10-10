@@ -72,7 +72,8 @@ export function despegar(origen: HTMLElement | null): HTMLElement | null {
 export function aterrizar(
   clon: HTMLElement | null,
   tarjeta: HTMLElement | null,
-  desdeAbajo = true
+  desdeAbajo = true,
+  lateral = false
 ): void {
   const destino = tarjeta?.querySelector<HTMLElement>(".registro-ej-gif") ?? null;
   // Instantáneo y antes de medir: el clon está fijo en pantalla, así que mover la página no
@@ -100,7 +101,11 @@ export function aterrizar(
   contenido?.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 260, easing: "ease-out" });
   tarjeta.animate(
     // Entra desde abajo al avanzar en el entrenamiento y desde arriba al volver.
-    [{ opacity: 0, transform: `translateY(${desdeAbajo ? 18 : -18}px)` }, { opacity: 1, transform: "none" }],
+    // Deslizando de lado entra de lado: desde la derecha al avanzar, como un carrusel.
+    [{
+      opacity: 0,
+      transform: lateral ? `translateX(${desdeAbajo ? 40 : -40}px)` : `translateY(${desdeAbajo ? 18 : -18}px)`,
+    }, { opacity: 1, transform: "none" }],
     { duration: 380, delay: 160, easing: "cubic-bezier(.2,.8,.2,1)", fill: "backwards" }
   );
 
