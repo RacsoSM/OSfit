@@ -360,4 +360,26 @@ fun `revocado dice la fecha en la zona del gimnasio`() {
 
 ## Registro de verificación
 
-(Se llena en Task 7.)
+**2026-10-10, antes de desplegar:**
+
+- `functions/`: 110 tests en verde (incluye `corteAcceso.test.ts`).
+- Reglas: evaluadas con la API de pruebas de reglas de Firebase (`firebaserules.googleapis.com
+  …:test`, con `functionMocks` para el `get` / `firestore.get` del cliente), sin publicarlas.
+  14 casos de Firestore (sin corte, con corte, link nuevo, otra clienta, entrenador, medallas,
+  asistencias, ruletas, avisosFalta, cambiosDia) y 4 de Storage: todos como se esperaba.
+- `web/`: 434 tests en verde y build bien.
+- App: `testDebugUnitTest` (45 archivos de resultados, sin fallas) y `assembleDebug` bien.
+
+**2026-10-10, despliegue:** funciones (7, por nombre), reglas de Firestore y Storage, y hosting.
+
+- **Ojo para la próxima:** las reglas de Storage que leen Firestore necesitan el rol
+  "Firebase Rules Firestore Service Agent" (`roles/firebaserules.firestoreServiceAgent`) para
+  `service-754891137796@gcp-sa-firebasestorage.iam.gserviceaccount.com`. El CLI lo pide al
+  desplegar en modo interactivo; con `--non-interactive` no lo pide y las reglas se publican
+  igual. Entre el despliegue y que el entrenador dio el rol en la consola de IAM (unos
+  minutos), Storage denegó los videos a las clientas. Ya está dado.
+- Comprobado después: una sesión de una clienta activa pasa la regla de `resumenes/` (404 en
+  un archivo inexistente) y la carpeta de otra clienta sigue bloqueada (403).
+- App: APK de depuración entregado al entrenador para instalar.
+
+Pendiente: Step 3 (prueba con una clienta de prueba) y Step 4.

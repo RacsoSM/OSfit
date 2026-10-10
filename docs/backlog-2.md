@@ -289,7 +289,10 @@ canjear, así que revocar no la saca. Decidido: "Notificaciones" no se toca al r
 muestra "Acceso revocado el…", y el candado dice "Tu acceso ya no está activo. Pídele a tu
 entrenador un link nuevo."
 
-Plan: `superpowers/plans/2026-10-10-revocar-acceso.md` (7 tasks; desplegar pide confirmación).
+Plan: `superpowers/plans/2026-10-10-revocar-acceso.md`.
+
+Implementado y desplegado (2026-10-10): funciones, reglas y web en producción; APK entregado.
+Falta instalar la app y probarlo con una clienta de prueba (Task 7, Step 3 del plan).
 
 ## 7. Barra de abajo con Músculos y Registro, y Entrenar en Inicio — 🔴 URGENTE
 
