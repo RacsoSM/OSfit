@@ -133,7 +133,7 @@ A decidir en el spec:
 - **Acceso:** reglas de Storage para que cualquier clienta con sesión pueda leerlos (no son
   datos personales), y guardar la ruta, no la URL de descarga, como con canciones y videos.
 
-Pendiente: spec de diseño.
+Pendiente: spec de diseño. Se resuelve dentro del punto 7 (banco de ejercicios con `gifRuta`).
 
 ## 4. Mapa muscular: ventana con el cuerpo coloreado por nivel
 
@@ -184,7 +184,7 @@ CSS; las líneas internas y el contorno van aparte y no cambian de color.
   scripts de `docs/mapa-muscular/espalda-mujer/`. Mismos ids que la espalda del hombre (sin
   lumbar). Con esto están las cuatro vistas: hombre y mujer, de frente y de espaldas.
 
-Pendiente: spec de diseño.
+Pendiente: spec de diseño. Se resuelve dentro del punto 7 (pestaña Músculos).
 
 ## 5. Que la web cargue más rápido al abrirla
 
@@ -251,3 +251,43 @@ Idea para cerrar la sesión de verdad (a decidir en el spec):
   sigan llegando avisos.
 
 Pendiente: spec de diseño.
+
+## 7. Barra de abajo con Músculos, Entrenar y Registro — 🔴 URGENTE
+
+> "eso me agrada más, añadelo al backlog como urgente antes de proponer el spec"
+
+Es de lo fuerte de la app, así que va **a la vista**, no escondido en el menú lateral: una
+**barra de navegación fija abajo**, en toda la web del cliente, tipo WhatsApp/Instagram.
+
+```
+  🏠 Inicio   💪 Músculos   ▶️ ENTRENAR   📝 Registro
+                              (central, más grande, color del estilo)
+```
+
+- **Músculos:** el mapa de frente y espalda según el sexo de la clienta (las cuatro vistas
+  del punto 4), cada músculo pintado según su nivel de fuerza. Sin datos sale gris.
+- **Registro:** su historial de sesiones y "+ Registrar": elige un ejercicio (primero los de
+  su rutina; también puede buscar cualquiera del banco) y anota series, reps y peso.
+- **Entrenar:** modo guiado a pantalla completa con **la rutina que le asignó el entrenador**
+  (el día que le toca): un ejercicio a la vez, GIF grande, captura de peso y reps por serie y
+  descanso con temporizador. También se abre desde un botón en la tarjeta del día de Inicio.
+- El menú lateral (☰) se queda con lo secundario: Ranking, Medallas, Logros, Videos, Ajustes.
+
+Decisiones ya tomadas por el entrenador (2026-10-10):
+
+- La fuerza se mide **contra estándares**: 1RM estimado (Epley) / peso corporal, comparado
+  con una referencia por ejercicio y sexo → nivel 0–5.
+- Registro y Entrenar guardan lo mismo (sesiones), y de ahí sale el mapa.
+- GIFs sin preferencia de fuente: el banco los lleva como campo opcional y no bloquean nada.
+
+Lo que hace falta (detalle en el borrador de spec): `Cliente.sexo`, un banco de ejercicios
+(`ejercicios/`) con músculos y estándares, ligar `Ejercicio` de la rutina con el banco, y una
+función `registrarSesion`, porque la página no escribe en Firestore.
+
+Absorbe los puntos 3 (GIFs) y 4 (mapa muscular).
+
+Borrador de spec: `superpowers/specs/2026-10-10-mapa-fuerza-entrenamiento-design.md`
+(**propuesta, sin aprobar todavía**). Abierto: quién llena los estándares por ejercicio, de
+dónde salen los GIFs, y si avisar al entrenador cuando se registre un peso fuera de lo normal.
+
+Pendiente: aprobar el spec.
