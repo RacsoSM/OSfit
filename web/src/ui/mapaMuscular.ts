@@ -99,13 +99,14 @@ export function tarjetaMusculos(
   const de = (archivo: string): EstadoSvg => mapas[archivo] ?? { estado: "cargando" };
   return `
     <section class="mapa-cuerpo" aria-label="Tu mapa muscular">
-      <div class="mapa-giro${deEspalda ? " girado" : ""}" id="mapa-giro">
-        ${cara("frente", de(a.frente), deEspalda)}
-        ${cara("espalda", de(a.espalda), !deEspalda)}
+      <div class="mapa-marco">
+        <div class="mapa-giro${deEspalda ? " girado" : ""}" id="mapa-giro">
+          ${cara("frente", de(a.frente), deEspalda)}
+          ${cara("espalda", de(a.espalda), !deEspalda)}
+        </div>
+        <button type="button" class="mapa-girar" id="girar-mapa"
+                aria-label="${textoBoton(deEspalda)}" title="${textoBoton(deEspalda)}">🔄</button>
       </div>
-      <button type="button" class="mapa-girar" id="girar-mapa">
-        <span aria-hidden="true">🔄</span> <span class="mapa-girar-texto">${textoBoton(deEspalda)}</span>
-      </button>
       <p class="mapa-leyenda">
         <span class="mapa-muestra" aria-hidden="true"></span>
         Sin datos todavía: cada músculo se irá pintando con lo que registres.
@@ -120,7 +121,8 @@ export function conectarMapa(): void {
     document.querySelector("#mapa-giro")?.classList.toggle("girado", deEspalda);
     document.querySelector(".mapa-cara-frente")?.toggleAttribute("aria-hidden", deEspalda);
     document.querySelector(".mapa-cara-espalda")?.toggleAttribute("aria-hidden", !deEspalda);
-    const t = document.querySelector(".mapa-girar-texto");
-    if (t) t.textContent = textoBoton(deEspalda);
+    const b = document.querySelector("#girar-mapa");
+    b?.setAttribute("aria-label", textoBoton(deEspalda));
+    b?.setAttribute("title", textoBoton(deEspalda));
   });
 }

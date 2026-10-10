@@ -805,10 +805,13 @@ main:has(#barra) { padding-bottom: calc(84px + env(safe-area-inset-bottom)); }
    que lo gira. Las dos caras están una detrás de la otra y girar es rotar el contenedor:
    así se ve como un cuerpo que da la vuelta. Los SVG traen su contorno y sus líneas (ver
    `prepararSvg`); aquí va solo el color de los músculos, que sin registros es "sin datos". */
-.mapa-cuerpo { display: flex; flex-direction: column; align-items: center; padding-top: 4px; }
+.mapa-cuerpo {
+  display: flex; flex-direction: column; align-items: center; padding-top: 4px;
+}
+.mapa-marco { position: relative; max-width: 100%; }
 .mapa-giro {
   position: relative;
-  height: min(64vh, 620px); aspect-ratio: 420 / 800; max-width: 100%;
+  height: min(72vh, 720px); aspect-ratio: 420 / 800; max-width: 100%;
   transform-style: preserve-3d; transition: transform 600ms cubic-bezier(0.4, 0.1, 0.2, 1);
 }
 .mapa-giro.girado { transform: rotateY(180deg); }
@@ -825,11 +828,15 @@ main:has(#barra) { padding-bottom: calc(84px + env(safe-area-inset-bottom)); }
   filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.45)) drop-shadow(0 0 0.5px rgba(0, 0, 0, 0.45));
 }
 .mapa-cuerpo .musculo { fill: #8f90a6; }
+/* Solo el ícono, chico, en la esquina de abajo a la derecha del dibujo: así el cuerpo
+   ocupa casi toda la pantalla. El nombre lo dice `aria-label`. */
 .mapa-girar {
-  margin-top: 14px; min-height: 48px; padding: 10px 22px;
-  display: inline-flex; align-items: center; gap: 8px;
-  border: 0; border-radius: 999px; background: var(--primario); color: var(--sobre-primario);
-  font: inherit; font-size: 16px; font-weight: 700; cursor: pointer;
+  position: absolute; right: 0; bottom: 0; z-index: 1;
+  width: 44px; height: 44px; padding: 0;
+  display: flex; align-items: center; justify-content: center;
+  border: 0; border-radius: 50%; background: var(--superficie-alta);
+  font-size: 22px; line-height: 1; cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 .mapa-girar:focus-visible { outline: 2px solid var(--primario); outline-offset: 3px; }
 .mapa-cargando {

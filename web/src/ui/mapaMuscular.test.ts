@@ -98,7 +98,7 @@ describe("tarjetaMusculos", () => {
     expect(h).not.toContain("girado");
     expect(h).toContain('mapa-cara mapa-cara-espalda" aria-hidden="true"');
     expect(h).not.toContain('mapa-cara mapa-cara-frente" aria-hidden');
-    expect(h).toContain("Ver espalda");
+    expect(h).toContain('aria-label="Ver espalda"');
   });
 
   it("mientras cargan, muestra el esqueleto", () => {

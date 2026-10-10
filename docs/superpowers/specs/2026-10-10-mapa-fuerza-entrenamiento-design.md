@@ -71,7 +71,8 @@ una **barra de navegación abajo, fija y visible en toda la web**, tipo WhatsApp
 ### Músculos
 
 - Muestra **un solo cuerpo grande, de frente**, según `cliente.sexo`, directo sobre el fondo
-  (sin tarjeta). Debajo, un botón **"Ver espalda"** lo gira en 3D; el lado elegido se
+  (sin tarjeta). Un botón chico, solo con el ícono 🔄, en la esquina de abajo a la derecha
+  del dibujo, lo gira en 3D; el lado elegido se
   conserva aunque llegue un snapshot. Sin `sexo` no adivina:
   avisa que el entrenador tiene que completar su perfil.
 - Cada grupo se pinta con el color de su nivel, 0–5, de la paleta del estilo activo; los
