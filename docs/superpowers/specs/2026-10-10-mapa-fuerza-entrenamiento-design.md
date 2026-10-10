@@ -41,20 +41,34 @@ automáticos, compartir el mapa en redes y que la clienta edite su rutina.
 
 ## Navegación
 
-- **Una sola ventana nueva en el menú lateral: "Entrenamiento" (💪).** Se agrega a
-  `IdVentana` y `VENTANAS` en `web/src/ventanas.ts`, como dice el spec del menú lateral.
-- **Dentro, una barra de pestañas abajo**, tipo WhatsApp: **Músculos · Registro · Entrenar**.
-  La pestaña activa vive en el mismo estado que la ventana (`navegacion.ts`), para que
-  "atrás" se comporte igual que hoy. Pasar de una pestaña a otra hace `replaceState`, no
-  agrega entradas.
+Esto es de lo fuerte de la app, así que **no va escondido en el menú lateral**: se agrega
+una **barra de navegación abajo, fija y visible en toda la web**, tipo WhatsApp/Instagram.
+
+```
+  🏠 Inicio   💪 Músculos   ▶️ ENTRENAR   📝 Registro
+                              (central, más grande, color del estilo)
+```
+
+- **Músculos, Entrenar y Registro son ventanas de primer nivel**, al mismo nivel que Inicio:
+  se suman `"musculos" | "entrenar" | "registro"` a `IdVentana` en `web/src/ventanas.ts`, con
+  un campo nuevo `grupo: "barra"` para que salgan en la barra y no en el menú lateral.
+- **El menú lateral (☰) se queda** para lo secundario: Ranking, Medallas, Logros, Videos y
+  Ajustes.
+- **Entrenar va en el centro y resaltado**, como el "+" de Instagram: es la acción estrella y
+  queda a un toque desde cualquier pantalla. Su ventana muestra la vista previa del día y el
+  botón "Empezar".
+- **`navegacion.ts` no cambia de modelo:** cambiar de pestaña en la barra es `abrirVentana`;
+  el historial sigue siendo `[Inicio, ventana]`, así que "atrás" regresa a Inicio.
+- La barra respeta el área segura de abajo (`env(safe-area-inset-bottom)`) y cada estilo
+  (Neón, Pixel, Sakura, etc.) la pinta con su paleta. Se oculta en el modo guiado y mientras
+  el menú lateral está abierto.
 - **"Iniciar entrenamiento" también va en Inicio**, como botón de la tarjeta del día
-  (`ui/tarjetaDia.ts`), que ya sabe qué día toca. La pestaña Entrenar muestra el mismo
-  botón con la vista previa del día.
-- **El modo guiado es una capa a pantalla completa, sin pestañas ni menú.** Tiene su propia
+  (`ui/tarjetaDia.ts`), que ya sabe qué día toca.
+- **El modo guiado es una capa a pantalla completa, sin barra ni menú.** Tiene su propia
   entrada en el historial, para que "atrás" pregunte "¿Salir del entrenamiento?" en vez de
   perder lo capturado.
 
-## Pestañas
+## Ventanas nuevas
 
 ### Músculos
 
@@ -176,16 +190,18 @@ cortes.
 
 ## Fases
 
-0. **Cimientos:** `Cliente.sexo`, colección `ejercicios` con una semilla de unos 40
+0. **Barra de abajo:** la navegación fija con las cuatro pestañas (Músculos, Entrenar y
+   Registro empiezan como "próximamente").
+1. **Cimientos:** `Cliente.sexo`, colección `ejercicios` con una semilla de unos 40
    ejercicios básicos, `Ejercicio.ejercicioId` y el emparejado por nombre, reglas.
-1. **Músculos:** la ventana "Entrenamiento" con su barra de pestañas y el mapa coloreado
+2. **Músculos:** la ventana con el mapa coloreado
    por `fuerza.ts`. Mientras no haya sesiones se ve gris, así que se puede probar con datos
    falsos.
-2. **Registro:** la función `registrarSesion` / `borrarSesion`, la pestaña y el
+3. **Registro:** la función `registrarSesion` / `borrarSesion`, la pestaña y el
    historial. Desde aquí el mapa ya se colorea.
-3. **Entrenar:** el modo guiado, el botón en la tarjeta del día, el borrador local y el
+4. **Entrenar:** el modo guiado, el botón en la tarjeta del día, el borrador local y el
    resumen final.
-4. **Entrenador:** sesiones y mapa en la ficha, y la pantalla del banco.
+5. **Entrenador:** sesiones y mapa en la ficha, y la pantalla del banco.
 
 ## Preguntas abiertas
 
