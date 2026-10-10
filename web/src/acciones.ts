@@ -3,7 +3,7 @@ import { functions } from "./firebase";
 import type { Ranking } from "./datos";
 
 /**
- * Las llamadas a funciones que puede hacer el cliente: cinco escrituras y la lectura del
+ * Las llamadas a funciones que puede hacer el cliente: las escrituras y la lectura del
  * ranking. Nadie más llama a `httpsCallable`: el día que cambie la firma de una función hay
  * un solo sitio que tocar, y la página nunca escribe en Firestore por su cuenta — las reglas
  * la dejan en solo lectura a propósito.
@@ -56,3 +56,12 @@ export const registrarDispositivo = httpsCallable<
   { token: string; plataforma: "ios" | "android" | "otro" },
   { ok: true }
 >(functions, "registrarDispositivo");
+
+/**
+ * Anota que la página se abrió, con el teléfono, para las "Últimas entradas" de la ficha del
+ * entrenador. La página no la espera ni se entera si falla.
+ */
+export const registrarEntrada = httpsCallable<
+  { plataforma: "ios" | "android" | "otro" },
+  { ok: true }
+>(functions, "registrarEntrada");

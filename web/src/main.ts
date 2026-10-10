@@ -19,11 +19,11 @@ import type {
 } from "./datos";
 import { hoyEnMazatlan } from "./fecha";
 import { mesAnterior, type Tirada } from "./tirada";
-import { obtenerRanking } from "./acciones";
+import { obtenerRanking, registrarEntrada } from "./acciones";
 import { modalRuleta, conectarRuleta } from "./ui/ruleta";
 import { conectarRanking, type EstadoRanking } from "./ui/tarjetaRanking";
 import { conectarAjustes } from "./ui/tarjetaAjustes";
-import { estadoNotificaciones } from "./notificaciones";
+import { estadoNotificaciones, plataforma } from "./notificaciones";
 import { activarNotificaciones, entornoDelNavegador, sincronizarToken } from "./notificacionesNavegador";
 import { conectarNotificaciones } from "./ui/tarjetaNotificaciones";
 import { almacenDeEstilo, ponerEstilo } from "./ui/cambioDeEstilo";
@@ -509,6 +509,10 @@ async function arrancar(): Promise<void> {
   // La credencial antes que los listeners: pedir datos en el hueco entre entrar y que el
   // cliente de Firestore se entere vuelve como `permission-denied`.
   await credencialLista();
+
+  // Una vez por carga y sin esperarla: es para la ficha del entrenador, no para ella. Si
+  // falla, esta apertura no queda anotada y nada más.
+  registrarEntrada({ plataforma: plataforma(navigator.userAgent) }).catch(() => {});
 
   alVolverDatos((origen) => {
     // Volvió: se borra su error. Sin esto, un tropiezo al arrancar dejaría la pantalla de la
