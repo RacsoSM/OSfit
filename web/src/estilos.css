@@ -956,7 +956,7 @@ main:has(#barra) { padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
 
 /* El ejercicio activo del entrenamiento: el GIF grande, para ver bien el movimiento. 180 px y
    no más: es el tamaño real de las animaciones del dataset, y más grande se veían pixeladas
-   (2026-10-10). Si llegan versiones de mayor resolución de Gym visual, se puede volver a subir. */
+   (2026-10-10). Si llegan versiones de mayor resolución de Gym visual, se puede volver a subir.
    `scroll-margin-top` deja aire arriba cuando se le lleva la vista (`aterrizar`). */
 .registro-ejercicio.activo { scroll-margin-top: 12px; }
 .registro-activo-gif { position: relative; display: flex; justify-content: center; margin-bottom: 10px; }
