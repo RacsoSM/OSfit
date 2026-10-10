@@ -135,7 +135,7 @@ A decidir en el spec:
 
 Pendiente: spec de diseño. Se resuelve dentro del punto 7 (banco de ejercicios con `gifRuta`).
 
-## 4. Mapa muscular: ventana con el cuerpo coloreado por nivel
+## 4. Mapa muscular: ventana con el cuerpo coloreado por nivel — 🎨 DIBUJO HECHO (2026-10-09), falta vincularlo
 
 > "agrega al backlog también el agregar una ventana nueva donde aparezca el esqueleto de un hombre o mujer dependiendo el caso y colorear cada músculo según su nivel de fuerza o desarrollo como en algunas apps de gimnasios que rankean músculos"
 
@@ -184,7 +184,9 @@ CSS; las líneas internas y el contorno van aparte y no cambian de color.
   scripts de `docs/mapa-muscular/espalda-mujer/`. Mismos ids que la espalda del hombre (sin
   lumbar). Con esto están las cuatro vistas: hombre y mujer, de frente y de espaldas.
 
-Pendiente: spec de diseño. Se resuelve dentro del punto 7 (pestaña Músculos).
+**El mapa ya está hecho:** las cuatro vistas existen y se pueden pintar por `data-musculo`.
+Lo que falta es **vincularlo**: mostrarlo en la web y que el color salga de los datos de la
+clienta. Eso es la pestaña Músculos del punto 7.
 
 ## 5. Que la web cargue más rápido al abrirla
 
@@ -284,7 +286,8 @@ Lo que hace falta (detalle en el borrador de spec): `Cliente.sexo`, un banco de 
 (`ejercicios/`) con músculos y estándares, ligar `Ejercicio` de la rutina con el banco, y una
 función `registrarSesion`, porque la página no escribe en Firestore.
 
-Absorbe los puntos 3 (GIFs) y 4 (mapa muscular).
+Absorbe el punto 3 (GIFs) y la vinculación del punto 4: **el mapa muscular ya está dibujado**
+(las cuatro vistas en `web/public/`), aquí solo falta conectarlo a la barra y a los datos.
 
 Borrador de spec: `superpowers/specs/2026-10-10-mapa-fuerza-entrenamiento-design.md`
 (**propuesta, sin aprobar todavía**). Abierto: quién llena los estándares por ejercicio, de
