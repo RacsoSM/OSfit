@@ -382,4 +382,5 @@ fun `revocado dice la fecha en la zona del gimnasio`() {
   un archivo inexistente) y la carpeta de otra clienta sigue bloqueada (403).
 - App: APK de depuración entregado al entrenador para instalar.
 
-Pendiente: Step 3 (prueba con una clienta de prueba) y Step 4.
+**Verificado por el entrenador (2026-10-10):** instaló la app y probó la revocación; funciona.
+Modelo de teléfono y detalle de los pasos sin anotar.

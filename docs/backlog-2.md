@@ -250,7 +250,7 @@ Pendiente:
   CSS junto). Cargar solo la del estilo elegido ahorraría unos 10 kB gzip, a cambio de
   sacarlas del bundle de Vite; poco premio, se dejó para después.
 
-## 6. Revocar el enlace de un cliente de verdad
+## 6. Revocar el enlace de un cliente de verdad — ✅ HECHO (2026-10-10)
 
 > "agrega al backlog el revocar el enlace de un cliente"
 
@@ -291,8 +291,8 @@ entrenador un link nuevo."
 
 Plan: `superpowers/plans/2026-10-10-revocar-acceso.md`.
 
-Implementado y desplegado (2026-10-10): funciones, reglas y web en producción; APK entregado.
-Falta instalar la app y probarlo con una clienta de prueba (Task 7, Step 3 del plan).
+Implementado y desplegado (2026-10-10): funciones, reglas y web en producción; app instalada.
+Verificado por el entrenador en su teléfono (2026-10-10).
 
 ## 7. Barra de abajo con Músculos y Registro, y Entrenar en Inicio — 🔴 URGENTE
 
