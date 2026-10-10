@@ -39,7 +39,7 @@ import { moverMes } from "./ui/calendario";
 import { tarjetaVideos, ultimosRangoDescendente, firmaVideos, MAXIMO_VIDEOS } from "./ui/tarjetaVideos";
 import { BARRA, VENTANAS, contenidoDe, ventana, type IdVentana } from "./ventanas";
 import { barraInferior, conectarBarra } from "./ui/barraInferior";
-import { archivosMapa, type EstadoSvg } from "./ui/mapaMuscular";
+import { archivosMapa, conectarMapa, type EstadoSvg } from "./ui/mapaMuscular";
 import {
   abrirMenu, abrirVentana, cerrarMenu, historialDelNavegador, iniciarNavegacion, menuAbierto,
   ventanaActiva,
@@ -446,6 +446,10 @@ async function arrancar(): Promise<void> {
     // a colgar en cada repintado: `innerHTML` tira los anteriores junto con los elementos. El
     // estado de las dos acciones no vive acá, sino dentro de sus módulos, justo para que un
     // snapshot a destiempo no lo borre.
+    if (activa.id === "musculos") {
+      conectarMapa();
+      return;
+    }
     if (activa.id === "ranking") {
       conectarRanking(pintar, () => {
         cargarRanking();

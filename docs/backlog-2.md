@@ -302,7 +302,8 @@ Hecho (2026-10-10), primera parte:
 
 - **Barra de abajo** con Inicio, Músculos y Registro (`ui/barraInferior.ts`, `BARRA` en
   `ventanas.ts`). Registro dice "Muy pronto".
-- **Músculos** muestra frente y espalda según el sexo, en gris "sin datos"
+- **Músculos** muestra el cuerpo de frente según el sexo, con un botón para girarlo y ver
+  la espalda, sin tarjeta alrededor, en gris "sin datos"
   (`ui/mapaMuscular.ts`). Los SVG se piden al entrar y se meten en línea con ids prefijados,
   listos para pintarse por nivel. Sin sexo, avisa que falta completar el perfil.
 - **App:** `Cliente.sexo` ("H"/"M") y el selector "Sexo" en Editar cliente.

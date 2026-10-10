@@ -36,21 +36,21 @@ export function archivosMapa(sexo: Sexo): ArchivosMapa {
  *   referencia; en la página es global, así que se quedaría pintando los dos mapas. Se
  *   conservan las reglas de forma (contorno, líneas) acotadas a este SVG, y el color de los
  *   músculos lo pone `estilos.css`.
- * - **`fondo` → `mapa-fondo`.** `.fondo` ya es el fondo pintado de la página, con
- *   `position: fixed` y tamaño de pantalla.
+ * - **Sin el rectángulo negro de fondo.** El cuerpo va directo sobre el fondo de la página
+ *   (y `.fondo` ya es el fondo pintado de la página, con `position: fixed`).
  * - Sin la declaración XML ni los comentarios, que no van dentro de HTML.
  */
 export function prepararSvg(texto: string, prefijo: string): string {
   let s = texto
     .replace(/<\?xml[\s\S]*?\?>/g, "")
     .replace(/<!--[\s\S]*?-->/g, "")
-    .replace(/class="fondo"/g, 'class="mapa-fondo"');
+    .replace(/<rect class="fondo"[^>]*\/>/g, "");
   s = s.replace(/<style>([\s\S]*?)<\/style>/, (_, css: string) => {
     const reglas = css
       .split("\n")
       .map((l) => l.trim())
-      .filter((l) => l !== "" && !l.startsWith("[data-musculo"))
-      .map((l) => `#${prefijo} ${l.replace(/^\.fondo\b/, ".mapa-fondo")}`);
+      .filter((l) => l !== "" && !l.startsWith("[data-musculo") && !l.startsWith(".fondo"))
+      .map((l) => `#${prefijo} ${l}`);
     return `<style>${reglas.join("\n")}</style>`;
   });
   s = s
@@ -60,20 +60,29 @@ export function prepararSvg(texto: string, prefijo: string): string {
   return s.replace(/<svg\b/, `<svg id="${prefijo}" class="mapa-svg"`).trim();
 }
 
-function vista(titulo: string, e: EstadoSvg, prefijo: string): string {
+/**
+ * Qué lado se ve. Vive en el módulo y no en el HTML por lo mismo que las acciones del día:
+ * `pintar()` corre en cada snapshot de Firestore, y si el lado se decidiera ahí, una
+ * asistencia marcada por el entrenador le daría la vuelta al cuerpo sola.
+ */
+let deEspalda = false;
+
+function cara(lado: "frente" | "espalda", e: EstadoSvg, oculta: boolean): string {
   const cuerpo =
     e.estado === "listo"
-      ? prepararSvg(e.svg, prefijo)
+      ? prepararSvg(e.svg, `mapa-${lado}`)
       : e.estado === "error"
         ? `<p class="mapa-aviso">No se pudo cargar.</p>`
         : `<div class="mapa-cargando" role="status" aria-label="Cargando"></div>`;
-  return `
-      <figure class="mapa-vista">
-        <div class="mapa-dibujo">${cuerpo}</div>
-        <figcaption>${titulo}</figcaption>
-      </figure>`;
+  return `<div class="mapa-cara mapa-cara-${lado}"${oculta ? ' aria-hidden="true"' : ""}>${cuerpo}</div>`;
 }
 
+const textoBoton = (espalda: boolean) => (espalda ? "Ver de frente" : "Ver espalda");
+
+/**
+ * Las dos caras van siempre en el HTML, una detrás de la otra: así girar es una transición
+ * de CSS sobre lo que ya está (ver `conectarMapa`) y no un repintado que cortaría el giro.
+ */
 export function tarjetaMusculos(
   sexo: Sexo | null | undefined,
   mapas: Readonly<Record<string, EstadoSvg>>
@@ -89,15 +98,29 @@ export function tarjetaMusculos(
   const a = archivosMapa(sexo);
   const de = (archivo: string): EstadoSvg => mapas[archivo] ?? { estado: "cargando" };
   return `
-    <div class="tarjeta mapa-cuerpo">
-      <p class="tarjeta-titulo">Tu mapa muscular</p>
-      <div class="mapa-vistas">
-        ${vista("Frente", de(a.frente), "mapa-frente")}
-        ${vista("Espalda", de(a.espalda), "mapa-espalda")}
+    <section class="mapa-cuerpo" aria-label="Tu mapa muscular">
+      <div class="mapa-giro${deEspalda ? " girado" : ""}" id="mapa-giro">
+        ${cara("frente", de(a.frente), deEspalda)}
+        ${cara("espalda", de(a.espalda), !deEspalda)}
       </div>
+      <button type="button" class="mapa-girar" id="girar-mapa">
+        <span aria-hidden="true">🔄</span> <span class="mapa-girar-texto">${textoBoton(deEspalda)}</span>
+      </button>
       <p class="mapa-leyenda">
         <span class="mapa-muestra" aria-hidden="true"></span>
         Sin datos todavía: cada músculo se irá pintando con lo que registres.
       </p>
-    </div>`;
+    </section>`;
+}
+
+/** Se vuelve a llamar en cada repintado: `innerHTML` tira el listener. */
+export function conectarMapa(): void {
+  document.querySelector("#girar-mapa")?.addEventListener("click", () => {
+    deEspalda = !deEspalda;
+    document.querySelector("#mapa-giro")?.classList.toggle("girado", deEspalda);
+    document.querySelector(".mapa-cara-frente")?.toggleAttribute("aria-hidden", deEspalda);
+    document.querySelector(".mapa-cara-espalda")?.toggleAttribute("aria-hidden", !deEspalda);
+    const t = document.querySelector(".mapa-girar-texto");
+    if (t) t.textContent = textoBoton(deEspalda);
+  });
 }

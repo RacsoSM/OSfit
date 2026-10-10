@@ -63,9 +63,8 @@ describe("prepararSvg", () => {
     for (const regla of css.split("\n")) expect(regla.startsWith("#mapa-frente ")).toBe(true);
   });
 
-  it("no choca con el fondo pintado de la página", () => {
-    expect(listo).not.toContain('class="fondo"');
-    expect(listo).toContain('class="mapa-fondo"');
+  it("sin el rectángulo negro de fondo", () => {
+    expect(listo).not.toContain("fondo");
   });
 
   it("sin declaración XML ni comentarios", () => {
@@ -85,14 +84,31 @@ describe("prepararSvg", () => {
 });
 
 describe("tarjetaMusculos", () => {
+  const listos = {
+    "/mapa-muscular-frente.svg": { estado: "listo", svg: frenteH },
+    "/mapa-muscular-espalda.svg": { estado: "listo", svg: espaldaH },
+  } as const;
+
+  it("sin tarjeta: el cuerpo va directo en la página", () => {
+    expect(tarjetaMusculos("H", listos)).not.toContain('class="tarjeta');
+  });
+
+  it("arranca de frente, con la espalda detrás y oculta al lector de pantalla", () => {
+    const h = tarjetaMusculos("H", listos);
+    expect(h).not.toContain("girado");
+    expect(h).toContain('mapa-cara mapa-cara-espalda" aria-hidden="true"');
+    expect(h).not.toContain('mapa-cara mapa-cara-frente" aria-hidden');
+    expect(h).toContain("Ver espalda");
+  });
+
   it("mientras cargan, muestra el esqueleto", () => {
     expect(tarjetaMusculos("H", {})).toContain("mapa-cargando");
   });
 
-  it("si falla un mapa lo dice, sin tumbar el otro", () => {
+  it("si falla un lado lo dice, sin tumbar el otro", () => {
     const h = tarjetaMusculos("H", {
       "/mapa-muscular-frente.svg": { estado: "error" },
-      "/mapa-muscular-espalda.svg": { estado: "listo", svg: publico("/mapa-muscular-espalda.svg") },
+      "/mapa-muscular-espalda.svg": { estado: "listo", svg: espaldaH },
     });
     expect(h).toContain("No se pudo cargar");
     expect(h).toContain('id="mapa-espalda"');

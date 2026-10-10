@@ -144,10 +144,11 @@ describe("la ventana Músculos", () => {
     expect(h).not.toContain("mapa-vistas");
   });
 
-  it("con sexo pinta frente y espalda", () => {
+  it("con sexo pinta el cuerpo, con sus dos lados y el botón para girarlo", () => {
     const h = contenidoDe(ventana("musculos"), datos({ cliente: { ...cliente, sexo: "M" } }));
-    expect(h).toContain("Frente");
-    expect(h).toContain("Espalda");
+    expect(h).toContain("mapa-cara-frente");
+    expect(h).toContain("mapa-cara-espalda");
+    expect(h).toContain('id="girar-mapa"');
   });
 });
 
