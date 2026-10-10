@@ -308,7 +308,7 @@ function medioGrande(e: EjercicioBorrador, delBanco: EjercicioBanco | undefined)
   if (!video) return gif(gifRuta, "registro-ej-gif", 180);
   const poster = urlGif(gifRuta);
   return `<video class="registro-ej-gif registro-ej-video" src="${escapar(video)}"
-      ${poster ? `poster="${escapar(poster)}"` : ""} width="300" height="300"
+      ${poster ? `poster="${escapar(poster)}"` : ""} width="260" height="260"
       autoplay muted loop playsinline preload="auto" disablepictureinpicture aria-hidden="true"></video>`;
 }
 
