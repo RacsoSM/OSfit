@@ -144,6 +144,9 @@ fun OSfitNavHost(navController: NavHostController, modifier: Modifier = Modifier
         composable(Screen.ConfigVideo.route) {
             com.osfit.app.ui.configvideo.ConfigVideoScreen()
         }
+        composable(Screen.GruposEjercicios.route) {
+            com.osfit.app.ui.grupos.GruposEjerciciosScreen()
+        }
         composable(
             route = Screen.TomarAsistencia.route,
             arguments = listOf(navArgument("fecha") { type = NavType.StringType })

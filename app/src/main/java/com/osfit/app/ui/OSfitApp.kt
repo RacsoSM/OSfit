@@ -128,6 +128,15 @@ private fun OSfitContent() {
                             modifier = Modifier.padding(12.dp)
                         )
                         NavigationDrawerItem(
+                            label = { Text("Ejercicios por grupo") },
+                            selected = rutaActual == Screen.GruposEjercicios.route,
+                            onClick = {
+                                scope.launch { drawerState.close() }
+                                navController.navigate(Screen.GruposEjercicios.route)
+                            },
+                            modifier = Modifier.padding(12.dp)
+                        )
+                        NavigationDrawerItem(
                             label = { Text("Configuración de video") },
                             selected = rutaActual == Screen.ConfigVideo.route,
                             onClick = {
