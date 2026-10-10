@@ -100,9 +100,17 @@ gym, siga o no la rutina de la app. Los GIF se usan aquí, **no en la tarjeta de
 
 - **Historial:** sus sesiones de la más reciente a la más vieja: fecha, ejercicios y series.
   Arriba, el botón **"+ Agregar ejercicio"**.
-- **Elegir (grid):** tarjetas con el **GIF y el nombre**. Primero los ejercicios de su día de
-  hoy (los que casan con el banco); abajo, un buscador del banco completo, porque el coach
-  puede ponerle algo fuera de su rutina. Lo ya agregado sale marcado.
+- **Elegir (grid):** tarjetas con el **GIF y el nombre**, **agrupadas** (decidido 2026-10-10):
+  si hoy le toca "Pecho, hombro y tríceps", sale "Pecho" con sus ejercicios, luego "Hombro",
+  luego "Tríceps", y después todos los demás grupos y "Otros". Sin buscador. Lo ya agregado
+  sale marcado.
+  - Los grupos del día **se leen del nombre del día** (`web/src/grupos.ts`): "Pierna" y
+    "Superior completo" se expanden; lo nombrado directo va primero ("Pierna (Glúteo)" →
+    Glúteo y luego el resto de la pierna).
+  - Los ejercicios de cada grupo **los configura el entrenador en la app** ("Ejercicios por
+    grupo"), una sola lista para todas: `configEjercicios/grupos` →
+    `porGrupo: { pecho: [ids en orden] }`. Un grupo sin configurar usa los del banco con ese
+    `grupo`.
 - **Capturar:** al tocar un ejercicio pasa a una pantalla con los ejercicios que lleva, cada
   uno con sus series de **peso y reps** (solo segundos en los de tiempo; en los corporales el
   peso es lastre opcional). Prellenadas con lo que hizo la última vez; si no hay, tantas

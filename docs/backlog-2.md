@@ -370,6 +370,13 @@ Hecho (2026-10-10), tercera parte — **Registro**:
   luego buscador del banco) → captura de peso y reps por serie → "Guardar entrenamiento".
 - Función nueva `registrarSesion` (valida contra el banco) y `clientes/{id}/sesiones`.
 
+Hecho (2026-10-10), cuarta parte — **grid agrupado por músculo**:
+
+> "si al cliente le toca Pecho, hombro y tríceps, el grid de los gifs deberá aparecer primero como un título de Pecho: y n cantidad de ejercicios de pecho que yo debo de poder configurar en mi app de entrenador, luego ya que se acaben esos: Hombro y igual"
+
+- Grupos leídos del nombre del día; luego los demás grupos; sin buscador.
+- App: menú → **Ejercicios por grupo** (agregar, quitar, reordenar; una lista para todas).
+
 Plan: `superpowers/plans/2026-10-10-banco-ejercicios-gifs.md`.
 **Desplegado (2026-10-10):** reglas, banco cargado (91 de 91), función `registrarSesion` y web.
 Falta que el entrenador lo verifique en su teléfono.
