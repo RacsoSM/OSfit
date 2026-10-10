@@ -311,7 +311,7 @@ function tarjetaActiva(e: EjercicioBorrador, i: number, total: number): string {
   return `
     <div class="tarjeta registro-ejercicio activo" data-indice="${i}">
       <div class="registro-activo-gif">
-        ${gif(e.gifRuta, "registro-ej-gif", 240)}
+        ${gif(e.gifRuta, "registro-ej-gif", 180)}
         <button class="registro-quitar registro-quitar-ej" data-quitar-ej="${i}" aria-label="Quitar ${escapar(e.nombre)}">✕</button>
       </div>
       <p class="registro-activo-nombre">${escapar(e.nombre)}</p>

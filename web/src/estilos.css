@@ -954,12 +954,14 @@ main:has(#barra) { padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
 }
 .registro-opcion .registro-sin-gif { background: var(--superficie-alta); }
 
-/* El ejercicio activo del entrenamiento: el GIF a lo ancho, para ver bien el movimiento.
+/* El ejercicio activo del entrenamiento: el GIF grande, para ver bien el movimiento. 180 px y
+   no más: es el tamaño real de las animaciones del dataset, y más grande se veían pixeladas
+   (2026-10-10). Si llegan versiones de mayor resolución de Gym visual, se puede volver a subir. */
    `scroll-margin-top` deja aire arriba cuando se le lleva la vista (`aterrizar`). */
 .registro-ejercicio.activo { scroll-margin-top: 12px; }
 .registro-activo-gif { position: relative; display: flex; justify-content: center; margin-bottom: 10px; }
 .registro-activo-gif .registro-ej-gif {
-  width: min(100%, 240px); height: auto; aspect-ratio: 1; border-radius: 16px; background: #fff; object-fit: cover;
+  width: min(100%, 180px); height: auto; aspect-ratio: 1; border-radius: 14px; background: #fff; object-fit: cover;
 }
 .registro-activo-gif .registro-sin-gif { font-size: 56px; }
 .registro-quitar-ej { position: absolute; top: 0; right: 0; }
