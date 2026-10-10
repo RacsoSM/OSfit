@@ -32,7 +32,7 @@ export function registroValido(
  * quedaria ahi esperando a que alguien olvide revisar la llave.
  */
 export const registrarDispositivo = onCall({ region: REGION }, async (request) => {
-  const clienteId = clienteDeLaSesion(request);
+  const clienteId = await clienteDeLaSesion(request);
   const registro = registroValido(request.data);
   if (!registro) throw new HttpsError("invalid-argument", "token_invalido");
 

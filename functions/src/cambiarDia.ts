@@ -12,7 +12,7 @@ const MOTIVO_MAXIMO = 200;
  * logica cambia alla, tiene que cambiar aca.
  */
 export const cambiarDia = onCall({ region: REGION }, async (request) => {
-  const clienteId = clienteDeLaSesion(request);
+  const clienteId = await clienteDeLaSesion(request);
 
   const datos = request.data as { diaIndex?: unknown; motivo?: unknown } | undefined;
   const diaIndex = datos?.diaIndex;

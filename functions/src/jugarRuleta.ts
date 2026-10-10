@@ -184,7 +184,7 @@ const CODIGO_HTTP: Record<
  * recalculan sobre el historial real.
  */
 export const jugarRuleta = onCall({ region: REGION }, async (request) => {
-  const clienteId = clienteDeLaSesion(request);
+  const clienteId = await clienteDeLaSesion(request);
   const datos = request.data as { color?: unknown } | undefined;
   const apostado = datos?.color as Color;
 

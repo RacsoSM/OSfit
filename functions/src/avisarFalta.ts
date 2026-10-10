@@ -39,7 +39,7 @@ const CANAL_AVISOS = "avisos_falta";
  * del dia sin que un doble toque escriba dos documentos.
  */
 export const avisarFalta = onCall({ region: REGION }, async (request) => {
-  const clienteId = clienteDeLaSesion(request);
+  const clienteId = await clienteDeLaSesion(request);
   const hoy = hoyEnMazatlan();
 
   const doc = db().collection("avisosFalta").doc(`${clienteId}_${hoy}`);

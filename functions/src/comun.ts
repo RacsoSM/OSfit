@@ -1,6 +1,7 @@
 import { HttpsError, type CallableRequest } from "firebase-functions/v2/https";
 import { initializeApp } from "firebase-admin/app";
-import { getFirestore } from "firebase-admin/firestore";
+import { getFirestore, type Timestamp } from "firebase-admin/firestore";
+import { sesionVigente } from "./corteAcceso";
 
 export const REGION = "us-west1";
 
@@ -17,16 +18,25 @@ initializeApp();
 export const db = () => getFirestore();
 
 /**
- * El `clienteId` del token de sesion, o un error si no hay.
+ * El `clienteId` del token de sesion, o un error si no hay o si su acceso fue revocado.
  *
  * Es la unica puerta: ninguna funcion debe aceptar un clienteId que venga en el body, porque
  * eso seria dejar que el navegador diga de quien es la sesion. El claim lo pone `sesion` al
  * canjear el token del link y viaja firmado por Firebase.
+ *
+ * El claim no basta: una sesion sigue viva aunque el entrenador haya revocado el acceso. Por
+ * eso tambien se exige que se haya iniciado despues de `accesoRevocadoEn`, que escribe
+ * `alRevocarAcceso` (ver `sesionVigente`). Cuesta una lectura del cliente por llamada.
  */
-export function clienteDeLaSesion(request: CallableRequest): string {
+export async function clienteDeLaSesion(request: CallableRequest): Promise<string> {
   const clienteId = request.auth?.token?.clienteId;
   if (typeof clienteId !== "string" || clienteId === "") {
     throw new HttpsError("unauthenticated", "sesion_invalida");
+  }
+  const corte = (await db().collection("clientes").doc(clienteId).get())
+    .get("accesoRevocadoEn") as Timestamp | undefined;
+  if (!sesionVigente(request.auth?.token?.auth_time, corte ? corte.toMillis() : null)) {
+    throw new HttpsError("unauthenticated", "acceso_revocado");
   }
   return clienteId;
 }

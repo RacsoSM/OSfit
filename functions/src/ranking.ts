@@ -108,7 +108,7 @@ export function armarRanking(
  * minutos (ver el spec).
  */
 export const obtenerRanking = onCall({ region: REGION }, async (request): Promise<Ranking> => {
-  const clienteId = clienteDeLaSesion(request);
+  const clienteId = await clienteDeLaSesion(request);
   const firestore = db();
   const [clientesSnap, asistenciasSnap] = await Promise.all([
     firestore.collection("clientes").get(),

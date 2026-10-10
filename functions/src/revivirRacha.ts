@@ -42,7 +42,7 @@ interface AsistenciaConRef extends AsistenciaParaRacha {
  * revive se le devuelva solo al cliente.
  */
 export const revivirRacha = onCall({ region: REGION }, async (request) => {
-  const clienteId = clienteDeLaSesion(request);
+  const clienteId = await clienteDeLaSesion(request);
 
   const datos = request.data as { fecha?: unknown } | undefined;
   const fecha = typeof datos?.fecha === "string" ? datos.fecha : "";
