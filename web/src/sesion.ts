@@ -28,8 +28,12 @@ export type ResultadoSesion =
  * a aparecer en una recarga; "recordado-rechazado" es el entrenador que revocó el acceso, y
  * "link-rechazado" es un link muerto desde el primer toque. Sin esto, los tres se ven igual
  * desde afuera y la única forma de distinguirlos es adivinando.
+ *
+ * "revocado" no sale de esta escalera: es la página ya abierta que pierde el acceso porque el
+ * entrenador lo revocó (las reglas la frenan y el canje de respaldo sale rechazado). Es el
+ * único con texto propio: "Tu acceso ya no está activo".
  */
-export type MotivoSinAcceso = "link-rechazado" | "sin-rastro" | "recordado-rechazado";
+export type MotivoSinAcceso = "link-rechazado" | "sin-rastro" | "recordado-rechazado" | "revocado";
 
 /**
  * La ruta del link mágico. Exportada porque el script en línea de `index.html` la repite para
@@ -245,6 +249,11 @@ export async function resolverSesion(entorno: EntornoSesion): Promise<ResultadoS
     }
     const resultado = await entorno.canjear(deLaUrl);
     if (resultado.estado === "lista") entorno.memoria.recordar(deLaUrl);
+    // Rechazado y era el que teníamos guardado: el entrenador lo revocó. Se olvida para no
+    // seguir ofreciéndolo como vivo. Uno distinto rechazado no toca el recordado.
+    if (resultado.estado === "sin-acceso" && entorno.memoria.recordado() === deLaUrl) {
+      entorno.memoria.olvidar();
+    }
     return resultado.estado === "sin-acceso"
       ? { estado: "sin-acceso", motivo: "link-rechazado" }
       : resultado;

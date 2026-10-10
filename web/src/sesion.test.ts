@@ -214,6 +214,22 @@ describe("resolverSesion", () => {
     expect(e.memoria.recordado()).toBe("tok2");
   });
 
+  /**
+   * Revocado: el link de la dirección ya no sirve y era el que teníamos guardado. Si se
+   * quedara, la página instalada lo seguiría ofreciendo como si estuviera vivo.
+   */
+  it("un link rechazado que era el recordado se olvida", async () => {
+    const e = entorno({ ruta: "/c/tok1", recordado: "tok1", canje: () => ({ estado: "sin-acceso" }) });
+    expect(await resolverSesion(e)).toEqual({ estado: "sin-acceso", motivo: "link-rechazado" });
+    expect(e.memoria.recordado()).toBe(null);
+  });
+
+  it("un link rechazado distinto al recordado no borra el recordado", async () => {
+    const e = entorno({ ruta: "/c/tok2", recordado: "tok1", canje: () => ({ estado: "sin-acceso" }) });
+    await resolverSesion(e);
+    expect(e.memoria.recordado()).toBe("tok1");
+  });
+
   it("un link muerto no se recuerda ni esconde el token", async () => {
     const e = entorno({ ruta: "/c/muerto", canje: () => ({ estado: "sin-acceso" }) });
     expect(await resolverSesion(e)).toEqual({ estado: "sin-acceso", motivo: "link-rechazado" });
