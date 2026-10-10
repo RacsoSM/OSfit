@@ -20,7 +20,7 @@ con datos que ella misma registra desde la web. Para eso hay tres piezas nuevas:
 
 1. **Músculos**: los mapas de frente y espalda según su sexo, coloreados por nivel.
 2. **Registro**: anota los ejercicios que hizo (series, repeticiones y peso).
-3. **Entrenar**: modo guiado a pantalla completa, con su rutina del día, un GIF grande por
+3. **Entrenar** (desde Inicio): modo guiado a pantalla completa, con su rutina del día, un GIF grande por
    ejercicio y captura de pesos serie por serie.
 
 **Decisiones tomadas (entrenador, 2026-10-10):**
@@ -42,28 +42,26 @@ automáticos, compartir el mapa en redes y que la clienta edite su rutina.
 ## Navegación
 
 Esto es de lo fuerte de la app, así que **no va escondido en el menú lateral**: se agrega
-una **barra de navegación abajo, fija y visible en toda la web**, tipo WhatsApp/Instagram.
+una **barra de navegación abajo, fija y visible en toda la web**, tipo WhatsApp.
 
 ```
-  🏠 Inicio   💪 Músculos   ▶️ ENTRENAR   📝 Registro
-                              (central, más grande, color del estilo)
+  🏠 Inicio      💪 Músculos      📝 Registro
 ```
 
-- **Músculos, Entrenar y Registro son ventanas de primer nivel**, al mismo nivel que Inicio:
-  se suman `"musculos" | "entrenar" | "registro"` a `IdVentana` en `web/src/ventanas.ts`, con
-  un campo nuevo `grupo: "barra"` para que salgan en la barra y no en el menú lateral.
+- **Músculos y Registro son ventanas de primer nivel**, al mismo nivel que Inicio: se suman
+  `"musculos" | "registro"` a `IdVentana` en `web/src/ventanas.ts`, con un campo nuevo
+  `grupo: "barra"` para que salgan en la barra y no en el menú lateral.
+- **Entrenar no va en la barra (decidido 2026-10-10).** Se abre **solo desde Inicio**, con un
+  botón grande y del color del estilo en la tarjeta del día (`ui/tarjetaDia.ts`), que ya
+  sabe qué día toca: "Hoy: Pierna · ▶️ Empezar". Es lo primero que se ve en Inicio. Sin
+  rutina asignada, el botón no aparece.
 - **El menú lateral (☰) se queda** para lo secundario: Ranking, Medallas, Logros, Videos y
   Ajustes.
-- **Entrenar va en el centro y resaltado**, como el "+" de Instagram: es la acción estrella y
-  queda a un toque desde cualquier pantalla. Su ventana muestra la vista previa del día y el
-  botón "Empezar".
 - **`navegacion.ts` no cambia de modelo:** cambiar de pestaña en la barra es `abrirVentana`;
   el historial sigue siendo `[Inicio, ventana]`, así que "atrás" regresa a Inicio.
 - La barra respeta el área segura de abajo (`env(safe-area-inset-bottom)`) y cada estilo
   (Neón, Pixel, Sakura, etc.) la pinta con su paleta. Se oculta en el modo guiado y mientras
   el menú lateral está abierto.
-- **"Iniciar entrenamiento" también va en Inicio**, como botón de la tarjeta del día
-  (`ui/tarjetaDia.ts`), que ya sabe qué día toca.
 - **El modo guiado es una capa a pantalla completa, sin barra ni menú.** Tiene su propia
   entrada en el historial, para que "atrás" pregunte "¿Salir del entrenamiento?" en vez de
   perder lo capturado.
@@ -85,13 +83,14 @@ una **barra de navegación abajo, fija y visible en toda la web**, tipo WhatsApp
 ### Registro
 
 - Historial de sesiones de la más reciente a la más vieja: fecha, ejercicios y series.
+  Vacío, invita: "¿Entrenas hoy? Empieza desde Inicio", con un toque que lleva a Inicio.
 - **"+ Registrar"**: arriba salen los ejercicios del día y luego los del resto de su rutina;
   abajo, un buscador del banco completo. Por cada ejercicio captura series de
   `{reps, peso}`, prellenadas con lo que hizo la última vez o, si no hay, con `pesoONota` /
   `pesoPorEjercicio`.
 - Puede borrar una sesión propia el mismo día que la registró, por si se equivocó.
 
-### Entrenar (modo guiado)
+### Entrenar (modo guiado, se abre desde Inicio)
 
 - Un ejercicio a la vez: el GIF grande arriba, el nombre, "Serie 2 de 4" y debajo los campos
   de peso y reps, prellenados con la última vez y con botones ±.
@@ -190,8 +189,8 @@ cortes.
 
 ## Fases
 
-0. **Barra de abajo:** la navegación fija con las cuatro pestañas (Músculos, Entrenar y
-   Registro empiezan como "próximamente").
+0. **Barra de abajo:** la navegación fija con Inicio, Músculos y Registro (las dos nuevas
+   empiezan como "próximamente").
 1. **Cimientos:** `Cliente.sexo`, colección `ejercicios` con una semilla de unos 40
    ejercicios básicos, `Ejercicio.ejercicioId` y el emparejado por nombre, reglas.
 2. **Músculos:** la ventana con el mapa coloreado

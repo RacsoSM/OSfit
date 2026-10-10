@@ -254,7 +254,7 @@ Idea para cerrar la sesión de verdad (a decidir en el spec):
 
 Pendiente: spec de diseño.
 
-## 7. Barra de abajo con Músculos, Entrenar y Registro — 🔴 URGENTE
+## 7. Barra de abajo con Músculos y Registro, y Entrenar en Inicio — 🔴 URGENTE
 
 > "eso me agrada más, añadelo al backlog como urgente antes de proponer el spec"
 
@@ -262,9 +262,13 @@ Es de lo fuerte de la app, así que va **a la vista**, no escondido en el menú 
 **barra de navegación fija abajo**, en toda la web del cliente, tipo WhatsApp/Instagram.
 
 ```
-  🏠 Inicio   💪 Músculos   ▶️ ENTRENAR   📝 Registro
-                              (central, más grande, color del estilo)
+  🏠 Inicio      💪 Músculos      📝 Registro
 ```
+
+> "que te parece si dejamos el botón de entrenar (el modo guiado) solo en el menú de inicio y abajo dejamos solamente Inicio Músculos y Registro"
+
+Decidido (2026-10-10): **la barra lleva solo Inicio, Músculos y Registro.** Entrenar no va en
+la barra: vive en Inicio, dentro de la tarjeta del día, que ya sabe qué día toca.
 
 - **Músculos:** el mapa de frente y espalda según el sexo de la clienta (las cuatro vistas
   del punto 4), cada músculo pintado según su nivel de fuerza. Sin datos sale gris.
@@ -272,7 +276,8 @@ Es de lo fuerte de la app, así que va **a la vista**, no escondido en el menú 
   su rutina; también puede buscar cualquiera del banco) y anota series, reps y peso.
 - **Entrenar:** modo guiado a pantalla completa con **la rutina que le asignó el entrenador**
   (el día que le toca): un ejercicio a la vez, GIF grande, captura de peso y reps por serie y
-  descanso con temporizador. También se abre desde un botón en la tarjeta del día de Inicio.
+  descanso con temporizador. **Se abre solo desde Inicio**, con un botón grande y del color
+  del estilo en la tarjeta del día ("Hoy: Pierna · ▶️ Empezar"), lo primero que se ve.
 - El menú lateral (☰) se queda con lo secundario: Ranking, Medallas, Logros, Videos, Ajustes.
 
 Decisiones ya tomadas por el entrenador (2026-10-10):
