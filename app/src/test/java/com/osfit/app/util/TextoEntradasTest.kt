@@ -56,4 +56,45 @@ class TextoEntradasTest {
             TextoEntradas.revocado(momento, ZoneId.of("America/Mazatlan"))
         )
     }
+
+    private val mazatlan = ZoneId.of("America/Mazatlan")
+
+    @Test
+    fun `entrada con hora de la tarde en iPhone`() {
+        // 02:42 UTC del 11 = 7:42 pm del 10 en Mazatlán (UTC-7).
+        val cuando = Instant.parse("2026-10-11T02:42:00Z")
+        assertEquals("10 oct, 7:42 pm · iPhone", TextoEntradas.entrada(cuando, "ios", mazatlan))
+    }
+
+    @Test
+    fun `entrada de la mañana en Android, con minutos de un dígito`() {
+        val cuando = Instant.parse("2026-10-09T16:05:00Z") // 9:05 am en Mazatlán
+        assertEquals("9 oct, 9:05 am · Android", TextoEntradas.entrada(cuando, "android", mazatlan))
+    }
+
+    @Test
+    fun `mediodía y medianoche en formato de 12 horas`() {
+        assertEquals(
+            "10 oct, 12:00 pm · iPhone",
+            TextoEntradas.entrada(Instant.parse("2026-10-10T19:00:00Z"), "ios", mazatlan)
+        )
+        assertEquals(
+            "10 oct, 12:30 am · iPhone",
+            TextoEntradas.entrada(Instant.parse("2026-10-10T07:30:00Z"), "ios", mazatlan)
+        )
+    }
+
+    @Test
+    fun `una computadora u otra cosa es otro dispositivo`() {
+        val cuando = Instant.parse("2026-10-11T02:42:00Z")
+        assertEquals(
+            "10 oct, 7:42 pm · Otro dispositivo",
+            TextoEntradas.entrada(cuando, "otro", mazatlan)
+        )
+    }
+
+    @Test
+    fun `sin hora no se inventa una`() {
+        assertEquals("Sin hora · iPhone", TextoEntradas.entrada(null, "ios", mazatlan))
+    }
 }

@@ -13,10 +13,9 @@ import java.util.Locale
  * Vive aparte y sin nada de Android ni de Firebase para poder testearse en JVM, igual que
  * [EncajeInsignia].
  *
- * Lo que cuenta son **canjes del link**, no personas ni visitas: la página vuelve a canjear
- * en cada carga donde no hay sesión viva, y en el navegador que WhatsApp abre encima eso es
- * siempre. Una recarga suma. Sirve para ver quién usa su página y quién no la ha abierto
- * nunca; no para comparar a una clienta con otra que usa otro navegador.
+ * Lo que cuenta son **aperturas de la página**, no personas: la página avisa a la función
+ * `registrarEntrada` cada vez que carga, así que una recarga suma. Sirve para ver quién usa
+ * su página y quién no la ha abierto nunca.
  */
 object TextoEntradas {
 
@@ -38,6 +37,30 @@ object TextoEntradas {
 
     private val FECHA: DateTimeFormatter =
         DateTimeFormatter.ofPattern("d 'de' MMMM 'de' yyyy", Locale.forLanguageTag("es-MX"))
+
+    /**
+     * Un renglón de "Últimas entradas": "10 oct, 7:42 pm · iPhone". La hora va en la zona del
+     * gimnasio. Se arma a mano y no con `DateTimeFormatter`, que en español escribe "p.m." y,
+     * según la versión de Java, "oct." con punto.
+     */
+    fun entrada(cuando: Instant?, plataforma: String, zona: ZoneId): String {
+        val telefono = when (plataforma) {
+            "ios" -> "iPhone"
+            "android" -> "Android"
+            else -> "Otro dispositivo"
+        }
+        if (cuando == null) return "Sin hora · $telefono"
+        val local = cuando.atZone(zona)
+        val hora12 = (local.hour % 12).let { if (it == 0) 12 else it }
+        val minutos = local.minute.toString().padStart(2, '0')
+        val mediodia = if (local.hour < 12) "am" else "pm"
+        val mes = MESES[local.monthValue - 1]
+        return "${local.dayOfMonth} $mes, $hora12:$minutos $mediodia · $telefono"
+    }
+
+    private val MESES = listOf(
+        "ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"
+    )
 
     private fun haceCuanto(momento: Instant, ahora: Instant): String {
         val dias = ChronoUnit.DAYS.between(momento, ahora)

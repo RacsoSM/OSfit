@@ -434,6 +434,23 @@ fun ClienteDetailScreen(
                                 style = MaterialTheme.typography.bodySmall,
                                 modifier = Modifier.padding(top = 8.dp)
                             )
+                            if (accesoActual.ultimasEntradas.isNotEmpty()) {
+                                Text(
+                                    "Últimas entradas",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    modifier = Modifier.padding(top = 8.dp)
+                                )
+                                accesoActual.ultimasEntradas.forEach { entrada ->
+                                    Text(
+                                        TextoEntradas.entrada(
+                                            entrada.cuando?.toDate()?.toInstant(),
+                                            entrada.plataforma,
+                                            SincronizadorDiaWeb.ZONA
+                                        ),
+                                        style = MaterialTheme.typography.bodySmall
+                                    )
+                                }
+                            }
                         }
                         Text(
                             buildString {
