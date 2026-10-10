@@ -376,6 +376,8 @@ Hecho (2026-10-10), cuarta parte — **grid agrupado por músculo**:
 
 - Grupos leídos del nombre del día; luego los demás grupos; sin buscador.
 - App: menú → **Ejercicios por grupo** (agregar, quitar, reordenar; una lista para todas).
+- En "Ejercicios por grupo", cada ejercicio muestra su GIF; al tocarlo se ve en grande y se le
+  puede **cambiar el nombre** (el viejo queda como alias; la carga del banco ya no lo pisa).
 - Desplegado (2026-10-10): regla de `configEjercicios`, banco recargado con `grupo` y web.
   APK de la app entregado; falta instalarlo y verificarlo en el teléfono.
 
