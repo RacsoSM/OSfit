@@ -13,9 +13,20 @@ service firebase.storage {
     // El claim lo pone la función `sesion` al canjear el token del link. Es el mismo que
     // autoriza Firestore: esa es la razón de fondo para haber elegido Firebase Storage y no
     // un bucket de otro proveedor — no hacen falta URLs firmadas ni código aparte.
+    //
+    // Y, como en firestore.rules, la sesión tiene que haberse iniciado después del corte que
+    // deja `alRevocarAcceso` al revocar el acceso.
     function esCliente(cid) {
       return request.auth != null &&
-             request.auth.token.clienteId == cid;
+             request.auth.token.clienteId == cid &&
+             sesionVigente(cid);
+    }
+
+    // GEMELO de `sesionVigente` en firestore.rules y functions/src/corteAcceso.ts.
+    function sesionVigente(cid) {
+      let corte = firestore.get(/databases/(default)/documents/clientes/$(cid)).data
+        .get('accesoRevocadoEn', null);
+      return corte == null || request.auth.token.auth_time * 1000 > corte.toMillis();
     }
 
     // Catálogo de insignias: no es dato personal, así que lo lee cualquier sesión. Ojo con

@@ -11,13 +11,39 @@ service cloud.firestore {
 
     // El claim lo pone la función `sesion` al canjear el token del link. No se puede
     // falsificar: viaja dentro de un token firmado por Firebase.
+    //
+    // El claim solo no basta: una sesión sigue viva aunque el entrenador revoque el acceso.
+    // Por eso además tiene que haberse iniciado después del corte (`sesionVigente`).
     function esCliente(cid) {
       return request.auth != null &&
-             request.auth.token.clienteId == cid;
+             request.auth.token.clienteId == cid &&
+             sesionVigente(cid);
+    }
+
+    // GEMELO de `sesionVigente` en functions/src/corteAcceso.ts. `auth_time` es la hora del
+    // canje original (segundos, firmada, no cambia al renovarse); `accesoRevocadoEn` lo
+    // escribe la función `alRevocarAcceso` al revocar. Sin corte, todo pasa como antes; un
+    // link nuevo canjeado después del corte también pasa.
+    // Ver docs/superpowers/specs/2026-10-10-revocar-acceso-design.md.
+    function vigenteFrente(corte) {
+      return corte == null || request.auth.token.auth_time * 1000 > corte.toMillis();
+    }
+
+    // Cuesta una lectura extra (el `get`) por consulta. Para el propio documento del cliente
+    // se usa `esClienteDelDoc`, que mira `resource.data` y no paga esa lectura.
+    function sesionVigente(cid) {
+      return vigenteFrente(
+        get(/databases/$(database)/documents/clientes/$(cid)).data.get('accesoRevocadoEn', null));
+    }
+
+    function esClienteDelDoc(cid) {
+      return request.auth != null &&
+             request.auth.token.clienteId == cid &&
+             vigenteFrente(resource.data.get('accesoRevocadoEn', null));
     }
 
     match /clientes/{cid} {
-      allow read: if esEntrenador() || esCliente(cid);
+      allow read: if esEntrenador() || esClienteDelDoc(cid);
       allow write: if esEntrenador();
 
       // Los pagos quedan fuera del alcance del cliente a propósito.
@@ -49,13 +75,15 @@ service cloud.firestore {
 
     match /asistencias/{doc} {
       allow read: if esEntrenador() ||
-                     resource.data.clienteId == request.auth.token.clienteId;
+                     (resource.data.clienteId == request.auth.token.clienteId &&
+                      sesionVigente(request.auth.token.clienteId));
       allow write: if esEntrenador();
     }
 
     match /cambiosDia/{doc} {
       allow read: if esEntrenador() ||
-                     resource.data.clienteId == request.auth.token.clienteId;
+                     (resource.data.clienteId == request.auth.token.clienteId &&
+                      sesionVigente(request.auth.token.clienteId));
       allow write: if esEntrenador();
     }
 
@@ -70,7 +98,8 @@ service cloud.firestore {
       // Relajarlo a `resource == null` no vale: dejaría probar ids para averiguar si otra
       // clienta avisó.
       allow read: if esEntrenador() ||
-                     doc.split('_')[0] == request.auth.token.clienteId;
+                     (doc.split('_')[0] == request.auth.token.clienteId &&
+                      sesionVigente(request.auth.token.clienteId));
       allow write: if esEntrenador();
     }
 
@@ -83,7 +112,8 @@ service cloud.firestore {
     // `resource.data` no deja leer lo que no existe. Ver entrada 23 de docs/backlog.md.
     match /ruletas/{doc} {
       allow read: if esEntrenador() ||
-                     doc.split('_')[0] == request.auth.token.clienteId;
+                     (doc.split('_')[0] == request.auth.token.clienteId &&
+                      sesionVigente(request.auth.token.clienteId));
       allow write: if esEntrenador();
     }
 
