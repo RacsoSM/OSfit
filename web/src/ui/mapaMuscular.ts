@@ -177,11 +177,11 @@ export function tarjetaMusculos(
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 
-/** Deshace `elevar`: el músculo vuelve a su grupo y su copia de líneas desaparece. */
-function bajar(svg: Element): void {
+/** Deshace `elevar`: los músculos vuelven a su grupo y las copias de líneas desaparecen. */
+function bajar(svg: SVGSVGElement): void {
+  const musculos = svg.querySelector(`#${svg.id}-musculos`);
   svg.querySelectorAll(".musculo-elevado").forEach((g) => {
-    const m = g.querySelector(".musculo");
-    if (m) g.parentNode?.insertBefore(m, g);
+    g.querySelectorAll(".musculo").forEach((m) => musculos?.appendChild(m));
     g.remove();
   });
   svg.querySelectorAll(".recorte-elevado").forEach((c) => c.remove());
@@ -189,33 +189,54 @@ function bajar(svg: Element): void {
 }
 
 /**
- * Pone el músculo dentro de un grupo que crece desde su centro, junto con una copia de sus
- * líneas internas en negro, recortada con su propia forma. Como el recorte se lee en el
- * espacio del grupo, crece con él y las líneas siguen cayendo justo dentro del músculo. Las
- * líneas blancas originales de ese músculo se esconden: se dibujan encima de los músculos y,
- * sin crecer, quedarían corridas.
+ * Hasta qué distancia (unidades del SVG) los dos lados crecen como uno solo. Pecho, glúteos,
+ * dorsales, lumbar y trapecio de espalda se tocan (0.7–2.7); cuádriceps e isquiotibiales
+ * quedan a 11–20 y, creciendo cada uno desde su centro, se rozaban arriba. Lo más cercano que
+ * va por separado son las pantorrillas de la mujer (23).
  */
-function elevar(m: SVGGraphicsElement, animar: boolean): void {
-  const svg = m.ownerSVGElement;
-  if (!svg || !m.id) return;
-  const caja = m.getBBox();
+const SEPARACION_JUNTOS = 20;
+
+function seTocan(a: DOMRect, b: DOMRect): boolean {
+  const dx = Math.max(a.x - (b.x + b.width), b.x - (a.x + a.width), 0);
+  const dy = Math.max(a.y - (b.y + b.height), b.y - (a.y + a.height), 0);
+  return Math.max(dx, dy) <= SEPARACION_JUNTOS;
+}
+
+/**
+ * Pone los paths de un músculo dentro de un grupo que crece desde su centro, junto con una
+ * copia de sus líneas internas en negro, recortada con su propia forma. Como el recorte se
+ * lee en el espacio del grupo, crece con él y las líneas siguen cayendo dentro del músculo.
+ *
+ * El grupo va al final del SVG, encima también de las líneas blancas de los demás: si no,
+ * las del vecino (las del abdomen sobre el pecho) asomarían sobre el músculo agrandado. Las
+ * blancas del propio músculo se esconden, porque sin crecer quedarían corridas.
+ */
+function elevar(svg: SVGSVGElement, paths: SVGGraphicsElement[], n: number, animar: boolean): void {
+  const cajas = paths.map((m) => m.getBBox());
+  const x0 = Math.min(...cajas.map((c) => c.x));
+  const y0 = Math.min(...cajas.map((c) => c.y));
+  const x1 = Math.max(...cajas.map((c) => c.x + c.width));
+  const y1 = Math.max(...cajas.map((c) => c.y + c.height));
   const g = document.createElementNS(SVG_NS, "g");
   g.setAttribute("class", "musculo-elevado");
-  g.style.transformOrigin = `${caja.x + caja.width / 2}px ${caja.y + caja.height / 2}px`;
-  m.parentNode?.appendChild(g); // al final: queda encima de sus vecinos
-  g.appendChild(m);
+  g.style.transformOrigin = `${(x0 + x1) / 2}px ${(y0 + y1) / 2}px`;
+  svg.appendChild(g);
+  paths.forEach((m) => g.appendChild(m));
 
+  const idRecorte = `${svg.id}-elevado-${n}`;
   const recorte = document.createElementNS(SVG_NS, "clipPath");
-  recorte.setAttribute("id", `${m.id}-elevado`);
+  recorte.setAttribute("id", idRecorte);
   recorte.setAttribute("class", "recorte-elevado");
-  const uso = document.createElementNS(SVG_NS, "use");
-  uso.setAttribute("href", `#${m.id}`);
-  recorte.appendChild(uso);
+  for (const m of paths) {
+    const uso = document.createElementNS(SVG_NS, "use");
+    uso.setAttribute("href", `#${m.id}`);
+    recorte.appendChild(uso);
+  }
   svg.appendChild(recorte);
 
   const lineas = document.createElementNS(SVG_NS, "g");
-  lineas.setAttribute("clip-path", `url(#${m.id}-elevado)`);
-  svg.querySelectorAll<SVGElement>(`.linea[data-de="${m.dataset.musculo}"]`).forEach((l) => {
+  lineas.setAttribute("clip-path", `url(#${idRecorte})`);
+  svg.querySelectorAll<SVGElement>(`.linea[data-de="${paths[0].dataset.musculo}"]`).forEach((l) => {
     if (l.closest(".musculo-elevado")) return;
     const copia = l.cloneNode() as SVGElement;
     copia.removeAttribute("clip-path");
@@ -237,16 +258,24 @@ function elevar(m: SVGGraphicsElement, animar: boolean): void {
 
 /**
  * Marca el grupo tocado sobre los paths que ya están: lo agranda con sus líneas en negro
- * (`elevar`) y apaga a los demás.
+ * (`elevar`) y apaga a los demás. Los lados que se tocan crecen juntos desde el centro de
+ * los dos; si cada uno creciera desde el suyo, se encimarían en medio.
  */
 function marcarSeleccion(animar: boolean): void {
   document.querySelector("#mapa-giro")?.classList.toggle("con-seleccion", seleccionado !== null);
   document.querySelector(".mapa-cuerpo")?.classList.toggle("con-detalle", seleccionado !== null);
-  document.querySelectorAll("#mapa-giro .mapa-svg").forEach(bajar);
-  document.querySelectorAll<SVGGraphicsElement>("#mapa-giro .musculo").forEach((m) => {
-    const es = m.dataset.musculo === seleccionado;
-    m.classList.toggle("seleccionado", es);
-    if (es) elevar(m, animar);
+  document.querySelectorAll<SVGSVGElement>("#mapa-giro .mapa-svg").forEach((svg) => {
+    bajar(svg);
+    const paths: SVGGraphicsElement[] = [];
+    svg.querySelectorAll<SVGGraphicsElement>(".musculo").forEach((m) => {
+      const es = m.dataset.musculo === seleccionado;
+      m.classList.toggle("seleccionado", es);
+      if (es) paths.push(m);
+    });
+    if (paths.length === 0) return;
+    const juntos = paths.length === 2 && seTocan(paths[0].getBBox(), paths[1].getBBox());
+    if (juntos || paths.length === 1) elevar(svg, paths, 0, animar);
+    else paths.forEach((m, n) => elevar(svg, [m], n, animar));
   });
 }
 
