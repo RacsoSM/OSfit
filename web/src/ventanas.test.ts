@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Timestamp } from "firebase/firestore";
 import type { Asistencia, Cliente } from "./datos";
-import { BARRA, VENTANAS, contenidoDe, ventana, type DatosCliente, type IdVentana } from "./ventanas";
+import { BARRA, VENTANAS, contenidoDe, tituloCabecera, ventana, type DatosCliente, type IdVentana } from "./ventanas";
 
 const HOY = "2026-09-18"; // viernes
 
@@ -158,5 +158,14 @@ describe("la ventana Registro", () => {
     expect(html).toContain("+ Agregar ejercicio");
     expect(html).toContain("Todavía no registras nada");
     expect(html).not.toContain("Muy pronto");
+  });
+});
+
+describe("tituloCabecera", () => {
+  it("Inicio lleva el saludo, Músculos y Registro nada, y las del menú su título", () => {
+    expect(tituloCabecera(ventana("inicio"))).toBeNull();
+    expect(tituloCabecera(ventana("musculos"))).toBe("");
+    expect(tituloCabecera(ventana("registro"))).toBe("");
+    expect(tituloCabecera(ventana("ranking"))).toBe("Ranking");
   });
 });

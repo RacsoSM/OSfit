@@ -31,8 +31,9 @@ export function conectarCabecera(abrirMenu: () => void): void {
 }
 
 /**
- * En Inicio va el saludo; en las demás, el nombre de la ventana. El saludo se oculta y no se
- * destruye: rehacerlo lo volvería a escribir letra por letra al regresar.
+ * `null`: el saludo (Inicio). `""`: nada (Músculos y Registro). Un texto: el nombre de la
+ * ventana. Ver `tituloCabecera` en `ventanas.ts`. El saludo se oculta y no se destruye:
+ * rehacerlo lo volvería a escribir letra por letra al regresar.
  */
 export function actualizarCabecera(titulo: string | null): void {
   const saludo = document.querySelector<HTMLElement>("#saludo");
@@ -44,7 +45,8 @@ export function actualizarCabecera(titulo: string | null): void {
     saludo.hidden = titulo !== null;
   }
   if (el) {
-    el.hidden = titulo === null;
+    // `""` (ventanas de la barra) esconde las dos cosas: ni saludo ni título.
+    el.hidden = !titulo;
     if (el.textContent !== (titulo ?? "")) el.textContent = titulo ?? "";
   }
 }

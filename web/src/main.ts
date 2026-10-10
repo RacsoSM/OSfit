@@ -44,7 +44,7 @@ import { conectarAccionDia } from "./ui/accionDia";
 import { conectarAccionFalta } from "./ui/accionFalta";
 import { moverMes } from "./ui/calendario";
 import { tarjetaVideos, ultimosRangoDescendente, firmaVideos, MAXIMO_VIDEOS } from "./ui/tarjetaVideos";
-import { BARRA, VENTANAS, contenidoDe, datosRegistro, ventana, type IdVentana } from "./ventanas";
+import { BARRA, VENTANAS, contenidoDe, datosRegistro, tituloCabecera, ventana, type IdVentana } from "./ventanas";
 import { conectarRegistro } from "./ui/registro";
 import { barraInferior, conectarBarra } from "./ui/barraInferior";
 import { archivosMapa, conectarMapa, type EstadoSvg } from "./ui/mapaMuscular";
@@ -450,7 +450,7 @@ async function arrancar(): Promise<void> {
     // Cada vez y no solo al entrar: si el entrenador le pone el sexo con la ventana abierta,
     // el snapshot del cliente llega aquí y el mapa aparece sin salir y volver.
     if (activa.id === "musculos") cargarMapas(activa.id !== ventanaPintada);
-    actualizarCabecera(activa.id === "inicio" ? null : activa.titulo);
+    actualizarCabecera(tituloCabecera(activa));
     const datos = {
       cliente, hoy, asistencias, mesVisible, yaAviso, medallas, logros,
       tiradaEsteMes, tiradaMesAnterior, ranking, estilo,

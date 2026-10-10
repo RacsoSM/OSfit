@@ -153,6 +153,16 @@ export const VENTANAS: readonly Ventana[] = [
  */
 export const BARRA: readonly IdVentana[] = ["inicio", "musculos", "registro"];
 
+/**
+ * Qué va en la cabecera junto al ☰: `null` es el saludo (Inicio), `""` es nada y un texto es el
+ * título de la ventana. Las de la barra de abajo van sin título (decisión del entrenador,
+ * 2026-10-10): la pestaña marcada ya dice dónde está, y el espacio es del contenido.
+ */
+export function tituloCabecera(v: Ventana): string | null {
+  if (v.id === "inicio") return null;
+  return v.grupo === "barra" ? "" : v.titulo;
+}
+
 /** Un id que no está en el registro (un `history.state` viejo, por ejemplo) cae en Inicio. */
 export function ventana(id: IdVentana): Ventana {
   return VENTANAS.find((v) => v.id === id) ?? VENTANAS[0];
