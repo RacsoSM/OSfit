@@ -1,8 +1,9 @@
-# Banco de ejercicios con GIF — plan
+# Banco de ejercicios con GIF y Registro — plan
 
-**Objetivo:** que cada ejercicio de la rutina muestre su animación en la web de la clienta,
-sin tener que editar las rutinas que ya existen. Es la parte del banco (`ejercicios/{id}`)
-del punto 7 del backlog que trae los GIF (punto 3).
+**Objetivo:** el banco de ejercicios (`ejercicios/{id}`) con un GIF por ejercicio, y la
+ventana Registro donde la clienta anota lo que su coach le pone en el gym: elige cada
+ejercicio en un grid con su GIF y captura peso y reps por serie. Es la parte del punto 7 del
+backlog que trae los GIF (punto 3) y el registro.
 
 **Spec:** `docs/superpowers/specs/2026-10-10-mapa-fuerza-entrenamiento-design.md`, secciones
 "Banco de ejercicios" y "Preguntas abiertas".
@@ -25,8 +26,11 @@ de los medios: `docs/licencias/GymVisual.md`.
 - **Sin `estandares`** por ahora: sigue abierto quién los llena. La carga escribe con
   `merge`, así que agregarlos después no se pisa.
 - **WebP animado, no GIF:** ~40 kB en vez de ~125 kB, con los mismos cuadros.
-- **Las URLs se resuelven solo para los ejercicios de su rutina**, una vez por carga de
-  página, como los videos (`resolverVideos`).
+- **Los GIF van en Registro, no en Inicio** (entrenador, 2026-10-10). La tarjeta del día
+  queda como estaba.
+- **Los GIF se leen sin sesión** (`storage.rules`) y la página arma la URL directo
+  (`urlGif`): el grid muestra decenas, y un `getDownloadURL` por cada uno retrasaría la
+  pantalla. Son catálogo; una URL con token los dejaba igual de expuestos.
 - **Hip thrust** usa la animación de puente de glúteo con barra en el piso: el dataset no
   tiene el hip thrust con la espalda en el banco.
 
@@ -39,12 +43,16 @@ de los medios: `docs/licencias/GymVisual.md`.
 - [x] **2. Script de carga** — `functions/scripts/cargarBancoEjercicios.mjs`. `--prueba`
   convierte los 91 sin subir nada (dejan los .webp en `functions/scripts/salida/`, ignorada
   por git). Revisada la hoja de contacto: cada animación corresponde a su ejercicio.
-- [x] **3. Reglas** — `ejercicios/{id}` en Firestore y `ejercicios/{archivo}` en Storage:
-  lee cualquier sesión, escribe el entrenador.
-- [x] **4. Web** — `EjercicioBanco` y `observarBanco` (`datos.ts`), `banco.ts` (+ test),
-  GIF de 64 px a la izquierda de cada ejercicio de la tarjeta del día y el crédito
-  "Animaciones © Gym visual".
-- [ ] **5. Desplegar** (lo hace el entrenador, en este orden):
+- [x] **3. Reglas** — `ejercicios/{id}` en Firestore lo lee cualquier sesión;
+  `ejercicios/{archivo}` en Storage se lee sin sesión (ver Decisiones). Escribe el entrenador.
+- [x] **4. Web: banco** — `EjercicioBanco` y `observarBanco` (`datos.ts`), `banco.ts`
+  (+ test): ligar por nombre, buscar y armar la URL del GIF.
+- [x] **5. Función `registrarSesion`** (+ test) y regla de lectura de
+  `clientes/{id}/sesiones`.
+- [x] **6. Web: Registro** — `registro.ts` (el borrador, puro, + test) y `ui/registro.ts`
+  (historial, grid, captura; + test). `diaDeHoy` sale de `tarjetaDia.ts` para ofrecer
+  primero los ejercicios del día.
+- [ ] **7. Desplegar** (lo hace el entrenador, en este orden):
 
   1. Reglas primero, para que la página pueda leer el banco en cuanto exista:
      ```bash
@@ -59,16 +67,23 @@ de los medios: `docs/licencias/GymVisual.md`.
      node scripts/cargarBancoEjercicios.mjs
      ```
      Debe terminar en "91 de 91 cargados". Se puede repetir sin miedo.
-  3. La web:
+  3. La función, por nombre (un `--only functions` a secas intentaría borrar
+     `guardarEstilo`):
+     ```bash
+     firebase deploy --only functions:registrarSesion
+     ```
+  4. La web:
      ```bash
      firebase deploy --only hosting
      ```
-  4. Verificar en el teléfono: en Inicio, los ejercicios del día con nombre conocido
-     ("Sentadilla", "Press banca", "Jalón al pecho"…) muestran su animación. Un ejercicio
-     con nombre que no está en el banco se ve igual que antes. Si alguno no casa y debería,
-     se agrega su nombre a `alias` en la semilla y se vuelve a correr la carga.
+  5. Verificar en el teléfono: Registro → "+ Agregar ejercicio" muestra los ejercicios del
+     día con su animación; buscar "jalón" encuentra el del banco; anotar dos series y
+     guardar deja la sesión en el historial. Si un ejercicio del día no aparece en el grid,
+     su nombre no casa con el banco: se agrega a `alias` en la semilla y se vuelve a correr
+     la carga.
 
 ## Fuera de este plan
 
-Registro, modo guiado (donde el GIF va grande), cálculo de fuerza y estándares, y
-`Ejercicio.ejercicioId` con buscador en la app. La app Android no cambia en este plan.
+Borrar una sesión del día, modo guiado, cálculo de fuerza y estándares (colorear el mapa),
+ver las sesiones desde la app, y `Ejercicio.ejercicioId` con buscador en la app. La app
+Android no cambia en este plan.

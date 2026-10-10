@@ -57,6 +57,7 @@ describe("elegir", () => {
     expect(html).toContain('data-agregar="press-banca"');
     expect(html).toContain("ejercicios%2Fpress-banca.webp");
     expect(html).not.toContain('data-agregar="plancha"');
+    expect(html).toContain("© Gym visual");
   });
 
   it("la búsqueda encuentra cualquiera del banco, aunque no tenga GIF", () => {

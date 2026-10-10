@@ -101,6 +101,9 @@ function gif(ruta: string | null | undefined, clase: string, lado: number): stri
     : `<span class="${clase} registro-sin-gif" aria-hidden="true">🏋️</span>`;
 }
 
+/** Los términos del dataset piden el crédito junto a las animaciones, donde se muestren. */
+const CREDITO = `<p class="registro-credito">Animaciones © Gym visual</p>`;
+
 // ── Historial ────────────────────────────────────────────────────────────────
 
 function textoSerie(s: { reps: number; peso: number | null }, tipo: "tiempo" | "otro"): string {
@@ -195,7 +198,8 @@ function vistaElegir(d: DatosRegistro): string {
     <p class="accion-subtitulo registro-subtitulo">Buscar otro ejercicio</p>
     <input id="registro-buscar" class="campo-libre" type="search" enterkeyhint="search"
            placeholder="Ej. sentadilla, jalón, curl…" value="${escapar(estado.busqueda)}" autocomplete="off">
-    <div id="registro-resultados">${resultados(d)}</div>`;
+    <div id="registro-resultados">${resultados(d)}</div>
+    ${CREDITO}`;
 }
 
 // ── Capturar ─────────────────────────────────────────────────────────────────
@@ -251,7 +255,8 @@ function vistaCapturar(): string {
     <button class="boton" data-accion="guardar" ${estado.enVuelo ? "disabled" : ""}>
       ${estado.enVuelo ? "Guardando…" : "Guardar entrenamiento"}
     </button>
-    <button class="boton-texto" data-accion="descartar" ${estado.enVuelo ? "disabled" : ""}>Descartar</button>`;
+    <button class="boton-texto" data-accion="descartar" ${estado.enVuelo ? "disabled" : ""}>Descartar</button>
+    ${CREDITO}`;
 }
 
 /** Lo que va en `#contenido` con Registro abierto. */

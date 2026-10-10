@@ -10,7 +10,8 @@ commit `7455efae41b330c265e7cd4b78dfa848e7ce5ebd` (ver `functions/scripts/bancoE
   su uso se rige por los
   [términos de Gym visual](https://gymvisual.com/content/3-terms-and-conditions-of-use).
 - Piden conservar la atribución "© Gym visual — https://gymvisual.com/". Va en cada documento
-  (`atribucion`) y en la página ("Animaciones © Gym visual", bajo la lista de ejercicios).
+  (`atribucion`) y en la página ("Animaciones © Gym visual", en Registro: el grid para elegir
+  ejercicio y la captura de series).
 
 **Estado (2026-10-10):** el entrenador está en contacto con Gym visual para la licencia de uso
 en OSfit. Los archivos convertidos no se versionan en el repo (`functions/scripts/salida/`

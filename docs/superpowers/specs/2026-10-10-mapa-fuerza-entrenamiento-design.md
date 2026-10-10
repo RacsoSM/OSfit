@@ -93,13 +93,25 @@ una **barra de navegación abajo, fija y visible en toda la web**, tipo WhatsApp
 
 ### Registro
 
-- Historial de sesiones de la más reciente a la más vieja: fecha, ejercicios y series.
-  Vacío, invita: "¿Entrenas hoy? Empieza desde Inicio", con un toque que lleva a Inicio.
-- **"+ Registrar"**: arriba salen los ejercicios del día y luego los del resto de su rutina;
-  abajo, un buscador del banco completo. Por cada ejercicio captura series de
-  `{reps, peso}`, prellenadas con lo que hizo la última vez o, si no hay, con `pesoONota` /
-  `pesoPorEjercicio`.
-- Puede borrar una sesión propia el mismo día que la registró, por si se equivocó.
+> "registro es para agregar rutinas dichas por los coaches en presencial"
+
+**Decidido (entrenador, 2026-10-10):** Registro es para anotar lo que el coach le dice en el
+gym, siga o no la rutina de la app. Los GIF se usan aquí, **no en la tarjeta de Inicio**.
+
+- **Historial:** sus sesiones de la más reciente a la más vieja: fecha, ejercicios y series.
+  Arriba, el botón **"+ Agregar ejercicio"**.
+- **Elegir (grid):** tarjetas con el **GIF y el nombre**. Primero los ejercicios de su día de
+  hoy (los que casan con el banco); abajo, un buscador del banco completo, porque el coach
+  puede ponerle algo fuera de su rutina. Lo ya agregado sale marcado.
+- **Capturar:** al tocar un ejercicio pasa a una pantalla con los ejercicios que lleva, cada
+  uno con sus series de **peso y reps** (solo segundos en los de tiempo; en los corporales el
+  peso es lastre opcional). Prellenadas con lo que hizo la última vez; si no hay, tantas
+  filas vacías como series diga su rutina. Desde ahí vuelve al grid por el siguiente, y así
+  hasta terminar y tocar **"Guardar entrenamiento"**.
+- El borrador vive en el navegador hasta guardarse: cerrar la pestaña o quedarse sin señal
+  no lo borra, y el historial ofrece continuarlo. Su id es el id de la sesión, así que
+  reintentar un guardado no la duplica.
+- Pendiente: borrar una sesión propia el mismo día (`borrarSesion`).
 
 ### Entrenar (modo guiado, se abre desde Inicio)
 

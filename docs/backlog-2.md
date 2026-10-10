@@ -359,14 +359,23 @@ Hecho (2026-10-10), segunda parte — **GIFs vinculados a los ejercicios** (cier
 - **Carga:** `functions/scripts/cargarBancoEjercicios.mjs` convierte cada GIF a WebP animado
   (~40 kB en vez de ~125 kB), lo sube a `ejercicios/<id>.webp` y escribe `ejercicios/{id}`.
 - **Reglas:** cualquier sesión lee `ejercicios` (Firestore y Storage); solo escribe el entrenador.
-- **Web:** la tarjeta del día muestra el GIF junto a cada ejercicio que case por nombre o alias
-  (sin importar acentos) con el banco, y el crédito "Animaciones © Gym visual".
+- Los GIF se ligan a la rutina por nombre o alias (sin importar acentos) contra el banco.
+
+Hecho (2026-10-10), tercera parte — **Registro**:
+
+> "en la pantalla de inicio donde vienen las rutinas en el card no vendrán los gifs [...] registro es para agregar rutinas dichas por los coaches en presencial"
+
+- Inicio queda como estaba, **sin GIF**.
+- Registro: historial + "Agregar ejercicio" → grid con GIF y nombre (primero los del día,
+  luego buscador del banco) → captura de peso y reps por serie → "Guardar entrenamiento".
+- Función nueva `registrarSesion` (valida contra el banco) y `clientes/{id}/sesiones`.
 
 Plan y pasos para desplegar: `superpowers/plans/2026-10-10-banco-ejercicios-gifs.md`.
 **Sin desplegar todavía.**
 
-Pendiente: aprobar el resto del spec (Registro, modo guiado, cálculo de fuerza, estándares
-por ejercicio, `Ejercicio.ejercicioId` con buscador en el editor de rutinas).
+Pendiente: borrar una sesión del día, modo guiado, cálculo de fuerza y estándares por
+ejercicio (para colorear el mapa), ver las sesiones desde la app, y `Ejercicio.ejercicioId`
+con buscador en el editor de rutinas.
 
 ## 8. Avisos automáticos: racha perdida y recordatorio de pago — ✅ HECHO (2026-10-10)
 
