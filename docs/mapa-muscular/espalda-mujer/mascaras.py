@@ -90,4 +90,21 @@ for g, ms in G.items():
     else:
         out[g] = np.any(ms, 0).astype(np.uint8)
 for g in sorted(out): print(g, int(out[g].sum() // (S * S)))
+# La mano toca la cadera en la foto: en el dibujo se separan con una franja negra de MANO_HUECO
+# px, para que no parezca pegada al cuerpo. La franja va por donde la mano y el cuerpo están a la
+# misma distancia, solo donde se juntan (allí donde la suma de distancias es pequeña).
+MANO_HUECO = 2.0                     # px de la foto (≈ 2 unidades del SVG)
+mano_ = (out['gris-mano'] | out['antebrazo']).astype(np.uint8)
+cuerpo_ = np.any([out[g] for g in ('gluteo', 'cuadriceps', 'dorsal')], 0).astype(np.uint8)
+dm = cv2.distanceTransform(1 - mano_, cv2.DIST_L2, 5); dc = cv2.distanceTransform(1 - cuerpo_, cv2.DIST_L2, 5)
+corte = (np.abs(dm - dc) < MANO_HUECO * S) & (dm + dc < 26 * S) & (yy > 430 * S) & izq
+# del lado de la mano, la silueta es solo la mano con su contorno (MANO_BORDE_FOTO px alrededor del
+# gris): el brillo del contorno de la cadera que quedaba de ese lado pasa a fondo
+MANO_BORDE_FOTO = 4.0
+lado_mano = (dm < dc) & (yy > 440 * S) & izq & (dm > MANO_BORDE_FOTO * S) & (dm + dc < 26 * S)
+fig = (fig & ~corte & ~lado_mano).astype(np.uint8)
+zona_m = (yy > 440 * S) & (dm < dc + MANO_HUECO * S) & izq      # el contorno de la mano, liso
+fig = np.where(zona_m, cv2.GaussianBlur(fig.astype(np.float32), (0, 0), 1.2 * S) > 0.5, fig).astype(np.uint8)
+n, cc, st, _ = cv2.connectedComponentsWithStats(fig, 8); fig = (cc == 1 + np.argmax(st[1:, 4])).astype(np.uint8)
+fig = simetrica(fig)
 np.savez_compressed('masks.npz', AX=AX, fig=fig, **out)
