@@ -361,7 +361,7 @@ tipo. Racha perdida: 3+ días, solo días hábiles, texto según vidas/ruleta. P
 y el día.
 
 
-## 9. Últimas 5 entradas a la web, con hora y teléfono
+## 9. Últimas 5 entradas a la web, con hora y teléfono — ✅ HECHO (2026-10-10)
 
 > "desde mi app de administrador, quiero además de poder ver la última vez que cada cliente abrió la web, quiero poder ver las últimas 5 y desde que dispositivo se hizo, es decir con que diga iPhone o android me basta, es eso posible? y la hora exacta"
 
@@ -374,4 +374,5 @@ Spec: `superpowers/specs/2026-10-10-ultimas-entradas-design.md`, **aprobado (202
 Plan: `superpowers/plans/2026-10-10-ultimas-entradas.md`.
 
 Implementado y desplegado (2026-10-10): funciones, web y `sesion` en producción, probado de
-punta a punta con una clienta temporal; APK entregado. Falta que el entrenador lo vea en la app.
+punta a punta con una clienta temporal; APK entregado. Verificado por el entrenador en su
+teléfono (2026-10-10).

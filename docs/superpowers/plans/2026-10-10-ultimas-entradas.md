@@ -70,4 +70,4 @@ Desplegado en orden: `registrarEntrada`, hosting, `sesion`. Prueba de punta a pu
 producción con una clienta temporal (creada y borrada por el script de prueba, junto con su
 acceso y su usuario de Auth): abrir `/c/<token>` como iPhone y como Android dejó `entradas: 2`
 y dos `ultimasEntradas` con su hora y `ios` / `android`. Que sean 2 y no 4 confirma que
-`sesion` ya no cuenta. APK entregado al entrenador; falta que vea el bloque en su teléfono.
+`sesion` ya no cuenta. APK entregado; el entrenador vio el bloque en su teléfono (2026-10-10).
