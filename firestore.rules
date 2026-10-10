@@ -62,6 +62,13 @@ service cloud.firestore {
         allow read: if esEntrenador() || esCliente(cid);
         allow write: if esEntrenador();
       }
+      // Lo que registra en "Registro". La clienta lee las suyas (su historial y, más
+      // adelante, su mapa de fuerza), pero escribe solo la función `registrarSesion` con el
+      // Admin SDK: valida los ejercicios contra el banco y los rangos de reps y peso.
+      match /sesiones/{doc} {
+        allow read: if esEntrenador() || esCliente(cid);
+        allow write: if esEntrenador();
+      }
       match /personal_records/{doc} {
         allow read, write: if esEntrenador();
       }

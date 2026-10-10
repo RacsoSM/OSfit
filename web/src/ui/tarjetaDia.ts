@@ -68,47 +68,31 @@ function conSusPesos(cliente: Cliente, ejercicios: Ejercicio[]): Ejercicio[] {
   return sigueUnaPlantilla ? conPesosPropios(ejercicios, cliente.pesoPorEjercicio) : ejercicios;
 }
 
-/** Nombre de ejercicio → URL de su GIF del banco, o null. Ver `gifsPorRuta` en `banco.ts`. */
-export type GifDe = (nombre: string) => string | null;
-
-const SIN_GIFS: GifDe = () => null;
-
-function listaEjercicios(ejercicios: Ejercicio[], gifDe: GifDe): string {
+function listaEjercicios(ejercicios: Ejercicio[]): string {
   if (ejercicios.length === 0) {
     return `
       <p class="hoy-sin-ejercicios">Tu entrenador todavía no cargó los ejercicios de este día.</p>`;
   }
 
-  let algunGif = false;
   const filas = ejercicios
-    .map((e) => {
-      const gif = gifDe(e.nombre ?? "");
-      if (gif) algunGif = true;
-      // `alt` vacío: el nombre ya está al lado, y un lector de pantalla lo diría dos veces.
-      // Ancho y alto fijos para que la fila no salte cuando la imagen termina de bajar.
-      return `
-        <li class="ejercicio${gif ? " con-gif" : ""}">
-          ${gif ? `<img class="ejercicio-gif" src="${escapar(gif)}" alt="" width="64" height="64" loading="lazy" decoding="async">` : ""}
+    .map(
+      (e) => `
+        <li class="ejercicio">
           <span class="ejercicio-nombre">${escapar(e.nombre ?? "")}</span>
           <span class="ejercicio-series">${escapar(String(e.series ?? ""))} x ${escapar(e.repeticiones ?? "")}</span>
           ${e.pesoONota ? `<span class="ejercicio-nota">${escapar(e.pesoONota)}</span>` : ""}
-        </li>`;
-    })
+        </li>`
+    )
     .join("");
 
-  // Los términos del dataset piden conservar el crédito junto a las animaciones. Fijo y no
-  // leído de `atribucion`: hoy todos los GIF del banco salen de ahí; si llega otra fuente,
-  // esto pasa a armarse con las atribuciones de los que se muestran.
-  const credito = algunGif ? `<p class="ejercicio-credito">Animaciones © Gym visual</p>` : "";
-  return `<ul class="hoy-ejercicios">${filas}</ul>${credito}`;
+  return `<ul class="hoy-ejercicios">${filas}</ul>`;
 }
 
 export function tarjetaDia(
   cliente: Cliente,
   hoy: string,
   acciones = "",
-  asistencias: Asistencia[] = [],
-  gifDe: GifDe = SIN_GIFS
+  asistencias: Asistencia[] = []
 ): string {
   const dias = cliente.rutinaAsignada?.dias ?? [];
 
@@ -170,8 +154,7 @@ export function tarjetaDia(
       ${listaEjercicios(
         dias[indice]
           ? conSusPesos(cliente, ejerciciosDeHoy(dias[indice], indice, asistencias, hoy))
-          : [],
-        gifDe
+          : []
       )}
       ${acciones ? `<div class="hoy-acciones">${acciones}</div>` : ""}
     </div>`;

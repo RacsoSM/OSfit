@@ -9,3 +9,4 @@ export { enviarNotificacion } from "./enviarNotificacion";
 export { programarAvisos } from "./programarAvisos";
 export { alRevocarAcceso } from "./alRevocarAcceso";
 export { registrarEntrada } from "./registrarEntrada";
+export { registrarSesion } from "./registrarSesion";
