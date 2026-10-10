@@ -25,28 +25,61 @@ function datos(campos: Partial<DatosRegistro> = {}): DatosRegistro {
   };
 }
 
-beforeEach(() => ponerEstadoRegistro({ vista: "historial", borrador: null }));
+beforeEach(() => ponerEstadoRegistro({ vista: "inicio", borrador: null }));
+
+/** Un Timestamp de Firestore de mentiras: la vista solo usa `toDate()`. */
+const ts = (iso: string) => ({ toDate: () => new Date(iso) }) as unknown as Sesion["creada"];
+
+describe("inicio", () => {
+  it("sin entrenamiento abierto ofrece iniciarlo y no deja agregar ejercicios sueltos", () => {
+    const html = ventanaRegistro(datos());
+    expect(html).toContain("▶ Iniciar entrenamiento");
+    expect(html).not.toContain("+ Agregar ejercicio");
+  });
+
+  it("lleva al historial con la fecha del último entrenamiento", () => {
+    const sesiones: Sesion[] = [
+      { id: "s2", fecha: "2026-10-12", origen: "manual", ejercicios: [] },
+      { id: "s1", fecha: "2026-10-09", origen: "manual", ejercicios: [] },
+    ];
+    const html = ventanaRegistro(datos({ sesiones }));
+    expect(html).toContain('data-accion="historial"');
+    expect(html).toContain("Último: lunes, 12 de octubre · 2 entrenamientos");
+  });
+
+  it("con un entrenamiento abierto, Registro se abre en él", () => {
+    ponerEstadoRegistro({ vista: "inicio", borrador: nuevoBorrador("b1234567", "2026-10-12", Date.UTC(2026, 9, 12, 17, 32)) });
+    const html = ventanaRegistro(datos());
+    expect(html).toContain("Entrenamiento en curso");
+    expect(html).toContain("desde las 10:32");
+    expect(html).toContain("Agrega tu primer ejercicio");
+    expect(html).not.toContain("Iniciar entrenamiento");
+  });
+});
 
 describe("historial", () => {
-  it("lista las sesiones con sus series; las de tiempo en segundos", () => {
+  it("cada entrenamiento con su fecha, horario, duración y series; las de tiempo en segundos", () => {
+    ponerEstadoRegistro({ vista: "historial", borrador: null });
     const sesiones: Sesion[] = [{
       id: "s1", fecha: "2026-10-12", origen: "manual",
+      iniciada: ts("2026-10-12T17:32:00Z"), creada: ts("2026-10-12T18:20:00Z"),
       ejercicios: [
         { ejercicioId: "press-banca", nombre: "Press de banca", series: [{ reps: 10, peso: 40 }, { reps: 8, peso: 42.5 }] },
         { ejercicioId: "plancha", nombre: "Plancha", series: [{ reps: 45, peso: null }] },
       ],
     }];
     const html = ventanaRegistro(datos({ sesiones }));
+    expect(html).toContain("Tu historial");
     expect(html).toContain("lunes, 12 de octubre");
+    expect(html).toMatch(/10:32.*–.*11:20.*· 48 min · 2 ejercicios/);
     expect(html).toContain("40 kg × 10 · 42.5 kg × 8");
     expect(html).toContain("45 s");
   });
 
-  it("con un borrador pendiente ofrece continuarlo en vez de empezar otro", () => {
-    ponerEstadoRegistro({ borrador: agregarEjercicio(nuevoBorrador("b1234567", "2026-10-12"), press, null, 1) });
-    const html = ventanaRegistro(datos());
-    expect(html).toContain("Tienes un registro sin guardar");
-    expect(html).not.toContain("+ Agregar ejercicio");
+  it("una sesión vieja sin hora de inicio muestra solo cuándo terminó", () => {
+    ponerEstadoRegistro({ vista: "historial", borrador: null });
+    const sesiones: Sesion[] = [{ id: "s1", fecha: "2026-10-12", origen: "manual", creada: ts("2026-10-12T18:20:00Z"), ejercicios: [] }];
+    expect(ventanaRegistro(datos({ sesiones }))).toMatch(/Terminado a las 11:20/);
   });
 });
 
@@ -72,9 +105,12 @@ describe("elegir", () => {
     expect(pecho).not.toContain('data-agregar="press-banca"');
   });
 
-  it("marca lo que ya agregó", () => {
+  it("lo que ya está en el entrenamiento sale deshabilitado", () => {
     ponerEstadoRegistro({ vista: "elegir", borrador: agregarEjercicio(nuevoBorrador("b1234567", "2026-10-12"), press, null, 1) });
-    expect(ventanaRegistro(datos())).toContain("✓ Agregado");
+    const html = ventanaRegistro(datos());
+    expect(html).toMatch(/class="registro-opcion agregado" data-agregar="press-banca"\s+disabled/);
+    expect(html).toContain("✓ Ya en tu entrenamiento");
+    expect(html).not.toMatch(/data-agregar="plancha"\s+disabled/);
   });
 });
 
@@ -87,11 +123,18 @@ describe("capturar", () => {
     expect(html.match(/data-campo="peso"/g)).toHaveLength(2);
     expect(html.match(/data-campo="reps"/g)).toHaveLength(3);
     expect(html).toContain(">seg<");
-    expect(html).toContain("Guardar entrenamiento");
+    expect(html).toContain("Terminar entrenamiento");
   });
 
-  it("sin ejercicios no se queda en una pantalla vacía", () => {
-    ponerEstadoRegistro({ vista: "capturar", borrador: nuevoBorrador("b1234567", "2026-10-12") });
-    expect(ventanaRegistro(datos())).toContain("+ Agregar ejercicio");
+  it("termina el entrenamiento en vez de solo guardarlo", () => {
+    ponerEstadoRegistro({ vista: "capturar", borrador: agregarEjercicio(nuevoBorrador("b1234567", "2026-10-12"), press, null, 1) });
+    const html = ventanaRegistro(datos());
+    expect(html).toContain("Terminar entrenamiento");
+    expect(html).toContain("Descartar entrenamiento");
+  });
+
+  it("sin entrenamiento abierto no hay qué capturar: vuelve al inicio", () => {
+    ponerEstadoRegistro({ vista: "capturar", borrador: null });
+    expect(ventanaRegistro(datos())).toContain("Iniciar entrenamiento");
   });
 });

@@ -20,24 +20,28 @@ import {
 import { escapar } from "./tarjetaDia";
 
 /**
- * La ventana Registro: la clienta anota lo que entrenó con su coach en el gym.
+ * La ventana Registro: la clienta anota lo que entrenó con su coach en el gym, por
+ * **entrenamientos** (decisión del entrenador, 2026-10-10): toca "Iniciar entrenamiento", va
+ * agregando ejercicios y al final "Terminar entrenamiento". Cada entrenamiento queda en su
+ * historial con su fecha, la hora en que empezó y en que terminó.
  *
- * Tres vistas dentro de la misma ventana:
- *  - **historial**: sus sesiones guardadas y el botón "Agregar ejercicio".
+ * Vistas dentro de la misma ventana:
+ *  - **inicio**: el botón "Iniciar entrenamiento" y la entrada al historial.
+ *  - **capturar**: el entrenamiento en curso, con sus ejercicios y las series de peso y reps.
+ *    Mientras hay uno abierto, Registro se abre aquí.
  *  - **elegir**: un grid con nombre y GIF, agrupado: primero los grupos que le tocan hoy según
  *    el nombre del día ("Pecho, hombro y tríceps" → Pecho, Hombro, Tríceps), con los
- *    ejercicios que el entrenador configuró para cada uno; luego los demás grupos. Sin
- *    buscador (decisión del entrenador, 2026-10-10): todo el banco queda en alguna sección.
- *  - **capturar**: los ejercicios que va agregando, cada uno con sus series de peso y reps.
- *    Desde ahí vuelve al grid por el siguiente, hasta que toca "Guardar".
+ *    ejercicios que el entrenador configuró para cada uno; luego los demás grupos. Lo que ya
+ *    está en el entrenamiento sale en gris y no se puede volver a elegir.
+ *  - **historial**: sus entrenamientos guardados, del más nuevo al más viejo.
  *
  * Los GIF van aquí y no en la tarjeta de Inicio (decisión del entrenador, 2026-10-10): sirven
  * para reconocer qué ejercicio hizo, no para leer la rutina.
  *
  * El estado vive en el módulo y no en `main.ts`, como en `accionFalta.ts`: un snapshot que
- * repinta a destiempo no debe sacarla de la vista donde estaba. El borrador además se guarda en
- * el navegador en cada cambio, para que cerrar la pestaña o quedarse sin señal no le borre lo
- * que lleva anotado.
+ * repinta a destiempo no debe sacarla de la vista donde estaba. El entrenamiento en curso además
+ * se guarda en el navegador en cada cambio, para que cerrar la pestaña o quedarse sin señal no
+ * le borre lo que lleva anotado.
  */
 
 export interface DatosRegistro {
@@ -52,7 +56,7 @@ export interface DatosRegistro {
   config: ConfigGrupos | null;
 }
 
-type Vista = "historial" | "elegir" | "capturar";
+type Vista = "inicio" | "historial" | "elegir" | "capturar";
 
 interface Estado {
   vista: Vista;
@@ -67,7 +71,7 @@ interface Estado {
 const LLAVE_BORRADOR = "osfit:registro-borrador";
 
 const estado: Estado = {
-  vista: "historial",
+  vista: "inicio",
   borrador: (() => {
     try { return leerBorrador(localStorage.getItem(LLAVE_BORRADOR)); } catch { return null; }
   })(),
@@ -96,6 +100,17 @@ function enPalabras(fecha: string): string {
   }).format(new Date(`${fecha}T12:00:00Z`));
 }
 
+function hora(t: { toDate(): Date } | null | undefined): string | null {
+  if (!t) return null;
+  return new Intl.DateTimeFormat("es-MX", {
+    timeZone: "America/Mazatlan", hour: "numeric", minute: "2-digit",
+  }).format(t.toDate());
+}
+
+function horaDeMs(ms: number | undefined): string | null {
+  return ms === undefined ? null : hora({ toDate: () => new Date(ms) });
+}
+
 function gif(ruta: string | null | undefined, clase: string, lado: number): string {
   const url = urlGif(ruta);
   // `alt` vacío: el nombre va justo al lado y un lector de pantalla lo diría dos veces.
@@ -107,11 +122,21 @@ function gif(ruta: string | null | undefined, clase: string, lado: number): stri
 /** Los términos del dataset piden el crédito junto a las animaciones, donde se muestren. */
 const CREDITO = `<p class="registro-credito">Animaciones © Gym visual</p>`;
 
-// ── Historial ────────────────────────────────────────────────────────────────
+// ── Inicio e historial ───────────────────────────────────────────────────────
 
 function textoSerie(s: { reps: number; peso: number | null }, tipo: "tiempo" | "otro"): string {
   if (tipo === "tiempo") return `${s.reps} s`;
   return s.peso === null ? `× ${s.reps}` : `${s.peso} kg × ${s.reps}`;
+}
+
+/** "10:32 a. m. – 11:20 a. m. · 48 min", o solo la hora de fin si no se sabe cuándo empezó. */
+function horario(s: Sesion): string {
+  const fin = hora(s.creada);
+  const inicio = hora(s.iniciada);
+  if (!fin) return "";
+  if (!inicio || !s.iniciada || !s.creada) return `Terminado a las ${fin}`;
+  const minutos = Math.round((s.creada.toDate().getTime() - s.iniciada.toDate().getTime()) / 60_000);
+  return `${inicio} – ${fin}${minutos > 0 ? ` · ${minutos} min` : ""}`;
 }
 
 function tarjetaSesion(s: Sesion, banco: readonly EjercicioBanco[]): string {
@@ -123,53 +148,68 @@ function tarjetaSesion(s: Sesion, banco: readonly EjercicioBanco[]): string {
         <span class="registro-hist-series">${e.series.map((x) => escapar(textoSerie(x, tipo))).join(" · ")}</span>
       </li>`;
   }).join("");
+  const cuando = horario(s);
+  const cuantos = s.ejercicios.length === 1 ? "1 ejercicio" : `${s.ejercicios.length} ejercicios`;
   return `
     <div class="tarjeta">
       <p class="tarjeta-titulo">${escapar(enPalabras(s.fecha))}</p>
+      <p class="registro-hist-horario">${escapar(cuando ? `${cuando} · ${cuantos}` : cuantos)}</p>
       <ul class="registro-hist">${filas}</ul>
     </div>`;
 }
 
-function vistaHistorial(d: DatosRegistro): string {
-  const pendientes = estado.borrador?.ejercicios.length ?? 0;
-  const aviso = estado.guardado
-    ? `<p class="aviso-ok">¡Entrenamiento guardado! 💪</p>`
-    : "";
-  const continuar = pendientes > 0
-    ? `<div class="tarjeta">
-         <p class="confirmar-titulo">Tienes un registro sin guardar</p>
-         <p class="accion-nota">${pendientes === 1 ? "1 ejercicio anotado" : `${pendientes} ejercicios anotados`}.</p>
-         <button class="boton" data-accion="continuar" style="margin-top:12px">Continuar</button>
-       </div>`
-    : `<button class="boton registro-agregar" data-accion="agregar">+ Agregar ejercicio</button>`;
+function vistaInicio(d: DatosRegistro): string {
+  const aviso = estado.guardado ? `<p class="aviso-ok">¡Entrenamiento guardado! 💪</p>` : "";
+  const ultima = d.sesiones?.[0];
+  const total = d.sesiones?.length ?? 0;
+  const historial = d.sesiones === null
+    ? `<p class="accion-nota" style="text-align:center">Cargando tu historial…</p>`
+    : total === 0
+      ? `<p class="accion-nota" style="text-align:center">Aquí se van a ir guardando tus entrenamientos.</p>`
+      : `<button class="tarjeta registro-ir-historial" data-accion="historial">
+           <span>
+             <span class="tarjeta-titulo">Tu historial</span>
+             <span class="registro-ir-detalle">Último: ${escapar(enPalabras(ultima!.fecha))} · ${total === 1 ? "1 entrenamiento" : `${total} entrenamientos`}</span>
+           </span>
+           <span aria-hidden="true">›</span>
+         </button>`;
+  return `
+    ${aviso}
+    <div class="tarjeta registro-iniciar">
+      <div class="vacio-emoji">🏋️</div>
+      <p class="confirmar-titulo">¿Lista para entrenar?</p>
+      <p class="accion-nota">Inicia tu entrenamiento y ve anotando cada ejercicio que hagas.</p>
+      <button class="boton" data-accion="iniciar" style="margin-top:14px">▶ Iniciar entrenamiento</button>
+    </div>
+    ${historial}`;
+}
 
-  let historial: string;
-  if (d.sesiones === null) {
-    historial = `<p class="accion-nota" style="text-align:center">Cargando tu historial…</p>`;
-  } else if (d.sesiones.length === 0) {
-    historial = `
-      <div class="tarjeta vacio">
-        <div class="vacio-emoji">📝</div>
-        <p><strong>Todavía no registras nada</strong></p>
-        <p style="color: var(--texto-tenue); font-size: 14px">
-          Cuando entrenes, toca “Agregar ejercicio” y anota tus series.
-        </p>
-      </div>`;
-  } else {
-    historial = d.sesiones.map((s) => tarjetaSesion(s, d.banco)).join("");
-  }
-  return `${aviso}${continuar}<p class="accion-subtitulo registro-subtitulo">Tu historial</p>${historial}`;
+function vistaHistorial(d: DatosRegistro): string {
+  const lista = d.sesiones === null
+    ? `<p class="accion-nota" style="text-align:center">Cargando tu historial…</p>`
+    : d.sesiones.length === 0
+      ? `<p class="accion-nota" style="text-align:center">Todavía no tienes entrenamientos guardados.</p>`
+      : d.sesiones.map((s) => tarjetaSesion(s, d.banco)).join("");
+  return `
+    <button class="boton-texto registro-volver" data-accion="volver">← Volver</button>
+    <p class="confirmar-titulo" style="margin-bottom:12px">Tu historial</p>
+    ${lista}`;
 }
 
 // ── Elegir ───────────────────────────────────────────────────────────────────
 
+/**
+ * Una tarjeta del grid. Lo que ya está en el entrenamiento sale en gris y deshabilitado: ya lo
+ * eligió, y sus series se capturan en la pantalla del entrenamiento.
+ */
 function opcion(e: EjercicioBanco): string {
   const ya = estado.borrador?.ejercicios.some((x) => x.ejercicioId === e.id) ?? false;
   return `
-    <button class="registro-opcion${ya ? " agregado" : ""}" data-agregar="${escapar(e.id)}">
+    <button class="registro-opcion${ya ? " agregado" : ""}" data-agregar="${escapar(e.id)}"
+            ${ya ? `disabled aria-label="${escapar(e.nombre)}, ya está en tu entrenamiento"` : ""}>
       ${gif(e.gifRuta, "registro-opcion-gif", 160)}
       <span class="registro-opcion-nombre">${escapar(e.nombre)}</span>
-      ${ya ? `<span class="registro-opcion-ya">✓ Agregado</span>` : ""}
+      ${ya ? `<span class="registro-opcion-ya">✓ Ya en tu entrenamiento</span>` : ""}
     </button>`;
 }
 
@@ -247,27 +287,39 @@ function tarjetaCaptura(e: EjercicioBorrador, i: number): string {
 
 function vistaCapturar(): string {
   const b = estado.borrador;
-  if (!b || b.ejercicios.length === 0) return "";
+  if (!b) return "";
   const error = estado.error ? `<p class="aviso-error" style="margin:0 0 12px">${escapar(estado.error)}</p>` : "";
+  const desde = horaDeMs(b.iniciado);
+  const hay = b.ejercicios.length > 0;
+  const vacio = hay ? "" : `
+    <div class="tarjeta vacio">
+      <p><strong>Agrega tu primer ejercicio</strong></p>
+      <p style="color: var(--texto-tenue); font-size: 14px">Elige el que te puso tu coach y anota tus series.</p>
+    </div>`;
+  const off = estado.enVuelo ? "disabled" : "";
   return `
-    <p class="confirmar-titulo" style="margin-bottom:12px">Tu entrenamiento</p>
+    <div class="registro-en-curso">
+      <p class="confirmar-titulo">Entrenamiento en curso</p>
+      <p class="accion-nota" style="margin:2px 0 12px">${escapar(enPalabras(b.fecha))}${desde ? ` · desde las ${escapar(desde)}` : ""}</p>
+    </div>
     ${b.ejercicios.map(tarjetaCaptura).join("")}
+    ${vacio}
     ${error}
-    <button class="boton secundario" data-accion="agregar" ${estado.enVuelo ? "disabled" : ""}>+ Agregar otro ejercicio</button>
-    <button class="boton" data-accion="guardar" ${estado.enVuelo ? "disabled" : ""}>
-      ${estado.enVuelo ? "Guardando…" : "Guardar entrenamiento"}
-    </button>
-    <button class="boton-texto" data-accion="descartar" ${estado.enVuelo ? "disabled" : ""}>Descartar</button>
-    ${CREDITO}`;
+    <button class="boton${hay ? " secundario" : ""}" data-accion="agregar" ${off}>+ Agregar ejercicio</button>
+    ${hay ? `<button class="boton" data-accion="guardar" ${off}>${estado.enVuelo ? "Guardando…" : "Terminar entrenamiento"}</button>` : ""}
+    <button class="boton-texto" data-accion="descartar" ${off}>Descartar entrenamiento</button>
+    ${hay ? CREDITO : ""}`;
 }
 
 /** Lo que va en `#contenido` con Registro abierto. */
 export function ventanaRegistro(d: DatosRegistro): string {
-  // Sin ejercicios no hay nada que capturar: un borrador vacío vuelve al historial.
-  if (estado.vista === "capturar" && !estado.borrador?.ejercicios.length) estado.vista = "historial";
+  // Con un entrenamiento abierto, Registro se abre en él; sin uno, no hay qué capturar ni elegir.
+  if (estado.vista === "inicio" && estado.borrador) estado.vista = "capturar";
+  if ((estado.vista === "capturar" || estado.vista === "elegir") && !estado.borrador) estado.vista = "inicio";
   const cuerpo = estado.vista === "elegir" ? vistaElegir(d)
     : estado.vista === "capturar" ? vistaCapturar()
-    : vistaHistorial(d);
+    : estado.vista === "historial" ? vistaHistorial(d)
+    : vistaInicio(d);
   return `<div id="registro" class="registro">${cuerpo}</div>`;
 }
 
@@ -306,18 +358,20 @@ export function conectarRegistro(
     const b = estado.borrador;
 
     const accion = el.dataset.accion;
-    if (accion === "agregar") {
+    if (accion === "iniciar") {
       estado.guardado = false;
-      if (!b) guardarBorrador(nuevoBorrador(idNuevo(), d.hoy));
-      ir("elegir");
+      if (!b) guardarBorrador(nuevoBorrador(idNuevo(), d.hoy, Date.now()));
+      ir("capturar");
       return;
     }
-    if (accion === "continuar") { estado.guardado = false; ir("capturar"); return; }
-    if (accion === "volver") { ir(b && b.ejercicios.length > 0 ? "capturar" : "historial"); return; }
+    if (accion === "agregar" && b) { ir("elegir"); return; }
+    if (accion === "historial") { estado.guardado = false; ir("historial"); return; }
+    // Volver siempre lleva al entrenamiento si hay uno abierto, y si no, al inicio de Registro.
+    if (accion === "volver") { ir(b ? "capturar" : "inicio"); return; }
     if (accion === "descartar") {
-      if (!confirm("¿Descartar lo que llevas anotado?")) return;
+      if (b && b.ejercicios.length > 0 && !confirm("¿Descartar este entrenamiento y lo que llevas anotado?")) return;
       guardarBorrador(null);
-      ir("historial");
+      ir("inicio");
       return;
     }
     if (accion === "guardar" && b) {
@@ -331,7 +385,7 @@ export function conectarRegistro(
           estado.enVuelo = false;
           estado.guardado = true;
           guardarBorrador(null);
-          ir("historial");
+          ir("inicio");
         },
         () => {
           // El borrador se queda: con señal de vuelta, "Guardar" reescribe la misma sesión.

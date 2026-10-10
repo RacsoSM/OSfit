@@ -255,20 +255,24 @@ export interface SerieSesion { reps: number; peso: number | null; }
 export interface Sesion {
   id: string;
   fecha: string;
+  /** Cuándo la terminó (al guardar). */
+  creada?: Timestamp | null;
+  /** Cuándo tocó "Iniciar entrenamiento". Opcional: las primeras sesiones no la tienen. */
+  iniciada?: Timestamp | null;
   origen: "manual" | "guiado";
   ejercicios: { ejercicioId: string; nombre: string; series: SerieSesion[] }[];
 }
 
 /**
- * Sus últimas sesiones, de la más nueva a la más vieja. Con 30 alcanza para el historial y
- * para prellenar lo que hizo la última vez; las 8 semanas del mapa de fuerza pedirán su
+ * Sus últimas sesiones, de la más nueva a la más vieja. Con 60 (unos tres meses entrenando
+ * cinco días) alcanza para el historial y para prellenar lo que hizo la última vez; las 8 semanas del mapa de fuerza pedirán su
  * propia consulta cuando lleguen.
  */
 export function observarSesiones(clienteId: string, alCambiar: (s: Sesion[]) => void) {
   const consulta = query(
     collection(db, "clientes", clienteId, "sesiones"),
     orderBy("creada", "desc"),
-    limit(30)
+    limit(60)
   );
   return escuchar("sesiones", (alLlegar, alFallar) =>
     onSnapshot(

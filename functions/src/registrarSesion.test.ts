@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { sesionValida, type DelBanco } from "./registrarSesion";
+import { inicioValido, sesionValida, type DelBanco } from "./registrarSesion";
 
 const banco = new Map<string, DelBanco>([
   ["press-banca", { nombre: "Press de banca", tipo: "peso" }],
@@ -71,5 +71,20 @@ describe("sesionValida", () => {
     expect(sesionValida({ ejercicios }, banco)).toBe("id_invalido");
     expect(sesionValida({ id: "a/b", ejercicios }, banco)).toBe("id_invalido");
     expect(sesionValida(null, banco)).toBe("id_invalido");
+  });
+});
+
+describe("inicioValido", () => {
+  const AHORA = Date.UTC(2026, 9, 12, 18, 0);
+
+  it("acepta un inicio de hace un rato", () => {
+    expect(inicioValido(AHORA - 90 * 60_000, AHORA)).toBe(AHORA - 90 * 60_000);
+  });
+
+  it("descarta lo que no es una hora razonable: más de un día atrás, futuro o basura", () => {
+    expect(inicioValido(AHORA - 25 * 3_600_000, AHORA)).toBeNull();
+    expect(inicioValido(AHORA + 10 * 60_000, AHORA)).toBeNull();
+    expect(inicioValido("ayer", AHORA)).toBeNull();
+    expect(inicioValido(undefined, AHORA)).toBeNull();
   });
 });

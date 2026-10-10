@@ -129,3 +129,19 @@ describe("leerBorrador", () => {
     expect(leerBorrador(null)).toBeNull();
   });
 });
+
+describe("hora de inicio", () => {
+  it("el entrenamiento manda la hora en que se inició", () => {
+    let b = agregarEjercicio(nuevoBorrador("borrador123", "2026-10-12", 1_760_000_000_000), ej(), null, 1);
+    b = cambiarSerie(cambiarSerie(b, 0, 0, "reps", "8"), 0, 0, "peso", "40");
+    const r = paraEnviar(b);
+    expect(r.ok && r.datos.iniciadaEn).toBe(1_760_000_000_000);
+  });
+
+  it("un borrador viejo sin hora se manda igual, sin ella", () => {
+    let b = agregarEjercicio(vacio(), ej(), null, 1);
+    b = cambiarSerie(cambiarSerie(b, 0, 0, "reps", "8"), 0, 0, "peso", "40");
+    const r = paraEnviar(b);
+    expect(r.ok && "iniciadaEn" in r.datos).toBe(false);
+  });
+});

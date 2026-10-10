@@ -27,19 +27,27 @@ export interface Borrador {
   id: string;
   /** Cuándo se empezó, solo para la pantalla; la fecha de la sesión la pone el servidor. */
   fecha: string;
+  /**
+   * Cuándo tocó "Iniciar entrenamiento" (ms). Opcional: los borradores de antes de los
+   * entrenamientos con inicio no lo traen.
+   */
+  iniciado?: number;
   ejercicios: EjercicioBorrador[];
 }
 
 /** Lo que recibe `registrarSesion`. */
 export interface Envio {
   id: string;
+  /** Hora de inicio del entrenamiento; el servidor la descarta si no es razonable. */
+  iniciadaEn?: number;
   ejercicios: { ejercicioId: string; series: SerieSesion[] }[];
 }
 
 const SERIE_VACIA: SerieBorrador = { reps: "", peso: "" };
 
-export function nuevoBorrador(id: string, fecha: string): Borrador {
-  return { id, fecha, ejercicios: [] };
+/** Un entrenamiento recién iniciado, todavía sin ejercicios. */
+export function nuevoBorrador(id: string, fecha: string, iniciado?: number): Borrador {
+  return iniciado === undefined ? { id, fecha, ejercicios: [] } : { id, fecha, iniciado, ejercicios: [] };
 }
 
 /** Un id que sirve de id de documento (`ID_VALIDO` en `functions/src/registrarSesion.ts`). */
@@ -138,7 +146,9 @@ export function paraEnviar(b: Borrador): { ok: true; datos: Envio } | { ok: fals
     if (series.length > 0) ejercicios.push({ ejercicioId: e.ejercicioId, series });
   }
   if (ejercicios.length === 0) return { ok: false, error: "Anota al menos una serie antes de guardar." };
-  return { ok: true, datos: { id: b.id, ejercicios } };
+  const datos: Envio = { id: b.id, ejercicios };
+  if (typeof b.iniciado === "number") datos.iniciadaEn = b.iniciado;
+  return { ok: true, datos };
 }
 
 /** Las series de la sesión más reciente que tenga ese ejercicio (llegan de nueva a vieja). */

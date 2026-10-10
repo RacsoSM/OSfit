@@ -1,4 +1,4 @@
-import { FieldValue } from "firebase-admin/firestore";
+import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { REGION, clienteDeLaSesion, db, hoyEnMazatlan } from "./comun";
 
@@ -76,6 +76,22 @@ export function sesionValida(data: unknown, banco: ReadonlyMap<string, DelBanco>
   return { id, ejercicios: salida };
 }
 
+/** Un entrenamiento de más de un día no existe: es un reloj mal puesto o un borrador olvidado. */
+const MAX_DURACION_MS = 24 * 3_600_000;
+/** Margen para relojes de teléfono adelantados. */
+const MARGEN_FUTURO_MS = 5 * 60_000;
+
+/**
+ * La hora en que la clienta tocó "Iniciar entrenamiento", o null si no sirve. Viene del reloj
+ * del teléfono, así que solo se acepta si es razonable; si no, la sesión se guarda sin ella y
+ * el historial muestra la fecha sin la duración.
+ */
+export function inicioValido(ms: unknown, ahora: number): number | null {
+  if (typeof ms !== "number" || !Number.isFinite(ms)) return null;
+  if (ms < ahora - MAX_DURACION_MS || ms > ahora + MARGEN_FUTURO_MS) return null;
+  return ms;
+}
+
 export const registrarSesion = onCall({ region: REGION }, async (request) => {
   const clienteId = await clienteDeLaSesion(request);
 
@@ -98,9 +114,12 @@ export const registrarSesion = onCall({ region: REGION }, async (request) => {
   if (typeof sesion === "string") throw new HttpsError("invalid-argument", sesion);
 
   const fecha = hoyEnMazatlan();
+  const inicio = inicioValido((request.data as { iniciadaEn?: unknown })?.iniciadaEn, Date.now());
   await db().collection("clientes").doc(clienteId).collection("sesiones").doc(sesion.id).set({
     fecha,
+    // `creada` es cuando terminó (tocó "Terminar entrenamiento"); `iniciada`, cuando lo empezó.
     creada: FieldValue.serverTimestamp(),
+    ...(inicio !== null ? { iniciada: Timestamp.fromMillis(inicio) } : {}),
     origen: "manual",
     ejercicios: sesion.ejercicios,
   });

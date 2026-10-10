@@ -938,14 +938,15 @@ main:has(#barra) { padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
   padding: 8px; border: 2px solid transparent; border-radius: 14px;
   background: var(--superficie); color: var(--texto); font: inherit; text-align: left; cursor: pointer;
 }
-.registro-opcion.agregado { border-color: var(--primario); }
+/* Ya está en el entrenamiento: en gris y sin tocar, para que se note que no se vuelve a elegir. */
+.registro-opcion.agregado, .registro-opcion:disabled { cursor: default; opacity: 0.45; filter: grayscale(1); }
 .registro-opcion-gif {
   width: 100%; height: auto; aspect-ratio: 1; border-radius: 10px; background: #fff; object-fit: cover;
 }
 .registro-opcion-nombre { font-size: 14px; font-weight: 600; line-height: 1.25; }
 .registro-opcion-ya {
-  position: absolute; top: 12px; right: 12px; padding: 2px 8px; border-radius: 999px;
-  background: var(--primario); color: var(--sobre-primario); font-size: 11px; font-weight: 700;
+  position: absolute; top: 12px; left: 12px; right: 12px; padding: 3px 8px; border-radius: 999px;
+  background: var(--superficie-alta); color: var(--texto); font-size: 11px; font-weight: 700; text-align: center;
 }
 .registro-sin-gif {
   display: flex; align-items: center; justify-content: center; font-size: 32px;
@@ -990,3 +991,12 @@ main:has(#barra) { padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
   margin: 26px 0 0; padding-top: 14px; border-top: 1px solid var(--superficie-alta);
   font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--texto-tenue);
 }
+.registro-iniciar { text-align: center; padding: 22px 16px; }
+.registro-ir-historial {
+  width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  border: 0; color: var(--texto); font: inherit; text-align: left; cursor: pointer;
+}
+.registro-ir-historial > span:last-child { font-size: 24px; color: var(--texto-tenue); }
+.registro-ir-historial .tarjeta-titulo { display: block; margin: 0 0 2px; }
+.registro-ir-detalle { display: block; font-size: 14px; }
+.registro-hist-horario { margin: -2px 0 6px; font-size: 13px; color: var(--texto-tenue); }

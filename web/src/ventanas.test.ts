@@ -153,10 +153,9 @@ describe("la ventana Músculos", () => {
 });
 
 describe("la ventana Registro", () => {
-  it("abre en su historial con el botón para agregar un ejercicio", () => {
+  it("abre con el botón para iniciar un entrenamiento", () => {
     const html = contenidoDe(ventana("registro"), datos({ sesiones: [] }));
-    expect(html).toContain("+ Agregar ejercicio");
-    expect(html).toContain("Todavía no registras nada");
+    expect(html).toContain("Iniciar entrenamiento");
     expect(html).not.toContain("Muy pronto");
   });
 });
