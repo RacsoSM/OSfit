@@ -20,6 +20,18 @@ export const MUSCULOS_SVG = [
 export const TIPOS = ["peso", "corporal", "tiempo"];
 
 /**
+ * Los grupos con los que se arma el grid de Registro ("Pecho:", "Hombro:"…). Cada ejercicio
+ * del banco pertenece a uno: es la lista que sale en su grupo mientras el entrenador no la
+ * configure desde la app.
+ *
+ * GEMELO: `GRUPOS` en `web/src/grupos.ts` y `GruposEjercicio` en `domain/GruposEjercicio.kt`.
+ */
+export const GRUPOS = [
+  "pecho", "espalda", "hombro", "biceps", "triceps", "cuadriceps", "gluteo", "femoral",
+  "pantorrilla", "abdomen", "cardio",
+];
+
+/**
  * El dataset de donde salen los GIF, fijado a un commit: si el autor renombra o reemplaza un
  * archivo, volver a correr la carga sube exactamente lo mismo que la primera vez.
  */
@@ -76,6 +88,7 @@ export function validarSemilla(semilla, idsDelDataset) {
       errores.push(`${donde}: falta el nombre`);
     }
     if (!TIPOS.includes(e.tipo)) errores.push(`${donde}: tipo "${e.tipo}" no existe`);
+    if (!GRUPOS.includes(e.grupo)) errores.push(`${donde}: grupo "${e.grupo}" no existe`);
 
     const musculos = Object.entries(e.musculos ?? {});
     if (musculos.length === 0) errores.push(`${donde}: sin músculos`);
@@ -115,6 +128,7 @@ export function documentoDe(e, conGif) {
     nombre: e.nombre,
     alias: e.alias ?? [],
     tipo: e.tipo,
+    grupo: e.grupo,
     musculos: e.musculos,
     gifRuta: conGif ? rutaGif(e.id) : null,
     atribucion: conGif ? ATRIBUCION : null,

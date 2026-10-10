@@ -11,6 +11,7 @@ const ejercicio = (cambios = {}) => ({
   nombre: "Press de banca",
   alias: ["press banca"],
   tipo: "peso",
+  grupo: "pecho",
   musculos: { pecho: 1, triceps: 0.5 },
   gifOrigen: "0025",
   ...cambios,
@@ -41,6 +42,11 @@ describe("validarSemilla", () => {
       .toEqual(['press-banca: músculo "pectoral" no está en los SVG']);
   });
 
+  it("detecta un grupo que no existe", () => {
+    expect(validarSemilla([ejercicio({ grupo: "pectoral" })]))
+      .toEqual(['press-banca: grupo "pectoral" no existe']);
+  });
+
   it("detecta un GIF que no está en el dataset", () => {
     expect(validarSemilla([ejercicio()], new Set(["0001"])))
       .toEqual(["press-banca: el GIF 0025 no está en el dataset"]);
@@ -53,6 +59,7 @@ describe("documentoDe", () => {
     expect(doc.gifRuta).toBe("ejercicios/press-banca.webp");
     expect(doc.atribucion).toContain("Gym visual");
     expect(doc).not.toHaveProperty("gifOrigen");
+    expect(doc.grupo).toBe("pecho");
   });
 
   it("sin GIF deja la ruta en null para que la página muestre el marcador", () => {
