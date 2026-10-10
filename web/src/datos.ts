@@ -35,6 +35,8 @@ export interface EjercicioBanco {
   /** Otras formas de escribirlo ("bulgaras", "split squat"). Opcional: un doc a mano puede no traerlo. */
   alias?: string[];
   tipo: "peso" | "corporal" | "tiempo";
+  /** Su grupo en el grid de Registro (ver `grupos.ts`). Opcional: los docs anteriores no lo traen. */
+  grupo?: string;
   /** Grupo del SVG (`data-musculo`) → 1 principal, 0.5 secundario. */
   musculos: Record<string, number>;
   /** Ruta en Storage, no URL (como los videos). Ausente o null = todavía sin GIF. */
@@ -217,6 +219,26 @@ export function observarCliente(clienteId: string, alCambiar: (c: Cliente | null
       (snap) => {
         alLlegar();
         alCambiar(snap.exists() ? (snap.data() as Cliente) : null);
+      },
+      alFallar
+    )
+  );
+}
+
+/**
+ * Qué ejercicios salen en cada grupo del grid de Registro, en orden: `configEjercicios/grupos`.
+ * Lo edita el entrenador desde la app. Un grupo ausente usa los del banco (ver `grupos.ts`).
+ */
+export interface ConfigGrupos { porGrupo?: Record<string, string[]>; }
+
+/** La configuración de grupos, o null si el entrenador todavía no configura ninguno. */
+export function observarConfigGrupos(alCambiar: (c: ConfigGrupos | null) => void) {
+  return escuchar("configGrupos", (alLlegar, alFallar) =>
+    onSnapshot(
+      doc(db, "configEjercicios", "grupos"),
+      (snap) => {
+        alLlegar();
+        alCambiar(snap.exists() ? (snap.data() as ConfigGrupos) : null);
       },
       alFallar
     )

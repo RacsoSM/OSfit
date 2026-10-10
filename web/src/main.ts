@@ -11,6 +11,7 @@ import {
   observarTirada,
   observarBanco,
   observarSesiones,
+  observarConfigGrupos,
 } from "./datos";
 import type {
   Cliente,
@@ -20,6 +21,7 @@ import type {
   VideoResumen,
   EjercicioBanco,
   Sesion,
+  ConfigGrupos,
 } from "./datos";
 import { hoyEnMazatlan } from "./fecha";
 import { mesAnterior, type Tirada } from "./tirada";
@@ -193,6 +195,8 @@ async function arrancar(): Promise<void> {
   let indice: IndiceBanco = new Map();
   /** Sus sesiones de Registro; null hasta que llegan. */
   let sesiones: Sesion[] | null = null;
+  /** Los ejercicios por grupo del grid de Registro; null si el entrenador no configura ninguno. */
+  let configGrupos: ConfigGrupos | null = null;
 
   /** Llave en el navegador para "Ahora no". Se pierde si borran datos: vuelve a salir, no es grave. */
   const LLAVE_INVITACION = "osfit:notificaciones-descartada";
@@ -457,6 +461,7 @@ async function arrancar(): Promise<void> {
       banco,
       indiceBanco: indice,
       sesiones,
+      configGrupos,
     };
     contenido.innerHTML = contenidoDe(activa, datos);
     pintarVideos(activa.contenedorPropio === "videos");
@@ -595,6 +600,7 @@ async function arrancar(): Promise<void> {
     pintar();
   });
   observarSesiones(clienteId, (s) => { sesiones = s; pintar(); });
+  observarConfigGrupos((c) => { configGrupos = c; pintar(); });
   observarTirada(clienteId, hoy.slice(0, 7), (t) => { tiradaEsteMes = t; pintar(); });
   observarTirada(clienteId, mesAnterior(hoy.slice(0, 7)), (t) => {
     tiradaMesAnterior = t;

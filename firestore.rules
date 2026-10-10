@@ -146,6 +146,13 @@ service cloud.firestore {
       allow write: if esEntrenador();
     }
 
+    // Qué ejercicios salen en cada grupo del grid de Registro (`configEjercicios/grupos`). Una
+    // sola configuración para todas las clientas, editada desde la app: catálogo como el banco.
+    match /configEjercicios/{doc} {
+      allow read: if request.auth != null;
+      allow write: if esEntrenador();
+    }
+
     // Avisos que el entrenador manda desde la app. Son cola y a la vez historial: la función
     // `enviarNotificacion` los toma al crearse y les anota el resultado.
     match /notificaciones/{doc} { allow read, write: if esEntrenador(); }

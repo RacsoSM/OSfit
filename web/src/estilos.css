@@ -982,3 +982,11 @@ main:has(#barra) { padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
   background: none; color: var(--primario); font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; width: 100%;
 }
 .registro-credito { margin: 14px 0 0; font-size: 10px; color: var(--texto-tenue); text-align: right; }
+/* Los títulos de grupo del grid ("Pecho", "Hombro"…). Los del día van con el color del estilo
+   para que se lean como "lo de hoy"; el resto, tenues. */
+.registro-grupo { margin: 18px 2px 8px; font-size: 18px; font-weight: 800; color: var(--texto-tenue); }
+.registro-grupo.del-dia { color: var(--primario); }
+.registro-separador {
+  margin: 26px 0 0; padding-top: 14px; border-top: 1px solid var(--superficie-alta);
+  font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--texto-tenue);
+}

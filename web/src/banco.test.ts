@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { EjercicioBanco } from "./datos";
-import { buscarEnBanco, claveBanco, delBanco, indiceBanco, urlGif } from "./banco";
+import { claveBanco, indiceBanco, urlGif } from "./banco";
 
 function ej(campos: Partial<EjercicioBanco> = {}): EjercicioBanco {
   return {
@@ -13,9 +13,6 @@ function ej(campos: Partial<EjercicioBanco> = {}): EjercicioBanco {
     ...campos,
   };
 }
-
-const curl = ej({ id: "curl-mancuernas", nombre: "Curl con mancuernas", alias: ["curl alterno"] });
-const press = ej({ id: "press-banca", nombre: "Press de banca", alias: ["press banca"] });
 
 describe("claveBanco", () => {
   it("ignora acentos, mayúsculas y espacios de sobra", () => {
@@ -35,26 +32,6 @@ describe("indiceBanco", () => {
   it("aguanta un documento viejo sin alias", () => {
     expect(indiceBanco([ej({ alias: undefined })]).get("sentadilla bulgara")?.id)
       .toBe("sentadilla-bulgara");
-  });
-});
-
-describe("delBanco", () => {
-  it("respeta el orden de la rutina, no repite y omite lo que no está en el banco", () => {
-    const indice = indiceBanco([ej(), press]);
-    expect(delBanco(["Press banca", "Caminadora", "Búlgaras", "Sentadilla bulgara"], indice)
-      .map((e) => e.id)).toEqual(["press-banca", "sentadilla-bulgara"]);
-  });
-});
-
-describe("buscarEnBanco", () => {
-  it("busca por palabras sueltas en nombre y alias, sin acentos", () => {
-    expect(buscarEnBanco("curl manc", [ej(), curl, press]).map((e) => e.id)).toEqual(["curl-mancuernas"]);
-    expect(buscarEnBanco("BULGARA", [ej(), curl]).map((e) => e.id)).toEqual(["sentadilla-bulgara"]);
-    expect(buscarEnBanco("alterno", [ej(), curl]).map((e) => e.id)).toEqual(["curl-mancuernas"]);
-  });
-
-  it("sin texto no devuelve nada", () => {
-    expect(buscarEnBanco("   ", [ej(), curl])).toEqual([]);
   });
 });
 

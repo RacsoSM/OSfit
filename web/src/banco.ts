@@ -2,7 +2,7 @@ import type { EjercicioBanco } from "./datos";
 
 /**
  * El banco de ejercicios del lado de la página: ligar por nombre los ejercicios de la rutina
- * con su entrada del banco, buscar en él y armar la URL de cada GIF. Lo usa Registro.
+ * con su entrada del banco y armar la URL de cada GIF. Lo usa Registro.
  *
  * Por nombre y no por un id guardado en la rutina: las rutinas que ya existen no tienen ese id,
  * y el entrenador escribe el nombre como le sale. El `Ejercicio.ejercicioId` del spec llegará
@@ -35,40 +35,6 @@ export function indiceBanco(banco: readonly EjercicioBanco[]): IndiceBanco {
     for (const nombre of [e.nombre, ...(e.alias ?? [])]) indice.set(claveBanco(nombre), e);
   }
   return indice;
-}
-
-/**
- * Los ejercicios del banco que corresponden a esos nombres, en ese orden y sin repetir. Un
- * nombre que no casa con nada se queda fuera: sin entrada en el banco no hay GIF ni se puede
- * registrar contra el mapa de fuerza.
- */
-export function delBanco(nombres: readonly string[], indice: IndiceBanco): EjercicioBanco[] {
-  const vistos = new Set<string>();
-  const salida: EjercicioBanco[] = [];
-  for (const nombre of nombres) {
-    const e = indice.get(claveBanco(nombre));
-    if (e && !vistos.has(e.id)) {
-      vistos.add(e.id);
-      salida.push(e);
-    }
-  }
-  return salida;
-}
-
-/**
- * Los ejercicios cuyo nombre o algún alias contiene todas las palabras buscadas, ordenados por
- * nombre. Por palabras y no por frase exacta: "curl manc" tiene que encontrar "Curl con
- * mancuernas". Vacío si no se buscó nada, para no tirar el banco entero de golpe en el grid.
- */
-export function buscarEnBanco(texto: string, banco: readonly EjercicioBanco[]): EjercicioBanco[] {
-  const palabras = claveBanco(texto).split(" ").filter(Boolean);
-  if (palabras.length === 0) return [];
-  return banco
-    .filter((e) => {
-      const textos = [e.nombre, ...(e.alias ?? [])].map(claveBanco);
-      return palabras.every((p) => textos.some((t) => t.includes(p)));
-    })
-    .sort((a, b) => a.nombre.localeCompare(b.nombre, "es"));
 }
 
 /**

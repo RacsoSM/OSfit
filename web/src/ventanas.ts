@@ -1,4 +1,4 @@
-import type { Asistencia, Cliente, EjercicioBanco, LogroPersonalOtorgado, MedallaOtorgada, Sesion } from "./datos";
+import type { Asistencia, Cliente, ConfigGrupos, EjercicioBanco, LogroPersonalOtorgado, MedallaOtorgada, Sesion } from "./datos";
 import type { IdEstilo } from "./estilo";
 import type { Tirada } from "./tirada";
 import { recordatorioPago } from "./pago";
@@ -58,6 +58,8 @@ export interface DatosCliente {
   indiceBanco: IndiceBanco;
   /** Sus últimas sesiones registradas; null mientras no llegan. */
   sesiones: Sesion[] | null;
+  /** Los ejercicios por grupo que configuró el entrenador; null si no hay configuración. */
+  configGrupos: ConfigGrupos | null;
 }
 
 /** Lo que necesita Registro, armado de lo que hay en cada repintado. Lo usa también `main.ts`. */
@@ -68,6 +70,7 @@ export function datosRegistro(d: DatosCliente): DatosRegistro {
     banco: d.banco,
     indice: d.indiceBanco,
     sesiones: d.sesiones,
+    config: d.configGrupos,
   };
 }
 

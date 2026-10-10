@@ -1,5 +1,6 @@
-import type { Ejercicio, EjercicioBanco, Sesion } from "../datos";
-import { buscarEnBanco, claveBanco, delBanco, urlGif, type IndiceBanco } from "../banco";
+import type { ConfigGrupos, Ejercicio, EjercicioBanco, Sesion } from "../datos";
+import { claveBanco, urlGif, type IndiceBanco } from "../banco";
+import { seccionesRegistro } from "../grupos";
 import {
   agregarEjercicio,
   agregarSerie,
@@ -23,8 +24,10 @@ import { escapar } from "./tarjetaDia";
  *
  * Tres vistas dentro de la misma ventana:
  *  - **historial**: sus sesiones guardadas y el botón "Agregar ejercicio".
- *  - **elegir**: un grid con nombre y GIF. Arriba, los ejercicios de su día de hoy; abajo, un
- *    buscador del banco completo, porque el coach puede ponerle algo que no está en su rutina.
+ *  - **elegir**: un grid con nombre y GIF, agrupado: primero los grupos que le tocan hoy según
+ *    el nombre del día ("Pecho, hombro y tríceps" → Pecho, Hombro, Tríceps), con los
+ *    ejercicios que el entrenador configuró para cada uno; luego los demás grupos. Sin
+ *    buscador (decisión del entrenador, 2026-10-10): todo el banco queda en alguna sección.
  *  - **capturar**: los ejercicios que va agregando, cada uno con sus series de peso y reps.
  *    Desde ahí vuelve al grid por el siguiente, hasta que toca "Guardar".
  *
@@ -45,13 +48,14 @@ export interface DatosRegistro {
   indice: IndiceBanco;
   /** null mientras no llegan. */
   sesiones: Sesion[] | null;
+  /** Los ejercicios que el entrenador puso en cada grupo; null si no ha configurado ninguno. */
+  config: ConfigGrupos | null;
 }
 
 type Vista = "historial" | "elegir" | "capturar";
 
 interface Estado {
   vista: Vista;
-  busqueda: string;
   borrador: Borrador | null;
   enVuelo: boolean;
   error: string | null;
@@ -64,7 +68,6 @@ const LLAVE_BORRADOR = "osfit:registro-borrador";
 
 const estado: Estado = {
   vista: "historial",
-  busqueda: "",
   borrador: (() => {
     try { return leerBorrador(localStorage.getItem(LLAVE_BORRADOR)); } catch { return null; }
   })(),
@@ -75,7 +78,7 @@ const estado: Estado = {
 };
 
 /** Solo para los tests: poner la ventana en una vista y con un borrador dados. */
-export function ponerEstadoRegistro(parcial: Partial<Pick<Estado, "vista" | "borrador" | "busqueda" | "error">>): void {
+export function ponerEstadoRegistro(parcial: Partial<Pick<Estado, "vista" | "borrador" | "error">>): void {
   Object.assign(estado, { guardado: false, enVuelo: false, error: null }, parcial);
 }
 
@@ -170,35 +173,34 @@ function opcion(e: EjercicioBanco): string {
     </button>`;
 }
 
-function resultados(d: DatosRegistro): string {
-  if (estado.busqueda.trim() === "") return "";
-  const encontrados = buscarEnBanco(estado.busqueda, d.banco);
-  if (encontrados.length === 0) {
-    return `<p class="accion-nota">No encontramos “${escapar(estado.busqueda.trim())}”. Prueba con otra palabra.</p>`;
-  }
-  return `<div class="registro-grid">${encontrados.map(opcion).join("")}</div>`;
-}
-
 function vistaElegir(d: DatosRegistro): string {
-  const delDia = d.dia ? delBanco(d.dia.ejercicios.map((e) => e.nombre), d.indice) : [];
-  const deHoy = d.dia
-    ? `<p class="accion-subtitulo registro-subtitulo">De tu día de hoy · ${escapar(d.dia.nombreDia)}</p>
-       ${delDia.length > 0
-         ? `<div class="registro-grid">${delDia.map(opcion).join("")}</div>`
-         : `<p class="accion-nota">Los ejercicios de tu día no están en el catálogo todavía. Búscalos abajo.</p>`}`
-    : "";
-  const cargando = d.banco.length === 0
-    ? `<p class="accion-nota">Cargando ejercicios…</p>`
+  if (d.banco.length === 0) {
+    return `
+      <button class="boton-texto registro-volver" data-accion="volver">← Volver</button>
+      <p class="accion-nota">Cargando ejercicios…</p>`;
+  }
+  const secciones = seccionesRegistro(d.dia?.nombreDia ?? null, d.banco, d.config);
+  const hayDelDia = secciones.some((x) => x.delDia);
+  let separado = false;
+  const cuerpo = secciones.map((x) => {
+    // Un rótulo entre lo de hoy y lo demás, para que se note dónde termina su día.
+    let antes = "";
+    if (hayDelDia && !x.delDia && !separado) {
+      separado = true;
+      antes = `<p class="registro-separador">Más ejercicios</p>`;
+    }
+    return `${antes}
+      <p class="registro-grupo${x.delDia ? " del-dia" : ""}">${escapar(x.titulo)}</p>
+      <div class="registro-grid">${x.ejercicios.map(opcion).join("")}</div>`;
+  }).join("");
+  const hoy = d.dia && hayDelDia
+    ? `<p class="accion-nota" style="margin:2px 2px 0">Hoy te toca ${escapar(d.dia.nombreDia.trim())}</p>`
     : "";
   return `
     <button class="boton-texto registro-volver" data-accion="volver">← Volver</button>
     <p class="confirmar-titulo">¿Qué ejercicio hiciste?</p>
-    ${cargando}
-    ${deHoy}
-    <p class="accion-subtitulo registro-subtitulo">Buscar otro ejercicio</p>
-    <input id="registro-buscar" class="campo-libre" type="search" enterkeyhint="search"
-           placeholder="Ej. sentadilla, jalón, curl…" value="${escapar(estado.busqueda)}" autocomplete="off">
-    <div id="registro-resultados">${resultados(d)}</div>
+    ${hoy}
+    ${cuerpo}
     ${CREDITO}`;
 }
 
@@ -278,8 +280,7 @@ function seriesDeLaRutina(d: DatosRegistro, e: EjercicioBanco): number | null {
 
 /**
  * Cuelga los eventos de la vista recién pintada. Uno solo, delegado en `#registro`: el
- * contenido se rehace con cada repintado y los resultados de búsqueda se reemplazan sin
- * repintar, así que colgarle un listener a cada botón obligaría a recolgarlos a mano.
+ * contenido se rehace con cada repintado, y uno por botón obligaría a recolgarlos todos.
  *
  * Escribir en un campo NO repinta: solo actualiza el borrador. Repintar en cada tecla
  * reconstruiría el input y el teclado del teléfono se cerraría bajo el dedo.
@@ -308,7 +309,6 @@ export function conectarRegistro(
     if (accion === "agregar") {
       estado.guardado = false;
       if (!b) guardarBorrador(nuevoBorrador(idNuevo(), d.hoy));
-      estado.busqueda = "";
       ir("elegir");
       return;
     }
@@ -377,12 +377,6 @@ export function conectarRegistro(
 
   raiz.addEventListener("input", (ev) => {
     const input = ev.target as HTMLInputElement;
-    if (input.id === "registro-buscar") {
-      estado.busqueda = input.value;
-      const caja = raiz.querySelector("#registro-resultados");
-      if (caja) caja.innerHTML = resultados(d);
-      return;
-    }
     const { ej, serie, campo } = input.dataset;
     if (!estado.borrador || ej === undefined || serie === undefined) return;
     if (campo !== "reps" && campo !== "peso") return;

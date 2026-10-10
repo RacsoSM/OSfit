@@ -5,11 +5,11 @@ import { agregarEjercicio, nuevoBorrador } from "../registro";
 import { ponerEstadoRegistro, ventanaRegistro, type DatosRegistro } from "./registro";
 
 const press: EjercicioBanco = {
-  id: "press-banca", nombre: "Press de banca", alias: ["press banca"], tipo: "peso",
+  id: "press-banca", nombre: "Press de banca", alias: ["press banca"], tipo: "peso", grupo: "pecho",
   musculos: { pecho: 1 }, gifRuta: "ejercicios/press-banca.webp",
 };
 const plancha: EjercicioBanco = {
-  id: "plancha", nombre: "Plancha", tipo: "tiempo", musculos: { abdomen: 1 }, gifRuta: null,
+  id: "plancha", nombre: "Plancha", tipo: "tiempo", grupo: "abdomen", musculos: { abdomen: 1 }, gifRuta: null,
 };
 const banco = [press, plancha];
 
@@ -20,11 +20,12 @@ function datos(campos: Partial<DatosRegistro> = {}): DatosRegistro {
     banco,
     indice: indiceBanco(banco),
     sesiones: [],
+    config: null,
     ...campos,
   };
 }
 
-beforeEach(() => ponerEstadoRegistro({ vista: "historial", borrador: null, busqueda: "" }));
+beforeEach(() => ponerEstadoRegistro({ vista: "historial", borrador: null }));
 
 describe("historial", () => {
   it("lista las sesiones con sus series; las de tiempo en segundos", () => {
@@ -50,21 +51,25 @@ describe("historial", () => {
 });
 
 describe("elegir", () => {
-  it("muestra los ejercicios del día con su GIF y, sin búsqueda, nada más", () => {
+  it("agrupa por los grupos del día, con el GIF de cada ejercicio, y luego los demás", () => {
     ponerEstadoRegistro({ vista: "elegir", borrador: nuevoBorrador("b1234567", "2026-10-12") });
     const html = ventanaRegistro(datos());
-    expect(html).toContain("De tu día de hoy · Pecho");
-    expect(html).toContain('data-agregar="press-banca"');
+    expect(html).toContain("Hoy te toca Pecho");
+    expect(html.indexOf(">Pecho<")).toBeLessThan(html.indexOf("Más ejercicios"));
+    expect(html.indexOf("Más ejercicios")).toBeLessThan(html.indexOf(">Abdomen<"));
     expect(html).toContain("ejercicios%2Fpress-banca.webp");
-    expect(html).not.toContain('data-agregar="plancha"');
-    expect(html).toContain("© Gym visual");
-  });
-
-  it("la búsqueda encuentra cualquiera del banco, aunque no tenga GIF", () => {
-    ponerEstadoRegistro({ vista: "elegir", borrador: nuevoBorrador("b1234567", "2026-10-12"), busqueda: "planch" });
-    const html = ventanaRegistro(datos({ dia: null }));
     expect(html).toContain('data-agregar="plancha"');
     expect(html).toContain("registro-sin-gif");
+    expect(html).toContain("© Gym visual");
+    expect(html).not.toContain("registro-buscar");
+  });
+
+  it("respeta la lista que configuró el entrenador para cada grupo", () => {
+    ponerEstadoRegistro({ vista: "elegir", borrador: nuevoBorrador("b1234567", "2026-10-12") });
+    const html = ventanaRegistro(datos({ config: { porGrupo: { pecho: ["plancha"] } } }));
+    const pecho = html.slice(html.indexOf(">Pecho<"), html.indexOf("Más ejercicios"));
+    expect(pecho).toContain('data-agregar="plancha"');
+    expect(pecho).not.toContain('data-agregar="press-banca"');
   });
 
   it("marca lo que ya agregó", () => {

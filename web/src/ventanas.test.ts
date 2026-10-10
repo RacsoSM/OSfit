@@ -21,7 +21,7 @@ function datos(campos: Partial<DatosCliente> = {}): DatosCliente {
     medallas: [], logros: [], tiradaEsteMes: null, tiradaMesAnterior: null,
     ranking: { estado: "cargando" }, estilo: "clasico",
     notificaciones: "no-habilitada", invitacionDescartada: false, activandoNotificaciones: false,
-    mapas: {}, banco: [], indiceBanco: new Map(), sesiones: null,
+    mapas: {}, banco: [], indiceBanco: new Map(), sesiones: null, configGrupos: null,
     ...campos,
   };
 }
