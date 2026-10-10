@@ -1,0 +1,4 @@
+{
+  "excludes": ["docs/backlog.md"],
+  "gitignore": true
+}

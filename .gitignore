@@ -20,9 +20,29 @@ functions/lib/
 # Ajustes locales de Claude Code: son de esta maquina, no del equipo.
 .claude/settings.local.json
 
-# Locales: el grafo de graphify es de esta maquina y el backlog nombra a clientes reales.
-graphify-out/
+# El backlog nombra a clientes reales: nunca se versiona (graphify tampoco lo lee: respeta
+# este archivo y además lo excluye en graphify-out/.graphify_build.json).
 docs/backlog.md
+
+# El grafo de graphify SÍ se versiona (grafo, caché, reporte, manifiesto): la parte semántica
+# de los documentos cuesta tokens y una sesión nueva no la puede regenerar sola. Se ignora lo
+# que es de cada máquina o se regenera: el HTML, las copias con fecha y los temporales.
+graphify-out/graph.html
+graphify-out/20*/
+graphify-out/.graphify_python
+graphify-out/.graphify_root
+graphify-out/.graphify_detect.json
+graphify-out/.graphify_extract.json
+graphify-out/.graphify_ast.json
+graphify-out/.graphify_semantic*.json
+graphify-out/.graphify_analysis.json
+graphify-out/.graphify_incremental.json
+graphify-out/.graphify_cached.json
+graphify-out/.graphify_uncached.txt
+graphify-out/.graphify_chunk_*.json
+graphify-out/.graphify_old.json
+graphify-out/.needs_update
+graphify-out/cache/last_query_stamp
 
 # Log que escribe firebase-tools cuando falla un despliegue.
 firebase-debug.log
