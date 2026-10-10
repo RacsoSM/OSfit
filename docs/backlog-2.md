@@ -188,7 +188,7 @@ CSS; las líneas internas y el contorno van aparte y no cambian de color.
 Lo que falta es **vincularlo**: mostrarlo en la web y que el color salga de los datos de la
 clienta. Eso es la pestaña Músculos del punto 7.
 
-## 5. Que la web cargue más rápido al abrirla
+## 5. Que la web cargue más rápido al abrirla — ✅ HECHO (2026-10-10)
 
 > "agrega al backlog el hacer que la carga de la web no tarde tanto en cuanto abre"
 
@@ -236,19 +236,16 @@ Hecho y desplegado a producción (2026-10-10), primera ronda:
 - Medido en Chromium con user agent de iPhone, bajando el bundle en 1.5 s y `sesion` en 2 s:
   el canje empezaba a los 1,645 ms y ahora a los 40 ms; la página pasaba de 3,992 a 2,452 ms.
 
-Pendiente:
+Verificado por el entrenador (2026-10-10): en su teléfono se siente más rápido. Medido contra
+la `sesion` real: arranque en frío de ~3.5 s, ~0.8 s ya despierta.
 
-- **Probar en el canal de vista previa** `https://osfit-cccfe--prueba-carga-wn1toy30.web.app`
-  (vence el 2026-10-17) con un link real, desde WhatsApp y desde la página instalada, en
-  iPhone y Android; revisar que los videos se reproduzcan. Medido contra la `sesion` real:
-  arranque en frío de ~3.5 s, ~0.8 s ya despierta. Ya está en producción: falta confirmar en
-  teléfono real con una clienta.
-- **Arranque en frío de `sesion`:** sigue siendo el sospechoso más grande. Si medido sigue
-  tardando, `minInstances: 1` lo quita (cuesta al mes). Además `sesion` espera a escribir el
+Ideas que quedan, solo si vuelve a sentirse lento:
+
+- **Arranque en frío de `sesion`:** pesa sobre todo al abrir desde WhatsApp, donde siempre se
+  canjea. `minInstances: 1` lo quita (cuesta al mes). Además `sesion` espera a escribir el
   contador de entradas (`contarEntrada`) antes de responder: una escritura más en el camino.
 - **Hojas de estilos alternativos:** las seis se cargan siempre (≈ 91 kB, 18 kB gzip, todo el
-  CSS junto). Cargar solo la del estilo elegido ahorraría unos 10 kB gzip, a cambio de
-  sacarlas del bundle de Vite; poco premio, se dejó para después.
+  CSS junto). Cargar solo la del estilo elegido ahorraría unos 10 kB gzip; poco premio.
 
 ## 6. Revocar el enlace de un cliente de verdad — ✅ HECHO (2026-10-10)
 
