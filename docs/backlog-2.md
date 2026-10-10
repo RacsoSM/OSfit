@@ -392,8 +392,7 @@ Hecho (2026-10-10) — **video por ejercicio**: el banco acepta `videoRuta`
 (`ejercicios/<id>.mp4`, lo sube `functions/scripts/subirVideoEjercicio.mjs`). Se reproduce mudo y
 en bucle donde el ejercicio se ve en grande (Registro y la app); el resto sigue con el GIF.
 Piloto: press de banca con el "camino 1" (las 2 poses del GIF escaladas con Real-ESRGAN y un
-fundido, 720 px). Pendiente decidir la fuente para los demás (camino 1, video generado con
-Gemini/ChatGPT o ExerciseDB).
+fundido, 720 px). Decidido (2026-10-10): los demás se hacen con el camino 1 → **punto 10**.
 
 Plan: `superpowers/plans/2026-10-10-banco-ejercicios-gifs.md`.
 **Desplegado (2026-10-10):** reglas, banco cargado (91 de 91), función `registrarSesion` y web.
@@ -429,3 +428,30 @@ Plan: `superpowers/plans/2026-10-10-ultimas-entradas.md`.
 Implementado y desplegado (2026-10-10): funciones, web y `sesion` en producción, probado de
 punta a punta con una clienta temporal; APK entregado. Verificado por el entrenador en su
 teléfono (2026-10-10).
+
+
+## 10. Videos HD de los ejercicios con el "camino 1" — 📋 PENDIENTE
+
+> "esto es lo que haremos, usaremos el camino 1 para la generación de los 80 videos"
+
+**Seguir `docs/videos-ejercicios/camino1.md`**: ahí está todo (por qué, cómo se hizo el piloto,
+instalación, el script, la revisión, qué se entrega y cómo está implementado en la web y la
+app). No hace falta cambiar código: la web y la app ya reproducen el video de cualquier
+ejercicio que tenga `videoRuta`.
+
+Qué hay que hacer:
+
+1. Instalar el entorno (sección 5 del documento).
+2. Generar los videos: `venv/bin/python camino1.py --todos` en `docs/videos-ejercicios/`.
+   Son los 91 ejercicios de 2 poses (~20 min). Los 6 de otro patrón (zancadas caminando, giros
+   rusos, plancha, escaladores, burpees, caminata del granjero) se saltan solos y no se usan.
+3. Revisar cada uno con la lista de la sección 6.2 (`salida/<id>-poses.png`).
+4. Subir los buenos con `functions/scripts/subirVideoEjercicio.mjs` (sección 6.3).
+5. Verificar en la web y en la app (sección 6.4).
+
+Qué se entrega: por ejercicio, `ejercicios/<id>.mp4` en Storage y `videoRuta` en
+`ejercicios/{id}`. El GIF no se borra (sigue en el grid y como póster).
+
+Ya hecho en el piloto: press de banca subido a producción. Sentadilla y jalón al pecho, solo
+generados.
+

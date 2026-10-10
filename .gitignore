@@ -49,3 +49,10 @@ firebase-debug.log
 
 # Los .webp que deja `cargarBancoEjercicios.mjs --prueba`: son medios de Gym visual, no se versionan.
 functions/scripts/salida/
+
+# Herramientas y resultados de docs/videos-ejercicios/camino1.py: el entorno de Python, el
+# modelo de Real-ESRGAN y los videos (derivados de Gym visual: viven solo en Storage).
+docs/videos-ejercicios/venv
+docs/videos-ejercicios/modelos/
+docs/videos-ejercicios/salida/
+docs/videos-ejercicios/trabajo/
