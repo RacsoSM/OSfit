@@ -2,7 +2,8 @@
 
 Guía completa para generar, revisar y publicar los videos en alta definición de los ejercicios
 del banco. Decidido por el entrenador el 2026-10-10, después de un piloto con 3 ejercicios.
-La tarea está en `docs/backlog-2.md` (punto 10).
+La tarea está en `docs/backlog-2.md` (punto 10); el traspaso paso a paso para la sesión que la
+ejecute, en `docs/videos-ejercicios/SIGUIENTE-SESION.md`.
 
 ## 1. Por qué
 

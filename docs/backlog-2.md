@@ -434,7 +434,8 @@ teléfono (2026-10-10).
 
 > "esto es lo que haremos, usaremos el camino 1 para la generación de los 80 videos"
 
-**Seguir `docs/videos-ejercicios/camino1.md`**: ahí está todo (por qué, cómo se hizo el piloto,
+**Seguir `docs/videos-ejercicios/SIGUIENTE-SESION.md`** (el traspaso paso a paso para la
+sesión que lo ejecute) **y `docs/videos-ejercicios/camino1.md`**: ahí está todo (por qué, cómo se hizo el piloto,
 instalación, el script, la revisión, qué se entrega y cómo está implementado en la web y la
 app). No hace falta cambiar código: la web y la app ya reproducen el video de cualquier
 ejercicio que tenga `videoRuta`.
@@ -443,7 +444,7 @@ Qué hay que hacer:
 
 1. Instalar el entorno (sección 5 del documento).
 2. Generar los videos: `venv/bin/python camino1.py --todos` en `docs/videos-ejercicios/`.
-   Son los 91 ejercicios de 2 poses (~20 min). Los 6 de otro patrón (zancadas caminando, giros
+   Son los 102 ejercicios de 2 poses (~25 min). Los 6 de otro patrón (zancadas caminando, giros
    rusos, plancha, escaladores, burpees, caminata del granjero) se saltan solos y no se usan.
 3. Revisar cada uno con la lista de la sección 6.2 (`salida/<id>-poses.png`).
 4. Subir los buenos con `functions/scripts/subirVideoEjercicio.mjs` (sección 6.3).
