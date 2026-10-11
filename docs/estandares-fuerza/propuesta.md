@@ -20,7 +20,7 @@ Cada corte se compara contra **toda la población** (incluye a la gente que no e
 |---|---|---|
 | Principiante | 50 % | 5 % |
 | Novato | 65 % | 12 % |
-| Constante | 78 % | 20 % |
+| En forma | 78 % | 20 % |
 | Intermedio | 83 % | 35 % |
 | Atlético / Atlética | 88 % | 50 % |
 | Fuerte | 92 % | 65 % |
@@ -33,7 +33,7 @@ Principiante es lo que levanta un adulto promedio que no entrena (la mitad de la
 
 ### Pecho
 
-| Ejercicio | Sexo | Principiante | Novato | Constante | Intermedio | Atlético / Atlética | Fuerte | Avanzado | Élite |
+| Ejercicio | Sexo | Principiante | Novato | En forma | Intermedio | Atlético / Atlética | Fuerte | Avanzado | Élite |
 |---|---|---|---|---|---|---|---|---|---|
 | Press de banca | H | 37.5 kg | 47.5 kg | 55 kg | 65 kg | 75 kg | 95 kg | 112.5 kg | 150 kg |
 |  | M | 15 kg | 22.5 kg | 30 kg | 37.5 kg | 45 kg | 52.5 kg | 60 kg | 90 kg |
@@ -60,7 +60,7 @@ Principiante es lo que levanta un adulto promedio que no entrena (la mitad de la
 
 ### Cuádriceps
 
-| Ejercicio | Sexo | Principiante | Novato | Constante | Intermedio | Atlético / Atlética | Fuerte | Avanzado | Élite |
+| Ejercicio | Sexo | Principiante | Novato | En forma | Intermedio | Atlético / Atlética | Fuerte | Avanzado | Élite |
 |---|---|---|---|---|---|---|---|---|---|
 | Sentadilla con barra | H | 55 kg | 75 kg | 95 kg | 102.5 kg | 112.5 kg | 140 kg | 170 kg | 205 kg |
 |  | M | 30 kg | 37.5 kg | 45 kg | 60 kg | 75 kg | 82.5 kg | 90 kg | 120 kg |
@@ -93,7 +93,7 @@ Principiante es lo que levanta un adulto promedio que no entrena (la mitad de la
 
 ### Glúteo
 
-| Ejercicio | Sexo | Principiante | Novato | Constante | Intermedio | Atlético / Atlética | Fuerte | Avanzado | Élite |
+| Ejercicio | Sexo | Principiante | Novato | En forma | Intermedio | Atlético / Atlética | Fuerte | Avanzado | Élite |
 |---|---|---|---|---|---|---|---|---|---|
 | Sentadilla sumo con mancuerna | H · una mancuerna | 22.5 kg | 27.5 kg | 35 kg | 40 kg | 42.5 kg | 52.5 kg | 65 kg | 77.5 kg |
 |  | M | 11 kg | 14 kg | 17 kg | 22.5 kg | 27.5 kg | 32.5 kg | 35 kg | 45 kg |
@@ -114,7 +114,7 @@ Principiante es lo que levanta un adulto promedio que no entrena (la mitad de la
 
 ### Femoral
 
-| Ejercicio | Sexo | Principiante | Novato | Constante | Intermedio | Atlético / Atlética | Fuerte | Avanzado | Élite |
+| Ejercicio | Sexo | Principiante | Novato | En forma | Intermedio | Atlético / Atlética | Fuerte | Avanzado | Élite |
 |---|---|---|---|---|---|---|---|---|---|
 | Curl femoral acostado | H · máquina | 25 kg | 35 kg | 40 kg | 50 kg | 60 kg | 70 kg | 82.5 kg | 110 kg |
 |  | M | 15 kg | 20 kg | 25 kg | 30 kg | 35 kg | 42.5 kg | 50 kg | 70 kg |
@@ -131,7 +131,7 @@ Principiante es lo que levanta un adulto promedio que no entrena (la mitad de la
 
 ### Espalda
 
-| Ejercicio | Sexo | Principiante | Novato | Constante | Intermedio | Atlético / Atlética | Fuerte | Avanzado | Élite |
+| Ejercicio | Sexo | Principiante | Novato | En forma | Intermedio | Atlético / Atlética | Fuerte | Avanzado | Élite |
 |---|---|---|---|---|---|---|---|---|---|
 | Peso muerto | H | 75 kg | 95 kg | 112.5 kg | 130 kg | 150 kg | 170 kg | 187.5 kg | 225 kg |
 |  | M | 30 kg | 45 kg | 60 kg | 67.5 kg | 75 kg | 90 kg | 105 kg | 150 kg |
@@ -165,7 +165,7 @@ Principiante es lo que levanta un adulto promedio que no entrena (la mitad de la
 
 ### Pantorrilla
 
-| Ejercicio | Sexo | Principiante | Novato | Constante | Intermedio | Atlético / Atlética | Fuerte | Avanzado | Élite |
+| Ejercicio | Sexo | Principiante | Novato | En forma | Intermedio | Atlético / Atlética | Fuerte | Avanzado | Élite |
 |---|---|---|---|---|---|---|---|---|---|
 | Elevación de talones de pie | H · máquina | 37.5 kg | 55 kg | 75 kg | 97.5 kg | 120 kg | 150 kg | 180 kg | 245 kg |
 |  | M | 20 kg | 32.5 kg | 45 kg | 60 kg | 75 kg | 95 kg | 115 kg | 155 kg |
@@ -174,7 +174,7 @@ Principiante es lo que levanta un adulto promedio que no entrena (la mitad de la
 
 ### Trapecio
 
-| Ejercicio | Sexo | Principiante | Novato | Constante | Intermedio | Atlético / Atlética | Fuerte | Avanzado | Élite |
+| Ejercicio | Sexo | Principiante | Novato | En forma | Intermedio | Atlético / Atlética | Fuerte | Avanzado | Élite |
 |---|---|---|---|---|---|---|---|---|---|
 | Encogimientos con barra | H | 45 kg | 60 kg | 75 kg | 95 kg | 112.5 kg | 135 kg | 157.5 kg | 205 kg |
 |  | M | 20 kg | 27.5 kg | 35 kg | 47.5 kg | 57.5 kg | 70 kg | 85 kg | 110 kg |
@@ -183,7 +183,7 @@ Principiante es lo que levanta un adulto promedio que no entrena (la mitad de la
 
 ### Hombro
 
-| Ejercicio | Sexo | Principiante | Novato | Constante | Intermedio | Atlético / Atlética | Fuerte | Avanzado | Élite |
+| Ejercicio | Sexo | Principiante | Novato | En forma | Intermedio | Atlético / Atlética | Fuerte | Avanzado | Élite |
 |---|---|---|---|---|---|---|---|---|---|
 | Press militar | H | 25 kg | 35 kg | 40 kg | 50 kg | 55 kg | 65 kg | 75 kg | 97.5 kg |
 |  | M | 12 kg | 16 kg | 20 kg | 25 kg | 30 kg | 37.5 kg | 45 kg | 60 kg |
@@ -208,7 +208,7 @@ Principiante es lo que levanta un adulto promedio que no entrena (la mitad de la
 
 ### Bíceps
 
-| Ejercicio | Sexo | Principiante | Novato | Constante | Intermedio | Atlético / Atlética | Fuerte | Avanzado | Élite |
+| Ejercicio | Sexo | Principiante | Novato | En forma | Intermedio | Atlético / Atlética | Fuerte | Avanzado | Élite |
 |---|---|---|---|---|---|---|---|---|---|
 | Curl con barra | H | 15 kg | 22.5 kg | 30 kg | 37.5 kg | 45 kg | 55 kg | 65 kg | 85 kg |
 |  | M | 6 kg | 9 kg | 12 kg | 18 kg | 25 kg | 30 kg | 35 kg | 50 kg |
@@ -233,7 +233,7 @@ Principiante es lo que levanta un adulto promedio que no entrena (la mitad de la
 
 ### Antebrazo
 
-| Ejercicio | Sexo | Principiante | Novato | Constante | Intermedio | Atlético / Atlética | Fuerte | Avanzado | Élite |
+| Ejercicio | Sexo | Principiante | Novato | En forma | Intermedio | Atlético / Atlética | Fuerte | Avanzado | Élite |
 |---|---|---|---|---|---|---|---|---|---|
 | Curl de muñeca con barra | H | 15 kg | 20 kg | 25 kg | 35 kg | 40 kg | 50 kg | 60 kg | 80 kg |
 |  | M | 6 kg | 9 kg | 12 kg | 16 kg | 20 kg | 25 kg | 30 kg | 42.5 kg |
@@ -254,7 +254,7 @@ Principiante es lo que levanta un adulto promedio que no entrena (la mitad de la
 
 ### Tríceps
 
-| Ejercicio | Sexo | Principiante | Novato | Constante | Intermedio | Atlético / Atlética | Fuerte | Avanzado | Élite |
+| Ejercicio | Sexo | Principiante | Novato | En forma | Intermedio | Atlético / Atlética | Fuerte | Avanzado | Élite |
 |---|---|---|---|---|---|---|---|---|---|
 | Extensión de tríceps en polea | H | 19 kg | 25 kg | 35 kg | 40 kg | 50 kg | 60 kg | 70 kg | 95 kg |
 |  | M | 9 kg | 12 kg | 15 kg | 20 kg | 25 kg | 30 kg | 35 kg | 50 kg |
@@ -275,7 +275,7 @@ Principiante es lo que levanta un adulto promedio que no entrena (la mitad de la
 
 ### Abdomen
 
-| Ejercicio | Sexo | Principiante | Novato | Constante | Intermedio | Atlético / Atlética | Fuerte | Avanzado | Élite |
+| Ejercicio | Sexo | Principiante | Novato | En forma | Intermedio | Atlético / Atlética | Fuerte | Avanzado | Élite |
 |---|---|---|---|---|---|---|---|---|---|
 | Crunch abdominal | H | 10 reps | 18 reps | 25 reps | 35 reps | 45 reps | 55 reps | 65 reps | 90 reps |
 |  | M | 8 reps | 14 reps | 20 reps | 29 reps | 38 reps | 46 reps | 55 reps | 80 reps |
@@ -296,7 +296,7 @@ Principiante es lo que levanta un adulto promedio que no entrena (la mitad de la
 
 ### Cardio
 
-| Ejercicio | Sexo | Principiante | Novato | Constante | Intermedio | Atlético / Atlética | Fuerte | Avanzado | Élite |
+| Ejercicio | Sexo | Principiante | Novato | En forma | Intermedio | Atlético / Atlética | Fuerte | Avanzado | Élite |
 |---|---|---|---|---|---|---|---|---|---|
 | Escaladores | — | de tiempo: no pinta el mapa | | | | | | | |
 | Burpees | H | 3 reps | 6 reps | 10 reps | 15 reps | 20 reps | 25 reps | 30 reps | 40 reps |
