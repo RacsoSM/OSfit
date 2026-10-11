@@ -1,7 +1,7 @@
 # Graph Report - OSfit  (2026-10-11)
 
 ## Corpus Check
-- 477 files · ~515,260 words
+- 477 files · ~515,375 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 30 file(s) not represented in the graph (top: .xml 7, .css 7, (none) 6)
 
@@ -11,7 +11,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `1a5cd232`
+- Built from commit: `ee7efc42`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -1002,15 +1002,15 @@ Nodes (6): 6.1 Generar, 6.2 Revisar (antes de subir), 6.3 Subir, 6.4 Verificar, 
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `ClienteDetailViewModel` connect `ClienteDetailViewModel` to `EstadisticasViewModel`, `ClienteEditarScreen.kt`, `EstadisticasScreen.kt`, `OSfitNavHost`, `ClienteDetailScreen.kt`, `file`, `Pago`, `ClienteDetailViewModel.kt`, `ClienteRepository`, `VideoPublicadoRepository`, `ResumenClienteViewModel.kt`, `LogroPersonalCatalogo`, `LogroPersonalRepository`, `DiaRutina`, `MedallaRepository`, `AccesoWebRepository`, `VideoPublicado`, `RuletaRepository.kt`, `AsistenciaRepository`, `RutinaWebClienteScreen.kt`, `MedallaCatalogo`, `Revocar el acceso de una clienta de verdad`, `RutinaRepository`, `CupoRevivesCalculatorTest`, `Ejercicio`?**
-  _High betweenness centrality (0.154) - this node is a cross-community bridge._
+  _High betweenness centrality (0.155) - this node is a cross-community bridge._
 - **Are the 7 inferred relationships involving `ClienteDetailViewModel` (e.g. with `ClienteDetailScreen()` and `ClienteEditarScreen()`) actually correct?**
   _`ClienteDetailViewModel` has 7 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `LANG`, `LC_ALL`, `Loading` to the rest of the system?**
   _105 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `RutinaProgressCalculatorTest` be split into smaller, more focused modules?**
   _Cohesion score 0.07081377151799687 - nodes in this community are weakly interconnected._
-- **Why does `ClienteDetailScreen()` connect `ClienteDetailScreen.kt` to `ResumenClienteViewModel.kt`, `Test`, `LogroPersonalCatalogo`, `TopScreen.kt`, `DiaRutina`, `OSfitNavHost`, `ClienteDetailViewModel`, `WhatsAppUtil`, `ClientesListScreen.kt`, `ClienteAsistenciaScreen.kt`, `File Structure`, `Ejercicio`?**
-  _High betweenness centrality (0.141) - this node is a cross-community bridge._
+- **Why does `Contexto y problema` connect `Revocar el acceso de una clienta de verdad` to `db`, `firebase.ts`?**
+  _High betweenness centrality (0.147) - this node is a cross-community bridge._
 
 ### Low-confidence Hints
 _AMBIGUOUS edges — the extractor was unsure. Verify before acting on these._

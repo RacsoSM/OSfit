@@ -2802,9 +2802,9 @@
     "semantic_hash": ""
   },
   "functions/semilla/ejercicios.json": {
-    "mtime": 1791711040.9430017,
-    "seen": 1791717289.4862924,
-    "ast_hash": "4915c74e509615b0e186721e321ad983",
+    "mtime": 1791717494.3310997,
+    "seen": 1791717662.5169446,
+    "ast_hash": "c48ffcc0fb063d18c875fd73a392ff5f",
     "semantic_hash": ""
   },
   "web/src/banco.test.ts": {
@@ -2892,9 +2892,9 @@
     "semantic_hash": ""
   },
   "docs/videos-ejercicios/camino1.py": {
-    "mtime": 1791631591.518986,
-    "seen": 1791710050.9224422,
-    "ast_hash": "f0ac0d09768e43f839d02e57607fd8a5",
+    "mtime": 1791717494.3437393,
+    "seen": 1791717662.516917,
+    "ast_hash": "c4b690a3cdf29ba4c89b19ed516b26a8",
     "semantic_hash": ""
   },
   "functions/scripts/subirVideoEjercicio.mjs": {

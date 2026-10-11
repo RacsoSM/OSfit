@@ -12479,7 +12479,7 @@
       "file_type": "code",
       "norm_label": "armar_video()",
       "source_file": "docs/videos-ejercicios/camino1.py",
-      "source_location": "L64"
+      "source_location": "L73"
     },
     {
       "id": "docs_videos_ejercicios_camino1_escalar",
@@ -12491,7 +12491,7 @@
       "file_type": "code",
       "norm_label": "escalar()",
       "source_file": "docs/videos-ejercicios/camino1.py",
-      "source_location": "L57"
+      "source_location": "L66"
     },
     {
       "id": "docs_videos_ejercicios_camino1_main",
@@ -12503,7 +12503,7 @@
       "file_type": "code",
       "norm_label": "main()",
       "source_file": "docs/videos-ejercicios/camino1.py",
-      "source_location": "L81"
+      "source_location": "L90"
     },
     {
       "id": "docs_videos_ejercicios_camino1_poses_del_gif",
@@ -35538,12 +35538,12 @@
     },
     {
       "id": "docs_videos_ejercicios_camino1_rationale_49",
-      "label": "Las 2 poses (cuadros de 1 s), o None si el GIF no sigue el patr\u00f3n de 2 poses.",
+      "label": "Las 2 poses, o None si el GIF no sigue el patr\u00f3n de 2 poses. Hay dos formatos\u2026",
       "_origin": "ast",
       "community": 193,
       "community_name": "camino1.py",
       "file_type": "rationale",
-      "norm_label": "las 2 poses (cuadros de 1 s), o none si el gif no sigue el patron de 2 poses.",
+      "norm_label": "las 2 poses, o none si el gif no sigue el patron de 2 poses. hay dos formatos...",
       "source_file": "docs/videos-ejercicios/camino1.py",
       "source_location": "L49"
     },
@@ -81172,7 +81172,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "docs/videos-ejercicios/camino1.py",
-      "source_location": "L110",
+      "source_location": "L119",
       "weight": 1.0
     },
     {
@@ -81184,7 +81184,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "docs/videos-ejercicios/camino1.py",
-      "source_location": "L115",
+      "source_location": "L124",
       "weight": 1.0
     },
     {
@@ -81196,7 +81196,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "docs/videos-ejercicios/camino1.py",
-      "source_location": "L120",
+      "source_location": "L129",
       "weight": 1.0
     },
     {
@@ -146271,7 +146271,7 @@
       "confidence_score": 1.0,
       "context": "parameter_type",
       "source_file": "docs/videos-ejercicios/camino1.py",
-      "source_location": "L64",
+      "source_location": "L73",
       "weight": 1.0
     },
     {
@@ -147447,7 +147447,7 @@
       "confidence_score": 1.0,
       "context": "return_type",
       "source_file": "docs/videos-ejercicios/camino1.py",
-      "source_location": "L57",
+      "source_location": "L66",
       "weight": 1.0
     },
     {
@@ -162420,7 +162420,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/videos-ejercicios/camino1.py",
-      "source_location": "L57",
+      "source_location": "L66",
       "weight": 1.0
     },
     {
@@ -162431,7 +162431,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/videos-ejercicios/camino1.py",
-      "source_location": "L64",
+      "source_location": "L73",
       "weight": 1.0
     },
     {
@@ -162442,7 +162442,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/videos-ejercicios/camino1.py",
-      "source_location": "L81",
+      "source_location": "L90",
       "weight": 1.0
     },
     {
@@ -193992,5 +193992,5 @@
       "source_file": "web/public/mapa-muscular-frente.svg"
     }
   ],
-  "built_at_commit": "1a5cd232d8a02a6b718d1857249f6619fe1349bb"
+  "built_at_commit": "ee7efc4287d03931ce021897764446059d6fbe71"
 }
