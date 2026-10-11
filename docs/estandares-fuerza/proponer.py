@@ -175,15 +175,40 @@ SUPERA_POBLACION = [50, 65, 78, 83, 88, 92, 95, 99]
 SUPERA_ENTRENAN = [5, 12, 20, 35, 50, 65, 80, 95]
 
 
+# La parte de arriba, más baja que en las tablas (decisión del entrenador, 2026-10-11): las
+# tablas tipo Strength Level salen de lo que reporta gente que entrena mucho, y para las
+# clientas de un gym normal quedaba casi inalcanzable. Avanzado y Élite bajan 15 %; Fuerte,
+# que es su punto medio con Atlético, baja con ellos (un poco menos). Bajar Fuerte 15 % parejo
+# lo dejaba por debajo de Atlético en los ejercicios donde las tablas tienen Intermedio y
+# Avanzado muy juntos.
+ARRIBA = [6, 7]
+BAJA_ARRIBA = 0.15
+# Lo mínimo que pide cada nivel arriba del anterior, de Atlético para arriba.
+SALTO_MIN = 0.06
+
+
 def a_ocho(cinco: list, entero: bool = False) -> list:
     """Los 5 cortes de las tablas a 8: los 5 en ANCLAS y el punto medio en los huecos."""
     ocho: list = [None] * len(NIVELES)
     for i, v in zip(ANCLAS, cinco):
         ocho[i] = v
+    original = ocho[:]
+    original[5] = (original[4] + original[6]) / 2
+    for i in ARRIBA:
+        bajado = ocho[i] * (1 - BAJA_ARRIBA)
+        ocho[i] = round(bajado) if entero else round(bajado, 3)
     for i, v in enumerate(ocho):
         if v is None:
             medio = (ocho[i - 1] + ocho[i + 1]) / 2
             ocho[i] = round(medio) if entero else round(medio, 3)
+    # Si Avanzado quedó casi pegado a Atlético (tablas con Intermedio y Avanzado muy juntos),
+    # Fuerte y Avanzado se reparten parejo entre Atlético y Élite: subir de nivel tiene que
+    # pedir algo, y el salto a Élite no debe quedarse con todo el tramo.
+    atl, eli = ocho[4], ocho[7]
+    if not entero and (ocho[6] - atl) / atl < 2 * SALTO_MIN:
+        # Nunca por encima de lo que pedían las tablas: esto es para bajar, no para subir.
+        ocho[5] = round(min(atl + (eli - atl) / 3, original[5]), 3)
+        ocho[6] = round(min(atl + 2 * (eli - atl) / 3, original[6]), 3)
     return ocho
 PESO_EJEMPLO = {"H": 75, "M": 60}
 
@@ -232,6 +257,10 @@ def main() -> None:
                  if any(a >= b for a, b in zip(est[s], est[s][1:]))]
     if repetidos:
         raise SystemExit(f"Cortes repetidos o al revés: {repetidos}")
+    pegados = [f"{i} {s}" for i, est in salida.items() for s in ("H", "M")
+               if PESO.get(i) and any((b - a) / a < SALTO_MIN for a, b in zip(est[s][4:], est[s][5:]))]
+    if pegados:
+        print(f"Aviso — niveles de arriba con poco salto: {pegados}")
 
     (AQUI / "estandares.json").write_text(json.dumps(salida, ensure_ascii=False, indent=2) + "\n")
 
@@ -261,7 +290,10 @@ def main() -> None:
         "",
         "**8 niveles**, con los nombres que eligió el entrenador. Salen de los 5 de las tablas "
         "públicas (en los niveles 1, 3, 5, 7 y 8) más el punto medio entre dos de ellos en los "
-        "niveles 2, 4 y 6, donde más se tarda en subir. A las mujeres se les dice *Atlética*.",
+        "niveles 2, 4 y 6, donde más se tarda en subir. **Avanzado y Élite van 15 % más "
+        "bajos** que en las tablas, y Fuerte (su punto medio con Atlético) baja con ellos, para "
+        "que la parte de arriba sea alcanzable. A las "
+        "mujeres se les dice *Atlética*.",
         "",
         "Cada corte se compara contra **toda la población** (incluye a la gente que no entrena) "
         "y contra **la gente que sí entrena**. Son los mismos cortes vistos desde dos grupos:",
