@@ -917,28 +917,64 @@ main:has(#barra) { padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
   font-size: 13px; color: var(--texto-tenue); text-align: left;
 }
 .mapa-muestra { flex: none; width: 14px; height: 14px; border-radius: 4px; background: #8f90a6; }
-/* El nivel de cada músculo (`conNiveles`): del gris de "sin datos" al color del estilo, más
-   intenso entre más alto. El nivel 0 ya arranca en 30 % de color: con menos no se distinguía
-   del gris de un músculo sin registros. Con `color-mix` para que siga al estilo activo; el `fill` de antes es
-   para Safari < 16.2, que no lo entiende y se queda con el color del estilo tal cual. */
-.mapa-cuerpo .musculo[data-nivel] { fill: var(--primario); }
-.mapa-cuerpo .musculo[data-nivel="0"] { fill: color-mix(in srgb, var(--primario) 30%, #8f90a6); }
-.mapa-cuerpo .musculo[data-nivel="1"] { fill: color-mix(in srgb, var(--primario) 40%, #8f90a6); }
-.mapa-cuerpo .musculo[data-nivel="2"] { fill: color-mix(in srgb, var(--primario) 50%, #8f90a6); }
-.mapa-cuerpo .musculo[data-nivel="3"] { fill: color-mix(in srgb, var(--primario) 60%, #8f90a6); }
-.mapa-cuerpo .musculo[data-nivel="4"] { fill: color-mix(in srgb, var(--primario) 69%, #8f90a6); }
-.mapa-cuerpo .musculo[data-nivel="5"] { fill: color-mix(in srgb, var(--primario) 78%, #8f90a6); }
-.mapa-cuerpo .musculo[data-nivel="6"] { fill: color-mix(in srgb, var(--primario) 86%, #8f90a6); }
-.mapa-cuerpo .musculo[data-nivel="7"] { fill: color-mix(in srgb, var(--primario) 93%, #8f90a6); }
-.mapa-cuerpo .musculo[data-nivel="8"] { fill: var(--primario); }
-.mapa-escala {
-  display: flex; align-items: center; gap: 8px; margin: 8px 2px 0;
-  font-size: 11px; color: var(--texto-tenue);
+/* El color de cada rango (`conNiveles` pone `data-rango`): uno distinto por rango, que se
+   lee de abajo hacia arriba como en los juegos — de café a dorado. Fijos y no del estilo
+   activo, porque la explicación ("?") los nombra y tienen que ser los mismos para todas.
+   El gris de "sin datos" es `#8f90a6`; ninguno se le parece. */
+:root {
+  --rango-0: #a1785c; /* Principiante: café */
+  --rango-1: #43a047; /* Novato: verde */
+  --rango-2: #00bcd4; /* En forma: turquesa */
+  --rango-3: #1e6bff; /* Intermedio: azul */
+  --rango-4: #8e44ff; /* Atlético: morado */
+  --rango-5: #e93cc0; /* Fuerte: rosa */
+  --rango-6: #ff6a00; /* Avanzado: naranja */
+  --rango-7: #ffc400; /* Élite: dorado */
 }
-.mapa-escala-barra {
-  flex: 1; height: 8px; border-radius: 999px;
-  background: linear-gradient(to right, color-mix(in srgb, var(--primario) 30%, #8f90a6), var(--primario));
+.mapa-cuerpo .musculo[data-rango="0"], .rango-muestra[data-rango="0"] { fill: var(--rango-0); background: var(--rango-0); }
+.mapa-cuerpo .musculo[data-rango="1"], .rango-muestra[data-rango="1"] { fill: var(--rango-1); background: var(--rango-1); }
+.mapa-cuerpo .musculo[data-rango="2"], .rango-muestra[data-rango="2"] { fill: var(--rango-2); background: var(--rango-2); }
+.mapa-cuerpo .musculo[data-rango="3"], .rango-muestra[data-rango="3"] { fill: var(--rango-3); background: var(--rango-3); }
+.mapa-cuerpo .musculo[data-rango="4"], .rango-muestra[data-rango="4"] { fill: var(--rango-4); background: var(--rango-4); }
+.mapa-cuerpo .musculo[data-rango="5"], .rango-muestra[data-rango="5"] { fill: var(--rango-5); background: var(--rango-5); }
+.mapa-cuerpo .musculo[data-rango="6"], .rango-muestra[data-rango="6"] { fill: var(--rango-6); background: var(--rango-6); }
+.mapa-cuerpo .musculo[data-rango="7"], .rango-muestra[data-rango="7"] { fill: var(--rango-7); background: var(--rango-7); }
+
+/* El "?" de la explicación: arriba a la izquierda del dibujo, en espejo del 🔄. */
+.mapa-ayuda {
+  position: absolute; left: 0; top: 0; z-index: 1;
+  width: 40px; height: 40px; padding: 0; border: 0; border-radius: 50%;
+  background: var(--superficie-alta); color: var(--texto);
+  font: inherit; font-size: 20px; font-weight: 800; line-height: 1; cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
+.mapa-ayuda:focus-visible { outline: 2px solid var(--primario); outline-offset: 3px; }
+/* La explicación, como el aviso del peso: velo debajo de la barra de abajo (z 10). */
+.ayuda-velo {
+  position: fixed; inset: 0; z-index: 9;
+  display: flex; align-items: center; justify-content: center;
+  padding: calc(16px + env(safe-area-inset-top)) 16px calc(84px + env(safe-area-inset-bottom));
+  background: rgba(0, 0, 0, 0.6);
+}
+.ayuda-hoja {
+  position: relative; width: 100%; max-width: 360px; max-height: 100%; overflow-y: auto;
+  margin: 0; padding: 18px 16px; text-align: left;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.55);
+}
+.ayuda-titulo { margin: 0 36px 8px 0; font-size: 19px; font-weight: 800; color: var(--primario); }
+.ayuda-texto { margin: 0 0 10px; font-size: 14px; line-height: 1.4; }
+.ayuda-nota { margin: 6px 0 10px; font-size: 11px; color: var(--texto-tenue); }
+.ayuda-rangos { list-style: none; margin: 4px 0 0; padding: 0; }
+.ayuda-rango {
+  display: grid; grid-template-columns: 18px 1fr auto; align-items: center; gap: 10px;
+  padding: 5px 0; font-size: 14px; border-bottom: 1px solid var(--superficie-alta);
+}
+.ayuda-rango:last-child { border-bottom: 0; }
+.ayuda-rango-cabeza { font-size: 11px; color: var(--texto-tenue); text-transform: uppercase; letter-spacing: 0.06em; }
+.ayuda-rango-nombre { font-weight: 700; }
+.ayuda-rango-pct { font-size: 12px; color: var(--texto-tenue); white-space: nowrap; }
+.rango-muestra { width: 16px; height: 16px; border-radius: 5px; }
+.rango-sin-datos { background: #8f90a6; }
 @media (prefers-reduced-motion: reduce) {
   .mapa-cargando { animation: none; }
   .mapa-giro, .mapa-marco, .mapa-cuerpo .musculo, .mapa-svg .musculo-elevado { transition: none; }

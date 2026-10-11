@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import {
-  archivosMapa, conNiveles, detalleMusculo, prepararSvg, reiniciarMapa, tarjetaMusculos,
+  archivosMapa, ayudaMapa, conNiveles, detalleMusculo, prepararSvg, reiniciarMapa, tarjetaMusculos,
 } from "./mapaMuscular";
 import frenteH from "../../public/mapa-muscular-frente.svg?raw";
 import espaldaH from "../../public/mapa-muscular-espalda.svg?raw";
@@ -185,24 +185,52 @@ describe("detalleMusculo", () => {
 describe("conNiveles", () => {
   const svg = '<path class="musculo" data-musculo="pecho" d="M0"/><path class="musculo" data-musculo="biceps" d="M1"/>';
 
-  it("le pone su nivel entero a cada músculo con datos", () => {
-    const s = conNiveles(svg, { pecho: { nivel: 3.7 } });
-    expect(s).toContain('data-musculo="pecho" data-nivel="3"');
+  it("le pone a cada músculo con datos el número de su rango", () => {
+    // 3.7 está entre En forma (3) e Intermedio (4): En forma, el tercero (2).
+    expect(conNiveles(svg, { pecho: { nivel: 3.7 } })).toContain('data-musculo="pecho" data-rango="2"');
   });
 
-  it("sin datos se queda sin nivel (gris)", () => {
+  it("sin datos se queda sin rango (gris)", () => {
     expect(conNiveles(svg, { pecho: { nivel: 3 } })).toContain('data-musculo="biceps" d="M1"');
   });
 
-  it("nivel 0 sí lleva nivel: registró algo, aunque poco", () => {
-    expect(conNiveles(svg, { biceps: { nivel: 0.4 } })).toContain('data-musculo="biceps" data-nivel="0"');
+  it("debajo de Novato es Principiante, aunque sea poco", () => {
+    expect(conNiveles(svg, { biceps: { nivel: 0.4 } })).toContain('data-musculo="biceps" data-rango="0"');
   });
 
-  it("se queda dentro de 0 a 8", () => {
-    expect(conNiveles(svg, { pecho: { nivel: 8 } })).toContain('data-nivel="8"');
-  });
-
-  it("siempre trae con qué cerrarlo", () => {
-    expect(detalleMusculo("gluteo", undefined, "M")).toContain('id="cerrar-detalle"');
+  it("Élite es el último", () => {
+    expect(conNiveles(svg, { pecho: { nivel: 8 } })).toContain('data-rango="7"');
   });
 });
+
+describe("ayudaMapa", () => {
+  it("lista los 8 rangos en orden, del más bajo al más alto, cada uno con su color", () => {
+    const h = ayudaMapa("H");
+    const nombres = [...h.matchAll(/ayuda-rango-nombre">\d\. ([^<]+)</g)].map((m) => m[1]);
+    expect(nombres).toEqual([
+      "Principiante", "Novato", "En forma", "Intermedio", "Atlético", "Fuerte", "Avanzado", "Élite",
+    ]);
+    for (let i = 0; i < 8; i++) expect(h).toContain(`data-rango="${i}"`);
+  });
+
+  it("para ellas dice Atlética", () => {
+    expect(ayudaMapa("M")).toContain("5. Atlética");
+  });
+
+  it("explica el gris y a quién supera cada rango", () => {
+    const h = ayudaMapa("M");
+    expect(h).toContain("sin datos");
+    expect(h).toContain("88 % · 50 %");
+    expect(h).toContain('id="cerrar-ayuda"');
+  });
+});
+
+describe("tarjetaMusculos y la ayuda", () => {
+  it("trae el ? y ya no la barra de degradado", () => {
+    const h = tarjetaMusculos("H", {});
+    expect(h).toContain('id="abrir-ayuda"');
+    expect(h).not.toContain("mapa-escala");
+    expect(h).not.toContain("ayuda-velo");
+  });
+});
+

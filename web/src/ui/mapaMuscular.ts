@@ -1,6 +1,7 @@
 import type { Sexo } from "../datos";
 import {
-  NIVEL_MAX, nombreMusculo, nombreRango, percentilDe, percentilEntrenanDe, type FuerzaMusculo,
+  RANGOS, indiceRango, nombreMusculo, nombreRango, percentilDe, percentilEntrenanDe,
+  type FuerzaMusculo,
 } from "../fuerza";
 import { seccionVacia } from "./tarjetaInsignias";
 
@@ -13,8 +14,8 @@ import { seccionVacia } from "./tarjetaInsignias";
  * se piden con `fetch` al entrar y no se meten al bundle: son ~90 kB cada uno y no hacen
  * falta en Inicio. Ver `docs/superpowers/specs/2026-10-10-mapa-fuerza-entrenamiento-design.md`.
  *
- * Cada músculo se pinta con su nivel (`data-nivel`, de `fuerzaPorMusculo`): del gris "sin
- * datos" al color del estilo, más intenso entre más alto el nivel.
+ * Cada músculo se pinta con el color de su rango (`data-rango`, de `fuerzaPorMusculo`); sin
+ * registros se queda gris. El "?" de arriba a la izquierda abre la explicación (`ayudaMapa`).
  */
 
 export type EstadoSvg =
@@ -80,23 +81,25 @@ export function prepararSvg(texto: string, prefijo: string): string {
  */
 let deEspalda = false;
 let seleccionado: string | null = null;
+/** La explicación abierta: también aquí y no en el HTML, para que un snapshot no la cierre. */
+let ayudaAbierta = false;
 
 /** Para los tests: el estado del módulo sobrevive entre pruebas. */
 export function reiniciarMapa(): void {
   deEspalda = false;
   seleccionado = null;
+  ayudaAbierta = false;
 }
 
 /**
- * Le pone a cada músculo su nivel entero (`data-nivel`, 0 a 8) para que `estilos.css` lo
- * pinte. Sin entrada en `fuerza` se queda sin atributo: el gris de "sin datos".
+ * Le pone a cada músculo su rango (`data-rango`, 0 = Principiante … 7 = Élite) para que
+ * `estilos.css` lo pinte con su color. Sin entrada en `fuerza` se queda sin atributo: el gris
+ * de "sin datos".
  */
 export function conNiveles(svg: string, fuerza: Readonly<Record<string, FuerzaMusculo>>): string {
   return svg.replace(/class="musculo" data-musculo="([^"]+)"/g, (todo, grupo: string) => {
     const f = fuerza[grupo];
-    if (!f) return todo;
-    const n = Math.min(NIVEL_MAX, Math.max(0, Math.floor(f.nivel)));
-    return `${todo} data-nivel="${n}"`;
+    return f ? `${todo} data-rango="${indiceRango(f.nivel)}"` : todo;
   });
 }
 
@@ -121,10 +124,7 @@ const LEYENDA = `
       <p class="mapa-leyenda">
         <span class="mapa-muestra" aria-hidden="true"></span>
         Toca un músculo para ver tu rango. Se irán pintando con lo que registres.
-      </p>
-      <div class="mapa-escala" aria-hidden="true">
-        <span>Principiante</span><span class="mapa-escala-barra"></span><span>Élite</span>
-      </div>`;
+      </p>`;
 
 /**
  * El texto de abajo del dibujo: con un músculo tocado, su rango y cómo se compara; sin
@@ -167,6 +167,54 @@ export function detalleMusculo(
 }
 
 /**
+ * La explicación de la ventana: qué es, de dónde sale el color y los rangos en orden, del más
+ * bajo al más alto, con su color y a quién supera cada uno. Los porcentajes salen de las
+ * mismas tablas que el detalle del músculo, en el nivel donde empieza cada rango.
+ */
+export function ayudaMapa(sexo: Sexo): string {
+  const filas = RANGOS.map((r, i) => {
+    const desde = Math.max(r.desde, 1);
+    return `
+          <li class="ayuda-rango">
+            <span class="rango-muestra" data-rango="${i}" aria-hidden="true"></span>
+            <span class="ayuda-rango-nombre">${i + 1}. ${nombreRango(r.desde, sexo)}</span>
+            <span class="ayuda-rango-pct">${percentilDe(desde)} % · ${percentilEntrenanDe(desde)} %</span>
+          </li>`;
+  }).join("");
+  return `
+    <div class="ayuda-velo" id="ayuda-velo">
+      <div class="ayuda-hoja tarjeta" role="dialog" aria-modal="true" aria-labelledby="ayuda-titulo">
+        <button type="button" class="mapa-detalle-cerrar" id="cerrar-ayuda" aria-label="Cerrar">✕</button>
+        <p class="ayuda-titulo" id="ayuda-titulo">¿Cómo funciona?</p>
+        <p class="ayuda-texto">
+          Tu mapa se pinta con lo que anotas en <strong>Registro</strong>. Por cada músculo
+          tomamos tu mejor marca de las últimas 8 semanas y la comparamos con tu peso corporal:
+          así, alguien más ligero no queda en desventaja.
+        </p>
+        <p class="ayuda-texto">
+          Cada color es un rango. Van del más bajo al más alto: entre más abajo en la lista,
+          más fuerte eres.
+        </p>
+        <ul class="ayuda-rangos">
+          <li class="ayuda-rango ayuda-rango-cabeza">
+            <span></span><span>Rango</span><span>Superas a</span>
+          </li>${filas}
+          <li class="ayuda-rango">
+            <span class="rango-muestra rango-sin-datos" aria-hidden="true"></span>
+            <span class="ayuda-rango-nombre">Gris: sin datos</span><span></span>
+          </li>
+        </ul>
+        <p class="ayuda-nota">
+          "Superas a": a qué porcentaje de toda la población · y de la gente que entrena.
+        </p>
+        <p class="ayuda-texto">
+          Toca un músculo para ver su rango. Con 🔄 ves tu espalda.
+        </p>
+      </div>
+    </div>`;
+}
+
+/**
  * Las dos caras van siempre en el HTML, una detrás de la otra: así girar es una transición
  * de CSS sobre lo que ya está (ver `conectarMapa`) y no un repintado que cortaría el giro.
  *
@@ -195,10 +243,13 @@ export function tarjetaMusculos(
           ${cara("frente", de(a.frente), deEspalda, fuerza)}
           ${cara("espalda", de(a.espalda), !deEspalda, fuerza)}
         </div>
+        <button type="button" class="mapa-ayuda" id="abrir-ayuda"
+                aria-label="¿Cómo funciona?" title="¿Cómo funciona?">?</button>
         <button type="button" class="mapa-girar" id="girar-mapa"
                 aria-label="${textoBoton(deEspalda)}" title="${textoBoton(deEspalda)}">🔄</button>
       </div>
       <div id="mapa-detalle">${detalle}</div>
+      ${ayudaAbierta ? ayudaMapa(sexo) : ""}
     </section>`;
 }
 
@@ -330,6 +381,24 @@ export function conectarMapa(
 
   marcarSeleccion(false);
   document.querySelector("#cerrar-detalle")?.addEventListener("click", () => elegir(null));
+
+  // La explicación se abre y cierra sobre lo que ya está, sin repintar (como el giro).
+  const conectarAyuda = () => {
+    const velo = document.querySelector<HTMLElement>("#ayuda-velo");
+    if (!velo) return;
+    const cerrar = () => { ayudaAbierta = false; velo.remove(); };
+    velo.querySelector("#cerrar-ayuda")?.addEventListener("click", cerrar);
+    // Tocar fuera de la hoja también la cierra.
+    velo.addEventListener("click", (e) => { if (e.target === velo) cerrar(); });
+  };
+  conectarAyuda();
+  document.querySelector("#abrir-ayuda")?.addEventListener("click", () => {
+    if (ayudaAbierta) return;
+    ayudaAbierta = true;
+    document.querySelector(".mapa-cuerpo")?.insertAdjacentHTML("beforeend", ayudaMapa(sexo));
+    conectarAyuda();
+    document.querySelector<HTMLElement>("#cerrar-ayuda")?.focus();
+  });
   document.querySelector("#mapa-giro")?.addEventListener("click", (e) => {
     const m = (e.target as Element).closest<SVGElement>(".musculo");
     const grupo = m?.dataset.musculo ?? null;

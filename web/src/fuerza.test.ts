@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  NOMBRES_MUSCULO, fuerzaPorMusculo, nivelDe, nombreMusculo, nombreRango, percentilDe,
+  NOMBRES_MUSCULO, fuerzaPorMusculo, indiceRango, nivelDe, nombreMusculo, nombreRango, percentilDe,
   percentilEntrenanDe, rangoDe, unoRm,
 } from "./fuerza";
 import type { EjercicioBanco, Sesion } from "./datos";
@@ -25,6 +25,12 @@ describe("rangoDe", () => {
   it("fuera de la escala se queda en sus orillas", () => {
     expect(rangoDe(-3).nombre).toBe("Principiante");
     expect(rangoDe(12).nombre).toBe("Élite");
+  });
+});
+
+describe("indiceRango", () => {
+  it("el número de su rango, de 0 (Principiante) a 7 (Élite)", () => {
+    expect([0, 1.5, 2, 3, 4, 5, 6, 7, 8, 10].map(indiceRango)).toEqual([0, 0, 1, 2, 3, 4, 5, 6, 7, 7]);
   });
 });
 

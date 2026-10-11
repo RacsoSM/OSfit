@@ -57,6 +57,14 @@ const PERCENTILES_ENTRENAN: readonly (readonly [number, number])[] = [
 
 const acotar = (n: number) => Math.min(NIVEL_MAX, Math.max(0, n));
 
+/** El número de su rango en `RANGOS` (0 = Principiante … 7 = Élite): el que decide su color. */
+export function indiceRango(nivel: number): number {
+  const n = acotar(nivel);
+  let i = 0;
+  RANGOS.forEach((x, j) => { if (n >= x.desde) i = j; });
+  return i;
+}
+
 export function rangoDe(nivel: number): Rango {
   const n = acotar(nivel);
   let r = RANGOS[0];
