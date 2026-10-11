@@ -46,12 +46,21 @@ CALIDAD = 23  # CRF de H.264: 23 deja cada video en ~110-150 kB sin artefactos v
 
 
 def poses_del_gif(gif: Path) -> tuple[Image.Image, Image.Image] | None:
-    """Las 2 poses (cuadros de 1 s), o None si el GIF no sigue el patrón de 2 poses."""
+    """
+    Las 2 poses, o None si el GIF no sigue el patrón de 2 poses. Hay dos formatos de 12 cuadros:
+    - con pausa: las poses son los 2 cuadros de 1 s (los demás duran 100 ms);
+    - sin pausa (todos de 100 ms, p. ej. varias máquinas): las poses son los cuadros 0 y 6.
+    En los dos, los cuadros intermedios son fundidos entre las poses.
+    """
     cuadros = [(c.info.get("duration", 0), c.convert("RGB").copy()) for c in ImageSequence.Iterator(Image.open(gif))]
-    poses = [img for dur, img in cuadros if dur >= 500]
-    if len(cuadros) != 12 or len(poses) != 2:
+    if len(cuadros) != 12:
         return None
-    return poses[0], poses[1]
+    pausas = [img for dur, img in cuadros if dur >= 500]
+    if len(pausas) == 2:
+        return pausas[0], pausas[1]
+    if not pausas and len({dur for dur, _ in cuadros}) == 1:
+        return cuadros[0][1], cuadros[6][1]
+    return None
 
 
 def escalar(modelo, img: Image.Image) -> Image.Image:

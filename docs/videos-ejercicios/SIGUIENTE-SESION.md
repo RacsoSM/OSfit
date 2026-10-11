@@ -15,7 +15,7 @@ dice **qué hacer, en qué orden, dónde y cómo**; el detalle técnico y el por
   720 px en bucle (fundido entre las dos poses). Decidido por el entrenador el 2026-10-10.
 - **La web y la app ya reproducen el video** de cualquier ejercicio con `videoRuta`. No hay
   que tocar código: solo generar, revisar y subir archivos.
-- Hoy el banco tiene **108 ejercicios; 102 son de 2 poses** (los que entran). Los otros 6
+- Hoy el banco tiene **109 ejercicios; 103 son de 2 poses** (con pausa de 1 s o, en algunas máquinas, sin pausa: el script acepta los dos) (los que entran). Los otros 6
   (zancadas caminando, giros rusos, plancha, escaladores, burpees, caminata del granjero) se
   saltan solos y **no se usan**: decisión del entrenador.
 - Ya hecho en el piloto: **press de banca** subido a producción (`ejercicios/press-banca.mp4`).
@@ -33,7 +33,7 @@ Verificado el 2026-10-10/11 en una sesión anterior; confírmalo, no lo supongas
   comando que sube a Firebase aunque el entrenador ya lo haya pedido. No lo esquives: dile qué
   ibas a subir y que lo autorice; con su "sí" explícito en la conversación suele pasar.
 - `ffmpeg` está instalado. No hay tarjeta gráfica: todo corre en CPU (4 núcleos ≈ 13 s por
-  ejercicio, ~25 min los 102).
+  ejercicio, ~25 min los 103).
 - `docs/videos-ejercicios/venv`, `modelos/`, `salida/`, `trabajo/` están en `.gitignore`. En
   una sesión nueva **no existen**: hay que crearlos (paso 2).
 
@@ -61,7 +61,7 @@ venv/bin/python camino1.py --todos        # en segundo plano: ~25 min
 ```
 
 - Deja `salida/<id>.mp4` y `salida/<id>-poses.png` por ejercicio.
-- Debe terminar con "102 videos … saltados: zancadas-caminando, giros-rusos, plancha,
+- Debe terminar con "103 videos … saltados: zancadas-caminando, giros-rusos, plancha,
   escaladores, burpees, caminata-granjero". Si salta otro, revísalo antes de seguir.
 - Para rehacer solo algunos: `venv/bin/python camino1.py <id> <id> …`.
 
