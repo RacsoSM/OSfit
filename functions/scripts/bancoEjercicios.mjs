@@ -27,7 +27,7 @@ export const TIPOS = ["peso", "corporal", "tiempo"];
  * GEMELO: `GRUPOS` en `web/src/grupos.ts` y `GruposEjercicio` en `domain/GruposEjercicio.kt`.
  */
 export const GRUPOS = [
-  "pecho", "espalda", "hombro", "biceps", "triceps", "cuadriceps", "gluteo", "femoral",
+  "pecho", "espalda", "hombro", "trapecio", "biceps", "triceps", "cuadriceps", "gluteo", "femoral",
   "pantorrilla", "abdomen", "cardio",
 ];
 

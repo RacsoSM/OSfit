@@ -18,6 +18,12 @@ describe("gruposDelDia", () => {
     expect(gruposDelDia(nombre)).toEqual(grupos);
   });
 
+  it("reconoce el trapecio en cualquiera de sus formas", () => {
+    expect(gruposDelDia("Hombro y trapecio")).toEqual(["hombro", "trapecio"]);
+    expect(gruposDelDia("Espalda + trapecios")).toEqual(["espalda", "trapecio"]);
+    expect(gruposDelDia("Traps")).toEqual(["trapecio"]);
+  });
+
   it("entiende plurales y otras formas de escribirlos", () => {
     expect(gruposDelDia("Hombros + Glúteos + abs")).toEqual(["hombro", "gluteo", "abdomen"]);
     expect(gruposDelDia("Brazo")).toEqual(["biceps", "triceps"]);
