@@ -31,7 +31,7 @@ Los GIFs **no tienen movimiento real**. Traen 12 cuadros:
 O sea: solo hay **2 imágenes reales**. Ningún interpolador puede sacar movimiento real de un
 fundido, así que el camino 1 no intenta inventarlo: rehace **el mismo fundido, pero nítido**.
 
-Al 2026-10-10, de los 97 ejercicios del banco **91 seguían este patrón**; los agregados después también (hoy 109 en total, 103 de 2 poses).
+Al 2026-10-10, de los 97 ejercicios del banco **91 seguían este patrón**; los agregados después también (hoy 110 en total, 104 de 2 poses).
 Algunas máquinas (p. ej. el press de pecho en máquina, GIF 1301) traen una variante **sin pausa**:
 12 cuadros todos de 100 ms; ahí las poses son los cuadros 0 y 6, y el script también la acepta. Los otros 6 (zancadas caminando,
 giros rusos, plancha, escaladores, burpees, caminata del granjero) tienen más poses o un patrón

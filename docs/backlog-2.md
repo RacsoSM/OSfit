@@ -354,7 +354,7 @@ Hecho (2026-10-10), segunda parte — **GIFs vinculados a los ejercicios** (cier
 - **Fuente:** `hasaneyldrm/exercises-dataset` en GitHub (1,324 animaciones © Gym visual),
   fijado a un commit. La licencia de los medios la está viendo el entrenador con Gym visual
   (ver `docs/licencias/GymVisual.md`).
-- **Banco semilla:** 109 ejercicios comunes (91 + press de pecho en máquina, jalón con triángulo, jalón supino, remo en T con apoyo de pecho, curl predicador en máquina, spider curl, curl inclinado, sentadilla sumo con mancuerna, prensa horizontal a una pierna, patada de glúteo con liga y 8 de antebrazo) en `functions/semilla/ejercicios.json`, con nombre
+- **Banco semilla:** 110 ejercicios comunes (91 + press de pecho en máquina, press militar en máquina, jalón con triángulo, jalón supino, remo en T con apoyo de pecho, curl predicador en máquina, spider curl, curl inclinado, sentadilla sumo con mancuerna, prensa horizontal a una pierna, patada de glúteo con liga y 8 de antebrazo) en `functions/semilla/ejercicios.json`, con nombre
   y alias en español, músculos (claves de los SVG) y tipo. Sin `estandares` todavía.
 - **Carga:** `functions/scripts/cargarBancoEjercicios.mjs` convierte cada GIF a WebP animado
   (~40 kB en vez de ~125 kB), lo sube a `ejercicios/<id>.webp` y escribe `ejercicios/{id}`.
@@ -444,7 +444,7 @@ Qué hay que hacer:
 
 1. Instalar el entorno (sección 5 del documento).
 2. Generar los videos: `venv/bin/python camino1.py --todos` en `docs/videos-ejercicios/`.
-   Son los 103 ejercicios de 2 poses (~25 min). Los 6 de otro patrón (zancadas caminando, giros
+   Son los 104 ejercicios de 2 poses (~25 min). Los 6 de otro patrón (zancadas caminando, giros
    rusos, plancha, escaladores, burpees, caminata del granjero) se saltan solos y no se usan.
 3. Revisar cada uno con la lista de la sección 6.2 (`salida/<id>-poses.png`).
 4. Subir los buenos con `functions/scripts/subirVideoEjercicio.mjs` (sección 6.3).
