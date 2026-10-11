@@ -1068,3 +1068,28 @@ main:has(#barra) { padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
 /* El video del ejercicio activo: viene en 720 px, así que se puede mostrar más grande que el
    GIF (180 px nativos) sin pixelarse. 260 px a pedido del entrenador (2026-10-10). */
 .registro-activo-gif .registro-ej-video { width: min(100%, 260px); }
+
+/* Músculos sin peso corporal: un velo que tapa la ventana y, al centro, el aviso con el campo
+   (`ui/pesoCorporal.ts`). Debajo de la barra de abajo (z 10) para que pueda irse a otra
+   ventana; arriba de todo lo demás de la página. */
+.peso-velo {
+  position: fixed; inset: 0; z-index: 9;
+  display: flex; align-items: center; justify-content: center;
+  padding: calc(16px + env(safe-area-inset-top)) 16px calc(90px + env(safe-area-inset-bottom));
+  background: rgba(0, 0, 0, 0.6);
+  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+}
+.peso-aviso {
+  width: 100%; max-width: 340px; margin: 0; padding: 20px 18px; text-align: center;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.55);
+}
+.peso-titulo { margin: 6px 0 4px; font-size: 18px; font-weight: 800; line-height: 1.3; }
+.peso-texto { margin: 0 0 14px; font-size: 14px; color: var(--texto-tenue); }
+.peso-campo { margin: 0 auto 12px; max-width: 180px; }
+.peso-campo input { text-align: center; font-size: 22px; }
+.peso-error { margin: -4px 0 10px; font-size: 13px; color: var(--rojo); }
+.peso-linea {
+  display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap;
+  margin: 4px 2px 12px; font-size: 14px; color: var(--texto-tenue);
+}
+.peso-linea strong { color: var(--texto); }

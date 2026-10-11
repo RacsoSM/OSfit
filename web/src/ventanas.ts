@@ -16,6 +16,7 @@ import { tarjetaAjustes } from "./ui/tarjetaAjustes";
 import { invitacionNotificaciones, seccionNotificaciones } from "./ui/tarjetaNotificaciones";
 import type { EstadoNotificaciones } from "./notificaciones";
 import { tarjetaMusculos, type EstadoSvg } from "./ui/mapaMuscular";
+import { bloquePeso } from "./ui/pesoCorporal";
 
 /**
  * Las ventanas de la página y lo que pinta cada una.
@@ -121,7 +122,9 @@ export const VENTANAS: readonly Ventana[] = [
   { id: "inicio", titulo: "Inicio", icono: "🏠", grupo: "principal", pintar: inicio },
   {
     id: "musculos", titulo: "Músculos", icono: "💪", grupo: "barra",
-    pintar: (d) => tarjetaMusculos(d.cliente.sexo, d.mapas),
+    // Sin sexo el mapa ya avisa que falta su perfil; con él, sin peso no deja pasar.
+    pintar: (d) => tarjetaMusculos(d.cliente.sexo, d.mapas)
+      + (d.cliente.sexo === "H" || d.cliente.sexo === "M" ? bloquePeso(d.cliente.peso) : ""),
   },
   {
     id: "registro", titulo: "Registro", icono: "📝", grupo: "barra",

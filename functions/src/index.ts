@@ -10,3 +10,4 @@ export { programarAvisos } from "./programarAvisos";
 export { alRevocarAcceso } from "./alRevocarAcceso";
 export { registrarEntrada } from "./registrarEntrada";
 export { registrarSesion } from "./registrarSesion";
+export { guardarPeso } from "./guardarPeso";

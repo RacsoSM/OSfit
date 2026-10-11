@@ -1,0 +1,257 @@
+"""
+Propuesta de estándares de fuerza por ejercicio (punto 4 / mapa muscular).
+
+Genera `estandares.json` (lo que se cargará al banco como `estandares`) y `propuesta.md`
+(la hoja que revisa el entrenador). Para cambiar un valor: edita FAMILIAS o EJERCICIOS
+aquí y vuelve a correr `python3 proponer.py`. Ver `README.md` de esta carpeta.
+
+Cada ejercicio tiene 5 cortes por sexo, en orden: Principiante, Novato, Intermedio,
+Avanzado, Élite (niveles 1 a 5 de `web/src/fuerza.ts`).
+- "peso": 1RM estimado / peso corporal. En mancuernas, el peso de UNA mancuerna.
+- "corporal": repeticiones seguidas con el propio cuerpo.
+- "tiempo": no alimenta el mapa (spec), no lleva estándares.
+"""
+import json
+from pathlib import Path
+
+AQUI = Path(__file__).parent
+BANCO = AQUI.parent.parent / "functions" / "semilla" / "ejercicios.json"
+
+# Ejercicios de referencia (1RM / peso corporal), de tablas públicas de fuerza por peso
+# corporal (estilo Strength Level / ExRx), redondeados. H = hombre, M = mujer.
+FAMILIAS = {
+    "banca":       {"H": [0.50, 0.75, 1.00, 1.50, 2.00], "M": [0.25, 0.50, 0.75, 1.00, 1.50]},
+    "sentadilla":  {"H": [0.75, 1.25, 1.50, 2.25, 2.75], "M": [0.50, 0.75, 1.25, 1.50, 2.00]},
+    "muerto":      {"H": [1.00, 1.50, 2.00, 2.50, 3.00], "M": [0.50, 1.00, 1.25, 1.75, 2.50]},
+    "militar":     {"H": [0.35, 0.55, 0.75, 1.00, 1.30], "M": [0.20, 0.35, 0.50, 0.75, 1.00]},
+    "curl":        {"H": [0.20, 0.40, 0.60, 0.85, 1.15], "M": [0.10, 0.20, 0.40, 0.60, 0.85]},
+    "remo":        {"H": [0.50, 0.75, 1.00, 1.50, 1.75], "M": [0.25, 0.40, 0.65, 0.90, 1.20]},
+    "jalon":       {"H": [0.50, 0.75, 1.00, 1.40, 1.75], "M": [0.30, 0.45, 0.65, 0.90, 1.20]},
+    "prensa":      {"H": [1.25, 2.00, 3.00, 4.25, 5.50], "M": [0.75, 1.50, 2.25, 3.25, 4.25]},
+    "triceps":     {"H": [0.25, 0.45, 0.65, 0.95, 1.25], "M": [0.15, 0.25, 0.40, 0.60, 0.85]},
+    "extension":   {"H": [0.50, 0.75, 1.15, 1.60, 2.10], "M": [0.35, 0.55, 0.85, 1.20, 1.60]},
+    "femoral":     {"H": [0.35, 0.55, 0.80, 1.10, 1.45], "M": [0.25, 0.40, 0.60, 0.85, 1.15]},
+    "pantorrilla": {"H": [0.50, 1.00, 1.60, 2.40, 3.25], "M": [0.35, 0.75, 1.25, 1.90, 2.60]},
+    "encogimiento":{"H": [0.60, 1.00, 1.50, 2.10, 2.75], "M": [0.35, 0.60, 0.95, 1.40, 1.85]},
+    "hipthrust":   {"H": [0.75, 1.25, 1.75, 2.50, 3.25], "M": [0.50, 1.00, 1.50, 2.25, 3.00]},
+    "muneca":      {"H": [0.20, 0.35, 0.55, 0.80, 1.05], "M": [0.10, 0.20, 0.35, 0.50, 0.70]},
+    "abductor":    {"H": [0.40, 0.70, 1.05, 1.50, 2.00], "M": [0.35, 0.65, 1.00, 1.45, 1.95]},
+    "lateral":     {"H": [0.05, 0.10, 0.20, 0.30, 0.40], "M": [0.03, 0.06, 0.12, 0.18, 0.25]},
+    "crunch":      {"H": [0.30, 0.55, 0.85, 1.20, 1.60], "M": [0.20, 0.35, 0.55, 0.80, 1.10]},
+}
+
+# Ejercicios con peso: (familia, factor, nota). El estándar es familia × factor.
+PESO = {
+    "press-banca": ("banca", 1.00, ""),
+    "press-banca-inclinado": ("banca", 0.82, ""),
+    "press-banca-declinado": ("banca", 1.05, ""),
+    "press-cerrado": ("banca", 0.85, ""),
+    "press-mancuernas": ("banca", 0.38, "por mancuerna"),
+    "press-inclinado-mancuernas": ("banca", 0.33, "por mancuerna"),
+    "aperturas-mancuernas": ("banca", 0.20, "por mancuerna"),
+    "aperturas-inclinadas": ("banca", 0.18, "por mancuerna"),
+    "cruce-poleas": ("banca", 0.18, "por lado; depende de la polea"),
+    "pec-deck": ("banca", 0.80, "máquina: varía por marca"),
+    "sentadilla": ("sentadilla", 1.00, ""),
+    "sentadilla-frontal": ("sentadilla", 0.82, ""),
+    "sentadilla-smith": ("sentadilla", 0.95, "máquina: varía por marca"),
+    "sentadilla-hack": ("sentadilla", 1.10, "máquina: varía por marca"),
+    "sentadilla-goblet": ("sentadilla", 0.35, "una mancuerna o pesa rusa"),
+    "sentadilla-sumo-mancuerna": ("sentadilla", 0.38, "una mancuerna"),
+    "sentadilla-bulgara": ("sentadilla", 0.25, "por mancuerna"),
+    "zancadas": ("sentadilla", 0.25, "por mancuerna"),
+    "zancadas-atras": ("sentadilla", 0.25, "por mancuerna"),
+    "subidas-cajon": ("sentadilla", 0.22, "por mancuerna"),
+    "buenos-dias": ("muerto", 0.45, ""),
+    "prensa": ("prensa", 1.00, "máquina: varía por marca"),
+    "prensa-horizontal-una-pierna": ("prensa", 0.40, "una pierna; máquina"),
+    "extension-cuadriceps": ("extension", 1.00, "máquina"),
+    "curl-femoral-acostado": ("femoral", 1.00, "máquina"),
+    "curl-femoral-sentado": ("femoral", 1.10, "máquina"),
+    "peso-muerto": ("muerto", 1.00, ""),
+    "peso-muerto-sumo": ("muerto", 1.00, ""),
+    "peso-muerto-rumano": ("muerto", 0.75, ""),
+    "peso-muerto-piernas-rigidas": ("muerto", 0.72, ""),
+    "peso-muerto-rumano-mancuernas": ("muerto", 0.33, "por mancuerna"),
+    "swing-kettlebell": ("muerto", 0.20, "una pesa rusa"),
+    "hip-thrust": ("hipthrust", 1.00, ""),
+    "pantorrilla-de-pie": ("pantorrilla", 1.00, "máquina"),
+    "pantorrilla-sentado": ("pantorrilla", 0.70, "máquina"),
+    "abductores-maquina": ("abductor", 1.00, "máquina"),
+    "aductores-maquina": ("abductor", 1.00, "máquina"),
+    "patada-gluteo-polea": ("abductor", 0.35, "polea"),
+    "jalon-al-pecho": ("jalon", 1.00, ""),
+    "jalon-agarre-abierto": ("jalon", 0.95, ""),
+    "jalon-triangulo": ("jalon", 1.00, ""),
+    "jalon-supino": ("jalon", 1.00, ""),
+    "remo-sentado-polea": ("jalon", 1.05, ""),
+    "pullover-polea": ("triceps", 0.90, ""),
+    "remo-con-barra": ("remo", 1.00, ""),
+    "remo-maquina": ("remo", 0.95, "máquina: varía por marca"),
+    "remo-en-t": ("remo", 0.85, "solo los discos"),
+    "remo-mancuerna": ("remo", 0.45, "una mancuerna"),
+    "encogimientos-barra": ("encogimiento", 1.00, ""),
+    "encogimientos-mancuernas": ("encogimiento", 0.45, "por mancuerna"),
+    "press-militar": ("militar", 1.00, ""),
+    "press-militar-sentado": ("militar", 1.03, ""),
+    "press-hombro-mancuernas": ("militar", 0.40, "por mancuerna"),
+    "press-arnold": ("militar", 0.36, "por mancuerna"),
+    "remo-al-menton": ("militar", 0.80, ""),
+    "elevaciones-laterales": ("lateral", 1.00, "por mancuerna"),
+    "elevaciones-laterales-polea": ("lateral", 0.80, "por lado"),
+    "elevaciones-frontales": ("lateral", 1.10, "por mancuerna"),
+    "pajaros": ("lateral", 0.90, "por mancuerna"),
+    "face-pull": ("triceps", 0.90, "polea"),
+    "curl-barra": ("curl", 1.00, ""),
+    "curl-barra-z": ("curl", 1.00, ""),
+    "curl-polea": ("curl", 1.00, ""),
+    "curl-predicador": ("curl", 0.85, ""),
+    "curl-predicador-maquina": ("curl", 0.85, "máquina"),
+    "spider-curl": ("curl", 0.75, ""),
+    "curl-mancuernas": ("curl", 0.45, "por mancuerna"),
+    "curl-martillo": ("curl", 0.50, "por mancuerna"),
+    "curl-inclinado": ("curl", 0.38, "por mancuerna"),
+    "curl-concentrado": ("curl", 0.40, "una mancuerna"),
+    "curl-inverso-barra": ("curl", 0.75, ""),
+    "curl-inverso-polea": ("curl", 0.75, ""),
+    "curl-inverso-mancuernas": ("curl", 0.33, "por mancuerna"),
+    "curl-muneca-barra": ("muneca", 1.00, ""),
+    "curl-muneca-polea": ("muneca", 0.90, ""),
+    "curl-muneca-inverso-barra": ("muneca", 0.60, ""),
+    "curl-muneca-mancuernas": ("muneca", 0.45, "por mancuerna"),
+    "curl-muneca-inverso-mancuernas": ("muneca", 0.28, "por mancuerna"),
+    "extension-triceps-polea": ("triceps", 1.00, ""),
+    "extension-triceps-cuerda": ("triceps", 0.90, ""),
+    "extension-triceps-trasnuca-polea": ("triceps", 0.85, ""),
+    "press-frances": ("triceps", 0.80, ""),
+    "extension-triceps-mancuerna": ("triceps", 0.45, "una mancuerna, dos manos"),
+    "patada-triceps": ("triceps", 0.20, "por mancuerna"),
+    "crunch-polea": ("crunch", 1.00, ""),
+}
+
+# Corporales: repeticiones seguidas.
+CORPORAL = {
+    "lagartijas":              {"H": [3, 15, 30, 45, 65], "M": [1, 5, 15, 28, 40]},
+    "fondos-pecho":            {"H": [1, 8, 18, 30, 42], "M": [1, 2, 8, 15, 25]},
+    "fondos-banco":            {"H": [5, 15, 30, 45, 60], "M": [3, 10, 22, 35, 50]},
+    "dominadas":               {"H": [1, 6, 12, 20, 30], "M": [1, 2, 6, 12, 18]},
+    "dominadas-supinas":       {"H": [1, 7, 13, 21, 31], "M": [1, 3, 7, 13, 19]},
+    "sentadilla-salto":        {"H": [5, 15, 30, 45, 60], "M": [3, 10, 22, 35, 50]},
+    "zancadas-caminando":      {"H": [8, 20, 35, 50, 70], "M": [6, 15, 28, 42, 60]},
+    "patada-gluteo-liga":      {"H": [10, 20, 35, 50, 70], "M": [10, 20, 35, 50, 70]},
+    "hiperextensiones":        {"H": [5, 15, 30, 45, 60], "M": [5, 12, 25, 40, 55]},
+    "crunch":                  {"H": [10, 25, 45, 65, 90], "M": [8, 20, 38, 55, 80]},
+    "abdominales-completos":   {"H": [5, 20, 35, 50, 70], "M": [3, 15, 28, 42, 60]},
+    "elevacion-piernas-colgado": {"H": [1, 6, 12, 20, 30], "M": [1, 4, 9, 15, 22]},
+    "elevacion-piernas":       {"H": [5, 15, 25, 40, 55], "M": [4, 12, 22, 35, 48]},
+    "giros-rusos":             {"H": [10, 25, 40, 60, 80], "M": [10, 22, 35, 52, 70]},
+    "bicho-muerto":            {"H": [10, 20, 35, 50, 70], "M": [10, 20, 35, 50, 70]},
+    "burpees":                 {"H": [3, 10, 20, 30, 40], "M": [2, 7, 15, 24, 32]},
+}
+NOTAS_CORPORAL = {
+    "patada-gluteo-liga": "con liga: depende de la liga, poco confiable",
+    "bicho-muerto": "por lado",
+    "zancadas-caminando": "pasos por pierna",
+}
+
+# Sin estándar a propósito.
+SIN_ESTANDAR = {
+    "dominadas-asistidas": "el peso es la ayuda de la máquina: más peso = menos fuerza",
+}
+
+NIVELES = ["Principiante", "Novato", "Intermedio", "Avanzado", "Élite"]
+# A quién supera cada corte. Iguales a `PERCENTILES` de `web/src/fuerza.ts` (población) y a
+# las tablas públicas (gente que entrena).
+SUPERA_POBLACION = [50, 78, 88, 95, 99]
+SUPERA_ENTRENAN = [5, 20, 50, 80, 95]
+PESO_EJEMPLO = {"H": 75, "M": 60}
+
+
+def redondear_kg(kg: float) -> float:
+    paso = 1 if kg < 20 else 2.5
+    return round(kg / paso) * paso
+
+
+def main() -> None:
+    banco = json.loads(BANCO.read_text())
+    salida: dict = {}
+    filas: dict[str, list[str]] = {}
+    faltan = []
+    for e in banco:
+        i, tipo, grupo = e["id"], e["tipo"], e["grupo"]
+        filas.setdefault(grupo, [])
+        if tipo == "tiempo":
+            filas[grupo].append(f"| {e['nombre']} | — | de tiempo: no pinta el mapa |" + " |" * 4)
+            continue
+        if i in SIN_ESTANDAR:
+            filas[grupo].append(f"| {e['nombre']} | — | sin estándar: {SIN_ESTANDAR[i]} |" + " |" * 4)
+            continue
+        if tipo == "peso" and i in PESO:
+            fam, f, nota = PESO[i]
+            est = {s: [round(v * f, 3) for v in FAMILIAS[fam][s]] for s in ("H", "M")}
+            salida[i] = est
+            for s in ("H", "M"):
+                celdas = [f"{redondear_kg(v * PESO_EJEMPLO[s]):g} kg" for v in est[s]]
+                n = f" · {nota}" if nota else ""
+                filas[grupo].append(f"| {e['nombre'] if s == 'H' else ''} | {'H' if s == 'H' else 'M'}{n if s == 'H' else ''} | " + " | ".join(celdas) + " |")
+        elif tipo == "corporal" and i in CORPORAL:
+            est = CORPORAL[i]
+            salida[i] = est
+            nota = NOTAS_CORPORAL.get(i, "")
+            for s in ("H", "M"):
+                n = f" · {nota}" if nota and s == "H" else ""
+                filas[grupo].append(f"| {e['nombre'] if s == 'H' else ''} | {s}{n} | " + " | ".join(f"{v} rep" if v == 1 else f"{v} reps" for v in est[s]) + " |")
+        else:
+            faltan.append(i)
+    if faltan:
+        raise SystemExit(f"Ejercicios del banco sin propuesta: {faltan}")
+
+    (AQUI / "estandares.json").write_text(json.dumps(salida, ensure_ascii=False, indent=2) + "\n")
+
+    nombres_grupo = {"pecho": "Pecho", "cuadriceps": "Cuádriceps", "femoral": "Femoral",
+                     "gluteo": "Glúteo", "pantorrilla": "Pantorrilla", "espalda": "Espalda",
+                     "trapecio": "Trapecio", "hombro": "Hombro", "biceps": "Bíceps",
+                     "antebrazo": "Antebrazo", "triceps": "Tríceps", "abdomen": "Abdomen",
+                     "cardio": "Cardio"}
+    cab = "| Ejercicio | Sexo | " + " | ".join(NIVELES) + " |\n|---|---|" + "---|" * 5
+    md = [
+        "# Propuesta de estándares de fuerza — para revisar",
+        "",
+        "Generado por `proponer.py` (no editar a mano: cambia el script y vuelve a correrlo).",
+        "",
+        "## Cómo leerla",
+        "",
+        f"- Los kilos son **un ejemplo** para un hombre de {PESO_EJEMPLO['H']} kg y una mujer de "
+        f"{PESO_EJEMPLO['M']} kg. Lo que se guarda es la proporción (1RM ÷ peso corporal), así "
+        "que a una clienta de 80 kg le pide un tercio más que a una de 60.",
+        "- Los kilos son el **1RM estimado** (el máximo a 1 repetición). La página lo calcula de lo "
+        "que registre: por ejemplo 40 kg × 8 reps ≈ 50 kg de 1RM.",
+        "- **Mancuernas: el peso de UNA mancuerna.** Hay que decirlo así en Registro.",
+        "- Corporales: repeticiones seguidas con el propio cuerpo.",
+        "- Máquinas y poleas varían por marca: tómalas como aproximadas o ajústalas a las de tu gym.",
+        "",
+        "## Las dos comparaciones",
+        "",
+        "Cada corte se compara contra **toda la población** (incluye a la gente que no entrena) "
+        "y contra **la gente que sí entrena**. Son los mismos cortes vistos desde dos grupos:",
+        "",
+        "| Nivel | Supera a toda la población | Supera a quienes entrenan |",
+        "|---|---|---|",
+        *[f"| {n} | {p} % | {t} % |" for n, p, t in zip(NIVELES, SUPERA_POBLACION, SUPERA_ENTRENAN)],
+        "",
+        "Principiante es lo que levanta un adulto promedio que no entrena (la mitad de la "
+        "población). Como solo ~1 de cada 4 adultos entrena fuerza, los niveles altos superan "
+        "a casi toda la población aunque a muchos de los que entrenan no. Entre un corte y otro "
+        "el porcentaje se reparte en proporción. En Músculos se mostrarían las dos, por ejemplo: "
+        "*\"Más fuerte que el 88 % de la población y que el 50 % de quienes entrenan\"*.",
+        "",
+        "## Estándares por ejercicio",
+    ]
+    for g, fs in filas.items():
+        md += ["", f"### {nombres_grupo.get(g, g)}", "", cab, *fs]
+    (AQUI / "propuesta.md").write_text("\n".join(md) + "\n")
+    print(f"{len(salida)} ejercicios con estándar; propuesta.md y estandares.json listos")
+
+
+if __name__ == "__main__":
+    main()

@@ -25,7 +25,7 @@ import type {
 } from "./datos";
 import { hoyEnMazatlan } from "./fecha";
 import { mesAnterior, type Tirada } from "./tirada";
-import { obtenerRanking, registrarEntrada, registrarSesion } from "./acciones";
+import { guardarPeso, obtenerRanking, registrarEntrada, registrarSesion } from "./acciones";
 import { modalRuleta, conectarRuleta } from "./ui/ruleta";
 import { conectarRanking, type EstadoRanking } from "./ui/tarjetaRanking";
 import { conectarAjustes } from "./ui/tarjetaAjustes";
@@ -48,6 +48,7 @@ import { BARRA, VENTANAS, contenidoDe, datosRegistro, tituloCabecera, ventana, t
 import { cabeceraRegistro, conectarRegistro } from "./ui/registro";
 import { barraInferior, conectarBarra } from "./ui/barraInferior";
 import { archivosMapa, conectarMapa, type EstadoSvg } from "./ui/mapaMuscular";
+import { conectarPeso } from "./ui/pesoCorporal";
 import {
   abrirMenu, abrirVentana, cerrarMenu, historialDelNavegador, iniciarNavegacion, menuAbierto,
   ventanaActiva,
@@ -480,6 +481,7 @@ async function arrancar(): Promise<void> {
     // snapshot a destiempo no lo borre.
     if (activa.id === "musculos") {
       conectarMapa(cliente.sexo);
+      conectarPeso(pintar, (peso) => guardarPeso({ peso }));
       return;
     }
     if (activa.id === "registro") {

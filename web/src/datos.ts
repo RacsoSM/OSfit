@@ -92,6 +92,12 @@ export interface Cliente {
    * razón de siempre; ausente, la ventana Músculos le avisa en vez de adivinar.
    */
   sexo?: Sexo | null;
+  /**
+   * Su peso corporal en kg: contra él se mide su fuerza en Músculos (1RM ÷ peso). Lo escribe
+   * el entrenador en "Editar cliente" o ella misma con `guardarPeso`. Opcional por la razón de
+   * siempre; ausente, Músculos le pide anotarlo antes de dejarla pasar.
+   */
+  peso?: number | null;
 }
 
 export interface Asistencia {

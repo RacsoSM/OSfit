@@ -75,3 +75,9 @@ export const registrarSesion = httpsCallable<Envio, { ok: true; id: string; fech
   functions,
   "registrarSesion"
 );
+
+/** Su peso corporal en kg, para Músculos. El servidor rechaza lo que no sea de 25 a 300 kg. */
+export const guardarPeso = httpsCallable<{ peso: number }, { ok: true; peso: number }>(
+  functions,
+  "guardarPeso"
+);
