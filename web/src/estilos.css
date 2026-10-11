@@ -812,9 +812,15 @@ main:has(#barra) { padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
    que lo gira. Las dos caras están una detrás de la otra y girar es rotar el contenedor:
    así se ve como un cuerpo que da la vuelta. Los SVG traen su contorno y sus líneas (ver
    `prepararSvg`); aquí va solo el color de los músculos, que sin registros es "sin datos". */
+/* `padding-top`: el dibujo, los botones y el texto un poco más abajo del título (2026-10-11):
+   sobraba espacio arriba de la barra y se veían pegados al encabezado. */
 .mapa-cuerpo {
-  display: flex; flex-direction: column; align-items: center; padding-top: 4px;
+  display: flex; flex-direction: column; align-items: center; padding-top: 20px;
 }
+/* El dibujo con sus dos botones. Los botones van en las orillas de la escena (todo el ancho)
+   y no del marco: el marco se encoge con un músculo tocado y los llevaba encima de la cabeza
+   y los pies. */
+.mapa-escena { position: relative; width: 100%; display: flex; justify-content: center; }
 /* El tamaño lo fija el marco, con un ancho que sale del ancho de la página (siempre
    conocido) y no de su contenido. Antes el giro decía su alto y el marco tomaba el ancho de
    él, con un `max-width: 100%` que apuntaba de vuelta al marco: Chrome rompe ese círculo,

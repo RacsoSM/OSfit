@@ -250,10 +250,12 @@ export function tarjetaMusculos(
   const detalle = detalleMusculo(seleccionado, seleccionado ? fuerza[seleccionado] : undefined, sexo);
   return `
     <section class="mapa-cuerpo${seleccionado ? " con-detalle" : ""}" aria-label="Tu mapa muscular">
-      <div class="mapa-marco">
-        <div class="mapa-giro${deEspalda ? " girado" : ""}${seleccionado ? " con-seleccion" : ""}" id="mapa-giro">
-          ${cara("frente", de(a.frente), deEspalda, fuerza)}
-          ${cara("espalda", de(a.espalda), !deEspalda, fuerza)}
+      <div class="mapa-escena">
+        <div class="mapa-marco">
+          <div class="mapa-giro${deEspalda ? " girado" : ""}${seleccionado ? " con-seleccion" : ""}" id="mapa-giro">
+            ${cara("frente", de(a.frente), deEspalda, fuerza)}
+            ${cara("espalda", de(a.espalda), !deEspalda, fuerza)}
+          </div>
         </div>
         <button type="button" class="mapa-ayuda" id="abrir-ayuda"
                 aria-label="¿Cómo funciona?" title="¿Cómo funciona?">${ICONO_AYUDA}</button>
