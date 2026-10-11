@@ -2178,9 +2178,9 @@
     "semantic_hash": "1dce49b7ce2103d2b05648a3929fc9b1"
   },
   "docs/backlog-2.md": {
-    "mtime": 1791631591.518986,
-    "seen": 1791710050.9227982,
-    "ast_hash": "5e900eff20c23912b6625d0d25b59789",
+    "mtime": 1791711148.7510633,
+    "seen": 1791717289.4865417,
+    "ast_hash": "8a255c2f0d622786cee6ddaef18e97be",
     "semantic_hash": ""
   },
   "docs/licencias/LilitaOne-OFL.txt": {
@@ -2784,9 +2784,9 @@
     "semantic_hash": ""
   },
   "functions/scripts/bancoEjercicios.mjs": {
-    "mtime": 1791631591.5232356,
-    "seen": 1791710050.922453,
-    "ast_hash": "b67f51e4907c091b71acefdfa8f3f790",
+    "mtime": 1791711040.942728,
+    "seen": 1791717289.4862828,
+    "ast_hash": "da3c85d4bd7903d07d0ba5b86cc44f9b",
     "semantic_hash": ""
   },
   "functions/scripts/bancoEjercicios.test.mjs": {
@@ -2802,9 +2802,9 @@
     "semantic_hash": ""
   },
   "functions/semilla/ejercicios.json": {
-    "mtime": 1791631591.5235825,
-    "seen": 1791710050.922462,
-    "ast_hash": "c9ccb8c00215fbcdc649917ba9dc0e14",
+    "mtime": 1791711040.9430017,
+    "seen": 1791717289.4862924,
+    "ast_hash": "4915c74e509615b0e186721e321ad983",
     "semantic_hash": ""
   },
   "web/src/banco.test.ts": {
@@ -2844,9 +2844,9 @@
     "semantic_hash": ""
   },
   "app/src/main/java/com/osfit/app/domain/GruposEjercicio.kt": {
-    "mtime": 1791631591.5175357,
-    "seen": 1791710050.921537,
-    "ast_hash": "262291c72acca80aebb760fbd1291c98",
+    "mtime": 1791711040.9393454,
+    "seen": 1791717289.485858,
+    "ast_hash": "f4036f29a2184b1575f889ca35c4ccfb",
     "semantic_hash": ""
   },
   "app/src/main/java/com/osfit/app/domain/NombresBanco.kt": {
@@ -2880,9 +2880,9 @@
     "semantic_hash": ""
   },
   "app/src/test/java/com/osfit/app/domain/GruposEjercicioTest.kt": {
-    "mtime": 1791631591.518986,
-    "seen": 1791710050.9222949,
-    "ast_hash": "1a3cc6b0da4bd4f77ab4ec2f4e1a8c24",
+    "mtime": 1791711040.9393454,
+    "seen": 1791717289.4861662,
+    "ast_hash": "295b6de8e1f89ca489eddef072a0f091",
     "semantic_hash": ""
   },
   "app/src/test/java/com/osfit/app/domain/NombresBancoTest.kt": {
@@ -2916,15 +2916,15 @@
     "semantic_hash": ""
   },
   "web/src/grupos.test.ts": {
-    "mtime": 1791631591.5500324,
-    "seen": 1791710050.9225845,
-    "ast_hash": "22c3df1d173589b8c3eee74caf484804",
+    "mtime": 1791711040.9711022,
+    "seen": 1791717289.486393,
+    "ast_hash": "dc20aca6b3da44cc47a5de720ec89dce",
     "semantic_hash": ""
   },
   "web/src/grupos.ts": {
-    "mtime": 1791631591.550276,
-    "seen": 1791710050.922586,
-    "ast_hash": "b5ac0124583bc62adad21e208b52ecb6",
+    "mtime": 1791711040.9718235,
+    "seen": 1791717289.4863946,
+    "ast_hash": "1fd21bda56ce2c327cb7374dd8bb9654",
     "semantic_hash": ""
   },
   "web/src/registro.test.ts": {
@@ -2976,9 +2976,21 @@
     "semantic_hash": ""
   },
   "docs/videos-ejercicios/camino1.md": {
-    "mtime": 1791631591.518986,
-    "seen": 1791710050.9231791,
-    "ast_hash": "25df20ff2091cc3bd6d3794d331f5760",
+    "mtime": 1791711148.7514727,
+    "seen": 1791717289.4866583,
+    "ast_hash": "6c21bc3d6014545d7e25120a8f3b64b9",
+    "semantic_hash": ""
+  },
+  "docs/videos-ejercicios/hoja_revision.py": {
+    "mtime": 1791711148.7514727,
+    "seen": 1791717289.4862742,
+    "ast_hash": "749c7438a19027094b185c30a3d54ef3",
+    "semantic_hash": ""
+  },
+  "docs/videos-ejercicios/SIGUIENTE-SESION.md": {
+    "mtime": 1791711148.7510633,
+    "seen": 1791717289.486656,
+    "ast_hash": "8c0642e97b3086f8397f538cfa7e510d",
     "semantic_hash": ""
   }
 }
