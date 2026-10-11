@@ -30,7 +30,7 @@ Los GIFs **no tienen movimiento real**. Traen 12 cuadros:
 O sea: solo hay **2 imágenes reales**. Ningún interpolador puede sacar movimiento real de un
 fundido, así que el camino 1 no intenta inventarlo: rehace **el mismo fundido, pero nítido**.
 
-De los 97 ejercicios del banco, **91 siguen este patrón**. Los otros 6 (zancadas caminando,
+Al 2026-10-10, de los 97 ejercicios del banco **91 seguían este patrón**; los agregados después también (hoy 108 en total, 102 de 2 poses). Los otros 6 (zancadas caminando,
 giros rusos, plancha, escaladores, burpees, caminata del granjero) tienen más poses o un patrón
 distinto; el script los **salta** y se quedan con su GIF. Decisión del entrenador: no se usan.
 
