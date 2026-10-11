@@ -225,4 +225,13 @@ crédito "Animaciones © Gym visual" en la página, junto a donde se muestran.
 
 - **Piloto (2026-10-10):** press de banca generado y **subido a producción**
   (`ejercicios/press-banca.mp4`); sentadilla y jalón al pecho generados, sin subir.
-- **Pendiente:** generar, revisar y subir los demás (punto 10 de `docs/backlog-2.md`).
+- **2026-10-11:** generados los 102 ejercicios de 2 poses y **subidos los 102 a producción**
+  (ninguno rechazado; los 6 de otro patrón se quedan con su GIF). Verificado: 102 URLs públicas
+  `200 video/mp4` y `videoRuta` en 102 de 108 ejercicios. Dudosos señalados en la revisión (se
+  subieron igual, decisión del entrenador): los que cambian de ángulo entre poses y se ven
+  encimados a mitad del fundido — buenos-dias, lagartijas, peso-muerto,
+  peso-muerto-piernas-rigidas, peso-muerto-rumano, peso-muerto-rumano-mancuernas,
+  sentadilla-hack, sentadilla-salto, sentadilla-sumo-mancuerna, sentadilla-goblet,
+  swing-kettlebell, saltar-cuerda, subidas-cajon. Si alguno no convence, se quita con
+  `--quitar` (§6.5).
+- **Pendiente:** que el entrenador lo vea en su teléfono (web y app, §6.4).

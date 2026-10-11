@@ -430,7 +430,7 @@ punta a punta con una clienta temporal; APK entregado. Verificado por el entrena
 teléfono (2026-10-10).
 
 
-## 10. Videos HD de los ejercicios con el "camino 1" — 📋 PENDIENTE
+## 10. Videos HD de los ejercicios con el "camino 1" — ✅ HECHO (2026-10-11)
 
 > "esto es lo que haremos, usaremos el camino 1 para la generación de los 80 videos"
 
@@ -456,3 +456,11 @@ Qué se entrega: por ejercicio, `ejercicios/<id>.mp4` en Storage y `videoRuta` e
 Ya hecho en el piloto: press de banca subido a producción. Sentadilla y jalón al pecho, solo
 generados.
 
+**Hecho (2026-10-11):** generados los 102 ejercicios de 2 poses (se saltaron solos los 6
+previstos) y **subidos los 102 a producción** con el OK del entrenador; **ninguno rechazado**.
+Verificado: las 102 URLs públicas responden `200 video/mp4` y Firestore tiene `videoRuta` en
+102 de 108 ejercicios (los 6 sin video son los saltados, se quedan con su GIF). En la revisión
+se señalaron como dudosos los que cambian de ángulo entre pose A y B (buenos días, lagartijas,
+los 4 peso muerto, sentadilla hack/salto/sumo/goblet, swing, saltar la cuerda, subidas al
+cajón): a mitad del fundido se encima la figura, igual que en el GIF original; el entrenador
+decidió subirlos todos. **Falta:** que el entrenador lo vea en su teléfono (web y app).
