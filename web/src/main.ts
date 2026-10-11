@@ -44,7 +44,9 @@ import { conectarAccionDia } from "./ui/accionDia";
 import { conectarAccionFalta } from "./ui/accionFalta";
 import { moverMes } from "./ui/calendario";
 import { tarjetaVideos, ultimosRangoDescendente, firmaVideos, MAXIMO_VIDEOS } from "./ui/tarjetaVideos";
-import { BARRA, VENTANAS, contenidoDe, datosRegistro, tituloCabecera, ventana, type IdVentana } from "./ventanas";
+import {
+  BARRA, VENTANAS, contenidoDe, datosRegistro, fuerzaDelCliente, tituloCabecera, ventana, type IdVentana,
+} from "./ventanas";
 import { cabeceraRegistro, conectarRegistro } from "./ui/registro";
 import { barraInferior, conectarBarra } from "./ui/barraInferior";
 import { archivosMapa, conectarMapa, type EstadoSvg } from "./ui/mapaMuscular";
@@ -480,7 +482,7 @@ async function arrancar(): Promise<void> {
     // estado de las dos acciones no vive acá, sino dentro de sus módulos, justo para que un
     // snapshot a destiempo no lo borre.
     if (activa.id === "musculos") {
-      conectarMapa(cliente.sexo);
+      conectarMapa(cliente.sexo, fuerzaDelCliente(datos));
       conectarPeso(pintar, (peso) => guardarPeso({ peso }));
       return;
     }

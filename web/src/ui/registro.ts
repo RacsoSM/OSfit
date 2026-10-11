@@ -317,9 +317,12 @@ function medioGrande(e: EjercicioBorrador, delBanco: EjercicioBanco | undefined)
  * al siguiente. Es el único con campos: los demás solo muestran su resumen.
  */
 function tarjetaActiva(e: EjercicioBorrador, i: number, total: number, delBanco?: EjercicioBanco): string {
+  // Los estándares de fuerza de mancuernas cuentan una sola (`docs/estandares-fuerza/`).
   const nota = e.tipo === "corporal"
     ? `<p class="accion-nota">Con tu peso corporal. En kg, solo si agregaste peso extra.</p>`
-    : "";
+    : delBanco?.pesoPorMancuerna
+      ? `<p class="accion-nota">En kg, el peso de una mancuerna.</p>`
+      : "";
   const nav = total > 1 ? `
       <div class="registro-nav">
         <button class="registro-nav-boton" data-activar="${i - 1}" ${i === 0 ? "disabled" : ""}>‹ Anterior</button>

@@ -17,6 +17,7 @@ import { invitacionNotificaciones, seccionNotificaciones } from "./ui/tarjetaNot
 import type { EstadoNotificaciones } from "./notificaciones";
 import { tarjetaMusculos, type EstadoSvg } from "./ui/mapaMuscular";
 import { bloquePeso } from "./ui/pesoCorporal";
+import { fuerzaPorMusculo, type FuerzaMusculo } from "./fuerza";
 
 /**
  * Las ventanas de la página y lo que pinta cada una.
@@ -118,12 +119,24 @@ function inicio(d: DatosCliente): string {
     `;
 }
 
+/**
+ * El nivel de cada músculo para el mapa. Vacío (todo gris) sin sexo, sin peso o mientras no
+ * llegan las sesiones. Lo usan el pintado y `conectarMapa`, que tienen que decir lo mismo.
+ */
+export function fuerzaDelCliente(
+  d: Pick<DatosCliente, "cliente" | "sesiones" | "banco" | "hoy">
+): Record<string, FuerzaMusculo> {
+  const { sexo, peso } = d.cliente;
+  if ((sexo !== "H" && sexo !== "M") || !peso || !d.sesiones) return {};
+  return fuerzaPorMusculo(d.sesiones, d.banco, sexo, peso, d.hoy);
+}
+
 export const VENTANAS: readonly Ventana[] = [
   { id: "inicio", titulo: "Inicio", icono: "🏠", grupo: "principal", pintar: inicio },
   {
     id: "musculos", titulo: "Músculos", icono: "💪", grupo: "barra",
     // Sin sexo el mapa ya avisa que falta su perfil; con él, sin peso no deja pasar.
-    pintar: (d) => tarjetaMusculos(d.cliente.sexo, d.mapas)
+    pintar: (d) => tarjetaMusculos(d.cliente.sexo, d.mapas, fuerzaDelCliente(d))
       + (d.cliente.sexo === "H" || d.cliente.sexo === "M" ? bloquePeso(d.cliente.peso) : ""),
   },
   {

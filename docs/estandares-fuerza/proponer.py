@@ -221,6 +221,7 @@ def redondear_kg(kg: float) -> float:
 def main() -> None:
     banco = json.loads(BANCO.read_text())
     salida: dict = {}
+    por_mancuerna: list[str] = []
     filas: dict[str, list[str]] = {}
     faltan = []
     for e in banco:
@@ -236,6 +237,8 @@ def main() -> None:
             fam, f, nota = PESO[i]
             est = {s: a_ocho([round(v * f, 3) for v in FAMILIAS[fam][s]]) for s in ("H", "M")}
             salida[i] = est
+            if "mancuerna" in nota:
+                por_mancuerna.append(i)
             for s in ("H", "M"):
                 celdas = [f"{redondear_kg(v * PESO_EJEMPLO[s]):g} kg" for v in est[s]]
                 n = f" · {nota}" if nota else ""
@@ -262,7 +265,11 @@ def main() -> None:
     if pegados:
         print(f"Aviso — niveles de arriba con poco salto: {pegados}")
 
-    (AQUI / "estandares.json").write_text(json.dumps(salida, ensure_ascii=False, indent=2) + "\n")
+    # Lo que carga `functions/scripts/cargarEstandares.mjs` en `ejercicios/{id}`.
+    banco_salida = {
+        i: {"estandares": est, "pesoPorMancuerna": i in por_mancuerna} for i, est in salida.items()
+    }
+    (AQUI / "estandares.json").write_text(json.dumps(banco_salida, ensure_ascii=False, indent=2) + "\n")
 
     nombres_grupo = {"pecho": "Pecho", "cuadriceps": "Cuádriceps", "femoral": "Femoral",
                      "gluteo": "Glúteo", "pantorrilla": "Pantorrilla", "espalda": "Espalda",

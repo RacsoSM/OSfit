@@ -48,6 +48,17 @@ export interface EjercicioBanco {
   videoRuta?: string | null;
   /** El crédito que piden los dueños del GIF; acompaña a la imagen donde se muestre. */
   atribucion?: string | null;
+  /**
+   * Sus 8 marcas por sexo para el mapa de fuerza (1RM ÷ peso corporal, o reps en los
+   * corporales). Las carga `functions/scripts/cargarEstandares.mjs` desde
+   * `docs/estandares-fuerza/`. Opcional: los de tiempo y algunos más no tienen.
+   */
+  estandares?: Record<Sexo, number[]> | null;
+  /**
+   * El peso se anota por mancuerna (una sola), como lo piden sus estándares; Registro se lo
+   * recuerda. Lo carga el mismo script. Opcional por la razón de siempre.
+   */
+  pesoPorMancuerna?: boolean;
 }
 
 /** "H" o "M". Gemelo de `Sexo` en `data/model/Sexo.kt`. */
@@ -276,8 +287,9 @@ export interface Sesion {
 
 /**
  * Sus últimas sesiones, de la más nueva a la más vieja. Con 60 (unos tres meses entrenando
- * cinco días) alcanza para el historial y para prellenar lo que hizo la última vez; las 8 semanas del mapa de fuerza pedirán su
- * propia consulta cuando lleguen.
+ * cinco días) alcanza para el historial, para prellenar lo que hizo la última vez y para las 8
+ * semanas del mapa de fuerza (`fuerzaPorMusculo`): solo quien entrene más de 7 veces por semana
+ * se quedaría sin sus primeras semanas.
  */
 export function observarSesiones(clienteId: string, alCambiar: (s: Sesion[]) => void) {
   const consulta = query(

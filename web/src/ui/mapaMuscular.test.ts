@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import {
-  archivosMapa, detalleMusculo, prepararSvg, reiniciarMapa, tarjetaMusculos,
+  archivosMapa, conNiveles, detalleMusculo, prepararSvg, reiniciarMapa, tarjetaMusculos,
 } from "./mapaMuscular";
 import frenteH from "../../public/mapa-muscular-frente.svg?raw";
 import espaldaH from "../../public/mapa-muscular-espalda.svg?raw";
@@ -168,12 +168,38 @@ describe("detalleMusculo", () => {
     expect(detalleMusculo("pecho", undefined, "H")).toContain("comparado");
   });
 
-  it("con datos, su rango y qué tan fuerte es contra la población", () => {
-    const h = detalleMusculo("cuadriceps", { nivel: 3.5 }, "M");
+  it("con datos, su rango y qué tan fuerte es contra la población y contra quienes entrenan", () => {
+    const h = detalleMusculo("cuadriceps", { nivel: 5.5 }, "M");
     expect(h).toContain("Cuádriceps");
-    expect(h).toContain("Intermedio");
-    expect(h).toContain("Más fuerte que el <strong>92 %</strong> de la población");
-    expect(h).toContain("width: 92%");
+    expect(h).toContain("Atlética");
+    expect(h).toContain("Más fuerte que el <strong>90 %</strong> de la población");
+    expect(h).toContain("<strong>58 %</strong> de quienes entrenan");
+    expect(h).toContain("width: 90%");
+  });
+
+  it("el rango va en masculino para ellos", () => {
+    expect(detalleMusculo("pecho", { nivel: 5.5 }, "H")).toContain("Atlético");
+  });
+});
+
+describe("conNiveles", () => {
+  const svg = '<path class="musculo" data-musculo="pecho" d="M0"/><path class="musculo" data-musculo="biceps" d="M1"/>';
+
+  it("le pone su nivel entero a cada músculo con datos", () => {
+    const s = conNiveles(svg, { pecho: { nivel: 3.7 } });
+    expect(s).toContain('data-musculo="pecho" data-nivel="3"');
+  });
+
+  it("sin datos se queda sin nivel (gris)", () => {
+    expect(conNiveles(svg, { pecho: { nivel: 3 } })).toContain('data-musculo="biceps" d="M1"');
+  });
+
+  it("nivel 0 sí lleva nivel: registró algo, aunque poco", () => {
+    expect(conNiveles(svg, { biceps: { nivel: 0.4 } })).toContain('data-musculo="biceps" data-nivel="0"');
+  });
+
+  it("se queda dentro de 0 a 8", () => {
+    expect(conNiveles(svg, { pecho: { nivel: 8 } })).toContain('data-nivel="8"');
   });
 
   it("siempre trae con qué cerrarlo", () => {

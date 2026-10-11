@@ -1,5 +1,7 @@
 import type { Sexo } from "../datos";
-import { nombreMusculo, percentilDe, rangoDe, type FuerzaMusculo } from "../fuerza";
+import {
+  NIVEL_MAX, nombreMusculo, nombreRango, percentilDe, percentilEntrenanDe, type FuerzaMusculo,
+} from "../fuerza";
 import { seccionVacia } from "./tarjetaInsignias";
 
 /**
@@ -11,7 +13,8 @@ import { seccionVacia } from "./tarjetaInsignias";
  * se piden con `fetch` al entrar y no se meten al bundle: son ~90 kB cada uno y no hacen
  * falta en Inicio. Ver `docs/superpowers/specs/2026-10-10-mapa-fuerza-entrenamiento-design.md`.
  *
- * Todavía no hay registros de fuerza, así que todos los músculos salen en el gris "sin datos".
+ * Cada músculo se pinta con su nivel (`data-nivel`, de `fuerzaPorMusculo`): del gris "sin
+ * datos" al color del estilo, más intenso entre más alto el nivel.
  */
 
 export type EstadoSvg =
@@ -84,10 +87,28 @@ export function reiniciarMapa(): void {
   seleccionado = null;
 }
 
-function cara(lado: "frente" | "espalda", e: EstadoSvg, oculta: boolean): string {
+/**
+ * Le pone a cada músculo su nivel entero (`data-nivel`, 0 a 8) para que `estilos.css` lo
+ * pinte. Sin entrada en `fuerza` se queda sin atributo: el gris de "sin datos".
+ */
+export function conNiveles(svg: string, fuerza: Readonly<Record<string, FuerzaMusculo>>): string {
+  return svg.replace(/class="musculo" data-musculo="([^"]+)"/g, (todo, grupo: string) => {
+    const f = fuerza[grupo];
+    if (!f) return todo;
+    const n = Math.min(NIVEL_MAX, Math.max(0, Math.floor(f.nivel)));
+    return `${todo} data-nivel="${n}"`;
+  });
+}
+
+function cara(
+  lado: "frente" | "espalda",
+  e: EstadoSvg,
+  oculta: boolean,
+  fuerza: Readonly<Record<string, FuerzaMusculo>>
+): string {
   const cuerpo =
     e.estado === "listo"
-      ? prepararSvg(e.svg, `mapa-${lado}`)
+      ? conNiveles(prepararSvg(e.svg, `mapa-${lado}`), fuerza)
       : e.estado === "error"
         ? `<p class="mapa-aviso">No se pudo cargar.</p>`
         : `<div class="mapa-cargando" role="status" aria-label="Cargando"></div>`;
@@ -100,7 +121,10 @@ const LEYENDA = `
       <p class="mapa-leyenda">
         <span class="mapa-muestra" aria-hidden="true"></span>
         Toca un músculo para ver tu rango. Se irán pintando con lo que registres.
-      </p>`;
+      </p>
+      <div class="mapa-escala" aria-hidden="true">
+        <span>Principiante</span><span class="mapa-escala-barra"></span><span>Élite</span>
+      </div>`;
 
 /**
  * El texto de abajo del dibujo: con un músculo tocado, su rango y cómo se compara; sin
@@ -127,14 +151,17 @@ export function detalleMusculo(
         </p>
       </div>`;
   }
-  const rango = rangoDe(fuerza.nivel);
   const p = percentilDe(fuerza.nivel);
+  const t = percentilEntrenanDe(fuerza.nivel);
   return `
       <div class="mapa-detalle" role="status">
         ${cerrar}
         <p class="mapa-detalle-nombre">${nombre}</p>
-        <p class="mapa-detalle-rango">Rango: <strong>${rango.nombre}</strong></p>
-        <p class="mapa-detalle-texto">Más fuerte que el <strong>${p} %</strong> de la población.</p>
+        <p class="mapa-detalle-rango">Rango: <strong>${nombreRango(fuerza.nivel, sexo)}</strong></p>
+        <p class="mapa-detalle-texto">
+          Más fuerte que el <strong>${p} %</strong> de la población y que el
+          <strong>${t} %</strong> de quienes entrenan.
+        </p>
         <div class="mapa-detalle-barra" aria-hidden="true"><span style="width: ${p}%"></span></div>
       </div>`;
 }
@@ -165,8 +192,8 @@ export function tarjetaMusculos(
     <section class="mapa-cuerpo${seleccionado ? " con-detalle" : ""}" aria-label="Tu mapa muscular">
       <div class="mapa-marco">
         <div class="mapa-giro${deEspalda ? " girado" : ""}${seleccionado ? " con-seleccion" : ""}" id="mapa-giro">
-          ${cara("frente", de(a.frente), deEspalda)}
-          ${cara("espalda", de(a.espalda), !deEspalda)}
+          ${cara("frente", de(a.frente), deEspalda, fuerza)}
+          ${cara("espalda", de(a.espalda), !deEspalda, fuerza)}
         </div>
         <button type="button" class="mapa-girar" id="girar-mapa"
                 aria-label="${textoBoton(deEspalda)}" title="${textoBoton(deEspalda)}">🔄</button>

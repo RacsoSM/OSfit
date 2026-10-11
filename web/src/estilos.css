@@ -917,6 +917,28 @@ main:has(#barra) { padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
   font-size: 13px; color: var(--texto-tenue); text-align: left;
 }
 .mapa-muestra { flex: none; width: 14px; height: 14px; border-radius: 4px; background: #8f90a6; }
+/* El nivel de cada músculo (`conNiveles`): del gris de "sin datos" al color del estilo, más
+   intenso entre más alto. El nivel 0 ya arranca en 30 % de color: con menos no se distinguía
+   del gris de un músculo sin registros. Con `color-mix` para que siga al estilo activo; el `fill` de antes es
+   para Safari < 16.2, que no lo entiende y se queda con el color del estilo tal cual. */
+.mapa-cuerpo .musculo[data-nivel] { fill: var(--primario); }
+.mapa-cuerpo .musculo[data-nivel="0"] { fill: color-mix(in srgb, var(--primario) 30%, #8f90a6); }
+.mapa-cuerpo .musculo[data-nivel="1"] { fill: color-mix(in srgb, var(--primario) 40%, #8f90a6); }
+.mapa-cuerpo .musculo[data-nivel="2"] { fill: color-mix(in srgb, var(--primario) 50%, #8f90a6); }
+.mapa-cuerpo .musculo[data-nivel="3"] { fill: color-mix(in srgb, var(--primario) 60%, #8f90a6); }
+.mapa-cuerpo .musculo[data-nivel="4"] { fill: color-mix(in srgb, var(--primario) 69%, #8f90a6); }
+.mapa-cuerpo .musculo[data-nivel="5"] { fill: color-mix(in srgb, var(--primario) 78%, #8f90a6); }
+.mapa-cuerpo .musculo[data-nivel="6"] { fill: color-mix(in srgb, var(--primario) 86%, #8f90a6); }
+.mapa-cuerpo .musculo[data-nivel="7"] { fill: color-mix(in srgb, var(--primario) 93%, #8f90a6); }
+.mapa-cuerpo .musculo[data-nivel="8"] { fill: var(--primario); }
+.mapa-escala {
+  display: flex; align-items: center; gap: 8px; margin: 8px 2px 0;
+  font-size: 11px; color: var(--texto-tenue);
+}
+.mapa-escala-barra {
+  flex: 1; height: 8px; border-radius: 999px;
+  background: linear-gradient(to right, color-mix(in srgb, var(--primario) 30%, #8f90a6), var(--primario));
+}
 @media (prefers-reduced-motion: reduce) {
   .mapa-cargando { animation: none; }
   .mapa-giro, .mapa-marco, .mapa-cuerpo .musculo, .mapa-svg .musculo-elevado { transition: none; }
@@ -1093,3 +1115,4 @@ main:has(#barra) { padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
   margin: 4px 2px 12px; font-size: 14px; color: var(--texto-tenue);
 }
 .peso-linea strong { color: var(--texto); }
+.peso-linea .boton-texto { display: inline; width: auto; margin: 0; padding: 4px 6px; color: var(--primario); }
