@@ -935,7 +935,7 @@ main:has(#barra) { padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
    derecha. Círculo de vidrio con borde fino y un ícono de línea (`mapa-icono`). */
 .mapa-ayuda { position: absolute; left: 0; top: 0; z-index: 1; }
 .mapa-ayuda, .mapa-girar {
-  width: 42px; height: 42px; padding: 0;
+  width: 50px; height: 50px; padding: 0;
   display: flex; align-items: center; justify-content: center;
   border: 1px solid color-mix(in srgb, var(--texto) 18%, transparent);
   border-radius: 50%;
@@ -948,7 +948,7 @@ main:has(#barra) { padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
 }
 .mapa-ayuda:active, .mapa-girar:active { transform: scale(0.94); }
 .mapa-icono {
-  width: 22px; height: 22px;
+  width: 26px; height: 26px;
   fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
 }
 .mapa-ayuda:focus-visible { outline: 2px solid var(--primario); outline-offset: 3px; }
