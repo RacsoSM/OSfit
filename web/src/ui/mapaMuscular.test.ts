@@ -203,12 +203,35 @@ describe("detalleMusculo", () => {
     const h = detalleMusculo("pecho", f, "H", 75);
     expect(h).toContain("Siguiente: <strong");
     expect(h).toContain(">Novato</strong>");
-    expect(h).toContain("Para llegar: <strong>37.5 kg × 8</strong> en <strong>Press de banca</strong>");
-    expect(h).toContain("Tu mejor: 30 kg × 8");
+    expect(h).toContain("Te faltan <strong>7.5 kg</strong> en <strong>Press de banca</strong> para llegar al siguiente rango.");
+    expect(h).toContain("Tu mejor serie: 30 kg × 8.");
+  });
+
+  it("en los corporales cuenta repeticiones, y en singular si falta una", () => {
+    const f = {
+      nivel: 4.4,
+      origen: {
+        ejercicioId: "lagartijas", nombre: "Lagartijas", tipo: "corporal" as const, cuanto: 1,
+        serie: { reps: 14, peso: null }, estandares: [1, 3, 5, 10, 15, 18, 20, 34], pesoPorMancuerna: false,
+      },
+    };
+    expect(detalleMusculo("pecho", f, "M", 60)).toContain("Te falta <strong>1 repetición</strong> en <strong>Lagartijas</strong>");
+  });
+
+  it("en mancuernas dice que es por mancuerna", () => {
+    const f = {
+      nivel: 1.05,
+      origen: {
+        ejercicioId: "press-mancuernas", nombre: "Press con mancuernas", tipo: "peso" as const, cuanto: 1,
+        serie: { reps: 8, peso: 12 }, estandares: [0.19, 0.24, 0.29, 0.33, 0.38, 0.43, 0.48, 0.65],
+        pesoPorMancuerna: true,
+      },
+    };
+    expect(detalleMusculo("pecho", f, "H", 75)).toMatch(/Te faltan <strong>[\d.]+ kg por mancuerna<\/strong>/);
   });
 
   it("sin su peso no promete kilos", () => {
-    expect(detalleMusculo("pecho", { nivel: 1.05 }, "H")).not.toContain("Para llegar");
+    expect(detalleMusculo("pecho", { nivel: 1.05 }, "H")).not.toContain("para llegar al siguiente rango");
   });
 });
 

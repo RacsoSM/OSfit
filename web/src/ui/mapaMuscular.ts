@@ -147,6 +147,19 @@ const kg = (n: number) => `${n.toLocaleString("es-MX", { maximumFractionDigits: 
 const serieTexto = (x: { reps: number; peso: number | null }) =>
   x.peso === null ? `${x.reps} reps` : `${kg(x.peso)} × ${x.reps}`;
 
+/**
+ * "Te faltan 2.5 kg" (a las mismas reps de su mejor serie) o "Te faltan 3 repeticiones". Los
+ * kilos salen de restar su mejor peso al que pide el siguiente rango.
+ */
+function textoFalta(s: Extract<ReturnType<typeof siguienteRango>, { tipo: "falta" }>): string {
+  if (s.objetivo.peso !== null && s.mejor.peso !== null) {
+    const kilos = Math.round((s.objetivo.peso - s.mejor.peso) * 10) / 10;
+    return `Te ${kilos === 1 ? "falta" : "faltan"} <strong>${kg(kilos)}${s.porMancuerna ? " por mancuerna" : ""}</strong>`;
+  }
+  const reps = s.objetivo.reps - s.mejor.reps;
+  return `Te ${reps === 1 ? "falta" : "faltan"} <strong>${reps} ${reps === 1 ? "repetición" : "repeticiones"}</strong>`;
+}
+
 /** Lo que le falta para el siguiente rango, o que ya está en el más alto. */
 function bloqueSiguiente(f: FuerzaMusculo, sexo: Sexo, peso: number, musculo: string): string {
   const s = siguienteRango(f, peso);
@@ -164,8 +177,8 @@ function bloqueSiguiente(f: FuerzaMusculo, sexo: Sexo, peso: number, musculo: st
       </div>`;
   const texto = s.tipo === "otroEjercicio"
     ? `Para subir, registra un ejercicio que trabaje directo tu ${musculo.toLowerCase()}.`
-    : `Para llegar: <strong>${serieTexto(s.objetivo)}</strong> en <strong>${escapar(s.ejercicio)}</strong>`
-      + `${s.porMancuerna && s.objetivo.peso !== null ? " (por mancuerna)" : ""}. Tu mejor: ${serieTexto(s.mejor)}.`;
+    : `${textoFalta(s)} en <strong>${escapar(s.ejercicio)}</strong> para llegar al siguiente rango.`
+      + ` Tu mejor serie: ${serieTexto(s.mejor)}.`;
   return `<div class="hoja-sig">${barra}<p class="hoja-sig-texto">${texto}</p></div>`;
 }
 
