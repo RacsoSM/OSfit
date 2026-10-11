@@ -917,19 +917,19 @@ main:has(#barra) { padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
   font-size: 13px; color: var(--texto-tenue); text-align: left;
 }
 .mapa-muestra { flex: none; width: 14px; height: 14px; border-radius: 4px; background: #8f90a6; }
-/* El color de cada rango (`conNiveles` pone `data-rango`): uno distinto por rango, que se
-   lee de abajo hacia arriba como en los juegos — de café a dorado. Fijos y no del estilo
+/* El color de cada rango (`conNiveles` pone `data-rango`): paleta "hielo → fuego", elegida por
+   el entrenador (2026-10-11) — de azul hielo a fuego, y oro en Élite. Fijos y no del estilo
    activo, porque la explicación ("?") los nombra y tienen que ser los mismos para todas.
    El gris de "sin datos" es `#8f90a6`; ninguno se le parece. */
 :root {
-  --rango-0: #a1785c; /* Principiante: café */
-  --rango-1: #43a047; /* Novato: verde */
-  --rango-2: #00bcd4; /* En forma: turquesa */
-  --rango-3: #1e6bff; /* Intermedio: azul */
-  --rango-4: #8e44ff; /* Atlético: morado */
-  --rango-5: #e93cc0; /* Fuerte: rosa */
-  --rango-6: #ff6a00; /* Avanzado: naranja */
-  --rango-7: #ffc400; /* Élite: dorado */
+  --rango-0: #bfe3ff; /* Principiante: azul hielo */
+  --rango-1: #7cc4ff; /* Novato: azul claro */
+  --rango-2: #3b8fff; /* En forma: azul */
+  --rango-3: #5b5bd6; /* Intermedio: índigo */
+  --rango-4: #9d4edd; /* Atlético: morado */
+  --rango-5: #e0457b; /* Fuerte: rosa fuego */
+  --rango-6: #ff6b2c; /* Avanzado: naranja */
+  --rango-7: #ffb703; /* Élite: oro */
 }
 .mapa-cuerpo .musculo[data-rango="0"], .rango-muestra[data-rango="0"] { fill: var(--rango-0); background: var(--rango-0); }
 .mapa-cuerpo .musculo[data-rango="1"], .rango-muestra[data-rango="1"] { fill: var(--rango-1); background: var(--rango-1); }
