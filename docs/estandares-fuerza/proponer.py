@@ -16,7 +16,9 @@ FAMILIAS y CORPORAL guardan los 5 de las tablas; `a_ocho` arma los 8.
 - "tiempo": no alimenta el mapa (spec), no lleva estándares.
 """
 import json
+import math
 from pathlib import Path
+from statistics import NormalDist
 
 AQUI = Path(__file__).parent
 BANCO = AQUI.parent.parent / "functions" / "semilla" / "ejercicios.json"
@@ -169,10 +171,22 @@ NIVELES = ["Principiante", "Novato", "En forma", "Intermedio", "Atlético / Atl�
            "Avanzado", "Élite"]
 # Dónde cae cada uno de los 5 de las tablas entre los 8 (índice 0 = nivel 1).
 ANCLAS = [0, 2, 4, 6, 7]
-# A quién supera cada corte: toda la población y la gente que entrena (tablas públicas). Los
-# intermedios, a la mitad. Irán a `PERCENTILES` de `web/src/fuerza.ts`.
-SUPERA_POBLACION = [50, 65, 78, 83, 88, 92, 95, 99]
-SUPERA_ENTRENAN = [5, 12, 20, 35, 50, 65, 80, 95]
+# A quién supera cada corte (decisión del entrenador, 2026-10-11, "camino B"): ya no se toman
+# fijos de las tablas, salen de un modelo (`modelo`, abajo) en cada ejercicio y se promedian.
+# Antes se partía cada tramo a la mitad y la gráfica quedaba en 15 % parejo, y al bajar la
+# parte de arriba los porcentajes seguían siendo los de las tablas (inflados). `main` los
+# calcula, los imprime y los deja en `percentiles.json`; van a `web/src/fuerza.ts`.
+#
+# El modelo: entre la gente que entrena, la fuerza (1RM ÷ peso, o reps) sigue una log-normal
+# ajustada a los 5 puntos de las tablas (Principiante supera al 5 %, Novato 20 %, Intermedio
+# 50 %, Avanzado 80 %, Élite 95 %). La gente que no entrena, otra log-normal con la misma
+# dispersión y la mediana en el estándar de Principiante (lo que levanta un adulto promedio
+# que no entrena). Toda la población: 1 de cada 4 entrena fuerza.
+PCT_TABLAS = [0.05, 0.20, 0.50, 0.80, 0.95]
+ENTRENAN_DE_LA_POBLACION = 0.25
+# Élite: el 5 % más fuerte de quienes entrenan, según el modelo de cada ejercicio. Así no se
+# queda con lo que bajó Avanzado (con él, Élite era ~13 % de quienes entrenan).
+PCT_ELITE = 0.95
 
 
 # La parte de arriba, más baja que en las tablas (decisión del entrenador, 2026-10-11): las
@@ -185,6 +199,37 @@ ARRIBA = [6, 7]
 BAJA_ARRIBA = 0.15
 # Lo mínimo que pide cada nivel arriba del anterior, de Atlético para arriba.
 SALTO_MIN = 0.06
+
+
+_N = NormalDist()
+
+
+def modelo(cinco: list) -> tuple[float, float]:
+    """(mu, sigma) de la log-normal de quienes entrenan, ajustada a los 5 de las tablas."""
+    z = [_N.inv_cdf(p) for p in PCT_TABLAS]
+    lx = [math.log(v) for v in cinco]
+    zm, lm = sum(z) / len(z), sum(lx) / len(lx)
+    sig = sum((a - zm) * (b - lm) for a, b in zip(z, lx)) / sum((a - zm) ** 2 for a in z)
+    return lm - sig * zm, sig
+
+
+def percentiles(cinco: list, cortes: list) -> tuple[list, list]:
+    """Qué % de quienes entrenan y de toda la población queda debajo de cada corte."""
+    mu, sig = modelo(cinco)
+    t = [_N.cdf((math.log(c) - mu) / sig) for c in cortes]
+    u = [_N.cdf((math.log(c) - math.log(cinco[0])) / sig) for c in cortes]
+    e = ENTRENAN_DE_LA_POBLACION
+    return [100 * x for x in t], [100 * ((1 - e) * a + e * b) for a, b in zip(u, t)]
+
+
+def con_elite(cinco: list, ocho: list, entero: bool) -> list:
+    """`ocho` con Élite en el 5 % más fuerte del modelo (y siempre arriba de Avanzado)."""
+    mu, sig = modelo(cinco)
+    v = math.exp(mu + sig * _N.inv_cdf(PCT_ELITE))
+    # Nunca más que el Élite de las tablas: el modelo se pasa en los corporales (dominadas
+    # pedía 42 reps contra 30 de la tabla).
+    v = max(min(v, cinco[4]), ocho[6] * (1 + SALTO_MIN))
+    return ocho[:7] + [math.ceil(v) if entero else round(v, 3)]
 
 
 def a_ocho(cinco: list, entero: bool = False) -> list:
@@ -221,6 +266,7 @@ def redondear_kg(kg: float) -> float:
 def main() -> None:
     banco = json.loads(BANCO.read_text())
     salida: dict = {}
+    modelos: list[tuple[list, list]] = []
     por_mancuerna: list[str] = []
     filas: dict[str, list[str]] = {}
     faltan = []
@@ -235,8 +281,11 @@ def main() -> None:
             continue
         if tipo == "peso" and i in PESO:
             fam, f, nota = PESO[i]
-            est = {s: a_ocho([round(v * f, 3) for v in FAMILIAS[fam][s]]) for s in ("H", "M")}
+            cinco = {s: [round(v * f, 3) for v in FAMILIAS[fam][s]] for s in ("H", "M")}
+            est = {s: con_elite(cinco[s], a_ocho(cinco[s]), False) for s in ("H", "M")}
             salida[i] = est
+            for s in ("H", "M"):
+                modelos.append(percentiles(cinco[s], est[s]))
             if "mancuerna" in nota:
                 por_mancuerna.append(i)
             for s in ("H", "M"):
@@ -244,8 +293,10 @@ def main() -> None:
                 n = f" · {nota}" if nota else ""
                 filas[grupo].append(f"| {e['nombre'] if s == 'H' else ''} | {'H' if s == 'H' else 'M'}{n if s == 'H' else ''} | " + " | ".join(celdas) + " |")
         elif tipo == "corporal" and i in CORPORAL:
-            est = {s: a_ocho(CORPORAL[i][s], entero=True) for s in ("H", "M")}
+            est = {s: con_elite(CORPORAL[i][s], a_ocho(CORPORAL[i][s], entero=True), True) for s in ("H", "M")}
             salida[i] = est
+            for s in ("H", "M"):
+                modelos.append(percentiles(CORPORAL[i][s], est[s]))
             nota = NOTAS_CORPORAL.get(i, "")
             for s in ("H", "M"):
                 n = f" · {nota}" if nota and s == "H" else ""
@@ -264,6 +315,14 @@ def main() -> None:
                if PESO.get(i) and any((b - a) / a < SALTO_MIN for a, b in zip(est[s][4:], est[s][5:]))]
     if pegados:
         print(f"Aviso — niveles de arriba con poco salto: {pegados}")
+
+    # El promedio del modelo en todos los ejercicios y los dos sexos: lo que dice la página.
+    SUPERA_ENTRENAN = [round(sum(m[0][k] for m in modelos) / len(modelos)) for k in range(len(NIVELES))]
+    SUPERA_POBLACION = [round(sum(m[1][k] for m in modelos) / len(modelos)) for k in range(len(NIVELES))]
+    (AQUI / "percentiles.json").write_text(json.dumps(
+        {"entrenan": SUPERA_ENTRENAN, "poblacion": SUPERA_POBLACION}, indent=2) + "\n")
+    print("supera a quienes entrenan:", SUPERA_ENTRENAN)
+    print("supera a toda la población:", SUPERA_POBLACION)
 
     # Lo que carga `functions/scripts/cargarEstandares.mjs` en `ejercicios/{id}`.
     banco_salida = {
@@ -297,10 +356,9 @@ def main() -> None:
         "",
         "**8 niveles**, con los nombres que eligió el entrenador. Salen de los 5 de las tablas "
         "públicas (en los niveles 1, 3, 5, 7 y 8) más el punto medio entre dos de ellos en los "
-        "niveles 2, 4 y 6, donde más se tarda en subir. **Avanzado y Élite van 15 % más "
-        "bajos** que en las tablas, y Fuerte (su punto medio con Atlético) baja con ellos, para "
-        "que la parte de arriba sea alcanzable. A las "
-        "mujeres se les dice *Atlética*.",
+        "niveles 2, 4 y 6, donde más se tarda en subir. **Fuerte y Avanzado van más bajos** "
+        "que en las tablas, para que la parte de arriba sea alcanzable; **Élite** es el 5 % "
+        "más fuerte de quienes entrenan. A las mujeres se les dice *Atlética*.",
         "",
         "Cada corte se compara contra **toda la población** (incluye a la gente que no entrena) "
         "y contra **la gente que sí entrena**. Son los mismos cortes vistos desde dos grupos:",
@@ -309,11 +367,11 @@ def main() -> None:
         "|---|---|---|",
         *[f"| {n} | {p} % | {t} % |" for n, p, t in zip(NIVELES, SUPERA_POBLACION, SUPERA_ENTRENAN)],
         "",
-        "Principiante es lo que levanta un adulto promedio que no entrena (la mitad de la "
-        "población). Como solo ~1 de cada 4 adultos entrena fuerza, los niveles altos superan "
-        "a casi toda la población aunque a muchos de los que entrenan no. Entre un corte y otro "
-        "el porcentaje se reparte en proporción. En Músculos se mostrarían las dos, por ejemplo: "
-        "*\"Más fuerte que el 88 % de la población y que el 50 % de quienes entrenan\"*.",
+        "Los porcentajes salen de un modelo: entre quienes entrenan, la fuerza se reparte como "
+        "una curva (mucha gente en el medio, poca en los extremos) ajustada a las tablas "
+        "públicas; quien no entrena levanta en promedio lo de Principiante, y 1 de cada 4 "
+        "adultos entrena fuerza. Son el promedio de todos los ejercicios: una estimación, no un "
+        "censo.",
         "",
         "## Estándares por ejercicio",
     ]
