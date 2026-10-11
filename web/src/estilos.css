@@ -1026,8 +1026,18 @@ main:has(#barra) { padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
 .registro-credito { margin: 14px 0 0; font-size: 10px; color: var(--texto-tenue); text-align: right; }
 /* Los títulos de grupo del grid ("Pecho", "Hombro"…). Los del día van con el color del estilo
    para que se lean como "lo de hoy"; el resto, tenues. */
-.registro-grupo { margin: 18px 2px 8px; font-size: 18px; font-weight: 800; color: var(--texto-tenue); }
-.registro-grupo.del-dia { color: var(--primario); }
+/* El título de cada grupo muscular: una banda clara con su raya de color, y pegada arriba al
+   hacer scroll, para que siempre se sepa de qué músculo es el grid que se está viendo (antes
+   era texto gris tenue y casi no se veía, 2026-10-11). */
+.registro-grupo {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 2;
+  margin: 22px 0 10px; padding: 9px 14px;
+  border-left: 4px solid var(--texto-tenue); border-radius: 12px;
+  background: var(--superficie-alta); color: var(--texto);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.45);
+  font-size: 18px; font-weight: 800;
+}
+.registro-grupo.del-dia { border-left-color: var(--primario); color: var(--primario-claro); }
 .registro-separador {
   margin: 26px 0 0; padding-top: 14px; border-top: 1px solid var(--superficie-alta);
   font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--texto-tenue);
