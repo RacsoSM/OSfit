@@ -1548,9 +1548,9 @@
     "semantic_hash": "894e5e8fadb192ded26062f67d488f33"
   },
   "functions/src/index.ts": {
-    "mtime": 1791711197.8093636,
-    "seen": 1791711221.367974,
-    "ast_hash": "ba2f9c090b1a3a8e3a1228e95b1fd9e1",
+    "mtime": 1791714038.8914857,
+    "seen": 1791745072.7858298,
+    "ast_hash": "ea7db8a04b9cb4b9145dde29a7cad4bf",
     "semantic_hash": ""
   },
   "functions/src/jugarRuleta.test.ts": {
@@ -1680,9 +1680,9 @@
     "semantic_hash": "428443a35b82770afac99d12a49e9045"
   },
   "web/src/acciones.ts": {
-    "mtime": 1791711198.0313332,
-    "seen": 1791711221.368005,
-    "ast_hash": "eddf9a76a52a5a7fc48f4957e7596548",
+    "mtime": 1791714054.62179,
+    "seen": 1791745072.7858603,
+    "ast_hash": "e6e538c793cd17dc37419e26e7df137c",
     "semantic_hash": ""
   },
   "web/src/cupo.test.ts": {
@@ -1698,9 +1698,9 @@
     "semantic_hash": "3c0236edec856dca527347a689b2fc13"
   },
   "web/src/datos.ts": {
-    "mtime": 1791711198.0313332,
-    "seen": 1791711221.3680131,
-    "ast_hash": "584ab153be94863153858f566e81b012",
+    "mtime": 1791715469.2505898,
+    "seen": 1791745072.7858667,
+    "ast_hash": "c7bd55f745632be7a80bb6aee3baa2c6",
     "semantic_hash": ""
   },
   "web/src/dia.test.ts": {
@@ -1758,9 +1758,9 @@
     "semantic_hash": ""
   },
   "web/src/main.ts": {
-    "mtime": 1791711198.0353332,
-    "seen": 1791711221.3680294,
-    "ast_hash": "022b410975ebbf41d065fd3ce6abbde1",
+    "mtime": 1791715393.3956008,
+    "seen": 1791745072.7858815,
+    "ast_hash": "db2175142b897aad62cf14babbb1ec40",
     "semantic_hash": ""
   },
   "web/src/motivos.test.ts": {
@@ -2142,9 +2142,9 @@
     "semantic_hash": ""
   },
   "web/src/ventanas.ts": {
-    "mtime": 1791711198.0393333,
-    "seen": 1791711221.368119,
-    "ast_hash": "3e114d85d0b7b9d57020cdbbfcabb90f",
+    "mtime": 1791715388.2762537,
+    "seen": 1791745072.7859879,
+    "ast_hash": "6be2a21eff93df4b63e9aac7778ef0ac",
     "semantic_hash": ""
   },
   "web/src/vite-env.d.ts": {
@@ -2178,9 +2178,9 @@
     "semantic_hash": "1dce49b7ce2103d2b05648a3929fc9b1"
   },
   "docs/backlog-2.md": {
-    "mtime": 1791711197.7960606,
-    "seen": 1791711221.3681269,
-    "ast_hash": "8a255c2f0d622786cee6ddaef18e97be",
+    "mtime": 1791713003.8621342,
+    "seen": 1791745072.7859957,
+    "ast_hash": "bf06a4562c654e66ca3d6a3105fa734f",
     "semantic_hash": ""
   },
   "docs/licencias/LilitaOne-OFL.txt": {
@@ -2658,16 +2658,16 @@
     "semantic_hash": "70f8d87d3b58dcf243a7810029033429"
   },
   "web/src/ui/mapaMuscular.test.ts": {
-    "mtime": 1791711198.0393333,
-    "seen": 1791711221.368075,
-    "ast_hash": "f36e28727110bd3aaa2aff473287cf22",
-    "semantic_hash": "f36e28727110bd3aaa2aff473287cf22"
+    "mtime": 1791716154.4201543,
+    "seen": 1791745072.785923,
+    "ast_hash": "c93199d3aad57744f998bb564562622a",
+    "semantic_hash": ""
   },
   "web/src/ui/mapaMuscular.ts": {
-    "mtime": 1791711198.0393333,
-    "seen": 1791711221.3680763,
-    "ast_hash": "7b5a34b9d38ad92c890eb9b6bc43fda4",
-    "semantic_hash": "7b5a34b9d38ad92c890eb9b6bc43fda4"
+    "mtime": 1791717077.9537215,
+    "seen": 1791745072.7859244,
+    "ast_hash": "ba60533aa1787c566c05e49935c72ca8",
+    "semantic_hash": ""
   },
   "app/src/main/java/com/osfit/app/data/model/AvisoAutomatico.kt": {
     "mtime": 1791711197.7873333,
@@ -2694,16 +2694,16 @@
     "semantic_hash": "b726678bd2c7d6847d89991732dcfd22"
   },
   "web/src/fuerza.test.ts": {
-    "mtime": 1791711198.0353332,
-    "seen": 1791711221.368025,
-    "ast_hash": "d5b2f3ed328e83769558bb0ac83f7bc1",
-    "semantic_hash": "d5b2f3ed328e83769558bb0ac83f7bc1"
+    "mtime": 1791716154.4208074,
+    "seen": 1791745072.785877,
+    "ast_hash": "669ec6eb60976062638dce70fd950773",
+    "semantic_hash": ""
   },
   "web/src/fuerza.ts": {
-    "mtime": 1791711198.0353332,
-    "seen": 1791711221.368026,
-    "ast_hash": "39a8011ae310e809e907783f83d9f31d",
-    "semantic_hash": "39a8011ae310e809e907783f83d9f31d"
+    "mtime": 1791716112.6498845,
+    "seen": 1791745072.785878,
+    "ast_hash": "a80d55dd82f6a4a48a8969e9f7b2c968",
+    "semantic_hash": ""
   },
   "docs/superpowers/specs/2026-10-10-avisos-automaticos-design.md": {
     "mtime": 1791711197.8033333,
@@ -2958,9 +2958,9 @@
     "semantic_hash": ""
   },
   "web/src/ui/registro.ts": {
-    "mtime": 1791711198.0393333,
-    "seen": 1791711221.3680828,
-    "ast_hash": "4095fc5dbdddc0d0abf094be77e62edb",
+    "mtime": 1791715469.249744,
+    "seen": 1791745072.7859504,
+    "ast_hash": "d932f9dd9fd8870ccda265ac2c9a614e",
     "semantic_hash": ""
   },
   "web/src/ui/vueloRegistro.test.ts": {
@@ -2976,9 +2976,9 @@
     "semantic_hash": ""
   },
   "docs/videos-ejercicios/camino1.md": {
-    "mtime": 1791711197.8072557,
-    "seen": 1791711221.3682473,
-    "ast_hash": "6c21bc3d6014545d7e25120a8f3b64b9",
+    "mtime": 1791713003.862712,
+    "seen": 1791745072.7860742,
+    "ast_hash": "7bd8b9b7ea966193e7e40d29ee9bd6f9",
     "semantic_hash": ""
   },
   "docs/videos-ejercicios/hoja_revision.py": {
@@ -2991,6 +2991,66 @@
     "mtime": 1791711197.8033333,
     "seen": 1791711221.3682454,
     "ast_hash": "8c0642e97b3086f8397f538cfa7e510d",
+    "semantic_hash": ""
+  },
+  "docs/estandares-fuerza/estandares.json": {
+    "mtime": 1791715469.2958724,
+    "seen": 1791745072.7857695,
+    "ast_hash": "f31d7d0264a98700201734fc1442917d",
+    "semantic_hash": ""
+  },
+  "docs/estandares-fuerza/proponer.py": {
+    "mtime": 1791715469.2484314,
+    "seen": 1791745072.7857726,
+    "ast_hash": "1b1ddcffdda58a16f69da3e81253446e",
+    "semantic_hash": ""
+  },
+  "functions/scripts/cargarEstandares.mjs": {
+    "mtime": 1791715498.6752348,
+    "seen": 1791745072.7858078,
+    "ast_hash": "98b831f2be96a6a9fbd91859ce684fe4",
+    "semantic_hash": ""
+  },
+  "functions/scripts/estandares.mjs": {
+    "mtime": 1791715498.6719038,
+    "seen": 1791745072.7858088,
+    "ast_hash": "e797ab6ee12d8a2b42aa40895ab2382b",
+    "semantic_hash": ""
+  },
+  "functions/scripts/estandares.test.mjs": {
+    "mtime": 1791715498.6743922,
+    "seen": 1791745072.78581,
+    "ast_hash": "864c7cdcf84dffeb568839085ac3182e",
+    "semantic_hash": ""
+  },
+  "functions/src/guardarPeso.test.ts": {
+    "mtime": 1791714038.8914857,
+    "seen": 1791745072.7858274,
+    "ast_hash": "a1b25ab1e081bbde682f1baac36b6e37",
+    "semantic_hash": ""
+  },
+  "functions/src/guardarPeso.ts": {
+    "mtime": 1791714038.8872683,
+    "seen": 1791745072.7858286,
+    "ast_hash": "b1d210e8697cc4ac08b92dfece600b6a",
+    "semantic_hash": ""
+  },
+  "web/src/ui/pesoCorporal.test.ts": {
+    "mtime": 1791714137.163266,
+    "seen": 1791745072.7859275,
+    "ast_hash": "57375c19bf647d2f5070df34513a1a56",
+    "semantic_hash": ""
+  },
+  "web/src/ui/pesoCorporal.ts": {
+    "mtime": 1791714108.9317968,
+    "seen": 1791745072.7859287,
+    "ast_hash": "9793745a36eb48fd159daf853ad17b76",
+    "semantic_hash": ""
+  },
+  "docs/estandares-fuerza/propuesta.md": {
+    "mtime": 1791715469.2970622,
+    "seen": 1791745072.7859974,
+    "ast_hash": "e6ea90cf4a694cda6cdf04c7272533f9",
     "semantic_hash": ""
   }
 }

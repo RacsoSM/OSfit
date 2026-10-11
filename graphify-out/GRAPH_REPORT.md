@@ -1,30 +1,30 @@
 # Graph Report - OSfit  (2026-10-11)
 
 ## Corpus Check
-- 477 files · ~515,260 words
+- 487 files · ~532,449 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 30 file(s) not represented in the graph (top: .xml 7, .css 7, (none) 6)
 
 ## Summary
-- 4761 nodes · 11042 edges · 225 communities (176 shown, 49 thin omitted)
-- Extraction: 97% EXTRACTED · 3% INFERRED · 0% AMBIGUOUS · INFERRED: 331 edges (avg confidence: 0.87)
+- 4834 nodes · 11196 edges · 242 communities (188 shown, 54 thin omitted)
+- Extraction: 97% EXTRACTED · 3% INFERRED · 0% AMBIGUOUS · INFERRED: 334 edges (avg confidence: 0.87)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `1a5cd232`
+- Built from commit: `a7498e9e`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
 ## Community Hubs (Navigation)
-- WebClienteScreen.kt
+- RutinaWebClienteScreen.kt
 - RutinaProgressCalculatorTest
 - ResumenFrameRenderer.kt
 - main.ts
-- ref_vitest
+- ruleta.ts
 - EstadisticasViewModel
 - ConfigVideoViewModel.kt
 - TopScreen.kt
-- OSfitMessagingService.kt
+- ResumenVideoGenerator.kt
 - ClienteEditarScreen.kt
 - EstadisticasScreen.kt
 - EscenaResumen
@@ -40,21 +40,21 @@
 - TimelineResumen
 - jugarRuleta.ts
 - ClienteAsistenciaScreen.kt
-- LogroPersonalImagenUtil
+- LogroPersonalCatalogo
 - mapaMuscular.ts
-- cv2
+- numpy
 - MancuAnimacion
 - FakeClienteRepository
-- awaitclose
+- AppContainer
 - firebase.ts
-- ClienteDetailViewModel.kt
+- CalendarioViewModel.kt
 - ClienteRepository
 - ResumenClienteViewModel.kt
 - ResumenVideoEncoder.kt
 - Web para clientes (spec de diseño)
 - tarjetaDia.ts
 - OSfitApp.kt
-- LogroPersonalCatalogo
+- TomarAsistenciaScreen.kt
 - Web para clientes
 - FirestoreAsistenciaRepository
 - Paleta
@@ -65,7 +65,7 @@
 - FirestoreClienteRepository
 - AccesoWebRepository
 - RutinaEditorViewModel
-- TomarAsistenciaScreen.kt
+- CalendarioScreen.kt
 - Plan: Estilos de video por quincena + Mancu
 - Spec: Archivos locales en la nube
 - VideoPublicado
@@ -73,45 +73,45 @@
 - Spec: Notificaciones web PWA
 - estilo.ts
 - halloween.ts
-- File Structure
+- notificacionesNavegador.ts
 - AvisosViewModel.kt
 - .resumen
-- WebClienteScreen
+- WebClienteScreen.kt
 - functions/package.json
 - mapa-muscular/vectorizar.py
-- localdate
+- Cliente
 - PaletasTest
 - ResumenVideoGenerator
 - Global Constraints
 - Notificaciones a los clientes: web instalable (PWA) y avisos desde la app
-- ventanas.ts
+- ref_vitest
 - Traspaso: generar y publicar los videos HD (camino 1)
 - OSfit Implementation Plan
-- .anguloHacia
+- SandboxViewModel.kt
 - cambioDeEstilo.ts
 - AsistenciaRepository
 - Estructura de archivos
 - Spec: Estilo pixel art
 - web/package.json
-- RutinaWebClienteScreen.kt
+- SeccionRutinaWeb
 - .calcular
 - espalda/vectorizar.py
 - espalda-mujer/vectorizar.py
-- numpy
+- mujer/vectorizar.py
 - Logros personales por cliente
-- MedallaCatalogo
+- .esperadosDe
 - Revocar el acceso de una clienta de verdad
 - ClientesListScreen.kt
 - EjercicioBanco
 - RutinaRepository
-- MancuDibujo
+- AccionMancu
 - EscenarioRutina
 - RendererMancu
 - Bloque A — Insignias
 - AGENTS.md (guía para agentes)
 - CupoRevivesCalculatorTest
 - Ejercicio
-- PoseMancu
+- MancuDibujo
 - Decisiones de diseño no explícitas en el spec (asunciones tomadas)
 - MedallaRepository
 - Estructura de archivos
@@ -124,7 +124,7 @@
 - Antes de empezar: lo que tiene que dar el entrenador
 - Medallas y logros por cliente
 - La clienta elige su paleta desde Ajustes
-- LogrosPersonalesViewModel.kt
+- Estándares por ejercicio
 - petalos.ts
 - TopViewModel.kt
 - CancionUtil
@@ -133,9 +133,9 @@
 - Medallas plan global constraints
 - Estructura de archivos
 - Recordatorio de pago en la web del cliente
-- navegacion.ts
+- menuLateral.ts
 - ui/registro.ts
-- tarjetaVideos.ts
+- ventanas.ts
 - Backlog 2
 - Mapa de fuerza, registro de ejercicios y entrenamiento guiado (web del cliente)
 - NombresBancoTest
@@ -144,8 +144,8 @@
 - OSfit — App de gestión de clientes de gimnasio (v1)
 - Paleta de la web del cliente desde la app
 - Ranking de rachas en la web del cliente
-- TomarAsistenciaViewModel
-- ResumenVideoGenerator.kt
+- TomarAsistenciaViewModel.kt
+- MedallaCatalogo
 - Test
 - AvanceDiaSecuenciaTest
 - Spec: Mapa de fuerza, registro y entrenamiento guiado
@@ -172,10 +172,10 @@
 - Spec: Avisos automáticos
 - Instrucciones para agentes — OSfit
 - Pago
-- MedallasViewModel.kt
+- FakeAsistenciaRepository
 - File Structure
 - BancoEjerciciosRepository
-- VideoPublicadoRepository
+- BlobsGeometriaTest
 - .assertFresco
 - Paleta web plan global constraints
 - File Structure
@@ -184,9 +184,9 @@
 - compilerOptions
 - sakura.ts
 - compilerOptions
-- FondoBlobRenderer.kt
-- .dibujar
-- GeometriaMancu
+- GruposEjerciciosScreen.kt
+- .inicio
+- .grafica
 - .textoVisible
 - Spec: Rutinas en la web
 - Global Constraints
@@ -194,9 +194,9 @@
 - Mancu: repertorio de acciones, transiciones variadas y texto negro legible — Plan
 - File Structure
 - Videos HD de los ejercicios — "camino 1"
-- GruposEjerciciosViewModel
+- GruposEjerciciosViewModel.kt
 - TipoTransicionMancu
-- RuletaRepository.kt
+- estandares.test.mjs
 - File Structure
 - Calendario-Rutina como fuente de verdad del día de rutina
 - Paleta / Paletas (catalogo compartido)
@@ -209,7 +209,8 @@
 - OSfit
 - espalda/mascaras.py
 - camino1.py
-- Más estilos en Ajustes: neón, cómic y minimalista
+- pesoCorporal.ts
+- .calcularDuracionMinutos
 - CorregirDiaRealizadoTest
 - .sugerirCategoria
 - web/index.html
@@ -225,14 +226,30 @@
 - session-start.sh
 - Default personal achievement medal (Android)
 - ConfigVideoPeriodo.kt
+- camposFirestore
 - PaletaMancu.kt
 - graphify-remote.sh
 - launch-worker.sh
-- 6. Paso a paso
+- bancoEjercicios.mjs
+- cargarBancoEjercicios.mjs
+- EjercicioRow
+- .mascota
 - re2jsVacio.ts
+- AvisosTest.kt
+- asserttrue
+- calendario.ts
+- subirVideoEjercicio.mjs
+- PaletaWebRepository.kt
+- sys
+- deslizarRegistro.ts
+- TipografiasMancu.kt
+- 7. Cómo está implementado
+- fondoPixel.ts
+- devDependencies
+- scripts
 
 ## God Nodes (most connected - your core abstractions)
-1. `arrancar()` - 79 edges
+1. `arrancar()` - 82 edges
 2. `Asistencia` - 67 edges
 3. `ClienteDetailViewModel` - 67 edges
 4. `Cliente` - 59 edges
@@ -241,7 +258,7 @@
 7. `ResumenClienteCalculatorTest` - 42 edges
 8. `AppContainer` - 41 edges
 9. `MedallaCatalogo` - 36 edges
-10. `FakeClienteRepository` - 35 edges
+10. `pintar()` - 36 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `4. Datos` --references--> `AccesoWeb`  [INFERRED]
@@ -281,23 +298,23 @@
 - **OSfit app icon set (Android + PWA)** — app_src_main_res_drawable_ic_launcher_foreground, web_public_icono_180, web_public_icono_192, web_public_icono_512, web_public_icono_maskable_512 [INFERRED 0.95]
 - **Muscle map SVG set (front/back x male/female) rendered by mapaMuscular.ts** — web_public_mapa_muscular_frente, web_public_mapa_muscular_frente_mujer, web_public_mapa_muscular_espalda, web_public_mapa_muscular_espalda_mujer, web_src_ui_mapamuscular [INFERRED 0.95]
 
-## Communities (225 total, 49 thin omitted)
+## Communities (242 total, 54 thin omitted)
 
 ### Community 1 - "RutinaProgressCalculatorTest"
 Cohesion: 0.07
 Nodes (6): Ancla, RutinaProgressCalculator, SemanaDeRutina, DiaDenormalizadoTest, RutinaProgressCalculatorTest, SemanaDeRutinaTest
 
 ### Community 2 - "ResumenFrameRenderer.kt"
-Cohesion: 0.05
-Nodes (9): FondoPapelRenderer, NubeTransicionMancu, BloqueTexto, Resaltado, TipografiasMancu, TransicionBrochaMancu, TransicionIrisMancu, TransicionMancu (+1 more)
+Cohesion: 0.06
+Nodes (7): FondoPapelRenderer, NubeTransicionMancu, TransicionBrochaMancu, TransicionIrisMancu, TransicionMancu, TransicionTelonMancu, poses_del_gif()
 
 ### Community 3 - "main.ts"
-Cohesion: 0.06
-Nodes (72): Task 5: La web — candado al perder el acceso, 5. La web: "Tu acceso ya no está activo", obtenerRanking, registrarEntrada, registrarSesion, alFallarDatos(), alPerderAcceso(), alVolverDatos() (+64 more)
+Cohesion: 0.08
+Nodes (61): Task 5: La web — candado al perder el acceso, 5. La web: "Tu acceso ya no está activo", firebase, guardarPeso, obtenerRanking, registrarEntrada, registrarSesion, alFallarDatos() (+53 more)
 
-### Community 4 - "ref_vitest"
-Cohesion: 0.07
-Nodes (59): jugarRuleta, pintarRuleta(), leTocaFragil(), Motivo, MOTIVOS, motivosPara(), NOMBRES_CON_FRAGIL, normalizar() (+51 more)
+### Community 4 - "ruleta.ts"
+Cohesion: 0.09
+Nodes (52): jugarRuleta, pintarRuleta(), abrirRuleta(), acuse(), cerrarRuleta(), conectarRuleta(), tirar(), degradado() (+44 more)
 
 ### Community 5 - "EstadisticasViewModel"
 Cohesion: 0.08
@@ -311,41 +328,49 @@ Nodes (17): ConfigVideoGuardada, ConfigVideoRepository, ConfigVideoResuelta, Per
 Cohesion: 0.07
 Nodes (12): RachaBadge(), BrilloPuesto(), CardGigante(), CategoriaTop, ASISTENCIA, RACHA, ColumnaPodio(), Confeti (+4 more)
 
+### Community 8 - "ResumenVideoGenerator.kt"
+Cohesion: 0.21
+Nodes (3): CompartirUtil, ResumenGenerado, ResumenVideoGenerator
+
 ### Community 9 - "ClienteEditarScreen.kt"
-Cohesion: 0.13
+Cohesion: 0.11
 Nodes (5): Sexo, ClienteEditarScreen(), formatoMmSs(), ReproductorCancionPreview(), SelectorSexo()
 
 ### Community 10 - "EstadisticasScreen.kt"
-Cohesion: 0.11
+Cohesion: 0.09
 Nodes (11): AsignarProximoPagoDialog(), ClientePagosScreen(), PagoCard(), RegistrarPagoDialog(), EditarEjercicioFavoritoDialog(), EstadisticasScreen(), RecordCard(), RegistrarRecordDialog() (+3 more)
 
 ### Community 11 - "EscenaResumen"
-Cohesion: 0.10
-Nodes (16): RankingResultado, ContextoEscenaMancu, EscenaMancuDiaFavorito, EscenaMancuTiempo, Asistencia, Despedida, DiaFavorito, EscenaResumen (+8 more)
+Cohesion: 0.07
+Nodes (17): ContextoEscenaMancu, EscenaMancuAsistencia, EscenaMancuDiaFavorito, EscenaMancuLogros, EscenaMancuRacha, Asistencia, Despedida, DiaFavorito (+9 more)
 
 ### Community 12 - "tarjetaRanking.ts"
-Cohesion: 0.17
-Nodes (13): FilaRanking, Ranking, COLOR_NOMBRE, conectarRanking(), cuerpo(), elegirPestanaRanking(), fila(), MEDALLAS (+5 more)
+Cohesion: 0.16
+Nodes (14): FilaRanking, Ranking, COLOR_NOMBRE, conectarRanking(), cuerpo(), elegirPestanaRanking(), EstadoRanking, fila() (+6 more)
 
 ### Community 13 - "OSfitNavHost"
 Cohesion: 0.07
-Nodes (18): AvisosScreen(), FilaHistorial(), FilaOpcion(), MedallaCard(), MedallasClienteScreen(), OtorgarMedallaDialog(), PaletaWebClienteScreen(), PaletaWebClienteViewModel (+10 more)
+Nodes (18): AvisosScreen(), FilaHistorial(), FilaOpcion(), LogroPersonalCard(), LogrosPersonalesClienteScreen(), OtorgarLogroPersonalDialog(), MedallaCard(), MedallasClienteScreen() (+10 more)
+
+### Community 14 - "ClienteDetailViewModel"
+Cohesion: 0.07
+Nodes (4): RuletaRepository, Tirada, VariacionCalculator, ClienteDetailViewModel
 
 ### Community 15 - "Asistencia"
-Cohesion: 0.10
-Nodes (6): Asistencia, Cliente, ConteoDiaRutina, RangoResumen, ResumenClienteCalculator, ResumenClienteCalculatorTest
+Cohesion: 0.13
+Nodes (4): Asistencia, ConteoDiaRutina, RangoResumen, ResumenClienteCalculatorTest
 
 ### Community 16 - "ClienteDetailScreen.kt"
 Cohesion: 0.09
-Nodes (15): AsignarRutinaDialog(), capitalizar(), ClienteDetailScreen(), ConfirmarActivoDialog(), ConfirmarEliminarDialog(), etiquetaMes(), etiquetaRangoSemanal(), opcionesPeriodo() (+7 more)
+Nodes (14): AsignarRutinaDialog(), capitalizar(), ClienteDetailScreen(), ConfirmarActivoDialog(), ConfirmarEliminarDialog(), etiquetaMes(), etiquetaRangoSemanal(), opcionesPeriodo() (+6 more)
 
 ### Community 17 - "db"
-Cohesion: 0.18
-Nodes (23): alRevocarAcceso, avisarFalta, notificarAlEntrenador(), cambiarDia, clienteDeLaSesion(), db(), hoyEnMazatlan(), REGION (+15 more)
+Cohesion: 0.15
+Nodes (27): alRevocarAcceso, avisarFalta, notificarAlEntrenador(), cambiarDia, clienteDeLaSesion(), db(), hoyEnMazatlan(), REGION (+19 more)
 
 ### Community 18 - "accionFalta.ts"
-Cohesion: 0.10
-Nodes (20): avisarFalta, revivirRacha, disponiblesEnElMes(), gastadosEnElMes(), MAXIMO_POR_MES, esDiaHabil(), faltaQueRompioLaRacha(), fechasQueCuentan() (+12 more)
+Cohesion: 0.11
+Nodes (19): avisarFalta, revivirRacha, disponiblesEnElMes(), gastadosEnElMes(), MAXIMO_POR_MES, esDiaHabil(), faltaQueRompioLaRacha(), fechasQueCuentan() (+11 more)
 
 ### Community 19 - "file"
 Cohesion: 0.13
@@ -364,40 +389,40 @@ Cohesion: 0.14
 Nodes (28): AsistenciaParaRacha, esDiaHabil(), faltaQueRompioLaRacha(), fechasQueCuentan(), restarUnDia(), aplicarTirada(), AsistenciaExistente, calcularDisponibles() (+20 more)
 
 ### Community 23 - "ClienteAsistenciaScreen.kt"
-Cohesion: 0.09
-Nodes (13): GrupoEjercicio, calcularColoresPorFecha(), CalendarGrid(), CalendarHeader(), CalendarioScreen(), ClienteAsistenciaScreen(), DetalleAsistenciaDialog(), formatearDuracion() (+5 more)
+Cohesion: 0.31
+Nodes (6): ClienteAsistenciaScreen(), DetalleAsistenciaDialog(), formatearDuracion(), HistorialCalendarGrid(), Leyenda(), MonthCalendarHeader()
+
+### Community 24 - "LogroPersonalCatalogo"
+Cohesion: 0.16
+Nodes (6): LogroPersonalCatalogo, EditarLogroDialog(), LogroItem(), LogrosPersonalesScreen(), LogrosPersonalesViewModel, LogroPersonalImagenUtil
 
 ### Community 25 - "mapaMuscular.ts"
-Cohesion: 0.07
-Nodes (49): Back Female Muscle Map Reference, Back Male Muscle Map Reference, Front Female Muscle Map Reference, Female Ponytail Hairstyle Reference, Upper/lower body color grouping (arms vs. rest), Front Male Muscle Map Reference (Bro split), Bro split muscle grouping (chest, shoulders, arms, abs, quads, calves), Flat colored muscle regions with white outlines on black background (+41 more)
+Cohesion: 0.06
+Nodes (64): Back Female Muscle Map Reference, Back Male Muscle Map Reference, Front Female Muscle Map Reference, Female Ponytail Hairstyle Reference, Upper/lower body color grouping (arms vs. rest), Front Male Muscle Map Reference (Bro split), Bro split muscle grouping (chest, shoulders, arms, abs, quads, calves), Flat colored muscle regions with white outlines on black background (+56 more)
 
-### Community 26 - "cv2"
+### Community 26 - "numpy"
 Cohesion: 0.13
-Nodes (12): cargar(), clean(), comps(), fill_holes(), k(), sym(), k(), piezas() (+4 more)
+Nodes (13): cargar(), cargar(), clean(), comps(), fill_holes(), k(), sym(), k() (+5 more)
 
 ### Community 27 - "MancuAnimacion"
 Cohesion: 0.07
 Nodes (5): EscenaMancuSaludo, MancuAnimacion, RendererMancu, MancuAnimacionTest, TransicionesMancuTest
 
-### Community 28 - "FakeClienteRepository"
-Cohesion: 0.07
-Nodes (3): FakeAsistenciaRepository, FakeClienteRepository, SandboxViewModel
-
-### Community 29 - "awaitclose"
-Cohesion: 0.15
-Nodes (3): AvisoFaltaWeb, CambioDiaWeb, DispositivoRepository
+### Community 29 - "AppContainer"
+Cohesion: 0.09
+Nodes (8): AppContainer, AvisoFaltaWeb, CambioDiaWeb, AvisoFaltaWebRepository, CambioDiaWebRepository, DispositivoRepository, ResumenStorageRepository, ClientesListViewModel
 
 ### Community 30 - "firebase.ts"
-Cohesion: 0.08
-Nodes (32): firebase, registrarDispositivo, app, auth, canjeAdelantado(), canjear(), db, esFalloDeRed() (+24 more)
+Cohesion: 0.07
+Nodes (35): File Structure, Global Constraints, Registro de verificación, Review Focus, Revocar el acceso de una clienta de verdad Implementation Plan, Task 1: Fecha de corte en las callables, Task 2: Trigger `alRevocarAcceso`, Task 3: Reglas de Firestore y Storage (+27 more)
 
-### Community 31 - "ClienteDetailViewModel.kt"
-Cohesion: 0.05
-Nodes (13): AppContainer, AvisoFaltaWebRepository, CambioDiaWebRepository, ResumenStorageRepository, Descanso, Dia, DiaQueToca, SinRutina (+5 more)
+### Community 31 - "CalendarioViewModel.kt"
+Cohesion: 0.12
+Nodes (6): AuthManager, AuthState, Error, Loading, Success, CalendarioViewModel
 
 ### Community 33 - "ResumenClienteViewModel.kt"
-Cohesion: 0.19
-Nodes (5): LogroPersonalOtorgado, ResumenClienteData, PreparacionResumenQuincenal, ResumenClienteViewModel, VideoQuincenalListo
+Cohesion: 0.12
+Nodes (9): DesgloseEsfuerzo, PuntoTiempoDiario, RankingResultado, ResumenClienteCalculator, ResumenClienteData, PreparacionResumenQuincenal, ResumenClienteViewModel, VideoQuincenalListo (+1 more)
 
 ### Community 34 - "ResumenVideoEncoder.kt"
 Cohesion: 0.07
@@ -415,21 +440,17 @@ Nodes (24): Banco de ejercicios con GIF y Registro — plan, Decisiones, Fuera d
 Cohesion: 0.08
 Nodes (3): ErrorScreen(), OSfitApp(), OSfitContent()
 
-### Community 38 - "LogroPersonalCatalogo"
-Cohesion: 0.21
-Nodes (8): LogroPersonalCatalogo, ConfirmarLogrosDialog(), LogroPersonalCard(), LogrosPersonalesClienteScreen(), OtorgarLogroPersonalDialog(), EditarLogroDialog(), LogroItem(), LogrosPersonalesScreen()
+### Community 38 - "TomarAsistenciaScreen.kt"
+Cohesion: 0.14
+Nodes (7): ClienteAsistenciaRow(), ClienteRutinaRow(), CronometroRow(), formatearDuracion(), SegmentoAsistencia(), SeleccionarDiaRealizadoDialog(), TomarAsistenciaScreen()
 
 ### Community 39 - "Web para clientes"
 Cohesion: 0.07
 Nodes (30): Alcance, Arquitectura, Calendario, `cambiarDia(diaIndex, motivo)`, Cambios en la app Android, Campos nuevos en modelos existentes, Colecciones nuevas, Contexto y objetivo (+22 more)
 
-### Community 40 - "FirestoreAsistenciaRepository"
-Cohesion: 0.13
-Nodes (3): FirestoreAsistenciaRepository, TiempoGymCalculator, TiempoGymCalculatorTest
-
 ### Community 41 - "Paleta"
-Cohesion: 0.13
-Nodes (6): Paleta, FabricaRendererVideo, RendererBlobs, RendererVideo, PosicionLogro, ResumenFrameRenderer
+Cohesion: 0.10
+Nodes (10): Paleta, FabricaRendererVideo, Capa, FondoBlobRenderer, RendererBlobs, RendererVideo, BloqueTexto, PosicionLogro (+2 more)
 
 ### Community 43 - "programarAvisos.ts"
 Cohesion: 0.16
@@ -451,13 +472,9 @@ Nodes (4): AvisoAutomatico, RACHA_PERDIDA, RECORDATORIO_PAGO, FirestoreClienteRe
 Cohesion: 0.29
 Nodes (3): AccesoWeb, EntradaWeb, AccesoWebRepository
 
-### Community 48 - "RutinaEditorViewModel"
-Cohesion: 0.12
-Nodes (4): EjerciciosEditables(), RutinaEditorScreen(), VariacionesDelDia(), RutinaEditorViewModel
-
-### Community 49 - "TomarAsistenciaScreen.kt"
-Cohesion: 0.06
-Nodes (12): cargadorDe(), GifEjercicio(), Muestras(), MuestrasPaletaVideo(), MuestrasPaletaWeb(), VideoEjercicio(), DetalleGrupo(), GruposEjerciciosScreen() (+4 more)
+### Community 49 - "CalendarioScreen.kt"
+Cohesion: 0.07
+Nodes (12): calcularColoresPorFecha(), CalendarGrid(), CalendarHeader(), CalendarioScreen(), FaltaRow(), SobornoDialog(), cargadorDe(), GifEjercicio() (+4 more)
 
 ### Community 50 - "Plan: Estilos de video por quincena + Mancu"
 Cohesion: 0.08
@@ -468,56 +485,44 @@ Cohesion: 0.11
 Nodes (26): Plan: Archivos locales en la nube, Archivos locales en la nube — Implementation Plan, Global Constraints, Task 1: El núcleo puro — qué se espera y qué falta, Task 2: Subir y bajar de Storage, Task 3: Subir la canción al elegirla, Task 4: El restaurador, Task 5: La regla de Storage (+18 more)
 
 ### Community 52 - "VideoPublicado"
-Cohesion: 0.24
-Nodes (3): VideoPublicado, RetencionVideos, RetencionVideosTest
+Cohesion: 0.16
+Nodes (4): VideoPublicado, VideoPublicadoRepository, RetencionVideos, RetencionVideosTest
 
 ### Community 53 - ".cuadro"
-Cohesion: 0.14
-Nodes (3): AccionesMancu, AccionesMancuTest, MancuCoreografiaTest
+Cohesion: 0.13
+Nodes (4): AccionesMancu, EscenaMancuDespedida, AccionesMancuTest, MancuCoreografiaTest
 
 ### Community 54 - "Spec: Notificaciones web PWA"
 Cohesion: 0.15
 Nodes (19): Plan: Notificaciones web PWA, Task 1: instalable y comprobar sesión en iPhone (puerta del plan), Spec: Notificaciones web PWA, activarNotificaciones(), AvisosViewModel, Clave VAPID (web push), Colección notificaciones/{id}, Subcolección clientes/{id}/dispositivos (+11 more)
 
 ### Community 55 - "estilo.ts"
-Cohesion: 0.13
-Nodes (16): AlmacenEstilo, aplicarEstilo(), CLAVE_ESTILO, esEstilo(), Estilo, ESTILO_POR_DEFECTO, estiloGuardado(), ESTILOS (+8 more)
+Cohesion: 0.17
+Nodes (13): AlmacenEstilo, aplicarEstilo(), CLAVE_ESTILO, Estilo, ESTILO_POR_DEFECTO, estiloGuardado(), ESTILOS, FUENTES (+5 more)
 
 ### Community 56 - "halloween.ts"
 Cohesion: 0.22
 Nodes (24): arbolSeco(), bandadaDeMurcielagos(), calabaza(), calabazaEnElSuelo(), CALABAZAS_DEL_SUELO, colina(), comoImagen(), cruz() (+16 more)
 
-### Community 57 - "File Structure"
-Cohesion: 0.15
-Nodes (12): File Structure, Global Constraints, Registro de verificación, Review Focus, Revocar el acceso de una clienta de verdad Implementation Plan, Task 1: Fecha de corte en las callables, Task 2: Trigger `alRevocarAcceso`, Task 3: Reglas de Firestore y Storage (+4 more)
+### Community 57 - "notificacionesNavegador.ts"
+Cohesion: 0.16
+Nodes (15): registrarDispositivo, alActivarNotificaciones(), EntornoNotificaciones, estadoNotificaciones, Permiso, plataforma(), versionIos(), activarNotificaciones() (+7 more)
 
 ### Community 58 - "AvisosViewModel.kt"
-Cohesion: 0.10
-Nodes (5): Notificacion, NotificacionRepository, Avisos, AvisosViewModel, AvisosTest
+Cohesion: 0.13
+Nodes (4): Notificacion, NotificacionRepository, Avisos, AvisosViewModel
 
-### Community 59 - ".resumen"
-Cohesion: 0.27
-Nodes (3): DesgloseEsfuerzo, PuntoTiempoDiario, ResumenVideoGeneratorTest
-
-### Community 60 - "WebClienteScreen"
-Cohesion: 0.16
+### Community 60 - "WebClienteScreen.kt"
+Cohesion: 0.14
 Nodes (7): FilaNotificaciones(), FilaRecordatorioPago(), seccionesWeb(), SeccionWeb, TarjetaAvisosAutomaticos(), WebClienteScreen(), WebClienteViewModel
 
 ### Community 61 - "functions/package.json"
-Cohesion: 0.05
-Nodes (44): author, dependencies, firebase-admin, firebase-functions, description, devDependencies, sharp, typescript (+36 more)
+Cohesion: 0.12
+Nodes (16): author, dependencies, firebase-admin, firebase-functions, description, engines, node, typescript (+8 more)
 
 ### Community 62 - "mapa-muscular/vectorizar.py"
 Cohesion: 0.14
 Nodes (10): area_paths(), catmull(), f(), F(), gsmooth(), mayores(), mirror(), P() (+2 more)
-
-### Community 63 - "localdate"
-Cohesion: 0.11
-Nodes (3): DiaDenormalizado, Rutina, FaltaQueRompioLaRacha
-
-### Community 64 - "PaletasTest"
-Cohesion: 0.06
-Nodes (10): PaletaWebRepository, Paletas, aHexWeb(), camposFirestore(), BlobsGeometria, BlobSpec, Punto, PaletasTest (+2 more)
 
 ### Community 65 - "ResumenVideoGenerator"
 Cohesion: 0.11
@@ -531,9 +536,9 @@ Nodes (24): Plan: Resumen video animado, Global Constraints, Resumen de cliente 
 Cohesion: 0.08
 Nodes (24): App Android (`app/`), Campo nuevo en `clientes/{id}`, Colección nueva `notificaciones/{id}`, Configuración que hay que hacer a mano, Contexto y objetivo, Datos, Dónde aparece, `enviarNotificacion` (trigger `onDocumentCreated("notificaciones/{id}")`, nueva) (+16 more)
 
-### Community 68 - "ventanas.ts"
+### Community 68 - "ref_vitest"
 Cohesion: 0.07
-Nodes (39): cambiarDia, Cliente, LogroPersonalOtorgado, MedallaOtorgada, Sesion, IdEstilo, fechaEnMazatlan(), horaEnMazatlan() (+31 more)
+Nodes (31): cambiarDia, Cliente, fechaEnMazatlan(), horaEnMazatlan(), hoyEnMazatlan(), leTocaFragil(), Motivo, MOTIVOS (+23 more)
 
 ### Community 69 - "Traspaso: generar y publicar los videos HD (camino 1)"
 Cohesion: 0.17
@@ -543,12 +548,16 @@ Nodes (11): 0. Contexto en 6 líneas, 1. Lo que hay en el entorno (sesión en la
 Cohesion: 0.14
 Nodes (15): AppContainer (contenedor de repositorios), Arquitectura MVVM single-module (data/model, data/repository, domain, ui), AsistenciaRepository.registrarAsistencia, AuthManager (autenticación silenciosa), Global Constraints, OSfit Implementation Plan, RutinaProgressCalculator, Self-Review (completado al escribir este plan) (+7 more)
 
+### Community 71 - "SandboxViewModel.kt"
+Cohesion: 0.17
+Nodes (5): Descanso, Dia, DiaQueToca, SinRutina, SandboxViewModel
+
 ### Community 72 - "cambioDeEstilo.ts"
-Cohesion: 0.15
-Nodes (16): cambiarConTransicion(), COLOR_BARRA, cortinaPixel, encendidoNeon, nocheDeBrujas, pedirFuentes(), ponerEstilo(), rafagaSakura (+8 more)
+Cohesion: 0.14
+Nodes (18): esEstilo(), guardarEstilo(), almacenDeEstilo(), cambiarConTransicion(), COLOR_BARRA, cortinaPixel, encendidoNeon, nocheDeBrujas (+10 more)
 
 ### Community 73 - "AsistenciaRepository"
-Cohesion: 0.14
+Cohesion: 0.13
 Nodes (3): AsistenciaRepository, SincronizadorDiaWeb, AsignarDiaManual
 
 ### Community 74 - "Estructura de archivos"
@@ -556,16 +565,16 @@ Cohesion: 0.09
 Nodes (22): Estructura de archivos, Global Constraints, Qué queda para la Etapa 3, Riesgos conocidos de esta etapa, Sobre los gemelos Kotlin ↔ TypeScript, Task 10: `revivirRacha`, Task 11: `acciones.ts` y el modal, Task 12: Los dos botones de la tarjeta del día (+14 more)
 
 ### Community 75 - "Spec: Estilo pixel art"
-Cohesion: 0.14
-Nodes (18): Spec: Estilo pixel art, Catálogo ESTILOS (estilo.ts), Decisiones, El pixel art, Estilo de la página desde Ajustes: pixel art, Estilo Pixel art, Fuera de alcance, Qué (+10 more)
+Cohesion: 0.10
+Nodes (24): Spec: Estilo pixel art, Catálogo ESTILOS (estilo.ts), Decisiones, El pixel art, Estilo de la página desde Ajustes: pixel art, Estilo Pixel art, Fuera de alcance, Qué (+16 more)
 
 ### Community 76 - "web/package.json"
 Cohesion: 0.08
 Nodes (21): vite, author, dependencies, firebase, description, devDependencies, typescript, vite (+13 more)
 
-### Community 77 - "RutinaWebClienteScreen.kt"
-Cohesion: 0.17
-Nodes (17): etiquetaVariacion(), DiaRutinaPlegable(), diasQueVeLaClienta(), EditarDiaDialog(), EditarPesosDialog(), ListaEjercicios(), OrigenRutina, origenRutinaDe() (+9 more)
+### Community 77 - "SeccionRutinaWeb"
+Cohesion: 0.19
+Nodes (16): etiquetaVariacion(), DiaRutinaPlegable(), diasQueVeLaClienta(), EditarDiaDialog(), EditarPesosDialog(), ListaEjercicios(), OrigenRutina, origenRutinaDe() (+8 more)
 
 ### Community 79 - "espalda/vectorizar.py"
 Cohesion: 0.14
@@ -575,29 +584,33 @@ Nodes (12): aplicar_fronteras(), area_paths(), catmull(), curva_y(), f(), F(), g
 Cohesion: 0.14
 Nodes (12): aplicar_fronteras(), area_paths(), catmull(), curva_y(), f(), F(), gsmooth(), mirror() (+4 more)
 
-### Community 81 - "numpy"
-Cohesion: 0.11
-Nodes (19): cargar(), alisar(), densa(), aplicar_fronteras(), area_paths(), catmull(), corte_fondo(), curva_y() (+11 more)
+### Community 81 - "mujer/vectorizar.py"
+Cohesion: 0.14
+Nodes (16): aplicar_fronteras(), area_paths(), catmull(), corte_fondo(), curva_y(), espejar(), f(), F() (+8 more)
 
 ### Community 82 - "Logros personales por cliente"
 Cohesion: 0.10
 Nodes (21): Agrupación en `construirEscenas`, Catálogo (Firestore `logrosPersonales`), Catálogo (`LogrosPersonalesScreen` + `LogrosPersonalesViewModel`), Colisión de nombres a resolver primero, Contexto y objetivo, Duración (`TimelineResumen.duracionParaTipo`), Escena nueva, Flujo de confirmación al generar el resumen quincenal (+13 more)
 
-### Community 83 - "MedallaCatalogo"
-Cohesion: 0.27
-Nodes (4): MedallaCatalogo, ArchivoEsperado, ArchivosQueFaltan, ArchivosQueFaltanTest
+### Community 83 - ".esperadosDe"
+Cohesion: 0.26
+Nodes (3): ArchivoEsperado, ArchivosQueFaltan, ArchivosQueFaltanTest
 
 ### Community 84 - "Revocar el acceso de una clienta de verdad"
 Cohesion: 0.11
 Nodes (14): 1. Una fecha de corte en el cliente: `accesoRevocadoEn`, 2. Reglas: `esCliente` exige una sesión posterior al corte, 3. Función `alRevocarAcceso` (trigger), 4. Funciones callable: misma fecha de corte, 6. La app: confirmar antes de revocar, Contexto y problema, Decisiones (entrenador, 2026-10-10), Diseño (+6 more)
 
 ### Community 85 - "ClientesListScreen.kt"
-Cohesion: 0.10
-Nodes (8): PagoCalculator, AvatarCliente(), ClienteItem(), ClientesListScreen(), EncabezadoSaludo(), NuevoClienteDialog(), rememberFechaActual(), TextoMaquinaEscribir()
+Cohesion: 0.09
+Nodes (10): PagoCalculator, AvatarCliente(), ClienteItem(), ClientesListScreen(), EncabezadoSaludo(), NuevoClienteDialog(), rememberFechaActual(), TextoMaquinaEscribir() (+2 more)
 
 ### Community 86 - "EjercicioBanco"
-Cohesion: 0.20
-Nodes (3): EjercicioBanco, GruposEjercicio, GruposEjercicioTest
+Cohesion: 0.17
+Nodes (4): EjercicioBanco, GrupoEjercicio, GruposEjercicio, GruposEjercicioTest
+
+### Community 88 - "AccionMancu"
+Cohesion: 0.12
+Nodes (12): AccionMancu, APLAUDIR, BAILAR, CORRER_SITIO, ESTIRARSE, MUSCULO, PULGAR, RELOJ (+4 more)
 
 ### Community 90 - "RendererMancu"
 Cohesion: 0.13
@@ -615,9 +628,9 @@ Nodes (13): AGENTS.md (guía para agentes), Claim clienteId / esCliente, Firebas
 Cohesion: 0.22
 Nodes (5): Ejercicio, claveEjercicio(), conPesoPropio(), conPesosPropios(), PesosPropiosTest
 
-### Community 96 - "PoseMancu"
-Cohesion: 0.05
-Nodes (42): AccionMancu, APLAUDIR, BAILAR, CORRER_SITIO, ESTIRARSE, MUSCULO, PULGAR, RELOJ (+34 more)
+### Community 96 - "MancuDibujo"
+Cohesion: 0.11
+Nodes (28): CuadroAccion, MancuDibujo, Boca, ABIERTA, DIENTES, O, SONRISA, TRISTE (+20 more)
 
 ### Community 97 - "Decisiones de diseño no explícitas en el spec (asunciones tomadas)"
 Cohesion: 0.11
@@ -632,8 +645,8 @@ Cohesion: 0.11
 Nodes (19): Del backlog, que esta etapa NO toca, Estructura de archivos, Global Constraints, Qué queda para la Etapa 3, Task 10: Las dos acciones en la página, Task 11: Indicadores en el calendario del entrenador, Task 12: Cupo visible en la ficha del cliente, Task 13: Verificación final en dispositivo (+11 more)
 
 ### Community 100 - "Spec: La ruleta, segunda oportunidad sin vidas"
-Cohesion: 0.19
-Nodes (14): Plan: Ruleta para revivir la racha, functions/src/reglasRuleta.ts (reglas puras), web/src/ui/ruletaGiro.ts (angulo de la ruleta), web/src/tirada.ts (dato de tirada y castigo), Spec: La ruleta, segunda oportunidad sin vidas, Animacion en dos fases (giro libre + frenado), Coleccion ruletas ({clienteId}_{AAAA-MM}), Cupo de revives derivado (disponiblesEnElMes con castigo) (+6 more)
+Cohesion: 0.16
+Nodes (16): Plan: Ruleta para revivir la racha, Global Constraints, functions/src/reglasRuleta.ts (reglas puras), Ruleta para revivir la racha — Plan de implementación, web/src/ui/ruletaGiro.ts (angulo de la ruleta), web/src/tirada.ts (dato de tirada y castigo), Spec: La ruleta, segunda oportunidad sin vidas, Animacion en dos fases (giro libre + frenado) (+8 more)
 
 ### Community 101 - "Reinicio semanal del ciclo de rutina"
 Cohesion: 0.11
@@ -644,8 +657,8 @@ Cohesion: 0.11
 Nodes (19): Arquitectura de render, Concepto, Decisiones ya tomadas con el trainer, Estado actual del código (para no re-explorar), Estilos de video seleccionables por periodo, Fuera de alcance, Geometría de Mancu (viewBox 200×200, escalar al tamaño en pantalla), Objetivo (+11 more)
 
 ### Community 103 - "TextoMancu"
-Cohesion: 0.18
-Nodes (4): ColorMancu, ClaveParrafo, TextoMancu, ColorMancuTest
+Cohesion: 0.27
+Nodes (3): ColorMancu, ClaveParrafo, TextoMancu
 
 ### Community 105 - "Mapa muscular hombre frente: generación SVG"
 Cohesion: 0.16
@@ -663,13 +676,17 @@ Nodes (18): Catálogo de medallas (compartido, Firestore `medallas`), Catálogo 
 Cohesion: 0.11
 Nodes (18): Contexto y objetivo, Cuál sale marcada, Despliegue, Dos comentarios que hay que corregir, El catálogo en TypeScript, El patrón es el de `accionDia.ts`, El test de paridad, Errores (+10 more)
 
+### Community 109 - "Estándares por ejercicio"
+Cohesion: 0.11
+Nodes (17): Abdomen, Antebrazo, Bíceps, Cardio, Cuádriceps, Cómo leerla, Espalda, Estándares por ejercicio (+9 more)
+
 ### Community 110 - "petalos.ts"
 Cohesion: 0.22
 Nodes (16): ajustarTamano(), avanzarPetalo(), brisa(), cantidad(), Capa, capas, COLORES_PETALO, crearPetalo() (+8 more)
 
 ### Community 111 - "TopViewModel.kt"
-Cohesion: 0.38
-Nodes (4): construirPodio(), PuestoPodio, TopCliente, TopViewModel
+Cohesion: 0.13
+Nodes (6): ClienteAsistenciaViewModel, RutinasViewModel, construirPodio(), PuestoPodio, TopCliente, TopViewModel
 
 ### Community 115 - "Medallas plan global constraints"
 Cohesion: 0.12
@@ -683,17 +700,17 @@ Nodes (17): Estructura de archivos, Global Constraints, Qué queda para las etap
 Cohesion: 0.12
 Nodes (17): App Android (`app/`), Campo nuevo en `clientes/{id}`, Contexto y objetivo, Cálculo puro (`web/src/pago.ts`, nuevo), Datos, Dónde va (`ventanas.ts`), Modelo, Pantalla Web (`WebClienteScreen`) (+9 more)
 
-### Community 118 - "navegacion.ts"
-Cohesion: 0.26
-Nodes (12): pintarMenu(), abrirMenu(), abrirVentana(), alRetroceder(), avisar(), cerrarMenu(), Historial, historialDelNavegador() (+4 more)
+### Community 118 - "menuLateral.ts"
+Cohesion: 0.12
+Nodes (24): pintarMenu(), abrirMenu(), abrirVentana(), alRetroceder(), avisar(), cerrarMenu(), Historial, historialDelNavegador() (+16 more)
 
 ### Community 119 - "ui/registro.ts"
-Cohesion: 0.05
-Nodes (82): claveBanco(), indiceBanco, urlGif(), urlPublica(), urlVideo(), ConfigGrupos, EjercicioBanco, SerieSesion (+74 more)
+Cohesion: 0.07
+Nodes (62): urlGif(), urlPublica(), urlVideo(), SerieSesion, agregarEjercicio(), agregarSerie(), Borrador, cambiarSerie() (+54 more)
 
-### Community 120 - "tarjetaVideos.ts"
-Cohesion: 0.16
-Nodes (14): VideoResumen, pintarVideos(), insignia(), porRangoDescendente(), seccionVacia(), tarjetaLogrosPersonales(), tarjetaMedallas(), firmaVideos() (+6 more)
+### Community 120 - "ventanas.ts"
+Cohesion: 0.08
+Nodes (35): claveBanco(), indiceBanco, ConfigGrupos, EjercicioBanco, LogroPersonalOtorgado, MedallaOtorgada, Sesion, IdEstilo (+27 more)
 
 ### Community 121 - "Backlog 2"
 Cohesion: 0.12
@@ -723,13 +740,9 @@ Nodes (15): Aplicar la paleta, Contexto y objetivo, Despliegue, Dos colores por 
 Cohesion: 0.13
 Nodes (15): Contexto y objetivo, Costo y mejora futura, Despliegue, Estado y carga (`main.ts`), `functions/src/rachas.ts` (nuevo, puro), `functions/src/ranking.ts` (nuevo), Llamada, Por qué una Cloud Function (+7 more)
 
-### Community 129 - "TomarAsistenciaViewModel"
+### Community 130 - "MedallaCatalogo"
 Cohesion: 0.16
-Nodes (8): ClienteAsistenciaRow(), ClienteRutinaRow(), CronometroRow(), formatearDuracion(), SegmentoAsistencia(), SeleccionarDiaRealizadoDialog(), TomarAsistenciaScreen(), TomarAsistenciaViewModel
-
-### Community 130 - "ResumenVideoGenerator.kt"
-Cohesion: 0.18
-Nodes (3): MedallaImagenUtil, ResumenGenerado, ResumenVideoGenerator
+Nodes (6): MedallaCatalogo, EditarMedallaDialog(), MedallaItem(), MedallasScreen(), MedallasViewModel, MedallaImagenUtil
 
 ### Community 131 - "Test"
 Cohesion: 0.11
@@ -740,8 +753,8 @@ Cohesion: 0.26
 Nodes (13): Barra inferior Inicio/Músculos/Registro, Spec: Mapa de fuerza, registro y entrenamiento guiado, Banco de ejercicios (colección ejercicios/), Cliente.sexo, Atributo data-musculo de los SVG, Ejercicio.ejercicioId, Cálculo de fuerza (web/src/fuerza.ts), FuerzaCalculator.kt (gemelo Kotlin) (+5 more)
 
 ### Community 134 - "Estructura de archivos"
-Cohesion: 0.12
-Nodes (16): Estructura de archivos, Global Constraints, Ruleta para revivir la racha — Plan de implementación, Task 10: Los estados nuevos de la tarjeta de revivir, Task 11: El modal en pantalla — estilos y cableado, Task 12: El castigo en la app del entrenador, Task 13: Verificación antes de producción, Task 1: El dato de la tirada y el castigo derivado (+8 more)
+Cohesion: 0.14
+Nodes (14): Estructura de archivos, Task 10: Los estados nuevos de la tarjeta de revivir, Task 11: El modal en pantalla — estilos y cableado, Task 12: El castigo en la app del entrenador, Task 13: Verificación antes de producción, Task 1: El dato de la tirada y el castigo derivado, Task 2: El cupo deja de ser una constante (web), Task 3: El gemelo Kotlin del cupo (+6 more)
 
 ### Community 135 - "Spec: La clienta elige su paleta desde Ajustes"
 Cohesion: 0.31
@@ -823,6 +836,10 @@ Nodes (11): Android, Commits, Compilar y probar, Convenciones del repo — resp�
 Cohesion: 0.17
 Nodes (12): File Structure, Global Constraints, Registro de verificación, Task 1: Funciones, Task 2: Web, Task 3: App, Task 4: Despliegue (con confirmación), Últimas entradas a la web Implementation Plan (+4 more)
 
+### Community 160 - "BlobsGeometriaTest"
+Cohesion: 0.24
+Nodes (4): BlobsGeometria, BlobSpec, Punto, BlobsGeometriaTest
+
 ### Community 162 - "Paleta web plan global constraints"
 Cohesion: 0.18
 Nodes (10): Lo que quedó sin verificar (2026-09-14), Notas para quien ejecute, Paleta de la web del cliente: plan de implementación, Task 1: Mudar y renombrar el catálogo, Task 2: Los colores de web y las diez paletas nuevas, Task 3: Muestras de paleta compartidas, Task 4: Guardar la paleta de la clienta, Task 5: La pantalla de la app (+2 more)
@@ -851,9 +868,13 @@ Nodes (9): arbol, crecer(), Crecimiento, fondoSakura(), generador(), r1(), racim
 Cohesion: 0.18
 Nodes (10): compilerOptions, lib, module, moduleResolution, noEmit, noUnusedLocals, skipLibCheck, strict (+2 more)
 
-### Community 170 - ".dibujar"
-Cohesion: 0.17
-Nodes (5): CascadaLogrosMancu, ComposicionPremiosMancu, Mascota, CascadaLogrosMancuTest, ComposicionPremiosMancuTest
+### Community 169 - "GruposEjerciciosScreen.kt"
+Cohesion: 0.27
+Nodes (6): DetalleGrupo(), GruposEjerciciosScreen(), ListaGrupos(), SelectorEjercicios(), sinAcentos(), VistaEjercicio()
+
+### Community 171 - ".grafica"
+Cohesion: 0.14
+Nodes (3): EscenaMancuTiempo, GeometriaMancu, GeometriaMancuTest
 
 ### Community 173 - "Spec: Rutinas en la web"
 Cohesion: 0.29
@@ -877,15 +898,19 @@ Nodes (10): File Structure, Global Constraints, Recordatorio de pago en la web d
 
 ### Community 178 - "Videos HD de los ejercicios — "camino 1""
 Cohesion: 0.12
-Nodes (15): 10. Estado, 1. Por qué, 2. Qué hay dentro de cada GIF (el hallazgo del piloto), 3. Qué hace el camino 1, 4. Qué se entrega y qué se reemplaza, 5. Instalación (una sola vez), 7. Cómo está implementado, 8. Tiempos y costo (+7 more)
+Nodes (16): 10. Estado, 1. Por qué, 2. Qué hay dentro de cada GIF (el hallazgo del piloto), 3. Qué hace el camino 1, 4. Qué se entrega y qué se reemplaza, 5. Instalación (una sola vez), 6.1 Generar, 6.2 Revisar (antes de subir) (+8 more)
 
-### Community 179 - "GruposEjerciciosViewModel"
-Cohesion: 0.35
+### Community 179 - "GruposEjerciciosViewModel.kt"
+Cohesion: 0.26
 Nodes (3): EstadoGrupos, FilaGrupo, GruposEjerciciosViewModel
 
 ### Community 180 - "TipoTransicionMancu"
 Cohesion: 0.25
 Nodes (8): EstiloViajeMancu, CORRER, SALTO, TipoTransicionMancu, BROCHA, IRIS, NUBE, TELON
+
+### Community 181 - "estandares.test.mjs"
+Cohesion: 0.22
+Nodes (8): leer(), main(), erroresEstandares(), NIVELES, archivo, bien, ocho, semilla
 
 ### Community 182 - "File Structure"
 Cohesion: 0.22
@@ -898,10 +923,6 @@ Nodes (9): Calendario-Rutina como fuente de verdad del día de rutina, Campos qu
 ### Community 184 - "Paleta / Paletas (catalogo compartido)"
 Cohesion: 0.25
 Nodes (7): webPrimario / webPrimarioOscuro / webPrimarioClaro / webSobrePrimario, Preset Morado OSfit, Paleta / Paletas (catalogo compartido), PaletasTest, porIdVideo / porIdWeb, 15 presets de paleta (5 existentes + 10 nuevas), Variables CSS --primario / --primario-oscuro / --primario-claro / --sobre-primario
-
-### Community 185 - "InsigniaMancu"
-Cohesion: 0.24
-Nodes (3): EscenaMancuLogros, EscenaMancuMedalla, InsigniaMancu
 
 ### Community 186 - "Web para clientes — Etapa 3: medallas, logros y videos (plan)"
 Cohesion: 0.39
@@ -932,12 +953,12 @@ Cohesion: 0.15
 Nodes (7): k(), partir(), piezas(), simetrica(), k(), piezas(), simetrica()
 
 ### Community 193 - "camino1.py"
-Cohesion: 0.15
-Nodes (5): armar_video(), escalar(), main(), poses_del_gif(), main()
+Cohesion: 0.13
+Nodes (7): a_ocho(), main(), redondear_kg(), armar_video(), escalar(), main(), main()
 
-### Community 194 - "Más estilos en Ajustes: neón, cómic y minimalista"
-Cohesion: 0.33
-Nodes (6): Cómic, Fuera de alcance, Lo que se generalizó, Minimalista, Más estilos en Ajustes: neón, cómic y minimalista, Neón
+### Community 194 - "pesoCorporal.ts"
+Cohesion: 0.30
+Nodes (10): bloquePeso(), conectarPeso(), kg(), necesitaPeso(), PESO_MAX, PESO_MIN, pesoActual(), pesoValido() (+2 more)
 
 ### Community 198 - "web/index.html"
 Cohesion: 0.38
@@ -968,8 +989,8 @@ Cohesion: 0.40
 Nodes (5): Flujo specs/planes en docs/superpowers, Ejemplo spec worker (nube Mancu), Nube de caricatura transición Mancu, progresoNube / escenaVisibleEsEntrante, RendererMancu.dibujarFrame
 
 ### Community 205 - "MainActivity.kt"
-Cohesion: 0.08
-Nodes (8): AuthManager, AuthState, Error, Loading, Success, MainActivity, Notificaciones, OSfitTheme()
+Cohesion: 0.07
+Nodes (4): MainActivity, Notificaciones, OSfitMessagingService, OSfitTheme()
 
 ### Community 206 - "El servidor"
 Cohesion: 0.40
@@ -983,9 +1004,53 @@ Nodes (3): LANG, LC_ALL, session-start.sh script
 Cohesion: 1.00
 Nodes (3): Default personal achievement medal (Android), Personal achievement medal (pixel-art purple medal with gold star), Default personal achievement medal (web)
 
-### Community 227 - "6. Paso a paso"
+### Community 213 - "camposFirestore"
+Cohesion: 0.36
+Nodes (3): aHexWeb(), camposFirestore(), PaletaWebFirestoreTest
+
+### Community 224 - "bancoEjercicios.mjs"
+Cohesion: 0.24
+Nodes (8): ATRIBUCION, claveBanco(), DATASET, GRUPOS, MUSCULOS_SVG, semilla, TIPOS, validarSemilla()
+
+### Community 225 - "cargarBancoEjercicios.mjs"
 Cohesion: 0.33
-Nodes (6): 6.1 Generar, 6.2 Revisar (antes de subir), 6.3 Subir, 6.4 Verificar, 6.5 Deshacer, 6. Paso a paso
+Nodes (9): documentoDe(), rutaGif(), urlDelDataset(), args, aWebp(), descargar(), main(), prueba (+1 more)
+
+### Community 226 - "EjercicioRow"
+Cohesion: 0.28
+Nodes (4): EjercicioRow(), EjerciciosEditables(), RutinaEditorScreen(), VariacionesDelDia()
+
+### Community 227 - ".mascota"
+Cohesion: 0.33
+Nodes (3): ComposicionPremiosMancu, Mascota, ComposicionPremiosMancuTest
+
+### Community 232 - "calendario.ts"
+Cohesion: 0.43
+Nodes (4): calendario(), columnaDe(), moverMes(), NOMBRES_MES
+
+### Community 233 - "subirVideoEjercicio.mjs"
+Cohesion: 0.33
+Nodes (3): rutaVideo(), doc, [id, archivo]
+
+### Community 236 - "deslizarRegistro.ts"
+Cohesion: 0.60
+Nodes (4): conectarDeslizar(), decidirDeslizamiento(), esInteractivo(), sinMovimiento()
+
+### Community 238 - "7. Cómo está implementado"
+Cohesion: 0.40
+Nodes (5): 7. Cómo está implementado, App (Android), Datos, Scripts, Web (Registro)
+
+### Community 239 - "fondoPixel.ts"
+Cohesion: 0.80
+Nodes (3): capaDeEstrellas(), estrellas(), fondoPixel()
+
+### Community 240 - "devDependencies"
+Cohesion: 0.50
+Nodes (4): devDependencies, sharp, typescript, vitest
+
+### Community 241 - "scripts"
+Cohesion: 0.50
+Nodes (4): scripts, build, deploy, test
 
 ## Ambiguous Edges - Review These
 - `Licencia OFL Patrick Hand` → `Hojas de estilos alternativos (pixel, neón, cómic, minimalista, sakura, halloween)`  [AMBIGUOUS]
@@ -995,22 +1060,22 @@ Nodes (6): 6.1 Generar, 6.2 Revisar (antes de subir), 6.3 Subir, 6.4 Verificar, 
 
 ## Knowledge Gaps
 - **105 isolated node(s):** `LANG`, `LC_ALL`, `Loading`, `Success`, `Error` (+100 more)
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 1386 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
-- **49 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 1420 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+- **54 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `ClienteDetailViewModel` connect `ClienteDetailViewModel` to `EstadisticasViewModel`, `ClienteEditarScreen.kt`, `EstadisticasScreen.kt`, `OSfitNavHost`, `ClienteDetailScreen.kt`, `file`, `Pago`, `ClienteDetailViewModel.kt`, `ClienteRepository`, `VideoPublicadoRepository`, `ResumenClienteViewModel.kt`, `LogroPersonalCatalogo`, `LogroPersonalRepository`, `DiaRutina`, `MedallaRepository`, `AccesoWebRepository`, `VideoPublicado`, `RuletaRepository.kt`, `AsistenciaRepository`, `RutinaWebClienteScreen.kt`, `MedallaCatalogo`, `Revocar el acceso de una clienta de verdad`, `RutinaRepository`, `CupoRevivesCalculatorTest`, `Ejercicio`?**
-  _High betweenness centrality (0.154) - this node is a cross-community bridge._
+- **Why does `ClienteDetailViewModel` connect `ClienteDetailViewModel` to `MedallaCatalogo`, `EstadisticasViewModel`, `ClienteEditarScreen.kt`, `EstadisticasScreen.kt`, `OSfitNavHost`, `ClienteDetailScreen.kt`, `file`, `LogroPersonalCatalogo`, `Pago`, `AppContainer`, `ClienteRepository`, `LogroPersonalRepository`, `DiaRutina`, `MedallaRepository`, `AccesoWebRepository`, `VideoPublicado`, `AsistenciaRepository`, `SeccionRutinaWeb`, `Revocar el acceso de una clienta de verdad`, `RutinaRepository`, `CupoRevivesCalculatorTest`, `Ejercicio`?**
+  _High betweenness centrality (0.153) - this node is a cross-community bridge._
 - **Are the 7 inferred relationships involving `ClienteDetailViewModel` (e.g. with `ClienteDetailScreen()` and `ClienteEditarScreen()`) actually correct?**
   _`ClienteDetailViewModel` has 7 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `LANG`, `LC_ALL`, `Loading` to the rest of the system?**
   _105 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `RutinaProgressCalculatorTest` be split into smaller, more focused modules?**
-  _Cohesion score 0.07081377151799687 - nodes in this community are weakly interconnected._
-- **Why does `ClienteDetailScreen()` connect `ClienteDetailScreen.kt` to `ResumenClienteViewModel.kt`, `Test`, `LogroPersonalCatalogo`, `TopScreen.kt`, `DiaRutina`, `OSfitNavHost`, `ClienteDetailViewModel`, `WhatsAppUtil`, `ClientesListScreen.kt`, `ClienteAsistenciaScreen.kt`, `File Structure`, `Ejercicio`?**
-  _High betweenness centrality (0.141) - this node is a cross-community bridge._
+  _Cohesion score 0.07243460764587525 - nodes in this community are weakly interconnected._
+- **Why does `ClienteDetailScreen()` connect `ClienteDetailScreen.kt` to `ResumenClienteViewModel.kt`, `Test`, `TopScreen.kt`, `DiaRutina`, `OSfitNavHost`, `ClienteDetailViewModel`, `CalendarioScreen.kt`, `WhatsAppUtil`, `ClientesListScreen.kt`, `firebase.ts`, `Ejercicio`?**
+  _High betweenness centrality (0.147) - this node is a cross-community bridge._
 
 ### Low-confidence Hints
 _AMBIGUOUS edges — the extractor was unsure. Verify before acting on these._
