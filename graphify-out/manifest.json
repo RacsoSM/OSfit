@@ -24,10 +24,10 @@
     "semantic_hash": "7992a2d3f5e246a99c810ccb85935c55"
   },
   "app/build.gradle.kts": {
-    "mtime": 1791437914.665727,
-    "seen": 1791608874.530642,
-    "ast_hash": "ee5c725dd907996cf56ba4b741572ff2",
-    "semantic_hash": "ee5c725dd907996cf56ba4b741572ff2"
+    "mtime": 1791631591.5149858,
+    "seen": 1791710050.9213924,
+    "ast_hash": "990c5b13be91edeb279ca80d66f0afec",
+    "semantic_hash": ""
   },
   "app/src/main/java/com/osfit/app/MainActivity.kt": {
     "mtime": 1791437914.6667655,
@@ -42,10 +42,10 @@
     "semantic_hash": "b30e9088d7a7a0b3020ef0defb0659c0"
   },
   "app/src/main/java/com/osfit/app/data/AppContainer.kt": {
-    "mtime": 1791617331.5159721,
-    "seen": 1791617352.0393825,
-    "ast_hash": "a58bcce4a51ecb43ad475cb1566d51f0",
-    "semantic_hash": "a58bcce4a51ecb43ad475cb1566d51f0"
+    "mtime": 1791631591.5169406,
+    "seen": 1791710050.9214034,
+    "ast_hash": "564c77b154bb15346f38ab89102b3adf",
+    "semantic_hash": ""
   },
   "app/src/main/java/com/osfit/app/data/RestauradorDeArchivos.kt": {
     "mtime": 1791437914.6672232,
@@ -450,10 +450,10 @@
     "semantic_hash": "cd15070580b191fa533dbbeaefd76c83"
   },
   "app/src/main/java/com/osfit/app/ui/OSfitApp.kt": {
-    "mtime": 1791617331.5159721,
-    "seen": 1791617352.0394917,
-    "ast_hash": "bea5f4b8176ac8c5dc2ada885a7bedd7",
-    "semantic_hash": "bea5f4b8176ac8c5dc2ada885a7bedd7"
+    "mtime": 1791631591.5180397,
+    "seen": 1791710050.9215713,
+    "ast_hash": "5d59aac2639465527a403d00b03d8d32",
+    "semantic_hash": ""
   },
   "app/src/main/java/com/osfit/app/ui/avisos/AvisosScreen.kt": {
     "mtime": 1791617331.519972,
@@ -708,16 +708,16 @@
     "semantic_hash": "dacbd0806af221b2f36cc6d06ed4802a"
   },
   "app/src/main/java/com/osfit/app/ui/navigation/OSfitNavHost.kt": {
-    "mtime": 1791617331.5235708,
-    "seen": 1791617352.0395434,
-    "ast_hash": "1019b58e33b2a929238298624e96bf0b",
-    "semantic_hash": "1019b58e33b2a929238298624e96bf0b"
+    "mtime": 1791631591.5186584,
+    "seen": 1791710050.922134,
+    "ast_hash": "ec0ff50fd0897a9b0def5e17a046e66e",
+    "semantic_hash": ""
   },
   "app/src/main/java/com/osfit/app/ui/navigation/Screen.kt": {
-    "mtime": 1791617331.5235708,
-    "seen": 1791617352.0395443,
-    "ast_hash": "02d5b6302bfbe01b1339699a4d2d39fa",
-    "semantic_hash": "02d5b6302bfbe01b1339699a4d2d39fa"
+    "mtime": 1791631591.518986,
+    "seen": 1791710050.9221363,
+    "ast_hash": "2432dfaf398fb8139996aa16ca6070ff",
+    "semantic_hash": ""
   },
   "app/src/main/java/com/osfit/app/ui/rutinas/RutinaEditorScreen.kt": {
     "mtime": 1791437914.6749694,
@@ -1512,8 +1512,8 @@
     "semantic_hash": "378e62b0f8009139736266061053e912"
   },
   "functions/package.json": {
-    "mtime": 1791617835.858287,
-    "seen": 1791618932.1842978,
+    "mtime": 1791631591.523099,
+    "seen": 1791710050.9224498,
     "ast_hash": "c79a820e59096ec1402fe29ddbc394de",
     "semantic_hash": ""
   },
@@ -1548,9 +1548,9 @@
     "semantic_hash": "894e5e8fadb192ded26062f67d488f33"
   },
   "functions/src/index.ts": {
-    "mtime": 1791617331.539972,
-    "seen": 1791617352.039749,
-    "ast_hash": "fc525c4fede2702d7f1416e942e198a3",
+    "mtime": 1791631591.5243409,
+    "seen": 1791710050.9224942,
+    "ast_hash": "ba2f9c090b1a3a8e3a1228e95b1fd9e1",
     "semantic_hash": ""
   },
   "functions/src/jugarRuleta.test.ts": {
@@ -1680,9 +1680,9 @@
     "semantic_hash": "428443a35b82770afac99d12a49e9045"
   },
   "web/src/acciones.ts": {
-    "mtime": 1791617331.771972,
-    "seen": 1791617352.039782,
-    "ast_hash": "822eafa1a00e6943974499b3dfeb3eec",
+    "mtime": 1791631591.5488625,
+    "seen": 1791710050.922547,
+    "ast_hash": "eddf9a76a52a5a7fc48f4957e7596548",
     "semantic_hash": ""
   },
   "web/src/cupo.test.ts": {
@@ -1698,9 +1698,9 @@
     "semantic_hash": "3c0236edec856dca527347a689b2fc13"
   },
   "web/src/datos.ts": {
-    "mtime": 1791618170.6821544,
-    "seen": 1791618932.1843772,
-    "ast_hash": "05a55a0ef09219dfcaef0ddbce5b717a",
+    "mtime": 1791631591.549277,
+    "seen": 1791710050.9225593,
+    "ast_hash": "584ab153be94863153858f566e81b012",
     "semantic_hash": ""
   },
   "web/src/dia.test.ts": {
@@ -1758,9 +1758,9 @@
     "semantic_hash": ""
   },
   "web/src/main.ts": {
-    "mtime": 1791618170.6827679,
-    "seen": 1791618932.1843922,
-    "ast_hash": "c7a6ddd950634aeeb79bb4f79d3043e0",
+    "mtime": 1791631591.5504787,
+    "seen": 1791710050.9225883,
+    "ast_hash": "022b410975ebbf41d065fd3ce6abbde1",
     "semantic_hash": ""
   },
   "web/src/motivos.test.ts": {
@@ -1950,10 +1950,10 @@
     "semantic_hash": "f8b2e5032620107417a3a3a5e215fe8c"
   },
   "web/src/ui/menuLateral.ts": {
-    "mtime": 1791617331.779972,
-    "seen": 1791617352.0398474,
-    "ast_hash": "6c3a96da920312d2805e1f6b87503c8c",
-    "semantic_hash": "6c3a96da920312d2805e1f6b87503c8c"
+    "mtime": 1791631591.5509858,
+    "seen": 1791710050.9227123,
+    "ast_hash": "99cc0691b8da7e4451d43a3b572447d3",
+    "semantic_hash": ""
   },
   "web/src/ui/petalos.test.ts": {
     "mtime": 1791437914.7046711,
@@ -2040,15 +2040,15 @@
     "semantic_hash": "e60637280a4e54136b75f901f0510455"
   },
   "web/src/ui/tarjetaDia.test.ts": {
-    "mtime": 1791618170.683059,
-    "seen": 1791618932.1844988,
-    "ast_hash": "c3e023216a4fbb385d48b67884249b28",
+    "mtime": 1791631591.5522625,
+    "seen": 1791710050.922746,
+    "ast_hash": "b5ff0017895ca8629061ab48883f16e8",
     "semantic_hash": ""
   },
   "web/src/ui/tarjetaDia.ts": {
-    "mtime": 1791618170.6832004,
-    "seen": 1791618932.1845012,
-    "ast_hash": "9b94a06618bc434b2fad2b5f8f4322bc",
+    "mtime": 1791631591.5525458,
+    "seen": 1791710050.9227479,
+    "ast_hash": "d184c3b97fdd2e3f478af988e0befbbb",
     "semantic_hash": ""
   },
   "web/src/ui/tarjetaInsignias.test.ts": {
@@ -2136,15 +2136,15 @@
     "semantic_hash": "4abbbf3832f0dd1066fb4285cddd1a14"
   },
   "web/src/ventanas.test.ts": {
-    "mtime": 1791618170.6833367,
-    "seen": 1791618932.1845229,
-    "ast_hash": "9051d2b1a4f341c42c399dbd65b35f40",
+    "mtime": 1791631591.5530632,
+    "seen": 1791710050.9227765,
+    "ast_hash": "4e94a3a7ba650f40b69a3ed63d3c76c0",
     "semantic_hash": ""
   },
   "web/src/ventanas.ts": {
-    "mtime": 1791618170.683502,
-    "seen": 1791618932.184524,
-    "ast_hash": "2c02ec7d6ddcd042684da6a2f95c4272",
+    "mtime": 1791631591.553335,
+    "seen": 1791710050.9227784,
+    "ast_hash": "3e114d85d0b7b9d57020cdbbfcabb90f",
     "semantic_hash": ""
   },
   "web/src/vite-env.d.ts": {
@@ -2178,9 +2178,9 @@
     "semantic_hash": "1dce49b7ce2103d2b05648a3929fc9b1"
   },
   "docs/backlog-2.md": {
-    "mtime": 1791618249.0275369,
-    "seen": 1791618932.1845336,
-    "ast_hash": "1524b20420617e2d8c6d9cafd961d5e5",
+    "mtime": 1791631591.518986,
+    "seen": 1791710050.9227982,
+    "ast_hash": "5e900eff20c23912b6625d0d25b59789",
     "semantic_hash": ""
   },
   "docs/licencias/LilitaOne-OFL.txt": {
@@ -2634,9 +2634,9 @@
     "semantic_hash": "13266dd95ab74082e3c2a2845ce209c3"
   },
   "docs/superpowers/specs/2026-10-10-mapa-fuerza-entrenamiento-design.md": {
-    "mtime": 1791618258.6146603,
-    "seen": 1791618932.1846716,
-    "ast_hash": "a446d9d4810a3d4195b081ce63b9ed7f",
+    "mtime": 1791631591.518986,
+    "seen": 1791710050.9231708,
+    "ast_hash": "8697ea2bc774c4548f1f7fd9075ef555",
     "semantic_hash": ""
   },
   "app/src/main/java/com/osfit/app/data/model/Sexo.kt": {
@@ -2784,51 +2784,201 @@
     "semantic_hash": ""
   },
   "functions/scripts/bancoEjercicios.mjs": {
-    "mtime": 1791617874.1143558,
-    "seen": 1791618932.1843026,
-    "ast_hash": "179fd441f988606136ba257bc7ee6a51",
+    "mtime": 1791631591.5232356,
+    "seen": 1791710050.922453,
+    "ast_hash": "b67f51e4907c091b71acefdfa8f3f790",
     "semantic_hash": ""
   },
   "functions/scripts/bancoEjercicios.test.mjs": {
-    "mtime": 1791617881.7039776,
-    "seen": 1791618932.184305,
-    "ast_hash": "2c2aa874bd9eb48a19a3ff496318a07a",
+    "mtime": 1791631591.5232356,
+    "seen": 1791710050.9224555,
+    "ast_hash": "df76d03d80b5432933b8fa2d3885cc50",
     "semantic_hash": ""
   },
   "functions/scripts/cargarBancoEjercicios.mjs": {
-    "mtime": 1791617905.0399778,
-    "seen": 1791618932.1843066,
-    "ast_hash": "95fa4c95de6ac18d6824cb64e4a784f4",
+    "mtime": 1791631591.5235825,
+    "seen": 1791710050.9224582,
+    "ast_hash": "be40044c2b6b0c6c65075f79173439be",
     "semantic_hash": ""
   },
   "functions/semilla/ejercicios.json": {
-    "mtime": 1791617821.8485515,
-    "seen": 1791618932.184308,
-    "ast_hash": "559842d339e47140b12fca878c88267e",
+    "mtime": 1791631591.5235825,
+    "seen": 1791710050.922462,
+    "ast_hash": "c9ccb8c00215fbcdc649917ba9dc0e14",
     "semantic_hash": ""
   },
   "web/src/banco.test.ts": {
-    "mtime": 1791618080.1679795,
-    "seen": 1791618932.184371,
-    "ast_hash": "ac2a6033342d54c77dcaf21dad0c640c",
+    "mtime": 1791631591.5488625,
+    "seen": 1791710050.9225512,
+    "ast_hash": "228a7bbd55be1942240f6cddc89b418c",
     "semantic_hash": ""
   },
   "web/src/banco.ts": {
-    "mtime": 1791618100.9746134,
-    "seen": 1791618932.1843722,
-    "ast_hash": "a288e68efc810d3c607b885f0aff9776",
+    "mtime": 1791631591.549089,
+    "seen": 1791710050.9225533,
+    "ast_hash": "05cb8dd66ce5bf819c754b78c2e8015d",
     "semantic_hash": ""
   },
   "docs/licencias/GymVisual.md": {
-    "mtime": 1791618258.6208766,
-    "seen": 1791618932.1845355,
-    "ast_hash": "03fd170579fb651d6f6ea3d6ea4e5a41",
+    "mtime": 1791631591.518986,
+    "seen": 1791710050.9228005,
+    "ast_hash": "4d3d24a6bce9eb1e3ee0969abbc50ea7",
     "semantic_hash": ""
   },
   "docs/superpowers/plans/2026-10-10-banco-ejercicios-gifs.md": {
-    "mtime": 1791618281.1399815,
-    "seen": 1791618932.184612,
-    "ast_hash": "d9da289e79dc10ffada54035ce26f505",
+    "mtime": 1791631591.518986,
+    "seen": 1791710050.9231212,
+    "ast_hash": "21782cd68a518a5ee76d423fc49b49f6",
+    "semantic_hash": ""
+  },
+  "app/src/main/java/com/osfit/app/data/model/EjercicioBanco.kt": {
+    "mtime": 1791631591.5169406,
+    "seen": 1791710050.921443,
+    "ast_hash": "e099e120292948207d8702f6391c1e9a",
+    "semantic_hash": ""
+  },
+  "app/src/main/java/com/osfit/app/data/repository/BancoEjerciciosRepository.kt": {
+    "mtime": 1791631591.5169406,
+    "seen": 1791710050.9214792,
+    "ast_hash": "9fdd145b05d81fbb3ae5dc3b29b39fe9",
+    "semantic_hash": ""
+  },
+  "app/src/main/java/com/osfit/app/domain/GruposEjercicio.kt": {
+    "mtime": 1791631591.5175357,
+    "seen": 1791710050.921537,
+    "ast_hash": "262291c72acca80aebb760fbd1291c98",
+    "semantic_hash": ""
+  },
+  "app/src/main/java/com/osfit/app/domain/NombresBanco.kt": {
+    "mtime": 1791631591.5175357,
+    "seen": 1791710050.9215403,
+    "ast_hash": "e444ff8341a413878e8119a3aee07dd8",
+    "semantic_hash": ""
+  },
+  "app/src/main/java/com/osfit/app/ui/common/GifEjercicio.kt": {
+    "mtime": 1791631591.5180397,
+    "seen": 1791710050.921678,
+    "ast_hash": "26fd34de1dbb6462a89d1ce64bf8d228",
+    "semantic_hash": ""
+  },
+  "app/src/main/java/com/osfit/app/ui/common/VideoEjercicio.kt": {
+    "mtime": 1791631591.5180397,
+    "seen": 1791710050.9216912,
+    "ast_hash": "bc2b07d6255b2386d48c6a781e30abb8",
+    "semantic_hash": ""
+  },
+  "app/src/main/java/com/osfit/app/ui/grupos/GruposEjerciciosScreen.kt": {
+    "mtime": 1791631591.5180397,
+    "seen": 1791710050.9216971,
+    "ast_hash": "41dd785887e86e4ec72087e53164d40d",
+    "semantic_hash": ""
+  },
+  "app/src/main/java/com/osfit/app/ui/grupos/GruposEjerciciosViewModel.kt": {
+    "mtime": 1791631591.5186584,
+    "seen": 1791710050.9220765,
+    "ast_hash": "cfe480de8ecb0200a9c2e8789e9248c0",
+    "semantic_hash": ""
+  },
+  "app/src/test/java/com/osfit/app/domain/GruposEjercicioTest.kt": {
+    "mtime": 1791631591.518986,
+    "seen": 1791710050.9222949,
+    "ast_hash": "1a3cc6b0da4bd4f77ab4ec2f4e1a8c24",
+    "semantic_hash": ""
+  },
+  "app/src/test/java/com/osfit/app/domain/NombresBancoTest.kt": {
+    "mtime": 1791631591.518986,
+    "seen": 1791710050.9222987,
+    "ast_hash": "70a02814b4217987cf1103de4e6ede6d",
+    "semantic_hash": ""
+  },
+  "docs/videos-ejercicios/camino1.py": {
+    "mtime": 1791631591.518986,
+    "seen": 1791710050.9224422,
+    "ast_hash": "f0ac0d09768e43f839d02e57607fd8a5",
+    "semantic_hash": ""
+  },
+  "functions/scripts/subirVideoEjercicio.mjs": {
+    "mtime": 1791631591.5235825,
+    "seen": 1791710050.9224594,
+    "ast_hash": "a28b86c4f037b8e87cccbb251f102ffa",
+    "semantic_hash": ""
+  },
+  "functions/src/registrarSesion.test.ts": {
+    "mtime": 1791631591.5243409,
+    "seen": 1791710050.922522,
+    "ast_hash": "609faf2a17f6a33178c1d979695e4775",
+    "semantic_hash": ""
+  },
+  "functions/src/registrarSesion.ts": {
+    "mtime": 1791631591.5246224,
+    "seen": 1791710050.9225237,
+    "ast_hash": "b95dcec8d0d079af274c584725f446d4",
+    "semantic_hash": ""
+  },
+  "web/src/grupos.test.ts": {
+    "mtime": 1791631591.5500324,
+    "seen": 1791710050.9225845,
+    "ast_hash": "22c3df1d173589b8c3eee74caf484804",
+    "semantic_hash": ""
+  },
+  "web/src/grupos.ts": {
+    "mtime": 1791631591.550276,
+    "seen": 1791710050.922586,
+    "ast_hash": "b5ac0124583bc62adad21e208b52ecb6",
+    "semantic_hash": ""
+  },
+  "web/src/registro.test.ts": {
+    "mtime": 1791631591.5504787,
+    "seen": 1791710050.9226606,
+    "ast_hash": "b2aafa0d4ed0d45ee4e63bc9c60b4596",
+    "semantic_hash": ""
+  },
+  "web/src/registro.ts": {
+    "mtime": 1791631591.5504787,
+    "seen": 1791710050.9226625,
+    "ast_hash": "327115681853c1c24880754931401c4a",
+    "semantic_hash": ""
+  },
+  "web/src/ui/deslizarRegistro.test.ts": {
+    "mtime": 1791631591.5504787,
+    "seen": 1791710050.9226923,
+    "ast_hash": "a658e9f0824bc450ac7d580062a8681a",
+    "semantic_hash": ""
+  },
+  "web/src/ui/deslizarRegistro.ts": {
+    "mtime": 1791631591.5504787,
+    "seen": 1791710050.9226942,
+    "ast_hash": "3b403db713dde6f26681d0aeefc0d35c",
+    "semantic_hash": ""
+  },
+  "web/src/ui/registro.test.ts": {
+    "mtime": 1791631591.5509858,
+    "seen": 1791710050.922718,
+    "ast_hash": "af4361a9e9238e350a920f2e497751bd",
+    "semantic_hash": ""
+  },
+  "web/src/ui/registro.ts": {
+    "mtime": 1791631591.5518787,
+    "seen": 1791710050.9227195,
+    "ast_hash": "4095fc5dbdddc0d0abf094be77e62edb",
+    "semantic_hash": ""
+  },
+  "web/src/ui/vueloRegistro.test.ts": {
+    "mtime": 1791631591.5526865,
+    "seen": 1791710050.9227703,
+    "ast_hash": "ce26187786776f314692e0487e9ac1cb",
+    "semantic_hash": ""
+  },
+  "web/src/ui/vueloRegistro.ts": {
+    "mtime": 1791631591.5528915,
+    "seen": 1791710050.9227715,
+    "ast_hash": "3b8acf62f9b1d58cfb6ad55c5c965b06",
+    "semantic_hash": ""
+  },
+  "docs/videos-ejercicios/camino1.md": {
+    "mtime": 1791631591.518986,
+    "seen": 1791710050.9231791,
+    "ast_hash": "25df20ff2091cc3bd6d3794d331f5760",
     "semantic_hash": ""
   }
 }
