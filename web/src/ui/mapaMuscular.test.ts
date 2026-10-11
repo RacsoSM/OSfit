@@ -159,26 +159,56 @@ describe("detalleMusculo", () => {
   it("sin datos, dice el músculo y cómo conseguir su rango", () => {
     const h = detalleMusculo("pecho", undefined, "M");
     expect(h).toContain("Pecho");
-    expect(h).toContain("sin datos");
+    expect(h).toContain("Sin datos");
     expect(h).toContain("Registra ejercicios de pecho");
     expect(h).toContain("comparada");
+    expect(h).not.toContain("hoja-grafica");
   });
 
   it("a él se le habla en masculino", () => {
     expect(detalleMusculo("pecho", undefined, "H")).toContain("comparado");
   });
 
-  it("con datos, su rango y qué tan fuerte es contra la población y contra quienes entrenan", () => {
+  it("con datos: su rango con insignia, contra toda la población por omisión", () => {
     const h = detalleMusculo("cuadriceps", { nivel: 5.5 }, "M");
     expect(h).toContain("Cuádriceps");
-    expect(h).toContain("Atlética");
-    expect(h).toContain("Más fuerte que el <strong>90 %</strong> de la población");
-    expect(h).toContain("<strong>58 %</strong> de quienes entrenan");
-    expect(h).toContain("width: 90%");
+    expect(h).toContain('class="hoja-rango">Atlética<');
+    expect(h).toContain("insignia-rango");
+    expect(h).toContain("entrenen o no, el <strong>4&nbsp;%</strong> está en este rango");
+    expect(h).toContain("más fuerte que el <strong>90&nbsp;%</strong> de ellas");
+    expect(h).toContain("Contra la gente que entrena, eres más fuerte que el 58&nbsp;%");
+    expect(h).toContain('data-comparar="todos" aria-pressed="true"');
+  });
+
+  it("la gráfica trae los 8 rangos y marca el suyo", () => {
+    const h = detalleMusculo("cuadriceps", { nivel: 5.5 }, "M");
+    expect(h.match(/class="h-col/g)).toHaveLength(8);
+    expect(h.match(/class="h-col yo"/g)).toHaveLength(1);
+    expect(h).toContain("TÚ");
   });
 
   it("el rango va en masculino para ellos", () => {
     expect(detalleMusculo("pecho", { nivel: 5.5 }, "H")).toContain("Atlético");
+  });
+
+  it("con su peso, dice qué le falta para el siguiente rango", () => {
+    const f = {
+      nivel: 1.05,
+      origen: {
+        ejercicioId: "press-banca", nombre: "Press de banca", tipo: "peso" as const, cuanto: 1,
+        serie: { reps: 8, peso: 30 }, estandares: [0.5, 0.625, 0.75, 0.875, 1, 1.137, 1.275, 1.7],
+        pesoPorMancuerna: false,
+      },
+    };
+    const h = detalleMusculo("pecho", f, "H", 75);
+    expect(h).toContain("Siguiente: <strong");
+    expect(h).toContain(">Novato</strong>");
+    expect(h).toContain("Para llegar: <strong>37.5 kg × 8</strong> en <strong>Press de banca</strong>");
+    expect(h).toContain("Tu mejor: 30 kg × 8");
+  });
+
+  it("sin su peso no promete kilos", () => {
+    expect(detalleMusculo("pecho", { nivel: 1.05 }, "H")).not.toContain("Para llegar");
   });
 });
 

@@ -136,7 +136,7 @@ export const VENTANAS: readonly Ventana[] = [
   {
     id: "musculos", titulo: "Músculos", icono: "💪", grupo: "barra",
     // Sin sexo el mapa ya avisa que falta su perfil; con él, sin peso no deja pasar.
-    pintar: (d) => tarjetaMusculos(d.cliente.sexo, d.mapas, fuerzaDelCliente(d))
+    pintar: (d) => tarjetaMusculos(d.cliente.sexo, d.mapas, fuerzaDelCliente(d), d.cliente.peso ?? null)
       + (d.cliente.sexo === "H" || d.cliente.sexo === "M" ? bloquePeso(d.cliente.peso) : ""),
   },
   {

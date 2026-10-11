@@ -832,8 +832,14 @@ main:has(#barra) { padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
 }
 /* Con un músculo tocado el cuerpo se encoge lo justo para que el panel quepa entero arriba de
    la barra, sin tener que desplazar la página. */
+/* Con un músculo tocado, su hoja de detalle sube desde abajo y tapa la mitad de abajo de la
+   pantalla: el cuerpo se encoge para que se siga viendo arriba, con el músculo tocado. */
 .mapa-cuerpo.con-detalle .mapa-marco {
-  width: min(100%, calc((min(72vh, 720px) - 120px) * 420 / 800));
+  width: min(100%, calc(max(150px, min(72vh, 720px) - 330px) * 420 / 800));
+}
+/* Un músculo sin datos tiene una hoja chica (solo el aviso): el cuerpo se encoge menos. */
+.mapa-cuerpo.con-detalle.sin-datos .mapa-marco {
+  width: min(100%, calc((min(72vh, 720px) - 150px) * 420 / 800));
 }
 .mapa-giro {
   position: absolute; inset: 0;
@@ -895,19 +901,6 @@ main:has(#barra) { padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
 @keyframes mapa-pulso { from { opacity: 0.4; } to { opacity: 0.9; } }
 .mapa-aviso { color: var(--texto-tenue); font-size: 13px; padding: 12px; }
 #mapa-detalle { width: 100%; }
-.mapa-detalle {
-  position: relative; margin-top: 12px; padding: 12px 44px 12px 14px;
-  border-radius: 14px; background: var(--superficie); text-align: left;
-}
-.mapa-detalle p { margin: 0; }
-.mapa-detalle-nombre { font-size: 20px; font-weight: 800; color: var(--primario); }
-.mapa-detalle-rango { margin-top: 2px !important; font-size: 15px; }
-.mapa-detalle-texto { margin-top: 6px !important; font-size: 14px; color: var(--texto-tenue); }
-.mapa-detalle-barra {
-  margin-top: 10px; height: 8px; border-radius: 999px;
-  background: var(--superficie-alta); overflow: hidden;
-}
-.mapa-detalle-barra span { display: block; height: 100%; border-radius: inherit; background: var(--primario); }
 .mapa-detalle-cerrar {
   position: absolute; top: 4px; right: 4px; width: 40px; height: 40px;
   border: 0; border-radius: 12px; background: transparent;
@@ -982,6 +975,8 @@ main:has(#barra) { padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
 .ayuda-rango-cabeza { font-size: 11px; color: var(--texto-tenue); text-transform: uppercase; letter-spacing: 0.06em; }
 .ayuda-rango-nombre { font-weight: 700; }
 .ayuda-rango-pct { font-size: 12px; color: var(--texto-tenue); white-space: nowrap; }
+.ayuda-insignia { display: flex; }
+.ayuda-rango { grid-template-columns: 24px 1fr auto; }
 .rango-muestra { width: 16px; height: 16px; border-radius: 5px; }
 .rango-sin-datos { background: #8f90a6; }
 @media (prefers-reduced-motion: reduce) {
@@ -1161,3 +1156,69 @@ main:has(#barra) { padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
 }
 .peso-linea strong { color: var(--texto); }
 .peso-linea .boton-texto { display: inline; width: auto; margin: 0; padding: 4px 6px; color: var(--primario); }
+
+/* La hoja de detalle de un músculo (`detalleMusculo`): sube desde abajo, por encima del
+   mapa y debajo de la barra (z 10), que sigue a la vista. `--color` es el de su rango. */
+.hoja-detalle {
+  --color: #8f90a6;
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 9;
+  max-width: 480px; margin: 0 auto; max-height: 74vh; overflow-y: auto;
+  padding: 10px 18px calc(78px + env(safe-area-inset-bottom));
+  border-radius: 22px 22px 0 0; text-align: center;
+  background: linear-gradient(to bottom, color-mix(in srgb, var(--color) 20%, var(--superficie)), var(--superficie) 46%);
+  box-shadow: 0 -12px 30px rgba(0, 0, 0, 0.5);
+}
+/* Solo al abrirse (`conectarMapa` le pone `entra`): al cambiar de músculo o de comparación se
+   rehace por dentro y no debe volver a subir. */
+.hoja-detalle.entra { animation: hoja-sube 260ms cubic-bezier(0.2, 0.8, 0.2, 1); }
+@keyframes hoja-sube { from { transform: translateY(40%); opacity: 0; } to { transform: none; opacity: 1; } }
+.hoja-asa { width: 40px; height: 5px; border-radius: 9px; background: color-mix(in srgb, var(--texto) 25%, transparent); margin: 0 auto 6px; }
+.hoja-cerrar {
+  position: absolute; top: 10px; right: 10px; width: 38px; height: 38px;
+  border: 0; border-radius: 50%; background: color-mix(in srgb, var(--texto) 9%, transparent);
+  color: var(--texto-tenue); font: inherit; font-size: 15px; cursor: pointer;
+}
+.hoja-musculo {
+  margin: 4px 0 8px; font-size: 14px; font-weight: 700; color: var(--texto-tenue);
+  letter-spacing: 0.06em; text-transform: uppercase;
+}
+.hoja-sin-datos { margin: 6px 0; font-size: 26px; font-weight: 900; color: #8f90a6; }
+.hoja-cabeza { display: flex; align-items: center; justify-content: center; gap: 14px; margin: 0 0 10px; }
+.hoja-cabeza .insignia-rango { flex: none; filter: drop-shadow(0 4px 12px color-mix(in srgb, var(--color) 60%, transparent)); }
+.hoja-sub { margin: 0; font-size: 12px; color: var(--texto-tenue); text-align: left; }
+.hoja-rango {
+  margin: 0; font-size: 28px; font-weight: 900; line-height: 1.05; text-align: left;
+  text-transform: uppercase; letter-spacing: 0.03em; color: var(--color);
+}
+.hoja-comparar {
+  display: inline-flex; gap: 2px; padding: 3px; margin: 0 0 12px; border-radius: 999px;
+  background: color-mix(in srgb, var(--texto) 8%, transparent);
+}
+.hoja-comparar button {
+  border: 0; border-radius: 999px; padding: 6px 14px; background: none;
+  color: var(--texto-tenue); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer;
+}
+.hoja-comparar button[aria-pressed="true"] { background: var(--color); color: #10131a; }
+.hoja-frase { margin: 0 4px 14px; font-size: 14px; line-height: 1.45; color: var(--texto); }
+.hoja-grafica { display: flex; align-items: flex-end; gap: 4px; padding: 0 2px 20px; }
+.h-col { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; position: relative; opacity: 0.4; }
+.h-col.yo { opacity: 1; }
+.h-caja { height: 104px; width: 100%; display: flex; align-items: flex-end; justify-content: center; }
+.h-barra { width: 72%; border-radius: 6px 6px 2px 2px; transition: height 260ms ease; }
+.h-col.yo .h-barra { width: 88%; box-shadow: 0 0 16px color-mix(in srgb, var(--color) 70%, transparent); }
+.h-insignia { margin-top: 6px; height: 26px; }
+.h-pct { margin-top: 2px; font-size: 11px; font-weight: 700; color: var(--texto); white-space: nowrap; }
+.h-col.yo .h-pct { color: var(--color); }
+.h-tu { position: absolute; bottom: -18px; font-size: 10px; font-weight: 900; letter-spacing: 0.08em; color: var(--color); }
+.h-tu::before { content: "▲"; display: block; font-size: 8px; line-height: 1; }
+.hoja-sig {
+  margin-bottom: 10px; padding: 12px 14px; border-radius: 14px; text-align: left;
+  background: color-mix(in srgb, var(--texto) 6%, transparent);
+}
+.hoja-sig-fila { display: flex; justify-content: space-between; gap: 8px; font-size: 14px; }
+.hoja-sig-barra { height: 8px; margin: 8px 0; border-radius: 9px; overflow: hidden; background: color-mix(in srgb, var(--texto) 12%, transparent); }
+.hoja-sig-barra span { display: block; height: 100%; border-radius: 9px; }
+.hoja-sig-texto { margin: 0; font-size: 13px; line-height: 1.4; color: var(--texto-tenue); }
+.hoja-sig-texto strong { color: var(--texto); }
+.hoja-otra { margin: 0; font-size: 11px; color: var(--texto-tenue); }
+@media (prefers-reduced-motion: reduce) { .hoja-detalle.entra { animation: none; } .h-barra { transition: none; } }

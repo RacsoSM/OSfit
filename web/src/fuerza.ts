@@ -99,7 +99,24 @@ export function percentilEntrenanDe(nivel: number): number {
 }
 
 /** Lo que el mapa sabe de un músculo. Ausente = sin datos. */
-export interface FuerzaMusculo { nivel: number; }
+export interface FuerzaMusculo {
+  nivel: number;
+  /** De qué ejercicio y serie sale el nivel: lo que usa "te faltan X para el siguiente rango". */
+  origen?: OrigenFuerza;
+}
+
+/** El ejercicio que le da su nivel a un músculo, con su mejor serie de la ventana. */
+export interface OrigenFuerza {
+  ejercicioId: string;
+  nombre: string;
+  tipo: "peso" | "corporal";
+  /** Cuánto trabaja al músculo: 1 principal, 0.5 secundario. */
+  cuanto: number;
+  /** La serie de su mejor marca: el mejor 1RM estimado, o las reps máximas. */
+  serie: { reps: number; peso: number | null };
+  estandares: readonly number[];
+  pesoPorMancuerna: boolean;
+}
 
 /** Cómo se llama cada grupo de los SVG (`data-musculo`) en pantalla. */
 export const NOMBRES_MUSCULO: Readonly<Record<string, string>> = {
@@ -182,7 +199,7 @@ export function fuerzaPorMusculo(
   const desde = diasAntes(hoy, SEMANAS_VENTANA * 7);
   const porId = new Map(banco.map((e) => [e.id, e]));
 
-  const mejor = new Map<string, number>();
+  const mejor = new Map<string, { marca: number; serie: { reps: number; peso: number | null } }>();
   for (const s of sesiones) {
     if (s.fecha < desde || s.fecha > hoy) continue;
     for (const e of s.ejercicios) {
@@ -192,19 +209,102 @@ export function fuerzaPorMusculo(
         const marca = b.tipo === "peso"
           ? (serie.peso ?? 0) > 0 ? unoRm(serie.peso as number, serie.reps) / pesoCorporal : 0
           : serie.reps;
-        if (marca > (mejor.get(b.id) ?? 0)) mejor.set(b.id, marca);
+        if (marca > (mejor.get(b.id)?.marca ?? 0)) mejor.set(b.id, { marca, serie });
       }
     }
   }
 
   const fuerza: Record<string, FuerzaMusculo> = {};
-  for (const [id, marca] of mejor) {
+  for (const [id, { marca, serie }] of mejor) {
     const b = porId.get(id)!;
-    const nivel = nivelDe(marca, b.estandares![sexo]);
+    const estandares = b.estandares![sexo];
+    const nivel = nivelDe(marca, estandares);
     for (const [musculo, cuanto] of Object.entries(b.musculos)) {
       const n = nivel * cuanto;
-      if (n > (fuerza[musculo]?.nivel ?? -1)) fuerza[musculo] = { nivel: n };
+      if (n > (fuerza[musculo]?.nivel ?? -1)) {
+        fuerza[musculo] = {
+          nivel: n,
+          origen: {
+            ejercicioId: id, nombre: b.nombre, tipo: b.tipo as "peso" | "corporal", cuanto,
+            serie: { reps: serie.reps, peso: serie.peso }, estandares,
+            pesoPorMancuerna: b.pesoPorMancuerna === true,
+          },
+        };
+      }
     }
   }
   return fuerza;
+}
+
+// ── Reparto y siguiente rango (el detalle del músculo) ────────────────────────
+
+export type Comparacion = "todos" | "entrenan";
+
+/**
+ * Qué porcentaje de cada grupo cae en cada rango, de Principiante a Élite: la gráfica de
+ * barras del detalle. Sale de las mismas tablas que los porcentajes (lo que hay entre el
+ * inicio de un rango y el del siguiente), así que suma 100. Es una estimación de las tablas
+ * públicas, no de las clientas del gym.
+ */
+export function repartoRangos(contra: Comparacion): number[] {
+  const p = contra === "todos" ? percentilDe : percentilEntrenanDe;
+  return RANGOS.map((r, i) => {
+    const desde = i === 0 ? 0 : p(r.desde);
+    const hasta = i === RANGOS.length - 1 ? 100 : p(RANGOS[i + 1].desde);
+    return hasta - desde;
+  });
+}
+
+/** La marca que da el nivel `nivel` con estos estándares: lo contrario de `nivelDe`. */
+export function marcaPara(nivel: number, estandares: readonly number[]): number {
+  const e = estandares;
+  if (nivel <= 1) return Math.max(0, nivel) * e[0];
+  const k = Math.floor(nivel);
+  if (k >= e.length) return e[e.length - 1];
+  return e[k - 1] + (nivel - k) * (e[k] - e[k - 1]);
+}
+
+export type Siguiente =
+  /** Ya está en Élite. */
+  | { tipo: "maximo" }
+  /** Con su mismo ejercicio: cuánto le falta, en kg (a sus mismas reps) o en reps. */
+  | {
+      tipo: "falta"; rango: number; avance: number; ejercicio: string; porMancuerna: boolean;
+      mejor: { reps: number; peso: number | null };
+      objetivo: { reps: number; peso: number | null };
+    }
+  /** Su nivel sale de un ejercicio que trabaja el músculo de lado: con ese no llega. */
+  | { tipo: "otroEjercicio"; rango: number; avance: number };
+
+/**
+ * El siguiente rango y qué le falta para llegar. `avance` es cuánto lleva del camino entre el
+ * inicio de su rango y el del siguiente (0 a 1). En los de peso, el objetivo es el peso que
+ * tendría que mover **a las mismas reps** de su mejor serie, redondeado hacia arriba a 0.5 kg:
+ * es lo que puede intentar en su próximo entrenamiento.
+ */
+export function siguienteRango(f: FuerzaMusculo, pesoCorporal: number): Siguiente {
+  const i = indiceRango(f.nivel);
+  if (i >= RANGOS.length - 1) return { tipo: "maximo" };
+  const inicio = RANGOS[i].desde;
+  const meta = RANGOS[i + 1].desde;
+  const avance = Math.min(1, Math.max(0, (acotar(f.nivel) - inicio) / (meta - inicio)));
+  const o = f.origen;
+  const nivelEjercicio = o ? meta / o.cuanto : Infinity;
+  if (!o || nivelEjercicio > NIVEL_MAX) return { tipo: "otroEjercicio", rango: i + 1, avance };
+
+  const marca = marcaPara(nivelEjercicio, o.estandares);
+  let objetivo: { reps: number; peso: number | null };
+  if (o.tipo === "peso") {
+    const reps = o.serie.reps;
+    const factor = reps <= 1 ? 1 : 1 + Math.min(reps, REPS_TOPE_EPLEY) / 30;
+    let peso = Math.ceil(((marca * pesoCorporal) / factor) * 2) / 2;
+    if (o.serie.peso !== null && peso <= o.serie.peso) peso = o.serie.peso + 0.5;
+    objetivo = { reps, peso };
+  } else {
+    objetivo = { reps: Math.max(Math.ceil(marca), o.serie.reps + 1), peso: null };
+  }
+  return {
+    tipo: "falta", rango: i + 1, avance, ejercicio: o.nombre, porMancuerna: o.pesoPorMancuerna,
+    mejor: o.serie, objetivo,
+  };
 }

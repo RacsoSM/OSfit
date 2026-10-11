@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
-  NOMBRES_MUSCULO, fuerzaPorMusculo, indiceRango, nivelDe, nombreMusculo, nombreRango, percentilDe,
+  NOMBRES_MUSCULO, fuerzaPorMusculo, indiceRango, marcaPara, nivelDe, repartoRangos, siguienteRango, nombreMusculo, nombreRango, percentilDe,
   percentilEntrenanDe, rangoDe, unoRm,
 } from "./fuerza";
 import type { EjercicioBanco, Sesion } from "./datos";
+import type { FuerzaMusculo } from "./fuerza";
 import frenteH from "../public/mapa-muscular-frente.svg?raw";
 import espaldaH from "../public/mapa-muscular-espalda.svg?raw";
 import frenteM from "../public/mapa-muscular-frente-mujer.svg?raw";
@@ -183,5 +184,82 @@ describe("nombreMusculo", () => {
 
   it("uno desconocido se muestra tal cual", () => {
     expect(nombreMusculo("nada")).toBe("nada");
+  });
+});
+
+describe("repartoRangos", () => {
+  it("contra toda la población, casi todos en Principiante", () => {
+    expect(repartoRangos("todos")).toEqual([65, 13, 5, 5, 4, 3, 4, 1]);
+  });
+
+  it("contra quienes entrenan, más parejo", () => {
+    expect(repartoRangos("entrenan")).toEqual([12, 8, 15, 15, 15, 15, 15, 5]);
+  });
+
+  it("los dos suman 100", () => {
+    for (const c of ["todos", "entrenan"] as const) {
+      expect(repartoRangos(c).reduce((a, b) => a + b, 0)).toBe(100);
+    }
+  });
+});
+
+describe("marcaPara", () => {
+  const e = [0.5, 0.625, 0.75, 0.875, 1, 1.137, 1.275, 1.7];
+
+  it("es lo contrario de nivelDe", () => {
+    for (const n of [0.4, 1, 1.5, 2, 3.25, 7, 7.9, 8]) expect(nivelDe(marcaPara(n, e), e)).toBeCloseTo(n, 6);
+  });
+
+  it("en cada nivel entero, su estándar", () => {
+    expect(marcaPara(2, e)).toBe(0.625);
+    expect(marcaPara(8, e)).toBe(1.7);
+  });
+});
+
+describe("siguienteRango", () => {
+  const banca = [0.5, 0.625, 0.75, 0.875, 1, 1.137, 1.275, 1.7];
+  const conOrigen = (nivel: number, origen: Partial<NonNullable<FuerzaMusculo["origen"]>> = {}): FuerzaMusculo => ({
+    nivel,
+    origen: {
+      ejercicioId: "press-banca", nombre: "Press de banca", tipo: "peso", cuanto: 1,
+      serie: { reps: 8, peso: 30 }, estandares: banca, pesoPorMancuerna: false, ...origen,
+    },
+  });
+
+  it("en los de peso: el peso a sus mismas reps, redondeado hacia arriba a 0.5 kg", () => {
+    // 30 × 8 ≈ 38 kg de 1RM ÷ 75 = 0.507 → nivel 1.05, Principiante. Novato pide 0.625 × 75 =
+    // 46.9 kg de 1RM, que a 8 reps son 37.006 kg: 37.5 (con 37 no le alcanza).
+    const s = siguienteRango(conOrigen(1.05), 75);
+    expect(s).toMatchObject({ tipo: "falta", rango: 1, objetivo: { reps: 8, peso: 37.5 }, mejor: { reps: 8, peso: 30 } });
+    if (s.tipo === "falta") expect(s.avance).toBeCloseTo(0.525, 3);
+  });
+
+  it("en los corporales: las reps que pide el siguiente", () => {
+    const lagartijas = [1, 3, 5, 10, 15, 18, 20, 34];
+    const s = siguienteRango(conOrigen(4.4, { tipo: "corporal", nombre: "Lagartijas", serie: { reps: 12, peso: null }, estandares: lagartijas }), 60);
+    expect(s).toMatchObject({ tipo: "falta", rango: 4, objetivo: { reps: 15, peso: null } });
+  });
+
+  it("si su nivel sale de un ejercicio secundario que no alcanza, le sugiere otro", () => {
+    expect(siguienteRango(conOrigen(4.2, { cuanto: 0.5 }), 75)).toMatchObject({ tipo: "otroEjercicio", rango: 4 });
+  });
+
+  it("en Élite ya no hay siguiente", () => {
+    expect(siguienteRango(conOrigen(8), 75)).toEqual({ tipo: "maximo" });
+  });
+
+  it("fuerzaPorMusculo le dice de qué ejercicio y serie sale cada músculo", () => {
+    const b: EjercicioBanco = {
+      id: "press-banca", nombre: "Press de banca", tipo: "peso", musculos: { pecho: 1, triceps: 0.5 },
+      estandares: { H: banca, M: banca }, pesoPorMancuerna: false,
+    };
+    const f = fuerzaPorMusculo(
+      [{ id: "a", fecha: "2026-10-10", origen: "manual", ejercicios: [{ ejercicioId: "press-banca", nombre: "", series: [
+        { reps: 8, peso: 30 }, { reps: 3, peso: 32 },
+      ] }] }],
+      [b], "H", 75, "2026-10-11"
+    );
+    expect(f.pecho.origen).toMatchObject({ nombre: "Press de banca", cuanto: 1, serie: { reps: 8, peso: 30 } });
+    expect(f.triceps.origen?.cuanto).toBe(0.5);
   });
 });

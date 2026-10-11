@@ -1,8 +1,10 @@
 import type { Sexo } from "../datos";
 import {
   RANGOS, indiceRango, nombreMusculo, nombreRango, percentilDe, percentilEntrenanDe,
-  type FuerzaMusculo,
+  repartoRangos, siguienteRango, type Comparacion, type FuerzaMusculo,
 } from "../fuerza";
+import { COLORES_RANGO, insigniaRango } from "./insigniaRango";
+import { escapar } from "./tarjetaDia";
 import { seccionVacia } from "./tarjetaInsignias";
 
 /**
@@ -83,12 +85,15 @@ let deEspalda = false;
 let seleccionado: string | null = null;
 /** La explicación abierta: también aquí y no en el HTML, para que un snapshot no la cierre. */
 let ayudaAbierta = false;
+/** Contra quién compara el detalle (el botón "Todos / Quienes entrenan"). */
+let comparacion: Comparacion = "todos";
 
 /** Para los tests: el estado del módulo sobrevive entre pruebas. */
 export function reiniciarMapa(): void {
   deEspalda = false;
   seleccionado = null;
   ayudaAbierta = false;
+  comparacion = "todos";
 }
 
 /**
@@ -137,44 +142,102 @@ const ICONO_AYUDA = icono(
 const LEYENDA = `
       <p class="mapa-leyenda">Toca un músculo para ver su detalle</p>`;
 
+const pct = (n: number) => `${n}&nbsp;%`;
+const kg = (n: number) => `${n.toLocaleString("es-MX", { maximumFractionDigits: 1 })} kg`;
+const serieTexto = (x: { reps: number; peso: number | null }) =>
+  x.peso === null ? `${x.reps} reps` : `${kg(x.peso)} × ${x.reps}`;
+
+/** Lo que le falta para el siguiente rango, o que ya está en el más alto. */
+function bloqueSiguiente(f: FuerzaMusculo, sexo: Sexo, peso: number, musculo: string): string {
+  const s = siguienteRango(f, peso);
+  if (s.tipo === "maximo") {
+    return `<div class="hoja-sig"><p class="hoja-sig-texto">Estás en el rango más alto. ¡Sigue así!</p></div>`;
+  }
+  const actual = indiceRango(f.nivel);
+  const barra = `
+      <div class="hoja-sig-fila">
+        <span>Siguiente: <strong style="color: ${COLORES_RANGO[s.rango]}">${nombreRango(RANGOS[s.rango].desde, sexo)}</strong></span>
+        <span>${pct(Math.round(s.avance * 100))}</span>
+      </div>
+      <div class="hoja-sig-barra" aria-hidden="true">
+        <span style="width: ${Math.round(s.avance * 100)}%; background: linear-gradient(90deg, ${COLORES_RANGO[actual]}, ${COLORES_RANGO[s.rango]})"></span>
+      </div>`;
+  const texto = s.tipo === "otroEjercicio"
+    ? `Para subir, registra un ejercicio que trabaje directo tu ${musculo.toLowerCase()}.`
+    : `Para llegar: <strong>${serieTexto(s.objetivo)}</strong> en <strong>${escapar(s.ejercicio)}</strong>`
+      + `${s.porMancuerna && s.objetivo.peso !== null ? " (por mancuerna)" : ""}. Tu mejor: ${serieTexto(s.mejor)}.`;
+  return `<div class="hoja-sig">${barra}<p class="hoja-sig-texto">${texto}</p></div>`;
+}
+
+/** Las 8 barras: qué porcentaje de cada grupo está en cada rango; la suya, resaltada. */
+function grafica(yo: number, contra: Comparacion, sexo: Sexo): string {
+  const reparto = repartoRangos(contra);
+  const max = Math.max(...reparto);
+  const quien = contra === "todos" ? "toda la población" : "la gente que entrena";
+  const columnas = reparto.map((p, i) => `
+        <div class="h-col${i === yo ? " yo" : ""}">
+          <div class="h-caja"><div class="h-barra" style="height: max(4px, ${((p / max) * 100).toFixed(1)}%); background: ${COLORES_RANGO[i]}"></div></div>
+          <div class="h-insignia">${insigniaRango(i, 26, `g-${contra}-${i}`)}</div>
+          <div class="h-pct">${pct(p)}</div>
+          ${i === yo ? `<div class="h-tu">TÚ</div>` : ""}
+        </div>`).join("");
+  const resumen = reparto.map((p, i) => `${nombreRango(RANGOS[i].desde, sexo)} ${p} %`).join(", ");
+  return `<div class="hoja-grafica" role="img" aria-label="Rangos de ${quien}: ${resumen}">${columnas}</div>`;
+}
+
 /**
- * El texto de abajo del dibujo: con un músculo tocado, su rango y cómo se compara; sin
- * ninguno, la leyenda. Se usa al pintar y al tocar, para que los dos digan lo mismo.
+ * Sin músculo tocado, la leyenda. Con uno, su hoja de detalle, que sube desde abajo: su
+ * rango con su insignia, cuántos hay en ese rango y a cuántos supera (contra toda la
+ * población o contra quienes entrenan, con el botón), la gráfica de los 8 rangos y qué le
+ * falta para el siguiente. Se usa al pintar y al tocar, para que los dos digan lo mismo.
  */
 export function detalleMusculo(
   grupo: string | null,
   fuerza: FuerzaMusculo | undefined,
-  sexo: Sexo
+  sexo: Sexo,
+  peso: number | null = null
 ): string {
   if (grupo === null) return LEYENDA;
   const nombre = nombreMusculo(grupo);
-  const cerrar = `<button type="button" class="mapa-detalle-cerrar" id="cerrar-detalle"
-                          aria-label="Cerrar">✕</button>`;
+  const cerrar = `<button type="button" class="hoja-cerrar" id="cerrar-detalle" aria-label="Cerrar">✕</button>`;
   if (!fuerza) {
     return `
-      <div class="mapa-detalle" role="status">
-        ${cerrar}
-        <p class="mapa-detalle-nombre">${nombre}</p>
-        <p class="mapa-detalle-rango">Rango: <strong>sin datos</strong></p>
-        <p class="mapa-detalle-texto">
+      <section class="hoja-detalle" role="dialog" aria-label="${nombre}">
+        <div class="hoja-asa" aria-hidden="true"></div>${cerrar}
+        <p class="hoja-musculo">${nombre}</p>
+        <p class="hoja-sin-datos">Sin datos</p>
+        <p class="hoja-frase">
           Registra ejercicios de ${nombre.toLowerCase()} para conocer tu rango y ver qué tan
-          fuerte eres ${sexo === "H" ? "comparado" : "comparada"} con la población.
+          fuerte eres ${sexo === "H" ? "comparado" : "comparada"} con los demás.
         </p>
-      </div>`;
+      </section>`;
   }
-  const p = percentilDe(fuerza.nivel);
-  const t = percentilEntrenanDe(fuerza.nivel);
+  const yo = indiceRango(fuerza.nivel);
+  const rango = nombreRango(fuerza.nivel, sexo);
+  const reparto = repartoRangos(comparacion);
+  const supera = comparacion === "todos" ? percentilDe(fuerza.nivel) : percentilEntrenanDe(fuerza.nivel);
+  const frase = comparacion === "todos"
+    ? `De todas las personas del mundo, entrenen o no, el <strong>${pct(reparto[yo])}</strong> está en este rango. Eres más fuerte que el <strong>${pct(supera)}</strong> de ellas.`
+    : `De todas las personas que entrenan en el mundo, el <strong>${pct(reparto[yo])}</strong> está en este rango. Eres más fuerte que el <strong>${pct(supera)}</strong> de ellas.`;
+  const otra = comparacion === "todos"
+    ? `Contra la gente que entrena, eres más fuerte que el ${pct(percentilEntrenanDe(fuerza.nivel))}.`
+    : `Contra toda la población (también quien no entrena), eres más fuerte que el ${pct(percentilDe(fuerza.nivel))}.`;
+  const boton = (c: Comparacion, texto: string) =>
+    `<button type="button" data-comparar="${c}" aria-pressed="${comparacion === c}">${texto}</button>`;
   return `
-      <div class="mapa-detalle" role="status">
-        ${cerrar}
-        <p class="mapa-detalle-nombre">${nombre}</p>
-        <p class="mapa-detalle-rango">Rango: <strong>${nombreRango(fuerza.nivel, sexo)}</strong></p>
-        <p class="mapa-detalle-texto">
-          Más fuerte que el <strong>${p} %</strong> de la población y que el
-          <strong>${t} %</strong> de quienes entrenan.
-        </p>
-        <div class="mapa-detalle-barra" aria-hidden="true"><span style="width: ${p}%"></span></div>
-      </div>`;
+      <section class="hoja-detalle" role="dialog" aria-label="${nombre}: ${rango}" style="--color: ${COLORES_RANGO[yo]}">
+        <div class="hoja-asa" aria-hidden="true"></div>${cerrar}
+        <p class="hoja-musculo">${nombre}</p>
+        <div class="hoja-cabeza">
+          ${insigniaRango(yo, 76, "detalle")}
+          <div><p class="hoja-sub">Tu rango</p><p class="hoja-rango">${rango}</p></div>
+        </div>
+        <div class="hoja-comparar">${boton("todos", "Todos")}${boton("entrenan", "Quienes entrenan")}</div>
+        <p class="hoja-frase">${frase}</p>
+        ${grafica(yo, comparacion, sexo)}
+        ${peso ? bloqueSiguiente(fuerza, sexo, peso, nombre) : ""}
+        <p class="hoja-otra">${otra}</p>
+      </section>`;
 }
 
 /**
@@ -187,7 +250,7 @@ export function ayudaMapa(sexo: Sexo): string {
     const desde = Math.max(r.desde, 1);
     return `
           <li class="ayuda-rango">
-            <span class="rango-muestra" data-rango="${i}" aria-hidden="true"></span>
+            <span class="ayuda-insignia" data-rango="${i}">${insigniaRango(i, 24, `ayuda-${i}`)}</span>
             <span class="ayuda-rango-nombre">${i + 1}. ${nombreRango(r.desde, sexo)}</span>
             <span class="ayuda-rango-pct">${percentilDe(desde)} % · ${percentilEntrenanDe(desde)} %</span>
           </li>`;
@@ -235,7 +298,8 @@ export function ayudaMapa(sexo: Sexo): string {
 export function tarjetaMusculos(
   sexo: Sexo | null | undefined,
   mapas: Readonly<Record<string, EstadoSvg>>,
-  fuerza: Readonly<Record<string, FuerzaMusculo>> = {}
+  fuerza: Readonly<Record<string, FuerzaMusculo>> = {},
+  peso: number | null = null
 ): string {
   if (sexo !== "H" && sexo !== "M") {
     return seccionVacia(
@@ -247,9 +311,9 @@ export function tarjetaMusculos(
   }
   const a = archivosMapa(sexo);
   const de = (archivo: string): EstadoSvg => mapas[archivo] ?? { estado: "cargando" };
-  const detalle = detalleMusculo(seleccionado, seleccionado ? fuerza[seleccionado] : undefined, sexo);
+  const detalle = detalleMusculo(seleccionado, seleccionado ? fuerza[seleccionado] : undefined, sexo, peso);
   return `
-    <section class="mapa-cuerpo${seleccionado ? " con-detalle" : ""}" aria-label="Tu mapa muscular">
+    <section class="mapa-cuerpo${seleccionado ? " con-detalle" : ""}${seleccionado && !fuerza[seleccionado] ? " sin-datos" : ""}" aria-label="Tu mapa muscular">
       <div class="mapa-escena">
         <div class="mapa-marco">
           <div class="mapa-giro${deEspalda ? " girado" : ""}${seleccionado ? " con-seleccion" : ""}" id="mapa-giro">
@@ -378,23 +442,36 @@ function marcarSeleccion(animar: boolean): void {
  */
 export function conectarMapa(
   sexo: Sexo | null | undefined,
-  fuerza: Readonly<Record<string, FuerzaMusculo>> = {}
+  fuerza: Readonly<Record<string, FuerzaMusculo>> = {},
+  peso: number | null = null
 ): void {
   if (sexo !== "H" && sexo !== "M") return;
-  const pintarDetalle = () => {
+  const pintarDetalle = (abriendo = false) => {
     const caja = document.querySelector("#mapa-detalle");
     if (!caja) return;
-    caja.innerHTML = detalleMusculo(seleccionado, seleccionado ? fuerza[seleccionado] : undefined, sexo);
+    caja.innerHTML = detalleMusculo(seleccionado, seleccionado ? fuerza[seleccionado] : undefined, sexo, peso);
+    if (abriendo) caja.querySelector(".hoja-detalle")?.classList.add("entra");
     caja.querySelector("#cerrar-detalle")?.addEventListener("click", () => elegir(null));
   };
   const elegir = (grupo: string | null) => {
+    const abriendo = seleccionado === null && grupo !== null;
     seleccionado = grupo;
+    // Sin datos la hoja es chica: el cuerpo se encoge menos (ver `estilos.css`).
+    document.querySelector(".mapa-cuerpo")?.classList.toggle("sin-datos", grupo !== null && !fuerza[grupo]);
     marcarSeleccion(true);
-    pintarDetalle();
+    pintarDetalle(abriendo);
   };
 
   marcarSeleccion(false);
   document.querySelector("#cerrar-detalle")?.addEventListener("click", () => elegir(null));
+  // "Todos / Quienes entrenan": delegado en la caja, que sobrevive a `pintarDetalle`.
+  document.querySelector("#mapa-detalle")?.addEventListener("click", (e) => {
+    const b = (e.target as Element).closest<HTMLElement>("[data-comparar]");
+    const c = b?.dataset.comparar;
+    if (c !== "todos" && c !== "entrenan" || c === comparacion) return;
+    comparacion = c;
+    pintarDetalle();
+  });
 
   // La explicación se abre y cierra sobre lo que ya está, sin repintar (como el giro).
   const conectarAyuda = () => {

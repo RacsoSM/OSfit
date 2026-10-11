@@ -482,7 +482,7 @@ async function arrancar(): Promise<void> {
     // estado de las dos acciones no vive acá, sino dentro de sus módulos, justo para que un
     // snapshot a destiempo no lo borre.
     if (activa.id === "musculos") {
-      conectarMapa(cliente.sexo, fuerzaDelCliente(datos));
+      conectarMapa(cliente.sexo, fuerzaDelCliente(datos), cliente.peso ?? null);
       conectarPeso(pintar, (peso) => guardarPeso({ peso }));
       return;
     }
