@@ -50,7 +50,7 @@ class GruposEjercicioTest {
     @Test
     fun `los grupos son los mismos que en la web y en la semilla`() {
         assertEquals(
-            listOf("pecho", "espalda", "hombro", "trapecio", "biceps", "triceps", "cuadriceps", "gluteo",
+            listOf("pecho", "espalda", "hombro", "trapecio", "biceps", "triceps", "antebrazo", "cuadriceps", "gluteo",
                 "femoral", "pantorrilla", "abdomen", "cardio"),
             GruposEjercicio.TODOS.map { it.id }
         )

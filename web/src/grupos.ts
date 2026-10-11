@@ -25,6 +25,7 @@ export const GRUPOS: readonly Grupo[] = [
   { id: "trapecio", nombre: "Trapecio" },
   { id: "biceps", nombre: "Bíceps" },
   { id: "triceps", nombre: "Tríceps" },
+  { id: "antebrazo", nombre: "Antebrazo" },
   { id: "cuadriceps", nombre: "Cuádriceps" },
   { id: "gluteo", nombre: "Glúteo" },
   { id: "femoral", nombre: "Femoral" },
@@ -41,6 +42,7 @@ const PALABRAS: Readonly<Record<string, string>> = {
   trapecio: "trapecio", trapecios: "trapecio", traps: "trapecio",
   biceps: "biceps",
   triceps: "triceps",
+  antebrazo: "antebrazo", antebrazos: "antebrazo",
   cuadriceps: "cuadriceps", cuads: "cuadriceps",
   gluteo: "gluteo", gluteos: "gluteo", pompa: "gluteo",
   femoral: "femoral", femorales: "femoral", isquios: "femoral", isquiotibiales: "femoral",
@@ -56,7 +58,7 @@ const SUPERIOR = ["pecho", "espalda", "hombro", "biceps", "triceps"];
 const EXPANSIONES: Readonly<Record<string, readonly string[]>> = {
   pierna: PIERNA, piernas: PIERNA, inferior: PIERNA,
   superior: SUPERIOR, torso: SUPERIOR,
-  brazo: ["biceps", "triceps"], brazos: ["biceps", "triceps"],
+  brazo: ["biceps", "triceps", "antebrazo"], brazos: ["biceps", "triceps", "antebrazo"],
 };
 
 /**

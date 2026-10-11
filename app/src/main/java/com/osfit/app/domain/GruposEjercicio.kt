@@ -26,6 +26,7 @@ object GruposEjercicio {
         GrupoEjercicio("trapecio", "Trapecio"),
         GrupoEjercicio("biceps", "Bíceps"),
         GrupoEjercicio("triceps", "Tríceps"),
+        GrupoEjercicio("antebrazo", "Antebrazo"),
         GrupoEjercicio("cuadriceps", "Cuádriceps"),
         GrupoEjercicio("gluteo", "Glúteo"),
         GrupoEjercicio("femoral", "Femoral"),

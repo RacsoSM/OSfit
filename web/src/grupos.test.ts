@@ -18,6 +18,12 @@ describe("gruposDelDia", () => {
     expect(gruposDelDia(nombre)).toEqual(grupos);
   });
 
+  it("reconoce el antebrazo, y un día de brazo lo incluye", () => {
+    expect(gruposDelDia("Bíceps y antebrazo")).toEqual(["biceps", "antebrazo"]);
+    expect(gruposDelDia("Antebrazos")).toEqual(["antebrazo"]);
+    expect(gruposDelDia("Brazo")).toEqual(["biceps", "triceps", "antebrazo"]);
+  });
+
   it("reconoce el trapecio en cualquiera de sus formas", () => {
     expect(gruposDelDia("Hombro y trapecio")).toEqual(["hombro", "trapecio"]);
     expect(gruposDelDia("Espalda + trapecios")).toEqual(["espalda", "trapecio"]);
@@ -26,7 +32,6 @@ describe("gruposDelDia", () => {
 
   it("entiende plurales y otras formas de escribirlos", () => {
     expect(gruposDelDia("Hombros + Glúteos + abs")).toEqual(["hombro", "gluteo", "abdomen"]);
-    expect(gruposDelDia("Brazo")).toEqual(["biceps", "triceps"]);
   });
 
   it("un nombre sin grupos reconocibles no inventa ninguno", () => {
