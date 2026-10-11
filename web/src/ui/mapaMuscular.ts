@@ -120,11 +120,22 @@ function cara(
 
 const textoBoton = (espalda: boolean) => (espalda ? "Ver de frente" : "Ver espalda");
 
+/**
+ * Los íconos de los dos botones del dibujo: de línea, en SVG y con el color del texto
+ * (`currentColor`). Antes eran 🔄 y "?", que en cada teléfono se veían distinto y como emoji.
+ */
+const icono = (trazos: string) =>
+  `<svg class="mapa-icono" viewBox="0 0 24 24" aria-hidden="true" focusable="false">${trazos}</svg>`;
+const ICONO_GIRAR = icono(
+  '<path d="M20 12a8 8 0 0 1-13.9 5.4"/><path d="M4 12a8 8 0 0 1 13.9-5.4"/>'
+  + '<path d="M18 2.8v3.9h-3.9"/><path d="M6 21.2v-3.9h3.9"/>'
+);
+const ICONO_AYUDA = icono(
+  '<path d="M7.4 7.9a4.6 4.6 0 1 1 6.5 4.2c-1.1.5-1.9 1.5-1.9 2.7v.8"/><path d="M12 20.1v.1"/>'
+);
+
 const LEYENDA = `
-      <p class="mapa-leyenda">
-        <span class="mapa-muestra" aria-hidden="true"></span>
-        Toca un músculo para ver tu rango. Se irán pintando con lo que registres.
-      </p>`;
+      <p class="mapa-leyenda">Toca un músculo para ver su detalle</p>`;
 
 /**
  * El texto de abajo del dibujo: con un músculo tocado, su rango y cómo se compara; sin
@@ -208,7 +219,8 @@ export function ayudaMapa(sexo: Sexo): string {
           "Superas a": a qué porcentaje de toda la población · y de la gente que entrena.
         </p>
         <p class="ayuda-texto">
-          Toca un músculo para ver su rango. Con 🔄 ves tu espalda.
+          Toca un músculo para ver su detalle. Con el botón de girar, abajo a la derecha,
+          ves tu espalda.
         </p>
       </div>
     </div>`;
@@ -244,9 +256,9 @@ export function tarjetaMusculos(
           ${cara("espalda", de(a.espalda), !deEspalda, fuerza)}
         </div>
         <button type="button" class="mapa-ayuda" id="abrir-ayuda"
-                aria-label="¿Cómo funciona?" title="¿Cómo funciona?">?</button>
+                aria-label="¿Cómo funciona?" title="¿Cómo funciona?">${ICONO_AYUDA}</button>
         <button type="button" class="mapa-girar" id="girar-mapa"
-                aria-label="${textoBoton(deEspalda)}" title="${textoBoton(deEspalda)}">🔄</button>
+                aria-label="${textoBoton(deEspalda)}" title="${textoBoton(deEspalda)}">${ICONO_GIRAR}</button>
       </div>
       <div id="mapa-detalle">${detalle}</div>
       ${ayudaAbierta ? ayudaMapa(sexo) : ""}

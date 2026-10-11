@@ -880,11 +880,6 @@ main:has(#barra) { padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
    ocupa casi toda la pantalla. El nombre lo dice `aria-label`. */
 .mapa-girar {
   position: absolute; right: 0; bottom: 0; z-index: 1;
-  width: 44px; height: 44px; padding: 0;
-  display: flex; align-items: center; justify-content: center;
-  border: 0; border-radius: 50%; background: var(--superficie-alta);
-  font-size: 22px; line-height: 1; cursor: pointer;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 .mapa-girar:focus-visible { outline: 2px solid var(--primario); outline-offset: 3px; }
 .mapa-cargando {
@@ -912,11 +907,7 @@ main:has(#barra) { padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
   border: 0; border-radius: 12px; background: transparent;
   color: var(--texto-tenue); font-size: 16px; cursor: pointer;
 }
-.mapa-leyenda {
-  display: flex; align-items: center; gap: 8px; margin: 14px 2px 0;
-  font-size: 13px; color: var(--texto-tenue); text-align: left;
-}
-.mapa-muestra { flex: none; width: 14px; height: 14px; border-radius: 4px; background: #8f90a6; }
+.mapa-leyenda { margin: 14px 2px 0; font-size: 13px; color: var(--texto-tenue); text-align: center; }
 /* El color de cada rango (`conNiveles` pone `data-rango`): paleta "hielo → fuego", elegida por
    el entrenador (2026-10-11) — de azul hielo a fuego, y oro en Élite. Fijos y no del estilo
    activo, porque la explicación ("?") los nombra y tienen que ser los mismos para todas.
@@ -940,13 +931,25 @@ main:has(#barra) { padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
 .mapa-cuerpo .musculo[data-rango="6"], .rango-muestra[data-rango="6"] { fill: var(--rango-6); background: var(--rango-6); }
 .mapa-cuerpo .musculo[data-rango="7"], .rango-muestra[data-rango="7"] { fill: var(--rango-7); background: var(--rango-7); }
 
-/* El "?" de la explicación: arriba a la izquierda del dibujo, en espejo del 🔄. */
-.mapa-ayuda {
-  position: absolute; left: 0; top: 0; z-index: 1;
-  width: 40px; height: 40px; padding: 0; border: 0; border-radius: 50%;
-  background: var(--superficie-alta); color: var(--texto);
-  font: inherit; font-size: 20px; font-weight: 800; line-height: 1; cursor: pointer;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+/* Los dos botones del dibujo: la explicación arriba a la izquierda y girar abajo a la
+   derecha. Círculo de vidrio con borde fino y un ícono de línea (`mapa-icono`). */
+.mapa-ayuda { position: absolute; left: 0; top: 0; z-index: 1; }
+.mapa-ayuda, .mapa-girar {
+  width: 42px; height: 42px; padding: 0;
+  display: flex; align-items: center; justify-content: center;
+  border: 1px solid color-mix(in srgb, var(--texto) 18%, transparent);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--superficie) 72%, transparent);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  color: var(--texto); cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.28);
+  transition: transform 0.12s ease-out, background 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.mapa-ayuda:active, .mapa-girar:active { transform: scale(0.94); }
+.mapa-icono {
+  width: 22px; height: 22px;
+  fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
 }
 .mapa-ayuda:focus-visible { outline: 2px solid var(--primario); outline-offset: 3px; }
 /* La explicación, como el aviso del peso: velo debajo de la barra de abajo (z 10). */
