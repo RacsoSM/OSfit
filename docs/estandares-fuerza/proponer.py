@@ -6,8 +6,10 @@ Genera `estandares.json` (lo que se cargará al banco como `estandares`) y `prop
 aquí y vuelve a correr `python3 proponer.py`. Ver `README.md` de esta carpeta.
 
 Cada ejercicio tiene 8 cortes por sexo (NIVELES, niveles 1 a 8). Las tablas públicas dan 5
-(Principiante, Novato, Intermedio, Avanzado, Élite); los otros 3 son el punto medio entre
-dos de ellos, en los tramos donde más tarda subir, para que se sienta que se avanza más seguido.
+(Principiante, Novato, Intermedio, Avanzado, Élite), que caen en los niveles 1, 3, 5, 7 y 8;
+los niveles 2, 4 y 6 son el punto medio entre dos de ellos, en los tramos donde más tarda
+subir, para que se sienta que se avanza más seguido. Los nombres de NIVELES son los de la app,
+no los de las tablas.
 FAMILIAS y CORPORAL guardan los 5 de las tablas; `a_ocho` arma los 8.
 - "peso": 1RM estimado / peso corporal. En mancuernas, el peso de UNA mancuerna.
 - "corporal": repeticiones seguidas con el propio cuerpo.
@@ -161,7 +163,9 @@ SIN_ESTANDAR = {
     "dominadas-asistidas": "el peso es la ayuda de la máquina: más peso = menos fuerza",
 }
 
-NIVELES = ["Principiante", "Iniciado", "Novato", "En progreso", "Intermedio", "Fuerte",
+# Nombres elegidos por el entrenador (2026-10-11). "Atlético" va en femenino para las
+# mujeres ("Atlética"); los demás no cambian.
+NIVELES = ["Principiante", "Novato", "Constante", "Intermedio", "Atlético / Atlética", "Fuerte",
            "Avanzado", "Élite"]
 # Dónde cae cada uno de los 5 de las tablas entre los 8 (índice 0 = nivel 1).
 ANCLAS = [0, 2, 4, 6, 7]
@@ -255,9 +259,9 @@ def main() -> None:
         "",
         "## Las dos comparaciones",
         "",
-        "**8 niveles.** Las tablas públicas dan 5 (Principiante, Novato, Intermedio, Avanzado, "
-        "Élite); Iniciado, En progreso y Fuerte son el punto medio entre dos de ellos, en los "
-        "tramos donde más se tarda en subir. Los nombres son propuesta: se pueden cambiar.",
+        "**8 niveles**, con los nombres que eligió el entrenador. Salen de los 5 de las tablas "
+        "públicas (en los niveles 1, 3, 5, 7 y 8) más el punto medio entre dos de ellos en los "
+        "niveles 2, 4 y 6, donde más se tarda en subir. A las mujeres se les dice *Atlética*.",
         "",
         "Cada corte se compara contra **toda la población** (incluye a la gente que no entrena) "
         "y contra **la gente que sí entrena**. Son los mismos cortes vistos desde dos grupos:",
