@@ -5,8 +5,10 @@ Genera `estandares.json` (lo que se cargará al banco como `estandares`) y `prop
 (la hoja que revisa el entrenador). Para cambiar un valor: edita FAMILIAS o EJERCICIOS
 aquí y vuelve a correr `python3 proponer.py`. Ver `README.md` de esta carpeta.
 
-Cada ejercicio tiene 5 cortes por sexo, en orden: Principiante, Novato, Intermedio,
-Avanzado, Élite (niveles 1 a 5 de `web/src/fuerza.ts`).
+Cada ejercicio tiene 8 cortes por sexo (NIVELES, niveles 1 a 8). Las tablas públicas dan 5
+(Principiante, Novato, Intermedio, Avanzado, Élite); los otros 3 son el punto medio entre
+dos de ellos, en los tramos donde más tarda subir, para que se sienta que se avanza más seguido.
+FAMILIAS y CORPORAL guardan los 5 de las tablas; `a_ocho` arma los 8.
 - "peso": 1RM estimado / peso corporal. En mancuernas, el peso de UNA mancuerna.
 - "corporal": repeticiones seguidas con el propio cuerpo.
 - "tiempo": no alimenta el mapa (spec), no lleva estándares.
@@ -132,9 +134,9 @@ PESO = {
 # Corporales: repeticiones seguidas.
 CORPORAL = {
     "lagartijas":              {"H": [3, 15, 30, 45, 65], "M": [1, 5, 15, 28, 40]},
-    "fondos-pecho":            {"H": [1, 8, 18, 30, 42], "M": [1, 2, 8, 15, 25]},
+    "fondos-pecho":            {"H": [1, 8, 18, 30, 42], "M": [1, 3, 8, 15, 25]},
     "fondos-banco":            {"H": [5, 15, 30, 45, 60], "M": [3, 10, 22, 35, 50]},
-    "dominadas":               {"H": [1, 6, 12, 20, 30], "M": [1, 2, 6, 12, 18]},
+    "dominadas":               {"H": [1, 6, 12, 20, 30], "M": [1, 3, 6, 12, 18]},
     "dominadas-supinas":       {"H": [1, 7, 13, 21, 31], "M": [1, 3, 7, 13, 19]},
     "sentadilla-salto":        {"H": [5, 15, 30, 45, 60], "M": [3, 10, 22, 35, 50]},
     "zancadas-caminando":      {"H": [8, 20, 35, 50, 70], "M": [6, 15, 28, 42, 60]},
@@ -159,11 +161,26 @@ SIN_ESTANDAR = {
     "dominadas-asistidas": "el peso es la ayuda de la máquina: más peso = menos fuerza",
 }
 
-NIVELES = ["Principiante", "Novato", "Intermedio", "Avanzado", "Élite"]
-# A quién supera cada corte. Iguales a `PERCENTILES` de `web/src/fuerza.ts` (población) y a
-# las tablas públicas (gente que entrena).
-SUPERA_POBLACION = [50, 78, 88, 95, 99]
-SUPERA_ENTRENAN = [5, 20, 50, 80, 95]
+NIVELES = ["Principiante", "Iniciado", "Novato", "En progreso", "Intermedio", "Fuerte",
+           "Avanzado", "Élite"]
+# Dónde cae cada uno de los 5 de las tablas entre los 8 (índice 0 = nivel 1).
+ANCLAS = [0, 2, 4, 6, 7]
+# A quién supera cada corte: toda la población y la gente que entrena (tablas públicas). Los
+# intermedios, a la mitad. Irán a `PERCENTILES` de `web/src/fuerza.ts`.
+SUPERA_POBLACION = [50, 65, 78, 83, 88, 92, 95, 99]
+SUPERA_ENTRENAN = [5, 12, 20, 35, 50, 65, 80, 95]
+
+
+def a_ocho(cinco: list, entero: bool = False) -> list:
+    """Los 5 cortes de las tablas a 8: los 5 en ANCLAS y el punto medio en los huecos."""
+    ocho: list = [None] * len(NIVELES)
+    for i, v in zip(ANCLAS, cinco):
+        ocho[i] = v
+    for i, v in enumerate(ocho):
+        if v is None:
+            medio = (ocho[i - 1] + ocho[i + 1]) / 2
+            ocho[i] = round(medio) if entero else round(medio, 3)
+    return ocho
 PESO_EJEMPLO = {"H": 75, "M": 60}
 
 
@@ -181,21 +198,21 @@ def main() -> None:
         i, tipo, grupo = e["id"], e["tipo"], e["grupo"]
         filas.setdefault(grupo, [])
         if tipo == "tiempo":
-            filas[grupo].append(f"| {e['nombre']} | — | de tiempo: no pinta el mapa |" + " |" * 4)
+            filas[grupo].append(f"| {e['nombre']} | — | de tiempo: no pinta el mapa |" + " |" * (len(NIVELES) - 1))
             continue
         if i in SIN_ESTANDAR:
-            filas[grupo].append(f"| {e['nombre']} | — | sin estándar: {SIN_ESTANDAR[i]} |" + " |" * 4)
+            filas[grupo].append(f"| {e['nombre']} | — | sin estándar: {SIN_ESTANDAR[i]} |" + " |" * (len(NIVELES) - 1))
             continue
         if tipo == "peso" and i in PESO:
             fam, f, nota = PESO[i]
-            est = {s: [round(v * f, 3) for v in FAMILIAS[fam][s]] for s in ("H", "M")}
+            est = {s: a_ocho([round(v * f, 3) for v in FAMILIAS[fam][s]]) for s in ("H", "M")}
             salida[i] = est
             for s in ("H", "M"):
                 celdas = [f"{redondear_kg(v * PESO_EJEMPLO[s]):g} kg" for v in est[s]]
                 n = f" · {nota}" if nota else ""
                 filas[grupo].append(f"| {e['nombre'] if s == 'H' else ''} | {'H' if s == 'H' else 'M'}{n if s == 'H' else ''} | " + " | ".join(celdas) + " |")
         elif tipo == "corporal" and i in CORPORAL:
-            est = CORPORAL[i]
+            est = {s: a_ocho(CORPORAL[i][s], entero=True) for s in ("H", "M")}
             salida[i] = est
             nota = NOTAS_CORPORAL.get(i, "")
             for s in ("H", "M"):
@@ -205,6 +222,12 @@ def main() -> None:
             faltan.append(i)
     if faltan:
         raise SystemExit(f"Ejercicios del banco sin propuesta: {faltan}")
+    # Cada nivel tiene que pedir algo más que el anterior: con dos cortes iguales, uno de los
+    # niveles nunca se vería.
+    repetidos = [f"{i} {s}" for i, est in salida.items() for s in ("H", "M")
+                 if any(a >= b for a, b in zip(est[s], est[s][1:]))]
+    if repetidos:
+        raise SystemExit(f"Cortes repetidos o al revés: {repetidos}")
 
     (AQUI / "estandares.json").write_text(json.dumps(salida, ensure_ascii=False, indent=2) + "\n")
 
@@ -213,7 +236,7 @@ def main() -> None:
                      "trapecio": "Trapecio", "hombro": "Hombro", "biceps": "Bíceps",
                      "antebrazo": "Antebrazo", "triceps": "Tríceps", "abdomen": "Abdomen",
                      "cardio": "Cardio"}
-    cab = "| Ejercicio | Sexo | " + " | ".join(NIVELES) + " |\n|---|---|" + "---|" * 5
+    cab = "| Ejercicio | Sexo | " + " | ".join(NIVELES) + " |\n|---|---|" + "---|" * len(NIVELES)
     md = [
         "# Propuesta de estándares de fuerza — para revisar",
         "",
@@ -231,6 +254,10 @@ def main() -> None:
         "- Máquinas y poleas varían por marca: tómalas como aproximadas o ajústalas a las de tu gym.",
         "",
         "## Las dos comparaciones",
+        "",
+        "**8 niveles.** Las tablas públicas dan 5 (Principiante, Novato, Intermedio, Avanzado, "
+        "Élite); Iniciado, En progreso y Fuerte son el punto medio entre dos de ellos, en los "
+        "tramos donde más se tarda en subir. Los nombres son propuesta: se pueden cambiar.",
         "",
         "Cada corte se compara contra **toda la población** (incluye a la gente que no entrena) "
         "y contra **la gente que sí entrena**. Son los mismos cortes vistos desde dos grupos:",
