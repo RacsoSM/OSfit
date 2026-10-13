@@ -109,6 +109,11 @@ gym, siga o no la rutina de la app. Los GIF se usan aquí, **no en la tarjeta de
   tarjeta entra desde abajo al avanzar o desde arriba al volver.
   También se cambia **deslizando la tarjeta de lado** (izquierda = siguiente, derecha =
   anterior); de lado y no vertical para no chocar con el scroll de la página.
+- **Inicio de Registro: "Tu semana"** (decidido 2026-10-13, propuesta B): tira de lunes a
+  domingo con los días que entrenó, tres datos de la semana (entrenamientos sobre los días de su
+  rutina, tiempo entrenando y series), el botón "▶ Iniciar entrenamiento · <día que le toca>" y
+  sus tres entrenamientos más recientes. Todo sale de lo que ella anotó: de la rutina solo se
+  toma el nombre del día y cuántos días tiene.
 - **Historial:** pantalla aparte ("Tu historial") con cada entrenamiento: fecha, horario,
   duración, ejercicios y series, del más reciente al más viejo.
 - **Elegir (grid):** tarjetas con el **GIF y el nombre**, **agrupadas** (decidido 2026-10-10):
