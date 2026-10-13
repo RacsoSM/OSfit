@@ -304,3 +304,16 @@ export function siguienteRango(f: FuerzaMusculo, pesoCorporal: number): Siguient
     mejor: o.serie, objetivo,
   };
 }
+
+/**
+ * Su rango general: el promedio del nivel de todos sus músculos que ya tienen rango (los "sin
+ * datos" no cuentan, ni a favor ni en contra). null mientras no tenga ninguno. Va arriba de
+ * Músculos (`tarjetaMusculos`).
+ */
+export function rangoGeneral(
+  fuerza: Readonly<Record<string, FuerzaMusculo>>
+): { nivel: number; musculos: number } | null {
+  const niveles = Object.values(fuerza).map((f) => f.nivel);
+  if (niveles.length === 0) return null;
+  return { nivel: niveles.reduce((a, b) => a + b, 0) / niveles.length, musculos: niveles.length };
+}

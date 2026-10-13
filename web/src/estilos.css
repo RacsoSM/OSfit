@@ -837,6 +837,25 @@ main:has(#barra) { padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
 .mapa-cuerpo.con-detalle .mapa-marco {
   width: min(100%, calc(max(150px, min(72vh, 720px) - 330px) * 420 / 800));
 }
+/* Con el rango general arriba, el cuerpo cede su alto para que todo siga cabiendo arriba de
+   la barra sin desplazar la página. Con un músculo tocado el bloque se oculta (manda la hoja)
+   y vale la regla de `.con-detalle`. */
+.mapa-cuerpo.con-general:not(.con-detalle) .mapa-marco {
+  width: min(100%, calc((min(72vh, 720px) - 70px) * 420 / 800));
+}
+.rango-general {
+  display: flex; align-items: center; gap: 12px; width: 100%; margin: -8px 0 10px;
+  padding: 8px 14px; border-radius: 16px; text-align: left;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--color) 22%, var(--superficie)), var(--superficie));
+  border: 1px solid color-mix(in srgb, var(--color) 35%, transparent);
+}
+.rango-general .insignia-rango { flex: none; filter: drop-shadow(0 3px 8px color-mix(in srgb, var(--color) 55%, transparent)); }
+.rango-general-texto { min-width: 0; }
+.rango-general p { margin: 0; }
+.rango-general-sub { font-size: 11px; color: var(--texto-tenue); text-transform: uppercase; letter-spacing: 0.06em; }
+.rango-general-nombre { font-size: 20px; font-weight: 900; line-height: 1.1; color: var(--color); text-transform: uppercase; letter-spacing: 0.02em; }
+.rango-general-detalle { font-size: 11.5px; color: var(--texto-tenue); }
+.mapa-cuerpo.con-detalle .rango-general { display: none; }
 /* Un músculo sin datos tiene una hoja chica (solo el aviso): el cuerpo se encoge menos. */
 .mapa-cuerpo.con-detalle.sin-datos .mapa-marco {
   width: min(100%, calc((min(72vh, 720px) - 150px) * 420 / 800));

@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import {
-  archivosMapa, ayudaMapa, conNiveles, detalleMusculo, prepararSvg, reiniciarMapa, tarjetaMusculos,
+  archivosMapa, ayudaMapa, bloqueRangoGeneral, conNiveles, detalleMusculo, prepararSvg, reiniciarMapa,
+  tarjetaMusculos,
 } from "./mapaMuscular";
 import frenteH from "../../public/mapa-muscular-frente.svg?raw";
 import espaldaH from "../../public/mapa-muscular-espalda.svg?raw";
@@ -287,3 +288,28 @@ describe("tarjetaMusculos y la ayuda", () => {
   });
 });
 
+
+describe("bloqueRangoGeneral", () => {
+  it("su rango general con insignia y en cuántos músculos se basa", () => {
+    const h = bloqueRangoGeneral({ pecho: { nivel: 3 }, biceps: { nivel: 5 }, cuadriceps: { nivel: 7 } }, "M");
+    expect(h).toContain("Tu rango general");
+    expect(h).toContain('class="rango-general-nombre">Atlética<');
+    expect(h).toContain("Promedio de tus 3 músculos con rango");
+    expect(h).toContain("insignia-rango");
+  });
+
+  it("con un solo músculo lo dice en singular", () => {
+    expect(bloqueRangoGeneral({ pecho: { nivel: 3 } }, "H")).toContain("Promedio de tu músculo con rango");
+  });
+
+  it("sin músculos con rango no pinta nada", () => {
+    expect(bloqueRangoGeneral({}, "M")).toBe("");
+  });
+
+  it("va arriba del mapa, y el mapa sabe que lo tiene", () => {
+    const h = tarjetaMusculos("H", {}, { pecho: { nivel: 3 } });
+    expect(h).toContain("con-general");
+    expect(h.indexOf("rango-general")).toBeLessThan(h.indexOf("mapa-escena"));
+    expect(tarjetaMusculos("H", {}, {})).not.toContain("rango-general");
+  });
+});

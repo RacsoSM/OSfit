@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
-  NOMBRES_MUSCULO, fuerzaPorMusculo, indiceRango, marcaPara, nivelDe, repartoRangos, siguienteRango, nombreMusculo, nombreRango, percentilDe,
+  NOMBRES_MUSCULO, fuerzaPorMusculo, indiceRango, marcaPara, nivelDe, rangoGeneral, repartoRangos,
+  siguienteRango, nombreMusculo, nombreRango, percentilDe,
   percentilEntrenanDe, rangoDe, unoRm,
 } from "./fuerza";
 import type { EjercicioBanco, Sesion } from "./datos";
@@ -265,5 +266,16 @@ describe("siguienteRango", () => {
     );
     expect(f.pecho.origen).toMatchObject({ nombre: "Press de banca", cuanto: 1, serie: { reps: 8, peso: 30 } });
     expect(f.triceps.origen?.cuanto).toBe(0.5);
+  });
+});
+
+describe("rangoGeneral", () => {
+  it("el promedio del nivel de los músculos con rango", () => {
+    expect(rangoGeneral({ pecho: { nivel: 3 }, biceps: { nivel: 5 }, cuadriceps: { nivel: 7 } }))
+      .toEqual({ nivel: 5, musculos: 3 });
+  });
+
+  it("sin ningún músculo con rango no hay rango general", () => {
+    expect(rangoGeneral({})).toBeNull();
   });
 });

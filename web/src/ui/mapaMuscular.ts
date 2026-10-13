@@ -1,7 +1,7 @@
 import type { Sexo } from "../datos";
 import {
   RANGOS, indiceRango, nombreMusculo, nombreRango, percentilDe, percentilEntrenanDe,
-  repartoRangos, siguienteRango, type Comparacion, type FuerzaMusculo,
+  rangoGeneral, repartoRangos, siguienteRango, type Comparacion, type FuerzaMusculo,
 } from "../fuerza";
 import { COLORES_RANGO, insigniaRango } from "./insigniaRango";
 import { escapar } from "./tarjetaDia";
@@ -307,6 +307,31 @@ export function ayudaMapa(sexo: Sexo): string {
 }
 
 /**
+ * Su rango general, arriba del dibujo: la insignia, el rango y en cuántos músculos se basa.
+ * Vacío sin ningún músculo con rango. Se oculta con un músculo tocado (`.con-detalle` en
+ * `estilos.css`): ahí manda la hoja de ese músculo.
+ */
+export function bloqueRangoGeneral(
+  fuerza: Readonly<Record<string, FuerzaMusculo>>,
+  sexo: Sexo
+): string {
+  const g = rangoGeneral(fuerza);
+  if (!g) return "";
+  const i = indiceRango(g.nivel);
+  const cuantos = g.musculos === 1 ? "tu músculo con rango" : `tus ${g.musculos} músculos con rango`;
+  return `
+      <div class="rango-general" style="--color: ${COLORES_RANGO[i]}" role="status"
+           aria-label="Tu rango general: ${nombreRango(g.nivel, sexo)}">
+        ${insigniaRango(i, 46, "general")}
+        <div class="rango-general-texto">
+          <p class="rango-general-sub">Tu rango general</p>
+          <p class="rango-general-nombre">${nombreRango(g.nivel, sexo)}</p>
+          <p class="rango-general-detalle">Promedio de ${cuantos} · más fuerte que el ${pct(percentilEntrenanDe(g.nivel))} de quienes entrenan</p>
+        </div>
+      </div>`;
+}
+
+/**
  * Las dos caras van siempre en el HTML, una detrás de la otra: así girar es una transición
  * de CSS sobre lo que ya está (ver `conectarMapa`) y no un repintado que cortaría el giro.
  *
@@ -330,7 +355,8 @@ export function tarjetaMusculos(
   const de = (archivo: string): EstadoSvg => mapas[archivo] ?? { estado: "cargando" };
   const detalle = detalleMusculo(seleccionado, seleccionado ? fuerza[seleccionado] : undefined, sexo, peso);
   return `
-    <section class="mapa-cuerpo${seleccionado ? " con-detalle" : ""}${seleccionado && !fuerza[seleccionado] ? " sin-datos" : ""}" aria-label="Tu mapa muscular">
+    <section class="mapa-cuerpo${seleccionado ? " con-detalle" : ""}${seleccionado && !fuerza[seleccionado] ? " sin-datos" : ""}${rangoGeneral(fuerza) ? " con-general" : ""}" aria-label="Tu mapa muscular">
+      ${bloqueRangoGeneral(fuerza, sexo)}
       <div class="mapa-escena">
         <div class="mapa-marco">
           <div class="mapa-giro${deEspalda ? " girado" : ""}${seleccionado ? " con-seleccion" : ""}" id="mapa-giro">
