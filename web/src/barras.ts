@@ -8,9 +8,10 @@
  */
 
 /**
- * Cuánto pesa una barra (kg). PROVISIONAL: lo más común en máquinas comerciales son placas de
- * 10 lb (≈ 4.5 kg); muchas europeas traen de 5 kg. El entrenador lo va a confirmar en su
- * gimnasio; cuando lo haga, este es el único número que hay que cambiar.
+ * Cuánto pesa una barra (kg). 4.5 kg = placa de 10 lb, lo más común en máquinas comerciales
+ * (muchas europeas traen de 5 kg). Lo fijó el entrenador el 2026-10-13 "de momento", mientras
+ * lo confirma en su gimnasio. Si cambia, este es el único número que hay que tocar, pero las
+ * sesiones ya guardadas quedan en kg calculados con el valor anterior.
  */
 export const KG_POR_BARRA = 4.5;
 
