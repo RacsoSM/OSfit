@@ -269,6 +269,29 @@ class ClienteDetailViewModel(
     }
 
     /**
+     * El switch "Reiniciar el ciclo cada lunes" para quien tiene rutina propia.
+     *
+     * Hace falta porque la propagación de plantillas (`RutinaRepository.propagarASeguidoras`)
+     * deja fuera a quien se desprendió: si el entrenador activa el reinicio en la plantilla
+     * después de que la clienta se hizo su copia, la copia se queda en `false` para siempre y
+     * el ciclo sigue dando la vuelta sin reiniciarse.
+     *
+     * A diferencia de [guardarRutinaPropia], sí refresca el día denormalizado: el reinicio
+     * cambia el ancla efectiva (ver `RutinaProgressCalculator.anclaEfectiva`), así que el trío
+     * que lee la web cambia con él.
+     */
+    fun cambiarReinicioSemanalPropio(valor: Boolean) {
+        val actual = cliente.value ?: return
+        if (actual.plantillaOrigenId.isNotBlank()) return
+        val rutina = actual.rutinaAsignada ?: return
+        if (rutina.reinicioSemanal == valor) return
+        viewModelScope.launch {
+            clienteRepository.guardarRutinaPropia(clienteId, rutina.copy(reinicioSemanal = valor))
+            sincronizadorDiaWeb.refrescar(clienteId)
+        }
+    }
+
+    /**
      * Desprende a la clienta de la plantilla **llevándose sus pesos propios dentro de la copia**.
      *
      * Si no se plegaran aquí se perderían en el acto: los pesos propios sólo se aplican mientras
