@@ -1,12 +1,19 @@
 /**
- * Deslizar el dedo hacia la derecha, hacia el lado del ☰, abre el menú lateral en las tres
- * pestañas de la barra (Inicio, Músculos y Registro). Pedido del entrenador, 2026-10-13.
+ * Jalar desde la orilla derecha hacia la izquierda abre el menú lateral, que sale por ese
+ * mismo lado, en las tres pestañas de la barra (Inicio, Músculos y Registro). Pedido del
+ * entrenador, 2026-10-13: primero era deslizar hacia la derecha, y lo cambió a jalar el menú
+ * desde su orilla.
  *
  * Se escucha en todo el documento con `touchstart`/`touchend` pasivos: no se bloquea nunca el
  * scroll, solo se mira hacia dónde se movió el dedo al soltar. Pointer events no sirven aquí:
  * el navegador los cancela (`pointercancel`) en cuanto decide que el gesto es scroll.
  */
 
+/**
+ * Qué tan cerca de la orilla derecha tiene que empezar el dedo (px). Generoso a propósito: en
+ * Android con navegación por gestos, los primeros píxeles de la orilla son del sistema ("atrás").
+ */
+export const ORILLA = 48;
 /** Distancia que basta por sí sola. */
 const DISTANCIA = 80;
 /** Más corto que eso, cuenta si fue rápido (px/ms): un "flick". */
@@ -14,14 +21,17 @@ const DISTANCIA_MINIMA = 40;
 const VELOCIDAD = 0.5;
 
 /**
- * Si el gesto abre el menú, según cuánto se movió el dedo (`dx` positivo = a la derecha) y en
- * cuánto tiempo. Tiene que ser claramente horizontal, para no confundirse con bajar la página.
+ * Si el gesto abre el menú: tiene que empezar en la orilla derecha (`x0` contra `ancho`, el de
+ * la ventana) y moverse hacia la izquierda (`dx` negativo), lo bastante o lo bastante rápido.
+ * Tiene que ser claramente horizontal, para no confundirse con bajar la página.
  */
-export function abreMenu(dx: number, dy: number, ms: number): boolean {
-  if (dx <= 0) return false;
-  if (dx < 1.5 * Math.abs(dy)) return false;
-  const rapido = dx >= DISTANCIA_MINIMA && dx / Math.max(ms, 1) >= VELOCIDAD;
-  return dx >= DISTANCIA || rapido;
+export function abreMenu(x0: number, ancho: number, dx: number, dy: number, ms: number): boolean {
+  if (x0 < ancho - ORILLA) return false;
+  const largo = -dx;
+  if (largo <= 0) return false;
+  if (largo < 1.5 * Math.abs(dy)) return false;
+  const rapido = largo >= DISTANCIA_MINIMA && largo / Math.max(ms, 1) >= VELOCIDAD;
+  return largo >= DISTANCIA || rapido;
 }
 
 /**
@@ -58,7 +68,8 @@ export function conectarDeslizarMenu(puede: () => boolean, abrir: () => void): v
     inicio = null;
     const t = ev.changedTouches[0];
     if (!desde || !t || !puede()) return;
-    if (abreMenu(t.clientX - desde.x, t.clientY - desde.y, performance.now() - desde.t)) abrir();
+    const dx = t.clientX - desde.x;
+    if (abreMenu(desde.x, window.innerWidth, dx, t.clientY - desde.y, performance.now() - desde.t)) abrir();
   }, { passive: true });
 
   document.addEventListener("touchcancel", () => { inicio = null; }, { passive: true });
