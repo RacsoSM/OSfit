@@ -51,6 +51,7 @@ import { cabeceraRegistro, conectarRegistro } from "./ui/registro";
 import { barraInferior, conectarBarra } from "./ui/barraInferior";
 import { archivosMapa, conectarMapa, type EstadoSvg } from "./ui/mapaMuscular";
 import { conectarPeso } from "./ui/pesoCorporal";
+import { conectarDeslizarMenu } from "./ui/deslizarMenu";
 import {
   abrirMenu, abrirVentana, cerrarMenu, historialDelNavegador, iniciarNavegacion, menuAbierto,
   ventanaActiva,
@@ -317,6 +318,8 @@ async function arrancar(): Promise<void> {
     conectarSaludo();
     conectarCabecera(abrirMenu);
     conectarBarra(abrirVentana);
+    // Deslizar hacia la derecha abre el menú, solo en las pestañas de la barra.
+    conectarDeslizarMenu(() => !menuAbierto() && BARRA.includes(ventanaActiva()), abrirMenu);
   }
 
   /** Lo último que se pintó en `#videos`; `null` mientras no se pintó nada. */
