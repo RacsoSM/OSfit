@@ -1,5 +1,6 @@
 import type { EjercicioBanco, SerieSesion, Sesion } from "./datos";
 import { lunesDe } from "./dia";
+import { barrasAKg, kgABarras, unidadPorDefecto, type Unidad } from "./barras";
 
 /**
  * El borrador de Registro: lo que la clienta va anotando en el gym, ejercicio por ejercicio,
@@ -21,6 +22,11 @@ export interface EjercicioBorrador {
   tipo: EjercicioBanco["tipo"];
   gifRuta: string | null;
   series: SerieBorrador[];
+  /**
+   * En qué anota el peso: kg, o barras en las máquinas de placas (ver `barras.ts`). Se envía
+   * siempre en kg. Ausente en los borradores de antes del selector: kg.
+   */
+  unidad?: Unidad;
 }
 
 export interface Borrador {
@@ -67,14 +73,19 @@ export function agregarEjercicio(
   seriesRutina: number | null
 ): Borrador {
   if (b.ejercicios.some((x) => x.ejercicioId === e.id)) return b;
+  // Solo los de peso eligen unidad: en los corporales el peso es lastre y va en kg.
+  const unidad: Unidad = e.tipo === "peso" ? unidadPorDefecto(e.id) : "kg";
+  // Lo de la última vez está guardado en kg; en barras se muestra en barras.
+  const pesoPrevio = (kg: number | null) =>
+    kg === null ? "" : String(unidad === "barras" ? kgABarras(kg) : kg);
   const series: SerieBorrador[] = previas && previas.length > 0
-    ? previas.map((s) => ({ reps: String(s.reps), peso: s.peso === null ? "" : String(s.peso) }))
+    ? previas.map((s) => ({ reps: String(s.reps), peso: pesoPrevio(s.peso) }))
     : Array.from({ length: Math.min(Math.max(seriesRutina ?? 1, 1), 10) }, () => ({ ...SERIE_VACIA }));
   return {
     ...b,
     ejercicios: [
       ...b.ejercicios,
-      { ejercicioId: e.id, nombre: e.nombre, tipo: e.tipo, gifRuta: e.gifRuta ?? null, series },
+      { ejercicioId: e.id, nombre: e.nombre, tipo: e.tipo, gifRuta: e.gifRuta ?? null, series, unidad },
     ],
   };
 }
@@ -111,6 +122,26 @@ export function quitarSerie(b: Borrador, iEj: number, iSerie: number): Borrador 
   });
 }
 
+/**
+ * Cambia la unidad de un ejercicio y convierte lo que ya escribió, para que el selector no
+ * le cambie el peso de fondo: 6 barras pasan a 27 kg, y 27 kg a 6 barras.
+ */
+export function cambiarUnidad(b: Borrador, iEj: number, unidad: Unidad): Borrador {
+  const e = b.ejercicios[iEj];
+  if (!e || (e.unidad ?? "kg") === unidad) return b;
+  const convertir = (texto: string): string => {
+    const n = numero(texto);
+    if (n === null || Number.isNaN(n)) return texto;
+    return String(unidad === "barras" ? kgABarras(n) : barrasAKg(n));
+  };
+  return {
+    ...b,
+    ejercicios: b.ejercicios.map((x, i) => (i === iEj
+      ? { ...x, unidad, series: x.series.map((s) => ({ ...s, peso: convertir(s.peso) })) }
+      : x)),
+  };
+}
+
 export function quitarEjercicio(b: Borrador, iEj: number): Borrador {
   return { ...b, ejercicios: b.ejercicios.filter((_, i) => i !== iEj) };
 }
@@ -139,9 +170,13 @@ export function paraEnviar(b: Borrador): { ok: true; datos: Envio } | { ok: fals
       if (!Number.isInteger(reps) || reps < 1) {
         return { ok: false, error: `${donde}: las repeticiones van en número entero.` };
       }
-      const peso = e.tipo === "tiempo" ? null : numero(s.peso);
-      if (peso !== null && Number.isNaN(peso)) return { ok: false, error: `${donde}: el peso no es un número.` };
-      if (e.tipo === "peso" && peso === null) return { ok: false, error: `${donde}: falta el peso.` };
+      const escrito = e.tipo === "tiempo" ? null : numero(s.peso);
+      if (escrito !== null && Number.isNaN(escrito)) return { ok: false, error: `${donde}: el peso no es un número.` };
+      if (e.tipo === "peso" && escrito === null) {
+        return { ok: false, error: `${donde}: ${e.unidad === "barras" ? "faltan las barras" : "falta el peso"}.` };
+      }
+      // Se guarda siempre en kg: las barras se convierten aquí y en ningún otro lado.
+      const peso = escrito !== null && e.unidad === "barras" ? barrasAKg(escrito) : escrito;
       series.push({ reps, peso });
     }
     if (series.length > 0) ejercicios.push({ ejercicioId: e.ejercicioId, series });
@@ -163,7 +198,8 @@ export function resumenSeries(e: EjercicioBorrador): string {
     const reps = s.reps.trim() || "?";
     if (e.tipo === "tiempo") return `${reps} s`;
     const peso = s.peso.trim().replace(",", ".");
-    return peso === "" ? `× ${reps}` : `${peso} kg × ${reps}`;
+    const unidad = e.unidad === "barras" ? (peso === "1" ? "barra" : "barras") : "kg";
+    return peso === "" ? `× ${reps}` : `${peso} ${unidad} × ${reps}`;
   });
   return `${llenas.length === 1 ? "1 serie" : `${llenas.length} series`} · ${texto.join(", ")}`;
 }

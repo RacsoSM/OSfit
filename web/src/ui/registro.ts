@@ -5,6 +5,7 @@ import {
   agregarEjercicio,
   agregarSerie,
   cambiarSerie,
+  cambiarUnidad,
   idNuevo,
   leerBorrador,
   nombresDeSesion,
@@ -334,11 +335,12 @@ function filaSerie(e: EjercicioBorrador, i: number, s: SerieBorrador, j: number)
              value="${escapar(s.reps)}" placeholder="0" aria-label="Serie ${j + 1}, ${e.tipo === "tiempo" ? "segundos" : "repeticiones"}">
       <span>${e.tipo === "tiempo" ? "seg" : "reps"}</span>
     </label>`;
+  const enBarras = e.unidad === "barras";
   const peso = e.tipo === "tiempo" ? "" : `
     <label class="registro-campo">
       <input inputmode="decimal" data-ej="${i}" data-serie="${j}" data-campo="peso"
-             value="${escapar(s.peso)}" placeholder="${e.tipo === "corporal" ? "+0" : "0"}" aria-label="Serie ${j + 1}, kilos">
-      <span>kg</span>
+             value="${escapar(s.peso)}" placeholder="${e.tipo === "corporal" ? "+0" : "0"}" aria-label="Serie ${j + 1}, ${enBarras ? "barras" : "kilos"}">
+      <span>${enBarras ? "barras" : "kg"}</span>
     </label>
     <span class="registro-por" aria-hidden="true">×</span>`;
   return `
@@ -379,11 +381,20 @@ function medioGrande(e: EjercicioBorrador, delBanco: EjercicioBanco | undefined)
  */
 function tarjetaActiva(e: EjercicioBorrador, i: number, total: number, delBanco?: EjercicioBanco): string {
   // Los estándares de fuerza de mancuernas cuentan una sola (`docs/estandares-fuerza/`).
+  const enBarras = e.unidad === "barras";
   const nota = e.tipo === "corporal"
     ? `<p class="accion-nota">Con tu peso corporal. En kg, solo si agregaste peso extra.</p>`
-    : delBanco?.pesoPorMancuerna
-      ? `<p class="accion-nota">En kg, el peso de una mancuerna.</p>`
-      : "";
+    : enBarras
+      ? `<p class="accion-nota">Cuántas barras de la máquina pusiste.</p>`
+      : delBanco?.pesoPorMancuerna
+        ? `<p class="accion-nota">En kg, el peso de una mancuerna.</p>`
+        : "";
+  // Barras o kg, solo en los de peso. Las máquinas de placas abren en barras (`barras.ts`).
+  const unidad = e.tipo !== "peso" ? "" : `
+      <div class="registro-unidad" role="group" aria-label="Unidad del peso">
+        <button data-unidad="${i}:barras" aria-pressed="${enBarras}" class="${enBarras ? "activa" : ""}">Barras</button>
+        <button data-unidad="${i}:kg" aria-pressed="${!enBarras}" class="${enBarras ? "" : "activa"}">Kg</button>
+      </div>`;
   const nav = total > 1 ? `
       <div class="registro-nav">
         <button class="registro-nav-boton" data-activar="${i - 1}" ${i === 0 ? "disabled" : ""}>‹ Anterior</button>
@@ -397,6 +408,7 @@ function tarjetaActiva(e: EjercicioBorrador, i: number, total: number, delBanco?
         <button class="registro-quitar registro-quitar-ej" data-quitar-ej="${i}" aria-label="Quitar ${escapar(e.nombre)}">✕</button>
       </div>
       <p class="registro-activo-nombre">${escapar(e.nombre)}</p>
+      ${unidad}
       ${nota}
       ${e.series.map((s, j) => filaSerie(e, i, s, j)).join("")}
       <button class="registro-mas-serie" data-agregar-serie="${i}">+ Serie</button>
@@ -606,6 +618,13 @@ export function conectarRegistro(
       guardarBorrador(quitarEjercicio(b, quitado));
       // Queda abierto el que estaba debajo (o el anterior si era el último).
       estado.activo = quitado < actual ? actual - 1 : actual;
+      repintar();
+      return;
+    }
+    if (el.dataset.unidad !== undefined) {
+      const [i, unidad] = el.dataset.unidad.split(":");
+      if (unidad !== "kg" && unidad !== "barras") return;
+      guardarBorrador(cambiarUnidad(b, Number(i), unidad));
       repintar();
       return;
     }

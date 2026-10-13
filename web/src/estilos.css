@@ -1186,6 +1186,16 @@ main:has(#barra) { padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
    navegador se queda con el scroll vertical y nos deja el horizontal. */
 .registro-ejercicio.activo { touch-action: pan-y; }
 .registro-nav-cuenta { text-align: center; }
+/* Barras o kg (`barras.ts`): un selector de dos, centrado bajo el nombre del ejercicio. */
+.registro-unidad {
+  display: flex; width: fit-content; margin: 6px auto 8px; padding: 3px; gap: 2px;
+  border-radius: 999px; background: var(--superficie-alta);
+}
+.registro-unidad button {
+  min-width: 84px; min-height: 36px; padding: 6px 16px; border: 0; border-radius: 999px;
+  background: transparent; color: var(--texto-tenue); font: inherit; font-size: 14px; font-weight: 700; cursor: pointer;
+}
+.registro-unidad button.activa { background: var(--primario); color: var(--sobre-primario); }
 .registro-nav-pista { display: block; font-size: 10px; opacity: 0.7; }
 /* Sin "arrastrar imagen" ni seleccionar texto al deslizar la tarjeta (en iPhone también evita
    el menú de mantener presionada la imagen). */
