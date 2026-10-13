@@ -85,15 +85,19 @@ let deEspalda = false;
 let seleccionado: string | null = null;
 /** La explicación abierta: también aquí y no en el HTML, para que un snapshot no la cierre. */
 let ayudaAbierta = false;
-/** Contra quién compara el detalle (el botón "Todos / Quienes entrenan"). */
-let comparacion: Comparacion = "todos";
+/**
+ * Contra quién compara el detalle (el botón "Todos / Quienes entrenan"). Cada músculo se abre
+ * contra quienes entrenan (decisión del entrenador, 2026-10-13); "Todos" dura mientras la hoja
+ * siga abierta.
+ */
+let comparacion: Comparacion = "entrenan";
 
 /** Para los tests: el estado del módulo sobrevive entre pruebas. */
 export function reiniciarMapa(): void {
   deEspalda = false;
   seleccionado = null;
   ayudaAbierta = false;
-  comparacion = "todos";
+  comparacion = "entrenan";
 }
 
 /**
@@ -468,6 +472,7 @@ export function conectarMapa(
   };
   const elegir = (grupo: string | null) => {
     const abriendo = seleccionado === null && grupo !== null;
+    if (abriendo) comparacion = "entrenan";
     seleccionado = grupo;
     // Sin datos la hoja es chica: el cuerpo se encoge menos (ver `estilos.css`).
     document.querySelector(".mapa-cuerpo")?.classList.toggle("sin-datos", grupo !== null && !fuerza[grupo]);

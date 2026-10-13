@@ -169,15 +169,15 @@ describe("detalleMusculo", () => {
     expect(detalleMusculo("pecho", undefined, "H")).toContain("comparado");
   });
 
-  it("con datos: su rango con insignia, contra toda la población por omisión", () => {
+  it("con datos: su rango con insignia, contra quienes entrenan por omisión", () => {
     const h = detalleMusculo("cuadriceps", { nivel: 5.5 }, "M");
     expect(h).toContain("Cuádriceps");
     expect(h).toContain('class="hoja-rango">Atlética<');
     expect(h).toContain("insignia-rango");
-    expect(h).toContain("entrenen o no, el <strong>2&nbsp;%</strong> está en este rango");
-    expect(h).toContain("más fuerte que el <strong>89&nbsp;%</strong> de ellas");
-    expect(h).toContain("Contra la gente que entrena, eres más fuerte que el 61&nbsp;%");
-    expect(h).toContain('data-comparar="todos" aria-pressed="true"');
+    expect(h).toContain("que entrenan en el mundo, el <strong>8&nbsp;%</strong> está en este rango");
+    expect(h).toContain("más fuerte que el <strong>61&nbsp;%</strong> de ellas");
+    expect(h).toContain("Contra toda la población (también quien no entrena), eres más fuerte que el 89&nbsp;%");
+    expect(h).toContain('data-comparar="entrenan" aria-pressed="true"');
   });
 
   it("la gráfica trae los 8 rangos y marca el suyo", () => {
