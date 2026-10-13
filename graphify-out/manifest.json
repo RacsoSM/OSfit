@@ -1758,9 +1758,9 @@
     "semantic_hash": ""
   },
   "web/src/main.ts": {
-    "mtime": 1791715393.3956008,
-    "seen": 1791745072.7858815,
-    "ast_hash": "db2175142b897aad62cf14babbb1ec40",
+    "mtime": 1791746332.7111378,
+    "seen": 1791904473.0991375,
+    "ast_hash": "55e6aa97d0d1eee1785c7928e206a6e1",
     "semantic_hash": ""
   },
   "web/src/motivos.test.ts": {
@@ -2142,9 +2142,9 @@
     "semantic_hash": ""
   },
   "web/src/ventanas.ts": {
-    "mtime": 1791715388.2762537,
-    "seen": 1791745072.7859879,
-    "ast_hash": "6be2a21eff93df4b63e9aac7778ef0ac",
+    "mtime": 1791746332.7104297,
+    "seen": 1791904473.0992482,
+    "ast_hash": "4ed87c274de22586519d3a9c5d54266c",
     "semantic_hash": ""
   },
   "web/src/vite-env.d.ts": {
@@ -2658,15 +2658,15 @@
     "semantic_hash": "70f8d87d3b58dcf243a7810029033429"
   },
   "web/src/ui/mapaMuscular.test.ts": {
-    "mtime": 1791716154.4201543,
-    "seen": 1791745072.785923,
-    "ast_hash": "c93199d3aad57744f998bb564562622a",
+    "mtime": 1791747015.263117,
+    "seen": 1791904473.0991933,
+    "ast_hash": "647ce7d1d0d973727149d8b3070877b9",
     "semantic_hash": ""
   },
   "web/src/ui/mapaMuscular.ts": {
-    "mtime": 1791717077.9537215,
-    "seen": 1791745072.7859244,
-    "ast_hash": "ba60533aa1787c566c05e49935c72ca8",
+    "mtime": 1791747015.2627017,
+    "seen": 1791904473.0991945,
+    "ast_hash": "34c1605092855dd0b6e48edbd24f8093",
     "semantic_hash": ""
   },
   "app/src/main/java/com/osfit/app/data/model/AvisoAutomatico.kt": {
@@ -2694,15 +2694,15 @@
     "semantic_hash": "b726678bd2c7d6847d89991732dcfd22"
   },
   "web/src/fuerza.test.ts": {
-    "mtime": 1791716154.4208074,
-    "seen": 1791745072.785877,
-    "ast_hash": "669ec6eb60976062638dce70fd950773",
+    "mtime": 1791746433.7669263,
+    "seen": 1791904473.0991323,
+    "ast_hash": "5bee31c05c36fd21d189e80320fdc3db",
     "semantic_hash": ""
   },
   "web/src/fuerza.ts": {
-    "mtime": 1791716112.6498845,
-    "seen": 1791745072.785878,
-    "ast_hash": "a80d55dd82f6a4a48a8969e9f7b2c968",
+    "mtime": 1791746271.076911,
+    "seen": 1791904473.0991337,
+    "ast_hash": "aba69ca81bfc531314599a995bcabb1d",
     "semantic_hash": ""
   },
   "docs/superpowers/specs/2026-10-10-avisos-automaticos-design.md": {
@@ -2994,15 +2994,15 @@
     "semantic_hash": ""
   },
   "docs/estandares-fuerza/estandares.json": {
-    "mtime": 1791715469.2958724,
-    "seen": 1791745072.7857695,
-    "ast_hash": "f31d7d0264a98700201734fc1442917d",
+    "mtime": 1791747560.0439446,
+    "seen": 1791904473.09899,
+    "ast_hash": "e76bdd80b69152185b2115f6da2861bd",
     "semantic_hash": ""
   },
   "docs/estandares-fuerza/proponer.py": {
-    "mtime": 1791715469.2484314,
-    "seen": 1791745072.7857726,
-    "ast_hash": "1b1ddcffdda58a16f69da3e81253446e",
+    "mtime": 1791747760.1967962,
+    "seen": 1791904473.0989962,
+    "ast_hash": "f118ba09001e030ab5af085e8abb2d41",
     "semantic_hash": ""
   },
   "functions/scripts/cargarEstandares.mjs": {
@@ -3048,9 +3048,27 @@
     "semantic_hash": ""
   },
   "docs/estandares-fuerza/propuesta.md": {
-    "mtime": 1791715469.2970622,
-    "seen": 1791745072.7859974,
-    "ast_hash": "e6ea90cf4a694cda6cdf04c7272533f9",
+    "mtime": 1791747560.0444794,
+    "seen": 1791904473.0992587,
+    "ast_hash": "2216ea3f33ff51405e85688bb31213ff",
+    "semantic_hash": ""
+  },
+  "docs/estandares-fuerza/percentiles.json": {
+    "mtime": 1791747560.0428007,
+    "seen": 1791904473.0989945,
+    "ast_hash": "b75032813024cf1df1cd0c9bf409176f",
+    "semantic_hash": ""
+  },
+  "web/src/ui/insigniaRango.test.ts": {
+    "mtime": 1791746416.880947,
+    "seen": 1791904473.099191,
+    "ast_hash": "965dc0ec106f0ae0f983ab40614f8407",
+    "semantic_hash": ""
+  },
+  "web/src/ui/insigniaRango.ts": {
+    "mtime": 1791746233.390212,
+    "seen": 1791904473.0991924,
+    "ast_hash": "5d285bff853843156a8fa4b1442a7892",
     "semantic_hash": ""
   }
 }
