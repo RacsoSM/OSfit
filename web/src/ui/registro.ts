@@ -7,10 +7,12 @@ import {
   cambiarSerie,
   idNuevo,
   leerBorrador,
+  nombresDeSesion,
   nuevoBorrador,
   paraEnviar,
   quitarEjercicio,
   quitarSerie,
+  resumenSemana,
   resumenSeries,
   ultimasSeries,
   type Borrador,
@@ -29,7 +31,8 @@ import { conectarDeslizar } from "./deslizarRegistro";
  * historial con su fecha, la hora en que empezó y en que terminó.
  *
  * Vistas dentro de la misma ventana:
- *  - **inicio**: el botón "Iniciar entrenamiento" y la entrada al historial.
+ *  - **inicio**: su semana (días que vino, entrenamientos, tiempo y series), el botón
+ *    "Iniciar entrenamiento" con el día que le toca, y sus entrenamientos recientes.
  *  - **capturar**: el entrenamiento en curso. Un ejercicio a la vez en grande (GIF, series de
  *    peso y reps, "+ Serie", Anterior/Siguiente); los anteriores comprimidos arriba y los
  *    siguientes abajo, y al tocar uno su GIF vuela y crece hasta el lugar del activo.
@@ -59,6 +62,8 @@ export interface DatosRegistro {
   sesiones: Sesion[] | null;
   /** Los ejercicios que el entrenador puso en cada grupo; null si no ha configurado ninguno. */
   config: ConfigGrupos | null;
+  /** Cuántos días tiene su rutina, para el "2 / 5" de la semana; sin rutina, no se muestra. */
+  diasRutina?: number;
 }
 
 type Vista = "inicio" | "historial" | "elegir" | "capturar";
@@ -178,30 +183,86 @@ function tarjetaSesion(s: Sesion, banco: readonly EjercicioBanco[]): string {
     </div>`;
 }
 
+/** "1 h 41", "52 min". */
+function duracion(minutos: number): string {
+  if (minutos < 60) return `${minutos} min`;
+  const resto = minutos % 60;
+  return `${Math.floor(minutos / 60)} h${resto ? ` ${String(resto).padStart(2, "0")}` : ""}`;
+}
+
+const DIA_CORTO = ["DOM", "LUN", "MAR", "MIÉ", "JUE", "VIE", "SÁB"];
+
+/** Una fila de "Recientes": toda la fila lleva al historial, que es donde se ven las series. */
+function filaReciente(s: Sesion): string {
+  const fecha = new Date(`${s.fecha}T12:00:00Z`);
+  const series = s.ejercicios.reduce((n, e) => n + e.series.length, 0);
+  const cuando = horario(s);
+  const detalle = [cuando, series === 1 ? "1 serie" : `${series} series`].filter(Boolean).join(" · ");
+  return `
+    <button class="tarjeta registro-reciente" data-accion="historial">
+      <span class="registro-reciente-fecha" aria-hidden="true">
+        <span>${DIA_CORTO[fecha.getUTCDay()]}</span>
+        <strong>${fecha.getUTCDate()}</strong>
+      </span>
+      <span class="registro-reciente-texto">
+        <span class="registro-reciente-titulo">${escapar(nombresDeSesion(s))}</span>
+        <span class="registro-reciente-detalle"><span class="sr-solo">${escapar(enPalabras(s.fecha))} · </span>${escapar(detalle)}</span>
+      </span>
+      <span class="registro-reciente-flecha" aria-hidden="true">›</span>
+    </button>`;
+}
+
+/**
+ * Inicio de Registro: su semana (los días que vino, cuántos entrenamientos, tiempo y series),
+ * el botón para empezar y sus entrenamientos recientes. Todo sale de lo que ella anotó; de la
+ * rutina solo se toma el nombre del día que le toca, para el botón.
+ */
 function vistaInicio(d: DatosRegistro): string {
   const aviso = estado.guardado ? `<p class="aviso-ok">¡Entrenamiento guardado! 💪</p>` : "";
-  const ultima = d.sesiones?.[0];
-  const total = d.sesiones?.length ?? 0;
-  const historial = d.sesiones === null
+  const sesiones = d.sesiones ?? [];
+  const semana = resumenSemana(sesiones, d.hoy);
+
+  const dias = semana.dias.map((x) => {
+    const clase = x.entreno ? " hecho" : x.esHoy ? " es-hoy" : "";
+    const estadoDia = x.entreno ? "entrenaste" : x.esHoy ? "hoy" : "sin entrenamiento";
+    return `
+      <li class="registro-semana-dia">
+        <span class="registro-semana-letra" aria-hidden="true">${x.letra}</span>
+        <span class="registro-semana-num${clase}" aria-label="${escapar(`${enPalabras(x.fecha)}, ${estadoDia}`)}">${x.numero}</span>
+      </li>`;
+  }).join("");
+
+  const meta = d.diasRutina && d.diasRutina > 0 ? `<span class="registro-dato-de"> / ${d.diasRutina}</span>` : "";
+  const datos = `
+    <div class="registro-datos">
+      <div class="registro-dato"><strong>${semana.entrenamientos}${meta}</strong><span>${semana.entrenamientos === 1 && !meta ? "entrenamiento" : "entrenamientos"}</span></div>
+      <div class="registro-dato"><strong>${semana.minutos === null ? "—" : duracion(semana.minutos)}</strong><span>entrenando</span></div>
+      <div class="registro-dato"><strong>${semana.series}</strong><span>series</span></div>
+    </div>`;
+
+  const nombreDia = d.dia?.nombreDia.trim();
+  const boton = `<button class="boton registro-boton-iniciar" data-accion="iniciar">▶ Iniciar entrenamiento${nombreDia ? ` · ${escapar(nombreDia)}` : ""}</button>`;
+
+  const recientes = d.sesiones === null
     ? `<p class="accion-nota" style="text-align:center">Cargando tu historial…</p>`
-    : total === 0
+    : sesiones.length === 0
       ? `<p class="accion-nota" style="text-align:center">Aquí se van a ir guardando tus entrenamientos.</p>`
-      : `<button class="tarjeta registro-ir-historial" data-accion="historial">
-           <span>
-             <span class="tarjeta-titulo">Tu historial</span>
-             <span class="registro-ir-detalle">Último: ${escapar(enPalabras(ultima!.fecha))} · ${total === 1 ? "1 entrenamiento" : `${total} entrenamientos`}</span>
-           </span>
-           <span aria-hidden="true">›</span>
-         </button>`;
+      : `
+        <div class="registro-recientes-cabecera">
+          <p class="registro-recientes-titulo">Recientes</p>
+          <button class="boton-texto" data-accion="historial">Ver todo · ${sesiones.length === 1 ? "1 entrenamiento" : `${sesiones.length} entrenamientos`}</button>
+        </div>
+        ${sesiones.slice(0, 3).map(filaReciente).join("")}`;
+
   return `
     ${aviso}
-    <div class="tarjeta registro-iniciar">
-      <div class="vacio-emoji">🏋️</div>
-      <p class="confirmar-titulo">¿Lista para entrenar?</p>
-      <p class="accion-nota">Inicia tu entrenamiento y ve anotando cada ejercicio que hagas.</p>
-      <button class="boton" data-accion="iniciar" style="margin-top:14px">▶ Iniciar entrenamiento</button>
+    <p class="confirmar-titulo registro-semana-titulo">Tu semana</p>
+    <div class="tarjeta registro-semana">
+      <ol class="registro-semana-dias">${dias}</ol>
+      ${datos}
     </div>
-    ${historial}`;
+    ${boton}
+    ${recientes}`;
 }
 
 function vistaHistorial(d: DatosRegistro): string {

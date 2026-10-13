@@ -1,4 +1,5 @@
 import type { EjercicioBanco, SerieSesion, Sesion } from "./datos";
+import { lunesDe } from "./dia";
 
 /**
  * El borrador de Registro: lo que la clienta va anotando en el gym, ejercicio por ejercicio,
@@ -191,4 +192,67 @@ export function leerBorrador(texto: string | null): Borrador | null {
   } catch {
     return null;
   }
+}
+
+export interface DiaDeLaSemana {
+  fecha: string;
+  /** "L", "M", "M", "J", "V", "S", "D". */
+  letra: string;
+  /** Número del día del mes. */
+  numero: number;
+  entreno: boolean;
+  esHoy: boolean;
+}
+
+export interface ResumenSemana {
+  dias: DiaDeLaSemana[];
+  entrenamientos: number;
+  /** null si ninguna sesión de la semana sabe cuándo empezó: no se inventa una duración. */
+  minutos: number | null;
+  series: number;
+}
+
+const LETRAS = ["L", "M", "M", "J", "V", "S", "D"];
+
+/**
+ * Lo que lleva entrenado en la semana de [hoy], de lunes a domingo, contado solo con lo que ELLA
+ * anotó. De la rutina no sale nada: Registro no sigue la rutina (ver arriba).
+ *
+ * Las fechas se arman a mediodía UTC, como `lunesDe`, para que la zona del navegador no mueva
+ * un día a la semana de al lado.
+ */
+export function resumenSemana(sesiones: readonly Sesion[], hoy: string): ResumenSemana {
+  const lunes = new Date(`${lunesDe(hoy)}T12:00:00Z`);
+  const fechas = LETRAS.map((_, i) => {
+    const d = new Date(lunes);
+    d.setUTCDate(d.getUTCDate() + i);
+    return d.toISOString().slice(0, 10);
+  });
+  const deLaSemana = sesiones.filter((s) => s.fecha >= fechas[0] && s.fecha <= fechas[6]);
+  const conHora = deLaSemana.filter((s) => s.iniciada && s.creada);
+  const minutos = conHora.length === 0 ? null : conHora.reduce(
+    (total, s) => total + Math.max(0, Math.round((s.creada!.toDate().getTime() - s.iniciada!.toDate().getTime()) / 60_000)),
+    0
+  );
+  return {
+    dias: fechas.map((fecha, i) => ({
+      fecha,
+      letra: LETRAS[i],
+      numero: Number(fecha.slice(8, 10)),
+      entreno: deLaSemana.some((s) => s.fecha === fecha),
+      esHoy: fecha === hoy,
+    })),
+    entrenamientos: deLaSemana.length,
+    minutos,
+    series: deLaSemana.reduce((total, s) => total + s.ejercicios.reduce((n, e) => n + e.series.length, 0), 0),
+  };
+}
+
+/** "Sentadilla", "Sentadilla y Prensa", "Sentadilla, Prensa y 3 más". */
+export function nombresDeSesion(s: Sesion): string {
+  const nombres = s.ejercicios.map((e) => e.nombre);
+  if (nombres.length === 0) return "Sin ejercicios";
+  if (nombres.length === 1) return nombres[0];
+  if (nombres.length === 2) return `${nombres[0]} y ${nombres[1]}`;
+  return `${nombres[0]}, ${nombres[1]} y ${nombres.length - 2} más`;
 }

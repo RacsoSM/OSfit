@@ -5,10 +5,12 @@ import {
   agregarSerie,
   cambiarSerie,
   leerBorrador,
+  nombresDeSesion,
   nuevoBorrador,
   paraEnviar,
   quitarEjercicio,
   quitarSerie,
+  resumenSemana,
   resumenSeries,
   ultimasSeries,
 } from "./registro";
@@ -161,5 +163,58 @@ describe("resumenSeries", () => {
     b = cambiarSerie(cambiarSerie(b, 0, 0, "reps", "6"), 1, 0, "reps", "45");
     expect(resumenSeries(b.ejercicios[0])).toBe("1 serie · × 6");
     expect(resumenSeries(b.ejercicios[1])).toBe("1 serie · 45 s");
+  });
+});
+
+describe("resumenSemana", () => {
+  const ts = (iso: string) => ({ toDate: () => new Date(iso) }) as unknown as Sesion["creada"];
+  const sesion = (fecha: string, series: number, minutos?: number): Sesion => ({
+    id: fecha, fecha, origen: "manual",
+    ...(minutos === undefined ? {} : {
+      iniciada: ts(`${fecha}T13:00:00Z`),
+      creada: ts(new Date(Date.parse(`${fecha}T13:00:00Z`) + minutos * 60_000).toISOString()),
+    }),
+    ejercicios: [{ ejercicioId: "x", nombre: "X", series: Array.from({ length: series }, () => ({ reps: 10, peso: 20 })) }],
+  });
+
+  it("cuenta solo la semana de hoy, de lunes a domingo", () => {
+    const r = resumenSemana([
+      sesion("2026-10-18", 2, 30), // domingo: esta semana
+      sesion("2026-10-12", 4, 52), // lunes: esta semana
+      sesion("2026-10-11", 9, 60), // domingo anterior: fuera
+    ], "2026-10-14");
+    expect(r.dias.map((d) => d.fecha)).toEqual([
+      "2026-10-12", "2026-10-13", "2026-10-14", "2026-10-15", "2026-10-16", "2026-10-17", "2026-10-18",
+    ]);
+    expect(r.dias.map((d) => d.letra).join("")).toBe("LMMJVSD");
+    expect(r.dias.filter((d) => d.entreno).map((d) => d.numero)).toEqual([12, 18]);
+    expect(r.dias.find((d) => d.esHoy)?.fecha).toBe("2026-10-14");
+    expect(r.entrenamientos).toBe(2);
+    expect(r.series).toBe(6);
+    expect(r.minutos).toBe(82);
+  });
+
+  it("en domingo, la semana sigue siendo la que abrió el lunes anterior", () => {
+    expect(resumenSemana([], "2026-10-18").dias[0].fecha).toBe("2026-10-12");
+  });
+
+  it("sin horas no inventa una duración", () => {
+    const r = resumenSemana([sesion("2026-10-13", 3)], "2026-10-13");
+    expect(r.minutos).toBeNull();
+    expect(r.entrenamientos).toBe(1);
+  });
+});
+
+describe("nombresDeSesion", () => {
+  const con = (...nombres: string[]): Sesion => ({
+    id: "s", fecha: "2026-10-13", origen: "manual",
+    ejercicios: nombres.map((nombre) => ({ ejercicioId: nombre, nombre, series: [] })),
+  });
+
+  it("resume los nombres sin hacer filas largas", () => {
+    expect(nombresDeSesion(con())).toBe("Sin ejercicios");
+    expect(nombresDeSesion(con("Sentadilla"))).toBe("Sentadilla");
+    expect(nombresDeSesion(con("Sentadilla", "Prensa"))).toBe("Sentadilla y Prensa");
+    expect(nombresDeSesion(con("Sentadilla", "Prensa", "Curl", "Hip thrust"))).toBe("Sentadilla, Prensa y 2 más");
   });
 });
