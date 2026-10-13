@@ -4,9 +4,11 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -19,6 +21,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -103,7 +106,9 @@ fun RutinaWebClienteScreen(clienteId: String) {
                                 ?.let { viewModel.convertirEnRutinaPropia(it) }
                         },
                         pesosPropios = clienteActual.pesoPorEjercicio,
-                        onGuardarPesos = viewModel::guardarPesosPropios
+                        onGuardarPesos = viewModel::guardarPesosPropios,
+                        reinicioSemanal = clienteActual.rutinaAsignada?.reinicioSemanal ?: false,
+                        onCambiarReinicioSemanal = viewModel::cambiarReinicioSemanalPropio
                     )
                 }
             }
@@ -162,7 +167,9 @@ private fun SeccionRutinaWeb(
     onGuardarDia: (Int, DiaRutina) -> Unit,
     onConvertirEnPropia: () -> Unit,
     pesosPropios: Map<String, String>,
-    onGuardarPesos: (Map<String, String>) -> Unit
+    onGuardarPesos: (Map<String, String>) -> Unit,
+    reinicioSemanal: Boolean,
+    onCambiarReinicioSemanal: (Boolean) -> Unit
 ) {
     // Qué se está editando: el día, y dentro de él la variación (null = la lista base, que es
     // la que manda cuando el día no tiene variaciones).
@@ -176,11 +183,31 @@ private fun SeccionRutinaWeb(
 
     Text("Rutina", style = MaterialTheme.typography.titleSmall)
     when (origen) {
-        OrigenRutina.Propia -> Text(
-            "Rutina propia",
-            style = MaterialTheme.typography.bodySmall,
-            modifier = Modifier.padding(top = 4.dp)
-        )
+        OrigenRutina.Propia -> {
+            Text(
+                "Rutina propia",
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(top = 4.dp)
+            )
+            // El mismo switch que el editor de plantillas: la propagación de plantillas no
+            // llega a la rutina propia, así que sin esto no habría dónde activárselo.
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text("Reiniciar el ciclo cada lunes", style = MaterialTheme.typography.bodyMedium)
+                    Text(
+                        "El último día solo se hace si viene la semana completa. " +
+                            "Úsalo cuando el primer día y el último trabajan lo mismo.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Spacer(modifier = Modifier.width(12.dp))
+                Switch(checked = reinicioSemanal, onCheckedChange = onCambiarReinicioSemanal)
+            }
+        }
         is OrigenRutina.SiguePlantilla -> {
             Text(
                 "Sigue la plantilla «${origen.nombre}»",
