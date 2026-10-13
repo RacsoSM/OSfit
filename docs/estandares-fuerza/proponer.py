@@ -184,9 +184,10 @@ ANCLAS = [0, 2, 4, 6, 7]
 # que no entrena). Toda la población: 1 de cada 4 entrena fuerza.
 PCT_TABLAS = [0.05, 0.20, 0.50, 0.80, 0.95]
 ENTRENAN_DE_LA_POBLACION = 0.25
-# Élite: el 5 % más fuerte de quienes entrenan, según el modelo de cada ejercicio. Así no se
-# queda con lo que bajó Avanzado (con él, Élite era ~13 % de quienes entrenan).
-PCT_ELITE = 0.95
+# Élite: el 10 % más fuerte de quienes entrenan, según el modelo de cada ejercicio (el
+# entrenador eligió 10 % sobre 5 % y 8 %: exclusivo pero alcanzable). Con lo que bajó Avanzado,
+# antes Élite era ~13 % de quienes entrenan.
+PCT_ELITE = 0.90
 
 
 # La parte de arriba, más baja que en las tablas (decisión del entrenador, 2026-10-11): las
@@ -357,7 +358,7 @@ def main() -> None:
         "**8 niveles**, con los nombres que eligió el entrenador. Salen de los 5 de las tablas "
         "públicas (en los niveles 1, 3, 5, 7 y 8) más el punto medio entre dos de ellos en los "
         "niveles 2, 4 y 6, donde más se tarda en subir. **Fuerte y Avanzado van más bajos** "
-        "que en las tablas, para que la parte de arriba sea alcanzable; **Élite** es el 5 % "
+        "que en las tablas, para que la parte de arriba sea alcanzable; **Élite** es el 10 % "
         "más fuerte de quienes entrenan. A las mujeres se les dice *Atlética*.",
         "",
         "Cada corte se compara contra **toda la población** (incluye a la gente que no entrena) "

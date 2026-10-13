@@ -5,6 +5,7 @@ import {
 } from "./fuerza";
 import type { EjercicioBanco, Sesion } from "./datos";
 import type { FuerzaMusculo } from "./fuerza";
+import modelo from "../../docs/estandares-fuerza/percentiles.json";
 import frenteH from "../public/mapa-muscular-frente.svg?raw";
 import espaldaH from "../public/mapa-muscular-espalda.svg?raw";
 import frenteM from "../public/mapa-muscular-frente-mujer.svg?raw";
@@ -45,20 +46,23 @@ describe("nombreRango", () => {
 
 describe("percentilDe (contra toda la población)", () => {
   it("en cada estándar da su porcentaje", () => {
-    expect([0, 1, 2, 3, 4, 5, 6, 7, 8].map(percentilDe)).toEqual([1, 50, 65, 78, 83, 88, 92, 95, 99]);
+    expect([0, 1, 2, 3, 4, 5, 6, 7, 8].map(percentilDe)).toEqual([1, 38, 60, 72, 82, 88, 90, 93, 97]);
   });
 
-  it("el estándar de Principiante es el promedio: la mitad de la población", () => {
-    expect(percentilDe(1)).toBe(50);
+  it("los porcentajes son los del modelo de docs/estandares-fuerza (percentiles.json)", () => {
+    const [, ...poblacion] = [0, 1, 2, 3, 4, 5, 6, 7, 8].map(percentilDe);
+    const [, ...entrenan] = [0, 1, 2, 3, 4, 5, 6, 7, 8].map(percentilEntrenanDe);
+    expect(poblacion).toEqual(modelo.poblacion);
+    expect(entrenan).toEqual(modelo.entrenan);
   });
 
   it("entre estándares interpola", () => {
-    expect(percentilDe(5.5)).toBe(90);
+    expect(percentilDe(5.5)).toBe(89);
   });
 
   it("nunca 0 % ni 100 %", () => {
     expect(percentilDe(-1)).toBe(1);
-    expect(percentilDe(99)).toBe(99);
+    expect(percentilDe(99)).toBe(97);
   });
 
   it("sube siempre con el nivel", () => {
@@ -68,7 +72,7 @@ describe("percentilDe (contra toda la población)", () => {
 
 describe("percentilEntrenanDe (contra quienes entrenan)", () => {
   it("en cada estándar da su porcentaje", () => {
-    expect([0, 1, 2, 3, 4, 5, 6, 7, 8].map(percentilEntrenanDe)).toEqual([1, 5, 12, 20, 35, 50, 65, 80, 95]);
+    expect([0, 1, 2, 3, 4, 5, 6, 7, 8].map(percentilEntrenanDe)).toEqual([1, 3, 12, 25, 42, 57, 65, 72, 90]);
   });
 
   it("siempre por debajo del de toda la población", () => {
@@ -189,11 +193,11 @@ describe("nombreMusculo", () => {
 
 describe("repartoRangos", () => {
   it("contra toda la población, casi todos en Principiante", () => {
-    expect(repartoRangos("todos")).toEqual([65, 13, 5, 5, 4, 3, 4, 1]);
+    expect(repartoRangos("todos")).toEqual([60, 12, 10, 6, 2, 3, 4, 3]);
   });
 
-  it("contra quienes entrenan, más parejo", () => {
-    expect(repartoRangos("entrenan")).toEqual([12, 8, 15, 15, 15, 15, 15, 5]);
+  it("contra quienes entrenan, con la forma de la curva del modelo", () => {
+    expect(repartoRangos("entrenan")).toEqual([12, 13, 17, 15, 8, 7, 18, 10]);
   });
 
   it("los dos suman 100", () => {

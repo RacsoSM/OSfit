@@ -10,17 +10,13 @@ import type { EjercicioBanco, Sesion, Sexo } from "./datos";
  * `fuerzaPorMusculo`, con lo que registra en Registro.
  * Ver `docs/superpowers/specs/2026-10-10-mapa-fuerza-entrenamiento-design.md`.
  *
- * **Porcentajes contra toda la población (estimación).** Las tablas públicas de estándares
- * comparan contra gente que entrena (Principiante supera al ~5 % de ellos, Novato ~20 %,
- * Intermedio ~50 %, Avanzado ~80 %, Élite ~95 %). Para llevarlo a toda la población:
- * - el estándar de Principiante es, en esas tablas, lo que levanta un adulto que no entrena:
- *   se toma como la mediana, el 50 %;
- * - solo ~1 de cada 4 adultos entrena fuerza, así que los que superan un estándar más alto
- *   son casi todos de ese cuarto: Novato ≈ 78 %, Intermedio ≈ 88 %, Avanzado ≈ 95 %,
- *   Élite ≈ 99 %.
- * Por debajo del estándar de Principiante baja en línea recta hasta el 1 % en el nivel 0.
- * Esos cinco nombres son los de las tablas y caen en los niveles 1, 3, 5, 7 y 8 de la app;
- * los niveles 2, 4 y 6 son puntos medios (ver `docs/estandares-fuerza/proponer.py`).
+ * **Porcentajes (estimación, 2026-10-11).** Salen del modelo de
+ * `docs/estandares-fuerza/proponer.py` (`percentiles.json`): entre quienes entrenan, la fuerza
+ * se reparte como una curva log-normal ajustada a las tablas públicas; quien no entrena
+ * levanta en promedio lo de Principiante; y 1 de cada 4 adultos entrena fuerza. Es el
+ * promedio de todos los ejercicios y los dos sexos. Antes cada tramo se partía a la mitad y la
+ * gráfica salía pareja, y al bajar la parte de arriba los porcentajes quedaban inflados.
+ * Élite es el 10 % más fuerte de quienes entrenan (decisión del entrenador).
  */
 
 export interface Rango { nombre: string; desde: number; }
@@ -46,13 +42,13 @@ export const NIVEL_MAX = 8;
 
 /**
  * Nivel → porcentaje que queda por debajo: de toda la población y de la gente que entrena.
- * Los mismos de `docs/estandares-fuerza/proponer.py` (`SUPERA_POBLACION`, `SUPERA_ENTRENAN`).
+ * GEMELO: `docs/estandares-fuerza/percentiles.json`, que genera `proponer.py`; si se regeneran, copiarlos aquí.
  */
 const PERCENTILES_POBLACION: readonly (readonly [number, number])[] = [
-  [0, 1], [1, 50], [2, 65], [3, 78], [4, 83], [5, 88], [6, 92], [7, 95], [8, 99],
+  [0, 1], [1, 38], [2, 60], [3, 72], [4, 82], [5, 88], [6, 90], [7, 93], [8, 97],
 ];
 const PERCENTILES_ENTRENAN: readonly (readonly [number, number])[] = [
-  [0, 1], [1, 5], [2, 12], [3, 20], [4, 35], [5, 50], [6, 65], [7, 80], [8, 95],
+  [0, 1], [1, 3], [2, 12], [3, 25], [4, 42], [5, 57], [6, 65], [7, 72], [8, 90],
 ];
 
 const acotar = (n: number) => Math.min(NIVEL_MAX, Math.max(0, n));
@@ -88,12 +84,12 @@ function interpolar(tabla: readonly (readonly [number, number])[], nivel: number
   return tabla[tabla.length - 1][1];
 }
 
-/** Entero de 1 a 99 contra toda la población: nunca "más fuerte que el 0 %" ni "que el 100 %". */
+/** Entero de 1 a 97 contra toda la población: nunca "más fuerte que el 0 %" ni "que el 100 %". */
 export function percentilDe(nivel: number): number {
   return interpolar(PERCENTILES_POBLACION, nivel);
 }
 
-/** Entero de 1 a 95 contra la gente que entrena. */
+/** Entero de 1 a 90 contra la gente que entrena. */
 export function percentilEntrenanDe(nivel: number): number {
   return interpolar(PERCENTILES_ENTRENAN, nivel);
 }

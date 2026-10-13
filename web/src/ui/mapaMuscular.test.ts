@@ -174,9 +174,9 @@ describe("detalleMusculo", () => {
     expect(h).toContain("Cuádriceps");
     expect(h).toContain('class="hoja-rango">Atlética<');
     expect(h).toContain("insignia-rango");
-    expect(h).toContain("entrenen o no, el <strong>4&nbsp;%</strong> está en este rango");
-    expect(h).toContain("más fuerte que el <strong>90&nbsp;%</strong> de ellas");
-    expect(h).toContain("Contra la gente que entrena, eres más fuerte que el 58&nbsp;%");
+    expect(h).toContain("entrenen o no, el <strong>2&nbsp;%</strong> está en este rango");
+    expect(h).toContain("más fuerte que el <strong>89&nbsp;%</strong> de ellas");
+    expect(h).toContain("Contra la gente que entrena, eres más fuerte que el 61&nbsp;%");
     expect(h).toContain('data-comparar="todos" aria-pressed="true"');
   });
 
@@ -273,7 +273,7 @@ describe("ayudaMapa", () => {
   it("explica el gris y a quién supera cada rango", () => {
     const h = ayudaMapa("M");
     expect(h).toContain("sin datos");
-    expect(h).toContain("88 % · 50 %");
+    expect(h).toContain("88 % · 57 %");
     expect(h).toContain('id="cerrar-ayuda"');
   });
 });
