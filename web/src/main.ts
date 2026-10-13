@@ -318,7 +318,7 @@ async function arrancar(): Promise<void> {
     conectarSaludo();
     conectarCabecera(abrirMenu);
     conectarBarra(abrirVentana);
-    // Deslizar hacia la derecha abre el menú, solo en las pestañas de la barra.
+    // Jalar desde la orilla derecha abre el menú, solo en las pestañas de la barra.
     conectarDeslizarMenu(() => !menuAbierto() && BARRA.includes(ventanaActiva()), abrirMenu);
   }
 
