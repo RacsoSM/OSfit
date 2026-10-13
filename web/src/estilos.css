@@ -913,7 +913,7 @@ main:has(#barra) { padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
 /* Solo el ícono, chico, en la esquina de abajo a la derecha del dibujo: así el cuerpo
    ocupa casi toda la pantalla. El nombre lo dice `aria-label`. */
 .mapa-girar {
-  position: absolute; right: 0; bottom: 0; z-index: 1;
+  position: absolute; right: -8px; bottom: 0; z-index: 1;
 }
 .mapa-girar:focus-visible { outline: 2px solid var(--primario); outline-offset: 3px; }
 .mapa-cargando {
@@ -953,25 +953,21 @@ main:has(#barra) { padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
 .mapa-cuerpo .musculo[data-rango="7"], .rango-muestra[data-rango="7"] { fill: var(--rango-7); background: var(--rango-7); }
 
 /* Los dos botones del dibujo: la explicación arriba a la izquierda y girar abajo a la
-   derecha. Círculo de vidrio con borde fino y un ícono de línea (`mapa-icono`). */
+   derecha. Solo el ícono de línea (`mapa-icono`), sin círculo, como el ☰ (2026-10-13). */
 /* El "?" sube a la esquina de arriba a la izquierda, a la altura del ☰ de la cabecera
    (44 px, justo encima de `.mapa-cuerpo`), y con su mismo tamaño. */
-.mapa-ayuda { position: absolute; left: 2px; top: -44px; z-index: 1; }
+.mapa-ayuda { position: absolute; left: -8px; top: -44px; z-index: 1; }
 .mapa-ayuda, .mapa-girar {
   width: 50px; height: 50px; padding: 0;
   display: flex; align-items: center; justify-content: center;
-  border: 1px solid color-mix(in srgb, var(--texto) 18%, transparent);
-  border-radius: 50%;
-  background: color-mix(in srgb, var(--superficie) 72%, transparent);
-  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  border: 0; border-radius: 12px; background: transparent;
   color: var(--texto); cursor: pointer;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.28);
-  transition: transform 0.12s ease-out, background 0.15s ease;
+  transition: transform 0.12s ease-out;
   -webkit-tap-highlight-color: transparent;
 }
 .mapa-ayuda:active, .mapa-girar:active { transform: scale(0.94); }
 .mapa-ayuda { width: 44px; height: 44px; }
-.mapa-ayuda .mapa-icono { width: 22px; height: 22px; }
+.mapa-ayuda .mapa-icono { stroke-width: 2.2; }
 .mapa-icono {
   width: 26px; height: 26px;
   fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
