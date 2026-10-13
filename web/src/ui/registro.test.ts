@@ -37,14 +37,40 @@ describe("inicio", () => {
     expect(html).not.toContain("+ Agregar ejercicio");
   });
 
-  it("lleva al historial con la fecha del último entrenamiento", () => {
+  it("lleva al historial desde sus entrenamientos recientes", () => {
     const sesiones: Sesion[] = [
       { id: "s2", fecha: "2026-10-12", origen: "manual", ejercicios: [] },
       { id: "s1", fecha: "2026-10-09", origen: "manual", ejercicios: [] },
     ];
     const html = ventanaRegistro(datos({ sesiones }));
     expect(html).toContain('data-accion="historial"');
-    expect(html).toContain("Último: lunes, 12 de octubre · 2 entrenamientos");
+    expect(html).toContain("Ver todo · 2 entrenamientos");
+    expect(html.indexOf("LUN")).toBeLessThan(html.indexOf("VIE"));
+  });
+
+  it("muestra su semana con lo que anotó y el día que le toca en el botón", () => {
+    const sesiones: Sesion[] = [{
+      id: "s1", fecha: "2026-10-12", origen: "manual",
+      iniciada: ts("2026-10-12T13:05:00Z"), creada: ts("2026-10-12T13:57:00Z"),
+      ejercicios: [
+        { ejercicioId: "press-banca", nombre: "Press de banca", series: [{ reps: 10, peso: 40 }, { reps: 8, peso: 42.5 }] },
+        { ejercicioId: "plancha", nombre: "Plancha", series: [{ reps: 45, peso: null }] },
+      ],
+    }];
+    const html = ventanaRegistro(datos({ hoy: "2026-10-13", sesiones, diasRutina: 5 }));
+    expect(html).toContain("Tu semana");
+    expect(html).toContain("▶ Iniciar entrenamiento · Pecho");
+    expect(html).toMatch(/registro-semana-num hecho[^>]*>12</);
+    expect(html).toMatch(/registro-semana-num es-hoy[^>]*>13</);
+    expect(html).toMatch(/<strong>1<span class="registro-dato-de"> \/ 5<\/span><\/strong><span>entrenamientos</);
+    expect(html).toContain("<strong>52 min</strong>");
+    expect(html).toContain("<strong>3</strong><span>series");
+    expect(html).toContain("Press de banca y Plancha");
+  });
+
+  it("sin día que le toque, el botón no inventa uno", () => {
+    const html = ventanaRegistro(datos({ dia: null }));
+    expect(html).toContain("▶ Iniciar entrenamiento</button>");
   });
 
   it("con un entrenamiento abierto, Registro se abre en él", () => {

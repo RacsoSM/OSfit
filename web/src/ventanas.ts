@@ -73,6 +73,7 @@ export function datosRegistro(d: DatosCliente): DatosRegistro {
     indice: d.indiceBanco,
     sesiones: d.sesiones,
     config: d.configGrupos,
+    diasRutina: d.cliente.rutinaAsignada?.dias.length ?? 0,
   };
 }
 
