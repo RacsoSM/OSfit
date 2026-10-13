@@ -326,7 +326,8 @@ export function bloqueRangoGeneral(
         <div class="rango-general-texto">
           <p class="rango-general-sub">Tu rango general</p>
           <p class="rango-general-nombre">${nombreRango(g.nivel, sexo)}</p>
-          <p class="rango-general-detalle">Promedio de ${cuantos} · más fuerte que el ${pct(percentilEntrenanDe(g.nivel))} de quienes entrenan</p>
+          <p class="rango-general-detalle">Más fuerte que el ${pct(percentilEntrenanDe(g.nivel))} de quienes entrenan</p>
+          <p class="rango-general-base">Promedio de ${cuantos}</p>
         </div>
       </div>`;
 }
@@ -356,6 +357,8 @@ export function tarjetaMusculos(
   const detalle = detalleMusculo(seleccionado, seleccionado ? fuerza[seleccionado] : undefined, sexo, peso);
   return `
     <section class="mapa-cuerpo${seleccionado ? " con-detalle" : ""}${seleccionado && !fuerza[seleccionado] ? " sin-datos" : ""}${rangoGeneral(fuerza) ? " con-general" : ""}" aria-label="Tu mapa muscular">
+      <button type="button" class="mapa-ayuda" id="abrir-ayuda"
+              aria-label="¿Cómo funciona?" title="¿Cómo funciona?">${ICONO_AYUDA}</button>
       ${bloqueRangoGeneral(fuerza, sexo)}
       <div class="mapa-escena">
         <div class="mapa-marco">
@@ -364,8 +367,6 @@ export function tarjetaMusculos(
             ${cara("espalda", de(a.espalda), !deEspalda, fuerza)}
           </div>
         </div>
-        <button type="button" class="mapa-ayuda" id="abrir-ayuda"
-                aria-label="¿Cómo funciona?" title="¿Cómo funciona?">${ICONO_AYUDA}</button>
         <button type="button" class="mapa-girar" id="girar-mapa"
                 aria-label="${textoBoton(deEspalda)}" title="${textoBoton(deEspalda)}">${ICONO_GIRAR}</button>
       </div>
