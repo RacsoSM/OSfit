@@ -36,10 +36,11 @@ describe("bloquePeso", () => {
     expect(html).not.toContain("peso-cancelar");
   });
 
-  it("con peso no bloquea: deja una línea para actualizarlo", () => {
+  it("con peso no bloquea ni lo muestra: solo el botón para actualizarlo", () => {
     const html = bloquePeso(62.5);
     expect(html).not.toContain("peso-velo");
-    expect(html).toContain("62.5 kg");
+    expect(html).not.toContain("62.5");
+    expect(html).toContain("Actualizar peso corporal");
     expect(html).toContain('id="peso-actualizar"');
   });
 });
