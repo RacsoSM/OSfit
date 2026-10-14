@@ -518,3 +518,39 @@ Lo que haría falta:
 - Mostrar la versión en la app (Ajustes o el menú) para verificarla de un vistazo.
 - Opcional: guardar en Firestore qué versión usó cada teléfono al iniciar sesión, para saber
   si alguien sigue con una vieja. Hoy los teléfonos comparten la misma cuenta de entrenador.
+
+## 13. Camino tipo Duolingo con los siguientes objetivos de fuerza
+
+> "también agrega al backlog un camino tipo Duolingo con los siguientes objetivos, calculado con sus pesos máximos"
+
+Idea: en la web de la clienta, un camino vertical de "paradas" como el de Duolingo: las que
+ya cumplió, la actual resaltada y las siguientes bloqueadas. Cada parada es un objetivo
+concreto ("Press de banca: 42.5 kg × 8") que sale de **sus pesos máximos** registrados.
+
+Lo que ya existe y se puede reusar (`web/src/fuerza.ts`):
+
+- `unoRm` (Epley con tope de 12 reps) estima el máximo de cada serie que guarda en Registro.
+- `fuerzaPorMusculo` calcula el nivel de cada músculo con su mejor marca de las últimas 8
+  semanas contra los estándares del banco.
+- `siguienteRango` ya da **el siguiente objetivo** de un músculo: el peso que tendría que
+  mover a sus mismas reps (redondeado a 0.5 kg) o las reps, para subir de rango. El camino
+  sería encadenar varios de estos objetivos hacia adelante con `marcaPara`, no solo el próximo.
+
+A decidir en el spec:
+
+- **Qué es cada parada:** un objetivo por ejercicio, por músculo o por rango general. Y
+  cuántos pasos entre rango y rango: un rango entero puede ser un salto grande, así que
+  convendría partirlo en escalones (por ejemplo +2.5 kg o +1 rep).
+- **Qué ejercicios entran:** los de su rutina, los que más registra o los que elija el
+  entrenador.
+- **Cuándo se cumple una parada:** al registrar en Registro una serie que la alcance. ¿Celebración
+  (animación, medalla, aviso al entrenador)?
+- **Dónde vive:** pestaña o tarjeta nueva, o dentro de Músculos al tocar un músculo.
+- **Sin datos:** qué ve quien todavía no registra pesos (por ejemplo, una primera parada de
+  "registra tu primer entrenamiento").
+- Que se vea bien en todos los estilos de la web (neón, cómic, pixel, sakura, minimalista,
+  halloween).
+
+**Duda pendiente del entrenador:** "los siguientes objetivos" se entendió como los próximos
+objetivos que le tocan a cada clienta. Si se refería a una lista concreta de objetivos,
+falta anotarla aquí.
