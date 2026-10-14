@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import type { EjercicioBanco, Sesion } from "../datos";
 import { indiceBanco } from "../banco";
 import { agregarEjercicio, borradorDeSesion, nuevoBorrador } from "../registro";
-import { cabeceraRegistro, ponerEstadoRegistro, ventanaRegistro, type DatosRegistro } from "./registro";
+import { avisoReps, cabeceraRegistro, ponerEstadoRegistro, ventanaRegistro, type DatosRegistro } from "./registro";
 
 const press: EjercicioBanco = {
   id: "press-banca", nombre: "Press de banca", alias: ["press banca"], tipo: "peso", grupo: "pecho",
@@ -243,3 +243,14 @@ describe("editar y eliminar del historial", () => {
     expect(cabeceraRegistro()).toEqual({ titulo: "Editando entrenamiento", detalle: "sábado, 10 de octubre" });
   });
 });
+
+describe("avisoReps", () => {
+  it("dice cuántas reps escribió y trae los dos botones", () => {
+    const html = avisoReps(25);
+    expect(html).toContain("¿Estás seguro que hiciste 25 reps?");
+    expect(html).toContain("No es que desconfíe de ti o algo, pero son muchas.");
+    expect(html).toMatch(/data-reps="corregir">No, me equivoqué</);
+    expect(html).toMatch(/data-reps="seguir">Sí, continuar</);
+  });
+});
+

@@ -642,20 +642,27 @@ entrenador, tal cual:
      *Propuestos (2026-10-14) los de las dos máquinas:* press de pecho = banca × 0.90 y press
      militar = militar × 0.95 (en `proponer.py`). **Cargados a Firestore (2026-10-14).** Dominadas asistidas
      sigue sin estándar a propósito (más peso = más ayuda).
-   - **Avisar cuando un ejercicio no cuenta para el mapa**: en Registro o en Músculos, algo
-     como "este ejercicio todavía no suma a tu mapa", para que no parezca que se perdió.
    - **Que se note que hay color del otro lado**: si de frente no hay nada pintado pero de
      espalda sí, abrir directo de espalda o mostrar una pista ("tu tríceps está pintado, gira
      el cuerpo").
 
    Además, en los datos de ese día se vio:
-   - **Pesos que parecen libras** (22.7, 13.6, 31.8, 40.9 = 50, 30, 70, 90 lb) en máquinas y
+   - ❌ **NO SE HARÁ (decisión del entrenador, 2026-10-14).** ~~**Pesos que parecen libras** (22.7, 13.6, 31.8, 40.9 = 50, 30, 70, 90 lb) en máquinas y
      poleas. Revisar si las máquinas del gimnasio marcan en libras y si conviene un selector
-     kg/lb (relacionado con "Barras | Kg" en Registro).
+     kg/lb (relacionado con "Barras | Kg" en Registro).~~
+     Las máquinas del gimnasio traen los dos lados: libras a la izquierda (de 10 en 10) y kg a
+     la derecha (de 4.5 en 4.5). Todo se queda en kg, sin selector; el entrenador les avisa a
+     sus clientes que siempre anoten el lado de kg.
    - **Patada de glúteo con liga** es de tipo "corporal" (cuenta reps), pero le anotaron peso:
      ese peso se ignora. Si la hacen en máquina con peso, es el ejercicio nuevo de la tabla.
-   - **Reps que parecen error de dedo** (una serie de 86 reps). Avisar o pedir confirmación
-     arriba de, por ejemplo, 50 reps.
+   - ✅ **HECHO (2026-10-14).** ~~**Reps que parecen error de dedo** (una serie de 86 reps). Avisar o pedir confirmación
+     arriba de, por ejemplo, 50 reps.~~
+     El entrenador lo bajó a **más de 20**. Al soltar el campo de reps (en cuanto pierde el
+     foco) sale un aviso: "¿Estás seguro que hiciste 25 reps? No es que desconfíe de ti o algo,
+     pero son muchas." con **"No, me equivoqué"** (regresa al campo con el número seleccionado)
+     y **"Sí, continuar"** (no vuelve a preguntar por ese número en esa serie). No sale en los
+     ejercicios de tiempo, donde el campo son segundos. `repsDudosas` en `web/src/registro.ts`
+     y `avisoReps` en `web/src/ui/registro.ts`.
 
 ### Ejercicios que no encontraron en el banco
 

@@ -14,6 +14,7 @@ import {
   paraEnviar,
   quitarEjercicio,
   quitarSerie,
+  repsDudosas,
   resumenSemana,
   resumenSeries,
   ultimasSeries,
@@ -156,6 +157,25 @@ function gif(ruta: string | null | undefined, clase: string, lado: number): stri
 
 /** Los términos del dataset piden el crédito junto a las animaciones, donde se muestren. */
 const CREDITO = `<p class="registro-credito">Animaciones © Gym visual</p>`;
+
+/**
+ * El aviso cuando escribe muchas reps (backlog 2, punto 15.4), con las palabras del
+ * entrenador. Va en `body` y no dentro de `#registro`: no se repinta con la ventana.
+ */
+export function avisoReps(reps: number): string {
+  return `
+    <div class="reps-velo" id="reps-velo">
+      <div class="reps-aviso tarjeta" role="alertdialog" aria-modal="true" aria-labelledby="reps-titulo">
+        <p class="reps-titulo" id="reps-titulo">¿Estás seguro que hiciste ${reps} reps?</p>
+        <p class="reps-texto">No es que desconfíe de ti o algo, pero son muchas.</p>
+        <button type="button" class="boton secundario" data-reps="corregir">No, me equivoqué</button>
+        <button type="button" class="boton" data-reps="seguir">Sí, continuar</button>
+      </div>
+    </div>`;
+}
+
+/** Las reps que ya confirmó ("ej:serie:reps"), para no volver a preguntar por las mismas. */
+const repsConfirmadas = new Set<string>();
 
 // ── Inicio e historial ───────────────────────────────────────────────────────
 
@@ -567,6 +587,9 @@ export function conectarRegistro(
   };
 
   raiz.addEventListener("click", (ev) => {
+    // El aviso de reps sale al soltar el campo, que puede ser justo al tocar un botón
+    // ("Terminar entrenamiento"): ese toque no cuenta hasta que conteste.
+    if (document.querySelector("#reps-velo")) return;
     const el = (ev.target as HTMLElement).closest<HTMLElement>("button");
     if (!el || el.hasAttribute("disabled")) return;
     const b = estado.borrador;
@@ -740,6 +763,39 @@ export function conectarRegistro(
     };
     seleccionar();
     setTimeout(seleccionar, 0);
+  });
+
+  /**
+   * Más de 20 reps: al soltar el campo pregunta si de verdad fueron tantas. "No, me equivoqué"
+   * la regresa al campo con el número seleccionado para corregirlo; "Sí, continuar" lo deja.
+   */
+  raiz.addEventListener("focusout", (ev) => {
+    const input = ev.target as HTMLElement;
+    if (!(input instanceof HTMLInputElement) || input.dataset.campo !== "reps") return;
+    if (document.querySelector("#reps-velo")) return;
+    const { ej, serie } = input.dataset;
+    const tipo = estado.borrador?.ejercicios[Number(ej)]?.tipo;
+    if (tipo === undefined) return;
+    const reps = repsDudosas(input.value, tipo);
+    const clave = `${ej}:${serie}:${reps}`;
+    if (reps === null || repsConfirmadas.has(clave)) return;
+
+    document.body.insertAdjacentHTML("beforeend", avisoReps(reps));
+    const velo = document.querySelector<HTMLElement>("#reps-velo");
+    if (!velo) return;
+    velo.querySelector<HTMLElement>('[data-reps="seguir"]')?.focus();
+    velo.addEventListener("click", (e) => {
+      const boton = (e.target as HTMLElement).closest<HTMLElement>("[data-reps]");
+      if (!boton) return;
+      velo.remove();
+      if (boton.dataset.reps === "seguir") {
+        repsConfirmadas.add(clave);
+        return;
+      }
+      document
+        .querySelector<HTMLInputElement>(`#registro input[data-ej="${ej}"][data-serie="${serie}"][data-campo="reps"]`)
+        ?.focus();
+    });
   });
 
   if (estado.vista === "capturar" && estado.enfocar !== null) {

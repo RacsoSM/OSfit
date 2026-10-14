@@ -15,6 +15,7 @@ import {
   resumenSemana,
   resumenSeries,
   ultimasSeries,
+  repsDudosas,
 } from "./registro";
 import { barrasAKg } from "./barras";
 
@@ -313,3 +314,22 @@ describe("borradorDeSesion", () => {
     expect(leerBorrador(JSON.stringify(b))?.edicion).toBe(true);
   });
 });
+
+describe("repsDudosas", () => {
+  it("pregunta arriba de 20 reps", () => {
+    expect(repsDudosas("21", "peso")).toBe(21);
+    expect(repsDudosas(" 86 ", "corporal")).toBe(86);
+  });
+
+  it("20 o menos, vacío o algo que no es número no pregunta", () => {
+    expect(repsDudosas("20", "peso")).toBeNull();
+    expect(repsDudosas("8", "peso")).toBeNull();
+    expect(repsDudosas("", "peso")).toBeNull();
+    expect(repsDudosas("abc", "peso")).toBeNull();
+  });
+
+  it("en los de tiempo son segundos: no pregunta", () => {
+    expect(repsDudosas("60", "tiempo")).toBeNull();
+  });
+});
+

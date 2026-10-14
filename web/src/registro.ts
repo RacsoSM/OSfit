@@ -183,6 +183,19 @@ function numero(texto: string): number | null {
   return Number.isFinite(n) ? n : NaN;
 }
 
+/** Arriba de esto se pregunta si de verdad fueron tantas reps (backlog 2, punto 15.4). */
+export const REPS_DUDOSAS = 20;
+
+/**
+ * Las reps que conviene confirmar, o null. Solo en ejercicios de reps: en los de tiempo el
+ * campo son segundos, y 30 o 60 es lo normal.
+ */
+export function repsDudosas(texto: string, tipo: EjercicioBanco["tipo"]): number | null {
+  if (tipo === "tiempo") return null;
+  const n = numero(texto);
+  return n !== null && n > REPS_DUDOSAS ? n : null;
+}
+
 /**
  * Lo que se le manda a `registrarSesion`, o el error en palabras de la clienta. Las series en
  * blanco se saltan (prellenar con más filas de las que hizo no debe obligarla a borrarlas);
