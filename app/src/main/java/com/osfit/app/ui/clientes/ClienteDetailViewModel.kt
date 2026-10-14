@@ -333,13 +333,15 @@ class ClienteDetailViewModel(
         peso: Double?,
         altura: Double?,
         anioNacimiento: Int?,
+        porcentajeGrasa: Double?,
+        grasaFecha: String?,
         sexo: String?,
         segundosPorEjercicio: Int?,
         minutosDescanso: Double?
     ) {
         viewModelScope.launch {
             clienteRepository.actualizarDatosPersonales(
-                clienteId, nombre, telefono, peso, altura, anioNacimiento, sexo, segundosPorEjercicio,
+                clienteId, nombre, telefono, peso, altura, anioNacimiento, porcentajeGrasa, grasaFecha, sexo, segundosPorEjercicio,
                 minutosDescanso
             )
         }

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  NOMBRES_MUSCULO, edadEn, factorEdad, factorPeso, fuerzaPorMusculo, indiceRango, marcaPara, nivelDe, rangoGeneral, repartoRangos,
+  NOMBRES_MUSCULO, edadEn, factorEdad, factorPeso, fuerzaPorMusculo, pesoParaFuerza, indiceRango, marcaPara, nivelDe, rangoGeneral, repartoRangos,
   siguienteRango, nombreMusculo, nombreRango, percentilDe,
   percentilEntrenanDe, rangoDe, unoRm,
 } from "./fuerza";
@@ -293,6 +293,12 @@ describe("siguienteRango", () => {
     expect(s).toMatchObject({ tipo: "falta", objetivo: { reps: 8, peso: 34 } });
   });
 
+  it("el objetivo usa el mismo peso con que se midió (la masa magra, si hubo)", () => {
+    // Medido contra 60 kg en vez de 75: Novato pide 0.625 × 60 = 37.5 kg de 1RM → 29.6 a 8 reps → 30.
+    const s = siguienteRango(conOrigen(1.2, { pesoUsado: 60, serie: { reps: 8, peso: 25 } }), 75);
+    expect(s).toMatchObject({ tipo: "falta", objetivo: { reps: 8, peso: 30 } });
+  });
+
   it("en Élite ya no hay siguiente", () => {
     expect(siguienteRango(conOrigen(8), 75)).toEqual({ tipo: "maximo" });
   });
@@ -408,5 +414,32 @@ describe("factorPeso", () => {
     const f = fuerzaPorMusculo(s, [lagartijas], "H", 100, "2026-10-11").pecho;
     expect(f.nivel).toBe(3);
     expect(f.origen?.factorPeso).toBe(1);
+  });
+});
+
+describe("pesoParaFuerza", () => {
+  const HOY = "2026-10-14";
+
+  it("sin medición de grasa, su peso tal cual", () => {
+    expect(pesoParaFuerza(90, "H", null, null, HOY)).toBe(90);
+    expect(pesoParaFuerza(90, "H", 35, null, HOY)).toBe(90);
+  });
+
+  it("con el % típico (20 ellos, 28 ellas) tampoco cambia", () => {
+    expect(pesoParaFuerza(90, "H", 20, HOY, HOY)).toBeCloseTo(90, 5);
+    expect(pesoParaFuerza(65, "M", 28, HOY, HOY)).toBeCloseTo(65, 5);
+  });
+
+  it("con mucha grasa se le mide contra menos peso; muy marcado, contra un poco más", () => {
+    // 90 kg al 35 %: 58.5 kg magros, que al 20 % típico serían 73.1 kg.
+    expect(pesoParaFuerza(90, "H", 35, "2026-09-01", HOY)).toBeCloseTo(73.125, 3);
+    expect(pesoParaFuerza(90, "H", 12, "2026-09-01", HOY)).toBeCloseTo(99, 3);
+  });
+
+  it("una medición de más de 90 días, del futuro o fuera de rango no cuenta", () => {
+    expect(pesoParaFuerza(90, "H", 35, "2026-07-16", HOY)).toBeCloseTo(73.125, 3);
+    expect(pesoParaFuerza(90, "H", 35, "2026-07-15", HOY)).toBe(90);
+    expect(pesoParaFuerza(90, "H", 35, "2026-10-20", HOY)).toBe(90);
+    expect(pesoParaFuerza(90, "H", 80, HOY, HOY)).toBe(90);
   });
 });

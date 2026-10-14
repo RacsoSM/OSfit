@@ -47,6 +47,7 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.osfit.app.data.model.Sexo
 import com.osfit.app.util.CancionUtil
 import java.io.File
+import java.time.LocalDate
 import java.time.Year
 import kotlinx.coroutines.delay
 
@@ -71,6 +72,7 @@ fun ClienteEditarScreen(
     var peso by remember { mutableStateOf(clienteActual.peso?.toString() ?: "") }
     var altura by remember { mutableStateOf(clienteActual.altura?.toString() ?: "") }
     var anioNacimiento by remember { mutableStateOf(clienteActual.anioNacimiento?.toString() ?: "") }
+    var grasa by remember { mutableStateOf(clienteActual.porcentajeGrasa?.let(::formatoGrasa) ?: "") }
     var sexo by remember { mutableStateOf(clienteActual.sexo) }
     var segundosPorEjercicio by remember { mutableStateOf(clienteActual.segundosPorEjercicio?.toString() ?: "") }
     var minutosDescanso by remember { mutableStateOf(clienteActual.minutosDescanso?.toString() ?: "") }
@@ -122,6 +124,13 @@ fun ClienteEditarScreen(
                         peso = peso.toDoubleOrNull(),
                         altura = altura.toDoubleOrNull(),
                         anioNacimiento = anioNacimientoValido(anioNacimiento),
+                        porcentajeGrasa = grasaValida(grasa),
+                        // La fecha es la de la medición: solo se mueve si el porcentaje cambió.
+                        grasaFecha = when (val g = grasaValida(grasa)) {
+                            null -> null
+                            clienteActual.porcentajeGrasa -> clienteActual.grasaFecha ?: LocalDate.now().toString()
+                            else -> LocalDate.now().toString()
+                        },
                         sexo = sexo,
                         segundosPorEjercicio = segundosPorEjercicio.toIntOrNull(),
                         minutosDescanso = minutosDescanso.toDoubleOrNull()
@@ -133,7 +142,8 @@ fun ClienteEditarScreen(
                     )
                     onGuardado()
                 },
-                enabled = nombreValido && (anioNacimiento.isBlank() || anioNacimientoValido(anioNacimiento) != null),
+                enabled = nombreValido && (anioNacimiento.isBlank() || anioNacimientoValido(anioNacimiento) != null) &&
+                    (grasa.isBlank() || grasaValida(grasa) != null),
                 modifier = Modifier.fillMaxWidth().padding(16.dp)
             ) {
                 Text("Guardar")
@@ -194,6 +204,27 @@ fun ClienteEditarScreen(
                 },
                 isError = !anioValido,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                modifier = Modifier.fillMaxWidth()
+            )
+            val grasaOk = grasa.isBlank() || grasaValida(grasa) != null
+            OutlinedTextField(
+                value = grasa,
+                onValueChange = { grasa = it.filter { c -> c.isDigit() || c == '.' || c == ',' }.take(5) },
+                label = { Text("% de grasa") },
+                supportingText = {
+                    val fecha = clienteActual.grasaFecha
+                    Text(
+                        when {
+                            !grasaOk -> "Escribe un porcentaje entre $GRASA_MIN y $GRASA_MAX"
+                            grasaValida(grasa) != null && grasaValida(grasa) == clienteActual.porcentajeGrasa && fecha != null ->
+                                "Medido el ${fechaCorta(fecha)}" + if (grasaVencida(fecha)) " · ya no cuenta, mide otra vez" else ""
+                            grasaValida(grasa) != null -> "Se guarda con la fecha de hoy"
+                            else -> "Opcional. Cuenta 90 días desde que se mide"
+                        }
+                    )
+                },
+                isError = !grasaOk,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 modifier = Modifier.fillMaxWidth()
             )
             SelectorSexo(sexo = sexo, onCambio = { sexo = it })
@@ -365,3 +396,20 @@ private const val EDAD_MINIMA = 10
 /** El año escrito, si es uno de nacimiento creíble; null si está vacío o no lo es. */
 private fun anioNacimientoValido(texto: String): Int? =
     texto.trim().toIntOrNull()?.takeIf { it in ANIO_MINIMO..(Year.now().value - EDAD_MINIMA) }
+
+private const val GRASA_MIN = 3
+private const val GRASA_MAX = 60
+/** Igual que `DIAS_GRASA` en `web/src/fuerza.ts`: después, la web ya no usa la medición. */
+private const val DIAS_GRASA = 90L
+
+/** El porcentaje escrito, si es creíble; null si está vacío o no lo es. */
+private fun grasaValida(texto: String): Double? =
+    texto.trim().replace(',', '.').toDoubleOrNull()?.takeIf { it >= GRASA_MIN && it <= GRASA_MAX }
+
+private fun formatoGrasa(g: Double): String = if (g % 1.0 == 0.0) g.toInt().toString() else g.toString()
+
+private fun fechaCorta(iso: String): String =
+    runCatching { LocalDate.parse(iso).let { "%02d/%02d/%d".format(it.dayOfMonth, it.monthValue, it.year) } }.getOrDefault(iso)
+
+private fun grasaVencida(iso: String): Boolean =
+    runCatching { LocalDate.parse(iso).plusDays(DIAS_GRASA).isBefore(LocalDate.now()) }.getOrDefault(true)
