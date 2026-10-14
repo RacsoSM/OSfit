@@ -701,11 +701,10 @@ con ventaja) distorsiona más que cualquier factor. Falta poder configurarlo por
 > "agrégalo a la app de entrenador como un dato más y agrega lo de multiplicarlo y ajustarlo"
 
 - **App:** "% de grasa" en Editar cliente (`porcentajeGrasa`, 3 a 60) con la fecha de la
-  medición (`grasaFecha`), que se pone sola al cambiar el porcentaje. Abajo dice cuándo se midió
-  y avisa cuando ya pasaron 90 días.
-- **Web:** `pesoParaFuerza` en `web/src/fuerza.ts`. Con una medición de menos de 90 días, la
-  fuerza se mide contra el peso que tendría con el % de grasa típico (20 % ellos, 28 % ellas) y
+  medición (`grasaFecha`), que se pone sola al cambiar el porcentaje. Abajo dice cuándo se midió.
+- **Web:** `pesoParaFuerza` en `web/src/fuerza.ts`. Con una medición, la fuerza se mide contra el peso que tendría con el % de grasa típico (20 % ellos, 28 % ellas) y
   su misma masa magra: a quien tiene mucha grasa se le compara con menos peso. Después se
   aplican la corrección por peso (punto 17) y la de edad (16). **No se menciona en la página.**
+- **La medición no caduca** (decisión del entrenador, 2026-10-14): vale la última capturada.
 - Ojo: con esto, bajar grasa sin ganar fuerza ya no sube el nivel (antes sí, porque pesaba
   menos). Medir siempre con el mismo aparato y en las mismas condiciones.

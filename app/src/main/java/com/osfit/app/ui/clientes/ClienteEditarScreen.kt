@@ -217,9 +217,9 @@ fun ClienteEditarScreen(
                         when {
                             !grasaOk -> "Escribe un porcentaje entre $GRASA_MIN y $GRASA_MAX"
                             grasaValida(grasa) != null && grasaValida(grasa) == clienteActual.porcentajeGrasa && fecha != null ->
-                                "Medido el ${fechaCorta(fecha)}" + if (grasaVencida(fecha)) " · ya no cuenta, mide otra vez" else ""
+                                "Medido el ${fechaCorta(fecha)}"
                             grasaValida(grasa) != null -> "Se guarda con la fecha de hoy"
-                            else -> "Opcional. Cuenta 90 días desde que se mide"
+                            else -> "Opcional"
                         }
                     )
                 },
@@ -399,8 +399,6 @@ private fun anioNacimientoValido(texto: String): Int? =
 
 private const val GRASA_MIN = 3
 private const val GRASA_MAX = 60
-/** Igual que `DIAS_GRASA` en `web/src/fuerza.ts`: después, la web ya no usa la medición. */
-private const val DIAS_GRASA = 90L
 
 /** El porcentaje escrito, si es creíble; null si está vacío o no lo es. */
 private fun grasaValida(texto: String): Double? =
@@ -410,6 +408,3 @@ private fun formatoGrasa(g: Double): String = if (g % 1.0 == 0.0) g.toInt().toSt
 
 private fun fechaCorta(iso: String): String =
     runCatching { LocalDate.parse(iso).let { "%02d/%02d/%d".format(it.dayOfMonth, it.monthValue, it.year) } }.getOrDefault(iso)
-
-private fun grasaVencida(iso: String): Boolean =
-    runCatching { LocalDate.parse(iso).plusDays(DIAS_GRASA).isBefore(LocalDate.now()) }.getOrDefault(true)

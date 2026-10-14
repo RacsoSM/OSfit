@@ -49,10 +49,10 @@ data class Cliente(
      */
     val anioNacimiento: Int? = null,
     /**
-     * Porcentaje de grasa corporal medido (3 a 60), y la fecha AAAA-MM-DD de esa medición. La
-     * web compara la fuerza contra la masa magra mientras la medición tenga menos de 90 días
-     * (`pesoParaFuerza` en `web/src/fuerza.ts`); más vieja o sin ella, contra el peso total.
-     * Los dos van juntos: al cambiar el porcentaje, la app pone la fecha de hoy.
+     * Porcentaje de grasa corporal medido (3 a 60), y la fecha AAAA-MM-DD de esa medición. Con
+     * él, la web compara la fuerza contra la masa magra (`pesoParaFuerza` en
+     * `web/src/fuerza.ts`); sin él, contra el peso total. No caduca: la fecha es informativa.
+     * Al cambiar el porcentaje, la app pone la fecha de hoy.
      */
     val porcentajeGrasa: Double? = null,
     val grasaFecha: String? = null,

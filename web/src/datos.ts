@@ -115,8 +115,8 @@ export interface Cliente {
    */
   anioNacimiento?: number | null;
   /**
-   * % de grasa medido y su fecha (AAAA-MM-DD). Con una medición de menos de 90 días el mapa
-   * compara contra la masa magra (`pesoParaFuerza`). Los escribe el entrenador en "Editar
+   * % de grasa medido y su fecha (AAAA-MM-DD). Con él, el mapa compara contra la masa magra
+   * (`pesoParaFuerza`); la medición no caduca, la fecha es solo informativa. Los escribe el entrenador en "Editar
    * cliente". Opcionales por la razón de siempre.
    */
   porcentajeGrasa?: number | null;

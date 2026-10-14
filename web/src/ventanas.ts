@@ -129,8 +129,8 @@ export function fuerzaDelCliente(
 ): Record<string, FuerzaMusculo> {
   const { sexo, peso } = d.cliente;
   if ((sexo !== "H" && sexo !== "M") || !peso || !d.sesiones) return {};
-  const { porcentajeGrasa, grasaFecha, anioNacimiento } = d.cliente;
-  const pesoFuerza = pesoParaFuerza(peso, sexo, porcentajeGrasa, grasaFecha, d.hoy);
+  const { porcentajeGrasa, anioNacimiento } = d.cliente;
+  const pesoFuerza = pesoParaFuerza(peso, sexo, porcentajeGrasa);
   return fuerzaPorMusculo(d.sesiones, d.banco, sexo, pesoFuerza, d.hoy, edadEn(anioNacimiento, d.hoy));
 }
 

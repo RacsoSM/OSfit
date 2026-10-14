@@ -418,28 +418,24 @@ describe("factorPeso", () => {
 });
 
 describe("pesoParaFuerza", () => {
-  const HOY = "2026-10-14";
-
   it("sin medición de grasa, su peso tal cual", () => {
-    expect(pesoParaFuerza(90, "H", null, null, HOY)).toBe(90);
-    expect(pesoParaFuerza(90, "H", 35, null, HOY)).toBe(90);
+    expect(pesoParaFuerza(90, "H", null)).toBe(90);
+    expect(pesoParaFuerza(90, "H", undefined)).toBe(90);
   });
 
   it("con el % típico (20 ellos, 28 ellas) tampoco cambia", () => {
-    expect(pesoParaFuerza(90, "H", 20, HOY, HOY)).toBeCloseTo(90, 5);
-    expect(pesoParaFuerza(65, "M", 28, HOY, HOY)).toBeCloseTo(65, 5);
+    expect(pesoParaFuerza(90, "H", 20)).toBeCloseTo(90, 5);
+    expect(pesoParaFuerza(65, "M", 28)).toBeCloseTo(65, 5);
   });
 
   it("con mucha grasa se le mide contra menos peso; muy marcado, contra un poco más", () => {
     // 90 kg al 35 %: 58.5 kg magros, que al 20 % típico serían 73.1 kg.
-    expect(pesoParaFuerza(90, "H", 35, "2026-09-01", HOY)).toBeCloseTo(73.125, 3);
-    expect(pesoParaFuerza(90, "H", 12, "2026-09-01", HOY)).toBeCloseTo(99, 3);
+    expect(pesoParaFuerza(90, "H", 35)).toBeCloseTo(73.125, 3);
+    expect(pesoParaFuerza(90, "H", 12)).toBeCloseTo(99, 3);
   });
 
-  it("una medición de más de 90 días, del futuro o fuera de rango no cuenta", () => {
-    expect(pesoParaFuerza(90, "H", 35, "2026-07-16", HOY)).toBeCloseTo(73.125, 3);
-    expect(pesoParaFuerza(90, "H", 35, "2026-07-15", HOY)).toBe(90);
-    expect(pesoParaFuerza(90, "H", 35, "2026-10-20", HOY)).toBe(90);
-    expect(pesoParaFuerza(90, "H", 80, HOY, HOY)).toBe(90);
+  it("un porcentaje fuera de 3 a 60 no cuenta", () => {
+    expect(pesoParaFuerza(90, "H", 80)).toBe(90);
+    expect(pesoParaFuerza(90, "H", 1)).toBe(90);
   });
 });

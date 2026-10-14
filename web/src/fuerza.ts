@@ -237,27 +237,17 @@ export function factorPeso(pesoCorporal: number, sexo: Sexo): number {
 
 /** % de grasa típico por sexo: con él, el peso para la fuerza es el peso tal cual. */
 const GRASA_REFERENCIA: Readonly<Record<Sexo, number>> = { H: 20, M: 28 };
-/** Días que vale una medición de grasa. Igual que `DIAS_GRASA` en la app. */
-export const DIAS_GRASA = 90;
-
 /**
- * El peso contra el que se mide su fuerza (decisión del entrenador, 2026-10-14). Sin una
- * medición de grasa reciente, su peso. Con una, lo que pesaría con el % de grasa típico y su
+ * El peso contra el que se mide su fuerza (decisión del entrenador, 2026-10-14). Sin
+ * medición de grasa, su peso. Con una, lo que pesaría con el % de grasa típico y su
  * misma masa magra: `peso × (1 − grasa) ÷ (1 − típica)`. La grasa pesa pero no levanta, así que
  * a quien tiene mucha se le compara con menos peso, y a quien está muy marcado, con un poco
  * más. Con este peso se aplican después `1RM ÷ peso` y `factorPeso`, como siempre. La página
- * no lo menciona.
+ * no lo menciona. La medición no caduca (decisión del entrenador, 2026-10-14): vale la última
+ * que se haya capturado, sea de cuando sea.
  */
-export function pesoParaFuerza(
-  peso: number,
-  sexo: Sexo,
-  grasa: number | null | undefined,
-  grasaFecha: string | null | undefined,
-  hoy: string
-): number {
-  if (typeof grasa !== "number" || !(grasa >= 3 && grasa <= 60) || !grasaFecha) return peso;
-  const dias = (Date.parse(`${hoy}T12:00:00Z`) - Date.parse(`${grasaFecha}T12:00:00Z`)) / 86_400_000;
-  if (!(dias >= 0 && dias <= DIAS_GRASA)) return peso;
+export function pesoParaFuerza(peso: number, sexo: Sexo, grasa: number | null | undefined): number {
+  if (typeof grasa !== "number" || !(grasa >= 3 && grasa <= 60)) return peso;
   return (peso * (1 - grasa / 100)) / (1 - GRASA_REFERENCIA[sexo] / 100);
 }
 
