@@ -185,7 +185,9 @@ describe("capturar", () => {
     ponerEstadoRegistro({ vista: "capturar", borrador: agregarEjercicio(nuevoBorrador("b1234567", "2026-10-12"), press, null, 1) });
     const html = ventanaRegistro(datos());
     expect(html).toContain("Terminar entrenamiento");
-    expect(html).toContain("Descartar entrenamiento");
+    expect(html).toContain("Eliminar entrenamiento");
+    // Hasta abajo, después del crédito: lejos de "Terminar entrenamiento".
+    expect(html.indexOf("Eliminar entrenamiento")).toBeGreaterThan(html.indexOf("registro-credito"));
   });
 
   it("sin entrenamiento abierto no hay qué capturar: vuelve al inicio", () => {

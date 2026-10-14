@@ -615,10 +615,12 @@ entrenador, tal cual:
    hoja desde abajo con una barrita arriba (`.hoja-asa` en `ui/mapaMuscular.ts`, ~línea 223).
    Esa barrita invita a jalar la hoja hacia abajo para cerrarla, pero es solo de adorno: hoy
    solo cierra el ✕. Que deslizar hacia abajo la cierre, o quitar la barrita.
-3. **"Descartar entrenamiento" está muy pegado a "Terminar entrenamiento".** En
+3. ✅ **HECHO (2026-10-14).** ~~**"Descartar entrenamiento" está muy pegado a "Terminar entrenamiento".** En
    `ui/registro.ts` (~línea 459–460) van uno debajo del otro. Separarlo bien (más espacio,
    otro lugar o menos peso visual) para que nadie lo toque sin querer. Ya pide confirmación
-   si hay ejercicios anotados, pero el susto queda.
+   si hay ejercicios anotados, pero el susto queda.~~
+   *Hecho:* ahora dice **"Eliminar entrenamiento"** y va hasta abajo, después del crédito de Gym
+   visual, con 40 px de separación (`.registro-eliminar`). La confirmación sigue igual.
 4. **El mapa de Músculos no se pintó (aunque ya había registrado y puesto su peso).**
 
    > "primero anotó toda su rutina y después ingresó el apartado de su peso corporal en los músculos, por lo que el dibujo no se pintó"

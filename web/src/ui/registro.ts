@@ -474,8 +474,8 @@ function vistaCapturar(d: DatosRegistro): string {
     ${error}
     <button class="boton${hay ? " secundario" : ""}" data-accion="agregar" ${off}>+ Agregar ejercicio</button>
     ${hay ? `<button class="boton" data-accion="guardar" ${off}>${estado.enVuelo ? "Guardando…" : b.edicion ? "Guardar cambios" : "Terminar entrenamiento"}</button>` : ""}
-    <button class="boton-texto" data-accion="descartar" ${off}>${b.edicion ? "Cancelar cambios" : "Descartar entrenamiento"}</button>
-    ${hay ? CREDITO : ""}`;
+    ${hay ? CREDITO : ""}
+    <button class="boton-texto registro-eliminar" data-accion="descartar" ${off}>${b.edicion ? "Cancelar cambios" : "Eliminar entrenamiento"}</button>`;
 }
 
 /**
@@ -589,7 +589,7 @@ export function conectarRegistro(
         ir("historial");
         return;
       }
-      if (b && b.ejercicios.length > 0 && !confirm("¿Descartar este entrenamiento y lo que llevas anotado?")) return;
+      if (b && b.ejercicios.length > 0 && !confirm("¿Eliminar este entrenamiento y lo que llevas anotado?")) return;
       guardarBorrador(null);
       ir("inicio");
       return;

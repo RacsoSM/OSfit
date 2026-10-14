@@ -783,6 +783,9 @@ body.menu-abierto { overflow: hidden; }
   border: 0; background: none; font: inherit; font-size: 14px;
   color: var(--texto-tenue); cursor: pointer;
 }
+/* "Eliminar entrenamiento", lejos de "Terminar entrenamiento" para no tocarlo sin querer
+   (backlog 2, punto 15.3). */
+.registro-eliminar { margin-top: 40px; }
 
 /* La barra de abajo: Inicio, Músculos y Registro, siempre a la vista. Fija al fondo con el
    área segura del iPhone instalado; debajo del velo del menú (z 20), que la tapa al abrirse. */
