@@ -924,6 +924,31 @@
     },
     "pesoPorMancuerna": false
   },
+  "pantorrilla-prensa": {
+    "estandares": {
+      "H": [
+        0.55,
+        0.825,
+        1.1,
+        1.43,
+        1.76,
+        2.002,
+        2.244,
+        3.247
+      ],
+      "M": [
+        0.385,
+        0.605,
+        0.825,
+        1.1,
+        1.375,
+        1.575,
+        1.776,
+        2.606
+      ]
+    },
+    "pesoPorMancuerna": false
+  },
   "abductores-maquina": {
     "estandares": {
       "H": [
@@ -1673,6 +1698,31 @@
       ]
     },
     "pesoPorMancuerna": true
+  },
+  "rear-delt-maquina": {
+    "estandares": {
+      "H": [
+        0.262,
+        0.338,
+        0.413,
+        0.488,
+        0.562,
+        0.6,
+        0.637,
+        0.885
+      ],
+      "M": [
+        0.15,
+        0.206,
+        0.262,
+        0.319,
+        0.375,
+        0.426,
+        0.478,
+        0.671
+      ]
+    },
+    "pesoPorMancuerna": false
   },
   "face-pull": {
     "estandares": {

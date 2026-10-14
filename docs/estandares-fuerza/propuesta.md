@@ -175,6 +175,8 @@ Los porcentajes salen de un modelo: entre quienes entrenan, la fuerza se reparte
 |  | M | 20 kg | 32.5 kg | 45 kg | 60 kg | 75 kg | 85 kg | 97.5 kg | 142.5 kg |
 | Elevación de talones sentado | H · máquina | 25 kg | 40 kg | 52.5 kg | 67.5 kg | 85 kg | 95 kg | 107.5 kg | 155 kg |
 |  | M | 15 kg | 22.5 kg | 32.5 kg | 42.5 kg | 52.5 kg | 60 kg | 67.5 kg | 100 kg |
+| Pantorrilla en prensa | H · en prensa: varía por marca | 40 kg | 62.5 kg | 82.5 kg | 107.5 kg | 132.5 kg | 150 kg | 167.5 kg | 242.5 kg |
+|  | M | 22.5 kg | 37.5 kg | 50 kg | 65 kg | 82.5 kg | 95 kg | 107.5 kg | 157.5 kg |
 
 ### Trapecio
 
@@ -207,6 +209,8 @@ Los porcentajes salen de un modelo: entre quienes entrenan, la fuerza se reparte
 |  | M | 2 kg | 3 kg | 4 kg | 6 kg | 8 kg | 9 kg | 10 kg | 15 kg |
 | Pájaros | H · por mancuerna | 3 kg | 5 kg | 7 kg | 10 kg | 14 kg | 15 kg | 17 kg | 25 kg |
 |  | M | 2 kg | 2 kg | 3 kg | 5 kg | 6 kg | 7 kg | 8 kg | 12 kg |
+| Rear delt en máquina | H · máquina: varía por marca | 20 kg | 25 kg | 30 kg | 37.5 kg | 42.5 kg | 45 kg | 47.5 kg | 67.5 kg |
+|  | M | 9 kg | 12 kg | 16 kg | 19 kg | 22.5 kg | 25 kg | 27.5 kg | 40 kg |
 | Face pull | H · polea | 17 kg | 22.5 kg | 30 kg | 37.5 kg | 45 kg | 50 kg | 55 kg | 77.5 kg |
 |  | M | 8 kg | 11 kg | 14 kg | 18 kg | 22.5 kg | 25 kg | 27.5 kg | 40 kg |
 | Remo al mentón | H | 20 kg | 27.5 kg | 32.5 kg | 40 kg | 45 kg | 47.5 kg | 50 kg | 70 kg |
