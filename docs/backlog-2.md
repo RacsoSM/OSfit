@@ -464,3 +464,36 @@ se señalaron como dudosos los que cambian de ángulo entre pose A y B (buenos d
 los 4 peso muerto, sentadilla hack/salto/sumo/goblet, swing, saltar la cuerda, subidas al
 cajón): a mitad del fundido se encima la figura, igual que en el GIF original; el entrenador
 decidió subirlos todos. **Falta:** que el entrenador lo vea en su teléfono (web y app).
+
+## 11. Que la web abra sin internet, aunque sea en las pestañas principales
+
+> "si los clientes no tienen internet, aún así pueden checar su app y viajar por ella? aunque sea por los tabs principales"
+
+Hoy, si la clienta abre la página sin señal, el teléfono muestra su propia pantalla de "sin
+conexión": la página no llega a cargar. Solo funciona sin red si ya estaba abierta: navega
+entre pestañas y ve sus datos, porque Firestore guarda lo último en el teléfono
+(`persistentLocalCache` en `web/src/firebase.ts`).
+
+Por qué no abre:
+
+- **La página no se guarda en el teléfono.** `web/public/sw.js` solo muestra los avisos y no
+  guarda nada en caché a propósito, y el HTML se sirve con `no-cache` (`firebase.json`).
+- **El arranque revisa la sesión contra el servidor.** `resolverSesion` (`web/src/sesion.ts`)
+  pide el token de Firebase; dura una hora, y renovarlo necesita red. Si falla, sale
+  "Sin conexión" (`mostrarSinConexion`).
+
+Lo que haría falta:
+
+1. **Guardar la página:** que el service worker guarde HTML, JS, CSS y los SVG del mapa
+   muscular en la primera visita y los use cuando no haya red. Cuidado con las
+   actualizaciones: al publicar una versión nueva, el teléfono no se puede quedar con la vieja
+   (por eso hoy no guarda nada).
+2. **Entrar sin red:** si no hay conexión y en el teléfono hay una sesión guardada de esa
+   clienta, entrar con ella sin pedir el token al servidor y mostrar lo que Firestore tiene
+   guardado.
+3. **Opcional, más grande:** que "Guardar entrenamiento" sin red quede en cola y se mande al
+   volver la señal. Hoy pasa por la función `registrarSesion`, así que necesita una cola
+   propia.
+
+Sin red siguen sin funcionar: la ruleta, revivir la racha y los GIF/videos que no haya visto
+antes (salen de Storage).
