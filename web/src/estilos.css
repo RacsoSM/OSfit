@@ -930,8 +930,8 @@ main:has(#barra) { padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
 .mapa-svg .linea, .mapa-svg .linea-mano, .mapa-svg .linea-elevada { pointer-events: none; }
 /* Solo el ícono, chico, en la esquina de abajo a la derecha del dibujo: así el cuerpo
    ocupa casi toda la pantalla. El nombre lo dice `aria-label`. */
-/* Debajo del cuerpo: Compararme, "Actualizar peso corporal" y girar, en una sola fila. */
-.mapa-pie { display: flex; align-items: center; justify-content: space-between; gap: 4px; width: 100%; margin: 2px 0 0; }
+/* Debajo de "Toca un músculo…": Compararme, "Actualizar peso corporal" y girar, en una sola fila. */
+.mapa-pie { display: flex; align-items: center; justify-content: space-between; gap: 4px; width: 100%; margin: 4px 0 0; }
 .mapa-pie-centro { flex: 1; min-width: 0; }
 .mapa-pie .peso-linea { margin: 0; }
 .mapa-pie .mapa-comparar { margin-left: -8px; }

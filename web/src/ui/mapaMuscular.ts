@@ -343,9 +343,9 @@ export function bloqueRangoGeneral(
  *
  * `fuerza` es el nivel de cada grupo (`data-musculo`); vacío mientras no exista el registro.
  *
- * `pie` va en medio de la fila de abajo del cuerpo, entre Compararme y girar: el "Actualizar
- * peso corporal" (`bloquePeso`). Los dos íconos van a su altura y no encima del dibujo
- * (pedido del entrenador, 2026-10-14).
+ * `pie` va en medio de la fila de abajo, entre Compararme y girar: el "Actualizar peso
+ * corporal" (`bloquePeso`). La fila va debajo de "Toca un músculo…" y los dos íconos a la
+ * altura del peso, no encima del dibujo (pedido del entrenador, 2026-10-14).
  */
 export function tarjetaMusculos(
   sexo: Sexo | null | undefined,
@@ -378,6 +378,7 @@ export function tarjetaMusculos(
           </div>
         </div>
       </div>
+      <div id="mapa-detalle">${detalle}</div>
       <div class="mapa-pie">
         <button type="button" class="mapa-comparar" id="abrir-comparar"
                 aria-label="Compararme con los demás" title="Compararme">${ICONO_COMUNIDAD}</button>
@@ -385,7 +386,6 @@ export function tarjetaMusculos(
         <button type="button" class="mapa-girar" id="girar-mapa"
                 aria-label="${textoBoton(deEspalda)}" title="${textoBoton(deEspalda)}">${ICONO_GIRAR}</button>
       </div>
-      <div id="mapa-detalle">${detalle}</div>
       ${ayudaAbierta ? ayudaMapa(sexo) : ""}
     </section>`;
 }
