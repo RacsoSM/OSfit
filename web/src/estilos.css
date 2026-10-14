@@ -1290,7 +1290,11 @@ main:has(#barra) { padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
    rehace por dentro y no debe volver a subir. */
 .hoja-detalle.entra { animation: hoja-sube 260ms cubic-bezier(0.2, 0.8, 0.2, 1); }
 @keyframes hoja-sube { from { transform: translateY(40%); opacity: 0; } to { transform: none; opacity: 1; } }
-.hoja-asa { width: 40px; height: 5px; border-radius: 9px; background: color-mix(in srgb, var(--texto) 25%, transparent); margin: 0 auto 6px; }
+/* La zona de la barrita: se jala hacia abajo para cerrar (`ui/deslizarHoja.ts`). Más alta que la
+   barrita para que el dedo la atine, y sin `touch-action` para que el navegador no la tome
+   como desplazamiento. */
+.hoja-agarre { margin: -10px 40px 0; padding: 10px 0 10px; touch-action: none; cursor: grab; }
+.hoja-asa { width: 40px; height: 5px; border-radius: 9px; background: color-mix(in srgb, var(--texto) 25%, transparent); margin: 0 auto; }
 .hoja-cerrar {
   position: absolute; top: 10px; right: 10px; width: 38px; height: 38px;
   border: 0; border-radius: 50%; background: color-mix(in srgb, var(--texto) 9%, transparent);

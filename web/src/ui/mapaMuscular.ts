@@ -4,6 +4,7 @@ import {
   rangoGeneral, repartoRangos, siguienteRango, type Comparacion, type FuerzaMusculo,
 } from "../fuerza";
 import { COLORES_RANGO, insigniaRango } from "./insigniaRango";
+import { conectarHoja } from "./deslizarHoja";
 import { escapar } from "./tarjetaDia";
 import { seccionVacia } from "./tarjetaInsignias";
 
@@ -225,7 +226,7 @@ export function detalleMusculo(
   if (!fuerza) {
     return `
       <section class="hoja-detalle" role="dialog" aria-label="${nombre}">
-        <div class="hoja-asa" aria-hidden="true"></div>${cerrar}
+        <div class="hoja-agarre" aria-hidden="true"><div class="hoja-asa"></div></div>${cerrar}
         <p class="hoja-musculo">${nombre}</p>
         <p class="hoja-sin-datos">Sin datos</p>
         <p class="hoja-frase">
@@ -248,7 +249,7 @@ export function detalleMusculo(
     `<button type="button" data-comparar="${c}" aria-pressed="${comparacion === c}">${texto}</button>`;
   return `
       <section class="hoja-detalle" role="dialog" aria-label="${nombre}: ${rango}" style="--color: ${COLORES_RANGO[yo]}">
-        <div class="hoja-asa" aria-hidden="true"></div>${cerrar}
+        <div class="hoja-agarre" aria-hidden="true"><div class="hoja-asa"></div></div>${cerrar}
         <p class="hoja-musculo">${nombre}</p>
         <div class="hoja-cabeza">
           ${insigniaRango(yo, 76, "detalle")}
@@ -511,6 +512,7 @@ export function conectarMapa(
     caja.innerHTML = detalleMusculo(seleccionado, seleccionado ? fuerza[seleccionado] : undefined, sexo, peso);
     if (abriendo) caja.querySelector(".hoja-detalle")?.classList.add("entra");
     caja.querySelector("#cerrar-detalle")?.addEventListener("click", () => elegir(null));
+    conectarHoja(caja.querySelector<HTMLElement>(".hoja-detalle"), () => elegir(null));
   };
   const elegir = (grupo: string | null) => {
     const abriendo = seleccionado === null && grupo !== null;
@@ -524,6 +526,7 @@ export function conectarMapa(
 
   marcarSeleccion(false);
   document.querySelector("#cerrar-detalle")?.addEventListener("click", () => elegir(null));
+  conectarHoja(document.querySelector<HTMLElement>("#mapa-detalle .hoja-detalle"), () => elegir(null));
   // "Todos / Quienes entrenan": delegado en la caja, que sobrevive a `pintarDetalle`.
   document.querySelector("#mapa-detalle")?.addEventListener("click", (e) => {
     const b = (e.target as Element).closest<HTMLElement>("[data-comparar]");
