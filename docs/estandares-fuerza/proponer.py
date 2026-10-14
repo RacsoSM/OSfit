@@ -131,9 +131,9 @@ PESO = {
     "curl-muneca-inverso-barra": ("muneca", 0.60, ""),
     "curl-muneca-mancuernas": ("muneca", 0.45, "por mancuerna"),
     "curl-muneca-inverso-mancuernas": ("muneca", 0.28, "por mancuerna"),
-    "extension-triceps-polea": ("triceps", 1.30, "polea doble: la pila pesa más de lo que se siente"),
-    "extension-triceps-cuerda": ("triceps", 1.17, "polea doble"),
-    "extension-triceps-trasnuca-polea": ("triceps", 1.10, "polea doble"),
+    "extension-triceps-polea": ("triceps", 1.00, ""),
+    "extension-triceps-cuerda": ("triceps", 0.90, ""),
+    "extension-triceps-trasnuca-polea": ("triceps", 0.85, ""),
     "copa-polea-un-brazo": ("triceps", 0.40, "un brazo; polea"),
     "press-frances": ("triceps", 0.80, ""),
     "extension-triceps-mancuerna": ("triceps", 0.45, "una mancuerna, dos manos"),
@@ -142,6 +142,17 @@ PESO = {
 }
 
 # Corporales: repeticiones seguidas.
+# La estación de poleas del gimnasio es de polea doble: la pila marca bastante más de lo que se
+# siente. Con los estándares de las tablas, 5 barras de tríceps daban Avanzado a quien el
+# entrenador ve entre Intermedio y Atlética. Él eligió ×1.3 (2026-10-14) y dijo qué ejercicios
+# van en esa estación.
+FACTOR_POLEA_DOBLE = 1.3
+POLEA_DOBLE = {
+    "pullover-polea", "face-pull", "elevaciones-laterales-polea", "curl-polea", "curl-inverso-polea",
+    "curl-muneca-polea", "extension-triceps-polea", "extension-triceps-cuerda",
+    "extension-triceps-trasnuca-polea", "copa-polea-un-brazo", "crunch-polea",
+}
+
 CORPORAL = {
     "lagartijas":              {"H": [3, 15, 30, 45, 65], "M": [1, 5, 15, 28, 40]},
     "fondos-pecho":            {"H": [1, 8, 18, 30, 42], "M": [1, 3, 8, 15, 25]},
@@ -289,6 +300,9 @@ def main() -> None:
             continue
         if tipo == "peso" and i in PESO:
             fam, f, nota = PESO[i]
+            if i in POLEA_DOBLE:
+                f *= FACTOR_POLEA_DOBLE
+                nota = f"{nota}; polea doble ×{FACTOR_POLEA_DOBLE:g}" if nota else f"polea doble ×{FACTOR_POLEA_DOBLE:g}"
             cinco = {s: [round(v * f, 3) for v in FAMILIAS[fam][s]] for s in ("H", "M")}
             est = {s: con_elite(cinco[s], a_ocho(cinco[s]), False) for s in ("H", "M")}
             salida[i] = est
