@@ -4,6 +4,7 @@ import {
   agregarEjercicio,
   agregarSerie,
   cambiarSerie,
+  cambiarUnidad,
   leerBorrador,
   nombresDeSesion,
   nuevoBorrador,
@@ -14,6 +15,7 @@ import {
   resumenSeries,
   ultimasSeries,
 } from "./registro";
+import { barrasAKg } from "./barras";
 
 function ej(campos: Partial<EjercicioBanco> = {}): EjercicioBanco {
   return {
@@ -216,5 +218,54 @@ describe("nombresDeSesion", () => {
     expect(nombresDeSesion(con("Sentadilla"))).toBe("Sentadilla");
     expect(nombresDeSesion(con("Sentadilla", "Prensa"))).toBe("Sentadilla y Prensa");
     expect(nombresDeSesion(con("Sentadilla", "Prensa", "Curl", "Hip thrust"))).toBe("Sentadilla, Prensa y 2 más");
+  });
+});
+
+describe("unidad: barras o kg", () => {
+  const jalon = ej({ id: "jalon-al-pecho", nombre: "Jalón al pecho" });
+
+  it("una máquina de placas abre en barras y lo de la última vez se muestra en barras", () => {
+    const b = agregarEjercicio(nuevoBorrador("b1", "2026-10-13"), jalon, [{ reps: 10, peso: barrasAKg(6) }], null);
+    expect(b.ejercicios[0].unidad).toBe("barras");
+    expect(b.ejercicios[0].series[0].peso).toBe("6");
+  });
+
+  it("lo que no es máquina abre en kg", () => {
+    const b = agregarEjercicio(nuevoBorrador("b1", "2026-10-13"), ej(), null, null);
+    expect(b.ejercicios[0].unidad).toBe("kg");
+  });
+
+  it("al guardar, las barras se mandan en kg", () => {
+    let b = agregarEjercicio(nuevoBorrador("b1", "2026-10-13"), jalon, null, null);
+    b = cambiarSerie(b, 0, 0, "peso", "5");
+    b = cambiarSerie(b, 0, 0, "reps", "12");
+    const r = paraEnviar(b);
+    expect(r.ok && r.datos.ejercicios[0].series[0]).toEqual({ reps: 12, peso: barrasAKg(5) });
+  });
+
+  it("cambiar de unidad convierte lo que ya escribió", () => {
+    let b = agregarEjercicio(nuevoBorrador("b1", "2026-10-13"), jalon, null, null);
+    b = cambiarSerie(b, 0, 0, "peso", "6");
+    b = cambiarUnidad(b, 0, "kg");
+    expect(b.ejercicios[0].unidad).toBe("kg");
+    expect(b.ejercicios[0].series[0].peso).toBe(String(barrasAKg(6)));
+    b = cambiarUnidad(b, 0, "barras");
+    expect(b.ejercicios[0].series[0].peso).toBe("6");
+  });
+
+  it("el resumen dice barras", () => {
+    let b = agregarEjercicio(nuevoBorrador("b1", "2026-10-13"), jalon, null, null);
+    b = cambiarSerie(b, 0, 0, "peso", "6");
+    b = cambiarSerie(b, 0, 0, "reps", "10");
+    expect(resumenSeries(b.ejercicios[0])).toBe("1 serie · 6 barras × 10");
+  });
+
+  it("un borrador viejo sin unidad se manda tal cual, en kg", () => {
+    let b = agregarEjercicio(nuevoBorrador("b1", "2026-10-13"), ej(), null, null);
+    b = { ...b, ejercicios: b.ejercicios.map(({ unidad: _, ...x }) => x) };
+    b = cambiarSerie(b, 0, 0, "peso", "40");
+    b = cambiarSerie(b, 0, 0, "reps", "8");
+    const r = paraEnviar(b);
+    expect(r.ok && r.datos.ejercicios[0].series[0]).toEqual({ reps: 8, peso: 40 });
   });
 });
