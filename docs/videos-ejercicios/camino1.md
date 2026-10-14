@@ -234,4 +234,6 @@ crédito "Animaciones © Gym visual" en la página, junto a donde se muestran.
   sentadilla-hack, sentadilla-salto, sentadilla-sumo-mancuerna, sentadilla-goblet,
   swing-kettlebell, saltar-cuerda, subidas-cajon. Si alguno no convence, se quita con
   `--quitar` (§6.5).
+- **2026-10-14:** subidos 3 más: `rear-delt-maquina` y `pantorrilla-prensa` (nuevos en el banco) y
+  `patada-gluteo-maquina` (dada de alta después del lote). Revisados con §6.2; URLs `200 video/mp4`.
 - **Pendiente:** que el entrenador lo vea en su teléfono (web y app, §6.4).

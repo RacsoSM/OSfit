@@ -656,8 +656,8 @@ Revisado contra `functions/semilla/ejercicios.json` (108 ejercicios):
 
 | Lo que buscaron | Qué hay hoy | Qué falta |
 |---|---|---|
-| Rear delt | `pajaros` (con mancuernas), sin el alias "rear delt" | 🟡 **En semilla (2026-10-14)**: `rear-delt-maquina` (GIF 0602 de Gym visual, pec deck invertido; estándares = militar × 0.75), con los alias "rear delt". Video HD generado con el camino 1. **Falta cargarlo a producción.** Ver **punto 14**. |
-| Pantorrilla en prensa | Solo `pantorrilla-de-pie` y `pantorrilla-sentado` | 🟡 **En semilla (2026-10-14)**: `pantorrilla-prensa` (GIF 2289 de Gym visual; estándares = pantorrilla × 1.10). Video HD generado con el camino 1. **Falta cargarlo a producción.** |
+| Rear delt | `pajaros` (con mancuernas), sin el alias "rear delt" | ✅ **Dado de alta (2026-10-14)**: `rear-delt-maquina` (GIF 0602 de Gym visual, pec deck invertido; estándares = militar × 0.75), con los alias "rear delt". Con video HD (camino 1) y en Ejercicios por grupo → Hombro después de los Pájaros. Ver **punto 14**. |
+| Pantorrilla en prensa | Solo `pantorrilla-de-pie` y `pantorrilla-sentado` | ✅ **Dado de alta (2026-10-14)**: `pantorrilla-prensa` (GIF 2289 de Gym visual; estándares = pantorrilla × 1.10). Con video HD (camino 1); sale en Pantorrilla porque ese grupo no está configurado en la app. |
 | Prensa en máquina a dos piernas | `prensa` (45°/inclinada) y `prensa-horizontal-una-pierna` | **Ejercicio nuevo**: prensa horizontal / sentado a dos piernas. Ojo: hoy los alias "prensa horizontal" y "prensa sentado" apuntan a la de **una** pierna; habría que pasarlos al nuevo. |
 | Patada en máquina | `patada-gluteo-polea` y `patada-gluteo-liga` | ✅ **Dado de alta (2026-10-14)**: `patada-gluteo-maquina` (GIF 2286 de Gym visual, estándares = abductor × 0.80), en Ejercicios por grupo → Glúteo después de la de liga. |
 | Copa con cuerda de frente | `extension-triceps-trasnuca-polea` (sobre la cabeza con cuerda) y `extension-triceps-mancuerna` (alias "copa") | Confirmar con el entrenador cuál es. Si es la trasnuca en polea, solo faltan alias ("copa con cuerda", "copa en polea"); si es otra variante, ejercicio nuevo. |
