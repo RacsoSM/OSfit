@@ -933,7 +933,11 @@ main:has(#barra) { padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
 .mapa-girar {
   position: absolute; right: -8px; bottom: 0; z-index: 1;
 }
-.mapa-girar:focus-visible { outline: 2px solid var(--primario); outline-offset: 3px; }
+/* Compararme: del otro lado del de girar, a su misma altura. */
+.mapa-comparar {
+  position: absolute; left: -8px; bottom: 0; z-index: 1;
+}
+.mapa-girar:focus-visible, .mapa-comparar:focus-visible { outline: 2px solid var(--primario); outline-offset: 3px; }
 .mapa-cargando {
   width: 55%; height: 85%; border-radius: 60px;
   background: var(--superficie-alta); animation: mapa-pulso 1.2s ease-in-out infinite alternate;
@@ -975,7 +979,7 @@ main:has(#barra) { padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
 /* El "?" sube a la esquina de arriba a la izquierda, a la altura del ☰ de la cabecera
    (44 px, justo encima de `.mapa-cuerpo`), y con su mismo tamaño. */
 .mapa-ayuda { position: absolute; left: -8px; top: -44px; z-index: 1; }
-.mapa-ayuda, .mapa-girar {
+.mapa-ayuda, .mapa-girar, .mapa-comparar {
   width: 50px; height: 50px; padding: 0;
   display: flex; align-items: center; justify-content: center;
   border: 0; border-radius: 12px; background: transparent;
@@ -983,7 +987,7 @@ main:has(#barra) { padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
   transition: transform 0.12s ease-out;
   -webkit-tap-highlight-color: transparent;
 }
-.mapa-ayuda:active, .mapa-girar:active { transform: scale(0.94); }
+.mapa-ayuda:active, .mapa-girar:active, .mapa-comparar:active { transform: scale(0.94); }
 .mapa-ayuda { width: 44px; height: 44px; }
 .mapa-ayuda .mapa-icono { stroke-width: 2.2; }
 .mapa-icono {
@@ -1375,7 +1379,6 @@ main:has(#barra) { padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
 
 /* Compararme (dentro de Músculos): la lista con el rango general de cada una y, al tocar a
    alguien, los dos cuerpos lado a lado con los colores de sus rangos. */
-.abrir-comparar { margin: 14px 0 4px; }
 .cmp-nota { margin: 2px 2px 12px; }
 .cmp-fila {
   display: flex; align-items: center; gap: 12px; width: 100%; text-align: left;

@@ -139,6 +139,11 @@ const ICONO_GIRAR = icono(
   '<path d="M20 12a8 8 0 0 1-13.9 5.4"/><path d="M4 12a8 8 0 0 1 13.9-5.4"/>'
   + '<path d="M18 2.8v3.9h-3.9"/><path d="M6 21.2v-3.9h3.9"/>'
 );
+/** Compararme: dos personas, de línea como los otros dos. */
+const ICONO_COMUNIDAD = icono(
+  '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/>'
+  + '<path d="M16 4.6a3.5 3.5 0 0 1 0 6.8"/><path d="M18.5 14.2a6.5 6.5 0 0 1 3 5.8"/>'
+);
 const ICONO_AYUDA = icono(
   '<path d="M7.4 7.9a4.6 4.6 0 1 1 6.5 4.2c-1.1.5-1.9 1.5-1.9 2.7v.8"/><path d="M12 20.1v.1"/>'
 );
@@ -367,6 +372,8 @@ export function tarjetaMusculos(
             ${cara("espalda", de(a.espalda), !deEspalda, fuerza)}
           </div>
         </div>
+        <button type="button" class="mapa-comparar" id="abrir-comparar"
+                aria-label="Compararme con los demás" title="Compararme">${ICONO_COMUNIDAD}</button>
         <button type="button" class="mapa-girar" id="girar-mapa"
                 aria-label="${textoBoton(deEspalda)}" title="${textoBoton(deEspalda)}">${ICONO_GIRAR}</button>
       </div>
