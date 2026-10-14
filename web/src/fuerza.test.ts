@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  NOMBRES_MUSCULO, edadEn, factorEdad, fuerzaPorMusculo, indiceRango, marcaPara, nivelDe, rangoGeneral, repartoRangos,
+  NOMBRES_MUSCULO, edadEn, factorEdad, factorPeso, fuerzaPorMusculo, indiceRango, marcaPara, nivelDe, rangoGeneral, repartoRangos,
   siguienteRango, nombreMusculo, nombreRango, percentilDe,
   percentilEntrenanDe, rangoDe, unoRm,
 } from "./fuerza";
@@ -166,13 +166,13 @@ describe("fuerzaPorMusculo", () => {
       estandares: { H: [0.5, 0.6, 0.75, 0.9, 1, 1.1, 1.3, 1.7], M: [0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.2] },
     };
     const b = [curl, jalon];
-    // Jalón en Élite (2 × peso) → bíceps 8 × 0.5 = 4. Curl de 30 kg ÷ 100 = 0.3 → nivel 2.
+    // Jalón en Élite (2 × peso) → bíceps 8 × 0.5 = 4. Curl de 22.5 kg ÷ 75 = 0.3 → nivel 2.
     const ambos = fuerzaPorMusculo(
       [sesion("2026-10-10", [
-        { ejercicioId: "jalon", nombre: "", series: [{ reps: 1, peso: 200 }] },
-        { ejercicioId: "curl", nombre: "", series: [{ reps: 1, peso: 30 }] },
+        { ejercicioId: "jalon", nombre: "", series: [{ reps: 1, peso: 150 }] },
+        { ejercicioId: "curl", nombre: "", series: [{ reps: 1, peso: 22.5 }] },
       ])],
-      b, "H", 100, "2026-10-11"
+      b, "H", 75, "2026-10-11"
     );
     expect(ambos.biceps.nivel).toBeCloseTo(2, 5);
     expect(ambos.biceps.origen?.ejercicioId).toBe("curl");
@@ -180,8 +180,8 @@ describe("fuerzaPorMusculo", () => {
 
     // Sin curl, el bíceps sí sale del jalón.
     const soloJalon = fuerzaPorMusculo(
-      [sesion("2026-10-10", [{ ejercicioId: "jalon", nombre: "", series: [{ reps: 1, peso: 200 }] }])],
-      b, "H", 100, "2026-10-11"
+      [sesion("2026-10-10", [{ ejercicioId: "jalon", nombre: "", series: [{ reps: 1, peso: 150 }] }])],
+      b, "H", 75, "2026-10-11"
     );
     expect(soloJalon.biceps.nivel).toBe(4);
     expect(soloJalon.biceps.origen?.ejercicioId).toBe("jalon");
@@ -287,6 +287,12 @@ describe("siguienteRango", () => {
     expect(s).toMatchObject({ tipo: "falta", objetivo: { reps: 8, peso: 32 } });
   });
 
+  it("con factor por peso, el objetivo se corrige igual", () => {
+    // A 75 kg pedía 37.5 kg; con × 1.1 pide 46.9 ÷ 1.1 = 42.6 kg de 1RM → 33.7 a 8 reps → 34.
+    const s = siguienteRango(conOrigen(1.2, { factorPeso: 1.1 }), 75);
+    expect(s).toMatchObject({ tipo: "falta", objetivo: { reps: 8, peso: 34 } });
+  });
+
   it("en Élite ya no hay siguiente", () => {
     expect(siguienteRango(conOrigen(8), 75)).toEqual({ tipo: "maximo" });
   });
@@ -352,12 +358,55 @@ describe("factorEdad y edadEn", () => {
       estandares: { H: [0.5, 0.6, 0.75, 0.9, 1, 1.1, 1.3, 1.7], M: [0.25, 0.4, 0.5, 0.6, 0.75, 0.8, 0.85, 1.3] },
     };
     const sesiones: Sesion[] = [{ id: "s", fecha: "2026-10-10", origen: "manual", ejercicios: [
-      { ejercicioId: "press-banca", nombre: "", series: [{ reps: 1, peso: 50 }] },
+      { ejercicioId: "press-banca", nombre: "", series: [{ reps: 1, peso: 37.5 }] },
     ] }];
-    // 50 ÷ 100 = 0.5 → nivel 1. A los 50 (× 1.13) = 0.565 → entre 0.5 y 0.6.
-    expect(fuerzaPorMusculo(sesiones, [banca], "H", 100, "2026-10-11").pecho.nivel).toBeCloseTo(1, 5);
-    const conEdad = fuerzaPorMusculo(sesiones, [banca], "H", 100, "2026-10-11", 50).pecho;
+    // 37.5 ÷ 75 = 0.5 → nivel 1. A los 50 (× 1.13) = 0.565 → entre 0.5 y 0.6.
+    expect(fuerzaPorMusculo(sesiones, [banca], "H", 75, "2026-10-11").pecho.nivel).toBeCloseTo(1, 5);
+    const conEdad = fuerzaPorMusculo(sesiones, [banca], "H", 75, "2026-10-11", 50).pecho;
     expect(conEdad.nivel).toBeCloseTo(1.65, 5);
     expect(conEdad.origen).toMatchObject({ edad: 50, factorEdad: 1.13 });
+  });
+});
+
+describe("factorPeso", () => {
+  it("1 en el peso de referencia (75 kg ellos, 60 kg ellas); raíz cúbica alrededor", () => {
+    expect(factorPeso(75, "H")).toBe(1);
+    expect(factorPeso(60, "M")).toBe(1);
+    expect(factorPeso(87, "H")).toBeCloseTo(1.0507, 4);
+    expect(factorPeso(65, "H")).toBeCloseTo(0.9534, 4);
+    expect(factorPeso(70, "M")).toBeCloseTo(1.0527, 4);
+  });
+
+  it("se topa en 0.85 y 1.25", () => {
+    expect(factorPeso(30, "H")).toBe(0.85);
+    expect(factorPeso(250, "H")).toBe(1.25);
+    expect(factorPeso(0, "H")).toBe(1);
+  });
+
+  it("dos igual de entrenados con distinto peso quedan parecidos; con la división a secas, no", () => {
+    const banca: EjercicioBanco = {
+      id: "press-banca", nombre: "Press de banca", tipo: "peso", musculos: { pecho: 1 },
+      estandares: { H: [0.5, 0.6, 0.75, 0.9, 1, 1.1, 1.3, 1.7], M: [0.25, 0.4, 0.5, 0.6, 0.75, 0.8, 0.85, 1.3] },
+    };
+    const con = (peso: number): Sesion[] => [{ id: "s", fecha: "2026-10-10", origen: "manual", ejercicios: [
+      { ejercicioId: "press-banca", nombre: "", series: [{ reps: 1, peso }] },
+    ] }];
+    // 75 kg → 75 kg de banca (1.0 ×). 100 kg → 75 × (100/75)^⅔ ≈ 90.9 kg: igual de fuerte.
+    const ligero = fuerzaPorMusculo(con(75), [banca], "H", 75, "2026-10-11").pecho.nivel;
+    const pesado = fuerzaPorMusculo(con(90.9), [banca], "H", 100, "2026-10-11").pecho.nivel;
+    expect(pesado).toBeCloseTo(ligero, 1);
+  });
+
+  it("no corrige los corporales: ya cargan su propio cuerpo", () => {
+    const lagartijas: EjercicioBanco = {
+      id: "lagartijas", nombre: "Lagartijas", tipo: "corporal", musculos: { pecho: 1 },
+      estandares: { H: [3, 9, 15, 22, 30, 34, 38, 55], M: [1, 3, 5, 10, 15, 18, 20, 34] },
+    };
+    const s: Sesion[] = [{ id: "s", fecha: "2026-10-10", origen: "manual", ejercicios: [
+      { ejercicioId: "lagartijas", nombre: "", series: [{ reps: 15, peso: null }] },
+    ] }];
+    const f = fuerzaPorMusculo(s, [lagartijas], "H", 100, "2026-10-11").pecho;
+    expect(f.nivel).toBe(3);
+    expect(f.origen?.factorPeso).toBe(1);
   });
 });

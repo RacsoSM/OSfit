@@ -118,6 +118,8 @@ export interface OrigenFuerza {
    */
   edad?: number | null;
   factorEdad?: number;
+  /** El factor por peso corporal que se le aplicó (`factorPeso`); solo en los de peso, si no 1. */
+  factorPeso?: number;
 }
 
 /** Cómo se llama cada grupo de los SVG (`data-musculo`) en pantalla. */
@@ -208,6 +210,29 @@ export function edadEn(anioNacimiento: number | null | undefined, hoy: string): 
   return edad >= 10 && edad <= 100 ? edad : null;
 }
 
+/**
+ * Peso de referencia por sexo: el factor por peso es 1 aquí. Es más o menos donde están
+ * centrados los estándares de `docs/estandares-fuerza/`.
+ */
+const PESO_REFERENCIA: Readonly<Record<Sexo, number>> = { H: 75, M: 60 };
+/** Topes del factor por peso: a más de ~±25 % del peso de referencia ya no se le cree. */
+const FACTOR_PESO_MIN = 0.85;
+const FACTOR_PESO_MAX = 1.25;
+
+/**
+ * Corrección por peso corporal (decisión del entrenador, 2026-10-14). La fuerza crece con el
+ * área del músculo y el peso con el volumen, así que con el doble de peso se espera ~1.6 veces
+ * la fuerza, no el doble: dividir el 1RM entre el peso a secas castiga a los pesados y premia a
+ * los ligeros. Multiplicar `1RM ÷ peso` por `(peso ÷ referencia)^⅓` lo deja en
+ * `1RM ÷ peso^⅔`, la misma idea de Wilks/DOTS, y en el peso de referencia no cambia nada.
+ * La página no lo menciona, igual que la edad.
+ */
+export function factorPeso(pesoCorporal: number, sexo: Sexo): number {
+  if (!(pesoCorporal > 0)) return 1;
+  const f = Math.cbrt(pesoCorporal / PESO_REFERENCIA[sexo]);
+  return Math.min(FACTOR_PESO_MAX, Math.max(FACTOR_PESO_MIN, f));
+}
+
 /** AAAA-MM-DD de `dias` antes de `hoy` (también AAAA-MM-DD). */
 function diasAntes(hoy: string, dias: number): string {
   const d = new Date(`${hoy}T12:00:00Z`);
@@ -230,7 +255,9 @@ function diasAntes(hoy: string, dias: number): string {
  *   bíceps) le ganaba a los curls que sí hizo, y el detalle le hablaba de un ejercicio que no
  *   era de bíceps.
  * - Un músculo sin ejercicios registrados no aparece: es "sin datos", distinto de nivel 0.
- * - Con `edad`, la marca se multiplica por `factorEdad` antes de compararla (ver la tabla).
+ * - En los de peso, la marca se corrige por peso corporal (`factorPeso`); los corporales no,
+ *   porque ya cargan su propio cuerpo.
+ * - Con `edad`, la marca se multiplica además por `factorEdad` (ver la tabla).
  */
 export function fuerzaPorMusculo(
   sesiones: readonly Sesion[],
@@ -242,6 +269,7 @@ export function fuerzaPorMusculo(
 ): Record<string, FuerzaMusculo> {
   if (!(pesoCorporal > 0)) return {};
   const factor = factorEdad(edad);
+  const porPeso = factorPeso(pesoCorporal, sexo);
   const desde = diasAntes(hoy, SEMANAS_VENTANA * 7);
   const porId = new Map(banco.map((e) => [e.id, e]));
 
@@ -253,7 +281,7 @@ export function fuerzaPorMusculo(
       if (!b || !b.estandares || b.tipo === "tiempo") continue;
       for (const serie of e.series) {
         const marca = factor * (b.tipo === "peso"
-          ? (serie.peso ?? 0) > 0 ? unoRm(serie.peso as number, serie.reps) / pesoCorporal : 0
+          ? (serie.peso ?? 0) > 0 ? (unoRm(serie.peso as number, serie.reps) / pesoCorporal) * porPeso : 0
           : serie.reps);
         if (marca > (mejor.get(b.id)?.marca ?? 0)) mejor.set(b.id, { marca, serie });
       }
@@ -279,7 +307,7 @@ export function fuerzaPorMusculo(
             ejercicioId: id, nombre: b.nombre, tipo: b.tipo as "peso" | "corporal", cuanto,
             serie: { reps: serie.reps, peso: serie.peso }, estandares,
             pesoPorMancuerna: b.pesoPorMancuerna === true,
-            edad, factorEdad: factor,
+            edad, factorEdad: factor, factorPeso: b.tipo === "peso" ? porPeso : 1,
           },
         };
       }
@@ -345,7 +373,7 @@ export function siguienteRango(f: FuerzaMusculo, pesoCorporal: number): Siguient
   if (!o || nivelEjercicio > NIVEL_MAX) return { tipo: "otroEjercicio", rango: i + 1, avance };
 
   // La marca que pide el estándar ya viene ajustada por edad: lo que tiene que mover es menos.
-  const marca = marcaPara(nivelEjercicio, o.estandares) / (o.factorEdad ?? 1);
+  const marca = marcaPara(nivelEjercicio, o.estandares) / ((o.factorEdad ?? 1) * (o.factorPeso ?? 1));
   let objetivo: { reps: number; peso: number | null };
   if (o.tipo === "peso") {
     const reps = o.serie.reps;

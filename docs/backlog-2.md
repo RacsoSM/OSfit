@@ -681,3 +681,17 @@ fondos" (punto de la tabla).
   lo considera. **La página no menciona el ajuste por edad en ningún lado** (decisión del
   entrenador, 2026-10-14).
 - Sin año de nacimiento no se ajusta nada. Falta capturarlo en la app para cada cliente.
+
+## 17. Fuerza corregida por peso corporal — ✅ HECHO (2026-10-14)
+
+> "si son gorditos, flaquitos o en forma sirve?"
+
+Dividir el 1RM entre el peso castiga a los pesados: con el doble de peso se espera ~1.6 veces
+la fuerza, no el doble (el área del músculo crece más lento que el volumen). `factorPeso` en
+`web/src/fuerza.ts` multiplica `1RM ÷ peso` por `(peso ÷ referencia)^⅓`, la idea de
+Wilks/DOTS. Referencia 75 kg ellos y 60 kg ellas (ahí no cambia nada); topes × 0.85 y × 1.25;
+solo en los de peso, no en los corporales. Se combina con la edad (punto 16). Como la edad,
+**no se menciona en la página**.
+
+Pendiente relacionado: el peso real de cada máquina (cuánto pesa una barra, libras, poleas
+con ventaja) distorsiona más que cualquier factor. Falta poder configurarlo por máquina en la app.
