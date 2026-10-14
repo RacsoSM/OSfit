@@ -232,7 +232,7 @@ describe("diaDeHoy", () => {
 describe("botonEntrenar", () => {
   const dia = { ejercicios: [{ nombre: "Sentadilla", series: 4, repeticiones: "10", pesoONota: "" }] };
   it("sale con ejercicios y continúa si ya hay uno abierto", () => {
-    expect(botonEntrenar(dia, null)).toContain("Empezar entrenamiento");
+    expect(botonEntrenar(dia, null)).toContain("Empezar entrenamiento guiado");
     expect(botonEntrenar(dia, "nuevo")).toContain("Continuar entrenamiento");
   });
   it("no sale sin día o sin ejercicios", () => {

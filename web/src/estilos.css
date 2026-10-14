@@ -154,7 +154,9 @@ main {
   margin: 10px 0 4px; padding: 15px 16px; font-size: 17px; font-weight: 800;
   background: #fff; color: var(--primario-oscuro); border: none;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+  display: flex; align-items: center; justify-content: center; gap: 10px;
 }
+.hoy-empezar-play { font-size: 26px; line-height: 1; }
 .hoy-sin-ejercicios {
   font-size: 13px; color: rgba(255, 255, 255, 0.78); margin: 8px 0 0;
 }

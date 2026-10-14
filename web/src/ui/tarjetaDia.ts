@@ -125,8 +125,8 @@ export function botonEntrenar(
   abierto: "nuevo" | "edicion" | null
 ): string {
   if (!dia || dia.ejercicios.length === 0) return "";
-  const texto = abierto === "nuevo" ? "▶ Continuar entrenamiento" : "▶ Empezar entrenamiento";
-  return `<button id="empezar-entrenamiento" class="boton hoy-empezar">${texto}</button>`;
+  const texto = abierto === "nuevo" ? "Continuar entrenamiento" : "Empezar entrenamiento guiado";
+  return `<button id="empezar-entrenamiento" class="boton hoy-empezar">${texto}<span class="hoy-empezar-play" aria-hidden="true">▶</span></button>`;
 }
 
 export function tarjetaDia(
