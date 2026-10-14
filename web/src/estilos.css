@@ -1340,3 +1340,14 @@ main:has(#barra) { padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
 /* Lo que pide su rutina para el ejercicio, en el entrenamiento guiado. */
 .registro-objetivo { margin: -2px 0 8px; text-align: center; font-size: 14px; font-weight: 700; color: var(--primario); }
 .registro-sin-ligar { margin: 0 2px 12px; }
+
+/* El cronómetro del entrenamiento en curso. Pegado arriba al hacer scroll: entre serie y serie
+   se mira de reojo sin tener que subir. */
+.cronometro {
+  position: sticky; top: 8px; z-index: 5;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  width: fit-content; margin: 0 auto 12px; padding: 6px 16px; border-radius: 999px;
+  background: var(--primario); color: var(--sobre-primario);
+  font-size: 18px; font-weight: 800; box-shadow: 0 3px 10px rgba(0, 0, 0, 0.18);
+}
+.cronometro-tiempo { font-variant-numeric: tabular-nums; }

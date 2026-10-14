@@ -295,3 +295,17 @@ describe("entrenamiento guiado", () => {
     expect(ventanaRegistro(datos({ dia }))).toContain("Máquina inventada");
   });
 });
+
+describe("cronómetro", () => {
+  it("corre desde que inició el entrenamiento, en la captura y al elegir", () => {
+    const inicio = Date.UTC(2026, 9, 12, 17, 0);
+    ponerEstadoRegistro({ vista: "capturar", borrador: nuevoBorrador("b1234567", "2026-10-12", inicio) });
+    expect(ventanaRegistro(datos())).toContain(`data-desde="${inicio}"`);
+    ponerEstadoRegistro({ vista: "elegir", borrador: nuevoBorrador("b1234567", "2026-10-12", inicio) });
+    expect(ventanaRegistro(datos())).toContain(`data-desde="${inicio}"`);
+  });
+  it("no sale al corregir uno ya guardado", () => {
+    ponerEstadoRegistro({ vista: "capturar", borrador: { ...nuevoBorrador("b1234567", "2026-10-12", 1000), edicion: true } });
+    expect(ventanaRegistro(datos())).not.toContain("data-desde");
+  });
+});

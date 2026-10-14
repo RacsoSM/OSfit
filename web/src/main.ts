@@ -64,6 +64,7 @@ import {
   marcarVentanaActiva, panelMenu,
 } from "./ui/menuLateral";
 import type { VideoConUrl } from "./ui/tarjetaVideos";
+import { iniciarCronometros } from "./ui/cronometro";
 
 const app = document.querySelector<HTMLElement>("#app")!;
 
@@ -331,6 +332,7 @@ async function arrancar(): Promise<void> {
    */
   function prepararEstructura(nombre: string): void {
     if (document.querySelector("#contenido")) return;
+    iniciarCronometros();
     // La cabecera (☰ + saludo) y el menú viven fuera de `#contenido` por lo mismo que el
     // saludo: sus nodos tienen estado (la animación, la transición del panel) que un
     // repintado destruiría.

@@ -28,6 +28,7 @@ import { rechazoDefinitivo } from "../cola";
 import { escapar } from "./tarjetaDia";
 import { aterrizar, despegar } from "./vueloRegistro";
 import { conectarDeslizar } from "./deslizarRegistro";
+import { cronometro } from "./cronometro";
 
 /**
  * La ventana Registro: la clienta anota lo que entrenó con su coach en el gym, por
@@ -379,9 +380,19 @@ function opcion(e: EjercicioBanco): string {
     </button>`;
 }
 
+/**
+ * El cronómetro arriba del entrenamiento en curso, desde que lo inició. No en una corrección
+ * (ya terminó) ni en los borradores de antes de guardar la hora de inicio.
+ */
+function cronometroDelBorrador(): string {
+  const b = estado.borrador;
+  return b && !b.edicion && typeof b.iniciado === "number" ? cronometro(b.iniciado) : "";
+}
+
 function vistaElegir(d: DatosRegistro): string {
   if (d.banco.length === 0) {
     return `
+      ${cronometroDelBorrador()}
       <button class="boton-texto registro-volver" data-accion="volver">← Volver</button>
       <p class="accion-nota">Cargando ejercicios…</p>`;
   }
@@ -403,6 +414,7 @@ function vistaElegir(d: DatosRegistro): string {
     ? `<p class="accion-nota" style="margin:2px 2px 0">Hoy te toca ${escapar(d.dia.nombreDia.trim())}</p>`
     : "";
   return `
+    ${cronometroDelBorrador()}
     <button class="boton-texto registro-volver" data-accion="volver">← Volver</button>
     <p class="confirmar-titulo">¿Qué ejercicio hiciste?</p>
     ${hoy}
@@ -542,6 +554,7 @@ function vistaCapturar(d: DatosRegistro): string {
     <p class="accion-nota registro-sin-ligar">${faltan.length === 1 ? "Este ejercicio de tu rutina no está" : "Estos ejercicios de tu rutina no están"} en la lista: ${escapar(faltan.join(", "))}. Si los haces, agrega el más parecido con "+ Agregar ejercicio".</p>`;
   const off = estado.enVuelo ? "disabled" : "";
   return `
+    ${cronometroDelBorrador()}
     ${hay ? ejerciciosDelEntrenamiento(b, d.banco) : ""}
     ${vacio}
     ${sinLigar}
