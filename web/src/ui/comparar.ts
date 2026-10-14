@@ -145,7 +145,7 @@ function vistaComparacion(
       ${cuerpo("a", "Tú", miSexo, mia, mapas)}
       ${cuerpo("b", otra.nombre, otra.sexo, suya, mapas)}
     </div>
-    <button class="boton secundario cmp-girar" data-cmp="girar">🔄 ${deEspalda ? "Ver de frente" : "Ver espalda"}</button>
+    <button class="boton secundario cmp-girar" data-cmp="girar">${deEspalda ? "Ver de frente" : "Ver espalda"}</button>
     <div class="tarjeta cmp-tabla">
       <div class="cmp-musculo cmp-encabezado" aria-hidden="true">
         <span></span><span>Tú</span><span>${escapar(otra.nombre)}</span>
