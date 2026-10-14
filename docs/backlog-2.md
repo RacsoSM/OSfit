@@ -584,3 +584,52 @@ posterior), así que el rear delt pinta el hombro completo, igual que hoy los P�
 
 Duda para el entrenador: ¿cuál de los dos le falta (máquina, polea o ambos) o basta con que
 "rear delt" encuentre a los Pájaros?
+
+## 15. Lo que salió al estrenar Registro con clientas reales (2026-10-13)
+
+Primer día de Registro (que cada clienta anote sus pesos) con clientas reales. Notas del
+entrenador, tal cual:
+
+> "seleccionar peso en el registro cuando se pique" · "indicador de bajar la barrita en músculos no sirve" · "rear delt no está en el banco" · "botón de descartar muy cerca del guardar" · "pantorrilla prensa" · "prensa máquina dos piernas no está" · "maquina patada" · "copa con cuerda de frente" · "tríceps fondos" · "metieron los ejercicios antes q el peso"
+
+### Errores y cambios de la web
+
+1. **Al tocar el campo de peso, que se seleccione lo que ya tiene escrito.** Así se teclea el
+   peso nuevo encima en vez de borrar a mano. Son los `<input>` de reps y peso de
+   `ui/registro.ts` (~línea 334–341): seleccionar el contenido al enfocarlos. Probablemente
+   también en reps. Ojo con iOS: `select()` en el `focus` a veces no pega y hay que hacerlo en
+   el `pointerup` o con `setSelectionRange`.
+2. **La barrita de la hoja de detalle en Músculos no hace nada.** Al tocar un músculo sube una
+   hoja desde abajo con una barrita arriba (`.hoja-asa` en `ui/mapaMuscular.ts`, ~línea 223).
+   Esa barrita invita a jalar la hoja hacia abajo para cerrarla, pero es solo de adorno: hoy
+   solo cierra el ✕. Que deslizar hacia abajo la cierre, o quitar la barrita.
+3. **"Descartar entrenamiento" está muy pegado a "Terminar entrenamiento".** En
+   `ui/registro.ts` (~línea 459–460) van uno debajo del otro. Separarlo bien (más espacio,
+   otro lugar o menos peso visual) para que nadie lo toque sin querer. Ya pide confirmación
+   si hay ejercicios anotados, pero el susto queda.
+4. **Metieron todos los ejercicios antes de anotar los pesos.** Las clientas agregaron primero
+   la lista entera de ejercicios y después regresaron a llenar pesos, en lugar de agregar uno,
+   anotarlo y pasar al siguiente. Hay que decidir si se apoya ese flujo (que llenar los pesos
+   después sea fácil y quede claro cuáles faltan) o si se guía a ir de uno en uno. Además,
+   ¿qué pasa si terminan con ejercicios sin peso?
+
+### Ejercicios que no encontraron en el banco
+
+Revisado contra `functions/semilla/ejercicios.json` (108 ejercicios):
+
+| Lo que buscaron | Qué hay hoy | Qué falta |
+|---|---|---|
+| Rear delt | `pajaros` (con mancuernas), sin el alias "rear delt" | Ver **punto 14**. |
+| Pantorrilla en prensa | Solo `pantorrilla-de-pie` y `pantorrilla-sentado` | **Ejercicio nuevo**: elevación de talones en prensa ("pantorrilla en prensa", "calf press"). |
+| Prensa en máquina a dos piernas | `prensa` (45°/inclinada) y `prensa-horizontal-una-pierna` | **Ejercicio nuevo**: prensa horizontal / sentado a dos piernas. Ojo: hoy los alias "prensa horizontal" y "prensa sentado" apuntan a la de **una** pierna; habría que pasarlos al nuevo. |
+| Patada en máquina | `patada-gluteo-polea` y `patada-gluteo-liga` | **Ejercicio nuevo**: patada de glúteo en máquina. |
+| Copa con cuerda de frente | `extension-triceps-trasnuca-polea` (sobre la cabeza con cuerda) y `extension-triceps-mancuerna` (alias "copa") | Confirmar con el entrenador cuál es. Si es la trasnuca en polea, solo faltan alias ("copa con cuerda", "copa en polea"); si es otra variante, ejercicio nuevo. |
+| Tríceps fondos | `fondos-banco` (alias "fondos de triceps") y `fondos-pecho` | Si es en banco: alias "triceps fondos". Si es en paralelas o en máquina para tríceps: ejercicio nuevo. Confirmar. |
+
+Para cada ejercicio nuevo: GIF/WebP del dataset de Gym visual (`cargarBancoEjercicios.mjs`),
+video con el "camino 1" (punto 10), músculos, grupo, estándares de fuerza
+(`docs/estandares-fuerza/`) y agregarlo en la app a **Ejercicios por grupo** para que salga en
+el grid de Registro.
+
+Dudas para el entrenador: qué ejercicio es exactamente "copa con cuerda de frente" y "tríceps
+fondos" (punto de la tabla), y qué flujo quiere para el punto 4.
