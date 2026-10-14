@@ -25,7 +25,9 @@ import type {
 } from "./datos";
 import { hoyEnMazatlan } from "./fecha";
 import { mesAnterior, type Tirada } from "./tirada";
-import { borrarSesion, editarSesion, guardarPeso, obtenerRanking, registrarEntrada, registrarSesion } from "./acciones";
+import {
+  borrarSesion, editarSesion, guardarPeso, marcarAsistencia, obtenerRanking, registrarEntrada, registrarSesion,
+} from "./acciones";
 import { modalRuleta, conectarRuleta } from "./ui/ruleta";
 import { conectarRanking, type EstadoRanking } from "./ui/tarjetaRanking";
 import { conectarAjustes } from "./ui/tarjetaAjustes";
@@ -524,6 +526,8 @@ async function arrancar(): Promise<void> {
           cola.guardar(encolar(cola.leer(), { clienteId, envio }));
           pendientes = pendientesDe(cola.leer(), clienteId).length;
         },
+        // Sin esperarla ni avisar si falla: sin internet la marca el entrenamiento al llegar.
+        alIniciar: () => { marcarAsistencia({}).catch(() => {}); },
       });
       return;
     }

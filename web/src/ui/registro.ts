@@ -553,6 +553,8 @@ export interface AccionesRegistro {
   borrar: (id: string) => Promise<unknown>;
   /** Guarda en el teléfono uno nuevo que no se pudo mandar, para mandarlo después (`cola.ts`). */
   encolar?: (envio: Envio) => void;
+  /** Al iniciar un entrenamiento nuevo: marca su asistencia de hoy (`marcarAsistencia`). */
+  alIniciar?: () => void;
 }
 
 /**
@@ -609,7 +611,10 @@ export function conectarRegistro(
     const accion = el.dataset.accion;
     if (accion === "iniciar") {
       estado.guardado = false;
-      if (!b) guardarBorrador(nuevoBorrador(idNuevo(), d.hoy, Date.now()));
+      if (!b) {
+        guardarBorrador(nuevoBorrador(idNuevo(), d.hoy, Date.now()));
+        acciones.alIniciar?.();
+      }
       ir("capturar");
       return;
     }

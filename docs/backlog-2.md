@@ -470,7 +470,7 @@ los 4 peso muerto, sentadilla hack/salto/sumo/goblet, swing, saltar la cuerda, s
 cajón): a mitad del fundido se encima la figura, igual que en el GIF original; el entrenador
 decidió subirlos todos. **Falta:** que el entrenador lo vea en su teléfono (web y app).
 
-## 11. Que la web abra sin internet, aunque sea en las pestañas principales — ✅ HECHO lo mínimo (2026-10-14)
+## 11. Que la web abra sin internet, aunque sea en las pestañas principales — ✅ HECHO (2026-10-14)
 
 > "si los clientes no tienen internet, aún así pueden checar su app y viajar por ella? aunque sea por los tabs principales"
 
@@ -806,3 +806,29 @@ Al darla de alta: id tipo `prensa-sentado`, grupo `cuadriceps`, músculos `cuadr
 "prensa sentado", que hoy apuntan a `prensa-horizontal-una-pierna`. Como la animación sería
 nuestra y no del dataset, la carga del banco (`cargarBancoEjercicios.mjs`, que baja por
 `gifOrigen`) necesitaría aceptar un GIF local.
+
+## 21. Asistencia automática al iniciar un entrenamiento en Registro — ✅ HECHO (2026-10-14)
+
+> "quiero que agregues que, cuando un cliente inicie un entrenamiento en Registro, automáticamente se marque su asistencia de ese día y se me refleje en mi app de entrenador" (2026-10-14)
+
+Al tocar **"Iniciar entrenamiento"** (uno nuevo, no al editar uno pasado), la página llama a la
+función `marcarAsistencia` (`functions/src/asistenciaWeb.ts`) sin hacer esperar a la clienta.
+Escribe en `asistencias` lo mismo que la app al marcar: `asistio`, el día de la rutina que hizo
+y su variación, así que el entrenador la ve en Tomar asistencia y la rutina avanza igual que si
+la hubiera marcado él. También refresca en la ficha el trío que lee la web (`ultimoDia`…), como
+`SincronizadorDiaWeb` en la app.
+
+- **El día y la variación los calcula el servidor**, con las mismas reglas que la web
+  (`interpretar` de `web/src/dia.ts` y `variacionQueToca` de `web/src/variacion.ts`, copiadas
+  como gemelos): son los que la web le muestra como "Hoy te toca…".
+- **Si el entrenador ya la marcó, no se toca.** Si estaba como falta, pasa a asistencia (como el
+  cronómetro de la app). Su botón "Guardar" de Tomar asistencia solo marca "Faltó" a quien no
+  tiene registro, así que no la pisa.
+- **Sin internet:** la asistencia se marca cuando llega el entrenamiento (`registrarSesion`
+  llama a la misma función con la fecha del entrenamiento). Uno mandado tarde de un día ya
+  superado, o anterior a un día asignado a mano, se marca sin día para no mover la rutina.
+- Fin de semana, sin rutina o descanso del ciclo: asistencia sin día de rutina.
+- No inicia el cronómetro de la app (hora de llegada y salida).
+- **Eliminar el entrenamiento no quita la asistencia:** ya estaba en el gimnasio.
+- El documento lleva `marcadaDesde: "registro"`, para saber de dónde salió; la app lo ignora.
+

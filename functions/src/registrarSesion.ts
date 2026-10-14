@@ -1,6 +1,7 @@
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { REGION, clienteDeLaSesion, db, hoyEnMazatlan } from "./comun";
+import { marcarAsistenciaDelDia } from "./asistenciaWeb";
 
 /**
  * Registro: la clienta anota lo que entrenó (los ejercicios que el coach le dijo en el gym,
@@ -163,6 +164,11 @@ export const registrarSesion = onCall({ region: REGION }, async (request) => {
     ...(inicio !== null ? { iniciada: Timestamp.fromMillis(inicio) } : {}),
     origen: "manual",
     ejercicios: sesion.ejercicios,
+  });
+  // La asistencia se marca al iniciar el entrenamiento (`marcarAsistencia`); esto la cubre si
+  // lo inició sin internet. Si falla no se pierde el entrenamiento, que ya está guardado.
+  await marcarAsistenciaDelDia(clienteId, fecha).catch((error) => {
+    console.error("No se pudo marcar la asistencia al guardar el entrenamiento", clienteId, fecha, error);
   });
   return { ok: true, id: sesion.id, fecha };
 });

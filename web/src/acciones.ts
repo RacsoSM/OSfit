@@ -76,6 +76,16 @@ export const registrarSesion = httpsCallable<Envio, { ok: true; id: string; fech
   "registrarSesion"
 );
 
+/**
+ * Marca su asistencia de hoy al iniciar un entrenamiento en Registro, para que el entrenador
+ * la vea en su app. La página no la espera; si falla (sin internet), la marca `registrarSesion`
+ * cuando llegue el entrenamiento.
+ */
+export const marcarAsistencia = httpsCallable<Record<string, never>, { ok: true; marcada: boolean }>(
+  functions,
+  "marcarAsistencia"
+);
+
 /** Corrige un entrenamiento ya guardado; conserva su fecha y sus horas. */
 export const editarSesion = httpsCallable<Envio, { ok: true; id: string }>(functions, "editarSesion");
 
