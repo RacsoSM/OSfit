@@ -310,3 +310,35 @@ describe("cronómetro", () => {
     expect(ventanaRegistro(datos())).not.toContain("data-desde");
   });
 });
+
+describe("resumen al terminar", () => {
+  const resumen = {
+    minutos: 48, ejercicios: 2, series: 7, kilos: 1240,
+    musculos: [{ musculo: "pecho", nombre: "Pecho", principal: true }, { musculo: "hombro", nombre: "Hombros", principal: false }],
+    subidas: [{ musculo: "pecho", nombre: "Pecho", antes: 2, despues: 3, nivel: 4.1 }],
+    enTelefono: false, guiado: true, dia: "Pecho y hombro",
+  };
+  it("muestra duración, lo que hizo, lo que subió de rango y los músculos", () => {
+    ponerEstadoRegistro({ vista: "resumen", borrador: null, resumen });
+    const html = ventanaRegistro(datos({ sexo: "M" }));
+    expect(html).toContain("¡Entrenamiento terminado!");
+    expect(html).toContain("Pecho y hombro");
+    expect(html).toContain("<strong>48 min</strong>");
+    expect(html).toContain("1,240 kg");
+    expect(html).toContain("¡Subiste de rango!");
+    expect(html).toContain("En forma → Intermedio");
+    expect(html).toContain('resumen-musculo principal">Pecho');
+    expect(html).toContain('data-accion="listo"');
+    expect(html).not.toContain("se enviará solo");
+  });
+  it("sin internet avisa que se guardó en el teléfono", () => {
+    ponerEstadoRegistro({ vista: "resumen", borrador: null, resumen: { ...resumen, enTelefono: true, subidas: [] } });
+    const html = ventanaRegistro(datos());
+    expect(html).toContain("se enviará solo");
+    expect(html).not.toContain("Subiste de rango");
+  });
+  it("sin resumen regresa al inicio de Registro", () => {
+    ponerEstadoRegistro({ vista: "resumen", borrador: null });
+    expect(ventanaRegistro(datos())).toContain("Tu semana");
+  });
+});

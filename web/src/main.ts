@@ -530,6 +530,7 @@ async function arrancar(): Promise<void> {
         },
         // Sin esperarla ni avisar si falla: sin internet la marca el entrenamiento al llegar.
         alIniciar: () => { marcarAsistencia({}).catch(() => {}); },
+        verMusculos: () => abrirVentana("musculos"),
       });
       return;
     }

@@ -79,6 +79,8 @@ export function datosRegistro(d: DatosCliente): DatosRegistro {
     config: d.configGrupos,
     pendientes: d.pendientes ?? 0,
     promedioMinutos: promedioMinutos(d.asistencias),
+    fuerza: (sesiones) => fuerzaDelCliente({ ...d, sesiones: [...sesiones] }),
+    sexo: d.cliente.sexo === "H" || d.cliente.sexo === "M" ? d.cliente.sexo : null,
   };
 }
 

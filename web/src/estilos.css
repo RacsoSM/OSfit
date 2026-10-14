@@ -1352,3 +1352,23 @@ main:has(#barra) { padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
   font-size: 18px; font-weight: 800; box-shadow: 0 3px 10px rgba(0, 0, 0, 0.18);
 }
 .cronometro-tiempo { font-variant-numeric: tabular-nums; }
+
+/* El resumen al terminar un entrenamiento (Registro y guiado). */
+.resumen { text-align: center; margin: 8px 0 14px; }
+.resumen-emoji { font-size: 56px; line-height: 1; margin: 0 0 6px; animation: resumen-brinco 0.6s ease-out; }
+.resumen-titulo { margin: 0; font-size: 24px; font-weight: 800; }
+.resumen-dia { margin: 4px 0 0; color: var(--texto-tenue); font-size: 15px; }
+.resumen-datos { grid-template-columns: repeat(2, minmax(0, 1fr)); margin-bottom: 12px; }
+.resumen-subidas .resumen-subida { display: flex; align-items: center; gap: 12px; padding: 6px 0; }
+.resumen-subida svg { flex: none; }
+.resumen-subida-texto { display: flex; flex-direction: column; gap: 2px; }
+.resumen-subida-texto span { font-size: 13px; color: var(--texto-tenue); }
+.resumen-musculos { display: flex; flex-wrap: wrap; gap: 6px; }
+.resumen-musculo {
+  padding: 5px 11px; border-radius: 999px; font-size: 13px;
+  background: var(--superficie-alta); color: var(--texto-tenue);
+}
+.resumen-musculo.principal { background: var(--primario); color: var(--sobre-primario); font-weight: 700; }
+.resumen-musculos-boton { margin-top: 8px; }
+@keyframes resumen-brinco { 0% { transform: scale(0.4); opacity: 0; } 70% { transform: scale(1.15); } 100% { transform: scale(1); opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .resumen-emoji { animation: none; } }

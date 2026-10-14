@@ -1,7 +1,7 @@
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { REGION, clienteDeLaSesion, db, hoyEnMazatlan } from "./comun";
-import { marcarAsistenciaDelDia } from "./asistenciaWeb";
+import { actualizarDuracionDelDia, marcarAsistenciaDelDia } from "./asistenciaWeb";
 
 /**
  * Registro: la clienta anota lo que entrenó (los ejercicios que el coach le dijo en el gym,
@@ -178,6 +178,10 @@ export const registrarSesion = onCall({ region: REGION }, async (request) => {
   await marcarAsistenciaDelDia(clienteId, fecha).catch((error) => {
     console.error("No se pudo marcar la asistencia al guardar el entrenamiento", clienteId, fecha, error);
   });
+  // Y su duración, para quien entrena sin el cronómetro del entrenador.
+  await actualizarDuracionDelDia(clienteId, fecha).catch((error) => {
+    console.error("No se pudo poner la duración en la asistencia", clienteId, fecha, error);
+  });
   return { ok: true, id: sesion.id, fecha };
 });
 
@@ -213,6 +217,14 @@ export const borrarSesion = onCall({ region: REGION }, async (request) => {
   const clienteId = await clienteDeLaSesion(request);
   const id = idSesion(request.data);
   if (!id) throw new HttpsError("invalid-argument", "id_invalido");
-  await db().collection("clientes").doc(clienteId).collection("sesiones").doc(id).delete();
+  const ref = db().collection("clientes").doc(clienteId).collection("sesiones").doc(id);
+  const fecha = (await ref.get()).get("fecha") as string | undefined;
+  await ref.delete();
+  // Sin ese entrenamiento, la duración del día cambia (o desaparece).
+  if (fecha) {
+    await actualizarDuracionDelDia(clienteId, fecha).catch((error) => {
+      console.error("No se pudo actualizar la duración al borrar", clienteId, fecha, error);
+    });
+  }
   return { ok: true, id };
 });
