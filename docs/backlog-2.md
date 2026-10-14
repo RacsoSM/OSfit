@@ -599,11 +599,11 @@ entrenador, tal cual:
 
 ### Errores y cambios de la web
 
-1. ✅ **HECHO (2026-10-14).** **Al tocar el campo de peso, que se seleccione lo que ya tiene escrito.** Así se teclea el
+1. ✅ **HECHO (2026-10-14).** ~~**Al tocar el campo de peso, que se seleccione lo que ya tiene escrito.** Así se teclea el
    peso nuevo encima en vez de borrar a mano. Son los `<input>` de reps y peso de
    `ui/registro.ts` (~línea 334–341): seleccionar el contenido al enfocarlos. Probablemente
    también en reps. Ojo con iOS: `select()` en el `focus` a veces no pega y hay que hacerlo en
-   el `pointerup` o con `setSelectionRange`.
+   el `pointerup` o con `setSelectionRange`.~~
    *Hecho:* un `focusin` en `conectarRegistro` selecciona peso y reps con `setSelectionRange`, y
    lo repite tras un `setTimeout` para que el toque de iOS no lo deshaga.
 2. **La barrita de la hoja de detalle en Músculos no hace nada.** Al tocar un músculo sube una
