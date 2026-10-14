@@ -356,6 +356,12 @@ export interface ResumenSemana {
 const LETRAS = ["L", "M", "M", "J", "V", "S", "D"];
 
 /**
+ * Los entrenamientos que se buscan por semana: el "2 / 5" de la tarjeta de Inicio. El mismo
+ * para todas, tenga su rutina los días que tenga (decisión del entrenador, 2026-10-14).
+ */
+export const OBJETIVO_SEMANAL = 5;
+
+/**
  * Lo que lleva entrenado en la semana de [hoy], de lunes a domingo, contado solo con lo que ELLA
  * anotó. De la rutina no sale nada: Registro no sigue la rutina (ver arriba).
  *

@@ -17,6 +17,8 @@ import { invitacionNotificaciones, seccionNotificaciones } from "./ui/tarjetaNot
 import type { EstadoNotificaciones } from "./notificaciones";
 import { tarjetaMusculos, type EstadoSvg } from "./ui/mapaMuscular";
 import { bloquePeso } from "./ui/pesoCorporal";
+import { promedioMinutos } from "./racha";
+import { resumenSemana } from "./registro";
 import { edadEn, fuerzaPorMusculo, pesoParaFuerza, type FuerzaMusculo } from "./fuerza";
 
 /**
@@ -76,6 +78,7 @@ export function datosRegistro(d: DatosCliente): DatosRegistro {
     sesiones: d.sesiones,
     config: d.configGrupos,
     pendientes: d.pendientes ?? 0,
+    promedioMinutos: promedioMinutos(d.asistencias),
   };
 }
 
@@ -118,7 +121,7 @@ function inicio(d: DatosCliente): string {
       ${tarjetaDia(d.cliente, d.hoy, acciones, d.asistencias,
         botonEntrenar(diaDeHoy(d.cliente, d.hoy, d.asistencias), entrenamientoAbierto()))}
       ${invitacionNotificaciones(d.notificaciones, d.invitacionDescartada)}
-      ${tarjetasStats(d.asistencias, d.hoy)}
+      ${tarjetasStats(d.asistencias, d.hoy, d.sesiones ? resumenSemana(d.sesiones, d.hoy).entrenamientos : null)}
       ${tarjetaRevivir(d.cliente, d.hoy, d.asistencias, d.tiradaEsteMes, d.tiradaMesAnterior)}
       ${calendario(d.asistencias, d.mesVisible, d.hoy)}
     `;

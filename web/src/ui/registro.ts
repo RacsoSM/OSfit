@@ -72,6 +72,11 @@ export interface DatosRegistro {
   config: ConfigGrupos | null;
   /** Entrenamientos terminados sin internet que esperan a mandarse (`cola.ts`). */
   pendientes?: number;
+  /**
+   * Minutos promedio por sesión, de sus asistencias (`promedioMinutos`); null sin sesiones
+   * medidas. Estaba en Inicio y se cambió de lugar con el "n / 5" (entrenador, 2026-10-14).
+   */
+  promedioMinutos?: number | null;
 }
 
 type Vista = "inicio" | "historial" | "elegir" | "capturar";
@@ -288,12 +293,6 @@ function filaReciente(s: Sesion): string {
  * el botón para empezar y sus entrenamientos recientes. Todo sale de lo que ella anotó; de la
  * rutina solo se toma el nombre del día que le toca, para el botón.
  */
-/**
- * Los entrenamientos que se buscan por semana: el "2 / 5" del resumen. El mismo para todas,
- * tenga su rutina los días que tenga (decisión del entrenador, 2026-10-14).
- */
-const OBJETIVO_SEMANAL = 5;
-
 function vistaInicio(d: DatosRegistro): string {
   const n = d.pendientes ?? 0;
   // Guardado sin internet y ya se mandó (la cola quedó vacía): es un guardado normal.
@@ -315,10 +314,10 @@ function vistaInicio(d: DatosRegistro): string {
       </li>`;
   }).join("");
 
-  const meta = `<span class="registro-dato-de"> / ${OBJETIVO_SEMANAL}</span>`;
+  const promedio = d.promedioMinutos ?? null;
   const datos = `
     <div class="registro-datos">
-      <div class="registro-dato"><strong>${semana.entrenamientos}${meta}</strong><span>entrenamientos</span></div>
+      <div class="registro-dato"><strong>${promedio === null ? "—" : duracion(promedio)}</strong><span>promedio por sesión</span></div>
       <div class="registro-dato"><strong>${semana.minutos === null ? "—" : duracion(semana.minutos)}</strong><span>entrenando</span></div>
       <div class="registro-dato"><strong>${semana.series}</strong><span>series</span></div>
     </div>`;

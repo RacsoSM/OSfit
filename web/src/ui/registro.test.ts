@@ -57,12 +57,12 @@ describe("inicio", () => {
         { ejercicioId: "plancha", nombre: "Plancha", series: [{ reps: 45, peso: null }] },
       ],
     }];
-    const html = ventanaRegistro(datos({ hoy: "2026-10-13", sesiones }));
+    const html = ventanaRegistro(datos({ hoy: "2026-10-13", sesiones, promedioMinutos: 47 }));
     expect(html).toContain("Tu semana");
     expect(html).toContain("▶ Iniciar entrenamiento · Pecho");
     expect(html).toMatch(/registro-semana-num hecho[^>]*>12</);
     expect(html).toMatch(/registro-semana-num es-hoy[^>]*>13</);
-    expect(html).toMatch(/<strong>1<span class="registro-dato-de"> \/ 5<\/span><\/strong><span>entrenamientos</);
+    expect(html).toContain("<strong>47 min</strong><span>promedio por sesión");
     expect(html).toContain("<strong>52 min</strong>");
     expect(html).toContain("<strong>3</strong><span>series");
     expect(html).toContain("Press de banca y Plancha");
@@ -262,9 +262,10 @@ describe("entrenamientos sin internet", () => {
   });
 });
 
-describe("objetivo de la semana", () => {
-  it("es 5 para todas, tenga su rutina los días que tenga", () => {
-    expect(ventanaRegistro(datos())).toContain('<span class="registro-dato-de"> / 5</span>');
+describe("promedio por sesión", () => {
+  it("sin sesiones medidas dice —, y pasando de una hora usa horas", () => {
+    expect(ventanaRegistro(datos())).toContain("<strong>—</strong><span>promedio por sesión");
+    expect(ventanaRegistro(datos({ promedioMinutos: 65 }))).toContain("<strong>1 h 05</strong><span>promedio por sesión");
   });
 });
 

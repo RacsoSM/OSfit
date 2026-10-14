@@ -180,6 +180,8 @@ main {
 .fila { display: flex; gap: 12px; }
 .fila > * { flex: 1; }
 .numero { font-size: 30px; font-weight: 800; line-height: 1; margin: 4px 0; }
+/* El "/ 5" de los entrenamientos de la semana: más chico y tenue, el número es lo que importa. */
+.numero-de { font-size: 0.6em; font-weight: 700; color: var(--texto-tenue); }
 .vacio { text-align: center; padding: 24px 12px; }
 .vacio-emoji { font-size: 40px; }
 /* Las dos acciones. Botones de ancho completo y alto cómodo: el cliente abre esto desde un
@@ -1175,7 +1177,6 @@ main:has(#barra) { padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
 }
 .registro-dato strong { font-size: 20px; white-space: nowrap; }
 .registro-dato span { font-size: 12px; color: var(--texto-tenue); }
-.registro-dato .registro-dato-de { display: inline; font-size: 14px; font-weight: 400; }
 .registro-boton-iniciar { margin: 14px 0 6px; padding: 18px 14px; font-size: 17px; border-radius: 16px; }
 .registro-recientes-cabecera { display: flex; justify-content: space-between; align-items: center; margin: 14px 4px 6px; }
 .registro-recientes-titulo {
