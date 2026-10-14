@@ -1,6 +1,6 @@
 /**
  * El cronómetro del entrenamiento: corre desde que tocó "Iniciar entrenamiento" (Registro) o
- * "Empezar entrenamiento guiado ▶" (tarjeta del día). No guarda nada propio: cuenta desde
+ * "▶ Empezar entrenamiento guiado" (tarjeta del día). No guarda nada propio: cuenta desde
  * `Borrador.iniciado`, que ya vive en el navegador, así que cerrar la pestaña o cambiar de
  * ventana no lo reinicia.
  *

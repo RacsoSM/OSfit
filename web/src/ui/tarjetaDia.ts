@@ -126,7 +126,10 @@ export function botonEntrenar(
 ): string {
   if (!dia || dia.ejercicios.length === 0) return "";
   const texto = abierto === "nuevo" ? "Continuar entrenamiento" : "Empezar entrenamiento guiado";
-  return `<button id="empezar-entrenamiento" class="boton hoy-empezar">${texto}<span class="hoy-empezar-play" aria-hidden="true">▶</span></button>`;
+  // Triángulo dibujado y no el carácter ▶: el carácter se sienta en la línea base de la fuente
+  // y se ve más alto que el texto; el SVG se centra exacto con `align-items: center`.
+  const play = `<svg class="hoy-empezar-play" viewBox="0 0 20 20" aria-hidden="true"><path d="M5 2.5v15l13-7.5z" fill="currentColor"/></svg>`;
+  return `<button id="empezar-entrenamiento" class="boton hoy-empezar">${play}<span>${texto}</span></button>`;
 }
 
 export function tarjetaDia(
