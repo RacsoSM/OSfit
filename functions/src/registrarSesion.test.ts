@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { idSesion, inicioValido, sesionValida, type DelBanco } from "./registrarSesion";
+import { fechaValida, idSesion, inicioValido, sesionValida, terminadaValida, type DelBanco } from "./registrarSesion";
 
 const banco = new Map<string, DelBanco>([
   ["press-banca", { nombre: "Press de banca", tipo: "peso" }],
@@ -98,3 +98,31 @@ describe("idSesion", () => {
     expect(idSesion(null)).toBeNull();
   });
 });
+
+describe("terminadaValida", () => {
+  const AHORA = Date.UTC(2026, 9, 14, 18, 0);
+  it("acepta hasta una semana de atraso (hecho sin internet)", () => {
+    expect(terminadaValida(AHORA - 2 * 24 * 3_600_000, AHORA)).toBe(AHORA - 2 * 24 * 3_600_000);
+  });
+  it("más de una semana, del futuro o basura no sirve", () => {
+    expect(terminadaValida(AHORA - 8 * 24 * 3_600_000, AHORA)).toBeNull();
+    expect(terminadaValida(AHORA + 10 * 60_000, AHORA)).toBeNull();
+    expect(terminadaValida("ayer", AHORA)).toBeNull();
+    expect(terminadaValida(undefined, AHORA)).toBeNull();
+  });
+});
+
+describe("fechaValida", () => {
+  it("acepta hoy y hasta 7 días atrás", () => {
+    expect(fechaValida("2026-10-14", "2026-10-14")).toBe("2026-10-14");
+    expect(fechaValida("2026-10-13", "2026-10-14")).toBe("2026-10-13");
+    expect(fechaValida("2026-10-07", "2026-10-14")).toBe("2026-10-07");
+  });
+  it("del futuro, más de una semana o mal escrita no sirve", () => {
+    expect(fechaValida("2026-10-15", "2026-10-14")).toBeNull();
+    expect(fechaValida("2026-10-06", "2026-10-14")).toBeNull();
+    expect(fechaValida("14/10/2026", "2026-10-14")).toBeNull();
+    expect(fechaValida(undefined, "2026-10-14")).toBeNull();
+  });
+});
+

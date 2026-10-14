@@ -470,7 +470,7 @@ los 4 peso muerto, sentadilla hack/salto/sumo/goblet, swing, saltar la cuerda, s
 cajón): a mitad del fundido se encima la figura, igual que en el GIF original; el entrenador
 decidió subirlos todos. **Falta:** que el entrenador lo vea en su teléfono (web y app).
 
-## 11. Que la web abra sin internet, aunque sea en las pestañas principales
+## 11. Que la web abra sin internet, aunque sea en las pestañas principales — ✅ HECHO lo mínimo (2026-10-14)
 
 > "si los clientes no tienen internet, aún así pueden checar su app y viajar por ella? aunque sea por los tabs principales"
 
@@ -502,6 +502,35 @@ Lo que haría falta:
 
 Sin red siguen sin funcionar: la ruleta, revivir la racha y los GIF/videos que no haya visto
 antes (salen de Storage).
+
+> "quiero que la web abra sin internet, mínimamente para que puedan hacer el flujo de guardar sus entrenamientos en Registro, y que ya se mande a firebase cuando recuperen la conexión" (2026-10-14)
+
+**Hecho (2026-10-14), lo mínimo que pidió el entrenador:**
+
+1. **Guardar la página** (`web/public/sw.js`): el service worker guarda el HTML, el JS y el CSS
+   del build (también los pedazos que se cargan después), los SVG del mapa y los íconos. El HTML
+   va red primero (con 5 s de plazo), así que con señal siempre llega el del último deploy; los
+   de `/assets/` llevan hash y van caché primero, y al llegar una versión nueva se borran los
+   viejos. Ahora se registra en cada carga, no solo al activar los avisos.
+2. **Entrar sin red** (`web/src/firebase.ts`): si el token no se puede renovar por falta de
+   red y este teléfono ya validó esa sesión antes (`osfit:sesion-validada`), entra con ella y
+   Firestore muestra lo guardado. `credencialLista` ya no tumba el arranque sin red.
+3. **Cola de entrenamientos** (`web/src/cola.ts`): "Terminar entrenamiento" sin red (o si el
+   envío falla por la red) lo guarda en el teléfono y avisa "¡Entrenamiento guardado en tu
+   teléfono! 📱 Se enviará solo en cuanto tengas internet."; Registro muestra cuántos esperan.
+   Se mandan al abrir, al volver la señal y cada minuto. Reenviar no duplica (el id es el del
+   borrador).
+4. **La fecha correcta** (`functions/src/registrarSesion.ts`): el envío lleva `fecha` y
+   `terminadaEn` del teléfono, y si llega tarde (hasta 7 días) la sesión se guarda con ese día
+   y esa hora, no con los de cuando llegó.
+
+Probado en Chromium: recarga sin red servida desde el service worker, y el flujo de Registro sin
+red → cola → envío al volver la red. **Falta probar en un teléfono** con una clienta real (modo
+avión) la entrada sin red con la sesión guardada.
+
+Sigue sin hacerse: editar o borrar entrenamientos sin red, y que "Tu semana" cuente los que
+esperan internet (aparecen cuando llegan al servidor). La primera vez que una clienta abre la
+página después del deploy necesita señal para que se guarde.
 
 ## 12. Que cada APK diga qué versión es
 

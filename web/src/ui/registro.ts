@@ -23,6 +23,7 @@ import {
   type Envio,
   type SerieBorrador,
 } from "../registro";
+import { rechazoDefinitivo } from "../cola";
 import { escapar } from "./tarjetaDia";
 import { aterrizar, despegar } from "./vueloRegistro";
 import { conectarDeslizar } from "./deslizarRegistro";
@@ -69,6 +70,8 @@ export interface DatosRegistro {
   config: ConfigGrupos | null;
   /** Cuántos días tiene su rutina, para el "2 / 5" de la semana; sin rutina, no se muestra. */
   diasRutina?: number;
+  /** Entrenamientos terminados sin internet que esperan a mandarse (`cola.ts`). */
+  pendientes?: number;
 }
 
 type Vista = "inicio" | "historial" | "elegir" | "capturar";
@@ -78,7 +81,8 @@ interface Estado {
   borrador: Borrador | null;
   enVuelo: boolean;
   error: string | null;
-  guardado: boolean;
+  /** Se acaba de terminar uno: "enviado" llegó al servidor; "en-telefono", se guardó sin internet. */
+  guardado: false | "enviado" | "en-telefono";
   /** El ejercicio recién agregado, para llevarle la vista al pintar. */
   enfocar: number | null;
   /** El GIF que va volando del grid a su tarjeta (ver `vueloRegistro.ts`); null si no hay. */
@@ -253,7 +257,13 @@ function filaReciente(s: Sesion): string {
  * rutina solo se toma el nombre del día que le toca, para el botón.
  */
 function vistaInicio(d: DatosRegistro): string {
-  const aviso = estado.guardado ? `<p class="aviso-ok">¡Entrenamiento guardado! 💪</p>` : "";
+  const n = d.pendientes ?? 0;
+  // Guardado sin internet y ya se mandó (la cola quedó vacía): es un guardado normal.
+  const aviso = estado.guardado === "en-telefono" && n > 0
+    ? `<p class="aviso-ok">¡Entrenamiento guardado en tu teléfono! 📱 Se enviará solo en cuanto tengas internet.</p>`
+    : estado.guardado ? `<p class="aviso-ok">¡Entrenamiento guardado! 💪</p>`
+    : n > 0 ? `<p class="registro-pendientes">📤 ${n === 1 ? "1 entrenamiento espera" : `${n} entrenamientos esperan`} internet para enviarse.</p>`
+    : "";
   const sesiones = d.sesiones ?? [];
   const semana = resumenSemana(sesiones, d.hoy);
 
@@ -541,6 +551,8 @@ export interface AccionesRegistro {
   editar: (envio: Envio) => Promise<unknown>;
   /** Borra uno del historial (`borrarSesion`). */
   borrar: (id: string) => Promise<unknown>;
+  /** Guarda en el teléfono uno nuevo que no se pudo mandar, para mandarlo después (`cola.ts`). */
+  encolar?: (envio: Envio) => void;
 }
 
 /**
@@ -620,11 +632,24 @@ export function conectarRegistro(
     if (accion === "guardar" && b) {
       const envio = paraEnviar(b);
       if (!envio.ok) { estado.error = envio.error; repintar(); return; }
+      const edicion = b.edicion === true;
+      // Uno nuevo lleva su día y la hora en que terminó: si se manda tarde, valen esos.
+      const datos: Envio = edicion ? envio.datos : { ...envio.datos, fecha: b.fecha, terminadaEn: Date.now() };
+      /** Sin internet: se queda en el teléfono y se manda solo cuando vuelva la señal. */
+      const enTelefono = (): void => {
+        acciones.encolar?.(datos);
+        estado.enVuelo = false;
+        guardarBorrador(null);
+        estado.guardado = "en-telefono";
+        ir("inicio");
+      };
+      const puedeEsperar = !edicion && acciones.encolar !== undefined;
+      // Si el teléfono ya sabe que no hay red, ni se intenta: sería esperar a que falle.
+      if (puedeEsperar && navigator.onLine === false) { enTelefono(); return; }
       estado.enVuelo = true;
       estado.error = null;
       repintar();
-      const edicion = b.edicion === true;
-      (edicion ? acciones.editar : acciones.guardar)(envio.datos).then(
+      (edicion ? acciones.editar : acciones.guardar)(datos).then(
         () => {
           estado.enVuelo = false;
           guardarBorrador(null);
@@ -634,11 +659,12 @@ export function conectarRegistro(
             estado.aviso = "Cambios guardados ✓";
             ir("historial");
           } else {
-            estado.guardado = true;
+            estado.guardado = "enviado";
             ir("inicio");
           }
         },
-        () => {
+        (error) => {
+          if (puedeEsperar && !rechazoDefinitivo(error)) { enTelefono(); return; }
           // El borrador se queda: con señal de vuelta, "Guardar" reescribe la misma sesión.
           estado.enVuelo = false;
           estado.error = "No se pudo guardar. Revisa tu conexión e intenta otra vez; lo que anotaste sigue aquí.";

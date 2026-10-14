@@ -53,6 +53,12 @@ export interface Envio {
   id: string;
   /** Hora de inicio del entrenamiento; el servidor la descarta si no es razonable. */
   iniciadaEn?: number;
+  /**
+   * El día y la hora en que tocó "Terminar entrenamiento". Importan cuando se manda tarde,
+   * hecho sin internet (`cola.ts`): el servidor los usa en vez de cuándo llegó.
+   */
+  fecha?: string;
+  terminadaEn?: number;
   ejercicios: { ejercicioId: string; series: SerieSesion[] }[];
 }
 

@@ -209,6 +209,11 @@ main {
   background: var(--superficie-alta); border-left: 3px solid var(--verde);
   border-radius: 8px; padding: 10px 12px; margin: 0 0 12px; font-size: 14px;
 }
+/* Entrenamientos hechos sin internet que esperan a mandarse (`cola.ts`). */
+.registro-pendientes {
+  background: var(--superficie-alta); border-left: 3px solid var(--texto-tenue);
+  border-radius: 8px; padding: 10px 12px; margin: 0 0 12px; font-size: 14px; color: var(--texto-tenue);
+}
 .aviso-error {
   background: var(--superficie-alta); border-left: 3px solid var(--rojo);
   border-radius: 8px; padding: 10px 12px; margin: 12px 0 0; font-size: 14px;

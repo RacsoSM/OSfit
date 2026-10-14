@@ -136,9 +136,15 @@ export function iniciarSesion(): Promise<ResultadoSesion> {
       if (!usuario) return null;
       try {
         const token = await usuario.getIdTokenResult();
-        return typeof token.claims.clienteId === "string" ? usuario.uid : null;
-      } catch {
-        return null;
+        const valida = typeof token.claims.clienteId === "string";
+        if (valida) recordarValidada(usuario.uid);
+        return valida ? usuario.uid : null;
+      } catch (error) {
+        // Sin internet el token no se puede renovar (duran una hora), pero eso no dice nada
+        // de la sesión: si este teléfono ya la validó antes, se entra con ella y la página
+        // muestra lo que Firestore tiene guardado (backlog 2, punto 11). Con señal, el
+        // siguiente pedido la renueva o, si el entrenador la revocó, cae al candado.
+        return esFalloDeRed(error) && validadaAntes(usuario.uid) ? usuario.uid : null;
       }
     },
     /*
@@ -202,6 +208,11 @@ export async function renovarCredencial(): Promise<ResultadoSesion["estado"]> {
  */
 export async function cerrarSesion(): Promise<void> {
   try {
+    localStorage.removeItem(LLAVE_VALIDADA);
+  } catch {
+    /* Si no se puede borrar, el `signOut` de abajo igual quita la sesión con que entraría. */
+  }
+  try {
     memoriaToken(almacenesDelNavegador()).olvidar();
   } catch {
     /* El canje lo va a rechazar igual. */
@@ -240,6 +251,20 @@ export async function huellaDeLaSesion(): Promise<string> {
   }
 }
 
+/**
+ * La última sesión que se validó con el servidor en este teléfono (su uid, que es el id de la
+ * clienta). Es lo que deja entrar sin internet: una sesión que nunca se validó aquí no entra.
+ */
+const LLAVE_VALIDADA = "osfit:sesion-validada";
+
+function recordarValidada(uid: string): void {
+  try { localStorage.setItem(LLAVE_VALIDADA, uid); } catch { /* sin respaldo sin internet, nada más */ }
+}
+
+function validadaAntes(uid: string): boolean {
+  try { return localStorage.getItem(LLAVE_VALIDADA) === uid; } catch { return false; }
+}
+
 /** Canjea un token por una sesión de Firebase. No tira: cada falla vuelve como un estado. */
 async function canjear(token: string): Promise<ResultadoSesion> {
   let respuesta: Response;
@@ -262,6 +287,7 @@ async function canjear(token: string): Promise<ResultadoSesion> {
   try {
     const { customToken } = await respuesta.json();
     const credencial = await signInWithCustomToken(auth, customToken);
+    recordarValidada(credencial.user.uid);
     return { estado: "lista", clienteId: credencial.user.uid };
   } catch (error) {
     // El custom token ya salió bueno, así que lo único que puede fallar acá es el viaje a

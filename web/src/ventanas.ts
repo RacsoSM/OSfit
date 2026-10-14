@@ -62,6 +62,8 @@ export interface DatosCliente {
   sesiones: Sesion[] | null;
   /** Los ejercicios por grupo que configuró el entrenador; null si no hay configuración. */
   configGrupos: ConfigGrupos | null;
+  /** Entrenamientos terminados sin internet que esperan a mandarse (`cola.ts`). */
+  pendientes?: number;
 }
 
 /** Lo que necesita Registro, armado de lo que hay en cada repintado. Lo usa también `main.ts`. */
@@ -74,6 +76,7 @@ export function datosRegistro(d: DatosCliente): DatosRegistro {
     sesiones: d.sesiones,
     config: d.configGrupos,
     diasRutina: d.cliente.rutinaAsignada?.dias.length ?? 0,
+    pendientes: d.pendientes ?? 0,
   };
 }
 

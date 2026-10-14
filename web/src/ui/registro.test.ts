@@ -254,3 +254,11 @@ describe("avisoReps", () => {
   });
 });
 
+describe("entrenamientos sin internet", () => {
+  it("avisa cuántos esperan internet para enviarse", () => {
+    expect(ventanaRegistro(datos({ pendientes: 1 }))).toContain("1 entrenamiento espera internet para enviarse.");
+    expect(ventanaRegistro(datos({ pendientes: 3 }))).toContain("3 entrenamientos esperan internet para enviarse.");
+    expect(ventanaRegistro(datos())).not.toContain("registro-pendientes");
+  });
+});
+

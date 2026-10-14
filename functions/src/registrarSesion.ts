@@ -92,6 +92,35 @@ export function inicioValido(ms: unknown, ahora: number): number | null {
   return ms;
 }
 
+/**
+ * Lo más atrasado que se acepta un entrenamiento hecho sin internet: la web lo guarda en el
+ * teléfono y lo manda cuando vuelve la señal (backlog 2, punto 11). Más de una semana ya no
+ * es un bache de señal; se guarda como de hoy.
+ */
+const MAX_ATRASO_MS = 7 * 24 * 3_600_000;
+const DIA_MS = 24 * 3_600_000;
+
+/**
+ * La hora en que tocó "Terminar entrenamiento", si es razonable. Del reloj del teléfono, como
+ * `iniciadaEn`; solo importa cuando llega tarde.
+ */
+export function terminadaValida(ms: unknown, ahora: number): number | null {
+  if (typeof ms !== "number" || !Number.isFinite(ms)) return null;
+  if (ms < ahora - MAX_ATRASO_MS || ms > ahora + MARGEN_FUTURO_MS) return null;
+  return ms;
+}
+
+/**
+ * El día del entrenamiento según el teléfono ("2026-10-14"), si es de la última semana y no
+ * del futuro; si no, null y se usa hoy. Sin esto, uno hecho sin señal y mandado al día
+ * siguiente quedaba con la fecha del día en que llegó.
+ */
+export function fechaValida(fecha: unknown, hoy: string): string | null {
+  if (typeof fecha !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(fecha)) return null;
+  const dias = (Date.parse(hoy) - Date.parse(fecha)) / DIA_MS;
+  return Number.isFinite(dias) && dias >= 0 && dias * DIA_MS <= MAX_ATRASO_MS ? fecha : null;
+}
+
 /** Los ejercicios del banco que trae la petición: lo que `sesionValida` necesita para validar. */
 async function leerBanco(data: unknown): Promise<Map<string, DelBanco>> {
   const pedidos = (data as { ejercicios?: unknown } | null)?.ejercicios;
@@ -118,12 +147,19 @@ export const registrarSesion = onCall({ region: REGION }, async (request) => {
   const sesion = sesionValida(request.data, banco);
   if (typeof sesion === "string") throw new HttpsError("invalid-argument", sesion);
 
-  const fecha = hoyEnMazatlan();
-  const inicio = inicioValido((request.data as { iniciadaEn?: unknown })?.iniciadaEn, Date.now());
+  const datos = request.data as { iniciadaEn?: unknown; terminadaEn?: unknown; fecha?: unknown };
+  const ahora = Date.now();
+  // Hecho sin internet, puede llegar horas o días después: la fecha y las horas son las del
+  // teléfono, no las de cuando llegó.
+  const terminada = terminadaValida(datos?.terminadaEn, ahora);
+  const tarde = terminada !== null && ahora - terminada > 10 * 60_000;
+  const fecha = fechaValida(datos?.fecha, hoyEnMazatlan()) ?? hoyEnMazatlan();
+  const inicio = inicioValido(datos?.iniciadaEn, terminada ?? ahora);
   await db().collection("clientes").doc(clienteId).collection("sesiones").doc(sesion.id).set({
     fecha,
     // `creada` es cuando terminó (tocó "Terminar entrenamiento"); `iniciada`, cuando lo empezó.
-    creada: FieldValue.serverTimestamp(),
+    // Al momento, la hora del servidor; si llegó tarde, la del teléfono.
+    creada: tarde ? Timestamp.fromMillis(terminada) : FieldValue.serverTimestamp(),
     ...(inicio !== null ? { iniciada: Timestamp.fromMillis(inicio) } : {}),
     origen: "manual",
     ejercicios: sesion.ejercicios,

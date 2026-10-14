@@ -38,6 +38,7 @@ import { cerrarSesion, credencialLista, huellaDeLaSesion, iniciarSesion, urlDeDe
 import { almacenesDelNavegador, saludDeLosAlmacenes } from "./sesion";
 import type { MotivoSinAcceso, ResultadoSesion } from "./sesion";
 import { aplicarPaleta } from "./paleta";
+import { almacenCola, encolar, enviarPendientes, pendientesDe } from "./cola";
 import { indiceBanco, type IndiceBanco } from "./banco";
 import { saludo, conectarSaludo, actualizarNombre } from "./ui/saludo";
 import { conectarAccionDia } from "./ui/accionDia";
@@ -201,6 +202,26 @@ async function arrancar(): Promise<void> {
   let sesiones: Sesion[] | null = null;
   /** Los ejercicios por grupo del grid de Registro; null si el entrenador no configura ninguno. */
   let configGrupos: ConfigGrupos | null = null;
+  /** Los entrenamientos que se terminaron sin internet, en el teléfono (`cola.ts`). */
+  const cola = almacenCola((() => { try { return localStorage; } catch { return null; } })());
+  let pendientes = pendientesDe(cola.leer(), clienteId).length;
+  let enviandoCola = false;
+
+  /**
+   * Manda los entrenamientos que esperan internet. Se llama al abrir, al volver la señal y
+   * cada minuto mientras quede alguno: en iOS el evento `online` no siempre llega.
+   */
+  function enviarCola(): void {
+    if (enviandoCola || pendientes === 0) return;
+    enviandoCola = true;
+    enviarPendientes(cola, clienteId, (envio) => registrarSesion(envio))
+      .then((quedan) => {
+        const cambio = quedan !== pendientes;
+        pendientes = quedan;
+        if (cambio) pintar();
+      })
+      .finally(() => { enviandoCola = false; });
+  }
 
   /** Llave en el navegador para "Ahora no". Se pierde si borran datos: vuelve a salir, no es grave. */
   const LLAVE_INVITACION = "osfit:notificaciones-descartada";
@@ -468,6 +489,7 @@ async function arrancar(): Promise<void> {
       indiceBanco: indice,
       sesiones,
       configGrupos,
+      pendientes,
     };
     contenido.innerHTML = contenidoDe(activa, datos);
     pintarVideos(activa.contenedorPropio === "videos");
@@ -498,6 +520,10 @@ async function arrancar(): Promise<void> {
         guardar: (envio) => registrarSesion(envio),
         editar: (envio) => editarSesion(envio),
         borrar: (id) => borrarSesion({ id }),
+        encolar: (envio) => {
+          cola.guardar(encolar(cola.leer(), { clienteId, envio }));
+          pendientes = pendientesDe(cola.leer(), clienteId).length;
+        },
       });
       return;
     }
@@ -546,8 +572,14 @@ async function arrancar(): Promise<void> {
   let accesoPerdido = false;
 
   // La credencial antes que los listeners: pedir datos en el hueco entre entrar y que el
-  // cliente de Firestore se entere vuelve como `permission-denied`.
-  await credencialLista();
+  // cliente de Firestore se entere vuelve como `permission-denied`. Sin internet no se puede
+  // renovar, y no importa: Firestore muestra lo que tiene guardado en el teléfono.
+  await credencialLista().catch(() => {});
+
+  // Lo que se terminó sin internet sale en cuanto hay señal.
+  enviarCola();
+  window.addEventListener("online", enviarCola);
+  setInterval(enviarCola, 60_000);
 
   // Una vez por carga y sin esperarla: es para la ficha del entrenador, no para ella. Si
   // falla, esta apertura no queda anotada y nada más.
@@ -620,6 +652,17 @@ async function arrancar(): Promise<void> {
   observarTirada(clienteId, mesAnterior(hoy.slice(0, 7)), (t) => {
     tiradaMesAnterior = t;
     pintar();
+  });
+}
+
+/**
+ * El service worker guarda la página en el teléfono para que abra sin internet (`sw.js`).
+ * Antes solo se registraba al activar los avisos; ahora siempre, y después de cargar para no
+ * competir con el arranque.
+ */
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/sw.js").catch(() => {});
   });
 }
 
