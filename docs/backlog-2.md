@@ -519,7 +519,7 @@ Lo que haría falta:
 - Opcional: guardar en Firestore qué versión usó cada teléfono al iniciar sesión, para saber
   si alguien sigue con una vieja. Hoy los teléfonos comparten la misma cuenta de entrenador.
 
-## 13. Camino tipo Duolingo con los siguientes objetivos de fuerza
+## 13. El camino de la Fuerza (camino tipo Duolingo con sus próximos objetivos)
 
 > "también agrega al backlog un camino tipo Duolingo con los siguientes objetivos, calculado con sus pesos máximos"
 
@@ -551,6 +551,7 @@ A decidir en el spec:
 - Que se vea bien en todos los estilos de la web (neón, cómic, pixel, sakura, minimalista,
   halloween).
 
-**Duda pendiente del entrenador:** "los siguientes objetivos" se entendió como los próximos
-objetivos que le tocan a cada clienta. Si se refería a una lista concreta de objetivos,
-falta anotarla aquí.
+> "sí, eran los próximos objetivos de cada clienta en cuestión de fuerza, que se llame El camino de la Fuerza"
+
+Nombre decidido (2026-10-14): **El camino de la Fuerza**. Los objetivos son los próximos de
+cada clienta en fuerza, calculados con sus pesos máximos.
