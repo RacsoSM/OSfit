@@ -497,3 +497,24 @@ Lo que haría falta:
 
 Sin red siguen sin funcionar: la ruleta, revivir la racha y los GIF/videos que no haya visto
 antes (salen de Storage).
+
+## 12. Que cada APK diga qué versión es
+
+> "si agrégalo al backlog"
+
+El 2026-10-13 el papá del entrenador usó la app de entrenador con un APK más viejo y vio cómo
+"cambiaban los días de todos". Revisado en Firestore: solo se escribió el "Asignar día" de una
+clienta (7:47 am, un minuto después de iniciar sesión desde cero). El resto fue la pantalla de
+Clientes recalculando cuando llegaron las asistencias del servidor después de lo que tenía
+guardado en el teléfono. No hubo datos dañados.
+
+El problema de fondo: todos los APK dicen `versionCode = 1` y `versionName = "1.0"`
+(`app/build.gradle.kts`), así que no hay forma de saber qué versión tiene cada teléfono.
+
+Lo que haría falta:
+
+- Que `versionCode` suba solo en cada compilación (por ejemplo, el número de commits de git) y
+  que `versionName` lleve la fecha y el commit corto.
+- Mostrar la versión en la app (Ajustes o el menú) para verificarla de un vistazo.
+- Opcional: guardar en Firestore qué versión usó cada teléfono al iniciar sesión, para saber
+  si alguien sigue con una vieja. Hoy los teléfonos comparten la misma cuenta de entrenador.
