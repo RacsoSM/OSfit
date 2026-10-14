@@ -5,6 +5,7 @@ import {
   agregarEjercicio,
   agregarSerie,
   borradorDeSesion,
+  borradorGuiado,
   cambiarSerie,
   cambiarUnidad,
   idNuevo,
@@ -122,6 +123,38 @@ const estado: Estado = {
 /** Solo para los tests: poner la ventana en una vista y con un borrador dados. */
 export function ponerEstadoRegistro(parcial: Partial<Pick<Estado, "vista" | "borrador" | "error" | "activo">>): void {
   Object.assign(estado, { guardado: false, enVuelo: false, error: null, activo: null, aviso: null, borrando: null }, parcial);
+}
+
+/**
+ * Qué hay abierto en Registro, para el botón de la tarjeta del día: "nuevo" es un
+ * entrenamiento en curso (se continúa), "edicion" la corrección de uno pasado.
+ */
+export function entrenamientoAbierto(): "nuevo" | "edicion" | null {
+  const b = estado.borrador;
+  return !b ? null : b.edicion ? "edicion" : "nuevo";
+}
+
+/**
+ * "▶ Empezar" en la tarjeta del día (backlog 2, punto 7): abre la misma pantalla de captura
+ * de Registro con los ejercicios que le recomienda su rutina ya cargados, el primero en grande.
+ * Con un entrenamiento ya abierto no arma otro: la deja en el que lleva. Devuelve si empezó
+ * uno nuevo, para que quien la llama marque la asistencia como con "Iniciar entrenamiento".
+ */
+export function empezarGuiado(d: DatosRegistro, ahora = Date.now()): boolean {
+  estado.guardado = false;
+  estado.error = null;
+  estado.aviso = null;
+  if (estado.borrador) {
+    estado.vista = "capturar";
+    return false;
+  }
+  if (!d.dia) return false;
+  guardarBorrador(borradorGuiado(idNuevo(), d.hoy, ahora, d.dia, d.indice, d.sesiones ?? []));
+  estado.vista = "capturar";
+  estado.activo = 0;
+  estado.avanzando = true;
+  estado.lateral = false;
+  return true;
 }
 
 function guardarBorrador(b: Borrador | null): void {
@@ -459,6 +492,7 @@ function tarjetaActiva(e: EjercicioBorrador, i: number, total: number, delBanco?
         <button class="registro-quitar registro-quitar-ej" data-quitar-ej="${i}" aria-label="Quitar ${escapar(e.nombre)}">✕</button>
       </div>
       <p class="registro-activo-nombre">${escapar(e.nombre)}</p>
+      ${e.objetivo ? `<p class="registro-objetivo">Tu rutina: ${escapar(e.objetivo)}</p>` : ""}
       ${unidad}
       ${nota}
       ${e.series.map((s, j) => filaSerie(e, i, s, j)).join("")}
@@ -501,10 +535,16 @@ function vistaCapturar(d: DatosRegistro): string {
       <p><strong>Agrega tu primer ejercicio</strong></p>
       <p style="color: var(--texto-tenue); font-size: 14px">Elige el que te puso tu coach y anota tus series.</p>
     </div>`;
+  // Los de su rutina que no están en el banco no se pueden guardar: se le dice cuáles, para
+  // que elija el más parecido del grid si quiere anotarlos.
+  const faltan = b.guiado?.sinLigar ?? [];
+  const sinLigar = faltan.length === 0 ? "" : `
+    <p class="accion-nota registro-sin-ligar">${faltan.length === 1 ? "Este ejercicio de tu rutina no está" : "Estos ejercicios de tu rutina no están"} en la lista: ${escapar(faltan.join(", "))}. Si los haces, agrega el más parecido con "+ Agregar ejercicio".</p>`;
   const off = estado.enVuelo ? "disabled" : "";
   return `
     ${hay ? ejerciciosDelEntrenamiento(b, d.banco) : ""}
     ${vacio}
+    ${sinLigar}
     ${error}
     <button class="boton${hay ? " secundario" : ""}" data-accion="agregar" ${off}>+ Agregar ejercicio</button>
     ${hay ? `<button class="boton" data-accion="guardar" ${off}>${estado.enVuelo ? "Guardando…" : b.edicion ? "Guardar cambios" : "Terminar entrenamiento"}</button>` : ""}
@@ -524,7 +564,7 @@ export function cabeceraRegistro(): { titulo: string; detalle: string } | null {
   if (b.edicion) return { titulo: "Editando entrenamiento", detalle: enPalabras(b.fecha) };
   const desde = horaDeMs(b.iniciado);
   return {
-    titulo: "Entrenamiento en curso",
+    titulo: b.guiado?.nombreDia ? `Entrenando · ${b.guiado.nombreDia}` : "Entrenamiento en curso",
     detalle: `${enPalabras(b.fecha)}${desde ? ` · desde las ${desde}` : ""}`,
   };
 }

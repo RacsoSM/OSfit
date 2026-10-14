@@ -122,6 +122,14 @@ export function fechaValida(fecha: unknown, hoy: string): string | null {
   return Number.isFinite(dias) && dias >= 0 && dias * DIA_MS <= MAX_ATRASO_MS ? fecha : null;
 }
 
+/**
+ * "guiado" si se empezó con "▶ Empezar entrenamiento" desde la tarjeta del día (backlog 2,
+ * punto 7); cualquier otra cosa es uno de Registro, "manual".
+ */
+export function origenValido(origen: unknown): "manual" | "guiado" {
+  return origen === "guiado" ? "guiado" : "manual";
+}
+
 /** Los ejercicios del banco que trae la petición: lo que `sesionValida` necesita para validar. */
 async function leerBanco(data: unknown): Promise<Map<string, DelBanco>> {
   const pedidos = (data as { ejercicios?: unknown } | null)?.ejercicios;
@@ -148,7 +156,7 @@ export const registrarSesion = onCall({ region: REGION }, async (request) => {
   const sesion = sesionValida(request.data, banco);
   if (typeof sesion === "string") throw new HttpsError("invalid-argument", sesion);
 
-  const datos = request.data as { iniciadaEn?: unknown; terminadaEn?: unknown; fecha?: unknown };
+  const datos = request.data as { iniciadaEn?: unknown; terminadaEn?: unknown; fecha?: unknown; origen?: unknown };
   const ahora = Date.now();
   // Hecho sin internet, puede llegar horas o días después: la fecha y las horas son las del
   // teléfono, no las de cuando llegó.
@@ -162,7 +170,7 @@ export const registrarSesion = onCall({ region: REGION }, async (request) => {
     // Al momento, la hora del servidor; si llegó tarde, la del teléfono.
     creada: tarde ? Timestamp.fromMillis(terminada) : FieldValue.serverTimestamp(),
     ...(inicio !== null ? { iniciada: Timestamp.fromMillis(inicio) } : {}),
-    origen: "manual",
+    origen: origenValido(datos?.origen),
     ejercicios: sesion.ejercicios,
   });
   // La asistencia se marca al iniciar el entrenamiento (`marcarAsistencia`); esto la cubre si

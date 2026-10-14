@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { fechaValida, idSesion, inicioValido, sesionValida, terminadaValida, type DelBanco } from "./registrarSesion";
+import { fechaValida, idSesion, inicioValido, origenValido, sesionValida, terminadaValida, type DelBanco } from "./registrarSesion";
 
 const banco = new Map<string, DelBanco>([
   ["press-banca", { nombre: "Press de banca", tipo: "peso" }],
@@ -126,3 +126,12 @@ describe("fechaValida", () => {
   });
 });
 
+
+describe("origenValido", () => {
+  it("solo acepta guiado; lo demás es manual", () => {
+    expect(origenValido("guiado")).toBe("guiado");
+    expect(origenValido("manual")).toBe("manual");
+    expect(origenValido(undefined)).toBe("manual");
+    expect(origenValido("otra cosa")).toBe("manual");
+  });
+});

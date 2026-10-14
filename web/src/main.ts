@@ -50,7 +50,7 @@ import { tarjetaVideos, ultimosRangoDescendente, firmaVideos, MAXIMO_VIDEOS } fr
 import {
   BARRA, VENTANAS, contenidoDe, datosRegistro, fuerzaDelCliente, tituloCabecera, ventana, type IdVentana,
 } from "./ventanas";
-import { cabeceraRegistro, conectarRegistro } from "./ui/registro";
+import { cabeceraRegistro, conectarRegistro, empezarGuiado, entrenamientoAbierto } from "./ui/registro";
 import { barraInferior, conectarBarra } from "./ui/barraInferior";
 import { archivosMapa, conectarMapa, type EstadoSvg } from "./ui/mapaMuscular";
 import { conectarPeso } from "./ui/pesoCorporal";
@@ -547,6 +547,23 @@ async function arrancar(): Promise<void> {
       return;
     }
     if (activa.id !== "inicio") return;
+    // El entrenamiento guiado vive en Registro: se arma ahí y se abre esa ventana, así
+    // "atrás" regresa a Inicio y lo anotado queda en el mismo borrador que Registro.
+    document.querySelector("#empezar-entrenamiento")?.addEventListener("click", () => {
+      const r = datosRegistro(datos);
+      // Sin el banco no se puede ligar ningún ejercicio y saldría un entrenamiento vacío.
+      if (!entrenamientoAbierto() && r.banco.length === 0) {
+        alert("Todavía estamos cargando tus ejercicios. Intenta otra vez en un momento.");
+        return;
+      }
+      if (entrenamientoAbierto() === "edicion") {
+        alert("Estás editando un entrenamiento pasado. Guarda o cancela esos cambios en Registro primero.");
+        abrirVentana("registro");
+        return;
+      }
+      if (empezarGuiado(r)) marcarAsistencia({}).catch(() => {});
+      abrirVentana("registro");
+    });
     conectarAccionDia(pintar);
     conectarAccionFalta(hoy, asistencias, pintar);
     conectarNotificaciones(alActivarNotificaciones, alDescartarInvitacion);

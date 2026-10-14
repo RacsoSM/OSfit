@@ -291,7 +291,7 @@ Plan: `superpowers/plans/2026-10-10-revocar-acceso.md`.
 Implementado y desplegado (2026-10-10): funciones, reglas y web en producción; app instalada.
 Verificado por el entrenador en su teléfono (2026-10-10).
 
-## 7. Barra de abajo con Músculos y Registro, y Entrenar en Inicio — 🟡 PARCIAL: barra, Músculos y Registro hechos; falta el modo guiado Entrenar
+## 7. Barra de abajo con Músculos y Registro, y Entrenar en Inicio — 🟡 PARCIAL: barra, Músculos, Registro y modo guiado hechos; falta verlo en el teléfono
 
 > "eso me agrada más, añadelo al backlog como urgente antes de proponer el spec"
 
@@ -403,7 +403,15 @@ Hecho (2026-10-14): **editar y eliminar** entrenamientos desde "Tu historial" (f
 **primero los ejercicios directos** de cada músculo: los secundarios solo cuentan si no hay
 ninguno directo.
 
-Pendiente: modo guiado, cálculo de fuerza y estándares por
+**Modo guiado (2026-10-14):** "▶ Empezar entrenamiento" va arriba en la tarjeta del día y
+abre la misma pantalla de captura de Registro (GIF grande, series, Anterior/Siguiente) con
+los ejercicios que le recomienda la tarjeta ya cargados, en el orden de su rutina, con lo que
+pide la rutina ("Tu rutina: 4 × 10-12 · 30 kg") y prellenados con la última vez. Marca la
+asistencia como "Iniciar entrenamiento" y se guarda con `origen: "guiado"`. Los de la rutina
+que no están en el banco se avisan y no se cargan. Con un entrenamiento abierto, el botón dice
+"Continuar entrenamiento". Queda fuera, por ahora: temporizador de descanso y resumen final.
+
+Pendiente: cálculo de fuerza y estándares por
 ejercicio (para colorear el mapa), ver las sesiones desde la app, y `Ejercicio.ejercicioId`
 con buscador en el editor de rutinas.
 

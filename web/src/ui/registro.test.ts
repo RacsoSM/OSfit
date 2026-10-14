@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import type { EjercicioBanco, Sesion } from "../datos";
 import { indiceBanco } from "../banco";
 import { agregarEjercicio, borradorDeSesion, nuevoBorrador } from "../registro";
-import { avisoReps, cabeceraRegistro, ponerEstadoRegistro, ventanaRegistro, type DatosRegistro } from "./registro";
+import { avisoReps, cabeceraRegistro, empezarGuiado, entrenamientoAbierto, ponerEstadoRegistro, ventanaRegistro, type DatosRegistro } from "./registro";
 
 const press: EjercicioBanco = {
   id: "press-banca", nombre: "Press de banca", alias: ["press banca"], tipo: "peso", grupo: "pecho",
@@ -268,3 +268,30 @@ describe("objetivo de la semana", () => {
   });
 });
 
+
+describe("entrenamiento guiado", () => {
+  it("abre la captura con el ejercicio del día en grande, su GIF y lo que pide la rutina", () => {
+    expect(empezarGuiado(datos(), Date.UTC(2026, 9, 12, 17, 0))).toBe(true);
+    expect(entrenamientoAbierto()).toBe("nuevo");
+    const html = ventanaRegistro(datos());
+    expect(html).toContain("registro-ejercicio activo");
+    expect(html).toContain("Press de banca");
+    expect(html).toContain("ejercicios%2Fpress-banca.webp");
+    expect(html).toContain("Tu rutina: 4 × 10");
+    expect(html.match(/data-campo="reps"/g)).toHaveLength(4);
+    expect(cabeceraRegistro()?.titulo).toBe("Entrenando · Pecho");
+  });
+
+  it("con uno abierto no arma otro", () => {
+    const b = nuevoBorrador("b1234567", "2026-10-12");
+    ponerEstadoRegistro({ vista: "inicio", borrador: b });
+    expect(empezarGuiado(datos())).toBe(false);
+    expect(ventanaRegistro(datos())).toContain("Agrega tu primer ejercicio");
+  });
+
+  it("avisa de los ejercicios de la rutina que no están en el banco", () => {
+    const dia = { nombreDia: "Pecho", ejercicios: [{ nombre: "Máquina inventada", series: 3, repeticiones: "12", pesoONota: "" }] };
+    empezarGuiado(datos({ dia }));
+    expect(ventanaRegistro(datos({ dia }))).toContain("Máquina inventada");
+  });
+});

@@ -147,6 +147,14 @@ main {
 }
 /* La nota ocupa su propio renglón: es texto libre y puede ser larga ("bajarle, se lastimó"). */
 .ejercicio-nota { flex: 1 0 100%; font-size: 12px; color: rgba(255, 255, 255, 0.78); }
+/* "▶ Empezar entrenamiento": lo primero que se ve en Inicio (backlog 2, punto 7). Blanco
+   sobre el degradado, con el texto del color del estilo, para que destaque sobre las acciones
+   secundarias de abajo, que van traslúcidas. */
+.hoy-empezar {
+  margin: 10px 0 4px; padding: 15px 16px; font-size: 17px; font-weight: 800;
+  background: #fff; color: var(--primario-oscuro); border: none;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+}
 .hoy-sin-ejercicios {
   font-size: 13px; color: rgba(255, 255, 255, 0.78); margin: 8px 0 0;
 }
@@ -1328,3 +1336,7 @@ main:has(#barra) { padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
 .hoja-sig-texto strong { color: var(--texto); }
 .hoja-otra { margin: 0; font-size: 11px; color: var(--texto-tenue); }
 @media (prefers-reduced-motion: reduce) { .hoja-detalle.entra { animation: none; } .h-barra { transition: none; } }
+
+/* Lo que pide su rutina para el ejercicio, en el entrenamiento guiado. */
+.registro-objetivo { margin: -2px 0 8px; text-align: center; font-size: 14px; font-weight: 700; color: var(--primario); }
+.registro-sin-ligar { margin: 0 2px 12px; }

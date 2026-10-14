@@ -2,8 +2,8 @@ import type { Asistencia, Cliente, ConfigGrupos, EjercicioBanco, LogroPersonalOt
 import type { IdEstilo } from "./estilo";
 import type { Tirada } from "./tirada";
 import { recordatorioPago } from "./pago";
-import { diaDeHoy, tarjetaDia } from "./ui/tarjetaDia";
-import { ventanaRegistro, type DatosRegistro } from "./ui/registro";
+import { botonEntrenar, diaDeHoy, tarjetaDia } from "./ui/tarjetaDia";
+import { entrenamientoAbierto, ventanaRegistro, type DatosRegistro } from "./ui/registro";
 import type { IndiceBanco } from "./banco";
 import { tarjetaRecordatorioPago } from "./ui/tarjetaRecordatorioPago";
 import { tarjetasStats } from "./ui/tarjetasStats";
@@ -100,7 +100,8 @@ export interface Ventana {
 }
 
 /**
- * Lo que hoy es "hoy": el recordatorio de pago (si toca), el día con sus dos acciones, la
+ * Lo que hoy es "hoy": el recordatorio de pago (si toca), el día con "▶ Empezar
+ * entrenamiento" y sus dos acciones, la
  * invitación a activar las notificaciones (si toca), la racha, revivirla y el calendario, en
  * ese orden. El recordatorio va primero porque es lo único
  * de la página con fecha límite; abajo del calendario nadie lo vería. Cada acción vive junto al
@@ -114,7 +115,8 @@ function inicio(d: DatosCliente): string {
       ${hojaDeMotivosAbierta() ? "" : accionHoyNoPuedo(d.cliente, d.hoy, d.yaAviso)}`;
   return `
       ${tarjetaRecordatorioPago(recordatorioPago(d.cliente, d.hoy))}
-      ${tarjetaDia(d.cliente, d.hoy, acciones, d.asistencias)}
+      ${tarjetaDia(d.cliente, d.hoy, acciones, d.asistencias,
+        botonEntrenar(diaDeHoy(d.cliente, d.hoy, d.asistencias), entrenamientoAbierto()))}
       ${invitacionNotificaciones(d.notificaciones, d.invitacionDescartada)}
       ${tarjetasStats(d.asistencias, d.hoy)}
       ${tarjetaRevivir(d.cliente, d.hoy, d.asistencias, d.tiradaEsteMes, d.tiradaMesAnterior)}
