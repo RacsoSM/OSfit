@@ -1380,16 +1380,34 @@ main:has(#barra) { padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
 /* Compararme (dentro de Músculos): la lista con el rango general de cada una y, al tocar a
    alguien, los dos cuerpos lado a lado con los colores de sus rangos. */
 .cmp-nota { margin: 2px 2px 12px; }
-.cmp-fila {
-  display: flex; align-items: center; gap: 12px; width: 100%; text-align: left;
-  font: inherit; color: inherit; cursor: pointer; padding: 10px 14px; margin-bottom: 8px;
+.cmp-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.cmp-tarjeta {
+  display: flex; flex-direction: column; align-items: center; gap: 3px; min-width: 0;
+  padding: 10px 4px; border: 0; border-radius: 16px; background: var(--superficie);
+  font: inherit; color: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent;
+  transition: transform 0.12s ease-out;
 }
-.cmp-fila.tuya { cursor: default; outline: 2px solid var(--primario); outline-offset: -2px; }
-.cmp-fila svg { flex: none; }
-.cmp-fila-texto { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
-.cmp-fila-nombre { font-weight: 700; font-size: 16px; overflow: hidden; text-overflow: ellipsis; }
-.cmp-fila-rango { font-size: 13px; font-weight: 700; }
-.cmp-fila-flecha { font-size: 22px; color: var(--texto-tenue); }
+.cmp-tarjeta:active { transform: scale(0.97); }
+.cmp-tarjeta.tuya { cursor: default; outline: 2px solid var(--primario); outline-offset: -2px; }
+.cmp-tarjeta.tuya:active { transform: none; }
+.cmp-tarjeta-cuerpo { height: 120px; aspect-ratio: 420 / 800; display: flex; align-items: center; justify-content: center; }
+.cmp-tarjeta-cuerpo .mapa-svg { pointer-events: none; }
+.cmp-tarjeta-cuerpo .mapa-cargando { width: 60%; height: 80%; }
+.cmp-tarjeta-cuerpo .musculo { fill: #8f90a6; }
+.cmp-tarjeta-cuerpo .musculo[data-rango="0"] { fill: var(--rango-0); }
+.cmp-tarjeta-cuerpo .musculo[data-rango="1"] { fill: var(--rango-1); }
+.cmp-tarjeta-cuerpo .musculo[data-rango="2"] { fill: var(--rango-2); }
+.cmp-tarjeta-cuerpo .musculo[data-rango="3"] { fill: var(--rango-3); }
+.cmp-tarjeta-cuerpo .musculo[data-rango="4"] { fill: var(--rango-4); }
+.cmp-tarjeta-cuerpo .musculo[data-rango="5"] { fill: var(--rango-5); }
+.cmp-tarjeta-cuerpo .musculo[data-rango="6"] { fill: var(--rango-6); }
+.cmp-tarjeta-cuerpo .musculo[data-rango="7"] { fill: var(--rango-7); }
+.cmp-tarjeta-nombre {
+  font-weight: 800; font-size: 14px; max-width: 100%; margin-top: 4px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.cmp-tarjeta-rango { display: flex; align-items: center; gap: 3px; font-size: 11px; font-weight: 800; max-width: 100%; }
+.cmp-tarjeta-rango svg { flex: none; }
 .cmp-tu {
   font-size: 11px; font-weight: 800; padding: 1px 7px; border-radius: 999px; margin-left: 4px;
   background: var(--primario); color: var(--sobre-primario); vertical-align: middle;

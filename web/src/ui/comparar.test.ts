@@ -57,3 +57,16 @@ describe("comparación", () => {
     expect(ventanaComparar({ estado: "listo", personas: [yo] }, "M", mapas)).toContain("Compárate con el resto");
   });
 });
+
+describe("lista con mini cuerpos", () => {
+  it("cada tarjeta dibuja su cuerpo de frente con sus colores", () => {
+    const html = ventanaComparar(listo, "M", mapas);
+    expect(html).toContain('id="cmp-l0"');
+    expect(html).toContain('id="cmp-l1"');
+    expect(html).toMatch(/id="cmp-l1"[\s\S]*?data-musculo="cuadriceps" data-rango="4"/);
+    expect(html).toContain("cmp-tarjeta tuya");
+  });
+  it("en la lista pide los mapas de todos los sexos que haya", () => {
+    expect(sexosAComparar(listo, "M").sort()).toEqual(["H", "M"]);
+  });
+});

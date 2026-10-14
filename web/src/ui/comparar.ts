@@ -53,28 +53,38 @@ export function elegirEnComparar(nombre: string | null): void {
 const fuerzaDe = (p: PersonaComparar): Record<string, FuerzaMusculo> =>
   Object.fromEntries(Object.entries(p.niveles).map(([m, nivel]) => [m, { nivel }]));
 
-function fila(p: PersonaComparar, i: number): string {
-  const g = rangoGeneral(fuerzaDe(p))!;
+/**
+ * Una tarjeta de la lista: su cuerpo de frente pintado con sus rangos, su nombre y su rango
+ * general con la insignia (estilo "mini cuerpos", elegido por el entrenador, 2026-10-14). Desde
+ * la lista ya se ve en qué es fuerte cada quien.
+ */
+function tarjeta(p: PersonaComparar, i: number, mapas: Readonly<Record<string, EstadoSvg>>): string {
+  const fuerza = fuerzaDe(p);
+  const g = rangoGeneral(fuerza)!;
   const indice = indiceRango(g.nivel);
+  const e = mapas[archivosMapa(p.sexo).frente] ?? { estado: "cargando" };
+  const dibujo = e.estado === "listo"
+    ? conNiveles(prepararSvg(e.svg, `cmp-l${i}`), fuerza)
+    : `<div class="mapa-cargando" aria-hidden="true"></div>`;
   return `
-    <button class="tarjeta cmp-fila${p.esTuyo ? " tuya" : ""}" data-persona="${escapar(p.nombre)}">
-      ${insigniaRango(indice, 40, `cmp-fila-${i}`)}
-      <span class="cmp-fila-texto">
-        <span class="cmp-fila-nombre">${escapar(p.nombre)}${p.esTuyo ? ` <span class="cmp-tu">Tú</span>` : ""}</span>
-        <span class="cmp-fila-rango" style="color: ${COLORES_RANGO[indice]}">${escapar(nombreRango(g.nivel, p.sexo))}</span>
+    <button class="cmp-tarjeta${p.esTuyo ? " tuya" : ""}" data-persona="${escapar(p.nombre)}"
+            aria-label="${escapar(p.esTuyo ? `Tú, ${nombreRango(g.nivel, p.sexo)}` : `Compararte con ${p.nombre}, ${nombreRango(g.nivel, p.sexo)}`)}">
+      <span class="cmp-tarjeta-cuerpo" aria-hidden="true">${dibujo}</span>
+      <span class="cmp-tarjeta-nombre">${escapar(p.nombre)}${p.esTuyo ? ` <span class="cmp-tu">Tú</span>` : ""}</span>
+      <span class="cmp-tarjeta-rango" style="color: ${COLORES_RANGO[indice]}">
+        ${insigniaRango(indice, 22, `cmp-l${i}-ins`)}${escapar(nombreRango(g.nivel, p.sexo))}
       </span>
-      ${p.esTuyo ? "" : `<span class="cmp-fila-flecha" aria-hidden="true">›</span>`}
     </button>`;
 }
 
-function vistaLista(personas: PersonaComparar[]): string {
+function vistaLista(personas: PersonaComparar[], mapas: Readonly<Record<string, EstadoSvg>>): string {
   const yo = personas.find((p) => p.esTuyo);
   const nota = yo
     ? `<p class="accion-nota cmp-nota">Toca a alguien para comparar sus músculos con los tuyos.</p>`
     : `<p class="accion-nota cmp-nota">Todavía no tienes músculos con rango: registra tus entrenamientos para aparecer aquí. Igual puedes ver al resto.</p>`;
   const lista = personas.length === 0
     ? `<p class="accion-nota" style="text-align:center">Todavía nadie tiene músculos con rango.</p>`
-    : personas.map(fila).join("");
+    : `<div class="cmp-grid">${personas.map((p, i) => tarjeta(p, i, mapas)).join("")}</div>`;
   return `
     <p class="confirmar-titulo">Compárate con el resto</p>
     ${nota}
@@ -172,7 +182,7 @@ export function ventanaComparar(
     const otra = elegida === null ? undefined : e.personas.find((p) => p.nombre === elegida && !p.esTuyo);
     cuerpoHtml = otra
       ? vistaComparacion(e.personas.find((p) => p.esTuyo), miSexo, otra, mapas)
-      : vistaLista(e.personas);
+      : vistaLista(e.personas, mapas);
   }
   return `<div id="comparar" class="comparar">${cuerpoHtml}</div>`;
 }
@@ -181,9 +191,10 @@ export function ventanaComparar(
 export function sexosAComparar(e: EstadoComparar, miSexo: Sexo | null | undefined): Sexo[] {
   const sexos = new Set<Sexo>();
   if (miSexo === "H" || miSexo === "M") sexos.add(miSexo);
-  if (e.estado === "listo" && elegida !== null) {
-    const otra = e.personas.find((p) => p.nombre === elegida && !p.esTuyo);
-    if (otra) sexos.add(otra.sexo);
+  if (e.estado === "listo") {
+    const otra = elegida === null ? undefined : e.personas.find((p) => p.nombre === elegida && !p.esTuyo);
+    // En la lista se dibujan todos: hacen falta los mapas de los dos sexos que haya.
+    for (const p of otra ? [otra] : e.personas) sexos.add(p.sexo);
   }
   return [...sexos];
 }
