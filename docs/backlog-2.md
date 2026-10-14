@@ -555,3 +555,32 @@ A decidir en el spec:
 
 Nombre decidido (2026-10-14): **El camino de la Fuerza**. Los objetivos son los próximos de
 cada clienta en fuerza, calculados con sus pesos máximos.
+
+## 14. Rear delt en el banco de ejercicios
+
+> "me falta el rear dealt en el banco de ejercicios, agrégalo al backlog"
+
+Lo que ya hay en el banco (`functions/semilla/ejercicios.json`, 108 ejercicios):
+
+- **Pájaros** (`pajaros`), la versión con mancuernas, grupo hombro. Tiene los alias "deltoides
+  posterior", "vuelos posteriores", "reverse fly"… pero **no** "rear delt", así que una rutina
+  que diga "rear delt" no se liga con él.
+- **Face pull** (`face-pull`), que también trabaja el deltoide posterior.
+
+Lo que falta:
+
+1. **Alias "rear delt"** (y "rear delts", "rear delt fly") en `pajaros`, o en el nuevo de máquina
+   si el entrenador lo usa con ese nombre.
+2. **Ejercicios nuevos**, si los usa en el gimnasio:
+   - Rear delt en máquina (pec deck invertido / "reverse pec deck").
+   - Rear delt en polea (cruce de poleas invertido).
+3. Para cada nuevo: GIF/WebP del dataset de Gym visual (`cargarBancoEjercicios.mjs`), video con
+   el "camino 1" (punto 10), músculos (`hombro` 1, `infraespinoso` y `trapecio` 0.5, como
+   `pajaros`), grupo `hombro` y estándares de fuerza (`docs/estandares-fuerza/`).
+4. Agregarlo en la app a **Ejercicios por grupo → Hombro** si debe salir en el grid de Registro.
+
+Nota: el mapa muscular tiene un solo `hombro` (no separa deltoide anterior, lateral y
+posterior), así que el rear delt pinta el hombro completo, igual que hoy los Pájaros.
+
+Duda para el entrenador: ¿cuál de los dos le falta (máquina, polea o ambos) o basta con que
+"rear delt" encuentre a los Pájaros?
