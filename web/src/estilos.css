@@ -930,13 +930,12 @@ main:has(#barra) { padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
 .mapa-svg .linea, .mapa-svg .linea-mano, .mapa-svg .linea-elevada { pointer-events: none; }
 /* Solo el ícono, chico, en la esquina de abajo a la derecha del dibujo: así el cuerpo
    ocupa casi toda la pantalla. El nombre lo dice `aria-label`. */
-.mapa-girar {
-  position: absolute; right: -8px; bottom: 0; z-index: 1;
-}
-/* Compararme: del otro lado del de girar, a su misma altura. */
-.mapa-comparar {
-  position: absolute; left: -8px; bottom: 0; z-index: 1;
-}
+/* Debajo del cuerpo: Compararme, "Actualizar peso corporal" y girar, en una sola fila. */
+.mapa-pie { display: flex; align-items: center; justify-content: space-between; gap: 4px; width: 100%; margin: 2px 0 0; }
+.mapa-pie-centro { flex: 1; min-width: 0; }
+.mapa-pie .peso-linea { margin: 0; }
+.mapa-pie .mapa-comparar { margin-left: -8px; }
+.mapa-pie .mapa-girar { margin-right: -8px; }
 .mapa-girar:focus-visible, .mapa-comparar:focus-visible { outline: 2px solid var(--primario); outline-offset: 3px; }
 .mapa-cargando {
   width: 55%; height: 85%; border-radius: 60px;

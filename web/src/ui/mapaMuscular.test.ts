@@ -332,4 +332,8 @@ describe("botón de Compararme", () => {
     expect(html).toMatch(/class="mapa-comparar" id="abrir-comparar"[\s\S]*?<svg class="mapa-icono"/);
     expect(html).toContain('id="girar-mapa"');
   });
+  it("los dos íconos van en la fila de abajo, con el peso en medio", () => {
+    const html = tarjetaMusculos("M", {}, {}, 60, '<p class="peso-linea">PESO</p>');
+    expect(html).toMatch(/class="mapa-pie"[\s\S]*?id="abrir-comparar"[\s\S]*?PESO[\s\S]*?id="girar-mapa"/);
+  });
 });
