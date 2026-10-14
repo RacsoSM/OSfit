@@ -607,11 +607,38 @@ entrenador, tal cual:
    `ui/registro.ts` (~línea 459–460) van uno debajo del otro. Separarlo bien (más espacio,
    otro lugar o menos peso visual) para que nadie lo toque sin querer. Ya pide confirmación
    si hay ejercicios anotados, pero el susto queda.
-4. **Metieron todos los ejercicios antes de anotar los pesos.** Las clientas agregaron primero
-   la lista entera de ejercicios y después regresaron a llenar pesos, en lugar de agregar uno,
-   anotarlo y pasar al siguiente. Hay que decidir si se apoya ese flujo (que llenar los pesos
-   después sea fácil y quede claro cuáles faltan) o si se guía a ir de uno en uno. Además,
-   ¿qué pasa si terminan con ejercicios sin peso?
+4. **El mapa de Músculos no se pintó (aunque ya había registrado y puesto su peso).**
+
+   > "primero anotó toda su rutina y después ingresó el apartado de su peso corporal en los músculos, por lo que el dibujo no se pintó"
+
+   Revisado con los datos reales (2026-10-14): **el orden no es la causa.** El mapa se calcula
+   cada vez con el peso actual y todas sus sesiones (`fuerzaDelCliente` en `ventanas.ts` →
+   `fuerzaPorMusculo`), así que poner el peso después sí cuenta lo ya registrado. Con sus
+   datos, el cálculo de la propia web da **solo tríceps** (nivel 4.6, Avanzado). Lo que pasó:
+   - Su ejercicio principal fue **press de pecho en máquina** (`press-pecho-maquina`), que **no
+     tiene estándares de fuerza** en el banco: no cuenta para nada, y pecho y hombro se quedan
+     en gris.
+   - El tríceps sí se pinta, pero **solo se ve de espalda**. De frente, que es como abre el
+     mapa, no había nada de color.
+
+   Qué hacer:
+   - **Ponerles estándares** a los 3 ejercicios del banco que no tienen:
+     `press-pecho-maquina`, `press-militar-maquina` y `dominadas-asistidas`
+     (`docs/estandares-fuerza/`, `cargarEstandares.mjs`). Ese día los usaron 3 clientas.
+   - **Avisar cuando un ejercicio no cuenta para el mapa**: en Registro o en Músculos, algo
+     como "este ejercicio todavía no suma a tu mapa", para que no parezca que se perdió.
+   - **Que se note que hay color del otro lado**: si de frente no hay nada pintado pero de
+     espalda sí, abrir directo de espalda o mostrar una pista ("tu tríceps está pintado, gira
+     el cuerpo").
+
+   Además, en los datos de ese día se vio:
+   - **Pesos que parecen libras** (22.7, 13.6, 31.8, 40.9 = 50, 30, 70, 90 lb) en máquinas y
+     poleas. Revisar si las máquinas del gimnasio marcan en libras y si conviene un selector
+     kg/lb (relacionado con "Barras | Kg" en Registro).
+   - **Patada de glúteo con liga** es de tipo "corporal" (cuenta reps), pero le anotaron peso:
+     ese peso se ignora. Si la hacen en máquina con peso, es el ejercicio nuevo de la tabla.
+   - **Reps que parecen error de dedo** (una serie de 86 reps). Avisar o pedir confirmación
+     arriba de, por ejemplo, 50 reps.
 
 ### Ejercicios que no encontraron en el banco
 
@@ -632,4 +659,4 @@ video con el "camino 1" (punto 10), músculos, grupo, estándares de fuerza
 el grid de Registro.
 
 Dudas para el entrenador: qué ejercicio es exactamente "copa con cuerda de frente" y "tríceps
-fondos" (punto de la tabla), y qué flujo quiere para el punto 4.
+fondos" (punto de la tabla).
