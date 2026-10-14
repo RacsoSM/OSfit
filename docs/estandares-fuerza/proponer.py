@@ -87,6 +87,7 @@ PESO = {
     "abductores-maquina": ("abductor", 1.00, "máquina"),
     "aductores-maquina": ("abductor", 1.00, "máquina"),
     "patada-gluteo-polea": ("abductor", 0.35, "polea"),
+    "patada-gluteo-maquina": ("abductor", 0.80, "máquina de palanca, una pierna: varía por marca"),
     "jalon-al-pecho": ("jalon", 1.00, ""),
     "jalon-agarre-abierto": ("jalon", 0.95, ""),
     "jalon-triangulo": ("jalon", 1.00, ""),

@@ -657,7 +657,7 @@ Revisado contra `functions/semilla/ejercicios.json` (108 ejercicios):
 | Rear delt | `pajaros` (con mancuernas), sin el alias "rear delt" | Ver **punto 14**. |
 | Pantorrilla en prensa | Solo `pantorrilla-de-pie` y `pantorrilla-sentado` | **Ejercicio nuevo**: elevación de talones en prensa ("pantorrilla en prensa", "calf press"). |
 | Prensa en máquina a dos piernas | `prensa` (45°/inclinada) y `prensa-horizontal-una-pierna` | **Ejercicio nuevo**: prensa horizontal / sentado a dos piernas. Ojo: hoy los alias "prensa horizontal" y "prensa sentado" apuntan a la de **una** pierna; habría que pasarlos al nuevo. |
-| Patada en máquina | `patada-gluteo-polea` y `patada-gluteo-liga` | **Ejercicio nuevo**: patada de glúteo en máquina. |
+| Patada en máquina | `patada-gluteo-polea` y `patada-gluteo-liga` | ✅ **Dado de alta (2026-10-14)**: `patada-gluteo-maquina` (GIF 2286 de Gym visual, estándares = abductor × 0.80), en Ejercicios por grupo → Glúteo después de la de liga. |
 | Copa con cuerda de frente | `extension-triceps-trasnuca-polea` (sobre la cabeza con cuerda) y `extension-triceps-mancuerna` (alias "copa") | Confirmar con el entrenador cuál es. Si es la trasnuca en polea, solo faltan alias ("copa con cuerda", "copa en polea"); si es otra variante, ejercicio nuevo. |
 | Tríceps fondos | `fondos-banco` (alias "fondos de triceps") y `fondos-pecho` | Si es en banco: alias "triceps fondos". Si es en paralelas o en máquina para tríceps: ejercicio nuevo. Confirmar. |
 
