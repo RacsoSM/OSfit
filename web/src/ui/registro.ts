@@ -727,6 +727,21 @@ export function conectarRegistro(
     guardarBorrador(cambiarSerie(estado.borrador, Number(ej), Number(serie), campo, input.value));
   });
 
+  /**
+   * Al tocar un campo de peso o reps se selecciona lo que ya tiene, para teclear el número
+   * nuevo encima en vez de borrarlo a mano. En iOS un `select()` dentro del `focus` se pierde
+   * con el toque que lo enfocó, así que se repite después de ese toque (`setTimeout`).
+   */
+  raiz.addEventListener("focusin", (ev) => {
+    const input = ev.target as HTMLElement;
+    if (!(input instanceof HTMLInputElement) || !input.dataset.campo) return;
+    const seleccionar = () => {
+      if (document.activeElement === input) input.setSelectionRange(0, input.value.length);
+    };
+    seleccionar();
+    setTimeout(seleccionar, 0);
+  });
+
   if (estado.vista === "capturar" && estado.enfocar !== null) {
     const tarjeta = raiz.querySelector<HTMLElement>(`.registro-ejercicio[data-indice="${estado.enfocar}"]`);
     const clon = estado.vuelo;
