@@ -4,6 +4,7 @@ import { seccionesRegistro } from "../grupos";
 import {
   agregarEjercicio,
   agregarSerie,
+  borradorDeSesion,
   cambiarSerie,
   cambiarUnidad,
   idNuevo,
@@ -42,7 +43,9 @@ import { conectarDeslizar } from "./deslizarRegistro";
  *    el nombre del día ("Pecho, hombro y tríceps" → Pecho, Hombro, Tríceps), con los
  *    ejercicios que el entrenador configuró para cada uno; luego los demás grupos. Lo que ya
  *    está en el entrenamiento sale en gris y no se puede volver a elegir.
- *  - **historial**: sus entrenamientos guardados, del más nuevo al más viejo.
+ *  - **historial**: sus entrenamientos guardados, del más nuevo al más viejo. Cada uno se
+ *    puede corregir ("Editar": se abre en la misma pantalla de captura con `borradorDeSesion`
+ *    y al guardar va a `editarSesion`, que le respeta fecha y horas) o borrar ("Eliminar").
  *
  * Los GIF van aquí y no en la tarjeta de Inicio (decisión del entrenador, 2026-10-10): sirven
  * para reconocer qué ejercicio hizo, no para leer la rutina.
@@ -84,6 +87,10 @@ interface Estado {
    * abajo. null = el último agregado.
    */
   activo: number | null;
+  /** Mensaje de que algo salió bien en el historial ("Cambios guardados"); null si no hay. */
+  aviso: string | null;
+  /** El id del entrenamiento que se está borrando, para deshabilitar sus botones. */
+  borrando: string | null;
   /** Hacia dónde se movió la última vez: la tarjeta entra desde abajo al avanzar, desde arriba al volver. */
   avanzando: boolean;
   /** El último cambio fue deslizando de lado: la tarjeta nueva entra de lado y no de abajo. */
@@ -103,13 +110,15 @@ const estado: Estado = {
   enfocar: null,
   vuelo: null,
   activo: null,
+  aviso: null,
+  borrando: null,
   avanzando: true,
   lateral: false,
 };
 
 /** Solo para los tests: poner la ventana en una vista y con un borrador dados. */
 export function ponerEstadoRegistro(parcial: Partial<Pick<Estado, "vista" | "borrador" | "error" | "activo">>): void {
-  Object.assign(estado, { guardado: false, enVuelo: false, error: null, activo: null }, parcial);
+  Object.assign(estado, { guardado: false, enVuelo: false, error: null, activo: null, aviso: null, borrando: null }, parcial);
 }
 
 function guardarBorrador(b: Borrador | null): void {
@@ -176,11 +185,16 @@ function tarjetaSesion(s: Sesion, banco: readonly EjercicioBanco[]): string {
   }).join("");
   const cuando = horario(s);
   const cuantos = s.ejercicios.length === 1 ? "1 ejercicio" : `${s.ejercicios.length} ejercicios`;
+  const off = estado.borrando === s.id ? "disabled" : "";
   return `
     <div class="tarjeta">
       <p class="tarjeta-titulo">${escapar(enPalabras(s.fecha))}</p>
       <p class="registro-hist-horario">${escapar(cuando ? `${cuando} · ${cuantos}` : cuantos)}</p>
       <ul class="registro-hist">${filas}</ul>
+      <div class="registro-hist-acciones">
+        <button class="registro-hist-accion" data-editar="${escapar(s.id)}" ${off}>Editar</button>
+        <button class="registro-hist-accion peligro" data-borrar="${escapar(s.id)}" ${off}>${estado.borrando === s.id ? "Eliminando…" : "Eliminar"}</button>
+      </div>
     </div>`;
 }
 
@@ -272,9 +286,12 @@ function vistaHistorial(d: DatosRegistro): string {
     : d.sesiones.length === 0
       ? `<p class="accion-nota" style="text-align:center">Todavía no tienes entrenamientos guardados.</p>`
       : d.sesiones.map((s) => tarjetaSesion(s, d.banco)).join("");
+  const aviso = estado.aviso ? `<p class="aviso-ok">${escapar(estado.aviso)}</p>` : "";
+  const error = estado.error ? `<p class="aviso-error" style="margin:0 0 12px">${escapar(estado.error)}</p>` : "";
   return `
     <button class="boton-texto registro-volver" data-accion="volver">← Volver</button>
     <p class="confirmar-titulo" style="margin-bottom:12px">Tu historial</p>
+    ${aviso}${error}
     ${lista}`;
 }
 
@@ -456,8 +473,8 @@ function vistaCapturar(d: DatosRegistro): string {
     ${vacio}
     ${error}
     <button class="boton${hay ? " secundario" : ""}" data-accion="agregar" ${off}>+ Agregar ejercicio</button>
-    ${hay ? `<button class="boton" data-accion="guardar" ${off}>${estado.enVuelo ? "Guardando…" : "Terminar entrenamiento"}</button>` : ""}
-    <button class="boton-texto" data-accion="descartar" ${off}>Descartar entrenamiento</button>
+    ${hay ? `<button class="boton" data-accion="guardar" ${off}>${estado.enVuelo ? "Guardando…" : b.edicion ? "Guardar cambios" : "Terminar entrenamiento"}</button>` : ""}
+    <button class="boton-texto" data-accion="descartar" ${off}>${b.edicion ? "Cancelar cambios" : "Descartar entrenamiento"}</button>
     ${hay ? CREDITO : ""}`;
 }
 
@@ -470,6 +487,7 @@ function vistaCapturar(d: DatosRegistro): string {
 export function cabeceraRegistro(): { titulo: string; detalle: string } | null {
   const b = estado.borrador;
   if (estado.vista !== "capturar" || !b) return null;
+  if (b.edicion) return { titulo: "Editando entrenamiento", detalle: enPalabras(b.fecha) };
   const desde = horaDeMs(b.iniciado);
   return {
     titulo: "Entrenamiento en curso",
@@ -496,6 +514,15 @@ function seriesDeLaRutina(d: DatosRegistro, e: EjercicioBanco): number | null {
   return enRutina && enRutina.series > 0 ? enRutina.series : null;
 }
 
+export interface AccionesRegistro {
+  /** Guarda un entrenamiento nuevo (`registrarSesion`). */
+  guardar: (envio: Envio) => Promise<unknown>;
+  /** Guarda la corrección de uno ya guardado (`editarSesion`). */
+  editar: (envio: Envio) => Promise<unknown>;
+  /** Borra uno del historial (`borrarSesion`). */
+  borrar: (id: string) => Promise<unknown>;
+}
+
 /**
  * Cuelga los eventos de la vista recién pintada. Uno solo, delegado en `#registro`: el
  * contenido se rehace con cada repintado, y uno por botón obligaría a recolgarlos todos.
@@ -506,7 +533,7 @@ function seriesDeLaRutina(d: DatosRegistro, e: EjercicioBanco): number | null {
 export function conectarRegistro(
   d: DatosRegistro,
   repintar: () => void,
-  guardar: (envio: Envio) => Promise<unknown>
+  acciones: AccionesRegistro
 ): void {
   const raiz = document.querySelector<HTMLElement>("#registro");
   if (!raiz) return;
@@ -514,6 +541,7 @@ export function conectarRegistro(
   const ir = (vista: Vista) => {
     estado.vista = vista;
     estado.error = null;
+    if (vista !== "historial") estado.aviso = null;
     repintar();
     window.scrollTo(0, 0);
   };
@@ -551,10 +579,16 @@ export function conectarRegistro(
       return;
     }
     if (accion === "agregar" && b) { ir("elegir"); return; }
-    if (accion === "historial") { estado.guardado = false; ir("historial"); return; }
+    if (accion === "historial") { estado.guardado = false; estado.aviso = null; ir("historial"); return; }
     // Volver siempre lleva al entrenamiento si hay uno abierto, y si no, al inicio de Registro.
     if (accion === "volver") { ir(b ? "capturar" : "inicio"); return; }
     if (accion === "descartar") {
+      if (b?.edicion) {
+        if (!confirm("¿Salir sin guardar los cambios? El entrenamiento se queda como estaba.")) return;
+        guardarBorrador(null);
+        ir("historial");
+        return;
+      }
       if (b && b.ejercicios.length > 0 && !confirm("¿Descartar este entrenamiento y lo que llevas anotado?")) return;
       guardarBorrador(null);
       ir("inicio");
@@ -566,17 +600,62 @@ export function conectarRegistro(
       estado.enVuelo = true;
       estado.error = null;
       repintar();
-      guardar(envio.datos).then(
+      const edicion = b.edicion === true;
+      (edicion ? acciones.editar : acciones.guardar)(envio.datos).then(
         () => {
           estado.enVuelo = false;
-          estado.guardado = true;
           guardarBorrador(null);
-          ir("inicio");
+          if (edicion) {
+            // Antes de `ir`: al llegar al historial, el aviso ya tiene que estar.
+            estado.vista = "historial";
+            estado.aviso = "Cambios guardados ✓";
+            ir("historial");
+          } else {
+            estado.guardado = true;
+            ir("inicio");
+          }
         },
         () => {
           // El borrador se queda: con señal de vuelta, "Guardar" reescribe la misma sesión.
           estado.enVuelo = false;
           estado.error = "No se pudo guardar. Revisa tu conexión e intenta otra vez; lo que anotaste sigue aquí.";
+          repintar();
+        }
+      );
+      return;
+    }
+
+    // Historial: corregir o borrar un entrenamiento ya guardado.
+    if (el.dataset.editar !== undefined) {
+      const s = d.sesiones?.find((x) => x.id === el.dataset.editar);
+      if (!s) return;
+      // Hay un solo borrador: si tiene uno en curso, primero que lo termine o lo descarte.
+      if (b) {
+        alert(b.edicion
+          ? "Ya estás editando otro entrenamiento. Guarda o cancela esos cambios primero."
+          : "Tienes un entrenamiento en curso. Termínalo o descártalo antes de editar uno pasado.");
+        return;
+      }
+      guardarBorrador(borradorDeSesion(s, d.banco));
+      estado.activo = 0;
+      estado.aviso = null;
+      ir("capturar");
+      return;
+    }
+    if (el.dataset.borrar !== undefined) {
+      const id = el.dataset.borrar;
+      const s = d.sesiones?.find((x) => x.id === id);
+      if (!s || estado.borrando) return;
+      if (!confirm(`¿Eliminar tu entrenamiento del ${enPalabras(s.fecha)}? No se puede deshacer.`)) return;
+      estado.borrando = id;
+      estado.error = null;
+      estado.aviso = null;
+      repintar();
+      acciones.borrar(id).then(
+        () => { estado.borrando = null; estado.aviso = "Entrenamiento eliminado"; repintar(); },
+        () => {
+          estado.borrando = null;
+          estado.error = "No se pudo eliminar. Revisa tu conexión e intenta otra vez.";
           repintar();
         }
       );

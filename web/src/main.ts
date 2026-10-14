@@ -25,7 +25,7 @@ import type {
 } from "./datos";
 import { hoyEnMazatlan } from "./fecha";
 import { mesAnterior, type Tirada } from "./tirada";
-import { guardarPeso, obtenerRanking, registrarEntrada, registrarSesion } from "./acciones";
+import { borrarSesion, editarSesion, guardarPeso, obtenerRanking, registrarEntrada, registrarSesion } from "./acciones";
 import { modalRuleta, conectarRuleta } from "./ui/ruleta";
 import { conectarRanking, type EstadoRanking } from "./ui/tarjetaRanking";
 import { conectarAjustes } from "./ui/tarjetaAjustes";
@@ -494,7 +494,11 @@ async function arrancar(): Promise<void> {
       // abierto se va a él), y de eso depende lo que va en la cabecera.
       const enCurso = cabeceraRegistro();
       if (enCurso) actualizarCabecera(enCurso.titulo, enCurso.detalle);
-      conectarRegistro(datosRegistro(datos), pintar, (envio) => registrarSesion(envio));
+      conectarRegistro(datosRegistro(datos), pintar, {
+        guardar: (envio) => registrarSesion(envio),
+        editar: (envio) => editarSesion(envio),
+        borrar: (id) => borrarSesion({ id }),
+      });
       return;
     }
     if (activa.id === "ranking") {

@@ -398,7 +398,12 @@ Plan: `superpowers/plans/2026-10-10-banco-ejercicios-gifs.md`.
 **Desplegado (2026-10-10):** reglas, banco cargado (91 de 91), función `registrarSesion` y web.
 Falta que el entrenador lo verifique en su teléfono.
 
-Pendiente: borrar una sesión del día, modo guiado, cálculo de fuerza y estándares por
+Hecho (2026-10-14): **editar y eliminar** entrenamientos desde "Tu historial" (funciones
+`editarSesion` y `borrarSesion`; editar conserva la fecha y las horas). Y el mapa toma
+**primero los ejercicios directos** de cada músculo: los secundarios solo cuentan si no hay
+ninguno directo.
+
+Pendiente: modo guiado, cálculo de fuerza y estándares por
 ejercicio (para colorear el mapa), ver las sesiones desde la app, y `Ejercicio.ejercicioId`
 con buscador en el editor de rutinas.
 

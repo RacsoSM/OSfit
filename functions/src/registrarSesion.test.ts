@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { inicioValido, sesionValida, type DelBanco } from "./registrarSesion";
+import { idSesion, inicioValido, sesionValida, type DelBanco } from "./registrarSesion";
 
 const banco = new Map<string, DelBanco>([
   ["press-banca", { nombre: "Press de banca", tipo: "peso" }],
@@ -86,5 +86,15 @@ describe("inicioValido", () => {
     expect(inicioValido(AHORA + 10 * 60_000, AHORA)).toBeNull();
     expect(inicioValido("ayer", AHORA)).toBeNull();
     expect(inicioValido(undefined, AHORA)).toBeNull();
+  });
+});
+
+describe("idSesion", () => {
+  it("acepta el id de un borrador y rechaza lo que no sirve de id de documento", () => {
+    expect(idSesion({ id: ID })).toBe(ID);
+    expect(idSesion({ id: "a/b/c/d/e/f" })).toBeNull();
+    expect(idSesion({ id: "corto" })).toBeNull();
+    expect(idSesion({})).toBeNull();
+    expect(idSesion(null)).toBeNull();
   });
 });

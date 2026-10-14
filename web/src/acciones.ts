@@ -76,6 +76,12 @@ export const registrarSesion = httpsCallable<Envio, { ok: true; id: string; fech
   "registrarSesion"
 );
 
+/** Corrige un entrenamiento ya guardado; conserva su fecha y sus horas. */
+export const editarSesion = httpsCallable<Envio, { ok: true; id: string }>(functions, "editarSesion");
+
+/** Borra un entrenamiento de su historial. */
+export const borrarSesion = httpsCallable<{ id: string }, { ok: true; id: string }>(functions, "borrarSesion");
+
 /** Su peso corporal en kg, para Músculos. El servidor rechaza lo que no sea de 25 a 300 kg. */
 export const guardarPeso = httpsCallable<{ peso: number }, { ok: true; peso: number }>(
   functions,

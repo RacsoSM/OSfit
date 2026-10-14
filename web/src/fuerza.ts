@@ -182,6 +182,11 @@ function diasAntes(hoy: string, dias: number): string {
  *   Los de tiempo no pintan el mapa, ni los que no tienen estándar.
  * - Por músculo, el **máximo** de `nivel del ejercicio × lo que lo trabaja` (1 principal,
  *   0.5 secundario): un accesorio ligero no le baja el nivel.
+ * - **Primero los directos** (decisión del entrenador, 2026-10-14): si el músculo tiene algún
+ *   ejercicio que lo trabaja como principal (× 1), su nivel sale solo de esos. Los secundarios
+ *   cuentan únicamente cuando no hay ninguno directo. Sin esto, un jalón muy fuerte (× 0.5 en
+ *   bíceps) le ganaba a los curls que sí hizo, y el detalle le hablaba de un ejercicio que no
+ *   era de bíceps.
  * - Un músculo sin ejercicios registrados no aparece: es "sin datos", distinto de nivel 0.
  */
 export function fuerzaPorMusculo(
@@ -217,7 +222,12 @@ export function fuerzaPorMusculo(
     const nivel = nivelDe(marca, estandares);
     for (const [musculo, cuanto] of Object.entries(b.musculos)) {
       const n = nivel * cuanto;
-      if (n > (fuerza[musculo]?.nivel ?? -1)) {
+      const directo = cuanto >= 1;
+      const actual = fuerza[musculo];
+      const actualDirecto = (actual?.origen?.cuanto ?? 0) >= 1;
+      // Un directo siempre le gana a un secundario; entre iguales, el de más nivel.
+      const gana = !actual || (directo && !actualDirecto) || (directo === actualDirecto && n > actual.nivel);
+      if (gana) {
         fuerza[musculo] = {
           nivel: n,
           origen: {

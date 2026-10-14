@@ -39,6 +39,12 @@ export interface Borrador {
    * entrenamientos con inicio no lo traen.
    */
   iniciado?: number;
+  /**
+   * true cuando el borrador es la corrección de un entrenamiento ya guardado (el historial
+   * lo abre con `borradorDeSesion`): al guardar va a `editarSesion`, que conserva su fecha y
+   * sus horas, y no a `registrarSesion`, que le pondría la fecha de hoy.
+   */
+  edicion?: boolean;
   ejercicios: EjercicioBorrador[];
 }
 
@@ -87,6 +93,30 @@ export function agregarEjercicio(
       ...b.ejercicios,
       { ejercicioId: e.id, nombre: e.nombre, tipo: e.tipo, gifRuta: e.gifRuta ?? null, series, unidad },
     ],
+  };
+}
+
+/**
+ * Un entrenamiento ya guardado, como borrador para corregirlo. Mismo id (así `editarSesion`
+ * sabe cuál es) y siempre en kg, que es como está guardado: pasarlo a barras redondearía. Si un
+ * ejercicio ya no está en el banco se queda con su nombre y sin GIF.
+ */
+export function borradorDeSesion(s: Sesion, banco: readonly EjercicioBanco[]): Borrador {
+  return {
+    id: s.id,
+    fecha: s.fecha,
+    edicion: true,
+    ejercicios: s.ejercicios.map((e) => {
+      const b = banco.find((x) => x.id === e.ejercicioId);
+      return {
+        ejercicioId: e.ejercicioId,
+        nombre: b?.nombre ?? e.nombre,
+        tipo: b?.tipo ?? "peso",
+        gifRuta: b?.gifRuta ?? null,
+        unidad: "kg" as const,
+        series: e.series.map((x) => ({ reps: String(x.reps), peso: x.peso === null ? "" : String(x.peso) })),
+      };
+    }),
   };
 }
 

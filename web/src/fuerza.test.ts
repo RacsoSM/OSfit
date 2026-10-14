@@ -156,6 +156,37 @@ describe("fuerzaPorMusculo", () => {
     expect(f.abdomen.nivel).toBe(2.5);
   });
 
+  it("con un ejercicio directo, los secundarios no cuentan aunque den más", () => {
+    const curl: EjercicioBanco = {
+      id: "curl", nombre: "Curl", tipo: "peso", musculos: { biceps: 1 },
+      estandares: { H: [0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 1.1], M: [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.9] },
+    };
+    const jalon: EjercicioBanco = {
+      id: "jalon", nombre: "Jalón", tipo: "peso", musculos: { dorsal: 1, biceps: 0.5 },
+      estandares: { H: [0.5, 0.6, 0.75, 0.9, 1, 1.1, 1.3, 1.7], M: [0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.2] },
+    };
+    const b = [curl, jalon];
+    // Jalón en Élite (2 × peso) → bíceps 8 × 0.5 = 4. Curl de 30 kg ÷ 100 = 0.3 → nivel 2.
+    const ambos = fuerzaPorMusculo(
+      [sesion("2026-10-10", [
+        { ejercicioId: "jalon", nombre: "", series: [{ reps: 1, peso: 200 }] },
+        { ejercicioId: "curl", nombre: "", series: [{ reps: 1, peso: 30 }] },
+      ])],
+      b, "H", 100, "2026-10-11"
+    );
+    expect(ambos.biceps.nivel).toBeCloseTo(2, 5);
+    expect(ambos.biceps.origen?.ejercicioId).toBe("curl");
+    expect(ambos.dorsal.nivel).toBe(8);
+
+    // Sin curl, el bíceps sí sale del jalón.
+    const soloJalon = fuerzaPorMusculo(
+      [sesion("2026-10-10", [{ ejercicioId: "jalon", nombre: "", series: [{ reps: 1, peso: 200 }] }])],
+      b, "H", 100, "2026-10-11"
+    );
+    expect(soloJalon.biceps.nivel).toBe(4);
+    expect(soloJalon.biceps.origen?.ejercicioId).toBe("jalon");
+  });
+
   it("solo cuentan las últimas 8 semanas", () => {
     const vieja = sesion("2026-08-01", [{ ejercicioId: "press-banca", nombre: "", series: [{ reps: 1, peso: 100 }] }]);
     expect(fuerzaPorMusculo([vieja], banco, "H", 75, "2026-10-11")).toEqual({});

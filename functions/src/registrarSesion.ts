@@ -92,10 +92,9 @@ export function inicioValido(ms: unknown, ahora: number): number | null {
   return ms;
 }
 
-export const registrarSesion = onCall({ region: REGION }, async (request) => {
-  const clienteId = await clienteDeLaSesion(request);
-
-  const pedidos = (request.data as { ejercicios?: unknown })?.ejercicios;
+/** Los ejercicios del banco que trae la petición: lo que `sesionValida` necesita para validar. */
+async function leerBanco(data: unknown): Promise<Map<string, DelBanco>> {
+  const pedidos = (data as { ejercicios?: unknown } | null)?.ejercicios;
   const ids = Array.isArray(pedidos)
     ? [...new Set(pedidos.slice(0, MAX_EJERCICIOS)
         .map((e) => (e as { ejercicioId?: unknown })?.ejercicioId)
@@ -109,6 +108,12 @@ export const registrarSesion = onCall({ region: REGION }, async (request) => {
       if (d.exists) banco.set(d.id, { nombre: d.get("nombre"), tipo: d.get("tipo") });
     }
   }
+  return banco;
+}
+
+export const registrarSesion = onCall({ region: REGION }, async (request) => {
+  const clienteId = await clienteDeLaSesion(request);
+  const banco = await leerBanco(request.data);
 
   const sesion = sesionValida(request.data, banco);
   if (typeof sesion === "string") throw new HttpsError("invalid-argument", sesion);
@@ -124,4 +129,40 @@ export const registrarSesion = onCall({ region: REGION }, async (request) => {
     ejercicios: sesion.ejercicios,
   });
   return { ok: true, id: sesion.id, fecha };
+});
+
+/** El id de una sesión que la clienta quiere editar o borrar, o null si no sirve. */
+export function idSesion(data: unknown): string | null {
+  const id = (data as { id?: unknown } | null)?.id;
+  return typeof id === "string" && ID_VALIDO.test(id) ? id : null;
+}
+
+/**
+ * Corrige un entrenamiento ya guardado (un peso mal escrito, una serie de más). Solo cambia
+ * los ejercicios: la fecha y las horas de inicio y fin se quedan, porque son de cuando lo
+ * entrenó y no de cuando lo corrigió. Valida igual que `registrarSesion`.
+ */
+export const editarSesion = onCall({ region: REGION }, async (request) => {
+  const clienteId = await clienteDeLaSesion(request);
+  const id = idSesion(request.data);
+  if (!id) throw new HttpsError("invalid-argument", "id_invalido");
+
+  const ref = db().collection("clientes").doc(clienteId).collection("sesiones").doc(id);
+  if (!(await ref.get()).exists) throw new HttpsError("not-found", "sesion_no_existe");
+
+  const banco = await leerBanco(request.data);
+  const sesion = sesionValida(request.data, banco);
+  if (typeof sesion === "string") throw new HttpsError("invalid-argument", sesion);
+
+  await ref.update({ ejercicios: sesion.ejercicios, editada: FieldValue.serverTimestamp() });
+  return { ok: true, id };
+});
+
+/** Borra un entrenamiento de su historial. Solo los suyos: la ruta sale del claim, no del navegador. */
+export const borrarSesion = onCall({ region: REGION }, async (request) => {
+  const clienteId = await clienteDeLaSesion(request);
+  const id = idSesion(request.data);
+  if (!id) throw new HttpsError("invalid-argument", "id_invalido");
+  await db().collection("clientes").doc(clienteId).collection("sesiones").doc(id).delete();
+  return { ok: true, id };
 });

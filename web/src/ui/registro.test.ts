@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import type { EjercicioBanco, Sesion } from "../datos";
 import { indiceBanco } from "../banco";
-import { agregarEjercicio, nuevoBorrador } from "../registro";
+import { agregarEjercicio, borradorDeSesion, nuevoBorrador } from "../registro";
 import { cabeceraRegistro, ponerEstadoRegistro, ventanaRegistro, type DatosRegistro } from "./registro";
 
 const press: EjercicioBanco = {
@@ -216,5 +216,28 @@ describe("video del ejercicio", () => {
     expect(ventanaRegistro(datos())).not.toContain("<video");
     ponerEstadoRegistro({ vista: "elegir", borrador: nuevoBorrador("b1234567", "2026-10-12") });
     expect(ventanaRegistro(datos({ banco: [conVideo], indice: indiceBanco([conVideo]) }))).not.toContain("<video");
+  });
+});
+
+describe("editar y eliminar del historial", () => {
+  const guardada: Sesion = {
+    id: "sesion123abc", fecha: "2026-10-10", origen: "manual",
+    ejercicios: [{ ejercicioId: "press-banca", nombre: "Press de banca", series: [{ reps: 10, peso: 40 }] }],
+  };
+
+  it("cada entrenamiento del historial trae Editar y Eliminar", () => {
+    ponerEstadoRegistro({ vista: "historial", borrador: null });
+    const html = ventanaRegistro(datos({ sesiones: [guardada] }));
+    expect(html).toContain(`data-editar="sesion123abc"`);
+    expect(html).toContain(`data-borrar="sesion123abc"`);
+  });
+
+  it("editando: guarda cambios en vez de terminar, y la cabecera dice qué día se corrige", () => {
+    ponerEstadoRegistro({ vista: "capturar", borrador: borradorDeSesion(guardada, banco) });
+    const html = ventanaRegistro(datos({ sesiones: [guardada] }));
+    expect(html).toContain("Guardar cambios");
+    expect(html).toContain("Cancelar cambios");
+    expect(html).not.toContain("Terminar entrenamiento");
+    expect(cabeceraRegistro()).toEqual({ titulo: "Editando entrenamiento", detalle: "sábado, 10 de octubre" });
   });
 });

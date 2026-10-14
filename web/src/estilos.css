@@ -1017,6 +1017,16 @@ main:has(#barra) { padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
 .registro-hist-ej:first-child { border-top: 0; }
 .registro-hist-nombre { display: block; font-weight: 600; font-size: 15px; }
 .registro-hist-series { font-size: 13px; color: var(--texto-tenue); }
+.registro-hist-acciones {
+  display: flex; justify-content: flex-end; gap: 8px;
+  margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--superficie-alta);
+}
+.registro-hist-accion {
+  padding: 8px 14px; border: 1px solid var(--superficie-alta); border-radius: 999px;
+  background: none; font: inherit; font-size: 14px; color: var(--texto); cursor: pointer;
+}
+.registro-hist-accion.peligro { color: var(--rojo); }
+.registro-hist-accion:disabled { opacity: 0.5; cursor: default; }
 
 /* Dos columnas en el teléfono, más si cabe: el GIF tiene que verse lo bastante grande para
    reconocer el movimiento. */

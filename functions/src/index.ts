@@ -9,5 +9,5 @@ export { enviarNotificacion } from "./enviarNotificacion";
 export { programarAvisos } from "./programarAvisos";
 export { alRevocarAcceso } from "./alRevocarAcceso";
 export { registrarEntrada } from "./registrarEntrada";
-export { registrarSesion } from "./registrarSesion";
+export { borrarSesion, editarSesion, registrarSesion } from "./registrarSesion";
 export { guardarPeso } from "./guardarPeso";

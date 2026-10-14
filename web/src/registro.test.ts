@@ -3,6 +3,7 @@ import type { EjercicioBanco, Sesion } from "./datos";
 import {
   agregarEjercicio,
   agregarSerie,
+  borradorDeSesion,
   cambiarSerie,
   cambiarUnidad,
   leerBorrador,
@@ -267,5 +268,48 @@ describe("unidad: barras o kg", () => {
     b = cambiarSerie(b, 0, 0, "reps", "8");
     const r = paraEnviar(b);
     expect(r.ok && r.datos.ejercicios[0].series[0]).toEqual({ reps: 8, peso: 40 });
+  });
+});
+
+describe("borradorDeSesion", () => {
+  const guardada: Sesion = {
+    id: "sesion123abc", fecha: "2026-10-10", origen: "manual",
+    ejercicios: [
+      { ejercicioId: "press-banca", nombre: "Press viejo", series: [{ reps: 10, peso: 42.5 }, { reps: 8, peso: 45 }] },
+      { ejercicioId: "dominadas", nombre: "Dominadas", series: [{ reps: 6, peso: null }] },
+    ],
+  };
+
+  it("conserva id y fecha, va en kg, toma nombre y GIF del banco y marca la edición", () => {
+    const b = borradorDeSesion(guardada, [ej(), dominadas]);
+    expect(b.id).toBe("sesion123abc");
+    expect(b.fecha).toBe("2026-10-10");
+    expect(b.edicion).toBe(true);
+    expect(b.ejercicios[0]).toMatchObject({
+      nombre: "Press de banca", tipo: "peso", unidad: "kg", gifRuta: "ejercicios/press-banca.webp",
+      series: [{ reps: "10", peso: "42.5" }, { reps: "8", peso: "45" }],
+    });
+    expect(b.ejercicios[1].series).toEqual([{ reps: "6", peso: "" }]);
+  });
+
+  it("sin cambios, se envía igual que como estaba guardado", () => {
+    const envio = paraEnviar(borradorDeSesion(guardada, [ej(), dominadas]));
+    expect(envio).toEqual({ ok: true, datos: {
+      id: "sesion123abc",
+      ejercicios: [
+        { ejercicioId: "press-banca", series: [{ reps: 10, peso: 42.5 }, { reps: 8, peso: 45 }] },
+        { ejercicioId: "dominadas", series: [{ reps: 6, peso: null }] },
+      ],
+    } });
+  });
+
+  it("un ejercicio que ya no está en el banco se queda con su nombre", () => {
+    const b = borradorDeSesion(guardada, [dominadas]);
+    expect(b.ejercicios[0]).toMatchObject({ nombre: "Press viejo", gifRuta: null });
+  });
+
+  it("leerBorrador conserva la marca de edición", () => {
+    const b = borradorDeSesion(guardada, [ej(), dominadas]);
+    expect(leerBorrador(JSON.stringify(b))?.edicion).toBe(true);
   });
 });
