@@ -561,7 +561,7 @@ A decidir en el spec:
 Nombre decidido (2026-10-14): **El camino de la Fuerza**. Los objetivos son los próximos de
 cada clienta en fuerza, calculados con sus pesos máximos.
 
-## 14. Rear delt en el banco de ejercicios
+## 14. Rear delt en el banco de ejercicios — ✅ HECHO (2026-10-14)
 
 > "me falta el rear dealt en el banco de ejercicios, agrégalo al backlog"
 
@@ -589,6 +589,11 @@ posterior), así que el rear delt pinta el hombro completo, igual que hoy los P�
 
 Duda para el entrenador: ¿cuál de los dos le falta (máquina, polea o ambos) o basta con que
 "rear delt" encuentre a los Pájaros?
+
+**Hecho (2026-10-14):** el entrenador eligió la de máquina, GIF 0602 de Gym visual (*lever seated
+reverse fly*). Quedó como `rear-delt-maquina`, con los alias "rear delt" (los Pájaros se quedan
+como estaban), estándares = militar × 0.75, video HD del camino 1 y en Ejercicios por grupo →
+Hombro después de los Pájaros. La de polea no hizo falta.
 
 ## 15. Lo que salió al estrenar Registro con clientas reales (2026-10-13)
 
@@ -658,18 +663,18 @@ Revisado contra `functions/semilla/ejercicios.json` (108 ejercicios):
 |---|---|---|
 | Rear delt | `pajaros` (con mancuernas), sin el alias "rear delt" | ✅ **Dado de alta (2026-10-14)**: `rear-delt-maquina` (GIF 0602 de Gym visual, pec deck invertido; estándares = militar × 0.75), con los alias "rear delt". Con video HD (camino 1) y en Ejercicios por grupo → Hombro después de los Pájaros. Ver **punto 14**. |
 | Pantorrilla en prensa | Solo `pantorrilla-de-pie` y `pantorrilla-sentado` | ✅ **Dado de alta (2026-10-14)**: `pantorrilla-prensa` (GIF 2289 de Gym visual; estándares = pantorrilla × 1.10). Con video HD (camino 1); sale en Pantorrilla porque ese grupo no está configurado en la app. |
-| Prensa en máquina a dos piernas | `prensa` (45°/inclinada) y `prensa-horizontal-una-pierna` | **Ejercicio nuevo**: prensa horizontal / sentado a dos piernas. Ojo: hoy los alias "prensa horizontal" y "prensa sentado" apuntan a la de **una** pierna; habría que pasarlos al nuevo. |
+| Prensa en máquina a dos piernas | `prensa` (45°/inclinada) y `prensa-horizontal-una-pierna` | ⏸️ **Pendiente, para después**: no hay una igual en Gym visual; hay que recrearla. Ver **punto 20**. |
 | Patada en máquina | `patada-gluteo-polea` y `patada-gluteo-liga` | ✅ **Dado de alta (2026-10-14)**: `patada-gluteo-maquina` (GIF 2286 de Gym visual, estándares = abductor × 0.80), en Ejercicios por grupo → Glúteo después de la de liga. |
-| Copa con cuerda de frente | `extension-triceps-trasnuca-polea` (sobre la cabeza con cuerda) y `extension-triceps-mancuerna` (alias "copa") | Confirmar con el entrenador cuál es. Si es la trasnuca en polea, solo faltan alias ("copa con cuerda", "copa en polea"); si es otra variante, ejercicio nuevo. |
-| Tríceps fondos | `fondos-banco` (alias "fondos de triceps") y `fondos-pecho` | Si es en banco: alias "triceps fondos". Si es en paralelas o en máquina para tríceps: ejercicio nuevo. Confirmar. |
+| Copa con cuerda de frente | `extension-triceps-trasnuca-polea` (sobre la cabeza con cuerda) y `extension-triceps-mancuerna` (alias "copa") | ✅ **Dado de alta (2026-10-14)**: era a un brazo, de pie, con la polea baja. `copa-polea-un-brazo` (GIF 1727 de Gym visual; estándares = tríceps × 0.40), alias "copa con cuerda de frente", "copa con cuerda" y "copa en polea". Con video HD (camino 1) y en Ejercicios por grupo → Tríceps después de la trasnuca en polea. |
+| Tríceps fondos | `fondos-banco` (alias "fondos de triceps") y `fondos-pecho` | ✅ **Dado de alta (2026-10-14)**: era en paralelas. `fondos-triceps` (GIF 0814 de Gym visual, corporal; estándares = los de fondos para pecho), alias "triceps fondos" y "fondos triceps". "fondos de triceps" sigue en Fondos en banco para no cambiar rutinas que ya lo usan. Con video HD (camino 1) y al final de Ejercicios por grupo → Tríceps. |
 
 Para cada ejercicio nuevo: GIF/WebP del dataset de Gym visual (`cargarBancoEjercicios.mjs`),
 video con el "camino 1" (punto 10), músculos, grupo, estándares de fuerza
 (`docs/estandares-fuerza/`) y agregarlo en la app a **Ejercicios por grupo** para que salga en
 el grid de Registro.
 
-Dudas para el entrenador: qué ejercicio es exactamente "copa con cuerda de frente" y "tríceps
-fondos" (punto de la tabla).
+~~Dudas para el entrenador: qué ejercicio es exactamente "copa con cuerda de frente" y "tríceps
+fondos" (punto de la tabla).~~ Resueltas el 2026-10-14 con fotos del entrenador.
 
 ## 16. Fuerza ajustada por edad — ✅ HECHO (2026-10-14)
 
@@ -725,3 +730,41 @@ curso), un botón "Cambiar ejercicio" que abra el grid de elegir y reemplace el 
 dejando sus series. Cuidado con el tipo: de un corporal a uno de peso, las series sin peso
 quedan a medio llenar y `paraEnviar` las va a reclamar; de uno de peso a uno de tiempo, el
 peso sobra. Y con la unidad (barras o kg) del ejercicio nuevo.
+
+## 20. Prensa sentado a dos piernas: recrear la animación para cuádriceps
+
+> "la prensa esa la dejaremos para después, déjala en el backlog" (2026-10-14)
+
+Es la "prensa máquina dos piernas" del punto 15: la de placas, sentado, empujando con las dos
+piernas (foto de referencia del entrenador: asiento con respaldo inclinado, plataforma vertical
+y torre de placas atrás). En Gym visual no hay una igual:
+
+- **1385** (*lever seated squat calf raise on leg press machine*) es la misma máquina y el mismo
+  movimiento de rodilla, pero es para **pantorrilla**: en la pose A apoya solo la punta del pie
+  con el talón al aire, y la pantorrilla está en rojo. El entrenador pidió usarla como base y
+  recrearla para cuádriceps.
+- 2287 (prensa de discos, alternando piernas) y 2611 (la horizontal a una pierna, que ya usamos)
+  se descartaron.
+
+Lo que se probó (2026-10-14), con las poses escaladas ×4 del camino 1:
+
+- **Pasar la pantorrilla a gris** (solo el cuádriceps en rojo): **sale limpio**, con una máscara
+  por pose sobre los píxeles rojos de la pierna de abajo.
+- **Apoyar el pie completo en la pose A** girando la pierna desde la rodilla (~15°) y el pie desde
+  el tobillo (~23°), rellenando el hueco con `cv2.inpaint`: **no sirve**, queda un corte en la
+  rodilla y manchas en la máquina que en el video HD se notan. En la pose B el pie ya está casi
+  plano.
+
+Opciones para terminarla:
+
+1. Editar las dos poses con IA (por ejemplo en Canva) pidiendo el pie completo en la
+   plataforma. Ojo: es subir animaciones de Gym visual a un servicio externo con la licencia en
+   trámite (`docs/licencias/GymVisual.md`), y la IA puede no dejar las dos poses iguales.
+2. Usarla solo con la pantorrilla en gris (el pie sigue en punta).
+3. Redibujar el pie y la pierna a mano, cuadro por cuadro.
+
+Al darla de alta: id tipo `prensa-sentado`, grupo `cuadriceps`, músculos `cuadriceps` 1 y
+`gluteo` 0.5, estándares = prensa × algo menos de 1, y pasarle los alias "prensa horizontal" y
+"prensa sentado", que hoy apuntan a `prensa-horizontal-una-pierna`. Como la animación sería
+nuestra y no del dataset, la carga del banco (`cargarBancoEjercicios.mjs`, que baja por
+`gifOrigen`) necesitaría aceptar un GIF local.

@@ -236,4 +236,5 @@ crédito "Animaciones © Gym visual" en la página, junto a donde se muestran.
   `--quitar` (§6.5).
 - **2026-10-14:** subidos 3 más: `rear-delt-maquina` y `pantorrilla-prensa` (nuevos en el banco) y
   `patada-gluteo-maquina` (dada de alta después del lote). Revisados con §6.2; URLs `200 video/mp4`.
+  Después, `copa-polea-un-brazo` y `fondos-triceps`, también nuevos en el banco.
 - **Pendiente:** que el entrenador lo vea en su teléfono (web y app, §6.4).
