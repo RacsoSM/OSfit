@@ -17,7 +17,7 @@ import { invitacionNotificaciones, seccionNotificaciones } from "./ui/tarjetaNot
 import type { EstadoNotificaciones } from "./notificaciones";
 import { tarjetaMusculos, type EstadoSvg } from "./ui/mapaMuscular";
 import { bloquePeso } from "./ui/pesoCorporal";
-import { fuerzaPorMusculo, type FuerzaMusculo } from "./fuerza";
+import { edadEn, fuerzaPorMusculo, type FuerzaMusculo } from "./fuerza";
 
 /**
  * Las ventanas de la página y lo que pinta cada una.
@@ -129,7 +129,7 @@ export function fuerzaDelCliente(
 ): Record<string, FuerzaMusculo> {
   const { sexo, peso } = d.cliente;
   if ((sexo !== "H" && sexo !== "M") || !peso || !d.sesiones) return {};
-  return fuerzaPorMusculo(d.sesiones, d.banco, sexo, peso, d.hoy);
+  return fuerzaPorMusculo(d.sesiones, d.banco, sexo, peso, d.hoy, edadEn(d.cliente.anioNacimiento, d.hoy));
 }
 
 export const VENTANAS: readonly Ventana[] = [

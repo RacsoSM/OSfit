@@ -38,7 +38,16 @@ data class Cliente(
     val diaFavoritoIndex: Int? = null,
     val peso: Double? = null,
     val altura: Double? = null,
+    // Obsoleto: ya no se escribe. Quedaba viejo cada año y nunca se llenó; lo reemplaza
+    // [anioNacimiento]. Se conserva para que los documentos que lo traen se sigan leyendo.
+    @Deprecated("Reemplazado por anioNacimiento")
     val edad: Int? = null,
+    /**
+     * Año de nacimiento, para el factor por edad del mapa de fuerza de la web (`factorEdad` en
+     * `web/src/fuerza.ts`): a los 52 no se compara igual que a los 25. El año y no la edad
+     * para que no se quede viejo. null = sin capturar; la web no ajusta nada.
+     */
+    val anioNacimiento: Int? = null,
     /**
      * "H" o "M": qué mapa muscular le toca en la web (frente y espalda de hombre o de mujer).
      * Lo elige el entrenador en "Editar cliente". null = clienta anterior al campo o sin

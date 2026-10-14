@@ -109,6 +109,11 @@ export interface Cliente {
    * siempre; ausente, Músculos le pide anotarlo antes de dejarla pasar.
    */
   peso?: number | null;
+  /**
+   * Año de nacimiento: el mapa de fuerza ajusta su nivel por edad (`factorEdad`). Lo escribe
+   * el entrenador en "Editar cliente". Opcional por la razón de siempre; ausente, no se ajusta.
+   */
+  anioNacimiento?: number | null;
 }
 
 export interface Asistencia {

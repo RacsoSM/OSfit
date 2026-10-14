@@ -668,3 +668,15 @@ el grid de Registro.
 
 Dudas para el entrenador: qué ejercicio es exactamente "copa con cuerda de frente" y "tríceps
 fondos" (punto de la tabla).
+
+## 16. Fuerza ajustada por edad — ✅ HECHO (2026-10-14)
+
+> "no es lo mismo alguien de 23 años que pese 87 kg que alguien de 52 como lo es Jaime que pese 87 kg" · "impleméntalo con año de nacimiento"
+
+- **App:** "Edad" pasa a **"Año de nacimiento"** en Editar cliente (`Cliente.anioNacimiento`;
+  muestra la edad calculada y valida el año). `edad` queda obsoleto: nunca se llenó.
+- **Web:** `factorEdad` en `web/src/fuerza.ts` multiplica la marca antes de compararla con los
+  estándares. Aproximado a los coeficientes de veteranos y juveniles del powerlifting: × 1 de
+  23 a 40, × 1.13 a los 50, × 1.31 a los 60; × 1.13 a los 16. El "siguiente objetivo" también
+  lo considera, y el detalle del músculo dice "Tu rango ya considera tu edad (N años)".
+- Sin año de nacimiento no se ajusta nada. Falta capturarlo en la app para cada cliente.

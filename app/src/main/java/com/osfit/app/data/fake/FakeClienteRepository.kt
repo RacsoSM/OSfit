@@ -173,7 +173,7 @@ class FakeClienteRepository : ClienteRepository {
         telefono: String,
         peso: Double?,
         altura: Double?,
-        edad: Int?,
+        anioNacimiento: Int?,
         sexo: String?,
         segundosPorEjercicio: Int?,
         minutosDescanso: Double?
@@ -184,7 +184,7 @@ class FakeClienteRepository : ClienteRepository {
                 telefono = telefono,
                 peso = peso,
                 altura = altura,
-                edad = edad,
+                anioNacimiento = anioNacimiento,
                 sexo = sexo,
                 segundosPorEjercicio = segundosPorEjercicio,
                 minutosDescanso = minutosDescanso

@@ -112,6 +112,9 @@ export interface OrigenFuerza {
   serie: { reps: number; peso: number | null };
   estandares: readonly number[];
   pesoPorMancuerna: boolean;
+  /** Su edad y el factor que se le aplicó a la marca (`factorEdad`); sin edad, 1. */
+  edad?: number | null;
+  factorEdad?: number;
 }
 
 /** Cómo se llama cada grupo de los SVG (`data-musculo`) en pantalla. */
@@ -166,6 +169,42 @@ export function nivelDe(marca: number, estandares: readonly number[]): number {
   return e.length;
 }
 
+/**
+ * Coeficientes por edad (aproximados, como los de las categorías de veteranos y juveniles del
+ * powerlifting): la marca se multiplica por esto antes de compararla con los estándares, que
+ * son de adultos de 23 a 40. A los 52, 50 kg valen como 58 kg a los 30. Decisión del
+ * entrenador, 2026-10-14. Entre dos edades de la tabla se interpola; fuera, la orilla.
+ */
+const TABLA_EDAD: readonly (readonly [number, number])[] = [
+  [14, 1.23], [16, 1.13], [18, 1.06], [20, 1.02], [23, 1], [40, 1],
+  [45, 1.05], [50, 1.13], [55, 1.21], [60, 1.31], [65, 1.43], [70, 1.56], [75, 1.7], [80, 1.85],
+];
+
+/** El factor por edad; sin edad, 1 (no se ajusta). */
+export function factorEdad(edad: number | null | undefined): number {
+  if (typeof edad !== "number" || !Number.isFinite(edad)) return 1;
+  const t = TABLA_EDAD;
+  if (edad <= t[0][0]) return t[0][1];
+  for (let i = 1; i < t.length; i++) {
+    const [e1, f1] = t[i];
+    if (edad <= e1) {
+      const [e0, f0] = t[i - 1];
+      return Math.round((f0 + ((edad - e0) / (e1 - e0)) * (f1 - f0)) * 1000) / 1000;
+    }
+  }
+  return t[t.length - 1][1];
+}
+
+/**
+ * Su edad este año a partir del año de nacimiento, o null si no hay o no es creíble. Puede
+ * ir un año adelantada antes de su cumpleaños: para el factor no hace diferencia.
+ */
+export function edadEn(anioNacimiento: number | null | undefined, hoy: string): number | null {
+  if (typeof anioNacimiento !== "number" || !Number.isInteger(anioNacimiento)) return null;
+  const edad = Number(hoy.slice(0, 4)) - anioNacimiento;
+  return edad >= 10 && edad <= 100 ? edad : null;
+}
+
 /** AAAA-MM-DD de `dias` antes de `hoy` (también AAAA-MM-DD). */
 function diasAntes(hoy: string, dias: number): string {
   const d = new Date(`${hoy}T12:00:00Z`);
@@ -188,15 +227,18 @@ function diasAntes(hoy: string, dias: number): string {
  *   bíceps) le ganaba a los curls que sí hizo, y el detalle le hablaba de un ejercicio que no
  *   era de bíceps.
  * - Un músculo sin ejercicios registrados no aparece: es "sin datos", distinto de nivel 0.
+ * - Con `edad`, la marca se multiplica por `factorEdad` antes de compararla (ver la tabla).
  */
 export function fuerzaPorMusculo(
   sesiones: readonly Sesion[],
   banco: readonly EjercicioBanco[],
   sexo: Sexo,
   pesoCorporal: number,
-  hoy: string
+  hoy: string,
+  edad: number | null = null
 ): Record<string, FuerzaMusculo> {
   if (!(pesoCorporal > 0)) return {};
+  const factor = factorEdad(edad);
   const desde = diasAntes(hoy, SEMANAS_VENTANA * 7);
   const porId = new Map(banco.map((e) => [e.id, e]));
 
@@ -207,9 +249,9 @@ export function fuerzaPorMusculo(
       const b = porId.get(e.ejercicioId);
       if (!b || !b.estandares || b.tipo === "tiempo") continue;
       for (const serie of e.series) {
-        const marca = b.tipo === "peso"
+        const marca = factor * (b.tipo === "peso"
           ? (serie.peso ?? 0) > 0 ? unoRm(serie.peso as number, serie.reps) / pesoCorporal : 0
-          : serie.reps;
+          : serie.reps);
         if (marca > (mejor.get(b.id)?.marca ?? 0)) mejor.set(b.id, { marca, serie });
       }
     }
@@ -234,6 +276,7 @@ export function fuerzaPorMusculo(
             ejercicioId: id, nombre: b.nombre, tipo: b.tipo as "peso" | "corporal", cuanto,
             serie: { reps: serie.reps, peso: serie.peso }, estandares,
             pesoPorMancuerna: b.pesoPorMancuerna === true,
+            edad, factorEdad: factor,
           },
         };
       }
@@ -298,7 +341,8 @@ export function siguienteRango(f: FuerzaMusculo, pesoCorporal: number): Siguient
   const nivelEjercicio = o ? meta / o.cuanto : Infinity;
   if (!o || nivelEjercicio > NIVEL_MAX) return { tipo: "otroEjercicio", rango: i + 1, avance };
 
-  const marca = marcaPara(nivelEjercicio, o.estandares);
+  // La marca que pide el estándar ya viene ajustada por edad: lo que tiene que mover es menos.
+  const marca = marcaPara(nivelEjercicio, o.estandares) / (o.factorEdad ?? 1);
   let objetivo: { reps: number; peso: number | null };
   if (o.tipo === "peso") {
     const reps = o.serie.reps;

@@ -208,6 +208,18 @@ describe("detalleMusculo", () => {
     expect(h).toContain("Tu mejor serie: 30 kg × 8.");
   });
 
+  it("con edad ajustada, lo dice; sin ajuste, no", () => {
+    const origen = {
+      ejercicioId: "press-banca", nombre: "Press de banca", tipo: "peso" as const, cuanto: 1,
+      serie: { reps: 8, peso: 30 }, estandares: [0.5, 0.625, 0.75, 0.875, 1, 1.137, 1.275, 1.7],
+      pesoPorMancuerna: false,
+    };
+    expect(detalleMusculo("pecho", { nivel: 1.2, origen: { ...origen, edad: 52, factorEdad: 1.162 } }, "H", 75))
+      .toContain("Tu rango ya considera tu edad (52 años).");
+    expect(detalleMusculo("pecho", { nivel: 1.2, origen: { ...origen, edad: 30, factorEdad: 1 } }, "H", 75))
+      .not.toContain("considera tu edad");
+  });
+
   it("en los corporales cuenta repeticiones, y en singular si falta una", () => {
     const f = {
       nivel: 4.4,

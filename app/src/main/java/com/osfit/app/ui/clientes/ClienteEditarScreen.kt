@@ -47,6 +47,7 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.osfit.app.data.model.Sexo
 import com.osfit.app.util.CancionUtil
 import java.io.File
+import java.time.Year
 import kotlinx.coroutines.delay
 
 /** Cuánto suena la canción al tocar reproducir en el preview: suficiente para ubicar el
@@ -69,7 +70,7 @@ fun ClienteEditarScreen(
     var telefono by remember { mutableStateOf(clienteActual.telefono) }
     var peso by remember { mutableStateOf(clienteActual.peso?.toString() ?: "") }
     var altura by remember { mutableStateOf(clienteActual.altura?.toString() ?: "") }
-    var edad by remember { mutableStateOf(clienteActual.edad?.toString() ?: "") }
+    var anioNacimiento by remember { mutableStateOf(clienteActual.anioNacimiento?.toString() ?: "") }
     var sexo by remember { mutableStateOf(clienteActual.sexo) }
     var segundosPorEjercicio by remember { mutableStateOf(clienteActual.segundosPorEjercicio?.toString() ?: "") }
     var minutosDescanso by remember { mutableStateOf(clienteActual.minutosDescanso?.toString() ?: "") }
@@ -120,7 +121,7 @@ fun ClienteEditarScreen(
                         telefono = telefono.trim(),
                         peso = peso.toDoubleOrNull(),
                         altura = altura.toDoubleOrNull(),
-                        edad = edad.toIntOrNull(),
+                        anioNacimiento = anioNacimientoValido(anioNacimiento),
                         sexo = sexo,
                         segundosPorEjercicio = segundosPorEjercicio.toIntOrNull(),
                         minutosDescanso = minutosDescanso.toDoubleOrNull()
@@ -132,7 +133,7 @@ fun ClienteEditarScreen(
                     )
                     onGuardado()
                 },
-                enabled = nombreValido,
+                enabled = nombreValido && (anioNacimiento.isBlank() || anioNacimientoValido(anioNacimiento) != null),
                 modifier = Modifier.fillMaxWidth().padding(16.dp)
             ) {
                 Text("Guardar")
@@ -176,10 +177,22 @@ fun ClienteEditarScreen(
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 modifier = Modifier.fillMaxWidth()
             )
+            val anioValido = anioNacimiento.isBlank() || anioNacimientoValido(anioNacimiento) != null
             OutlinedTextField(
-                value = edad,
-                onValueChange = { edad = it },
-                label = { Text("Edad") },
+                value = anioNacimiento,
+                onValueChange = { anioNacimiento = it.filter(Char::isDigit).take(4) },
+                label = { Text("Año de nacimiento") },
+                supportingText = {
+                    val anio = anioNacimientoValido(anioNacimiento)
+                    Text(
+                        when {
+                            anio != null -> "${Year.now().value - anio} años"
+                            anioValido -> "Ajusta su nivel de fuerza por edad"
+                            else -> "Escribe un año entre $ANIO_MINIMO y ${Year.now().value - EDAD_MINIMA}"
+                        }
+                    )
+                },
+                isError = !anioValido,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 modifier = Modifier.fillMaxWidth()
             )
@@ -345,3 +358,10 @@ private fun formatoMmSs(totalSegundos: Int): String {
     val segundos = totalSegundos % 60
     return "%d:%02d".format(minutos, segundos)
 }
+
+private const val ANIO_MINIMO = 1920
+private const val EDAD_MINIMA = 10
+
+/** El año escrito, si es uno de nacimiento creíble; null si está vacío o no lo es. */
+private fun anioNacimientoValido(texto: String): Int? =
+    texto.trim().toIntOrNull()?.takeIf { it in ANIO_MINIMO..(Year.now().value - EDAD_MINIMA) }

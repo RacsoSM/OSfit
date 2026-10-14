@@ -29,7 +29,7 @@ interface ClienteRepository {
         telefono: String,
         peso: Double?,
         altura: Double?,
-        edad: Int?,
+        anioNacimiento: Int?,
         sexo: String?,
         segundosPorEjercicio: Int?,
         minutosDescanso: Double?

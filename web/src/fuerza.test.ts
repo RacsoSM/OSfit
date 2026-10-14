@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  NOMBRES_MUSCULO, fuerzaPorMusculo, indiceRango, marcaPara, nivelDe, rangoGeneral, repartoRangos,
+  NOMBRES_MUSCULO, edadEn, factorEdad, fuerzaPorMusculo, indiceRango, marcaPara, nivelDe, rangoGeneral, repartoRangos,
   siguienteRango, nombreMusculo, nombreRango, percentilDe,
   percentilEntrenanDe, rangoDe, unoRm,
 } from "./fuerza";
@@ -280,6 +280,13 @@ describe("siguienteRango", () => {
     expect(siguienteRango(conOrigen(4.2, { cuanto: 0.5 }), 75)).toMatchObject({ tipo: "otroEjercicio", rango: 4 });
   });
 
+  it("con factor por edad, el objetivo es lo que tiene que mover a su edad", () => {
+    // Mismo caso que arriba, a los 52 (× 1.162): Novato pide 46.9 kg ÷ 1.162 = 40.3 kg de
+    // 1RM, que a 8 reps son 31.8 kg → 32.
+    const s = siguienteRango(conOrigen(1.2, { edad: 52, factorEdad: factorEdad(52) }), 75);
+    expect(s).toMatchObject({ tipo: "falta", objetivo: { reps: 8, peso: 32 } });
+  });
+
   it("en Élite ya no hay siguiente", () => {
     expect(siguienteRango(conOrigen(8), 75)).toEqual({ tipo: "maximo" });
   });
@@ -308,5 +315,49 @@ describe("rangoGeneral", () => {
 
   it("sin ningún músculo con rango no hay rango general", () => {
     expect(rangoGeneral({})).toBeNull();
+  });
+});
+
+describe("factorEdad y edadEn", () => {
+  it("1 de los 23 a los 40 y sin edad; sube de grande y de muy joven", () => {
+    expect(factorEdad(null)).toBe(1);
+    expect(factorEdad(25)).toBe(1);
+    expect(factorEdad(40)).toBe(1);
+    expect(factorEdad(50)).toBe(1.13);
+    expect(factorEdad(52)).toBeCloseTo(1.162, 3);
+    expect(factorEdad(60)).toBe(1.31);
+    expect(factorEdad(16)).toBe(1.13);
+  });
+
+  it("fuera de la tabla se queda en la orilla", () => {
+    expect(factorEdad(10)).toBe(1.23);
+    expect(factorEdad(95)).toBe(1.85);
+  });
+
+  it("nunca baja al crecer después de los 23", () => {
+    const f = Array.from({ length: 60 }, (_, i) => factorEdad(23 + i));
+    expect(f.every((x, i) => i === 0 || x >= f[i - 1])).toBe(true);
+  });
+
+  it("la edad sale del año de nacimiento; un año imposible no cuenta", () => {
+    expect(edadEn(1974, "2026-10-14")).toBe(52);
+    expect(edadEn(null, "2026-10-14")).toBeNull();
+    expect(edadEn(2024, "2026-10-14")).toBeNull();
+    expect(edadEn(1900, "2026-10-14")).toBeNull();
+  });
+
+  it("fuerzaPorMusculo aplica el factor a la marca", () => {
+    const banca: EjercicioBanco = {
+      id: "press-banca", nombre: "Press de banca", tipo: "peso", musculos: { pecho: 1 },
+      estandares: { H: [0.5, 0.6, 0.75, 0.9, 1, 1.1, 1.3, 1.7], M: [0.25, 0.4, 0.5, 0.6, 0.75, 0.8, 0.85, 1.3] },
+    };
+    const sesiones: Sesion[] = [{ id: "s", fecha: "2026-10-10", origen: "manual", ejercicios: [
+      { ejercicioId: "press-banca", nombre: "", series: [{ reps: 1, peso: 50 }] },
+    ] }];
+    // 50 ÷ 100 = 0.5 → nivel 1. A los 50 (× 1.13) = 0.565 → entre 0.5 y 0.6.
+    expect(fuerzaPorMusculo(sesiones, [banca], "H", 100, "2026-10-11").pecho.nivel).toBeCloseTo(1, 5);
+    const conEdad = fuerzaPorMusculo(sesiones, [banca], "H", 100, "2026-10-11", 50).pecho;
+    expect(conEdad.nivel).toBeCloseTo(1.65, 5);
+    expect(conEdad.origen).toMatchObject({ edad: 50, factorEdad: 1.13 });
   });
 });
