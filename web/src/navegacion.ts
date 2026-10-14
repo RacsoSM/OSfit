@@ -14,6 +14,8 @@ import type { IdVentana } from "./ventanas";
  *
  * El historial nunca pasa de `[Inicio, ventana]`, más la entrada del menú mientras está
  * abierto: así "atrás" desde cualquier ventana vuelve a Inicio y no recorre todo lo visitado.
+ * La excepción son las subventanas (`PADRE`), como Compararme dentro de Músculos: se abren
+ * encima de su padre, `[Inicio, Músculos, Compararme]`, para que "atrás" regrese a Músculos.
  *
  * Es el único módulo que toca `history`, y lo recibe inyectado para poder probarlo.
  */
@@ -25,6 +27,14 @@ export interface Historial {
   replaceState(estado: unknown): void;
   back(): void;
   alRetroceder(escucha: () => void): void;
+}
+
+/** Las subventanas y la ventana sobre la que se abren. */
+const PADRE: Partial<Record<IdVentana, IdVentana>> = { comparar: "musculos" };
+
+/** La ventana de la barra que va marcada: la propia, o la del padre en una subventana. */
+export function ventanaDeBarra(id: IdVentana): IdVentana {
+  return PADRE[id] ?? id;
 }
 
 let historial: Historial | null = null;
@@ -51,13 +61,22 @@ function leer(estado: unknown): { ventana: IdVentana; menu: boolean } {
 /** Ir a una ventana con el menú ya cerrado. */
 function irA(id: IdVentana): void {
   if (!historial || id === activa) return;
+  const padre = PADRE[activa];
+  if (padre !== undefined) {
+    // Salir de una subventana es primero regresar a su padre; si iba a otra, se sigue desde
+    // ahí al llegar el `popstate` (`pendiente`), como al cerrar el menú.
+    if (id !== padre) pendiente = id;
+    esperando = true;
+    historial.back();
+    return;
+  }
   if (id === "inicio") {
     // Volver es retroceder, no empujar: así no se acumulan entradas.
     esperando = true;
     historial.back();
     return;
   }
-  if (activa === "inicio") historial.pushState({ ventana: id });
+  if (activa === "inicio" || PADRE[id] === activa) historial.pushState({ ventana: id });
   else historial.replaceState({ ventana: id });
   activa = id;
 }

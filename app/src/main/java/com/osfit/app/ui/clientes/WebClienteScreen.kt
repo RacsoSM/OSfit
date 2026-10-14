@@ -11,6 +11,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FitnessCenter
+import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.Notifications
@@ -85,6 +86,14 @@ class WebClienteViewModel(
         }
         viewModelScope.launch {
             runCatching { clienteRepository.actualizarAvisoAutomatico(clienteId, aviso, activo) }
+        }
+    }
+
+    /** El interruptor dice "Aparece": prendido es `ocultarEnComparar = false`. */
+    fun cambiarApareceEnComparar(aparece: Boolean) {
+        _cliente.value = _cliente.value?.copy(ocultarEnComparar = !aparece)
+        viewModelScope.launch {
+            runCatching { clienteRepository.actualizarOcultarEnComparar(clienteId, !aparece) }
         }
     }
 
@@ -163,6 +172,13 @@ fun WebClienteScreen(
                 )
             }
             item {
+                FilaCompararme(
+                    aparece = cliente?.ocultarEnComparar != true,
+                    habilitado = cliente != null,
+                    onCambiar = viewModel::cambiarApareceEnComparar
+                )
+            }
+            item {
                 TarjetaAvisosAutomaticos(
                     activos = cliente?.avisosAutomaticos.orEmpty(),
                     notificacionesPrendidas = cliente?.notificacionesWeb == true,
@@ -228,6 +244,36 @@ private fun FilaRecordatorioPago(
                 )
             }
             Switch(checked = activo, onCheckedChange = onCambiar, enabled = habilitado)
+        }
+    }
+}
+
+/**
+ * "Compararme" en Músculos de la web: la lista de clientas con su rango y sus cuerpos lado a
+ * lado. Aparece por defecto; aquí se apaga para quien no quiera salir.
+ */
+@Composable
+private fun FilaCompararme(
+    aparece: Boolean,
+    habilitado: Boolean,
+    onCambiar: (Boolean) -> Unit
+) {
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Icon(Icons.Filled.Groups, contentDescription = null)
+            Column(modifier = Modifier.weight(1f)) {
+                Text("Aparece en Compararme", style = MaterialTheme.typography.titleMedium)
+                Text(
+                    if (aparece) "Los demás ven su nombre, su rango y su mapa de músculos. Nunca su peso."
+                    else "No sale en la lista de los demás, pero sí puede compararse.",
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
+            Switch(checked = aparece, onCheckedChange = onCambiar, enabled = habilitado)
         }
     }
 }

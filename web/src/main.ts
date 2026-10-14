@@ -26,7 +26,7 @@ import type {
 import { hoyEnMazatlan } from "./fecha";
 import { mesAnterior, type Tirada } from "./tirada";
 import {
-  borrarSesion, editarSesion, guardarPeso, marcarAsistencia, obtenerRanking, registrarEntrada, registrarSesion,
+  borrarSesion, compararMusculos, editarSesion, guardarPeso, marcarAsistencia, obtenerRanking, registrarEntrada, registrarSesion,
 } from "./acciones";
 import { modalRuleta, conectarRuleta } from "./ui/ruleta";
 import { conectarRanking, type EstadoRanking } from "./ui/tarjetaRanking";
@@ -57,8 +57,11 @@ import { conectarPeso } from "./ui/pesoCorporal";
 import { conectarDeslizarMenu } from "./ui/deslizarMenu";
 import {
   abrirMenu, abrirVentana, cerrarMenu, historialDelNavegador, iniciarNavegacion, menuAbierto,
-  ventanaActiva,
+  ventanaActiva, ventanaDeBarra,
 } from "./navegacion";
+import {
+  conectarComparar, reiniciarComparar, sexosAComparar, type EstadoComparar,
+} from "./ui/comparar";
 import {
   actualizarCabecera, aplicarMenuAbierto, cabecera, conectarCabecera, conectarMenu,
   marcarVentanaActiva, panelMenu,
@@ -196,6 +199,9 @@ async function arrancar(): Promise<void> {
   let ranking: EstadoRanking = { estado: "cargando" };
   /** Número del último pedido: una respuesta de un pedido viejo no pisa a la más nueva. */
   let pedidoRanking = 0;
+  /** Lo de Compararme; se pide cada vez que se entra, como el ranking. */
+  let comparacion: EstadoComparar = { estado: "cargando" };
+  let pedidoComparar = 0;
   /** Los SVG del mapa muscular ya pedidos, por archivo. Viven lo que dura la página. */
   const mapas: Record<string, EstadoSvg> = {};
   /** El banco de ejercicios, y por nombre y alias normalizados; vacíos hasta que llega. */
@@ -258,11 +264,11 @@ async function arrancar(): Promise<void> {
    * y los repintados ya no van a la red. Si falla, se reintenta solo al volver a entrar
    * (`reintentar`): reintentar en cada repintado sería un ciclo, porque el fallo repinta.
    */
-  function cargarMapas(reintentar: boolean): void {
+  /** Los mapas de su sexo; en Compararme, también los del sexo de con quién se compara. */
+  function cargarMapas(reintentar: boolean, sexos?: readonly ("H" | "M")[]): void {
     const sexo = cliente?.sexo;
-    if (sexo !== "H" && sexo !== "M") return;
-    const { frente, espalda } = archivosMapa(sexo);
-    for (const archivo of [frente, espalda]) {
+    const todos = sexos ?? (sexo === "H" || sexo === "M" ? [sexo] : []);
+    for (const archivo of todos.flatMap((s) => Object.values(archivosMapa(s)))) {
       const e = mapas[archivo];
       if (e && (e.estado !== "error" || !reintentar)) continue;
       mapas[archivo] = { estado: "cargando" };
@@ -282,6 +288,24 @@ async function arrancar(): Promise<void> {
    * respuesta, y si el refresco falla también se quedan: una lista de hace un rato sirve más
    * que una pantalla de error. No repinta al arrancar: quien lo llama ya está pintando.
    */
+  /** Mismo patrón que `cargarRanking`: lo viejo se queda a la vista mientras llega lo nuevo. */
+  function cargarComparacion(): void {
+    const pedido = ++pedidoComparar;
+    if (comparacion.estado === "error") comparacion = { estado: "cargando" };
+    compararMusculos({}).then(
+      (r) => {
+        if (pedido !== pedidoComparar) return;
+        comparacion = { estado: "listo", personas: r.data.personas };
+        pintar();
+      },
+      () => {
+        if (pedido !== pedidoComparar) return;
+        if (comparacion.estado !== "listo") comparacion = { estado: "error" };
+        pintar();
+      }
+    );
+  }
+
   function cargarRanking(): void {
     const pedido = ++pedidoRanking;
     if (ranking.estado === "error") ranking = { estado: "cargando" };
@@ -481,6 +505,10 @@ async function arrancar(): Promise<void> {
     // Cada vez y no solo al entrar: si el entrenador le pone el sexo con la ventana abierta,
     // el snapshot del cliente llega aquí y el mapa aparece sin salir y volver.
     if (activa.id === "musculos") cargarMapas(activa.id !== ventanaPintada);
+    if (activa.id === "comparar") {
+      if (activa.id !== ventanaPintada) { reiniciarComparar(); cargarComparacion(); }
+      cargarMapas(false, sexosAComparar(comparacion, cliente.sexo));
+    }
     actualizarCabecera(tituloCabecera(activa));
     const datos = {
       cliente, hoy, asistencias, mesVisible, yaAviso, medallas, logros,
@@ -494,11 +522,12 @@ async function arrancar(): Promise<void> {
       sesiones,
       configGrupos,
       pendientes,
+      comparacion,
     };
     contenido.innerHTML = contenidoDe(activa, datos);
     pintarVideos(activa.contenedorPropio === "videos");
     pintarMenu(activa.id, cliente.nombre);
-    marcarVentanaActiva(document.querySelectorAll<HTMLElement>("#barra [data-ventana]"), activa.id);
+    marcarVentanaActiva(document.querySelectorAll<HTMLElement>("#barra [data-ventana]"), ventanaDeBarra(activa.id));
     pintarRuleta();
     if (activa.id !== ventanaPintada) {
       // Cada ventana arranca arriba. Solo al cambiar: un snapshot no debe mover el scroll.
@@ -513,6 +542,11 @@ async function arrancar(): Promise<void> {
     if (activa.id === "musculos") {
       conectarMapa(cliente.sexo, fuerzaDelCliente(datos), cliente.peso ?? null);
       conectarPeso(pintar, (peso) => guardarPeso({ peso }));
+      document.querySelector("#abrir-comparar")?.addEventListener("click", () => abrirVentana("comparar"));
+      return;
+    }
+    if (activa.id === "comparar") {
+      conectarComparar(pintar, () => { cargarComparacion(); pintar(); });
       return;
     }
     if (activa.id === "registro") {

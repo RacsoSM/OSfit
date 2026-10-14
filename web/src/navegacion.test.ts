@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import {
-  abrirMenu, abrirVentana, cerrarMenu, iniciarNavegacion, menuAbierto, ventanaActiva,
+  abrirMenu, abrirVentana, cerrarMenu, iniciarNavegacion, menuAbierto, ventanaActiva, ventanaDeBarra,
   type Historial,
 } from "./navegacion";
 
@@ -136,5 +136,39 @@ describe("el menú", () => {
     expect(menuAbierto()).toBe(false);
     expect(ventanaActiva()).toBe("inicio");
     expect(h.pila()).toEqual([null]);
+  });
+});
+
+describe("subventanas (Compararme dentro de Músculos)", () => {
+  beforeEach(() => abrirVentana("musculos"));
+
+  it("se abre encima de Músculos, y atrás regresa a Músculos", () => {
+    abrirVentana("comparar");
+    expect(h.pila()).toEqual([null, { ventana: "musculos" }, { ventana: "comparar" }]);
+    h.atras();
+    expect(ventanaActiva()).toBe("musculos");
+    h.atras();
+    expect(ventanaActiva()).toBe("inicio");
+  });
+
+  it("ir a otra pestaña desde ella no deja a Músculos colgado en el historial", () => {
+    abrirVentana("comparar");
+    abrirVentana("registro");
+    h.soltar();
+    expect(ventanaActiva()).toBe("registro");
+    expect(h.pila()).toEqual([null, { ventana: "registro" }]);
+  });
+
+  it("a Inicio desde ella regresa hasta el principio", () => {
+    abrirVentana("comparar");
+    abrirVentana("inicio");
+    h.soltar();
+    expect(ventanaActiva()).toBe("inicio");
+    expect(h.pila()).toEqual([null]);
+  });
+
+  it("la pestaña de Músculos queda marcada", () => {
+    expect(ventanaDeBarra("comparar")).toBe("musculos");
+    expect(ventanaDeBarra("registro")).toBe("registro");
   });
 });

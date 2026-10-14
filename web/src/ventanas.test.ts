@@ -32,9 +32,9 @@ describe("el registro de ventanas", () => {
     expect(new Set(ids).size).toBe(ids.length);
   });
 
-  it("va Inicio, Músculos, Registro, Ranking, Medallas, Logros, Videos y Ajustes al final", () => {
+  it("va Inicio, Músculos, Registro, Compararme, Ranking, Medallas, Logros, Videos y Ajustes al final", () => {
     expect(VENTANAS.map((v) => v.id)).toEqual(
-      ["inicio", "musculos", "registro", "ranking", "medallas", "logros", "videos", "ajustes"]
+      ["inicio", "musculos", "registro", "comparar", "ranking", "medallas", "logros", "videos", "ajustes"]
     );
   });
 

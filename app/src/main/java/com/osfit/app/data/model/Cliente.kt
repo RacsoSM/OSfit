@@ -92,6 +92,9 @@ data class Cliente(
     // Qué avisos automáticos le llegan, por llave de [AvisoAutomatico]. Ausente = apagado. Solo
     // salen además con [notificacionesWeb] prendido: esa llave sigue mandando sobre todo.
     val avisosAutomaticos: Map<String, Boolean> = emptyMap(),
+    // Si se esconde de "Compararme" en la web (comparar músculos con los demás). Apagado por
+    // defecto: aparece. Lo lee la función `compararMusculos`.
+    val ocultarEnComparar: Boolean = false,
     // Cuándo se le revocó el acceso web por última vez. Lo escribe la función
     // `alRevocarAcceso`, nunca la app: las reglas rechazan toda sesión iniciada antes. La
     // ficha lo muestra cuando ya no tiene acceso.
