@@ -272,6 +272,8 @@ Los porcentajes salen de un modelo: entre quienes entrenan, la fuerza se reparte
 |  | M | 8 kg | 11 kg | 14 kg | 18 kg | 22.5 kg | 25 kg | 27.5 kg | 40 kg |
 | Extensión de tríceps trasnuca en polea | H | 16 kg | 22.5 kg | 27.5 kg | 35 kg | 42.5 kg | 47.5 kg | 52.5 kg | 72.5 kg |
 |  | M | 8 kg | 10 kg | 13 kg | 17 kg | 20 kg | 22.5 kg | 25 kg | 37.5 kg |
+| Copa en polea a un brazo | H · un brazo; polea | 8 kg | 11 kg | 14 kg | 16 kg | 20 kg | 22.5 kg | 25 kg | 35 kg |
+|  | M | 4 kg | 5 kg | 6 kg | 8 kg | 10 kg | 11 kg | 12 kg | 18 kg |
 | Press francés | H | 15 kg | 20 kg | 27.5 kg | 32.5 kg | 40 kg | 42.5 kg | 47.5 kg | 67.5 kg |
 |  | M | 7 kg | 10 kg | 12 kg | 16 kg | 19 kg | 22.5 kg | 25 kg | 35 kg |
 | Extensión de tríceps con mancuerna | H · una mancuerna, dos manos | 8 kg | 12 kg | 15 kg | 19 kg | 22.5 kg | 25 kg | 27.5 kg | 37.5 kg |
@@ -280,6 +282,8 @@ Los porcentajes salen de un modelo: entre quienes entrenan, la fuerza se reparte
 |  | M | 2 kg | 2 kg | 3 kg | 4 kg | 5 kg | 5 kg | 6 kg | 9 kg |
 | Fondos en banco | H | 5 reps | 10 reps | 15 reps | 22 reps | 30 reps | 34 reps | 38 reps | 59 reps |
 |  | M | 3 reps | 6 reps | 10 reps | 16 reps | 22 reps | 26 reps | 30 reps | 48 reps |
+| Fondos de tríceps en paralelas | H | 1 rep | 4 reps | 8 reps | 13 reps | 18 reps | 22 reps | 26 reps | 42 reps |
+|  | M | 1 rep | 2 reps | 3 reps | 6 reps | 8 reps | 10 reps | 13 reps | 22 reps |
 | Press cerrado | H | 32.5 kg | 40 kg | 47.5 kg | 55 kg | 65 kg | 72.5 kg | 82.5 kg | 112.5 kg |
 |  | M | 13 kg | 19 kg | 25 kg | 32.5 kg | 37.5 kg | 40 kg | 42.5 kg | 67.5 kg |
 
