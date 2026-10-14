@@ -68,8 +68,6 @@ export interface DatosRegistro {
   sesiones: Sesion[] | null;
   /** Los ejercicios que el entrenador puso en cada grupo; null si no ha configurado ninguno. */
   config: ConfigGrupos | null;
-  /** Cuántos días tiene su rutina, para el "2 / 5" de la semana; sin rutina, no se muestra. */
-  diasRutina?: number;
   /** Entrenamientos terminados sin internet que esperan a mandarse (`cola.ts`). */
   pendientes?: number;
 }
@@ -256,6 +254,12 @@ function filaReciente(s: Sesion): string {
  * el botón para empezar y sus entrenamientos recientes. Todo sale de lo que ella anotó; de la
  * rutina solo se toma el nombre del día que le toca, para el botón.
  */
+/**
+ * Los entrenamientos que se buscan por semana: el "2 / 5" del resumen. El mismo para todas,
+ * tenga su rutina los días que tenga (decisión del entrenador, 2026-10-14).
+ */
+const OBJETIVO_SEMANAL = 5;
+
 function vistaInicio(d: DatosRegistro): string {
   const n = d.pendientes ?? 0;
   // Guardado sin internet y ya se mandó (la cola quedó vacía): es un guardado normal.
@@ -277,10 +281,10 @@ function vistaInicio(d: DatosRegistro): string {
       </li>`;
   }).join("");
 
-  const meta = d.diasRutina && d.diasRutina > 0 ? `<span class="registro-dato-de"> / ${d.diasRutina}</span>` : "";
+  const meta = `<span class="registro-dato-de"> / ${OBJETIVO_SEMANAL}</span>`;
   const datos = `
     <div class="registro-datos">
-      <div class="registro-dato"><strong>${semana.entrenamientos}${meta}</strong><span>${semana.entrenamientos === 1 && !meta ? "entrenamiento" : "entrenamientos"}</span></div>
+      <div class="registro-dato"><strong>${semana.entrenamientos}${meta}</strong><span>entrenamientos</span></div>
       <div class="registro-dato"><strong>${semana.minutos === null ? "—" : duracion(semana.minutos)}</strong><span>entrenando</span></div>
       <div class="registro-dato"><strong>${semana.series}</strong><span>series</span></div>
     </div>`;

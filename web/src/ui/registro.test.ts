@@ -57,7 +57,7 @@ describe("inicio", () => {
         { ejercicioId: "plancha", nombre: "Plancha", series: [{ reps: 45, peso: null }] },
       ],
     }];
-    const html = ventanaRegistro(datos({ hoy: "2026-10-13", sesiones, diasRutina: 5 }));
+    const html = ventanaRegistro(datos({ hoy: "2026-10-13", sesiones }));
     expect(html).toContain("Tu semana");
     expect(html).toContain("▶ Iniciar entrenamiento · Pecho");
     expect(html).toMatch(/registro-semana-num hecho[^>]*>12</);
@@ -259,6 +259,12 @@ describe("entrenamientos sin internet", () => {
     expect(ventanaRegistro(datos({ pendientes: 1 }))).toContain("1 entrenamiento espera internet para enviarse.");
     expect(ventanaRegistro(datos({ pendientes: 3 }))).toContain("3 entrenamientos esperan internet para enviarse.");
     expect(ventanaRegistro(datos())).not.toContain("registro-pendientes");
+  });
+});
+
+describe("objetivo de la semana", () => {
+  it("es 5 para todas, tenga su rutina los días que tenga", () => {
+    expect(ventanaRegistro(datos())).toContain('<span class="registro-dato-de"> / 5</span>');
   });
 });
 
