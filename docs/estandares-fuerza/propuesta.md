@@ -266,12 +266,12 @@ Los porcentajes salen de un modelo: entre quienes entrenan, la fuerza se reparte
 
 | Ejercicio | Sexo | Principiante | Novato | En forma | Intermedio | Atlético / Atlética | Fuerte | Avanzado | Élite |
 |---|---|---|---|---|---|---|---|---|---|
-| Extensión de tríceps en polea | H · polea doble: la pila pesa más de lo que se siente | 27.5 kg | 40 kg | 50 kg | 62.5 kg | 72.5 kg | 82.5 kg | 90 kg | 127.5 kg |
-|  | M | 14 kg | 18 kg | 22.5 kg | 30 kg | 35 kg | 40 kg | 45 kg | 67.5 kg |
-| Extensión de tríceps con cuerda | H · polea doble | 25 kg | 35 kg | 45 kg | 55 kg | 65 kg | 75 kg | 82.5 kg | 115 kg |
-|  | M | 12 kg | 16 kg | 20 kg | 27.5 kg | 32.5 kg | 37.5 kg | 42.5 kg | 60 kg |
-| Extensión de tríceps trasnuca en polea | H · polea doble | 25 kg | 32.5 kg | 42.5 kg | 52.5 kg | 62.5 kg | 70 kg | 77.5 kg | 110 kg |
-|  | M | 12 kg | 15 kg | 19 kg | 25 kg | 30 kg | 35 kg | 40 kg | 57.5 kg |
+| Extensión de tríceps en polea | H · polea doble: la pila pesa más de lo que se siente | 25 kg | 35 kg | 45 kg | 52.5 kg | 62.5 kg | 70 kg | 80 kg | 110 kg |
+|  | M | 12 kg | 16 kg | 20 kg | 25 kg | 30 kg | 35 kg | 40 kg | 57.5 kg |
+| Extensión de tríceps con cuerda | H · polea doble | 22.5 kg | 30 kg | 40 kg | 47.5 kg | 57.5 kg | 65 kg | 70 kg | 100 kg |
+|  | M | 10 kg | 14 kg | 18 kg | 22.5 kg | 27.5 kg | 32.5 kg | 35 kg | 52.5 kg |
+| Extensión de tríceps trasnuca en polea | H · polea doble | 20 kg | 30 kg | 37.5 kg | 45 kg | 52.5 kg | 60 kg | 67.5 kg | 92.5 kg |
+|  | M | 10 kg | 13 kg | 16 kg | 22.5 kg | 27.5 kg | 30 kg | 32.5 kg | 50 kg |
 | Copa en polea a un brazo | H · un brazo; polea | 8 kg | 11 kg | 14 kg | 16 kg | 20 kg | 22.5 kg | 25 kg | 35 kg |
 |  | M | 4 kg | 5 kg | 6 kg | 8 kg | 10 kg | 11 kg | 12 kg | 18 kg |
 | Press francés | H | 15 kg | 20 kg | 27.5 kg | 32.5 kg | 40 kg | 42.5 kg | 47.5 kg | 67.5 kg |
