@@ -708,3 +708,18 @@ con ventaja) distorsiona más que cualquier factor. Falta poder configurarlo por
 - **La medición no caduca** (decisión del entrenador, 2026-10-14): vale la última capturada.
 - Ojo: con esto, bajar grasa sin ganar fuerza ya no sube el nivel (antes sí, porque pesaba
   menos). Medir siempre con el mismo aparato y en las mismas condiciones.
+
+## 19. Cambiar un ejercicio por otro al editar un entrenamiento, sin perder las series
+
+> "sí, agrégalo al backlog" (2026-10-14)
+
+Al editar un entrenamiento del historial no hay forma de reemplazar un ejercicio por otro
+conservando lo anotado: hay que quitarlo, agregar el bueno y volver a escribir las series.
+Pasó con un cliente que registró "Patada de glúteo con liga" cuando la hizo en máquina (punto 15,
+ya existe `patada-gluteo-maquina`).
+
+Idea: en la tarjeta del ejercicio, en modo edición (y quizá también en un entrenamiento en
+curso), un botón "Cambiar ejercicio" que abra el grid de elegir y reemplace el ejercicio
+dejando sus series. Cuidado con el tipo: de un corporal a uno de peso, las series sin peso
+quedan a medio llenar y `paraEnviar` las va a reclamar; de uno de peso a uno de tiempo, el
+peso sobra. Y con la unidad (barras o kg) del ejercicio nuevo.
