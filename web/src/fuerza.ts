@@ -112,7 +112,10 @@ export interface OrigenFuerza {
   serie: { reps: number; peso: number | null };
   estandares: readonly number[];
   pesoPorMancuerna: boolean;
-  /** Su edad y el factor que se le aplicó a la marca (`factorEdad`); sin edad, 1. */
+  /**
+   * Su edad y el factor que se le aplicó a la marca (`factorEdad`); sin edad, 1. Solo para el
+   * cálculo: la página no menciona el ajuste por edad (decisión del entrenador, 2026-10-14).
+   */
   edad?: number | null;
   factorEdad?: number;
 }

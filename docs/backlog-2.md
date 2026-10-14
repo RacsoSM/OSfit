@@ -678,5 +678,6 @@ fondos" (punto de la tabla).
 - **Web:** `factorEdad` en `web/src/fuerza.ts` multiplica la marca antes de compararla con los
   estándares. Aproximado a los coeficientes de veteranos y juveniles del powerlifting: × 1 de
   23 a 40, × 1.13 a los 50, × 1.31 a los 60; × 1.13 a los 16. El "siguiente objetivo" también
-  lo considera, y el detalle del músculo dice "Tu rango ya considera tu edad (N años)".
+  lo considera. **La página no menciona el ajuste por edad en ningún lado** (decisión del
+  entrenador, 2026-10-14).
 - Sin año de nacimiento no se ajusta nada. Falta capturarlo en la app para cada cliente.

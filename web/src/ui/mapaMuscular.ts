@@ -254,15 +254,7 @@ export function detalleMusculo(
         ${grafica(yo, comparacion, sexo)}
         ${peso ? bloqueSiguiente(fuerza, sexo, peso, nombre) : ""}
         <p class="hoja-otra">${otra}</p>
-        ${notaEdad(fuerza)}
       </section>`;
-}
-
-/** "Tu rango ya considera tu edad (52 años)", solo cuando la edad sí movió algo. */
-function notaEdad(f: FuerzaMusculo): string {
-  const o = f.origen;
-  if (!o?.edad || !o.factorEdad || o.factorEdad === 1) return "";
-  return `<p class="hoja-otra">Tu rango ya considera tu edad (${o.edad} años).</p>`;
 }
 
 /**
