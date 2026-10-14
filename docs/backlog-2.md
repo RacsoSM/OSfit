@@ -625,6 +625,9 @@ entrenador, tal cual:
    - **Ponerles estándares** a los 3 ejercicios del banco que no tienen:
      `press-pecho-maquina`, `press-militar-maquina` y `dominadas-asistidas`
      (`docs/estandares-fuerza/`, `cargarEstandares.mjs`). Ese día los usaron 3 clientas.
+     *Propuestos (2026-10-14) los de las dos máquinas:* press de pecho = banca × 0.90 y press
+     militar = militar × 0.95 (en `proponer.py`). Falta cargarlos a Firestore. Dominadas asistidas
+     sigue sin estándar a propósito (más peso = más ayuda).
    - **Avisar cuando un ejercicio no cuenta para el mapa**: en Registro o en Músculos, algo
      como "este ejercicio todavía no suma a tu mapa", para que no parezca que se perdió.
    - **Que se note que hay color del otro lado**: si de frente no hay nada pintado pero de

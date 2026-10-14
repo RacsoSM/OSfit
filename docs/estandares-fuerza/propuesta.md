@@ -53,6 +53,8 @@ Los porcentajes salen de un modelo: entre quienes entrenan, la fuerza se reparte
 |  | M | 3 kg | 4 kg | 5 kg | 7 kg | 8 kg | 9 kg | 9 kg | 14 kg |
 | Pec deck | H · máquina: varía por marca | 30 kg | 37.5 kg | 45 kg | 52.5 kg | 60 kg | 67.5 kg | 77.5 kg | 105 kg |
 |  | M | 12 kg | 18 kg | 25 kg | 30 kg | 35 kg | 37.5 kg | 40 kg | 62.5 kg |
+| Press de pecho en máquina | H · máquina: varía por marca | 35 kg | 42.5 kg | 50 kg | 60 kg | 67.5 kg | 77.5 kg | 85 kg | 117.5 kg |
+|  | M | 14 kg | 20 kg | 27.5 kg | 32.5 kg | 40 kg | 42.5 kg | 45 kg | 70 kg |
 | Lagartijas | H | 3 reps | 9 reps | 15 reps | 22 reps | 30 reps | 34 reps | 38 reps | 65 reps |
 |  | M | 1 rep | 3 reps | 5 reps | 10 reps | 15 reps | 20 reps | 24 reps | 40 reps |
 | Fondos para pecho | H | 1 rep | 4 reps | 8 reps | 13 reps | 18 reps | 22 reps | 26 reps | 42 reps |
@@ -189,6 +191,8 @@ Los porcentajes salen de un modelo: entre quienes entrenan, la fuerza se reparte
 |  | M | 12 kg | 16 kg | 20 kg | 25 kg | 30 kg | 35 kg | 37.5 kg | 52.5 kg |
 | Press militar sentado | H | 27.5 kg | 35 kg | 42.5 kg | 50 kg | 57.5 kg | 62.5 kg | 65 kg | 90 kg |
 |  | M | 12 kg | 17 kg | 22.5 kg | 27.5 kg | 30 kg | 35 kg | 40 kg | 55 kg |
+| Press militar en máquina | H · máquina: varía por marca | 25 kg | 32.5 kg | 40 kg | 47.5 kg | 52.5 kg | 57.5 kg | 60 kg | 85 kg |
+|  | M | 11 kg | 16 kg | 20 kg | 25 kg | 27.5 kg | 32.5 kg | 37.5 kg | 50 kg |
 | Press de hombro con mancuernas | H · por mancuerna | 11 kg | 14 kg | 16 kg | 20 kg | 22.5 kg | 25 kg | 25 kg | 35 kg |
 |  | M | 5 kg | 7 kg | 8 kg | 10 kg | 12 kg | 14 kg | 15 kg | 22.5 kg |
 | Press Arnold | H · por mancuerna | 9 kg | 12 kg | 15 kg | 18 kg | 20 kg | 22.5 kg | 22.5 kg | 32.5 kg |

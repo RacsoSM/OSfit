@@ -224,6 +224,31 @@
     },
     "pesoPorMancuerna": false
   },
+  "press-pecho-maquina": {
+    "estandares": {
+      "H": [
+        0.45,
+        0.562,
+        0.675,
+        0.788,
+        0.9,
+        1.024,
+        1.147,
+        1.577
+      ],
+      "M": [
+        0.225,
+        0.338,
+        0.45,
+        0.562,
+        0.675,
+        0.72,
+        0.765,
+        1.179
+      ]
+    },
+    "pesoPorMancuerna": false
+  },
   "lagartijas": {
     "estandares": {
       "H": [
@@ -1445,6 +1470,31 @@
         0.586,
         0.656,
         0.922
+      ]
+    },
+    "pesoPorMancuerna": false
+  },
+  "press-militar-maquina": {
+    "estandares": {
+      "H": [
+        0.332,
+        0.427,
+        0.522,
+        0.617,
+        0.712,
+        0.76,
+        0.807,
+        1.12
+      ],
+      "M": [
+        0.19,
+        0.261,
+        0.332,
+        0.403,
+        0.475,
+        0.54,
+        0.605,
+        0.85
       ]
     },
     "pesoPorMancuerna": false
