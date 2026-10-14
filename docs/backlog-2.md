@@ -135,7 +135,7 @@ A decidir en el spec:
 
 Se resuelve dentro del punto 7 (banco de ejercicios con `gifRuta`): **GIFs vinculados (2026-10-10)**, ver allá.
 
-## 4. Mapa muscular: ventana con el cuerpo coloreado por nivel — 🎨 DIBUJO HECHO (2026-10-09), falta vincularlo
+## 4. Mapa muscular: ventana con el cuerpo coloreado por nivel — ✅ HECHO (vinculado en la pestaña Músculos del punto 7)
 
 > "agrega al backlog también el agregar una ventana nueva donde aparezca el esqueleto de un hombre o mujer dependiendo el caso y colorear cada músculo según su nivel de fuerza o desarrollo como en algunas apps de gimnasios que rankean músculos"
 
@@ -291,7 +291,7 @@ Plan: `superpowers/plans/2026-10-10-revocar-acceso.md`.
 Implementado y desplegado (2026-10-10): funciones, reglas y web en producción; app instalada.
 Verificado por el entrenador en su teléfono (2026-10-10).
 
-## 7. Barra de abajo con Músculos y Registro, y Entrenar en Inicio — 🔴 URGENTE
+## 7. Barra de abajo con Músculos y Registro, y Entrenar en Inicio — 🟡 PARCIAL: barra, Músculos y Registro hechos; falta el modo guiado Entrenar
 
 > "eso me agrada más, añadelo al backlog como urgente antes de proponer el spec"
 
