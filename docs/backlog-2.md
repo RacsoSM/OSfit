@@ -626,7 +626,7 @@ entrenador, tal cual:
      `press-pecho-maquina`, `press-militar-maquina` y `dominadas-asistidas`
      (`docs/estandares-fuerza/`, `cargarEstandares.mjs`). Ese día los usaron 3 clientas.
      *Propuestos (2026-10-14) los de las dos máquinas:* press de pecho = banca × 0.90 y press
-     militar = militar × 0.95 (en `proponer.py`). Falta cargarlos a Firestore. Dominadas asistidas
+     militar = militar × 0.95 (en `proponer.py`). **Cargados a Firestore (2026-10-14).** Dominadas asistidas
      sigue sin estándar a propósito (más peso = más ayuda).
    - **Avisar cuando un ejercicio no cuenta para el mapa**: en Registro o en Músculos, algo
      como "este ejercicio todavía no suma a tu mapa", para que no parezca que se perdió.
