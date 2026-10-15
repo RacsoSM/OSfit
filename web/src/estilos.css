@@ -1170,6 +1170,81 @@ main:has(#barra) { padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
   margin-top: 4px; padding: 8px 12px; border: 1px dashed var(--superficie-alta); border-radius: 10px;
   background: none; color: var(--primario); font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; width: 100%;
 }
+/* Dropset (2026-10-15): el número de la serie se toca para agregar una bajada. Un borde
+   punteado apenas visible dice que es botón sin ocupar más lugar. */
+button.registro-serie-num {
+  padding: 0; border: 1.5px dashed var(--texto-tenue); color: var(--texto); font: inherit;
+  font-size: 12px; font-weight: 700; cursor: pointer;
+}
+button.registro-serie-num.abierto { border-style: solid; border-color: var(--primario); color: var(--primario); }
+.registro-serie-num.letra { background: var(--primario); color: var(--sobre-primario); border-color: transparent; }
+.registro-serie-num.caida { background: none; color: var(--primario); font-size: 15px; }
+/* Las bajadas, con sangría y una raya del color del estilo: se leen como parte de su serie. */
+.registro-caida { margin-left: 12px; padding-left: 8px; border-left: 3px solid var(--primario); }
+.registro-caida .registro-campo { border-color: color-mix(in srgb, var(--primario) 45%, transparent); }
+.registro-menu-serie { display: flex; align-items: center; gap: 8px; margin: -2px 0 6px 32px; }
+.registro-menu-opcion {
+  padding: 7px 12px; border: 1px solid var(--primario); border-radius: 999px; background: none;
+  color: var(--primario); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer;
+}
+.registro-menu-opcion.tenue { border-color: var(--superficie-alta); color: var(--texto-tenue); }
+.registro-pista-drop { margin: 0 0 4px; font-size: 12px; }
+/* Biserie (2026-10-15): los dos ejercicios lado a lado y sus series por rondas, A y luego B. */
+.registro-biserie-cab {
+  display: flex; align-items: center; justify-content: space-between; margin: -4px 0 8px;
+  font-size: 13px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--primario);
+}
+.registro-biserie-ejs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 8px; }
+.registro-biserie-ej { min-width: 0; text-align: center; }
+.registro-biserie-ej .registro-ej-gif {
+  display: flex; align-items: center; justify-content: center;
+  width: 100%; height: auto; aspect-ratio: 1; border-radius: 12px; background: #fff; object-fit: cover;
+}
+.registro-biserie-ej .registro-sin-gif { font-size: 40px; }
+.registro-biserie-ej .registro-unidad { width: auto; margin: 6px 0 0; }
+.registro-biserie-ej .registro-unidad button { flex: 1; min-width: 0; min-height: 32px; padding: 4px 6px; font-size: 13px; }
+.registro-biserie-ej .accion-nota { margin: 4px 0 0; font-size: 11px; }
+.registro-biserie-nombre { margin: 6px 0 0; font-size: 14px; font-weight: 700; line-height: 1.25; }
+.registro-letra {
+  display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px;
+  margin-right: 5px; border-radius: 50%; vertical-align: -3px;
+  background: var(--primario); color: var(--sobre-primario); font-size: 11px; font-weight: 800;
+}
+.registro-ronda { margin: 0 0 8px; padding: 4px 8px 6px; border-radius: 12px; background: var(--superficie-alta); }
+.registro-ronda-cab { display: flex; align-items: center; justify-content: space-between; font-size: 12px; font-weight: 700; color: var(--texto-tenue); }
+.registro-ronda-cab .registro-quitar { width: 28px; height: 28px; }
+.registro-ronda .registro-serie { padding: 4px 0; }
+.registro-ronda .registro-campo { background: var(--fondo); }
+/* El selector "Un ejercicio / Biserie" de "¿Qué ejercicio hiciste?". */
+.registro-modo { display: flex; gap: 4px; margin: 4px 0 8px; padding: 4px; border-radius: 999px; background: var(--superficie-alta); }
+.registro-modo button {
+  flex: 1; padding: 8px; border: 0; border-radius: 999px; background: none;
+  color: var(--texto-tenue); font: inherit; font-size: 14px; font-weight: 700; cursor: pointer;
+}
+.registro-modo button.activa { background: var(--primario); color: var(--sobre-primario); }
+.registro-modo-nota { margin: 0 2px 2px; }
+.registro-opcion.marcada { outline: 3px solid var(--primario); outline-offset: -3px; }
+.registro-marca {
+  position: absolute; top: 8px; left: 8px; z-index: 1; width: 28px; height: 28px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--primario); color: var(--sobre-primario); font-size: 14px; font-weight: 800;
+}
+/* Lo elegido y "Agregar biserie", fijo sobre la barra de abajo (z 10). */
+.registro-barra-biserie {
+  position: fixed; z-index: 9; left: 50%; transform: translateX(-50%);
+  bottom: calc(68px + env(safe-area-inset-bottom)); width: min(calc(100% - 24px), 456px); box-sizing: border-box;
+  display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 16px;
+  background: var(--superficie); box-shadow: 0 6px 24px rgba(0, 0, 0, 0.55);
+}
+.registro-barra-biserie-texto {
+  flex: 1; min-width: 0; display: flex; flex-direction: column; font-size: 13px; color: var(--texto-tenue);
+}
+.registro-barra-biserie-texto span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.registro-barra-biserie-texto strong { color: var(--texto); }
+.registro-barra-biserie .boton { width: auto; margin: 0; padding: 10px 14px; flex: none; }
+.registro-espacio-biserie { height: 80px; }
+.registro-hist-biserie { font-size: 12px; font-weight: 800; color: var(--primario); }
+.registro-hist-ej.biserie-b { border-top-style: dashed; }
 .registro-credito { margin: 14px 0 0; font-size: 10px; color: var(--texto-tenue); text-align: right; }
 /* Los títulos de grupo del grid ("Pecho", "Hombro"…). Los del día van con el color del estilo
    para que se lean como "lo de hoy"; el resto, tenues. */

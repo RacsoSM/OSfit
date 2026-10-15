@@ -15,7 +15,14 @@ import { barrasAKg, kgABarras, unidadPorDefecto, type Unidad } from "./barras";
  * `paraEnviar`.
  */
 
-export interface SerieBorrador { reps: string; peso: string; }
+/** Una bajada de un dropset, como se escribe (ver `SerieBorrador`). */
+export interface CaidaBorrador { reps: string; peso: string; }
+
+/**
+ * `caidas`: las bajadas del dropset de esa serie, en orden. Se agregan tocando el número de la
+ * serie (decisión del entrenador, 2026-10-15). Ausente en una serie normal.
+ */
+export interface SerieBorrador { reps: string; peso: string; caidas?: CaidaBorrador[]; }
 
 export interface EjercicioBorrador {
   ejercicioId: string;
@@ -33,6 +40,11 @@ export interface EjercicioBorrador {
    * muestra junto a sus series para que sepa qué le toca sin volver a Inicio.
    */
   objetivo?: string;
+  /**
+   * Los dos ejercicios de una biserie llevan la misma marca ("b1") y van seguidos, el A
+   * primero. Sus series van a la par: la serie j de los dos es la ronda j. Ausente = suelto.
+   */
+  biserie?: string;
 }
 
 export interface Borrador {
@@ -73,10 +85,14 @@ export interface Envio {
   terminadaEn?: number;
   /** Solo en el guiado; sin él, el servidor lo guarda como "manual". */
   origen?: "guiado";
-  ejercicios: { ejercicioId: string; series: SerieSesion[] }[];
+  ejercicios: { ejercicioId: string; series: SerieSesion[]; biserie?: string }[];
 }
 
 const SERIE_VACIA: SerieBorrador = { reps: "", peso: "" };
+
+/** Bajadas por serie y series por ejercicio: los mismos topes que `registrarSesion`. */
+export const MAX_CAIDAS = 5;
+const MAX_SERIES = 20;
 
 /** Un entrenamiento recién iniciado, todavía sin ejercicios. */
 export function nuevoBorrador(id: string, fecha: string, iniciado?: number): Borrador {
@@ -105,7 +121,11 @@ export function agregarEjercicio(
   const pesoPrevio = (kg: number | null) =>
     kg === null ? "" : String(unidad === "barras" ? kgABarras(kg) : kg);
   const series: SerieBorrador[] = previas && previas.length > 0
-    ? previas.map((s) => ({ reps: String(s.reps), peso: pesoPrevio(s.peso) }))
+    ? previas.map((s) => ({
+      reps: String(s.reps),
+      peso: pesoPrevio(s.peso),
+      ...(s.caidas?.length ? { caidas: s.caidas.map((c) => ({ reps: String(c.reps), peso: pesoPrevio(c.peso) })) } : {}),
+    }))
     : Array.from({ length: Math.min(Math.max(seriesRutina ?? 1, 1), 10) }, () => ({ ...SERIE_VACIA }));
   return {
     ...b,
@@ -175,7 +195,14 @@ export function borradorDeSesion(s: Sesion, banco: readonly EjercicioBanco[]): B
         tipo: b?.tipo ?? "peso",
         gifRuta: b?.gifRuta ?? null,
         unidad: "kg" as const,
-        series: e.series.map((x) => ({ reps: String(x.reps), peso: x.peso === null ? "" : String(x.peso) })),
+        series: e.series.map((x) => ({
+          reps: String(x.reps),
+          peso: x.peso === null ? "" : String(x.peso),
+          ...(x.caidas?.length
+            ? { caidas: x.caidas.map((c) => ({ reps: String(c.reps), peso: c.peso === null ? "" : String(c.peso) })) }
+            : {}),
+        })),
+        ...(e.biserie ? { biserie: e.biserie } : {}),
       };
     }),
   };
@@ -199,10 +226,16 @@ export function cambiarSerie(
     series.map((s, i) => (i === iSerie ? { ...s, [campo]: valor } : s)));
 }
 
-/** La serie nueva copia la anterior: casi siempre se repite el peso y cambia poco más. */
+/**
+ * La serie nueva copia la anterior: casi siempre se repite el peso y cambia poco más. Las
+ * bajadas no: el drop suele ser solo de la última.
+ */
 export function agregarSerie(b: Borrador, iEj: number): Borrador {
-  return conSeries(b, iEj, (series) =>
-    series.length >= 20 ? series : [...series, { ...(series[series.length - 1] ?? SERIE_VACIA) }]);
+  return conSeries(b, iEj, (series) => {
+    if (series.length >= MAX_SERIES) return series;
+    const { reps, peso } = series[series.length - 1] ?? SERIE_VACIA;
+    return [...series, { reps, peso }];
+  });
 }
 
 /** Quitar la única serie la deja en blanco: para sacar el ejercicio está `quitarEjercicio`. */
@@ -211,6 +244,109 @@ export function quitarSerie(b: Borrador, iEj: number, iSerie: number): Borrador 
     const quedan = series.filter((_, i) => i !== iSerie);
     return quedan.length > 0 ? quedan : [{ ...SERIE_VACIA }];
   });
+}
+
+/** Una bajada más al final del dropset de esa serie, en blanco. */
+export function agregarCaida(b: Borrador, iEj: number, iSerie: number): Borrador {
+  return conSeries(b, iEj, (series) => series.map((s, i) => {
+    if (i !== iSerie) return s;
+    const caidas = s.caidas ?? [];
+    return caidas.length >= MAX_CAIDAS ? s : { ...s, caidas: [...caidas, { reps: "", peso: "" }] };
+  }));
+}
+
+export function cambiarCaida(
+  b: Borrador, iEj: number, iSerie: number, iCaida: number, campo: keyof CaidaBorrador, valor: string
+): Borrador {
+  return conSeries(b, iEj, (series) => series.map((s, i) => (i !== iSerie || !s.caidas ? s : {
+    ...s,
+    caidas: s.caidas.map((c, k) => (k === iCaida ? { ...c, [campo]: valor } : c)),
+  })));
+}
+
+/** Sin bajadas, la serie vuelve a ser normal: no se queda con una lista vacía. */
+export function quitarCaida(b: Borrador, iEj: number, iSerie: number, iCaida: number): Borrador {
+  return conSeries(b, iEj, (series) => series.map((s, i) => {
+    if (i !== iSerie || !s.caidas) return s;
+    const caidas = s.caidas.filter((_, k) => k !== iCaida);
+    if (caidas.length > 0) return { ...s, caidas };
+    const { reps, peso } = s;
+    return { reps, peso };
+  }));
+}
+
+// ── Biseries ─────────────────────────────────────────────────────────────────
+
+/**
+ * El otro ejercicio de la biserie de `i`, o null si va suelto. Van seguidos (`agregarBiserie`
+ * los pone así y nada los separa), así que es el de al lado con la misma marca.
+ */
+export function companero(b: Borrador, i: number): number | null {
+  const marca = b.ejercicios[i]?.biserie;
+  if (!marca) return null;
+  if (b.ejercicios[i - 1]?.biserie === marca) return i - 1;
+  if (b.ejercicios[i + 1]?.biserie === marca) return i + 1;
+  return null;
+}
+
+/**
+ * Los ejercicios del entrenamiento como se ven en la pantalla: cada suelto es una unidad y
+ * cada biserie, una sola con sus dos (el A primero).
+ */
+export function unidades(b: Borrador): number[][] {
+  const salida: number[][] = [];
+  for (let i = 0; i < b.ejercicios.length; i++) {
+    const otro = companero(b, i);
+    if (otro === i + 1) { salida.push([i, i + 1]); i++; } else salida.push([i]);
+  }
+  return salida;
+}
+
+/**
+ * Agrega los dos ejercicios de una biserie, seguidos y con la misma marca, prellenados como
+ * `agregarEjercicio` e igualados en series: cada serie es una ronda de los dos. Si alguno ya
+ * está en el entrenamiento no hace nada (el selector no deja elegirlo).
+ */
+export function agregarBiserie(
+  b: Borrador,
+  a: { e: EjercicioBanco; previas: readonly SerieSesion[] | null; seriesRutina: number | null },
+  c: { e: EjercicioBanco; previas: readonly SerieSesion[] | null; seriesRutina: number | null }
+): Borrador {
+  if (a.e.id === c.e.id || b.ejercicios.some((x) => x.ejercicioId === a.e.id || x.ejercicioId === c.e.id)) return b;
+  const conDos = agregarEjercicio(agregarEjercicio(b, a.e, a.previas, a.seriesRutina), c.e, c.previas, c.seriesRutina);
+  const usadas = new Set(b.ejercicios.map((x) => x.biserie));
+  let n = 1;
+  while (usadas.has(`b${n}`)) n++;
+  const marca = `b${n}`;
+  const rondas = Math.max(...conDos.ejercicios.slice(-2).map((x) => x.series.length));
+  return {
+    ...conDos,
+    ejercicios: conDos.ejercicios.map((x, i) => {
+      if (i < b.ejercicios.length) return x;
+      const faltan = Array.from({ length: rondas - x.series.length }, () => ({ ...SERIE_VACIA }));
+      return { ...x, biserie: marca, series: [...x.series, ...faltan] };
+    }),
+  };
+}
+
+/** Una ronda más: una serie a cada uno de la biserie, copiando la anterior de cada quien. */
+export function agregarRonda(b: Borrador, iEj: number): Borrador {
+  const otro = companero(b, iEj);
+  const conUna = agregarSerie(b, iEj);
+  return otro === null ? conUna : agregarSerie(conUna, otro);
+}
+
+/** Quita la ronda j de los dos ejercicios de la biserie. */
+export function quitarRonda(b: Borrador, iEj: number, j: number): Borrador {
+  const otro = companero(b, iEj);
+  const sinUna = quitarSerie(b, iEj, j);
+  return otro === null ? sinUna : quitarSerie(sinUna, otro, j);
+}
+
+/** Saca del entrenamiento el ejercicio y, si es de una biserie, también su compañero. */
+export function quitarBloque(b: Borrador, iEj: number): Borrador {
+  const otro = companero(b, iEj);
+  return { ...b, ejercicios: b.ejercicios.filter((_, i) => i !== iEj && i !== otro) };
 }
 
 /**
@@ -228,13 +364,30 @@ export function cambiarUnidad(b: Borrador, iEj: number, unidad: Unidad): Borrado
   return {
     ...b,
     ejercicios: b.ejercicios.map((x, i) => (i === iEj
-      ? { ...x, unidad, series: x.series.map((s) => ({ ...s, peso: convertir(s.peso) })) }
+      ? {
+        ...x,
+        unidad,
+        series: x.series.map((s) => ({
+          ...s,
+          peso: convertir(s.peso),
+          ...(s.caidas ? { caidas: s.caidas.map((c) => ({ ...c, peso: convertir(c.peso) })) } : {}),
+        })),
+      }
       : x)),
   };
 }
 
+/** Quitar uno de una biserie deja al otro suelto: una biserie de uno no existe. */
 export function quitarEjercicio(b: Borrador, iEj: number): Borrador {
-  return { ...b, ejercicios: b.ejercicios.filter((_, i) => i !== iEj) };
+  const otro = companero(b, iEj);
+  return {
+    ...b,
+    ejercicios: b.ejercicios.filter((_, i) => i !== iEj).map((x) => {
+      if (otro === null || x !== b.ejercicios[otro]) return x;
+      const { biserie: _marca, ...suelto } = x;
+      return suelto;
+    }),
+  };
 }
 
 function numero(texto: string): number | null {
@@ -265,25 +418,43 @@ export function repsDudosas(texto: string, tipo: EjercicioBanco["tipo"]): number
 export function paraEnviar(b: Borrador): { ok: true; datos: Envio } | { ok: false; error: string } {
   const ejercicios: Envio["ejercicios"] = [];
   for (const e of b.ejercicios) {
-    const series: SerieSesion[] = [];
-    for (const [i, s] of e.series.entries()) {
-      if (s.reps.trim() === "" && s.peso.trim() === "") continue;
-      const donde = `${e.nombre}, serie ${i + 1}`;
+    /** Una serie o una bajada ya en números, o el error. */
+    const convertir = (s: CaidaBorrador, donde: string): { reps: number; peso: number | null } | string => {
       const reps = numero(s.reps);
-      if (reps === null) return { ok: false, error: `${donde}: faltan las repeticiones.` };
-      if (!Number.isInteger(reps) || reps < 1) {
-        return { ok: false, error: `${donde}: las repeticiones van en número entero.` };
-      }
+      if (reps === null) return `${donde}: faltan las repeticiones.`;
+      if (!Number.isInteger(reps) || reps < 1) return `${donde}: las repeticiones van en número entero.`;
       const escrito = e.tipo === "tiempo" ? null : numero(s.peso);
-      if (escrito !== null && Number.isNaN(escrito)) return { ok: false, error: `${donde}: el peso no es un número.` };
+      if (escrito !== null && Number.isNaN(escrito)) return `${donde}: el peso no es un número.`;
       if (e.tipo === "peso" && escrito === null) {
-        return { ok: false, error: `${donde}: ${e.unidad === "barras" ? "faltan las barras" : "falta el peso"}.` };
+        return `${donde}: ${e.unidad === "barras" ? "faltan las barras" : "falta el peso"}.`;
       }
       // Se guarda siempre en kg: las barras se convierten aquí y en ningún otro lado.
-      const peso = escrito !== null && e.unidad === "barras" ? barrasAKg(escrito) : escrito;
-      series.push({ reps, peso });
+      return { reps, peso: escrito !== null && e.unidad === "barras" ? barrasAKg(escrito) : escrito };
+    };
+    const enBlanco = (s: CaidaBorrador) => s.reps.trim() === "" && s.peso.trim() === "";
+    const series: SerieSesion[] = [];
+    for (const [i, s] of e.series.entries()) {
+      // Una serie en blanco se salta con todo y sus bajadas: prellenadas de la vez pasada, no
+      // deben obligarla a borrarlas si hoy no la hizo.
+      if (enBlanco(s)) continue;
+      const serie = convertir(s, `${e.nombre}, serie ${i + 1}`);
+      if (typeof serie === "string") return { ok: false, error: serie };
+      const caidas: { reps: number; peso: number | null }[] = [];
+      for (const [k, c] of (s.caidas ?? []).entries()) {
+        if (enBlanco(c)) continue;
+        const caida = convertir(c, `${e.nombre}, serie ${i + 1}, bajada ${k + 1}`);
+        if (typeof caida === "string") return { ok: false, error: caida };
+        caidas.push(caida);
+      }
+      series.push(caidas.length > 0 ? { ...serie, caidas } : serie);
     }
-    if (series.length > 0) ejercicios.push({ ejercicioId: e.ejercicioId, series });
+    if (series.length > 0) {
+      ejercicios.push({ ejercicioId: e.ejercicioId, series, ...(e.biserie ? { biserie: e.biserie } : {}) });
+    }
+  }
+  // Una biserie de la que solo se anotó un ejercicio se guarda como ejercicio suelto.
+  for (const e of ejercicios) {
+    if (e.biserie && ejercicios.filter((x) => x.biserie === e.biserie).length !== 2) delete e.biserie;
   }
   if (ejercicios.length === 0) return { ok: false, error: "Anota al menos una serie antes de guardar." };
   const datos: Envio = { id: b.id, ejercicios };
@@ -299,13 +470,15 @@ export function paraEnviar(b: Borrador): { ok: true; datos: Envio } | { ok: fals
 export function resumenSeries(e: EjercicioBorrador): string {
   const llenas = e.series.filter((s) => s.reps.trim() !== "" || s.peso.trim() !== "");
   if (llenas.length === 0) return "Sin anotar";
-  const texto = llenas.map((s) => {
+  const una = (s: CaidaBorrador) => {
     const reps = s.reps.trim() || "?";
     if (e.tipo === "tiempo") return `${reps} s`;
     const peso = s.peso.trim().replace(",", ".");
     const unidad = e.unidad === "barras" ? (peso === "1" ? "barra" : "barras") : "kg";
     return peso === "" ? `× ${reps}` : `${peso} ${unidad} × ${reps}`;
-  });
+  };
+  const conAlgo = (s: CaidaBorrador) => s.reps.trim() !== "" || s.peso.trim() !== "";
+  const texto = llenas.map((s) => [s, ...(s.caidas ?? []).filter(conAlgo)].map(una).join(" ↓ "));
   return `${llenas.length === 1 ? "1 serie" : `${llenas.length} series`} · ${texto.join(", ")}`;
 }
 

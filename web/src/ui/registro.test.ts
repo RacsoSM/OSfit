@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import type { EjercicioBanco, Sesion } from "../datos";
 import { indiceBanco } from "../banco";
-import { agregarEjercicio, borradorDeSesion, nuevoBorrador } from "../registro";
+import { agregarBiserie, agregarEjercicio, borradorDeSesion, nuevoBorrador } from "../registro";
 import { avisoReps, cabeceraRegistro, empezarGuiado, entrenamientoAbierto, ponerEstadoRegistro, ventanaRegistro, type DatosRegistro } from "./registro";
 
 const press: EjercicioBanco = {
@@ -340,5 +340,73 @@ describe("resumen al terminar", () => {
   it("sin resumen regresa al inicio de Registro", () => {
     ponerEstadoRegistro({ vista: "resumen", borrador: null });
     expect(ventanaRegistro(datos())).toContain("Tu semana");
+  });
+});
+
+describe("biseries y dropsets", () => {
+  const remo: EjercicioBanco = { id: "remo", nombre: "Remo con barra", tipo: "peso", grupo: "espalda", musculos: { espalda: 1 }, gifRuta: null };
+  const conRemo = (campos: Partial<DatosRegistro> = {}) => datos({ banco: [press, plancha, remo], indice: indiceBanco([press, plancha, remo]), ...campos });
+  const biserie = () => agregarBiserie(nuevoBorrador("b1234567", "2026-10-12", Date.now()),
+    { e: press, previas: [{ reps: 10, peso: 40, caidas: [{ reps: 8, peso: 30 }] }], seriesRutina: null },
+    { e: remo, previas: null, seriesRutina: 1 });
+
+  it("el selector abre en un ejercicio; en biserie marca A y B y habilita agregarlas", () => {
+    ponerEstadoRegistro({ vista: "elegir", borrador: nuevoBorrador("b1234567", "2026-10-12") });
+    let html = ventanaRegistro(conRemo());
+    expect(html).toMatch(/data-modo="uno" aria-pressed="true"/);
+    expect(html).toContain('data-agregar="remo"');
+    expect(html).not.toContain("Agregar biserie");
+
+    ponerEstadoRegistro({ vista: "elegir", borrador: nuevoBorrador("b1234567", "2026-10-12"), modoElegir: "biserie", seleccion: ["press-banca"] });
+    html = ventanaRegistro(conRemo());
+    expect(html).toContain('data-biserie-elegir="remo"');
+    expect(html).not.toContain('data-agregar="remo"');
+    expect(html).toMatch(/registro-opcion marcada" data-biserie-elegir="press-banca"/);
+    expect(html).toMatch(/data-accion="agregar-biserie" disabled/);
+
+    ponerEstadoRegistro({ vista: "elegir", borrador: nuevoBorrador("b1234567", "2026-10-12"), modoElegir: "biserie", seleccion: ["press-banca", "remo"] });
+    html = ventanaRegistro(conRemo());
+    expect(html).toMatch(/data-accion="agregar-biserie" >/);
+    expect(html).toContain('aria-label="Ejercicio B">B<');
+  });
+
+  it("la biserie se captura en un bloque, por rondas A y B, con sus bajadas", () => {
+    ponerEstadoRegistro({ vista: "capturar", borrador: biserie(), activo: 1 });
+    const html = ventanaRegistro(conRemo());
+    expect(html).toContain("🔗 Biserie");
+    expect(html).toContain("Ronda 1");
+    expect(html).toMatch(/registro-serie-num letra tocable[^>]*data-menu-serie="0:0"[^>]*>A</);
+    expect(html).toMatch(/data-menu-serie="1:0"[^>]*>B</);
+    expect(html).toContain('data-caida="0" data-campo="peso"');
+    expect(html).toContain('data-agregar-ronda="0"');
+    expect(html).not.toContain("data-quitar-serie");
+  });
+
+  it("tocar el número de la serie ofrece agregar una bajada", () => {
+    const b = agregarEjercicio(nuevoBorrador("b1234567", "2026-10-12", Date.now()), press, [{ reps: 10, peso: 40 }], null);
+    ponerEstadoRegistro({ vista: "capturar", borrador: b });
+    expect(ventanaRegistro(datos())).not.toContain("data-agregar-caida");
+    ponerEstadoRegistro({ vista: "capturar", borrador: b, menuSerie: "0:0" });
+    expect(ventanaRegistro(datos())).toContain('data-agregar-caida="0:0"');
+  });
+
+  it("los de tiempo no tienen dropset", () => {
+    const b = agregarEjercicio(nuevoBorrador("b1234567", "2026-10-12", Date.now()), plancha, null, 1);
+    ponerEstadoRegistro({ vista: "capturar", borrador: b });
+    expect(ventanaRegistro(datos())).not.toContain("data-menu-serie");
+  });
+
+  it("el historial marca la biserie y pega las bajadas a su serie", () => {
+    ponerEstadoRegistro({ vista: "historial", borrador: null });
+    const sesiones: Sesion[] = [{
+      id: "s1", fecha: "2026-10-12", origen: "manual", ejercicios: [
+        { ejercicioId: "press-banca", nombre: "Press de banca", biserie: "b1", series: [{ reps: 10, peso: 40, caidas: [{ reps: 8, peso: 30 }] }] },
+        { ejercicioId: "remo", nombre: "Remo con barra", biserie: "b1", series: [{ reps: 12, peso: 30 }] },
+      ],
+    }];
+    const html = ventanaRegistro(conRemo({ sesiones }));
+    expect(html).toContain("🔗 A</span> Press de banca");
+    expect(html).toContain("🔗 B</span> Remo con barra");
+    expect(html).toContain("40 kg × 10 ↓ 30 kg × 8");
   });
 });

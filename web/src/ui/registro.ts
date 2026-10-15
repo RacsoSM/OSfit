@@ -1,14 +1,19 @@
-import type { ConfigGrupos, Ejercicio, EjercicioBanco, Sesion } from "../datos";
+import type { ConfigGrupos, Ejercicio, EjercicioBanco, SerieSesion, Sesion } from "../datos";
 import { RANGOS, nombreRango, type FuerzaMusculo } from "../fuerza";
 import { armarResumen, sesionDeEnvio, type Resumen } from "../resumen";
 import { insigniaRango } from "./insigniaRango";
 import { claveBanco, urlGif, urlVideo, type IndiceBanco } from "../banco";
 import { seccionesRegistro } from "../grupos";
 import {
+  MAX_CAIDAS,
+  agregarBiserie,
+  agregarCaida,
   agregarEjercicio,
+  agregarRonda,
   agregarSerie,
   borradorDeSesion,
   borradorGuiado,
+  cambiarCaida,
   cambiarSerie,
   cambiarUnidad,
   idNuevo,
@@ -16,13 +21,18 @@ import {
   nombresDeSesion,
   nuevoBorrador,
   paraEnviar,
+  quitarBloque,
+  quitarCaida,
   quitarEjercicio,
+  quitarRonda,
   quitarSerie,
   repsDudosas,
   resumenSemana,
   resumenSeries,
   ultimasSeries,
+  unidades,
   type Borrador,
+  type CaidaBorrador,
   type EjercicioBorrador,
   type Envio,
   type SerieBorrador,
@@ -118,6 +128,15 @@ interface Estado {
   lateral: boolean;
   /** El entrenamiento recién terminado, para su pantalla de resumen; null fuera de ella. */
   resumen: (Resumen & { dia: string | null }) | null;
+  /**
+   * "¿Qué ejercicio hiciste?": uno suelto (lo normal, y como abre siempre) o los dos de una
+   * biserie (decisión del entrenador, 2026-10-15).
+   */
+  modoElegir: "uno" | "biserie";
+  /** En modo biserie, los ids elegidos en orden: el primero es la A. */
+  seleccion: string[];
+  /** La serie cuyo número se tocó ("ej:serie"): debajo sale "↓ Agregar bajada". */
+  menuSerie: string | null;
 }
 
 const LLAVE_BORRADOR = "osfit:registro-borrador";
@@ -138,6 +157,9 @@ const estado: Estado = {
   avanzando: true,
   lateral: false,
   resumen: null,
+  modoElegir: "uno",
+  seleccion: [],
+  menuSerie: null,
 };
 
 const VISTAS: readonly Vista[] = ["inicio", "historial", "elegir", "capturar", "resumen"];
@@ -152,8 +174,13 @@ export function vistaDesdeHistorial(vista: string | null): void {
 }
 
 /** Solo para los tests: poner la ventana en una vista y con un borrador dados. */
-export function ponerEstadoRegistro(parcial: Partial<Pick<Estado, "vista" | "borrador" | "error" | "activo" | "resumen">>): void {
-  Object.assign(estado, { guardado: false, enVuelo: false, error: null, activo: null, aviso: null, borrando: null, resumen: null }, parcial);
+export function ponerEstadoRegistro(
+  parcial: Partial<Pick<Estado, "vista" | "borrador" | "error" | "activo" | "resumen" | "modoElegir" | "seleccion" | "menuSerie">>
+): void {
+  Object.assign(estado, {
+    guardado: false, enVuelo: false, error: null, activo: null, aviso: null, borrando: null, resumen: null,
+    modoElegir: "uno", seleccion: [], menuSerie: null,
+  }, parcial);
 }
 
 /**
@@ -245,9 +272,12 @@ const repsConfirmadas = new Set<string>();
 
 // ── Inicio e historial ───────────────────────────────────────────────────────
 
-function textoSerie(s: { reps: number; peso: number | null }, tipo: "tiempo" | "otro"): string {
-  if (tipo === "tiempo") return `${s.reps} s`;
-  return s.peso === null ? `× ${s.reps}` : `${s.peso} kg × ${s.reps}`;
+function textoSerie(s: SerieSesion, tipo: "tiempo" | "otro"): string {
+  const una = (x: { reps: number; peso: number | null }) => tipo === "tiempo"
+    ? `${x.reps} s`
+    : x.peso === null ? `× ${x.reps}` : `${x.peso} kg × ${x.reps}`;
+  // Las bajadas del dropset, pegadas a su serie: "40 kg × 10 ↓ 30 kg × 8".
+  return [s, ...(s.caidas ?? [])].map(una).join(" ↓ ");
 }
 
 /** "10:32 a. m. – 11:20 a. m. · 48 min", o solo la hora de fin si no se sabe cuándo empezó. */
@@ -261,11 +291,14 @@ function horario(s: Sesion): string {
 }
 
 function tarjetaSesion(s: Sesion, banco: readonly EjercicioBanco[]): string {
-  const filas = s.ejercicios.map((e) => {
+  const filas = s.ejercicios.map((e, i) => {
     const tipo = banco.find((x) => x.id === e.ejercicioId)?.tipo === "tiempo" ? "tiempo" : "otro";
+    // En una biserie, el primero de los dos es la A.
+    const letra = !e.biserie ? null : s.ejercicios[i - 1]?.biserie === e.biserie ? "B" : "A";
+    const marca = letra ? `<span class="registro-hist-biserie">🔗 ${letra}</span> ` : "";
     return `
-      <li class="registro-hist-ej">
-        <span class="registro-hist-nombre">${escapar(e.nombre)}</span>
+      <li class="registro-hist-ej${letra === "B" ? " biserie-b" : ""}">
+        <span class="registro-hist-nombre">${marca}${escapar(e.nombre)}</span>
         <span class="registro-hist-series">${e.series.map((x) => escapar(textoSerie(x, tipo))).join(" · ")}</span>
       </li>`;
   }).join("");
@@ -395,9 +428,15 @@ function vistaHistorial(d: DatosRegistro): string {
  */
 function opcion(e: EjercicioBanco): string {
   const ya = estado.borrador?.ejercicios.some((x) => x.ejercicioId === e.id) ?? false;
+  // En modo biserie, tocar marca (A o B) en vez de agregar.
+  const biserie = estado.modoElegir === "biserie";
+  const k = biserie ? estado.seleccion.indexOf(e.id) : -1;
+  const letra = k === 0 ? "A" : k === 1 ? "B" : null;
+  const accion = biserie ? `data-biserie-elegir="${escapar(e.id)}" aria-pressed="${letra !== null}"` : `data-agregar="${escapar(e.id)}"`;
   return `
-    <button class="registro-opcion${ya ? " agregado" : ""}" data-agregar="${escapar(e.id)}"
+    <button class="registro-opcion${ya ? " agregado" : ""}${letra ? " marcada" : ""}" ${accion}
             ${ya ? `disabled aria-label="${escapar(e.nombre)}, ya está en tu entrenamiento"` : ""}>
+      ${letra ? `<span class="registro-marca" aria-label="Ejercicio ${letra}">${letra}</span>` : ""}
       ${gif(e.gifRuta, "registro-opcion-gif", 160)}
       <span class="registro-opcion-nombre">${escapar(e.nombre)}</span>
       ${ya ? `<span class="registro-opcion-ya">✓ Ya en tu entrenamiento</span>` : ""}
@@ -453,6 +492,23 @@ function seguirGrupo(): void {
 }
 let siguiendoGrupo = false;
 
+/**
+ * Abajo, en modo biserie: lo elegido (A y B) y "Agregar biserie", que se habilita con los dos.
+ * Fija sobre la barra de abajo, para no tener que bajar hasta el final del grid.
+ */
+function barraBiserie(banco: readonly EjercicioBanco[]): string {
+  const nombre = (k: number) => banco.find((x) => x.id === estado.seleccion[k])?.nombre;
+  const [a, c] = [nombre(0), nombre(1)];
+  const texto = !a ? "Toca el ejercicio <strong>A</strong>"
+    : `<span><strong>A</strong> ${escapar(a)}</span><span>${c ? `<strong>B</strong> ${escapar(c)}` : "Ahora toca el <strong>B</strong>"}</span>`;
+  return `
+    <div class="registro-espacio-biserie" aria-hidden="true"></div>
+    <div class="registro-barra-biserie">
+      <span class="registro-barra-biserie-texto">${texto}</span>
+      <button class="boton" data-accion="agregar-biserie" ${a && c ? "" : "disabled"}>Agregar biserie</button>
+    </div>`;
+}
+
 function vistaElegir(d: DatosRegistro): string {
   if (d.banco.length === 0) {
     return `
@@ -480,37 +536,90 @@ function vistaElegir(d: DatosRegistro): string {
   const hoy = d.dia && hayDelDia
     ? `<p class="accion-nota" style="margin:2px 2px 0">Hoy te toca ${escapar(d.dia.nombreDia.trim())}</p>`
     : "";
+  const biserie = estado.modoElegir === "biserie";
+  const modo = `
+    <div class="registro-modo" role="group" aria-label="Qué vas a agregar">
+      <button data-modo="uno" aria-pressed="${!biserie}" class="${biserie ? "" : "activa"}">Un ejercicio</button>
+      <button data-modo="biserie" aria-pressed="${biserie}" class="${biserie ? "activa" : ""}">🔗 Biserie</button>
+    </div>`;
   return `
     ${botonAtras(`data-accion="volver"`)}
     <p class="confirmar-titulo">¿Qué ejercicio hiciste?</p>
-    ${hoy}
+    ${modo}
+    ${biserie ? `<p class="accion-nota registro-modo-nota">Elige los dos ejercicios, en el orden en que los haces.</p>` : hoy}
     ${cuerpo}
+    ${biserie ? barraBiserie(d.banco) : ""}
     ${CREDITO}`;
 }
 
 // ── Capturar ─────────────────────────────────────────────────────────────────
 
-function filaSerie(e: EjercicioBorrador, i: number, s: SerieBorrador, j: number): string {
+/** Los campos de peso y reps de una serie o de una bajada (`k`). */
+function camposSerie(e: EjercicioBorrador, i: number, j: number, s: CaidaBorrador, donde: string, k?: number): string {
+  const caida = k === undefined ? "" : ` data-caida="${k}"`;
   const reps = `
     <label class="registro-campo">
-      <input inputmode="numeric" data-ej="${i}" data-serie="${j}" data-campo="reps"
-             value="${escapar(s.reps)}" placeholder="0" aria-label="Serie ${j + 1}, ${e.tipo === "tiempo" ? "segundos" : "repeticiones"}">
+      <input inputmode="numeric" data-ej="${i}" data-serie="${j}"${caida} data-campo="reps"
+             value="${escapar(s.reps)}" placeholder="0" aria-label="${escapar(donde)}, ${e.tipo === "tiempo" ? "segundos" : "repeticiones"}">
       <span>${e.tipo === "tiempo" ? "seg" : "reps"}</span>
     </label>`;
   const enBarras = e.unidad === "barras";
   const peso = e.tipo === "tiempo" ? "" : `
     <label class="registro-campo">
-      <input inputmode="decimal" data-ej="${i}" data-serie="${j}" data-campo="peso"
-             value="${escapar(s.peso)}" placeholder="${e.tipo === "corporal" ? "+0" : "0"}" aria-label="Serie ${j + 1}, ${enBarras ? "barras" : "kilos"}">
+      <input inputmode="decimal" data-ej="${i}" data-serie="${j}"${caida} data-campo="peso"
+             value="${escapar(s.peso)}" placeholder="${e.tipo === "corporal" ? "+0" : "0"}" aria-label="${escapar(donde)}, ${enBarras ? "barras" : "kilos"}">
       <span>${enBarras ? "barras" : "kg"}</span>
     </label>
     <span class="registro-por" aria-hidden="true">×</span>`;
+  return `${peso}${reps}`;
+}
+
+/**
+ * Una serie con sus bajadas. En los de peso el número de la serie se puede tocar: abre
+ * "↓ Agregar bajada" para anotar un dropset (decisión del entrenador, 2026-10-15: un botón en
+ * cada serie ocupaba demasiado). En una biserie el número es la letra (A o B) y la serie no
+ * lleva ✕: se quita la ronda entera.
+ */
+function filaSerie(e: EjercicioBorrador, i: number, s: SerieBorrador, j: number, letra?: "A" | "B"): string {
+  const donde = letra ? `${e.nombre}, ronda ${j + 1}` : `Serie ${j + 1}`;
+  const rotulo = letra ?? String(j + 1);
+  const abierto = estado.menuSerie === `${i}:${j}`;
+  const clase = `registro-serie-num${letra ? " letra" : ""}`;
+  const num = e.tipo === "peso"
+    ? `<button class="${clase} tocable${abierto ? " abierto" : ""}" data-menu-serie="${i}:${j}" aria-expanded="${abierto}"
+              aria-label="${escapar(donde)}: agregar un drop">${rotulo}</button>`
+    : `<span class="${clase}">${rotulo}</span>`;
+  const quitar = letra ? "" : `<button class="registro-quitar" data-quitar-serie="${i}:${j}" aria-label="Quitar serie ${j + 1}">✕</button>`;
+  const caidas = (s.caidas ?? []).map((c, k) => `
+    <div class="registro-serie registro-caida">
+      <span class="registro-serie-num caida" aria-hidden="true">↓</span>
+      ${camposSerie(e, i, j, c, `${donde}, bajada ${k + 1}`, k)}
+      <button class="registro-quitar" data-quitar-caida="${i}:${j}:${k}" aria-label="Quitar bajada ${k + 1} de ${escapar(donde)}">✕</button>
+    </div>`).join("");
+  const lleno = (s.caidas?.length ?? 0) >= MAX_CAIDAS;
+  const menu = !abierto ? "" : `
+    <div class="registro-menu-serie">
+      ${lleno ? `<span class="accion-nota">Ya tiene ${MAX_CAIDAS} bajadas.</span>`
+        : `<button class="registro-menu-opcion" data-agregar-caida="${i}:${j}">↓ Agregar bajada (drop)</button>`}
+      <button class="registro-menu-opcion tenue" data-menu-serie="">Cancelar</button>
+    </div>`;
   return `
     <div class="registro-serie">
-      <span class="registro-serie-num">${j + 1}</span>
-      ${peso}${reps}
-      <button class="registro-quitar" data-quitar-serie="${i}:${j}" aria-label="Quitar serie ${j + 1}">✕</button>
-    </div>`;
+      ${num}
+      ${camposSerie(e, i, j, s, donde)}
+      ${quitar}
+    </div>${menu}${caidas}`;
+}
+
+const LLAVE_PISTA_DROP = "osfit:pista-drop";
+
+/**
+ * "Toca el número de una serie…", hasta que agregue su primer drop: tocar el número no se
+ * adivina, pero una vez aprendido el aviso sobra.
+ */
+function pistaDrop(): string {
+  try { if (localStorage.getItem(LLAVE_PISTA_DROP)) return ""; } catch { /* sin almacenamiento, se muestra */ }
+  return `<p class="accion-nota registro-pista-drop">Toca el número de una serie para agregarle un drop.</p>`;
 }
 
 /** El índice del ejercicio abierto en grande, dentro de rango. */
@@ -537,32 +646,50 @@ function medioGrande(e: EjercicioBorrador, delBanco: EjercicioBanco | undefined)
       autoplay muted loop playsinline preload="auto" disablepictureinpicture aria-hidden="true"></video>`;
 }
 
-/**
- * El ejercicio activo, en grande: el GIF a lo ancho, sus series y cómo moverse al anterior o
- * al siguiente. Es el único con campos: los demás solo muestran su resumen.
- */
-function tarjetaActiva(e: EjercicioBorrador, i: number, total: number, delBanco?: EjercicioBanco): string {
+/** La nota de cómo se anota el peso, si hace falta. */
+function notaPeso(e: EjercicioBorrador, delBanco: EjercicioBanco | undefined): string {
   // Los estándares de fuerza de mancuernas cuentan una sola (`docs/estandares-fuerza/`).
-  const enBarras = e.unidad === "barras";
-  const nota = e.tipo === "corporal"
+  return e.tipo === "corporal"
     ? `<p class="accion-nota">Con tu peso corporal. En kg, solo si agregaste peso extra.</p>`
-    : enBarras
+    : e.unidad === "barras"
       ? `<p class="accion-nota">Cuántas barras de la máquina pusiste.</p>`
       : delBanco?.pesoPorMancuerna
         ? `<p class="accion-nota">En kg, el peso de una mancuerna.</p>`
         : "";
-  // Barras o kg, solo en los de peso. Las máquinas de placas abren en barras (`barras.ts`).
-  const unidad = e.tipo !== "peso" ? "" : `
-      <div class="registro-unidad" role="group" aria-label="Unidad del peso">
+}
+
+/** Barras o kg, solo en los de peso. Las máquinas de placas abren en barras (`barras.ts`). */
+function selectorUnidad(e: EjercicioBorrador, i: number): string {
+  if (e.tipo !== "peso") return "";
+  const enBarras = e.unidad === "barras";
+  return `
+      <div class="registro-unidad" role="group" aria-label="Unidad del peso${escapar(` de ${e.nombre}`)}">
         <button data-unidad="${i}:barras" aria-pressed="${enBarras}" class="${enBarras ? "activa" : ""}">Barras</button>
         <button data-unidad="${i}:kg" aria-pressed="${!enBarras}" class="${enBarras ? "" : "activa"}">Kg</button>
       </div>`;
-  const nav = total > 1 ? `
+}
+
+/**
+ * Anterior/Siguiente entre lo que se ve en grande: un ejercicio suelto o una biserie entera
+ * (`unidades`). Cada botón lleva al primer ejercicio de la unidad de al lado.
+ */
+function navUnidades(us: readonly number[][], ua: number): string {
+  if (us.length <= 1) return "";
+  const antes = us[ua - 1]?.[0];
+  const despues = us[ua + 1]?.[0];
+  return `
       <div class="registro-nav">
-        <button class="registro-nav-boton" data-activar="${i - 1}" ${i === 0 ? "disabled" : ""}>‹ Anterior</button>
-        <span class="registro-nav-cuenta">${i + 1} de ${total}<span class="registro-nav-pista">desliza ‹ ›</span></span>
-        <button class="registro-nav-boton" data-activar="${i + 1}" ${i === total - 1 ? "disabled" : ""}>Siguiente ›</button>
-      </div>` : "";
+        <button class="registro-nav-boton" data-activar="${antes ?? ""}" ${antes === undefined ? "disabled" : ""}>‹ Anterior</button>
+        <span class="registro-nav-cuenta">${ua + 1} de ${us.length}<span class="registro-nav-pista">desliza ‹ ›</span></span>
+        <button class="registro-nav-boton" data-activar="${despues ?? ""}" ${despues === undefined ? "disabled" : ""}>Siguiente ›</button>
+      </div>`;
+}
+
+/**
+ * El ejercicio activo, en grande: el GIF a lo ancho, sus series y cómo moverse al anterior o
+ * al siguiente. Es el único con campos: los demás solo muestran su resumen.
+ */
+function tarjetaActiva(e: EjercicioBorrador, i: number, nav: string, delBanco?: EjercicioBanco): string {
   return `
     <div class="tarjeta registro-ejercicio activo" data-indice="${i}">
       <div class="registro-activo-gif">
@@ -571,10 +698,49 @@ function tarjetaActiva(e: EjercicioBorrador, i: number, total: number, delBanco?
       </div>
       <p class="registro-activo-nombre">${escapar(e.nombre)}</p>
       ${e.objetivo ? `<p class="registro-objetivo">Tu rutina: ${escapar(e.objetivo)}</p>` : ""}
-      ${unidad}
-      ${nota}
+      ${selectorUnidad(e, i)}
+      ${notaPeso(e, delBanco)}
+      ${e.tipo === "peso" ? pistaDrop() : ""}
       ${e.series.map((s, j) => filaSerie(e, i, s, j)).join("")}
       <button class="registro-mas-serie" data-agregar-serie="${i}">+ Serie</button>
+      ${nav}
+    </div>`;
+}
+
+/**
+ * Una biserie abierta en grande: los dos ejercicios lado a lado (A y B) y sus series por
+ * rondas, A y luego B (decisión del entrenador, 2026-10-15). Las rondas se agregan y se quitan
+ * para los dos a la vez; la ✕ de arriba saca la biserie entera.
+ */
+function tarjetaBiserie(b: Borrador, iA: number, iB: number, nav: string, banco: readonly EjercicioBanco[]): string {
+  const par = [iA, iB].map((i) => ({ i, e: b.ejercicios[i], delBanco: banco.find((x) => x.id === b.ejercicios[i].ejercicioId) }));
+  const ejercicios = par.map(({ i, e, delBanco }, k) => `
+      <div class="registro-biserie-ej">
+        ${gif(delBanco?.gifRuta ?? e.gifRuta, "registro-ej-gif", 160)}
+        <p class="registro-biserie-nombre"><span class="registro-letra">${k === 0 ? "A" : "B"}</span>${escapar(e.nombre)}</p>
+        ${selectorUnidad(e, i)}
+        ${notaPeso(e, delBanco)}
+      </div>`).join("");
+  const [a, c] = par.map((x) => x.e);
+  const rondas = Array.from({ length: Math.max(a.series.length, c.series.length) }, (_, j) => `
+      <div class="registro-ronda">
+        <div class="registro-ronda-cab">
+          <span>Ronda ${j + 1}</span>
+          <button class="registro-quitar" data-quitar-ronda="${iA}:${j}" aria-label="Quitar ronda ${j + 1}">✕</button>
+        </div>
+        ${a.series[j] ? filaSerie(a, iA, a.series[j], j, "A") : ""}
+        ${c.series[j] ? filaSerie(c, iB, c.series[j], j, "B") : ""}
+      </div>`).join("");
+  return `
+    <div class="tarjeta registro-ejercicio registro-biserie activo" data-indice="${iA}">
+      <div class="registro-biserie-cab">
+        <span>🔗 Biserie</span>
+        <button class="registro-quitar" data-quitar-biserie="${iA}" aria-label="Quitar la biserie de ${escapar(a.nombre)} y ${escapar(c.nombre)}">✕</button>
+      </div>
+      <div class="registro-biserie-ejs">${ejercicios}</div>
+      ${a.tipo === "peso" || c.tipo === "peso" ? pistaDrop() : ""}
+      ${rondas}
+      <button class="registro-mas-serie" data-agregar-ronda="${iA}">+ Ronda</button>
       ${nav}
     </div>`;
 }
@@ -592,14 +758,40 @@ function filaCompacta(e: EjercicioBorrador, i: number): string {
     </button>`;
 }
 
+/** Una biserie que no es la activa: sus dos nombres y cuántas rondas lleva anotadas. */
+function filaCompactaBiserie(a: EjercicioBorrador, c: EjercicioBorrador, iA: number): string {
+  const llenas = (e: EjercicioBorrador) => e.series.filter((s) => s.reps.trim() !== "" || s.peso.trim() !== "").length;
+  const n = Math.max(llenas(a), llenas(c));
+  const nombres = `${a.nombre} + ${c.nombre}`;
+  return `
+    <button class="registro-compacto" data-activar="${iA}" aria-label="Abrir la biserie ${escapar(nombres)}">
+      ${gif(a.gifRuta, "registro-compacto-gif", 44)}
+      <span class="registro-compacto-texto">
+        <span class="registro-compacto-nombre">🔗 ${escapar(nombres)}</span>
+        <span class="registro-compacto-resumen">Biserie · ${n === 0 ? "Sin anotar" : n === 1 ? "1 ronda" : `${n} rondas`}</span>
+      </span>
+      <span class="registro-compacto-flecha" aria-hidden="true">›</span>
+    </button>`;
+}
+
 /** Arriba los anteriores comprimidos, en medio el activo en grande, abajo los siguientes. */
 function ejerciciosDelEntrenamiento(b: Borrador, banco: readonly EjercicioBanco[]): string {
+  const us = unidades(b);
   const a = indiceActivo(b);
-  const arriba = b.ejercicios.slice(0, a).map((e, i) => filaCompacta(e, i)).join("");
-  const abajo = b.ejercicios.slice(a + 1).map((e, k) => filaCompacta(e, a + 1 + k)).join("");
+  const ua = Math.max(0, us.findIndex((u) => u.includes(a)));
+  const compacta = (u: number[]) => u.length === 2
+    ? filaCompactaBiserie(b.ejercicios[u[0]], b.ejercicios[u[1]], u[0])
+    : filaCompacta(b.ejercicios[u[0]], u[0]);
+  const arriba = us.slice(0, ua).map(compacta).join("");
+  const abajo = us.slice(ua + 1).map(compacta).join("");
+  const nav = navUnidades(us, ua);
+  const u = us[ua];
+  const activa = u.length === 2
+    ? tarjetaBiserie(b, u[0], u[1], nav, banco)
+    : tarjetaActiva(b.ejercicios[u[0]], u[0], nav, banco.find((x) => x.id === b.ejercicios[u[0]].ejercicioId));
   return `
     ${arriba ? `<div class="registro-compactos">${arriba}</div>` : ""}
-    ${tarjetaActiva(b.ejercicios[a], a, b.ejercicios.length, banco.find((x) => x.id === b.ejercicios[a].ejercicioId))}
+    ${activa}
     ${abajo ? `<div class="registro-compactos">${abajo}</div>` : ""}`;
 }
 
@@ -781,15 +973,20 @@ export function conectarRegistro(
   const activar = (i: number, lateral: boolean) => {
     const b = estado.borrador;
     if (!b) return;
-    const actual = indiceActivo(b);
-    if (!Number.isInteger(i) || i < 0 || i >= b.ejercicios.length || i === actual) return;
-    const origen = raiz.querySelector<HTMLElement>(`.registro-compacto[data-activar="${i}"] .registro-compacto-gif`);
+    // Se va de unidad en unidad: una biserie se abre entera, por su primer ejercicio.
+    const us = unidades(b);
+    const actual = us.findIndex((u) => u.includes(indiceActivo(b)));
+    const destino = us.findIndex((u) => u.includes(i));
+    if (!Number.isInteger(i) || destino < 0 || destino === actual) return;
+    const primero = us[destino][0];
+    const origen = raiz.querySelector<HTMLElement>(`.registro-compacto[data-activar="${primero}"] .registro-compacto-gif`);
     estado.vuelo?.remove();
     estado.vuelo = despegar(origen);
-    estado.avanzando = i > actual;
+    estado.avanzando = destino > actual;
     estado.lateral = lateral;
-    estado.activo = i;
-    estado.enfocar = i;
+    estado.activo = primero;
+    estado.enfocar = primero;
+    estado.menuSerie = null;
     repintar();
   };
 
@@ -811,7 +1008,14 @@ export function conectarRegistro(
       ir("capturar", "adelante");
       return;
     }
-    if (accion === "agregar" && b) { ir("elegir", "adelante"); return; }
+    if (accion === "agregar" && b) {
+      // Siempre abre en "Un ejercicio": la biserie es la excepción.
+      estado.modoElegir = "uno";
+      estado.seleccion = [];
+      estado.menuSerie = null;
+      ir("elegir", "adelante");
+      return;
+    }
     if (accion === "listo" || accion === "ver-musculos") {
       estado.resumen = null;
       estado.guardado = false;
@@ -947,6 +1151,45 @@ export function conectarRegistro(
       return;
     }
 
+    // "¿Qué ejercicio hiciste?" en modo biserie: elegir la A y la B, y agregarlas.
+    if (el.dataset.modo === "uno" || el.dataset.modo === "biserie") {
+      estado.modoElegir = el.dataset.modo;
+      estado.seleccion = [];
+      repintar();
+      return;
+    }
+    if (el.dataset.biserieElegir !== undefined) {
+      const elegido = el.dataset.biserieElegir;
+      const sel = estado.seleccion;
+      // Tocar uno marcado lo desmarca; con los dos ya elegidos, el nuevo reemplaza a la B.
+      estado.seleccion = sel.includes(elegido) ? sel.filter((x) => x !== elegido)
+        : sel.length < 2 ? [...sel, elegido] : [sel[0], elegido];
+      repintar();
+      return;
+    }
+    if (accion === "agregar-biserie" && b) {
+      const [ea, ec] = estado.seleccion.map((x) => d.banco.find((e) => e.id === x));
+      if (!ea || !ec) return;
+      const con = (e: EjercicioBanco) => ({ e, previas: ultimasSeries(d.sesiones ?? [], e.id), seriesRutina: seriesDeLaRutina(d, e) });
+      const nuevo = agregarBiserie(b, con(ea), con(ec));
+      if (nuevo === b) return;
+      guardarBorrador(nuevo);
+      const iA = nuevo.ejercicios.findIndex((x) => x.ejercicioId === ea.id);
+      estado.activo = iA;
+      estado.enfocar = iA;
+      estado.avanzando = true;
+      estado.lateral = false;
+      estado.vuelo?.remove();
+      estado.vuelo = despegar(raiz.querySelector<HTMLElement>(`[data-biserie-elegir="${ea.id}"] .registro-opcion-gif`));
+      estado.modoElegir = "uno";
+      estado.seleccion = [];
+      estado.vista = "capturar";
+      estado.error = null;
+      acciones.navegar?.("capturar", "volver");
+      repintar();
+      return;
+    }
+
     const id = el.dataset.agregar;
     if (id && b) {
       const e = d.banco.find((x) => x.id === id);
@@ -991,19 +1234,73 @@ export function conectarRegistro(
       repintar();
       return;
     }
+    if (el.dataset.quitarBiserie !== undefined) {
+      const iA = Number(el.dataset.quitarBiserie);
+      const nombres = [iA, iA + 1].map((i) => b.ejercicios[i]?.nombre).filter(Boolean).join(" y ");
+      if (!confirm(`¿Quitar la biserie de ${nombres} y lo que anotaste en ella?`)) return;
+      guardarBorrador(quitarBloque(b, iA));
+      // Queda abierto lo que estaba debajo (o lo anterior si era lo último).
+      estado.activo = iA;
+      estado.menuSerie = null;
+      repintar();
+      return;
+    }
+    if (el.dataset.agregarRonda !== undefined) {
+      guardarBorrador(agregarRonda(b, Number(el.dataset.agregarRonda)));
+      repintar();
+      return;
+    }
+    if (el.dataset.quitarRonda !== undefined) {
+      const [i, j] = el.dataset.quitarRonda.split(":").map(Number);
+      guardarBorrador(quitarRonda(b, i, j));
+      estado.menuSerie = null;
+      repintar();
+      return;
+    }
+    // Dropset: tocar el número de la serie abre "↓ Agregar bajada"; tocarlo otra vez lo cierra.
+    if (el.dataset.menuSerie !== undefined) {
+      const serie = el.dataset.menuSerie;
+      estado.menuSerie = serie === "" || serie === estado.menuSerie ? null : serie;
+      repintar();
+      return;
+    }
+    if (el.dataset.agregarCaida !== undefined) {
+      const [i, j] = el.dataset.agregarCaida.split(":").map(Number);
+      const nuevo = agregarCaida(b, i, j);
+      guardarBorrador(nuevo);
+      estado.menuSerie = null;
+      // Ya sabe que el número se toca: la pista sobra.
+      try { localStorage.setItem(LLAVE_PISTA_DROP, "1"); } catch { /* se seguirá mostrando */ }
+      repintar();
+      // Directo a escribir el peso de la bajada nueva.
+      const k = (nuevo.ejercicios[i]?.series[j]?.caidas?.length ?? 1) - 1;
+      document.querySelector<HTMLInputElement>(
+        `#registro input[data-ej="${i}"][data-serie="${j}"][data-caida="${k}"][data-campo="${nuevo.ejercicios[i]?.tipo === "tiempo" ? "reps" : "peso"}"]`
+      )?.focus();
+      return;
+    }
+    if (el.dataset.quitarCaida !== undefined) {
+      const [i, j, k] = el.dataset.quitarCaida.split(":").map(Number);
+      guardarBorrador(quitarCaida(b, i, j, k));
+      repintar();
+      return;
+    }
     if (el.dataset.quitarSerie !== undefined) {
       const [i, j] = el.dataset.quitarSerie.split(":").map(Number);
       guardarBorrador(quitarSerie(b, i, j));
+      estado.menuSerie = null;
       repintar();
     }
   });
 
   raiz.addEventListener("input", (ev) => {
     const input = ev.target as HTMLInputElement;
-    const { ej, serie, campo } = input.dataset;
+    const { ej, serie, campo, caida } = input.dataset;
     if (!estado.borrador || ej === undefined || serie === undefined) return;
     if (campo !== "reps" && campo !== "peso") return;
-    guardarBorrador(cambiarSerie(estado.borrador, Number(ej), Number(serie), campo, input.value));
+    guardarBorrador(caida === undefined
+      ? cambiarSerie(estado.borrador, Number(ej), Number(serie), campo, input.value)
+      : cambiarCaida(estado.borrador, Number(ej), Number(serie), Number(caida), campo, input.value));
   });
 
   /**
@@ -1029,11 +1326,11 @@ export function conectarRegistro(
     const input = ev.target as HTMLElement;
     if (!(input instanceof HTMLInputElement) || input.dataset.campo !== "reps") return;
     if (document.querySelector("#reps-velo")) return;
-    const { ej, serie } = input.dataset;
+    const { ej, serie, caida } = input.dataset;
     const tipo = estado.borrador?.ejercicios[Number(ej)]?.tipo;
     if (tipo === undefined) return;
     const reps = repsDudosas(input.value, tipo);
-    const clave = `${ej}:${serie}:${reps}`;
+    const clave = `${ej}:${serie}:${caida ?? ""}:${reps}`;
     if (reps === null || repsConfirmadas.has(clave)) return;
 
     document.body.insertAdjacentHTML("beforeend", avisoReps(reps));
@@ -1049,7 +1346,9 @@ export function conectarRegistro(
         return;
       }
       document
-        .querySelector<HTMLInputElement>(`#registro input[data-ej="${ej}"][data-serie="${serie}"][data-campo="reps"]`)
+        .querySelector<HTMLInputElement>(
+          `#registro input[data-ej="${ej}"][data-serie="${serie}"]${caida === undefined ? ":not([data-caida])" : `[data-caida="${caida}"]`}[data-campo="reps"]`
+        )
         ?.focus();
     });
   });
@@ -1063,10 +1362,14 @@ export function conectarRegistro(
   }
 
   if (estado.vista === "capturar" && estado.borrador) {
-    const a = indiceActivo(estado.borrador);
+    const us = unidades(estado.borrador);
+    const ua = us.findIndex((u) => u.includes(indiceActivo(estado.borrador!)));
     conectarDeslizar(
       raiz.querySelector<HTMLElement>(".registro-ejercicio.activo"),
-      (hacia) => activar(hacia === "siguiente" ? a + 1 : a - 1, true)
+      (hacia) => {
+        const destino = us[ua + (hacia === "siguiente" ? 1 : -1)];
+        if (destino) activar(destino[0], true);
+      }
     );
   }
 }

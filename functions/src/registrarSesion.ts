@@ -13,8 +13,13 @@ import { actualizarDuracionDelDia, marcarAsistenciaDelDia } from "./asistenciaWe
 
 export interface DelBanco { nombre: string; tipo: "peso" | "corporal" | "tiempo"; }
 
-export interface Serie { reps: number; peso: number | null; }
-export interface EjercicioSesion { ejercicioId: string; nombre: string; series: Serie[]; }
+/**
+ * `caidas`: las bajadas de un dropset, hechas sin descanso después de la serie. Se guardan para
+ * el historial y el volumen; la fuerza (`fuerza.ts`) solo lee `reps` y `peso` de la serie.
+ */
+export interface Serie { reps: number; peso: number | null; caidas?: { reps: number; peso: number | null }[]; }
+/** `biserie`: los dos ejercicios de una biserie llevan la misma marca y van seguidos. */
+export interface EjercicioSesion { ejercicioId: string; nombre: string; series: Serie[]; biserie?: string; }
 export interface SesionValida { id: string; ejercicios: EjercicioSesion[]; }
 
 const MAX_EJERCICIOS = 30;
@@ -23,6 +28,8 @@ const MAX_PESO = 500;
 const MAX_REPS = 100;
 /** En los de tiempo, `reps` son segundos: una hora de plancha ya es un error de captura. */
 const MAX_SEGUNDOS = 3600;
+const MAX_CAIDAS = 5;
+const BISERIE_VALIDA = /^b[0-9]{1,3}$/;
 
 /**
  * El id lo genera el borrador del navegador y se usa como id del documento. Así, si la
@@ -31,7 +38,8 @@ const MAX_SEGUNDOS = 3600;
  */
 const ID_VALIDO = /^[A-Za-z0-9_-]{8,40}$/;
 
-function serieValida(s: unknown, tipo: DelBanco["tipo"]): Serie | null {
+/** Reps y peso de una serie o de una bajada, sin sus bajadas. */
+function marcaValida(s: unknown, tipo: DelBanco["tipo"]): { reps: number; peso: number | null } | null {
   if (typeof s !== "object" || s === null) return null;
   const { reps, peso } = s as { reps?: unknown; peso?: unknown };
   const maxReps = tipo === "tiempo" ? MAX_SEGUNDOS : MAX_REPS;
@@ -44,6 +52,23 @@ function serieValida(s: unknown, tipo: DelBanco["tipo"]): Serie | null {
   if (tipo === "corporal" && !sinPeso && !pesoOk) return null;
   if (tipo === "tiempo" && !sinPeso) return null;
   return { reps, peso: pesoOk ? (peso as number) : null };
+}
+
+/** Una serie con sus bajadas, si trae. En los de tiempo no hay dropset. */
+function serieValida(s: unknown, tipo: DelBanco["tipo"]): Serie | null {
+  const serie = marcaValida(s, tipo);
+  if (!serie) return null;
+  const caidas = (s as { caidas?: unknown }).caidas;
+  if (caidas === undefined || caidas === null) return serie;
+  if (!Array.isArray(caidas) || caidas.length > MAX_CAIDAS || tipo === "tiempo") return null;
+  if (caidas.length === 0) return serie;
+  const validas: { reps: number; peso: number | null }[] = [];
+  for (const c of caidas) {
+    const v = marcaValida(c, tipo);
+    if (!v) return null;
+    validas.push(v);
+  }
+  return { ...serie, caidas: validas };
 }
 
 /**
@@ -60,7 +85,7 @@ export function sesionValida(data: unknown, banco: ReadonlyMap<string, DelBanco>
 
   const salida: EjercicioSesion[] = [];
   for (const e of ejercicios) {
-    const { ejercicioId, series } = (e ?? {}) as { ejercicioId?: unknown; series?: unknown };
+    const { ejercicioId, series, biserie } = (e ?? {}) as { ejercicioId?: unknown; series?: unknown; biserie?: unknown };
     const delBanco = typeof ejercicioId === "string" ? banco.get(ejercicioId) : undefined;
     if (!delBanco) return "ejercicio_desconocido";
     if (!Array.isArray(series) || series.length === 0 || series.length > MAX_SERIES) {
@@ -72,7 +97,22 @@ export function sesionValida(data: unknown, banco: ReadonlyMap<string, DelBanco>
       if (!v) return "serie_invalida";
       validas.push(v);
     }
-    salida.push({ ejercicioId: ejercicioId as string, nombre: delBanco.nombre, series: validas });
+    if (biserie !== undefined && biserie !== null && (typeof biserie !== "string" || !BISERIE_VALIDA.test(biserie))) {
+      return "biserie_invalida";
+    }
+    salida.push({
+      ejercicioId: ejercicioId as string,
+      nombre: delBanco.nombre,
+      series: validas,
+      ...(typeof biserie === "string" ? { biserie } : {}),
+    });
+  }
+  // Cada biserie es de exactamente dos ejercicios, seguidos.
+  for (const [i, e] of salida.entries()) {
+    if (!e.biserie) continue;
+    const con = salida.filter((x) => x.biserie === e.biserie).length;
+    const pegado = salida[i - 1]?.biserie === e.biserie || salida[i + 1]?.biserie === e.biserie;
+    if (con !== 2 || !pegado) return "biserie_invalida";
   }
   return { id, ejercicios: salida };
 }

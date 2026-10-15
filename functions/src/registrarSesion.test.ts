@@ -74,6 +74,52 @@ describe("sesionValida", () => {
   });
 });
 
+describe("sesionValida: dropsets y biseries", () => {
+  const sesion = (ejercicios: unknown[]) => sesionValida({ id: ID, ejercicios }, banco);
+
+  it("guarda las bajadas de un dropset dentro de su serie", () => {
+    const r = sesion([{ ejercicioId: "press-banca", series: [{ reps: 10, peso: 40, caidas: [{ reps: 8, peso: 30 }, { reps: 6, peso: 20 }] }] }]);
+    expect(r).not.toBeTypeOf("string");
+    expect((r as { ejercicios: { series: unknown[] }[] }).ejercicios[0].series[0])
+      .toEqual({ reps: 10, peso: 40, caidas: [{ reps: 8, peso: 30 }, { reps: 6, peso: 20 }] });
+  });
+
+  it("una lista de bajadas vacía es una serie normal", () => {
+    const r = sesion([{ ejercicioId: "press-banca", series: [{ reps: 10, peso: 40, caidas: [] }] }]);
+    expect((r as { ejercicios: { series: unknown[] }[] }).ejercicios[0].series[0]).toEqual({ reps: 10, peso: 40 });
+  });
+
+  it("valida cada bajada como una serie, con tope de 5 y nunca en los de tiempo", () => {
+    const con = (caidas: unknown, ejercicioId = "press-banca") =>
+      sesion([{ ejercicioId, series: [{ reps: 10, peso: ejercicioId === "plancha" ? null : 40, caidas }] }]);
+    expect(con([{ reps: 8, peso: null }])).toBe("serie_invalida");
+    expect(con([{ reps: 0, peso: 20 }])).toBe("serie_invalida");
+    expect(con("mucho")).toBe("serie_invalida");
+    expect(con(Array.from({ length: 6 }, () => ({ reps: 5, peso: 10 })))).toBe("serie_invalida");
+    expect(con([{ reps: 20, peso: null }], "plancha")).toBe("serie_invalida");
+  });
+
+  it("una biserie son dos ejercicios seguidos con la misma marca", () => {
+    const r = sesion([
+      { ejercicioId: "press-banca", biserie: "b1", series: [{ reps: 10, peso: 40 }] },
+      { ejercicioId: "dominadas", biserie: "b1", series: [{ reps: 8, peso: null }] },
+      { ejercicioId: "plancha", series: [{ reps: 30, peso: null }] },
+    ]);
+    expect(r).not.toBeTypeOf("string");
+    expect((r as { ejercicios: { biserie?: string }[] }).ejercicios.map((e) => e.biserie)).toEqual(["b1", "b1", undefined]);
+  });
+
+  it("rechaza biseries de uno, de tres, separadas o con marca rara", () => {
+    const p = { ejercicioId: "press-banca", series: [{ reps: 10, peso: 40 }] };
+    const d = { ejercicioId: "dominadas", series: [{ reps: 8, peso: null }] };
+    const t = { ejercicioId: "plancha", series: [{ reps: 30, peso: null }] };
+    expect(sesion([{ ...p, biserie: "b1" }, d])).toBe("biserie_invalida");
+    expect(sesion([{ ...p, biserie: "b1" }, { ...d, biserie: "b1" }, { ...t, biserie: "b1" }])).toBe("biserie_invalida");
+    expect(sesion([{ ...p, biserie: "b1" }, t, { ...d, biserie: "b1" }])).toBe("biserie_invalida");
+    expect(sesion([{ ...p, biserie: "<script>" }, { ...d, biserie: "<script>" }])).toBe("biserie_invalida");
+  });
+});
+
 describe("inicioValido", () => {
   const AHORA = Date.UTC(2026, 9, 12, 18, 0);
 

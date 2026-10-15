@@ -279,8 +279,13 @@ export function observarConfigGrupos(alCambiar: (c: ConfigGrupos | null) => void
   );
 }
 
-/** Una serie como la guarda `registrarSesion`. En los de tiempo, `reps` son segundos. */
-export interface SerieSesion { reps: number; peso: number | null; }
+/**
+ * Una serie como la guarda `registrarSesion`. En los de tiempo, `reps` son segundos.
+ * `caidas` son las bajadas de un dropset, hechas sin descanso después de la serie: cuentan para
+ * el volumen pero no para la fuerza (decisión del entrenador, 2026-10-15), que solo lee
+ * `reps` y `peso`. Ausente en una serie normal.
+ */
+export interface SerieSesion { reps: number; peso: number | null; caidas?: { reps: number; peso: number | null }[]; }
 
 /**
  * Lo que registró en un entrenamiento: `clientes/{cid}/sesiones/{id}`. Lo escribe solo la
@@ -294,7 +299,11 @@ export interface Sesion {
   /** Cuándo tocó "Iniciar entrenamiento". Opcional: las primeras sesiones no la tienen. */
   iniciada?: Timestamp | null;
   origen: "manual" | "guiado";
-  ejercicios: { ejercicioId: string; nombre: string; series: SerieSesion[] }[];
+  /**
+   * `biserie`: los dos ejercicios de una biserie (alternados sin descanso) llevan la misma
+   * marca y van juntos, el A primero. Ausente en un ejercicio suelto.
+   */
+  ejercicios: { ejercicioId: string; nombre: string; series: SerieSesion[]; biserie?: string }[];
 }
 
 /**

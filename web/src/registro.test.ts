@@ -1,8 +1,18 @@
 import { describe, expect, it } from "vitest";
 import type { EjercicioBanco, Sesion } from "./datos";
 import {
+  MAX_CAIDAS,
+  agregarBiserie,
+  agregarCaida,
   agregarEjercicio,
+  agregarRonda,
   agregarSerie,
+  cambiarCaida,
+  companero,
+  quitarBloque,
+  quitarCaida,
+  quitarRonda,
+  unidades,
   borradorDeSesion,
   borradorGuiado,
   cambiarSerie,
@@ -384,5 +394,123 @@ describe("objetivoDeRutina", () => {
     expect(objetivoDeRutina({ nombre: "x", series: 4, repeticiones: "10", pesoONota: "" })).toBe("4 × 10");
     expect(objetivoDeRutina({ nombre: "x", series: 3, repeticiones: "", pesoONota: "ligero" })).toBe("3 series · ligero");
     expect(objetivoDeRutina({ nombre: "x", series: 0, repeticiones: "", pesoONota: "" })).toBe("");
+  });
+});
+
+describe("dropset", () => {
+  const conPress = () => agregarEjercicio(vacio(), ej(), [{ reps: 10, peso: 40 }], null);
+
+  it("agrega, edita y quita bajadas; sin bajadas la serie vuelve a ser normal", () => {
+    let b = agregarCaida(conPress(), 0, 0);
+    b = cambiarCaida(b, 0, 0, 0, "peso", "30");
+    b = cambiarCaida(b, 0, 0, 0, "reps", "8");
+    expect(b.ejercicios[0].series[0]).toEqual({ reps: "10", peso: "40", caidas: [{ reps: "8", peso: "30" }] });
+    expect(quitarCaida(b, 0, 0, 0).ejercicios[0].series[0]).toEqual({ reps: "10", peso: "40" });
+  });
+
+  it("tope de bajadas por serie", () => {
+    let b = conPress();
+    for (let k = 0; k < MAX_CAIDAS + 2; k++) b = agregarCaida(b, 0, 0);
+    expect(b.ejercicios[0].series[0].caidas).toHaveLength(MAX_CAIDAS);
+  });
+
+  it("la serie nueva copia el peso de la anterior pero no sus bajadas", () => {
+    const b = agregarSerie(agregarCaida(conPress(), 0, 0), 0);
+    expect(b.ejercicios[0].series[1]).toEqual({ reps: "10", peso: "40" });
+  });
+
+  it("se envían en kg y se saltan las bajadas en blanco", () => {
+    let b = agregarCaida(agregarCaida(conPress(), 0, 0), 0, 0);
+    b = cambiarCaida(cambiarCaida(b, 0, 0, 0, "peso", "30"), 0, 0, 0, "reps", "8");
+    const r = paraEnviar(b);
+    expect(r.ok && r.datos.ejercicios[0].series).toEqual([{ reps: 10, peso: 40, caidas: [{ reps: 8, peso: 30 }] }]);
+  });
+
+  it("una bajada a medias se reclama con su número", () => {
+    const b = cambiarCaida(agregarCaida(conPress(), 0, 0), 0, 0, 0, "peso", "30");
+    expect(paraEnviar(b)).toEqual({ ok: false, error: "Press de banca, serie 1, bajada 1: faltan las repeticiones." });
+  });
+
+  it("en barras, las bajadas se convierten igual que la serie", () => {
+    let b = agregarCaida(cambiarUnidad(conPress(), 0, "barras"), 0, 0);
+    b = cambiarCaida(cambiarCaida(b, 0, 0, 0, "peso", "4"), 0, 0, 0, "reps", "8");
+    const r = paraEnviar(b);
+    expect(r.ok && r.datos.ejercicios[0].series[0].caidas).toEqual([{ reps: 8, peso: barrasAKg(4) }]);
+  });
+
+  it("el resumen comprimido las muestra pegadas a su serie", () => {
+    let b = agregarCaida(conPress(), 0, 0);
+    b = cambiarCaida(cambiarCaida(b, 0, 0, 0, "peso", "30"), 0, 0, 0, "reps", "8");
+    expect(resumenSeries(b.ejercicios[0])).toBe("1 serie · 40 kg × 10 ↓ 30 kg × 8");
+  });
+
+  it("lo de la última vez trae sus bajadas, y una sesión guardada se corrige con ellas", () => {
+    const previas = [{ reps: 10, peso: 40, caidas: [{ reps: 8, peso: 30 }] }];
+    expect(agregarEjercicio(vacio(), ej(), previas, null).ejercicios[0].series[0].caidas).toEqual([{ reps: "8", peso: "30" }]);
+    const s: Sesion = { id: "s1", fecha: "2026-10-12", origen: "manual", ejercicios: [{ ejercicioId: "press-banca", nombre: "Press de banca", series: previas }] };
+    expect(borradorDeSesion(s, [ej()]).ejercicios[0].series[0].caidas).toEqual([{ reps: "8", peso: "30" }]);
+  });
+});
+
+describe("biserie", () => {
+  const remo = ej({ id: "remo", nombre: "Remo con barra" });
+  const conBiserie = () => agregarBiserie(
+    agregarEjercicio(vacio(), plancha, null, 1),
+    { e: ej(), previas: [{ reps: 10, peso: 40 }, { reps: 9, peso: 40 }, { reps: 8, peso: 40 }], seriesRutina: null },
+    { e: remo, previas: null, seriesRutina: 2 },
+  );
+
+  it("agrega los dos seguidos, con la misma marca e igualados en rondas", () => {
+    const b = conBiserie();
+    expect(b.ejercicios.map((e) => [e.ejercicioId, e.biserie])).toEqual([["plancha", undefined], ["press-banca", "b1"], ["remo", "b1"]]);
+    expect(b.ejercicios[1].series).toHaveLength(3);
+    expect(b.ejercicios[2].series).toHaveLength(3);
+    expect(unidades(b)).toEqual([[0], [1, 2]]);
+    expect(companero(b, 2)).toBe(1);
+    expect(companero(b, 0)).toBeNull();
+  });
+
+  it("la segunda biserie lleva otra marca, y no se agrega lo que ya está", () => {
+    const b = conBiserie();
+    const otra = agregarBiserie(b, { e: dominadas, previas: null, seriesRutina: 1 }, { e: ej({ id: "curl", nombre: "Curl" }), previas: null, seriesRutina: 1 });
+    expect(otra.ejercicios.slice(-2).map((e) => e.biserie)).toEqual(["b2", "b2"]);
+    expect(agregarBiserie(b, { e: ej(), previas: null, seriesRutina: 1 }, { e: dominadas, previas: null, seriesRutina: 1 })).toBe(b);
+  });
+
+  it("las rondas se agregan y se quitan para los dos", () => {
+    const b = agregarRonda(conBiserie(), 2);
+    expect([b.ejercicios[1].series.length, b.ejercicios[2].series.length]).toEqual([4, 4]);
+    const c = quitarRonda(b, 1, 0);
+    expect([c.ejercicios[1].series.length, c.ejercicios[2].series.length]).toEqual([3, 3]);
+  });
+
+  it("quitar la biserie saca a los dos; quitar uno deja al otro suelto", () => {
+    expect(quitarBloque(conBiserie(), 1).ejercicios.map((e) => e.ejercicioId)).toEqual(["plancha"]);
+    const suelto = quitarEjercicio(conBiserie(), 1);
+    expect(suelto.ejercicios.map((e) => [e.ejercicioId, e.biserie])).toEqual([["plancha", undefined], ["remo", undefined]]);
+  });
+
+  it("se envía con su marca; si solo se anotó uno, va suelto", () => {
+    let b = conBiserie();
+    b = cambiarSerie(cambiarSerie(b, 2, 0, "peso", "30"), 2, 0, "reps", "12");
+    b = cambiarSerie(b, 0, 0, "reps", "30");
+    const r = paraEnviar(b);
+    expect(r.ok && r.datos.ejercicios.map((e) => [e.ejercicioId, e.biserie])).toEqual([["plancha", undefined], ["press-banca", "b1"], ["remo", "b1"]]);
+    // Del press (prellenado de la vez pasada) hoy no anotó nada: el remo se guarda suelto.
+    let c = conBiserie();
+    for (let j = 0; j < 3; j++) c = cambiarSerie(cambiarSerie(c, 1, j, "reps", ""), 1, j, "peso", "");
+    c = cambiarSerie(cambiarSerie(c, 2, 0, "peso", "30"), 2, 0, "reps", "12");
+    const soloUno = paraEnviar(c);
+    expect(soloUno.ok && soloUno.datos.ejercicios).toEqual([{ ejercicioId: "remo", series: [{ reps: 12, peso: 30 }] }]);
+  });
+
+  it("una sesión guardada se corrige con su biserie", () => {
+    const s: Sesion = {
+      id: "s1", fecha: "2026-10-12", origen: "manual", ejercicios: [
+        { ejercicioId: "press-banca", nombre: "Press de banca", biserie: "b1", series: [{ reps: 10, peso: 40 }] },
+        { ejercicioId: "remo", nombre: "Remo con barra", biserie: "b1", series: [{ reps: 12, peso: 30 }] },
+      ],
+    };
+    expect(unidades(borradorDeSesion(s, [ej(), remo]))).toEqual([[0, 1]]);
   });
 });
