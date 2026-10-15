@@ -413,6 +413,46 @@ function cronometroDelBorrador(): string {
   return b && !b.edicion && typeof b.iniciado === "number" ? cronometro(b.iniciado) : "";
 }
 
+/**
+ * Un solo renglón pegado arriba al hacer scroll: el grupo muscular que se está viendo y el
+ * cronómetro a la derecha. Pegada, se corre a la derecha de la flecha fija y las tres cosas
+ * quedan en un renglón (decisión del entrenador, 2026-10-15; antes el cronómetro, la flecha y
+ * la banda del grupo se pegaban cada uno a una altura). El nombre lo cambia `seguirGrupo` al
+ * pasar por debajo cada banda.
+ */
+function barraElegir(titulo: string, delDia: boolean): string {
+  return `
+    <div class="registro-barra${delDia ? " del-dia" : ""}" id="registro-barra"
+         data-grupo="${escapar(titulo)}"${delDia ? " data-del-dia" : ""}>
+      <span class="registro-barra-grupo">${escapar(titulo)}</span>
+      ${cronometroDelBorrador()}
+    </div>`;
+}
+
+/**
+ * Pone en la barra el grupo cuya banda ya pasó por debajo de ella (o el primero, que no tiene
+ * banda), y la marca `pegada` cuando llega arriba. Un solo listener de scroll para toda la
+ * página: sin barra en pantalla no hace nada.
+ */
+function seguirGrupo(): void {
+  const barra = document.querySelector<HTMLElement>("#registro-barra");
+  if (!barra) return;
+  const caja = barra.getBoundingClientRect();
+  const tope = parseFloat(getComputedStyle(barra).top) || 0;
+  barra.classList.toggle("pegada", caja.top <= tope + 1);
+  let titulo = barra.dataset.grupo ?? "";
+  let delDia = barra.dataset.delDia !== undefined;
+  for (const banda of document.querySelectorAll<HTMLElement>("#registro .registro-grupo")) {
+    if (banda.getBoundingClientRect().top >= caja.bottom) break;
+    titulo = banda.textContent ?? "";
+    delDia = banda.classList.contains("del-dia");
+  }
+  const nombre = barra.querySelector<HTMLElement>(".registro-barra-grupo");
+  if (nombre && nombre.textContent !== titulo) nombre.textContent = titulo;
+  barra.classList.toggle("del-dia", delDia);
+}
+let siguiendoGrupo = false;
+
 function vistaElegir(d: DatosRegistro): string {
   if (d.banco.length === 0) {
     return `
@@ -423,22 +463,24 @@ function vistaElegir(d: DatosRegistro): string {
   const secciones = seccionesRegistro(d.dia?.nombreDia ?? null, d.banco, d.config);
   const hayDelDia = secciones.some((x) => x.delDia);
   let separado = false;
-  const cuerpo = secciones.map((x) => {
+  const cuerpo = secciones.map((x, i) => {
     // Un rótulo entre lo de hoy y lo demás, para que se note dónde termina su día.
     let antes = "";
     if (hayDelDia && !x.delDia && !separado) {
       separado = true;
       antes = `<p class="registro-separador">Más ejercicios</p>`;
     }
+    // El primer grupo no lleva su banda: la barra de arriba ocupa su lugar y ya lo nombra.
+    const banda = i === 0 ? barraElegir(x.titulo, x.delDia)
+      : `<p class="registro-grupo${x.delDia ? " del-dia" : ""}">${escapar(x.titulo)}</p>`;
     return `${antes}
-      <p class="registro-grupo${x.delDia ? " del-dia" : ""}">${escapar(x.titulo)}</p>
+      ${banda}
       <div class="registro-grid">${x.ejercicios.map(opcion).join("")}</div>`;
   }).join("");
   const hoy = d.dia && hayDelDia
     ? `<p class="accion-nota" style="margin:2px 2px 0">Hoy te toca ${escapar(d.dia.nombreDia.trim())}</p>`
     : "";
   return `
-    ${cronometroDelBorrador()}
     ${botonAtras(`data-accion="volver"`)}
     <p class="confirmar-titulo">¿Qué ejercicio hiciste?</p>
     ${hoy}
@@ -713,6 +755,12 @@ export function conectarRegistro(
 ): void {
   const raiz = document.querySelector<HTMLElement>("#registro");
   if (!raiz) return;
+  if (!siguiendoGrupo) {
+    window.addEventListener("scroll", seguirGrupo, { passive: true });
+    siguiendoGrupo = true;
+  }
+  // Cada repintado vuelve a poner el primer grupo: se corrige con lo que ya se bajó.
+  seguirGrupo();
 
   const ir = (vista: Vista, modo: "adelante" | "volver" | "reemplazar" = "volver") => {
     estado.vista = vista;

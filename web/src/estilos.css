@@ -560,10 +560,8 @@ main {
 }
 .boton-atras:active { transform: scale(0.94); }
 .boton-atras:focus-visible { outline: 2px solid var(--primario); outline-offset: 2px; }
-/* Con la flecha, la cabecera le deja su esquina, y lo que se pega arriba al hacer scroll
-   (los grupos de Registro) se pega debajo de ella para no taparla. */
+/* Con la flecha, la cabecera le deja su esquina. */
 .con-atras .cabecera-texto { padding-left: 48px; }
-.con-atras .registro-grupo { top: calc(66px + env(safe-area-inset-top, 0px)); }
 .cabecera-menu:focus-visible, .menu-opcion:focus-visible, .menu-cerrar:focus-visible {
   outline: 2px solid var(--primario); outline-offset: 2px;
 }
@@ -1178,15 +1176,29 @@ main:has(#barra) { padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
 /* El título de cada grupo muscular: una banda clara con su raya de color, y pegada arriba al
    hacer scroll, para que siempre se sepa de qué músculo es el grid que se está viendo (antes
    era texto gris tenue y casi no se veía, 2026-10-11). */
-.registro-grupo {
-  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 2;
+.registro-grupo, .registro-barra {
   margin: 22px 0 10px; padding: 9px 14px;
   border-left: 4px solid var(--texto-tenue); border-radius: 12px;
   background: var(--superficie-alta); color: var(--texto);
   box-shadow: 0 6px 14px rgba(0, 0, 0, 0.45);
   font-size: 18px; font-weight: 800;
 }
-.registro-grupo.del-dia { border-left-color: var(--primario); color: var(--primario-claro); }
+.registro-grupo.del-dia, .registro-barra.del-dia { border-left-color: var(--primario); color: var(--primario-claro); }
+/* La barra de "¿Qué ejercicio hiciste?" (`barraElegir`): ocupa el lugar de la banda del primer
+   grupo y se pega arriba a la altura de la flecha fija (`.boton-atras`), con el cronómetro chico
+   a la derecha. Pegada, se corre para dejarle a la flecha su esquina: un solo renglón. */
+.registro-barra {
+  position: sticky; top: calc(16px + env(safe-area-inset-top, 0px)); z-index: 6;
+  display: flex; align-items: center; gap: 10px;
+  min-height: 44px; box-sizing: border-box; padding-top: 4px; padding-bottom: 4px; padding-right: 6px;
+  transition: margin-left 0.15s ease-out;
+}
+.registro-barra.pegada { margin-left: 42px; }
+.registro-barra-grupo { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.registro-barra .cronometro {
+  position: static; flex: none; margin: 0; padding: 4px 12px;
+  font-size: 15px; box-shadow: none;
+}
 .registro-separador {
   margin: 26px 0 0; padding-top: 14px; border-top: 1px solid var(--superficie-alta);
   font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--texto-tenue);
