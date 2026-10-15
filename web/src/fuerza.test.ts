@@ -16,7 +16,7 @@ describe("rangoDe", () => {
   it("cada rango empieza al alcanzar su estándar", () => {
     expect(rangoDe(0).nombre).toBe("Principiante");
     expect(rangoDe(1.99).nombre).toBe("Principiante");
-    expect(rangoDe(2).nombre).toBe("Novato");
+    expect(rangoDe(2).nombre).toBe("Ascenso");
     expect(rangoDe(3).nombre).toBe("En forma");
     expect(rangoDe(4.5).nombre).toBe("Intermedio");
     expect(rangoDe(5).nombre).toBe("Atlético");
@@ -141,7 +141,8 @@ describe("fuerzaPorMusculo", () => {
       banco, "H", 75, "2026-10-11"
     );
     expect(f.pecho.nivel).toBeCloseTo(3 + 0.05 / 0.15, 5);
-    expect(f.triceps.nivel).toBeCloseTo(f.pecho.nivel / 2, 5);
+    // El tríceps solo lo trabaja de lado: no se pinta de rebote.
+    expect(f.triceps).toBeUndefined();
   });
 
   it("por músculo se queda con el máximo de sus ejercicios", () => {
@@ -153,10 +154,11 @@ describe("fuerzaPorMusculo", () => {
       banco, "M", 60, "2026-10-11"
     );
     expect(f.pecho.nivel).toBe(5);
-    expect(f.abdomen.nivel).toBe(2.5);
+    // Las lagartijas trabajan el abdomen de lado (× 0.5): no lo pintan.
+    expect(f.abdomen).toBeUndefined();
   });
 
-  it("con un ejercicio directo, los secundarios no cuentan aunque den más", () => {
+  it("solo pinta el trabajo directo: los secundarios no cuentan nunca", () => {
     const curl: EjercicioBanco = {
       id: "curl", nombre: "Curl", tipo: "peso", musculos: { biceps: 1 },
       estandares: { H: [0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 1.1], M: [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.9] },
@@ -178,13 +180,13 @@ describe("fuerzaPorMusculo", () => {
     expect(ambos.biceps.origen?.ejercicioId).toBe("curl");
     expect(ambos.dorsal.nivel).toBe(8);
 
-    // Sin curl, el bíceps sí sale del jalón.
+    // Sin curl, el jalón tampoco le da color al bíceps (antes salía a la mitad, de rebote).
     const soloJalon = fuerzaPorMusculo(
       [sesion("2026-10-10", [{ ejercicioId: "jalon", nombre: "", series: [{ reps: 1, peso: 150 }] }])],
       b, "H", 75, "2026-10-11"
     );
-    expect(soloJalon.biceps.nivel).toBe(4);
-    expect(soloJalon.biceps.origen?.ejercicioId).toBe("jalon");
+    expect(soloJalon.biceps).toBeUndefined();
+    expect(soloJalon.dorsal.nivel).toBe(8);
   });
 
   it("solo cuentan las últimas 8 semanas", () => {
@@ -263,7 +265,7 @@ describe("siguienteRango", () => {
   });
 
   it("en los de peso: el peso a sus mismas reps, redondeado hacia arriba a 0.5 kg", () => {
-    // 30 × 8 ≈ 38 kg de 1RM ÷ 75 = 0.507 → nivel 1.05, Principiante. Novato pide 0.625 × 75 =
+    // 30 × 8 ≈ 38 kg de 1RM ÷ 75 = 0.507 → nivel 1.05, Principiante. Ascenso pide 0.625 × 75 =
     // 46.9 kg de 1RM, que a 8 reps son 37.006 kg: 37.5 (con 37 no le alcanza).
     const s = siguienteRango(conOrigen(1.05), 75);
     expect(s).toMatchObject({ tipo: "falta", rango: 1, objetivo: { reps: 8, peso: 37.5 }, mejor: { reps: 8, peso: 30 } });
@@ -281,7 +283,7 @@ describe("siguienteRango", () => {
   });
 
   it("con factor por edad, el objetivo es lo que tiene que mover a su edad", () => {
-    // Mismo caso que arriba, a los 52 (× 1.162): Novato pide 46.9 kg ÷ 1.162 = 40.3 kg de
+    // Mismo caso que arriba, a los 52 (× 1.162): Ascenso pide 46.9 kg ÷ 1.162 = 40.3 kg de
     // 1RM, que a 8 reps son 31.8 kg → 32.
     const s = siguienteRango(conOrigen(1.2, { edad: 52, factorEdad: factorEdad(52) }), 75);
     expect(s).toMatchObject({ tipo: "falta", objetivo: { reps: 8, peso: 32 } });
@@ -294,7 +296,7 @@ describe("siguienteRango", () => {
   });
 
   it("el objetivo usa el mismo peso con que se midió (la masa magra, si hubo)", () => {
-    // Medido contra 60 kg en vez de 75: Novato pide 0.625 × 60 = 37.5 kg de 1RM → 29.6 a 8 reps → 30.
+    // Medido contra 60 kg en vez de 75: Ascenso pide 0.625 × 60 = 37.5 kg de 1RM → 29.6 a 8 reps → 30.
     const s = siguienteRango(conOrigen(1.2, { pesoUsado: 60, serie: { reps: 8, peso: 25 } }), 75);
     expect(s).toMatchObject({ tipo: "falta", objetivo: { reps: 8, peso: 30 } });
   });
@@ -315,7 +317,7 @@ describe("siguienteRango", () => {
       [b], "H", 75, "2026-10-11"
     );
     expect(f.pecho.origen).toMatchObject({ nombre: "Press de banca", cuanto: 1, serie: { reps: 8, peso: 30 } });
-    expect(f.triceps.origen?.cuanto).toBe(0.5);
+    expect(f.triceps).toBeUndefined();
   });
 });
 

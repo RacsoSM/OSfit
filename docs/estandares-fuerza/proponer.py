@@ -87,7 +87,7 @@ PESO = {
     "pantorrilla-prensa": ("pantorrilla", 1.10, "en prensa: varía por marca"),
     "abductores-maquina": ("abductor", 1.00, "máquina"),
     "aductores-maquina": ("abductor", 1.00, "máquina"),
-    "patada-gluteo-polea": ("abductor", 0.35, "polea"),
+    "patada-gluteo-polea": ("abductor", 0.455, "polea: el peso marcado no es el real, × 1.3 (decisión del entrenador, 2026-10-15)"),
     "patada-gluteo-maquina": ("abductor", 0.80, "máquina de palanca, una pierna: varía por marca"),
     "jalon-al-pecho": ("jalon", 1.00, ""),
     "jalon-agarre-abierto": ("jalon", 0.95, ""),
@@ -185,7 +185,7 @@ SIN_ESTANDAR = {
 
 # Nombres elegidos por el entrenador (2026-10-11). "Atlético" va en femenino para las
 # mujeres ("Atlética"); los demás no cambian.
-NIVELES = ["Principiante", "Novato", "En forma", "Intermedio", "Atlético / Atlética", "Fuerte",
+NIVELES = ["Principiante", "Ascenso", "En forma", "Intermedio", "Atlético / Atlética", "Fuerte",
            "Avanzado", "Élite"]
 # Dónde cae cada uno de los 5 de las tablas entre los 8 (índice 0 = nivel 1).
 ANCLAS = [0, 2, 4, 6, 7]

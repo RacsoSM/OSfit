@@ -50,18 +50,24 @@ import { tarjetaVideos, ultimosRangoDescendente, firmaVideos, MAXIMO_VIDEOS } fr
 import {
   BARRA, VENTANAS, contenidoDe, datosRegistro, fuerzaDelCliente, tituloCabecera, ventana, type IdVentana,
 } from "./ventanas";
-import { cabeceraRegistro, conectarRegistro, empezarGuiado, entrenamientoAbierto } from "./ui/registro";
+import {
+  cabeceraRegistro, conectarRegistro, empezarGuiado, entrenamientoAbierto, vistaDesdeHistorial,
+} from "./ui/registro";
 import { barraInferior, conectarBarra } from "./ui/barraInferior";
 import { archivosMapa, conectarMapa, type EstadoSvg } from "./ui/mapaMuscular";
 import { conectarPeso } from "./ui/pesoCorporal";
 import { conectarDeslizarMenu } from "./ui/deslizarMenu";
 import {
-  abrirMenu, abrirVentana, cerrarMenu, historialDelNavegador, iniciarNavegacion, menuAbierto,
+  abrirMenu, abrirVentana, alRetrocederSub, cerrarMenu, historialDelNavegador, iniciarNavegacion, irSub, marcarSub,
+  menuAbierto,
   ventanaActiva, ventanaDeBarra,
 } from "./navegacion";
 import {
   conectarComparar, reiniciarComparar, sexosAComparar, type EstadoComparar,
 } from "./ui/comparar";
+import { marcarBotonAtras } from "./ui/botonAtras";
+import { mostrarAvisoVersion } from "./ui/avisoVersion";
+import { vigilarVersion } from "./version";
 import {
   actualizarCabecera, aplicarMenuAbierto, cabecera, conectarCabecera, conectarMenu,
   marcarVentanaActiva, panelMenu,
@@ -185,6 +191,8 @@ async function arrancar(): Promise<void> {
   // Después de la sesión, no antes: limpia `history.state`, y la pantalla del candado lo lee
   // para su diagnóstico.
   iniciarNavegacion(historialDelNavegador(), () => pintar());
+  // "Atrás" también recorre las pantallas de Registro: al llegar a una, Registro se pone en ella.
+  alRetrocederSub((v, s) => { if (v === "registro") vistaDesdeHistorial(s); });
   const hoy = hoyEnMazatlan();
 
   let cliente: Cliente | null = null;
@@ -526,6 +534,7 @@ async function arrancar(): Promise<void> {
       comparacion,
     };
     contenido.innerHTML = contenidoDe(activa, datos);
+    marcarBotonAtras(contenido);
     pintarVideos(activa.contenedorPropio === "videos");
     pintarMenu(activa.id, cliente.nombre);
     marcarVentanaActiva(document.querySelectorAll<HTMLElement>("#barra [data-ventana]"), ventanaDeBarra(activa.id));
@@ -550,6 +559,7 @@ async function arrancar(): Promise<void> {
       conectarComparar(
         pintar,
         () => { cargarComparacion(); pintar(); },
+        () => abrirVentana("musculos"),
         (mostrar) => elegirMostrarEnAmigos({ mostrar })
       );
       return;
@@ -569,6 +579,12 @@ async function arrancar(): Promise<void> {
         },
         // Sin esperarla ni avisar si falla: sin internet la marca el entrenamiento al llegar.
         alIniciar: () => { marcarAsistencia({}).catch(() => {}); },
+        // Inicio es la pantalla de entrada (null): así "volver" a ella retrocede.
+        navegar: (vista, modo) => {
+          const s = vista === "inicio" ? null : vista;
+          if (modo === "marcar") marcarSub(s);
+          else irSub(s, modo);
+        },
         verMusculos: () => abrirVentana("musculos"),
       });
       return;
@@ -728,5 +744,8 @@ if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("/sw.js").catch(() => {});
   });
 }
+
+// Con la página abierta desde antes de un deploy, ofrecer actualizar (`version.ts`).
+vigilarVersion(__VERSION__, mostrarAvisoVersion);
 
 arrancar();

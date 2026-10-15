@@ -44,6 +44,10 @@ describe("panelMenu", () => {
 });
 
 describe("cabecera", () => {
+  it("lleva la versión del deploy, arriba a la izquierda", () => {
+    expect(cabecera(`<h1 id="saludo">Hola</h1>`)).toMatch(/id="version-app"[^>]*>v\d{6}\.\d{4}</);
+  });
+
   it("trae el botón del menú con su etiqueta y el saludo adentro", () => {
     const html = cabecera(`<h1 id="saludo">Hola</h1>`);
     expect(html).toContain(`aria-label="Abrir menú"`);

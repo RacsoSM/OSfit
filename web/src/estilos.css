@@ -517,7 +517,14 @@ main {
 [hidden] { display: none !important; }
 
 /* La cabecera: el ☰ a la derecha, en el mismo renglón que el saludo o el nombre de la ventana. */
-.cabecera { display: flex; align-items: flex-start; gap: 4px; }
+.cabecera { display: flex; align-items: flex-start; gap: 4px; position: relative; }
+/* Qué deploy tiene la clienta (`__VERSION__`), arriba a la izquierda en Inicio. Absoluta, en el
+   margen de arriba de la página: no mueve el saludo. */
+.version-app {
+  position: absolute; top: -13px; left: 0;
+  font-size: 9px; line-height: 1; color: var(--texto-tenue); opacity: 0.6; pointer-events: none;
+}
+.version-app[hidden] { display: none; }
 .cabecera-texto { flex: 1; min-width: 0; }
 .cabecera-menu {
   flex: none; width: 44px; height: 44px; margin: 0 -8px 0 0;
@@ -529,8 +536,53 @@ main {
    que el de las ventanas, para que quepa a la altura del ☰ junto con su detalle. */
 .titulo-ventana.con-detalle { font-size: 17px; font-weight: 800; margin: 6px 2px 0; }
 .detalle-ventana { margin: 2px 2px 12px; font-size: 12px; color: var(--texto-tenue); }
+/* La flecha de "atrás" de las pantallas metidas dentro de otra (`ui/botonAtras.ts`): solo el
+   ícono, fija en la esquina de arriba a la izquierda, a la altura y del tamaño del ☰, para que
+   regresar siempre esté en el mismo lugar aunque se haya bajado (2026-10-15). Sigue a la
+   columna de `main` (480 px centrada) en pantallas anchas. El fondo es por el scroll: sin él,
+   la flecha se perdería sobre lo que pasa por debajo. Debajo del menú (z 20) y de los avisos. */
+.boton-atras {
+  position: fixed; z-index: 8;
+  top: calc(16px + env(safe-area-inset-top));
+  left: calc(max(0px, 50% - 240px) + 6px + env(safe-area-inset-left));
+  width: 44px; height: 44px; padding: 0;
+  display: flex; align-items: center; justify-content: center;
+  border: 0; border-radius: 12px;
+  background: color-mix(in srgb, var(--fondo) 82%, transparent);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+  color: var(--texto); cursor: pointer;
+  transition: transform 0.12s ease-out;
+  -webkit-tap-highlight-color: transparent;
+}
+.boton-atras svg {
+  width: 26px; height: 26px;
+  fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round;
+}
+.boton-atras:active { transform: scale(0.94); }
+.boton-atras:focus-visible { outline: 2px solid var(--primario); outline-offset: 2px; }
+/* Con la flecha, la cabecera le deja su esquina. */
+.con-atras .cabecera-texto { padding-left: 48px; }
 .cabecera-menu:focus-visible, .menu-opcion:focus-visible, .menu-cerrar:focus-visible {
   outline: 2px solid var(--primario); outline-offset: 2px;
+}
+
+/* "Hay una versión nueva" (`ui/avisoVersion.ts`): fija arriba, sobre el contenido y la flecha
+   de atrás (z 8) pero debajo del menú (z 20). Sigue a la columna de `main` en pantallas anchas. */
+.aviso-version {
+  position: fixed; z-index: 15; left: 50%; transform: translateX(-50%);
+  top: calc(8px + env(safe-area-inset-top)); width: min(calc(100% - 24px), 456px); box-sizing: border-box;
+  display: flex; align-items: center; gap: 8px; padding: 8px 8px 8px 14px; border-radius: 14px;
+  background: var(--primario); color: var(--sobre-primario); box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
+  font-size: 14px; font-weight: 700;
+}
+.aviso-version-texto { flex: 1; min-width: 0; }
+.aviso-version-actualizar {
+  flex: none; padding: 8px 14px; border: 0; border-radius: 10px;
+  background: var(--sobre-primario); color: var(--primario); font: inherit; cursor: pointer;
+}
+.aviso-version-cerrar {
+  flex: none; width: 32px; height: 32px; border: 0; border-radius: 8px; background: none;
+  color: var(--sobre-primario); font-size: 14px; cursor: pointer;
 }
 
 /* El menú lateral, que sale por la derecha como el ☰. Siempre está en el DOM, fuera de la
@@ -956,7 +1008,7 @@ main:has(#barra) { padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
    El gris de "sin datos" es `#8f90a6`; ninguno se le parece. */
 :root {
   --rango-0: #bfe3ff; /* Principiante: azul hielo */
-  --rango-1: #7cc4ff; /* Novato: azul claro */
+  --rango-1: #7cc4ff; /* Ascenso: azul claro */
   --rango-2: #3b8fff; /* En forma: azul */
   --rango-3: #5b5bd6; /* Intermedio: índigo */
   --rango-4: #9d4edd; /* Atlético: morado */
@@ -1032,7 +1084,6 @@ main:has(#barra) { padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
    cualquier paleta oscura se lee como una ficha y no como un hueco. */
 .registro-subtitulo { margin-top: 18px; }
 .registro-agregar { margin-bottom: 4px; }
-.registro-volver { width: auto; margin: 0 0 6px -10px; text-align: left; }
 .registro-hist { list-style: none; margin: 4px 0 0; padding: 0; }
 .registro-hist-ej { padding: 6px 0; border-top: 1px solid var(--superficie-alta); }
 .registro-hist-ej:first-child { border-top: 0; }
@@ -1138,27 +1189,124 @@ main:has(#barra) { padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
   margin-top: 4px; padding: 8px 12px; border: 1px dashed var(--superficie-alta); border-radius: 10px;
   background: none; color: var(--primario); font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; width: 100%;
 }
+/* Dropset (2026-10-15): el número de la serie se toca para agregar una bajada. Un borde
+   punteado apenas visible dice que es botón sin ocupar más lugar. */
+button.registro-serie-num {
+  padding: 0; border: 1.5px dashed var(--texto-tenue); color: var(--texto); font: inherit;
+  font-size: 12px; font-weight: 700; cursor: pointer;
+}
+button.registro-serie-num.abierto { border-style: solid; border-color: var(--primario); color: var(--primario); }
+.registro-serie-num.letra { background: var(--primario); color: var(--sobre-primario); border-color: transparent; }
+.registro-serie-num.caida { background: none; color: var(--primario); font-size: 15px; }
+/* Las bajadas, con sangría y una raya del color del estilo: se leen como parte de su serie. */
+.registro-caida { margin-left: 12px; padding-left: 8px; border-left: 3px solid var(--primario); }
+.registro-caida .registro-campo { border-color: color-mix(in srgb, var(--primario) 45%, transparent); }
+.registro-menu-serie { display: flex; align-items: center; gap: 8px; margin: -2px 0 6px 32px; }
+.registro-menu-opcion {
+  padding: 7px 12px; border: 1px solid var(--primario); border-radius: 999px; background: none;
+  color: var(--primario); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer;
+}
+.registro-menu-opcion.tenue { border-color: var(--superficie-alta); color: var(--texto-tenue); }
+.registro-pista-drop { margin: 0 0 4px; font-size: 12px; }
+/* Biserie (2026-10-15): los dos ejercicios lado a lado y sus series por rondas, A y luego B. */
+.registro-biserie-cab {
+  display: flex; align-items: center; justify-content: space-between; margin: -4px 0 8px;
+  font-size: 13px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--primario);
+}
+.registro-biserie-ejs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 8px; }
+/* En columna y con el selector al fondo: con un nombre de dos renglones y otro de uno, los dos
+   selectores Barras/Kg quedan a la misma altura. */
+.registro-biserie-ej { min-width: 0; display: flex; flex-direction: column; text-align: center; }
+.registro-biserie-ej .registro-ej-gif {
+  display: flex; align-items: center; justify-content: center;
+  width: 100%; height: auto; aspect-ratio: 1; border-radius: 12px; background: #fff; object-fit: cover;
+}
+.registro-biserie-ej .registro-sin-gif { font-size: 40px; }
+.registro-biserie-ej .registro-unidad { width: auto; margin: auto 0 0; padding: 2px; }
+.registro-biserie-ej .registro-unidad button { flex: 1; min-width: 0; min-height: 30px; padding: 3px 4px; font-size: 13px; }
+.registro-biserie-ej .accion-nota { margin: -4px 0 8px; font-size: 11px; }
+.registro-biserie-nombre { margin: 6px 0 8px; font-size: 14px; font-weight: 700; line-height: 1.25; }
+.registro-letra {
+  display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px;
+  margin-right: 5px; border-radius: 50%; vertical-align: -3px;
+  background: var(--primario); color: var(--sobre-primario); font-size: 11px; font-weight: 800;
+}
+.registro-ronda { margin: 0 0 8px; padding: 4px 8px 6px; border-radius: 12px; background: var(--superficie-alta); }
+.registro-ronda-cab { display: flex; align-items: center; justify-content: space-between; font-size: 12px; font-weight: 700; color: var(--texto-tenue); }
+.registro-ronda-cab .registro-quitar { width: 28px; height: 28px; }
+.registro-ronda .registro-serie { padding: 4px 0; }
+.registro-ronda .registro-campo { background: var(--fondo); }
+/* El selector "Un ejercicio / Biserie" de "¿Qué ejercicio hiciste?". */
+.registro-modo { display: flex; gap: 4px; margin: 4px 0 8px; padding: 4px; border-radius: 999px; background: var(--superficie-alta); }
+.registro-modo button {
+  flex: 1; padding: 8px; border: 0; border-radius: 999px; background: none;
+  color: var(--texto-tenue); font: inherit; font-size: 14px; font-weight: 700; cursor: pointer;
+}
+.registro-modo button.activa { background: var(--primario); color: var(--sobre-primario); }
+.registro-modo-nota { margin: 0 2px 2px; }
+.registro-opcion.marcada { outline: 3px solid var(--primario); outline-offset: -3px; }
+.registro-marca {
+  position: absolute; top: 8px; left: 8px; z-index: 1; width: 28px; height: 28px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--primario); color: var(--sobre-primario); font-size: 14px; font-weight: 800;
+}
+/* Lo elegido y "Agregar biserie", fijo sobre la barra de abajo (z 10). */
+.registro-barra-biserie {
+  position: fixed; z-index: 9; left: 50%; transform: translateX(-50%);
+  bottom: calc(68px + env(safe-area-inset-bottom)); width: min(calc(100% - 24px), 456px); box-sizing: border-box;
+  display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 16px;
+  background: var(--superficie); box-shadow: 0 6px 24px rgba(0, 0, 0, 0.55);
+}
+.registro-barra-biserie-texto {
+  flex: 1; min-width: 0; display: flex; flex-direction: column; font-size: 13px; color: var(--texto-tenue);
+}
+.registro-barra-biserie-texto span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.registro-barra-biserie-texto strong { color: var(--texto); }
+.registro-barra-biserie .boton { width: auto; margin: 0; padding: 10px 14px; flex: none; }
+.registro-espacio-biserie { height: 80px; }
+.registro-hist-ej.biserie-b { border-top-style: dashed; }
 .registro-credito { margin: 14px 0 0; font-size: 10px; color: var(--texto-tenue); text-align: right; }
 /* Los títulos de grupo del grid ("Pecho", "Hombro"…). Los del día van con el color del estilo
    para que se lean como "lo de hoy"; el resto, tenues. */
 /* El título de cada grupo muscular: una banda clara con su raya de color, y pegada arriba al
    hacer scroll, para que siempre se sepa de qué músculo es el grid que se está viendo (antes
    era texto gris tenue y casi no se veía, 2026-10-11). */
-.registro-grupo {
-  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 2;
+.registro-grupo, .registro-barra {
   margin: 22px 0 10px; padding: 9px 14px;
   border-left: 4px solid var(--texto-tenue); border-radius: 12px;
   background: var(--superficie-alta); color: var(--texto);
   box-shadow: 0 6px 14px rgba(0, 0, 0, 0.45);
   font-size: 18px; font-weight: 800;
 }
-.registro-grupo.del-dia { border-left-color: var(--primario); color: var(--primario-claro); }
+.registro-grupo.del-dia, .registro-barra.del-dia { border-left-color: var(--primario); color: var(--primario-claro); }
+/* La barra de "¿Qué ejercicio hiciste?" (`barraElegir`): ocupa el lugar de la banda del primer
+   grupo y se pega arriba a la altura de la flecha fija (`.boton-atras`), con el cronómetro chico
+   a la derecha. Pegada, se corre para dejarle a la flecha su esquina: un solo renglón. */
+.registro-barra {
+  position: sticky; top: calc(16px + env(safe-area-inset-top, 0px)); z-index: 6;
+  display: flex; align-items: center; gap: 10px;
+  min-height: 44px; box-sizing: border-box; padding-top: 4px; padding-bottom: 4px; padding-right: 6px;
+  transition: margin-left 0.15s ease-out;
+}
+.registro-barra.pegada { margin-left: 42px; }
+.registro-barra-grupo { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.registro-barra .cronometro {
+  position: static; flex: none; margin: 0; padding: 4px 12px;
+  font-size: 15px; box-shadow: none;
+}
 .registro-separador {
   margin: 26px 0 0; padding-top: 14px; border-top: 1px solid var(--superficie-alta);
   font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--texto-tenue);
 }
 /* Inicio de Registro: "Tu semana". */
 .registro-semana-titulo { margin: 4px 2px 10px; font-size: 24px; }
+/* Sube a la altura del ☰ (2026-10-15): en Registro la cabecera va sin título y su renglón
+   quedaba vacío. Solo si va primero: con un aviso ("¡Entrenamiento guardado!") encima, se queda
+   en su lugar. El ancho deja libre el ☰, que si no quedaría tapado y sin poder tocarse. */
+.registro > .registro-semana-titulo:first-child {
+  width: fit-content; max-width: calc(100% - 56px);
+  margin-top: -44px; min-height: 44px; display: flex; align-items: center; margin-bottom: 6px;
+}
 .registro-semana { padding: 16px 14px; }
 .registro-semana-dias {
   list-style: none; margin: 0 0 14px; padding: 0;

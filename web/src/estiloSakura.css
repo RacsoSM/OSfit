@@ -218,7 +218,7 @@
 
 /* ---------- Menú ---------- */
 
-:root[data-estilo="sakura"] .cabecera-menu { color: var(--sk-tinta); }
+:root[data-estilo="sakura"] .cabecera-menu, :root[data-estilo="sakura"] .boton-atras { color: var(--sk-tinta); }
 :root[data-estilo="sakura"] .menu-velo { background: rgba(120, 40, 70, 0.22); backdrop-filter: blur(3px); }
 :root[data-estilo="sakura"] .menu-panel { background: #fff7f9; border-left: 1px solid rgba(194, 69, 106, 0.18); }
 :root[data-estilo="sakura"] .menu-abierto .menu-panel { box-shadow: -14px 0 40px rgba(160, 40, 80, 0.18); }

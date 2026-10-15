@@ -117,17 +117,15 @@ export function nivelesPorMusculo(
     }
   }
 
-  const fuerza: Record<string, { nivel: number; directo: boolean }> = {};
+  const fuerza: Record<string, number> = {};
   for (const [id, marca] of mejor) {
     const b = porId.get(id)!;
     const nivel = nivelDe(marca, b.estandares![sexo]);
     for (const [musculo, cuanto] of Object.entries(b.musculos)) {
-      const n = nivel * cuanto;
-      const directo = cuanto >= 1;
-      const actual = fuerza[musculo];
-      const gana = !actual || (directo && !actual.directo) || (directo === actual.directo && n > actual.nivel);
-      if (gana) fuerza[musculo] = { nivel: n, directo };
+      // Solo el trabajo directo pinta (× 1 en el banco); un secundario no cuenta de rebote.
+      if (cuanto < 1) continue;
+      if (nivel > (fuerza[musculo] ?? -1)) fuerza[musculo] = nivel;
     }
   }
-  return Object.fromEntries(Object.entries(fuerza).map(([m, f]) => [m, f.nivel]));
+  return fuerza;
 }

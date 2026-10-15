@@ -45,7 +45,8 @@ self.addEventListener("fetch", (evento) => {
   const url = new URL(pedido.url);
   // Solo lo de este sitio. Firebase, Storage y las fuentes van directo, como siempre.
   if (url.origin !== self.location.origin) return;
-  if (url.pathname === "/sw.js" || url.pathname.startsWith("/__/")) return;
+  // `/version.json` siempre a la red y sin guardar: dice si hay un deploy más nuevo (`src/version.ts`).
+  if (url.pathname === "/sw.js" || url.pathname === "/version.json" || url.pathname.startsWith("/__/")) return;
 
   if (pedido.mode === "navigate") {
     evento.respondWith(paginaRedPrimero(evento));

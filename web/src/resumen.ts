@@ -43,6 +43,7 @@ export function sesionDeEnvio(envio: Envio, fecha: string, banco: readonly Ejerc
       ejercicioId: e.ejercicioId,
       nombre: banco.find((b) => b.id === e.ejercicioId)?.nombre ?? e.ejercicioId,
       series: e.series,
+      ...(e.biserie ? { biserie: e.biserie } : {}),
     })),
   };
 }
@@ -66,7 +67,10 @@ export function armarResumen(opciones: {
   for (const e of envio.ejercicios) {
     series += e.series.length;
     const b = porId.get(e.ejercicioId);
-    if (b?.tipo === "peso") for (const s of e.series) kilos += (s.peso ?? 0) * s.reps;
+    // Las bajadas de un dropset también son kilos movidos (aunque no cuenten para la fuerza).
+    if (b?.tipo === "peso") {
+      for (const s of e.series) for (const x of [s, ...(s.caidas ?? [])]) kilos += (x.peso ?? 0) * x.reps;
+    }
     for (const [musculo, cuanto] of Object.entries(b?.musculos ?? {})) {
       trabajo.set(musculo, Math.max(trabajo.get(musculo) ?? 0, cuanto));
     }

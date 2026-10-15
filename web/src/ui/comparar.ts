@@ -3,6 +3,7 @@ import {
   NOMBRES_MUSCULO, indiceRango, nombreMusculo, nombreRango, rangoGeneral, type FuerzaMusculo,
 } from "../fuerza";
 import { escapar } from "./tarjetaDia";
+import { botonAtras } from "./botonAtras";
 import { insigniaRango, COLORES_RANGO } from "./insigniaRango";
 import { archivosMapa, conNiveles, prepararSvg, type EstadoSvg } from "./mapaMuscular";
 
@@ -141,7 +142,7 @@ function vistaLista(personas: PersonaComparar[], mapas: Readonly<Record<string, 
     ? `<p class="accion-nota" style="text-align:center">Todavía nadie tiene músculos con rango.</p>`
     : `<div class="cmp-grid">${personas.map((p, i) => tarjeta(p, i, mapas)).join("")}</div>`;
   return `
-    <p class="confirmar-titulo">Compárate con el resto</p>
+    <p class="confirmar-titulo">Amigos</p>
     ${lineaVisibilidad(visible)}
     ${nota}
     ${lista}`;
@@ -205,7 +206,7 @@ function vistaComparacion(
     ? `<style>.cmp-cuerpos .musculo:not([data-musculo="${musculo}"]) { opacity: 0.25; }</style>`
     : "";
   return `
-    <button class="boton-texto registro-volver" data-cmp="lista">← Todos</button>
+    ${botonAtras(`data-cmp="lista"`)}
     ${resalte}
     <div class="cmp-cuerpos">
       ${cuerpo("a", "Tú", miSexo, mia, mapas)}
@@ -229,6 +230,7 @@ export function ventanaComparar(
 ): string {
   let cuerpoHtml: string;
   const visible = muestra(cliente);
+  let enComparacion = false;
   if (miSexo !== "H" && miSexo !== "M") {
     cuerpoHtml = `<p class="accion-nota">Tu entrenador tiene que completar tu perfil para compararte.</p>`;
   } else if (cliente.sinAccesoAmigos === true) {
@@ -242,11 +244,15 @@ export function ventanaComparar(
       <button class="boton" data-cmp="reintentar">Reintentar</button>`;
   } else {
     const otra = elegida === null ? undefined : e.personas.find((p) => p.nombre === elegida && !p.esTuyo);
+    enComparacion = otra !== undefined;
     cuerpoHtml = otra
       ? vistaComparacion(e.personas.find((p) => p.esTuyo), miSexo, otra, mapas)
       : vistaLista(e.personas, mapas, visible);
   }
-  return `<div id="comparar" class="comparar">${cuerpoHtml}</div>`;
+  // En la comparación la flecha regresa a la lista (va dentro de `vistaComparacion`); en lo
+  // demás —la lista, cargando o el error— sale de Amigos a Músculos.
+  const atras = enComparacion ? "" : botonAtras(`data-cmp="salir"`);
+  return `<div id="comparar" class="comparar">${atras}${cuerpoHtml}</div>`;
 }
 
 /** Los sexos cuyos mapas hay que tener: el suyo y el de quien está viendo. */
@@ -265,6 +271,7 @@ export function sexosAComparar(e: EstadoComparar, miSexo: Sexo | null | undefine
 export function conectarComparar(
   repintar: () => void,
   reintentar: () => void,
+  salir: () => void,
   elegir: (mostrar: boolean) => Promise<unknown>
 ): void {
   const raiz = document.querySelector<HTMLElement>("#comparar");
@@ -297,6 +304,7 @@ export function conectarComparar(
     }
     const accion = el.dataset.cmp;
     if (accion === "lista") { elegida = null; musculo = null; repintar(); return; }
+    if (accion === "salir") { salir(); return; }
     if (accion === "girar") { deEspalda = !deEspalda; repintar(); return; }
     if (accion === "reintentar") { reintentar(); return; }
     if ((accion === "mostrar" || accion === "ocultar") && !guardando) {

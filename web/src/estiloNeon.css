@@ -237,7 +237,7 @@
 
 /* ---------- Cabecera y menú ---------- */
 
-:root[data-estilo="neon"] .cabecera-menu { color: #fff; text-shadow: var(--brillo-texto); }
+:root[data-estilo="neon"] .cabecera-menu, :root[data-estilo="neon"] .boton-atras { color: #fff; text-shadow: var(--brillo-texto); }
 :root[data-estilo="neon"] .menu-velo { background: rgba(4, 2, 10, 0.72); backdrop-filter: blur(2px); }
 :root[data-estilo="neon"] .menu-panel {
   background: rgba(10, 5, 22, 0.97);

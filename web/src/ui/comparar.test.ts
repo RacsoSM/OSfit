@@ -21,7 +21,7 @@ const ya = { mostrarEnAmigos: true };
 describe("lista", () => {
   it("cada una con su rango general; tú marcada", () => {
     const html = ventanaComparar(listo, "M", mapas, ya);
-    expect(html).toContain("Compárate con el resto");
+    expect(html).toContain('<p class="confirmar-titulo">Amigos</p>');
     expect(html).toMatch(/Ana <span class="cmp-tu">Tú<\/span>/);
     expect(html).toContain('data-persona="Beto"');
     expect(html).not.toMatch(/kg/);
@@ -34,6 +34,13 @@ describe("lista", () => {
   });
   it("error con reintentar", () => {
     expect(ventanaComparar({ estado: "error" }, "M", mapas, ya)).toContain('data-cmp="reintentar"');
+  });
+  it("la flecha fija sale de Amigos, también cargando o con error", () => {
+    for (const e of [listo, { estado: "cargando" as const }, { estado: "error" as const }]) {
+      const html = ventanaComparar(e, "M", mapas);
+      expect(html.match(/class="boton-atras"/g)).toHaveLength(1);
+      expect(html).toContain('data-cmp="salir"');
+    }
   });
 });
 
@@ -56,11 +63,18 @@ describe("comparación", () => {
     expect(html).toMatch(/data-musculo-cmp="pecho"[\s\S]*?cmp-celda"[\s\S]*?cmp-celda gana/);
     expect(html).toContain('cmp-celda sin">—');
   });
+  it("una sola flecha fija, que regresa a la lista", () => {
+    const html = ventanaComparar(listo, "M", mapas, ya);
+    expect(html.match(/class="boton-atras"/g)).toHaveLength(1);
+    expect(html).toContain('data-cmp="lista"');
+    expect(html).not.toContain('data-cmp="salir"');
+    expect(html).not.toContain("Todos");
+  });
   it("pide los mapas de los dos sexos", () => {
     expect(sexosAComparar(listo, "M").sort()).toEqual(["H", "M"]);
   });
   it("si ya no está en la lista, regresa a la lista", () => {
-    expect(ventanaComparar({ estado: "listo", personas: [yo] }, "M", mapas, ya)).toContain("Compárate con el resto");
+    expect(ventanaComparar({ estado: "listo", personas: [yo] }, "M", mapas, ya)).toContain('<p class="confirmar-titulo">Amigos</p>');
   });
 });
 
@@ -89,7 +103,7 @@ describe("Amigos: acceso y elección", () => {
     expect(html).toContain("¿Quieres que los demás vean tus músculos?");
     expect(html).toContain('data-cmp="mostrar"');
     expect(html).toContain('data-cmp="ocultar"');
-    expect(html).not.toContain("Compárate con el resto");
+    expect(html).not.toContain('<p class="confirmar-titulo">Amigos</p>');
   });
   it("ya elegida, la lista dice cómo está y ofrece cambiarlo", () => {
     expect(ventanaComparar(listo, "M", {}, { mostrarEnAmigos: true })).toContain('data-cmp="ocultar"');

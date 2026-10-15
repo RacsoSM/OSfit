@@ -12,10 +12,17 @@ import type { IdVentana } from "./ventanas";
  * canjearía como token. La ruta tampoco, porque `resolverSesion` decide con ella si hay que
  * canjear. Con la URL quieta, la sesión no se entera de que existen ventanas.
  *
- * El historial nunca pasa de `[Inicio, ventana]`, más la entrada del menú mientras está
- * abierto: así "atrás" desde cualquier ventana vuelve a Inicio y no recorre todo lo visitado.
- * La excepción son las subventanas (`PADRE`), como Amigos dentro de Músculos: se abren
- * encima de su padre, `[Inicio, Músculos, Amigos]`, para que "atrás" regrese a Músculos.
+ * Cada ventana que se abre queda en el historial, como en cualquier app: el gesto o el botón de
+ * "atrás" regresa a la ventana en la que estaba antes, una por una (decisión del entrenador,
+ * 2026-10-15; antes el historial no pasaba de `[Inicio, ventana]` y "atrás" siempre volvía a
+ * Inicio). El menú abierto tiene su propia entrada, así que "atrás" primero lo cierra. Las
+ * subventanas (`PADRE`), como Amigos dentro de Músculos, se abren encima de su padre, y salir
+ * de ellas hacia el padre es retroceder, para no apilar `Músculos, Amigos, Músculos`.
+ *
+ * Dentro de una ventana puede haber pantallas (`sub`), como las de Registro: inicio, historial,
+ * elegir, capturar, resumen. Cada una lleva su entrada, así que "atrás" también las recorre.
+ * Cada entrada recuerda cuál era la anterior (`ant`): regresar a esa pantalla desde la página
+ * ("← Volver", elegir un ejercicio) es retroceder y no apilar otra entrada.
  *
  * Es el único módulo que toca `history`, y lo recibe inyectado para poder probarlo.
  */
@@ -41,6 +48,17 @@ let historial: Historial | null = null;
 let avisar: () => void = () => {};
 let activa: IdVentana = "inicio";
 let menu = false;
+/** La pantalla dentro de la ventana activa (`sub`); null = la de entrada. */
+let sub: string | null = null;
+/** Quién se entera cuando "atrás" cambia de pantalla: Registro pone la suya. */
+let alCambiarSub: (ventana: IdVentana, sub: string | null) => void = () => {};
+
+interface Lugar { ventana: IdVentana; sub?: string | null; }
+
+/** Lo que va en `history.state` de una entrada, con dónde estaba antes (`ant`). */
+function entrada(ventana: IdVentana, s: string | null, extra: { menu?: boolean } = {}): unknown {
+  return { ventana, ...(s !== null ? { sub: s } : {}), ...extra, ant: { ventana: activa, sub } };
+}
 /** La ventana elegida en el menú, que se abre en cuanto el menú termine de cerrarse. */
 let pendiente: IdVentana | null = null;
 /**
@@ -50,11 +68,14 @@ let pendiente: IdVentana | null = null;
  */
 let esperando = false;
 
-function leer(estado: unknown): { ventana: IdVentana; menu: boolean } {
-  const e = (estado ?? {}) as { ventana?: unknown; menu?: unknown };
+function leer(estado: unknown): { ventana: IdVentana; menu: boolean; sub: string | null; ant: Lugar | null } {
+  const e = (estado ?? {}) as { ventana?: unknown; menu?: unknown; sub?: unknown; ant?: unknown };
+  const ant = e.ant as Lugar | undefined;
   return {
     ventana: typeof e.ventana === "string" ? (e.ventana as IdVentana) : "inicio",
     menu: e.menu === true,
+    sub: typeof e.sub === "string" ? e.sub : null,
+    ant: ant && typeof ant.ventana === "string" ? { ventana: ant.ventana, sub: ant.sub ?? null } : null,
   };
 }
 
@@ -70,22 +91,19 @@ function irA(id: IdVentana): void {
     historial.back();
     return;
   }
-  if (id === "inicio") {
-    // Volver es retroceder, no empujar: así no se acumulan entradas.
-    esperando = true;
-    historial.back();
-    return;
-  }
-  if (activa === "inicio" || PADRE[id] === activa) historial.pushState({ ventana: id });
-  else historial.replaceState({ ventana: id });
+  historial.pushState(entrada(id, null));
   activa = id;
+  sub = null;
 }
 
 function alRetroceder(): void {
   esperando = false;
   const e = leer(historial?.state);
+  const cambioSub = e.ventana !== activa || e.sub !== sub;
   activa = e.ventana;
   menu = e.menu;
+  sub = e.sub;
+  if (cambioSub) alCambiarSub(activa, sub);
   const p = pendiente;
   pendiente = null;
   if (p !== null) irA(p);
@@ -105,8 +123,49 @@ export function iniciarNavegacion(h: Historial, alCambiar: () => void): void {
   avisar = alCambiar;
   activa = "inicio";
   menu = false;
+  sub = null;
   pendiente = null;
   esperando = false;
+}
+
+/** Quién pone la pantalla cuando "atrás" la cambia (Registro). */
+export function alRetrocederSub(f: (ventana: IdVentana, sub: string | null) => void): void {
+  alCambiarSub = f;
+}
+
+export function subActiva(): string | null {
+  return sub;
+}
+
+/**
+ * Cambio de pantalla dentro de la ventana activa. Las tres formas:
+ * - `adelante`: una pantalla nueva encima (iniciar, agregar un ejercicio, ver el historial).
+ * - `volver`: regresar a otra; si es la de la entrada anterior, se retrocede en vez de apilar.
+ * - `reemplazar`: cambia la de esta entrada (terminar el entrenamiento → resumen: "atrás" desde
+ *   el resumen no regresa a un entrenamiento ya guardado).
+ */
+export function irSub(nueva: string | null, modo: "adelante" | "volver" | "reemplazar"): void {
+  if (!historial || esperando || menu || nueva === sub) return;
+  const e = leer(historial.state);
+  if (modo === "volver" && e.ant && e.ant.ventana === activa && (e.ant.sub ?? null) === nueva) {
+    esperando = true;
+    sub = nueva;
+    historial.back();
+    return;
+  }
+  if (modo === "adelante") historial.pushState(entrada(activa, nueva));
+  else historial.replaceState({ ...(historial.state as object ?? {}), ventana: activa, sub: nueva ?? undefined });
+  sub = nueva;
+}
+
+/**
+ * La pantalla en la que quedó la ventana, sin tocar el historial más que para anotarla. Para
+ * cuando la ventana decide sola dónde abrir (Registro con un entrenamiento abierto se va a él).
+ */
+export function marcarSub(actual: string | null): void {
+  if (!historial || esperando || menu || actual === sub) return;
+  historial.replaceState({ ...(historial.state as object ?? {}), ventana: activa, sub: actual ?? undefined });
+  sub = actual;
 }
 
 export function ventanaActiva(): IdVentana {
@@ -137,7 +196,7 @@ export function abrirVentana(id: IdVentana): void {
 export function abrirMenu(): void {
   if (!historial || esperando || menu) return;
   // Con su propia entrada, "atrás" cierra el menú en vez de sacarla de la página.
-  historial.pushState({ ventana: activa, menu: true });
+  historial.pushState(entrada(activa, sub, { menu: true }));
   menu = true;
   avisar();
 }

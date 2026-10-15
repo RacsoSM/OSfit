@@ -375,7 +375,7 @@
 
 /* ---------- Menú ---------- */
 
-:root[data-estilo="halloween"] .cabecera-menu { color: var(--texto); }
+:root[data-estilo="halloween"] .cabecera-menu, :root[data-estilo="halloween"] .boton-atras { color: var(--texto); }
 :root[data-estilo="halloween"] .menu-velo { background: rgba(11, 6, 18, 0.5); backdrop-filter: blur(3px); }
 :root[data-estilo="halloween"] .menu-panel { background: #1d0f31; border-left: 1px solid rgba(255, 154, 60, 0.2); }
 :root[data-estilo="halloween"] .menu-abierto .menu-panel { box-shadow: -14px 0 40px rgba(0, 0, 0, 0.5); }

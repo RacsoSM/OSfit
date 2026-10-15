@@ -19,7 +19,7 @@ Cada corte se compara contra **toda la población** (incluye a la gente que no e
 | Nivel | Supera a toda la población | Supera a quienes entrenan |
 |---|---|---|
 | Principiante | 38 % | 3 % |
-| Novato | 60 % | 12 % |
+| Ascenso | 60 % | 12 % |
 | En forma | 72 % | 25 % |
 | Intermedio | 82 % | 42 % |
 | Atlético / Atlética | 88 % | 57 % |
@@ -33,7 +33,7 @@ Los porcentajes salen de un modelo: entre quienes entrenan, la fuerza se reparte
 
 ### Pecho
 
-| Ejercicio | Sexo | Principiante | Novato | En forma | Intermedio | Atlético / Atlética | Fuerte | Avanzado | Élite |
+| Ejercicio | Sexo | Principiante | Ascenso | En forma | Intermedio | Atlético / Atlética | Fuerte | Avanzado | Élite |
 |---|---|---|---|---|---|---|---|---|---|
 | Press de banca | H | 37.5 kg | 47.5 kg | 55 kg | 65 kg | 75 kg | 85 kg | 95 kg | 132.5 kg |
 |  | M | 15 kg | 22.5 kg | 30 kg | 37.5 kg | 45 kg | 47.5 kg | 50 kg | 77.5 kg |
@@ -62,7 +62,7 @@ Los porcentajes salen de un modelo: entre quienes entrenan, la fuerza se reparte
 
 ### Cuádriceps
 
-| Ejercicio | Sexo | Principiante | Novato | En forma | Intermedio | Atlético / Atlética | Fuerte | Avanzado | Élite |
+| Ejercicio | Sexo | Principiante | Ascenso | En forma | Intermedio | Atlético / Atlética | Fuerte | Avanzado | Élite |
 |---|---|---|---|---|---|---|---|---|---|
 | Sentadilla con barra | H | 55 kg | 75 kg | 95 kg | 102.5 kg | 112.5 kg | 127.5 kg | 142.5 kg | 190 kg |
 |  | M | 30 kg | 37.5 kg | 45 kg | 60 kg | 75 kg | 82.5 kg | 90 kg | 110 kg |
@@ -95,7 +95,7 @@ Los porcentajes salen de un modelo: entre quienes entrenan, la fuerza se reparte
 
 ### Glúteo
 
-| Ejercicio | Sexo | Principiante | Novato | En forma | Intermedio | Atlético / Atlética | Fuerte | Avanzado | Élite |
+| Ejercicio | Sexo | Principiante | Ascenso | En forma | Intermedio | Atlético / Atlética | Fuerte | Avanzado | Élite |
 |---|---|---|---|---|---|---|---|---|---|
 | Sentadilla sumo con mancuerna | H · una mancuerna | 22.5 kg | 27.5 kg | 35 kg | 40 kg | 42.5 kg | 47.5 kg | 55 kg | 72.5 kg |
 |  | M | 11 kg | 14 kg | 17 kg | 22.5 kg | 27.5 kg | 32.5 kg | 35 kg | 42.5 kg |
@@ -107,8 +107,8 @@ Los porcentajes salen de un modelo: entre quienes entrenan, la fuerza se reparte
 |  | M | 8 kg | 9 kg | 11 kg | 15 kg | 19 kg | 20 kg | 22.5 kg | 27.5 kg |
 | Abductores en máquina | H · máquina | 30 kg | 40 kg | 52.5 kg | 65 kg | 80 kg | 87.5 kg | 95 kg | 135 kg |
 |  | M | 20 kg | 30 kg | 40 kg | 50 kg | 60 kg | 67.5 kg | 75 kg | 105 kg |
-| Patada de glúteo en polea | H · polea | 11 kg | 14 kg | 18 kg | 22.5 kg | 27.5 kg | 30 kg | 32.5 kg | 47.5 kg |
-|  | M | 7 kg | 10 kg | 14 kg | 17 kg | 20 kg | 22.5 kg | 25 kg | 37.5 kg |
+| Patada de glúteo en polea | H · polea: el peso marcado no es el real, × 1.3 (decisión del entrenador, 2026-10-15) | 14 kg | 19 kg | 25 kg | 30 kg | 35 kg | 40 kg | 42.5 kg | 62.5 kg |
+|  | M | 10 kg | 14 kg | 18 kg | 22.5 kg | 27.5 kg | 30 kg | 32.5 kg | 47.5 kg |
 | Patada de glúteo con liga | H · con liga: depende de la liga, poco confiable | 10 reps | 15 reps | 20 reps | 28 reps | 35 reps | 38 reps | 42 reps | 64 reps |
 |  | M | 10 reps | 15 reps | 20 reps | 28 reps | 35 reps | 38 reps | 42 reps | 64 reps |
 | Patada de glúteo en máquina | H · máquina de palanca, una pierna: varía por marca | 25 kg | 32.5 kg | 42.5 kg | 52.5 kg | 62.5 kg | 70 kg | 77.5 kg | 107.5 kg |
@@ -118,7 +118,7 @@ Los porcentajes salen de un modelo: entre quienes entrenan, la fuerza se reparte
 
 ### Femoral
 
-| Ejercicio | Sexo | Principiante | Novato | En forma | Intermedio | Atlético / Atlética | Fuerte | Avanzado | Élite |
+| Ejercicio | Sexo | Principiante | Ascenso | En forma | Intermedio | Atlético / Atlética | Fuerte | Avanzado | Élite |
 |---|---|---|---|---|---|---|---|---|---|
 | Curl femoral acostado | H · máquina | 25 kg | 35 kg | 40 kg | 50 kg | 60 kg | 65 kg | 70 kg | 97.5 kg |
 |  | M | 15 kg | 20 kg | 25 kg | 30 kg | 35 kg | 40 kg | 42.5 kg | 62.5 kg |
@@ -135,7 +135,7 @@ Los porcentajes salen de un modelo: entre quienes entrenan, la fuerza se reparte
 
 ### Espalda
 
-| Ejercicio | Sexo | Principiante | Novato | En forma | Intermedio | Atlético / Atlética | Fuerte | Avanzado | Élite |
+| Ejercicio | Sexo | Principiante | Ascenso | En forma | Intermedio | Atlético / Atlética | Fuerte | Avanzado | Élite |
 |---|---|---|---|---|---|---|---|---|---|
 | Peso muerto | H | 75 kg | 95 kg | 112.5 kg | 130 kg | 150 kg | 162.5 kg | 177.5 kg | 212.5 kg |
 |  | M | 30 kg | 45 kg | 60 kg | 67.5 kg | 75 kg | 82.5 kg | 90 kg | 132.5 kg |
@@ -169,7 +169,7 @@ Los porcentajes salen de un modelo: entre quienes entrenan, la fuerza se reparte
 
 ### Pantorrilla
 
-| Ejercicio | Sexo | Principiante | Novato | En forma | Intermedio | Atlético / Atlética | Fuerte | Avanzado | Élite |
+| Ejercicio | Sexo | Principiante | Ascenso | En forma | Intermedio | Atlético / Atlética | Fuerte | Avanzado | Élite |
 |---|---|---|---|---|---|---|---|---|---|
 | Elevación de talones de pie | H · máquina | 37.5 kg | 55 kg | 75 kg | 97.5 kg | 120 kg | 137.5 kg | 152.5 kg | 222.5 kg |
 |  | M | 20 kg | 32.5 kg | 45 kg | 60 kg | 75 kg | 85 kg | 97.5 kg | 142.5 kg |
@@ -180,7 +180,7 @@ Los porcentajes salen de un modelo: entre quienes entrenan, la fuerza se reparte
 
 ### Trapecio
 
-| Ejercicio | Sexo | Principiante | Novato | En forma | Intermedio | Atlético / Atlética | Fuerte | Avanzado | Élite |
+| Ejercicio | Sexo | Principiante | Ascenso | En forma | Intermedio | Atlético / Atlética | Fuerte | Avanzado | Élite |
 |---|---|---|---|---|---|---|---|---|---|
 | Encogimientos con barra | H | 45 kg | 60 kg | 75 kg | 95 kg | 112.5 kg | 122.5 kg | 135 kg | 187.5 kg |
 |  | M | 20 kg | 27.5 kg | 35 kg | 47.5 kg | 57.5 kg | 65 kg | 72.5 kg | 100 kg |
@@ -189,7 +189,7 @@ Los porcentajes salen de un modelo: entre quienes entrenan, la fuerza se reparte
 
 ### Hombro
 
-| Ejercicio | Sexo | Principiante | Novato | En forma | Intermedio | Atlético / Atlética | Fuerte | Avanzado | Élite |
+| Ejercicio | Sexo | Principiante | Ascenso | En forma | Intermedio | Atlético / Atlética | Fuerte | Avanzado | Élite |
 |---|---|---|---|---|---|---|---|---|---|
 | Press militar | H | 25 kg | 35 kg | 40 kg | 50 kg | 55 kg | 60 kg | 65 kg | 87.5 kg |
 |  | M | 12 kg | 16 kg | 20 kg | 25 kg | 30 kg | 35 kg | 37.5 kg | 52.5 kg |
@@ -218,7 +218,7 @@ Los porcentajes salen de un modelo: entre quienes entrenan, la fuerza se reparte
 
 ### Bíceps
 
-| Ejercicio | Sexo | Principiante | Novato | En forma | Intermedio | Atlético / Atlética | Fuerte | Avanzado | Élite |
+| Ejercicio | Sexo | Principiante | Ascenso | En forma | Intermedio | Atlético / Atlética | Fuerte | Avanzado | Élite |
 |---|---|---|---|---|---|---|---|---|---|
 | Curl con barra | H | 15 kg | 22.5 kg | 30 kg | 37.5 kg | 45 kg | 50 kg | 55 kg | 77.5 kg |
 |  | M | 6 kg | 9 kg | 12 kg | 18 kg | 25 kg | 27.5 kg | 30 kg | 45 kg |
@@ -243,7 +243,7 @@ Los porcentajes salen de un modelo: entre quienes entrenan, la fuerza se reparte
 
 ### Antebrazo
 
-| Ejercicio | Sexo | Principiante | Novato | En forma | Intermedio | Atlético / Atlética | Fuerte | Avanzado | Élite |
+| Ejercicio | Sexo | Principiante | Ascenso | En forma | Intermedio | Atlético / Atlética | Fuerte | Avanzado | Élite |
 |---|---|---|---|---|---|---|---|---|---|
 | Curl de muñeca con barra | H | 15 kg | 20 kg | 25 kg | 35 kg | 40 kg | 45 kg | 50 kg | 72.5 kg |
 |  | M | 6 kg | 9 kg | 12 kg | 16 kg | 20 kg | 22.5 kg | 25 kg | 37.5 kg |
@@ -264,7 +264,7 @@ Los porcentajes salen de un modelo: entre quienes entrenan, la fuerza se reparte
 
 ### Tríceps
 
-| Ejercicio | Sexo | Principiante | Novato | En forma | Intermedio | Atlético / Atlética | Fuerte | Avanzado | Élite |
+| Ejercicio | Sexo | Principiante | Ascenso | En forma | Intermedio | Atlético / Atlética | Fuerte | Avanzado | Élite |
 |---|---|---|---|---|---|---|---|---|---|
 | Extensión de tríceps en polea | H · polea doble ×1.3 | 25 kg | 35 kg | 45 kg | 52.5 kg | 62.5 kg | 70 kg | 80 kg | 110 kg |
 |  | M | 12 kg | 16 kg | 20 kg | 25 kg | 30 kg | 35 kg | 40 kg | 57.5 kg |
@@ -289,7 +289,7 @@ Los porcentajes salen de un modelo: entre quienes entrenan, la fuerza se reparte
 
 ### Abdomen
 
-| Ejercicio | Sexo | Principiante | Novato | En forma | Intermedio | Atlético / Atlética | Fuerte | Avanzado | Élite |
+| Ejercicio | Sexo | Principiante | Ascenso | En forma | Intermedio | Atlético / Atlética | Fuerte | Avanzado | Élite |
 |---|---|---|---|---|---|---|---|---|---|
 | Crunch abdominal | H | 10 reps | 18 reps | 25 reps | 35 reps | 45 reps | 50 reps | 55 reps | 84 reps |
 |  | M | 8 reps | 14 reps | 20 reps | 29 reps | 38 reps | 42 reps | 47 reps | 74 reps |
@@ -310,7 +310,7 @@ Los porcentajes salen de un modelo: entre quienes entrenan, la fuerza se reparte
 
 ### Cardio
 
-| Ejercicio | Sexo | Principiante | Novato | En forma | Intermedio | Atlético / Atlética | Fuerte | Avanzado | Élite |
+| Ejercicio | Sexo | Principiante | Ascenso | En forma | Intermedio | Atlético / Atlética | Fuerte | Avanzado | Élite |
 |---|---|---|---|---|---|---|---|---|---|
 | Escaladores | — | de tiempo: no pinta el mapa | | | | | | | |
 | Burpees | H | 3 reps | 6 reps | 10 reps | 15 reps | 20 reps | 23 reps | 26 reps | 40 reps |
