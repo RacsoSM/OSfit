@@ -303,6 +303,7 @@
 /* ---------- Cabecera y menú ---------- */
 
 :root[data-estilo="pixel"] .cabecera-menu,
+:root[data-estilo="pixel"] .boton-atras,
 :root[data-estilo="pixel"] .menu-cerrar { border-radius: 0; }
 :root[data-estilo="pixel"] .cabecera-menu:focus-visible,
 :root[data-estilo="pixel"] .menu-opcion:focus-visible,

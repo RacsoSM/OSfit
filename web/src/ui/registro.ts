@@ -32,6 +32,7 @@ import { escapar } from "./tarjetaDia";
 import { aterrizar, despegar } from "./vueloRegistro";
 import { conectarDeslizar } from "./deslizarRegistro";
 import { cronometro } from "./cronometro";
+import { botonAtras } from "./botonAtras";
 
 /**
  * La ventana Registro: la clienta anota lo que entrenó con su coach en el gym, por
@@ -380,7 +381,7 @@ function vistaHistorial(d: DatosRegistro): string {
   const aviso = estado.aviso ? `<p class="aviso-ok">${escapar(estado.aviso)}</p>` : "";
   const error = estado.error ? `<p class="aviso-error" style="margin:0 0 12px">${escapar(estado.error)}</p>` : "";
   return `
-    <button class="boton-texto registro-volver" data-accion="volver">← Volver</button>
+    ${botonAtras(`data-accion="volver"`)}
     <p class="confirmar-titulo" style="margin-bottom:12px">Tu historial</p>
     ${aviso}${error}
     ${lista}`;
@@ -416,7 +417,7 @@ function vistaElegir(d: DatosRegistro): string {
   if (d.banco.length === 0) {
     return `
       ${cronometroDelBorrador()}
-      <button class="boton-texto registro-volver" data-accion="volver">← Volver</button>
+      ${botonAtras(`data-accion="volver"`)}
       <p class="accion-nota">Cargando ejercicios…</p>`;
   }
   const secciones = seccionesRegistro(d.dia?.nombreDia ?? null, d.banco, d.config);
@@ -438,7 +439,7 @@ function vistaElegir(d: DatosRegistro): string {
     : "";
   return `
     ${cronometroDelBorrador()}
-    <button class="boton-texto registro-volver" data-accion="volver">← Volver</button>
+    ${botonAtras(`data-accion="volver"`)}
     <p class="confirmar-titulo">¿Qué ejercicio hiciste?</p>
     ${hoy}
     ${cuerpo}

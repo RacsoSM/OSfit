@@ -65,6 +65,7 @@ import {
 import {
   conectarComparar, reiniciarComparar, sexosAComparar, type EstadoComparar,
 } from "./ui/comparar";
+import { marcarBotonAtras } from "./ui/botonAtras";
 import {
   actualizarCabecera, aplicarMenuAbierto, cabecera, conectarCabecera, conectarMenu,
   marcarVentanaActiva, panelMenu,
@@ -530,6 +531,7 @@ async function arrancar(): Promise<void> {
       comparacion,
     };
     contenido.innerHTML = contenidoDe(activa, datos);
+    marcarBotonAtras(contenido);
     pintarVideos(activa.contenedorPropio === "videos");
     pintarMenu(activa.id, cliente.nombre);
     marcarVentanaActiva(document.querySelectorAll<HTMLElement>("#barra [data-ventana]"), ventanaDeBarra(activa.id));
@@ -551,7 +553,7 @@ async function arrancar(): Promise<void> {
       return;
     }
     if (activa.id === "comparar") {
-      conectarComparar(pintar, () => { cargarComparacion(); pintar(); });
+      conectarComparar(pintar, () => { cargarComparacion(); pintar(); }, () => abrirVentana("musculos"));
       return;
     }
     if (activa.id === "registro") {

@@ -3,6 +3,7 @@ import {
   NOMBRES_MUSCULO, indiceRango, nombreMusculo, nombreRango, rangoGeneral, type FuerzaMusculo,
 } from "../fuerza";
 import { escapar } from "./tarjetaDia";
+import { botonAtras } from "./botonAtras";
 import { insigniaRango, COLORES_RANGO } from "./insigniaRango";
 import { archivosMapa, conNiveles, prepararSvg, type EstadoSvg } from "./mapaMuscular";
 
@@ -149,7 +150,7 @@ function vistaComparacion(
     ? `<style>.cmp-cuerpos .musculo:not([data-musculo="${musculo}"]) { opacity: 0.25; }</style>`
     : "";
   return `
-    <button class="boton-texto registro-volver" data-cmp="lista">← Todos</button>
+    ${botonAtras(`data-cmp="lista"`)}
     ${resalte}
     <div class="cmp-cuerpos">
       ${cuerpo("a", "Tú", miSexo, mia, mapas)}
@@ -171,6 +172,7 @@ export function ventanaComparar(
   mapas: Readonly<Record<string, EstadoSvg>>
 ): string {
   let cuerpoHtml: string;
+  let enComparacion = false;
   if (miSexo !== "H" && miSexo !== "M") {
     cuerpoHtml = `<p class="accion-nota">Tu entrenador tiene que completar tu perfil para compararte.</p>`;
   } else if (e.estado === "cargando") {
@@ -180,11 +182,15 @@ export function ventanaComparar(
       <button class="boton" data-cmp="reintentar">Reintentar</button>`;
   } else {
     const otra = elegida === null ? undefined : e.personas.find((p) => p.nombre === elegida && !p.esTuyo);
+    enComparacion = otra !== undefined;
     cuerpoHtml = otra
       ? vistaComparacion(e.personas.find((p) => p.esTuyo), miSexo, otra, mapas)
       : vistaLista(e.personas, mapas);
   }
-  return `<div id="comparar" class="comparar">${cuerpoHtml}</div>`;
+  // En la comparación la flecha regresa a la lista (va dentro de `vistaComparacion`); en lo
+  // demás —la lista, cargando o el error— sale de Amigos a Músculos.
+  const atras = enComparacion ? "" : botonAtras(`data-cmp="salir"`);
+  return `<div id="comparar" class="comparar">${atras}${cuerpoHtml}</div>`;
 }
 
 /** Los sexos cuyos mapas hay que tener: el suyo y el de quien está viendo. */
@@ -200,7 +206,7 @@ export function sexosAComparar(e: EstadoComparar, miSexo: Sexo | null | undefine
 }
 
 /** Un solo listener delegado en `#comparar`: el contenido se rehace en cada repintado. */
-export function conectarComparar(repintar: () => void, reintentar: () => void): void {
+export function conectarComparar(repintar: () => void, reintentar: () => void, salir: () => void): void {
   const raiz = document.querySelector<HTMLElement>("#comparar");
   if (!raiz) return;
   raiz.addEventListener("click", (ev) => {
@@ -231,6 +237,7 @@ export function conectarComparar(repintar: () => void, reintentar: () => void): 
     }
     const accion = el.dataset.cmp;
     if (accion === "lista") { elegida = null; musculo = null; repintar(); return; }
+    if (accion === "salir") { salir(); return; }
     if (accion === "girar") { deEspalda = !deEspalda; repintar(); return; }
     if (accion === "reintentar") reintentar();
   });

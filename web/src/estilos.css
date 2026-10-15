@@ -536,6 +536,34 @@ main {
    que el de las ventanas, para que quepa a la altura del ☰ junto con su detalle. */
 .titulo-ventana.con-detalle { font-size: 17px; font-weight: 800; margin: 6px 2px 0; }
 .detalle-ventana { margin: 2px 2px 12px; font-size: 12px; color: var(--texto-tenue); }
+/* La flecha de "atrás" de las pantallas metidas dentro de otra (`ui/botonAtras.ts`): solo el
+   ícono, fija en la esquina de arriba a la izquierda, a la altura y del tamaño del ☰, para que
+   regresar siempre esté en el mismo lugar aunque se haya bajado (2026-10-15). Sigue a la
+   columna de `main` (480 px centrada) en pantallas anchas. El fondo es por el scroll: sin él,
+   la flecha se perdería sobre lo que pasa por debajo. Debajo del menú (z 20) y de los avisos. */
+.boton-atras {
+  position: fixed; z-index: 8;
+  top: calc(16px + env(safe-area-inset-top));
+  left: calc(max(0px, 50% - 240px) + 6px + env(safe-area-inset-left));
+  width: 44px; height: 44px; padding: 0;
+  display: flex; align-items: center; justify-content: center;
+  border: 0; border-radius: 12px;
+  background: color-mix(in srgb, var(--fondo) 82%, transparent);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+  color: var(--texto); cursor: pointer;
+  transition: transform 0.12s ease-out;
+  -webkit-tap-highlight-color: transparent;
+}
+.boton-atras svg {
+  width: 26px; height: 26px;
+  fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round;
+}
+.boton-atras:active { transform: scale(0.94); }
+.boton-atras:focus-visible { outline: 2px solid var(--primario); outline-offset: 2px; }
+/* Con la flecha, la cabecera le deja su esquina, y lo que se pega arriba al hacer scroll
+   (los grupos de Registro) se pega debajo de ella para no taparla. */
+.con-atras .cabecera-texto { padding-left: 48px; }
+.con-atras .registro-grupo { top: calc(66px + env(safe-area-inset-top, 0px)); }
 .cabecera-menu:focus-visible, .menu-opcion:focus-visible, .menu-cerrar:focus-visible {
   outline: 2px solid var(--primario); outline-offset: 2px;
 }
@@ -1039,7 +1067,6 @@ main:has(#barra) { padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
    cualquier paleta oscura se lee como una ficha y no como un hueco. */
 .registro-subtitulo { margin-top: 18px; }
 .registro-agregar { margin-bottom: 4px; }
-.registro-volver { width: auto; margin: 0 0 6px -10px; text-align: left; }
 .registro-hist { list-style: none; margin: 4px 0 0; padding: 0; }
 .registro-hist-ej { padding: 6px 0; border-top: 1px solid var(--superficie-alta); }
 .registro-hist-ej:first-child { border-top: 0; }

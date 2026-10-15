@@ -29,6 +29,13 @@ describe("lista", () => {
   it("error con reintentar", () => {
     expect(ventanaComparar({ estado: "error" }, "M", mapas)).toContain('data-cmp="reintentar"');
   });
+  it("la flecha fija sale de Amigos, también cargando o con error", () => {
+    for (const e of [listo, { estado: "cargando" as const }, { estado: "error" as const }]) {
+      const html = ventanaComparar(e, "M", mapas);
+      expect(html.match(/class="boton-atras"/g)).toHaveLength(1);
+      expect(html).toContain('data-cmp="salir"');
+    }
+  });
 });
 
 describe("comparación", () => {
@@ -49,6 +56,13 @@ describe("comparación", () => {
     expect(html).toContain('data-musculo-cmp="biceps"');
     expect(html).toMatch(/data-musculo-cmp="pecho"[\s\S]*?cmp-celda"[\s\S]*?cmp-celda gana/);
     expect(html).toContain('cmp-celda sin">—');
+  });
+  it("una sola flecha fija, que regresa a la lista", () => {
+    const html = ventanaComparar(listo, "M", mapas);
+    expect(html.match(/class="boton-atras"/g)).toHaveLength(1);
+    expect(html).toContain('data-cmp="lista"');
+    expect(html).not.toContain('data-cmp="salir"');
+    expect(html).not.toContain("Todos");
   });
   it("pide los mapas de los dos sexos", () => {
     expect(sexosAComparar(listo, "M").sort()).toEqual(["H", "M"]);

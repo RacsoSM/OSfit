@@ -223,7 +223,7 @@
 
 /* ---------- Cabecera y menú ---------- */
 
-:root[data-estilo="comic"] .cabecera-menu { color: var(--tinta); font-weight: 700; }
+:root[data-estilo="comic"] .cabecera-menu, :root[data-estilo="comic"] .boton-atras { color: var(--tinta); font-weight: 700; }
 :root[data-estilo="comic"] .cabecera-menu:focus-visible,
 :root[data-estilo="comic"] .menu-opcion:focus-visible,
 :root[data-estilo="comic"] .menu-cerrar:focus-visible,
