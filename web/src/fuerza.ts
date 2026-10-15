@@ -106,7 +106,7 @@ export interface OrigenFuerza {
   ejercicioId: string;
   nombre: string;
   tipo: "peso" | "corporal";
-  /** Cuánto trabaja al músculo: 1 principal, 0.5 secundario. */
+  /** Cuánto trabaja al músculo. Siempre 1: solo los principales pintan (ver `fuerzaPorMusculo`). */
   cuanto: number;
   /** La serie de su mejor marca: el mejor 1RM estimado, o las reps máximas. */
   serie: { reps: number; peso: number | null };
@@ -265,13 +265,13 @@ function diasAntes(hoy: string, dias: number): string {
  * - Por ejercicio, su mejor marca: el mejor 1RM estimado entre su peso corporal en los de
  *   peso; las reps máximas en una serie en los corporales (el lastre no cuenta, por ahora).
  *   Los de tiempo no pintan el mapa, ni los que no tienen estándar.
- * - Por músculo, el **máximo** de `nivel del ejercicio × lo que lo trabaja` (1 principal,
- *   0.5 secundario): un accesorio ligero no le baja el nivel.
- * - **Primero los directos** (decisión del entrenador, 2026-10-14): si el músculo tiene algún
- *   ejercicio que lo trabaja como principal (× 1), su nivel sale solo de esos. Los secundarios
- *   cuentan únicamente cuando no hay ninguno directo. Sin esto, un jalón muy fuerte (× 0.5 en
- *   bíceps) le ganaba a los curls que sí hizo, y el detalle le hablaba de un ejercicio que no
- *   era de bíceps.
+ * - Por músculo, el **máximo** del nivel de los ejercicios que lo trabajan: un accesorio
+ *   ligero no le baja el nivel.
+ * - **Solo trabajo directo** (decisión del entrenador, 2026-10-15): un ejercicio pinta
+ *   únicamente los músculos que trabaja como principal (× 1 en el banco). Los secundarios
+ *   (× 0.5) no pintan nada, ni siquiera cuando el músculo no tiene otro ejercicio: un press de
+ *   banca no le da color al tríceps ni un jalón al bíceps. Antes contaban de rebote a la mitad
+ *   cuando no había ninguno directo.
  * - Un músculo sin ejercicios registrados no aparece: es "sin datos", distinto de nivel 0.
  * - En los de peso, la marca se corrige por peso corporal (`factorPeso`); los corporales no,
  *   porque ya cargan su propio cuerpo.
@@ -312,15 +312,12 @@ export function fuerzaPorMusculo(
     const estandares = b.estandares![sexo];
     const nivel = nivelDe(marca, estandares);
     for (const [musculo, cuanto] of Object.entries(b.musculos)) {
-      const n = nivel * cuanto;
-      const directo = cuanto >= 1;
+      // Solo el trabajo directo pinta: un secundario no le da nivel al músculo de rebote.
+      if (cuanto < 1) continue;
       const actual = fuerza[musculo];
-      const actualDirecto = (actual?.origen?.cuanto ?? 0) >= 1;
-      // Un directo siempre le gana a un secundario; entre iguales, el de más nivel.
-      const gana = !actual || (directo && !actualDirecto) || (directo === actualDirecto && n > actual.nivel);
-      if (gana) {
+      if (!actual || nivel > actual.nivel) {
         fuerza[musculo] = {
-          nivel: n,
+          nivel,
           origen: {
             ejercicioId: id, nombre: b.nombre, tipo: b.tipo as "peso" | "corporal", cuanto,
             serie: { reps: serie.reps, peso: serie.peso }, estandares,
