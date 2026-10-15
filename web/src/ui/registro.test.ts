@@ -373,7 +373,8 @@ describe("biseries y dropsets", () => {
   it("la biserie se captura en un bloque, por rondas A y B, con sus bajadas", () => {
     ponerEstadoRegistro({ vista: "capturar", borrador: biserie(), activo: 1 });
     const html = ventanaRegistro(conRemo());
-    expect(html).toContain("🔗 Biserie");
+    expect(html).toContain("<span>Biserie</span>");
+    expect(html).not.toContain("🔗");
     expect(html).toContain("Ronda 1");
     expect(html).toMatch(/registro-serie-num letra tocable[^>]*data-menu-serie="0:0"[^>]*>A</);
     expect(html).toMatch(/data-menu-serie="1:0"[^>]*>B</);
@@ -405,8 +406,8 @@ describe("biseries y dropsets", () => {
       ],
     }];
     const html = ventanaRegistro(conRemo({ sesiones }));
-    expect(html).toContain("🔗 A</span> Press de banca");
-    expect(html).toContain("🔗 B</span> Remo con barra");
+    expect(html).toContain('ejercicio A">A</span>Press de banca');
+    expect(html).toContain('ejercicio B">B</span>Remo con barra');
     expect(html).toContain("40 kg × 10 ↓ 30 kg × 8");
   });
 });

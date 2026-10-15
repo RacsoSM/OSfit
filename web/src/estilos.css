@@ -1195,16 +1195,18 @@ button.registro-serie-num.abierto { border-style: solid; border-color: var(--pri
   font-size: 13px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--primario);
 }
 .registro-biserie-ejs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 8px; }
-.registro-biserie-ej { min-width: 0; text-align: center; }
+/* En columna y con el selector al fondo: con un nombre de dos renglones y otro de uno, los dos
+   selectores Barras/Kg quedan a la misma altura. */
+.registro-biserie-ej { min-width: 0; display: flex; flex-direction: column; text-align: center; }
 .registro-biserie-ej .registro-ej-gif {
   display: flex; align-items: center; justify-content: center;
   width: 100%; height: auto; aspect-ratio: 1; border-radius: 12px; background: #fff; object-fit: cover;
 }
 .registro-biserie-ej .registro-sin-gif { font-size: 40px; }
-.registro-biserie-ej .registro-unidad { width: auto; margin: 6px 0 0; }
-.registro-biserie-ej .registro-unidad button { flex: 1; min-width: 0; min-height: 32px; padding: 4px 6px; font-size: 13px; }
-.registro-biserie-ej .accion-nota { margin: 4px 0 0; font-size: 11px; }
-.registro-biserie-nombre { margin: 6px 0 0; font-size: 14px; font-weight: 700; line-height: 1.25; }
+.registro-biserie-ej .registro-unidad { width: auto; margin: auto 0 0; padding: 2px; }
+.registro-biserie-ej .registro-unidad button { flex: 1; min-width: 0; min-height: 30px; padding: 3px 4px; font-size: 13px; }
+.registro-biserie-ej .accion-nota { margin: -4px 0 8px; font-size: 11px; }
+.registro-biserie-nombre { margin: 6px 0 8px; font-size: 14px; font-weight: 700; line-height: 1.25; }
 .registro-letra {
   display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px;
   margin-right: 5px; border-radius: 50%; vertical-align: -3px;
@@ -1243,7 +1245,6 @@ button.registro-serie-num.abierto { border-style: solid; border-color: var(--pri
 .registro-barra-biserie-texto strong { color: var(--texto); }
 .registro-barra-biserie .boton { width: auto; margin: 0; padding: 10px 14px; flex: none; }
 .registro-espacio-biserie { height: 80px; }
-.registro-hist-biserie { font-size: 12px; font-weight: 800; color: var(--primario); }
 .registro-hist-ej.biserie-b { border-top-style: dashed; }
 .registro-credito { margin: 14px 0 0; font-size: 10px; color: var(--texto-tenue); text-align: right; }
 /* Los títulos de grupo del grid ("Pecho", "Hombro"…). Los del día van con el color del estilo

@@ -295,7 +295,7 @@ function tarjetaSesion(s: Sesion, banco: readonly EjercicioBanco[]): string {
     const tipo = banco.find((x) => x.id === e.ejercicioId)?.tipo === "tiempo" ? "tiempo" : "otro";
     // En una biserie, el primero de los dos es la A.
     const letra = !e.biserie ? null : s.ejercicios[i - 1]?.biserie === e.biserie ? "B" : "A";
-    const marca = letra ? `<span class="registro-hist-biserie">🔗 ${letra}</span> ` : "";
+    const marca = letra ? `<span class="registro-letra" aria-label="Biserie, ejercicio ${letra}">${letra}</span>` : "";
     return `
       <li class="registro-hist-ej${letra === "B" ? " biserie-b" : ""}">
         <span class="registro-hist-nombre">${marca}${escapar(e.nombre)}</span>
@@ -540,7 +540,7 @@ function vistaElegir(d: DatosRegistro): string {
   const modo = `
     <div class="registro-modo" role="group" aria-label="Qué vas a agregar">
       <button data-modo="uno" aria-pressed="${!biserie}" class="${biserie ? "" : "activa"}">Un ejercicio</button>
-      <button data-modo="biserie" aria-pressed="${biserie}" class="${biserie ? "activa" : ""}">🔗 Biserie</button>
+      <button data-modo="biserie" aria-pressed="${biserie}" class="${biserie ? "activa" : ""}">Biserie</button>
     </div>`;
   return `
     ${botonAtras(`data-accion="volver"`)}
@@ -718,8 +718,8 @@ function tarjetaBiserie(b: Borrador, iA: number, iB: number, nav: string, banco:
       <div class="registro-biserie-ej">
         ${gif(delBanco?.gifRuta ?? e.gifRuta, "registro-ej-gif", 160)}
         <p class="registro-biserie-nombre"><span class="registro-letra">${k === 0 ? "A" : "B"}</span>${escapar(e.nombre)}</p>
-        ${selectorUnidad(e, i)}
         ${notaPeso(e, delBanco)}
+        ${selectorUnidad(e, i)}
       </div>`).join("");
   const [a, c] = par.map((x) => x.e);
   const rondas = Array.from({ length: Math.max(a.series.length, c.series.length) }, (_, j) => `
@@ -734,7 +734,7 @@ function tarjetaBiserie(b: Borrador, iA: number, iB: number, nav: string, banco:
   return `
     <div class="tarjeta registro-ejercicio registro-biserie activo" data-indice="${iA}">
       <div class="registro-biserie-cab">
-        <span>🔗 Biserie</span>
+        <span>Biserie</span>
         <button class="registro-quitar" data-quitar-biserie="${iA}" aria-label="Quitar la biserie de ${escapar(a.nombre)} y ${escapar(c.nombre)}">✕</button>
       </div>
       <div class="registro-biserie-ejs">${ejercicios}</div>
@@ -767,7 +767,7 @@ function filaCompactaBiserie(a: EjercicioBorrador, c: EjercicioBorrador, iA: num
     <button class="registro-compacto" data-activar="${iA}" aria-label="Abrir la biserie ${escapar(nombres)}">
       ${gif(a.gifRuta, "registro-compacto-gif", 44)}
       <span class="registro-compacto-texto">
-        <span class="registro-compacto-nombre">🔗 ${escapar(nombres)}</span>
+        <span class="registro-compacto-nombre">${escapar(nombres)}</span>
         <span class="registro-compacto-resumen">Biserie · ${n === 0 ? "Sin anotar" : n === 1 ? "1 ronda" : `${n} rondas`}</span>
       </span>
       <span class="registro-compacto-flecha" aria-hidden="true">›</span>
