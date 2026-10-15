@@ -17,10 +17,23 @@ function versionDelBuild(ahora = new Date()): string {
   return `${p.year}${p.month}${p.day}.${p.hour}${p.minute}`;
 }
 
+const VERSION = versionDelBuild();
+
 export default defineConfig({
   define: {
-    __VERSION__: JSON.stringify(versionDelBuild()),
+    __VERSION__: JSON.stringify(VERSION),
   },
+  plugins: [
+    {
+      // `/version.json`: la versión de este build, para que una página abierta desde antes
+      // sepa que hay otra y ofrezca actualizar (`src/version.ts`).
+      name: "osfit-version",
+      apply: "build",
+      generateBundle() {
+        this.emitFile({ type: "asset", fileName: "version.json", source: JSON.stringify({ version: VERSION }) });
+      },
+    },
+  ],
   resolve: {
     alias: {
       // Firestore arrastra `re2js` aunque la página no lo use. Ver `src/re2jsVacio.ts`.

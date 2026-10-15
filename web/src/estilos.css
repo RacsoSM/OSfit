@@ -566,6 +566,25 @@ main {
   outline: 2px solid var(--primario); outline-offset: 2px;
 }
 
+/* "Hay una versión nueva" (`ui/avisoVersion.ts`): fija arriba, sobre el contenido y la flecha
+   de atrás (z 8) pero debajo del menú (z 20). Sigue a la columna de `main` en pantallas anchas. */
+.aviso-version {
+  position: fixed; z-index: 15; left: 50%; transform: translateX(-50%);
+  top: calc(8px + env(safe-area-inset-top)); width: min(calc(100% - 24px), 456px); box-sizing: border-box;
+  display: flex; align-items: center; gap: 8px; padding: 8px 8px 8px 14px; border-radius: 14px;
+  background: var(--primario); color: var(--sobre-primario); box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
+  font-size: 14px; font-weight: 700;
+}
+.aviso-version-texto { flex: 1; min-width: 0; }
+.aviso-version-actualizar {
+  flex: none; padding: 8px 14px; border: 0; border-radius: 10px;
+  background: var(--sobre-primario); color: var(--primario); font: inherit; cursor: pointer;
+}
+.aviso-version-cerrar {
+  flex: none; width: 32px; height: 32px; border: 0; border-radius: 8px; background: none;
+  color: var(--sobre-primario); font-size: 14px; cursor: pointer;
+}
+
 /* El menú lateral, que sale por la derecha como el ☰. Siempre está en el DOM, fuera de la
    pantalla, para que abrir sea una transición y no un repintado. */
 .menu-velo {

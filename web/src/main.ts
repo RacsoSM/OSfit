@@ -66,6 +66,8 @@ import {
   conectarComparar, reiniciarComparar, sexosAComparar, type EstadoComparar,
 } from "./ui/comparar";
 import { marcarBotonAtras } from "./ui/botonAtras";
+import { mostrarAvisoVersion } from "./ui/avisoVersion";
+import { vigilarVersion } from "./version";
 import {
   actualizarCabecera, aplicarMenuAbierto, cabecera, conectarCabecera, conectarMenu,
   marcarVentanaActiva, panelMenu,
@@ -736,5 +738,8 @@ if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("/sw.js").catch(() => {});
   });
 }
+
+// Con la página abierta desde antes de un deploy, ofrecer actualizar (`version.ts`).
+vigilarVersion(__VERSION__, mostrarAvisoVersion);
 
 arrancar();
