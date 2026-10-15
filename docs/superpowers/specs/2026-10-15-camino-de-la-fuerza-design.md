@@ -18,8 +18,12 @@ parada es un objetivo concreto y alcanzable en el próximo entrenamiento ("Press
 - **Un camino por músculo.** Se elige el músculo arriba del camino.
 - **Las paradas salen del ejercicio de su mejor marca** en ese músculo, automático (el mismo
   que hoy da el "te faltan X kg"). Si con otro ejercicio llega más lejos, el camino sigue con ese.
-- **Escalones chicos con doble progresión:** primero +1 rep hasta 12, luego sube el peso y
-  regresa a 8 reps. Los cambios de rango son paradas especiales con su insignia.
+- **Escalones chicos con doble progresión:** primero +1 rep hasta el tope del rango, luego
+  sube el peso y regresa al inicio del rango. Los cambios de rango son paradas especiales con
+  su insignia.
+- **Incrementos del gimnasio:** barra y mancuernas de 2.5 kg (las mancuernas van de 2.5 a
+  37.5 kg); máquinas y poleas de 4.5 kg.
+- **Rango de reps:** 8–12 en general; pantorrilla y abdomen, 12–20.
 - **Se ve todo el camino hasta Élite**, con la vista centrada en la parada actual.
 - **Vive en una tarjeta en Inicio** con la parada actual de los músculos de su día de hoy; al
   tocarla se abre el camino completo.
@@ -49,9 +53,16 @@ Las paradas de un ejercicio de peso son la escalera:
 (p, 8) → (p, 9) → (p, 10) → (p, 11) → (p, 12) → (p + Δ, 8) → (p + Δ, 9) → …
 ```
 
-- **Δ (incremento):** 2.5 kg en barra, máquina y polea; 2 kg por mancuerna en los ejercicios
-  con `pesoPorMancuerna`. Va como constante por tipo, para cambiarla sin tocar el resto.
-- **Rango de reps 8–12:** fijo para todos. El tope de 12 es el mismo de `unoRm`.
+- **Δ (incremento), por equipo:** barra 2.5 kg; mancuernas 2.5 kg por mancuerna; máquina y
+  polea 4.5 kg. Van como constantes por equipo, para cambiarlas sin tocar el resto.
+- **Tope de las mancuernas: 37.5 kg.** Al llegar a 37.5 kg × tope de reps el camino de ese
+  ejercicio termina con "Llegaste a las mancuernas más pesadas del gimnasio": más reps ya no
+  suben el nivel (`unoRm` topa en 12). Si para entonces ese músculo tiene una marca mejor con
+  otro ejercicio, el camino sigue con ese.
+- **Rango de reps:** 8–12 en general; **12–20 en pantorrilla y abdomen** (según el músculo
+  del camino). Ojo: `unoRm` no cuenta más de 12 reps, así que entre 12 y 20 las paradas suben
+  de reps sin subir el nivel; el nivel sube solo al pasar al siguiente peso. Es lo esperado:
+  la parada de rango cae en un cambio de peso.
 - **Inicio de la escalera (`p₀`):** el peso de su primera marca en ese ejercicio, redondeado
   hacia abajo al múltiplo de Δ. Se guarda (ver Datos) para que la escalera no se mueva.
 - **Ejercicios corporales:** solo reps, +1 por parada, desde su primera marca hasta las reps
@@ -135,6 +146,14 @@ Subventana de Inicio (`PADRE: { camino: "inicio" }`, con la flecha fija de atrá
 
 ## Datos
 
+### Equipo en el banco: `ejercicios/{id}.equipo` (campo nuevo)
+
+Hoy el banco no dice si un ejercicio es de barra, mancuerna, máquina o polea, y el
+incremento depende de eso. Campo nuevo `equipo: "barra" | "mancuerna" | "maquina" | "polea" |
+"corporal"`. Se llena con un script: una primera propuesta por el nombre y el id ("polea",
+"máquina", `pesoPorMancuerna`, `tipo: "corporal"`), que el entrenador revisa en una lista
+antes de cargarla. Sin `equipo`, se usa 2.5 kg.
+
 ### Mejores marcas: `clientes/{cid}/marcas/{ejercicioId}` (nueva)
 
 ```
@@ -183,19 +202,17 @@ frontera va en servidor y web como **gemelos** con prueba de igualdad, igual que
 
 ## Fases
 
-1. **Marcas en el servidor:** colección `marcas`, frontera en `registrarSesion` /
+1. **Equipo en el banco:** el campo `equipo` con su script y la revisión del entrenador.
+2. **Marcas en el servidor:** colección `marcas`, frontera en `registrarSesion` /
    `editarSesion` / `borrarSesion`, reglas y script de respaldo. Se puede desplegar sola: no
    cambia nada visible.
-2. **Cálculo del camino:** `web/src/camino.ts` con pruebas (escalera, cumplidas, actual,
+3. **Cálculo del camino:** `web/src/camino.ts` con pruebas (escalera, cumplidas, actual,
    rangos, corporales, sin datos).
-3. **Ventana del camino:** subventana, selector de músculo, nodos, desplazamiento a la actual.
-4. **Tarjeta en Inicio.**
-5. **Celebración:** sección en el resumen y animación al abrir.
+4. **Ventana del camino:** subventana, selector de músculo, nodos, desplazamiento a la actual.
+5. **Tarjeta en Inicio.**
+6. **Celebración:** sección en el resumen y animación al abrir.
 
 ## Preguntas abiertas
 
-- **Incrementos reales del gimnasio:** ¿las mancuernas van de 2 en 2 kg? ¿Las poleas y
-  máquinas suben de 2.5 kg, o de otro paso (por ejemplo, 5 lb ≈ 2.3 kg)? Se ajusta en una
-  constante.
-- **Rango de reps:** 8–12 para todos. ¿Algunos ejercicios (pantorrilla, abdomen) deberían ir
-  de 12 a 20?
+- **Varios músculos por día:** cada día trabaja 2 o 3 músculos. Cómo se ven sus caminos en la
+  misma ventana (propuesta en conversación, 2026-10-15).
