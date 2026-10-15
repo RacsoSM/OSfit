@@ -185,7 +185,7 @@ SIN_ESTANDAR = {
 
 # Nombres elegidos por el entrenador (2026-10-11). "Atlético" va en femenino para las
 # mujeres ("Atlética"); los demás no cambian.
-NIVELES = ["Principiante", "Novato", "En forma", "Intermedio", "Atlético / Atlética", "Fuerte",
+NIVELES = ["Principiante", "Ascenso", "En forma", "Intermedio", "Atlético / Atlética", "Fuerte",
            "Avanzado", "Élite"]
 # Dónde cae cada uno de los 5 de las tablas entre los 8 (índice 0 = nivel 1).
 ANCLAS = [0, 2, 4, 6, 7]

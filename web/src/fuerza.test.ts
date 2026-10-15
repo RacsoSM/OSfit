@@ -16,7 +16,7 @@ describe("rangoDe", () => {
   it("cada rango empieza al alcanzar su estándar", () => {
     expect(rangoDe(0).nombre).toBe("Principiante");
     expect(rangoDe(1.99).nombre).toBe("Principiante");
-    expect(rangoDe(2).nombre).toBe("Novato");
+    expect(rangoDe(2).nombre).toBe("Ascenso");
     expect(rangoDe(3).nombre).toBe("En forma");
     expect(rangoDe(4.5).nombre).toBe("Intermedio");
     expect(rangoDe(5).nombre).toBe("Atlético");
@@ -265,7 +265,7 @@ describe("siguienteRango", () => {
   });
 
   it("en los de peso: el peso a sus mismas reps, redondeado hacia arriba a 0.5 kg", () => {
-    // 30 × 8 ≈ 38 kg de 1RM ÷ 75 = 0.507 → nivel 1.05, Principiante. Novato pide 0.625 × 75 =
+    // 30 × 8 ≈ 38 kg de 1RM ÷ 75 = 0.507 → nivel 1.05, Principiante. Ascenso pide 0.625 × 75 =
     // 46.9 kg de 1RM, que a 8 reps son 37.006 kg: 37.5 (con 37 no le alcanza).
     const s = siguienteRango(conOrigen(1.05), 75);
     expect(s).toMatchObject({ tipo: "falta", rango: 1, objetivo: { reps: 8, peso: 37.5 }, mejor: { reps: 8, peso: 30 } });
@@ -283,7 +283,7 @@ describe("siguienteRango", () => {
   });
 
   it("con factor por edad, el objetivo es lo que tiene que mover a su edad", () => {
-    // Mismo caso que arriba, a los 52 (× 1.162): Novato pide 46.9 kg ÷ 1.162 = 40.3 kg de
+    // Mismo caso que arriba, a los 52 (× 1.162): Ascenso pide 46.9 kg ÷ 1.162 = 40.3 kg de
     // 1RM, que a 8 reps son 31.8 kg → 32.
     const s = siguienteRango(conOrigen(1.2, { edad: 52, factorEdad: factorEdad(52) }), 75);
     expect(s).toMatchObject({ tipo: "falta", objetivo: { reps: 8, peso: 32 } });
@@ -296,7 +296,7 @@ describe("siguienteRango", () => {
   });
 
   it("el objetivo usa el mismo peso con que se midió (la masa magra, si hubo)", () => {
-    // Medido contra 60 kg en vez de 75: Novato pide 0.625 × 60 = 37.5 kg de 1RM → 29.6 a 8 reps → 30.
+    // Medido contra 60 kg en vez de 75: Ascenso pide 0.625 × 60 = 37.5 kg de 1RM → 29.6 a 8 reps → 30.
     const s = siguienteRango(conOrigen(1.2, { pesoUsado: 60, serie: { reps: 8, peso: 25 } }), 75);
     expect(s).toMatchObject({ tipo: "falta", objetivo: { reps: 8, peso: 30 } });
   });

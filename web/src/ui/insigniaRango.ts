@@ -89,7 +89,7 @@ export function insigniaRango(indice: number, tam: number, id: string): string {
       + `<circle cx="32" cy="32" r="19" fill="${F}" stroke="${linea}"/>`
       + `<circle cx="32" cy="32" r="9" fill="none" stroke="#fff" stroke-opacity=".7" stroke-width="2.5"/>`
       + `<ellipse cx="32" cy="22" rx="12" ry="6" fill="${H}"/>`,
-    // Novato: hexágono con otro adentro.
+    // Ascenso: hexágono con otro adentro.
     () => capas(poligono(6, 27), poligono(6, 20))
       + `<polygon points="${poligono(6, 10)}" fill="none" stroke="#fff" stroke-opacity=".75" stroke-width="2.5" stroke-linejoin="round"/>`
       + `<polygon points="${poligono(6, 18)}" fill="${H}" opacity=".6"/>`,

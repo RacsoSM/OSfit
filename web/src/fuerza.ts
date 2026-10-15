@@ -23,13 +23,13 @@ export interface Rango { nombre: string; desde: number; }
 
 /**
  * Los 8 rangos, ordenados por `desde`: el rango es el último cuyo estándar ya se alcanzó.
- * Principiante va desde 0 porque es donde está todo el que todavía no llega al de Novato.
- * Nombres elegidos por el entrenador (2026-10-11); "Atlético" va en femenino para ellas
- * (`nombreRango`). Los estándares de cada ejercicio, en `docs/estandares-fuerza/`.
+ * Principiante va desde 0 porque es donde está todo el que todavía no llega al de Ascenso.
+ * Nombres elegidos por el entrenador (2026-10-11; "Novato" pasó a "Ascenso" el 2026-10-15);
+ * "Atlético" va en femenino para ellas (`nombreRango`). Los estándares de cada ejercicio, en `docs/estandares-fuerza/`.
  */
 export const RANGOS: readonly Rango[] = [
   { nombre: "Principiante", desde: 0 },
-  { nombre: "Novato", desde: 2 },
+  { nombre: "Ascenso", desde: 2 },
   { nombre: "En forma", desde: 3 },
   { nombre: "Intermedio", desde: 4 },
   { nombre: "Atlético", desde: 5 },

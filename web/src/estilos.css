@@ -956,7 +956,7 @@ main:has(#barra) { padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
    El gris de "sin datos" es `#8f90a6`; ninguno se le parece. */
 :root {
   --rango-0: #bfe3ff; /* Principiante: azul hielo */
-  --rango-1: #7cc4ff; /* Novato: azul claro */
+  --rango-1: #7cc4ff; /* Ascenso: azul claro */
   --rango-2: #3b8fff; /* En forma: azul */
   --rango-3: #5b5bd6; /* Intermedio: índigo */
   --rango-4: #9d4edd; /* Atlético: morado */

@@ -203,7 +203,7 @@ describe("detalleMusculo", () => {
     };
     const h = detalleMusculo("pecho", f, "H", 75);
     expect(h).toContain("Siguiente: <strong");
-    expect(h).toContain(">Novato</strong>");
+    expect(h).toContain(">Ascenso</strong>");
     expect(h).toContain("Te faltan <strong>7.5 kg</strong> en <strong>Press de banca</strong> para llegar al siguiente rango.");
     expect(h).toContain("Tu mejor serie: 30 kg × 8.");
   });
@@ -260,7 +260,7 @@ describe("conNiveles", () => {
     expect(conNiveles(svg, { pecho: { nivel: 3 } })).toContain('data-musculo="biceps" d="M1"');
   });
 
-  it("debajo de Novato es Principiante, aunque sea poco", () => {
+  it("debajo de Ascenso es Principiante, aunque sea poco", () => {
     expect(conNiveles(svg, { biceps: { nivel: 0.4 } })).toContain('data-musculo="biceps" data-rango="0"');
   });
 
@@ -274,7 +274,7 @@ describe("ayudaMapa", () => {
     const h = ayudaMapa("H");
     const nombres = [...h.matchAll(/ayuda-rango-nombre">\d\. ([^<]+)</g)].map((m) => m[1]);
     expect(nombres).toEqual([
-      "Principiante", "Novato", "En forma", "Intermedio", "Atlético", "Fuerte", "Avanzado", "Élite",
+      "Principiante", "Ascenso", "En forma", "Intermedio", "Atlético", "Fuerte", "Avanzado", "Élite",
     ]);
     for (let i = 0; i < 8; i++) expect(h).toContain(`data-rango="${i}"`);
   });
