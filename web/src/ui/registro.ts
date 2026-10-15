@@ -141,6 +141,18 @@ interface Estado {
 
 const LLAVE_BORRADOR = "osfit:registro-borrador";
 
+/**
+ * Hasta dónde había bajado en "¿Qué ejercicio hiciste?" la última vez: al volver a entrar se
+ * queda ahí y no arriba del todo (decisión del entrenador, 2026-10-15), porque suele seguir con
+ * el grupo que estaba viendo. Vuelve a 0 con cada entrenamiento nuevo.
+ */
+let posicionElegir = 0;
+
+/** Se llama justo antes de salir de "elegir", por donde sea. */
+function recordarPosicionElegir(): void {
+  if (estado.vista === "elegir") posicionElegir = window.scrollY;
+}
+
 const estado: Estado = {
   vista: "inicio",
   borrador: (() => {
@@ -169,6 +181,7 @@ const VISTAS: readonly Vista[] = ["inicio", "historial", "elegir", "capturar", "
  * null es la de entrada: inicio, o el entrenamiento si hay uno abierto (`ventanaRegistro`).
  */
 export function vistaDesdeHistorial(vista: string | null): void {
+  recordarPosicionElegir();
   estado.vista = VISTAS.includes(vista as Vista) ? (vista as Vista) : "inicio";
   estado.error = null;
 }
@@ -208,6 +221,7 @@ export function empezarGuiado(d: DatosRegistro, ahora = Date.now()): boolean {
   }
   if (!d.dia) return false;
   guardarBorrador(borradorGuiado(idNuevo(), d.hoy, ahora, d.dia, d.indice, d.sesiones ?? []));
+  posicionElegir = 0;
   estado.vista = "capturar";
   estado.activo = 0;
   estado.avanzando = true;
@@ -955,12 +969,14 @@ export function conectarRegistro(
   seguirGrupo();
 
   const ir = (vista: Vista, modo: "adelante" | "volver" | "reemplazar" = "volver") => {
+    recordarPosicionElegir();
     estado.vista = vista;
     estado.error = null;
     if (vista !== "historial") estado.aviso = null;
     acciones.navegar?.(vista, modo);
     repintar();
-    window.scrollTo(0, 0);
+    // Cada pantalla arranca arriba, menos "elegir", que vuelve a donde se quedó.
+    window.scrollTo(0, vista === "elegir" ? posicionElegir : 0);
   };
   // La pantalla en la que quedó (puede haberla decidido `ventanaRegistro` sola).
   acciones.navegar?.(estado.vista, "marcar");
@@ -1004,6 +1020,7 @@ export function conectarRegistro(
       if (!b) {
         guardarBorrador(nuevoBorrador(idNuevo(), d.hoy, Date.now()));
         acciones.alIniciar?.();
+        posicionElegir = 0;
       }
       ir("capturar", "adelante");
       return;
@@ -1168,6 +1185,7 @@ export function conectarRegistro(
       return;
     }
     if (accion === "agregar-biserie" && b) {
+      recordarPosicionElegir();
       const [ea, ec] = estado.seleccion.map((x) => d.banco.find((e) => e.id === x));
       if (!ea || !ec) return;
       const con = (e: EjercicioBanco) => ({ e, previas: ultimasSeries(d.sesiones ?? [], e.id), seriesRutina: seriesDeLaRutina(d, e) });
@@ -1192,6 +1210,7 @@ export function conectarRegistro(
 
     const id = el.dataset.agregar;
     if (id && b) {
+      recordarPosicionElegir();
       const e = d.banco.find((x) => x.id === id);
       if (!e) return;
       const ya = b.ejercicios.findIndex((x) => x.ejercicioId === id);
