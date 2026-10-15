@@ -107,8 +107,8 @@ Los porcentajes salen de un modelo: entre quienes entrenan, la fuerza se reparte
 |  | M | 8 kg | 9 kg | 11 kg | 15 kg | 19 kg | 20 kg | 22.5 kg | 27.5 kg |
 | Abductores en máquina | H · máquina | 30 kg | 40 kg | 52.5 kg | 65 kg | 80 kg | 87.5 kg | 95 kg | 135 kg |
 |  | M | 20 kg | 30 kg | 40 kg | 50 kg | 60 kg | 67.5 kg | 75 kg | 105 kg |
-| Patada de glúteo en polea | H · polea | 11 kg | 14 kg | 18 kg | 22.5 kg | 27.5 kg | 30 kg | 32.5 kg | 47.5 kg |
-|  | M | 7 kg | 10 kg | 14 kg | 17 kg | 20 kg | 22.5 kg | 25 kg | 37.5 kg |
+| Patada de glúteo en polea | H · polea: el peso marcado no es el real, × 1.3 (decisión del entrenador, 2026-10-15) | 14 kg | 19 kg | 25 kg | 30 kg | 35 kg | 40 kg | 42.5 kg | 62.5 kg |
+|  | M | 10 kg | 14 kg | 18 kg | 22.5 kg | 27.5 kg | 30 kg | 32.5 kg | 47.5 kg |
 | Patada de glúteo con liga | H · con liga: depende de la liga, poco confiable | 10 reps | 15 reps | 20 reps | 28 reps | 35 reps | 38 reps | 42 reps | 64 reps |
 |  | M | 10 reps | 15 reps | 20 reps | 28 reps | 35 reps | 38 reps | 42 reps | 64 reps |
 | Patada de glúteo en máquina | H · máquina de palanca, una pierna: varía por marca | 25 kg | 32.5 kg | 42.5 kg | 52.5 kg | 62.5 kg | 70 kg | 77.5 kg | 107.5 kg |

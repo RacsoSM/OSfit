@@ -87,7 +87,7 @@ PESO = {
     "pantorrilla-prensa": ("pantorrilla", 1.10, "en prensa: varía por marca"),
     "abductores-maquina": ("abductor", 1.00, "máquina"),
     "aductores-maquina": ("abductor", 1.00, "máquina"),
-    "patada-gluteo-polea": ("abductor", 0.35, "polea"),
+    "patada-gluteo-polea": ("abductor", 0.455, "polea: el peso marcado no es el real, × 1.3 (decisión del entrenador, 2026-10-15)"),
     "patada-gluteo-maquina": ("abductor", 0.80, "máquina de palanca, una pierna: varía por marca"),
     "jalon-al-pecho": ("jalon", 1.00, ""),
     "jalon-agarre-abierto": ("jalon", 0.95, ""),
