@@ -598,6 +598,11 @@ A decidir en el spec:
 Nombre decidido (2026-10-14): **El camino de la Fuerza**. Los objetivos son los próximos de
 cada clienta en fuerza, calculados con sus pesos máximos.
 
+**Diseño definido (2026-10-15):** `docs/superpowers/specs/2026-10-15-camino-de-la-fuerza-design.md`.
+Un camino por músculo con el ejercicio de su mejor marca, doble progresión (8–12 reps, luego
++2.5 kg), todo hasta Élite, tarjeta en Inicio con los músculos del día, celebración en el
+resumen y al abrir el camino, y lo cumplido no se pierde (marcas de siempre en el servidor).
+
 ## 14. Rear delt en el banco de ejercicios — ✅ HECHO (2026-10-14)
 
 > "me falta el rear dealt en el banco de ejercicios, agrégalo al backlog"
