@@ -291,7 +291,7 @@ Plan: `superpowers/plans/2026-10-10-revocar-acceso.md`.
 Implementado y desplegado (2026-10-10): funciones, reglas y web en producción; app instalada.
 Verificado por el entrenador en su teléfono (2026-10-10).
 
-## 7. Barra de abajo con Músculos y Registro, y Entrenar en Inicio — 🟡 PARCIAL: barra, Músculos y Registro hechos; falta el modo guiado Entrenar
+## 7. Barra de abajo con Músculos y Registro, y Entrenar en Inicio — 🟡 PARCIAL: barra, Músculos, Registro y modo guiado hechos; falta verlo en el teléfono
 
 > "eso me agrada más, añadelo al backlog como urgente antes de proponer el spec"
 
@@ -403,7 +403,15 @@ Hecho (2026-10-14): **editar y eliminar** entrenamientos desde "Tu historial" (f
 **primero los ejercicios directos** de cada músculo: los secundarios solo cuentan si no hay
 ninguno directo.
 
-Pendiente: modo guiado, cálculo de fuerza y estándares por
+**Modo guiado (2026-10-14):** "▶ Empezar entrenamiento" va arriba en la tarjeta del día y
+abre la misma pantalla de captura de Registro (GIF grande, series, Anterior/Siguiente) con
+los ejercicios que le recomienda la tarjeta ya cargados, en el orden de su rutina, con lo que
+pide la rutina ("Tu rutina: 4 × 10-12 · 30 kg") y prellenados con la última vez. Marca la
+asistencia como "Iniciar entrenamiento" y se guarda con `origen: "guiado"`. Los de la rutina
+que no están en el banco se avisan y no se cargan. Con un entrenamiento abierto, el botón dice
+"Continuar entrenamiento". Queda fuera, por ahora: temporizador de descanso y resumen final.
+
+Pendiente: cálculo de fuerza y estándares por
 ejercicio (para colorear el mapa), ver las sesiones desde la app, y `Ejercicio.ejercicioId`
 con buscador en el editor de rutinas.
 
@@ -640,10 +648,14 @@ entrenador, tal cual:
    el `pointerup` o con `setSelectionRange`.~~
    *Hecho:* un `focusin` en `conectarRegistro` selecciona peso y reps con `setSelectionRange`, y
    lo repite tras un `setTimeout` para que el toque de iOS no lo deshaga.
-2. **La barrita de la hoja de detalle en Músculos no hace nada.** Al tocar un músculo sube una
+2. ✅ **HECHO (2026-10-14).** ~~**La barrita de la hoja de detalle en Músculos no hace nada.** Al tocar un músculo sube una
    hoja desde abajo con una barrita arriba (`.hoja-asa` en `ui/mapaMuscular.ts`, ~línea 223).
    Esa barrita invita a jalar la hoja hacia abajo para cerrarla, pero es solo de adorno: hoy
-   solo cierra el ✕. Que deslizar hacia abajo la cierre, o quitar la barrita.
+   solo cierra el ✕. Que deslizar hacia abajo la cierre, o quitar la barrita.~~
+   *Hecho:* jalar la barrita hacia abajo cierra la hoja (`ui/deslizarHoja.ts`). La hoja sigue al
+   dedo; al soltar se cierra si bajó 80 px o fue un tirón rápido, y si no regresa a su lugar. El
+   gesto se toma solo en la zona de la barrita, para que desplazar el contenido de la hoja no la
+   cierre. El ✕ sigue igual.
 3. ✅ **HECHO (2026-10-14).** ~~**"Descartar entrenamiento" está muy pegado a "Terminar entrenamiento".** En
    `ui/registro.ts` (~línea 459–460) van uno debajo del otro. Separarlo bien (más espacio,
    otro lugar o menos peso visual) para que nadie lo toque sin querer. Ya pide confirmación

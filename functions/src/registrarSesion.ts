@@ -1,7 +1,7 @@
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { REGION, clienteDeLaSesion, db, hoyEnMazatlan } from "./comun";
-import { marcarAsistenciaDelDia } from "./asistenciaWeb";
+import { actualizarDuracionDelDia, marcarAsistenciaDelDia } from "./asistenciaWeb";
 
 /**
  * Registro: la clienta anota lo que entrenó (los ejercicios que el coach le dijo en el gym,
@@ -122,6 +122,14 @@ export function fechaValida(fecha: unknown, hoy: string): string | null {
   return Number.isFinite(dias) && dias >= 0 && dias * DIA_MS <= MAX_ATRASO_MS ? fecha : null;
 }
 
+/**
+ * "guiado" si se empezó con "▶ Empezar entrenamiento" desde la tarjeta del día (backlog 2,
+ * punto 7); cualquier otra cosa es uno de Registro, "manual".
+ */
+export function origenValido(origen: unknown): "manual" | "guiado" {
+  return origen === "guiado" ? "guiado" : "manual";
+}
+
 /** Los ejercicios del banco que trae la petición: lo que `sesionValida` necesita para validar. */
 async function leerBanco(data: unknown): Promise<Map<string, DelBanco>> {
   const pedidos = (data as { ejercicios?: unknown } | null)?.ejercicios;
@@ -148,7 +156,7 @@ export const registrarSesion = onCall({ region: REGION }, async (request) => {
   const sesion = sesionValida(request.data, banco);
   if (typeof sesion === "string") throw new HttpsError("invalid-argument", sesion);
 
-  const datos = request.data as { iniciadaEn?: unknown; terminadaEn?: unknown; fecha?: unknown };
+  const datos = request.data as { iniciadaEn?: unknown; terminadaEn?: unknown; fecha?: unknown; origen?: unknown };
   const ahora = Date.now();
   // Hecho sin internet, puede llegar horas o días después: la fecha y las horas son las del
   // teléfono, no las de cuando llegó.
@@ -162,13 +170,17 @@ export const registrarSesion = onCall({ region: REGION }, async (request) => {
     // Al momento, la hora del servidor; si llegó tarde, la del teléfono.
     creada: tarde ? Timestamp.fromMillis(terminada) : FieldValue.serverTimestamp(),
     ...(inicio !== null ? { iniciada: Timestamp.fromMillis(inicio) } : {}),
-    origen: "manual",
+    origen: origenValido(datos?.origen),
     ejercicios: sesion.ejercicios,
   });
   // La asistencia se marca al iniciar el entrenamiento (`marcarAsistencia`); esto la cubre si
   // lo inició sin internet. Si falla no se pierde el entrenamiento, que ya está guardado.
   await marcarAsistenciaDelDia(clienteId, fecha).catch((error) => {
     console.error("No se pudo marcar la asistencia al guardar el entrenamiento", clienteId, fecha, error);
+  });
+  // Y su duración, para quien entrena sin el cronómetro del entrenador.
+  await actualizarDuracionDelDia(clienteId, fecha).catch((error) => {
+    console.error("No se pudo poner la duración en la asistencia", clienteId, fecha, error);
   });
   return { ok: true, id: sesion.id, fecha };
 });
@@ -205,6 +217,14 @@ export const borrarSesion = onCall({ region: REGION }, async (request) => {
   const clienteId = await clienteDeLaSesion(request);
   const id = idSesion(request.data);
   if (!id) throw new HttpsError("invalid-argument", "id_invalido");
-  await db().collection("clientes").doc(clienteId).collection("sesiones").doc(id).delete();
+  const ref = db().collection("clientes").doc(clienteId).collection("sesiones").doc(id);
+  const fecha = (await ref.get()).get("fecha") as string | undefined;
+  await ref.delete();
+  // Sin ese entrenamiento, la duración del día cambia (o desaparece).
+  if (fecha) {
+    await actualizarDuracionDelDia(clienteId, fecha).catch((error) => {
+      console.error("No se pudo actualizar la duración al borrar", clienteId, fecha, error);
+    });
+  }
   return { ok: true, id };
 });

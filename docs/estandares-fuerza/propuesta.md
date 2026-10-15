@@ -152,8 +152,8 @@ Los porcentajes salen de un modelo: entre quienes entrenan, la fuerza se reparte
 |  | M | 18 kg | 22.5 kg | 27.5 kg | 32.5 kg | 40 kg | 42.5 kg | 45 kg | 65 kg |
 | Jalón al pecho supino | H | 37.5 kg | 47.5 kg | 55 kg | 65 kg | 75 kg | 82.5 kg | 90 kg | 120 kg |
 |  | M | 18 kg | 22.5 kg | 27.5 kg | 32.5 kg | 40 kg | 42.5 kg | 45 kg | 65 kg |
-| Pullover en polea | H | 17 kg | 22.5 kg | 30 kg | 37.5 kg | 45 kg | 50 kg | 55 kg | 77.5 kg |
-|  | M | 8 kg | 11 kg | 14 kg | 18 kg | 22.5 kg | 25 kg | 27.5 kg | 40 kg |
+| Pullover en polea | H · polea doble ×1.3 | 22.5 kg | 30 kg | 40 kg | 47.5 kg | 57.5 kg | 65 kg | 70 kg | 100 kg |
+|  | M | 11 kg | 14 kg | 18 kg | 22.5 kg | 27.5 kg | 32.5 kg | 35 kg | 52.5 kg |
 | Remo con barra | H | 37.5 kg | 47.5 kg | 55 kg | 65 kg | 75 kg | 85 kg | 95 kg | 122.5 kg |
 |  | M | 15 kg | 20 kg | 25 kg | 32.5 kg | 40 kg | 42.5 kg | 45 kg | 65 kg |
 | Remo con mancuerna | H · una mancuerna | 17 kg | 20 kg | 25 kg | 30 kg | 35 kg | 37.5 kg | 42.5 kg | 55 kg |
@@ -203,16 +203,16 @@ Los porcentajes salen de un modelo: entre quienes entrenan, la fuerza se reparte
 |  | M | 4 kg | 6 kg | 8 kg | 9 kg | 11 kg | 12 kg | 14 kg | 19 kg |
 | Elevaciones laterales | H · por mancuerna | 4 kg | 6 kg | 8 kg | 11 kg | 15 kg | 17 kg | 19 kg | 27.5 kg |
 |  | M | 2 kg | 3 kg | 4 kg | 5 kg | 7 kg | 8 kg | 9 kg | 14 kg |
-| Elevaciones laterales en polea | H · por lado | 3 kg | 4 kg | 6 kg | 9 kg | 12 kg | 14 kg | 15 kg | 22.5 kg |
-|  | M | 1 kg | 2 kg | 3 kg | 4 kg | 6 kg | 7 kg | 7 kg | 11 kg |
+| Elevaciones laterales en polea | H · por lado; polea doble ×1.3 | 4 kg | 6 kg | 8 kg | 12 kg | 16 kg | 18 kg | 20 kg | 30 kg |
+|  | M | 2 kg | 3 kg | 4 kg | 6 kg | 8 kg | 9 kg | 10 kg | 14 kg |
 | Elevaciones frontales | H · por mancuerna | 4 kg | 6 kg | 8 kg | 12 kg | 16 kg | 19 kg | 20 kg | 30 kg |
 |  | M | 2 kg | 3 kg | 4 kg | 6 kg | 8 kg | 9 kg | 10 kg | 15 kg |
 | Pájaros | H · por mancuerna | 3 kg | 5 kg | 7 kg | 10 kg | 14 kg | 15 kg | 17 kg | 25 kg |
 |  | M | 2 kg | 2 kg | 3 kg | 5 kg | 6 kg | 7 kg | 8 kg | 12 kg |
 | Rear delt en máquina | H · máquina: varía por marca | 20 kg | 25 kg | 30 kg | 37.5 kg | 42.5 kg | 45 kg | 47.5 kg | 67.5 kg |
 |  | M | 9 kg | 12 kg | 16 kg | 19 kg | 22.5 kg | 25 kg | 27.5 kg | 40 kg |
-| Face pull | H · polea | 17 kg | 22.5 kg | 30 kg | 37.5 kg | 45 kg | 50 kg | 55 kg | 77.5 kg |
-|  | M | 8 kg | 11 kg | 14 kg | 18 kg | 22.5 kg | 25 kg | 27.5 kg | 40 kg |
+| Face pull | H · polea; polea doble ×1.3 | 22.5 kg | 30 kg | 40 kg | 47.5 kg | 57.5 kg | 65 kg | 70 kg | 100 kg |
+|  | M | 11 kg | 14 kg | 18 kg | 22.5 kg | 27.5 kg | 32.5 kg | 35 kg | 52.5 kg |
 | Remo al mentón | H | 20 kg | 27.5 kg | 32.5 kg | 40 kg | 45 kg | 47.5 kg | 50 kg | 70 kg |
 |  | M | 10 kg | 13 kg | 17 kg | 20 kg | 25 kg | 27.5 kg | 30 kg | 42.5 kg |
 
@@ -238,8 +238,8 @@ Los porcentajes salen de un modelo: entre quienes entrenan, la fuerza se reparte
 |  | M | 2 kg | 3 kg | 5 kg | 7 kg | 9 kg | 10 kg | 12 kg | 17 kg |
 | Curl concentrado | H · una mancuerna | 6 kg | 9 kg | 12 kg | 15 kg | 18 kg | 20 kg | 22.5 kg | 32.5 kg |
 |  | M | 2 kg | 4 kg | 5 kg | 7 kg | 10 kg | 11 kg | 12 kg | 18 kg |
-| Curl en polea | H | 15 kg | 22.5 kg | 30 kg | 37.5 kg | 45 kg | 50 kg | 55 kg | 77.5 kg |
-|  | M | 6 kg | 9 kg | 12 kg | 18 kg | 25 kg | 27.5 kg | 30 kg | 45 kg |
+| Curl en polea | H · polea doble ×1.3 | 20 kg | 30 kg | 40 kg | 50 kg | 57.5 kg | 65 kg | 70 kg | 102.5 kg |
+|  | M | 8 kg | 12 kg | 16 kg | 22.5 kg | 30 kg | 35 kg | 40 kg | 60 kg |
 
 ### Antebrazo
 
@@ -257,23 +257,23 @@ Los porcentajes salen de un modelo: entre quienes entrenan, la fuerza se reparte
 |  | M | 4 kg | 7 kg | 9 kg | 14 kg | 18 kg | 20 kg | 22.5 kg | 35 kg |
 | Curl inverso con mancuernas | H · por mancuerna | 5 kg | 7 kg | 10 kg | 12 kg | 15 kg | 16 kg | 18 kg | 25 kg |
 |  | M | 2 kg | 3 kg | 4 kg | 6 kg | 8 kg | 9 kg | 10 kg | 15 kg |
-| Curl inverso en polea | H | 11 kg | 17 kg | 22.5 kg | 27.5 kg | 35 kg | 37.5 kg | 40 kg | 60 kg |
-|  | M | 4 kg | 7 kg | 9 kg | 14 kg | 18 kg | 20 kg | 22.5 kg | 35 kg |
-| Curl de muñeca en polea | H | 14 kg | 19 kg | 22.5 kg | 30 kg | 37.5 kg | 42.5 kg | 45 kg | 65 kg |
-|  | M | 5 kg | 8 kg | 11 kg | 15 kg | 19 kg | 20 kg | 22.5 kg | 35 kg |
+| Curl inverso en polea | H · polea doble ×1.3 | 15 kg | 22.5 kg | 30 kg | 37.5 kg | 45 kg | 47.5 kg | 52.5 kg | 77.5 kg |
+|  | M | 6 kg | 9 kg | 12 kg | 18 kg | 22.5 kg | 27.5 kg | 30 kg | 45 kg |
+| Curl de muñeca en polea | H · polea doble ×1.3 | 18 kg | 25 kg | 30 kg | 40 kg | 47.5 kg | 55 kg | 60 kg | 85 kg |
+|  | M | 7 kg | 11 kg | 14 kg | 19 kg | 25 kg | 27.5 kg | 30 kg | 45 kg |
 
 ### Tríceps
 
 | Ejercicio | Sexo | Principiante | Novato | En forma | Intermedio | Atlético / Atlética | Fuerte | Avanzado | Élite |
 |---|---|---|---|---|---|---|---|---|---|
-| Extensión de tríceps en polea | H | 19 kg | 25 kg | 35 kg | 40 kg | 50 kg | 55 kg | 60 kg | 85 kg |
-|  | M | 9 kg | 12 kg | 15 kg | 20 kg | 25 kg | 27.5 kg | 30 kg | 45 kg |
-| Extensión de tríceps con cuerda | H | 17 kg | 22.5 kg | 30 kg | 37.5 kg | 45 kg | 50 kg | 55 kg | 77.5 kg |
-|  | M | 8 kg | 11 kg | 14 kg | 18 kg | 22.5 kg | 25 kg | 27.5 kg | 40 kg |
-| Extensión de tríceps trasnuca en polea | H | 16 kg | 22.5 kg | 27.5 kg | 35 kg | 42.5 kg | 47.5 kg | 52.5 kg | 72.5 kg |
-|  | M | 8 kg | 10 kg | 13 kg | 17 kg | 20 kg | 22.5 kg | 25 kg | 37.5 kg |
-| Copa en polea a un brazo | H · un brazo; polea | 8 kg | 11 kg | 14 kg | 16 kg | 20 kg | 22.5 kg | 25 kg | 35 kg |
-|  | M | 4 kg | 5 kg | 6 kg | 8 kg | 10 kg | 11 kg | 12 kg | 18 kg |
+| Extensión de tríceps en polea | H · polea doble ×1.3 | 25 kg | 35 kg | 45 kg | 52.5 kg | 62.5 kg | 70 kg | 80 kg | 110 kg |
+|  | M | 12 kg | 16 kg | 20 kg | 25 kg | 30 kg | 35 kg | 40 kg | 57.5 kg |
+| Extensión de tríceps con cuerda | H · polea doble ×1.3 | 22.5 kg | 30 kg | 40 kg | 47.5 kg | 57.5 kg | 65 kg | 70 kg | 100 kg |
+|  | M | 11 kg | 14 kg | 18 kg | 22.5 kg | 27.5 kg | 32.5 kg | 35 kg | 52.5 kg |
+| Extensión de tríceps trasnuca en polea | H · polea doble ×1.3 | 20 kg | 30 kg | 37.5 kg | 45 kg | 55 kg | 60 kg | 67.5 kg | 95 kg |
+|  | M | 10 kg | 13 kg | 17 kg | 22.5 kg | 27.5 kg | 30 kg | 35 kg | 50 kg |
+| Copa en polea a un brazo | H · un brazo; polea; polea doble ×1.3 | 10 kg | 14 kg | 18 kg | 22.5 kg | 25 kg | 27.5 kg | 32.5 kg | 45 kg |
+|  | M | 5 kg | 6 kg | 8 kg | 10 kg | 12 kg | 14 kg | 16 kg | 22.5 kg |
 | Press francés | H | 15 kg | 20 kg | 27.5 kg | 32.5 kg | 40 kg | 42.5 kg | 47.5 kg | 67.5 kg |
 |  | M | 7 kg | 10 kg | 12 kg | 16 kg | 19 kg | 22.5 kg | 25 kg | 35 kg |
 | Extensión de tríceps con mancuerna | H · una mancuerna, dos manos | 8 kg | 12 kg | 15 kg | 19 kg | 22.5 kg | 25 kg | 27.5 kg | 37.5 kg |
@@ -293,8 +293,8 @@ Los porcentajes salen de un modelo: entre quienes entrenan, la fuerza se reparte
 |---|---|---|---|---|---|---|---|---|---|
 | Crunch abdominal | H | 10 reps | 18 reps | 25 reps | 35 reps | 45 reps | 50 reps | 55 reps | 84 reps |
 |  | M | 8 reps | 14 reps | 20 reps | 29 reps | 38 reps | 42 reps | 47 reps | 74 reps |
-| Crunch en polea | H | 22.5 kg | 32.5 kg | 40 kg | 52.5 kg | 65 kg | 70 kg | 77.5 kg | 110 kg |
-|  | M | 12 kg | 16 kg | 20 kg | 27.5 kg | 32.5 kg | 37.5 kg | 40 kg | 60 kg |
+| Crunch en polea | H · polea doble ×1.3 | 30 kg | 42.5 kg | 52.5 kg | 67.5 kg | 82.5 kg | 90 kg | 100 kg | 142.5 kg |
+|  | M | 16 kg | 22.5 kg | 27.5 kg | 35 kg | 42.5 kg | 47.5 kg | 52.5 kg | 77.5 kg |
 | Abdominales completos | H | 5 reps | 12 reps | 20 reps | 28 reps | 35 reps | 38 reps | 42 reps | 69 reps |
 |  | M | 3 reps | 9 reps | 15 reps | 22 reps | 28 reps | 32 reps | 36 reps | 60 reps |
 | Elevación de piernas colgado | H | 1 rep | 4 reps | 6 reps | 9 reps | 12 reps | 14 reps | 17 reps | 30 reps |

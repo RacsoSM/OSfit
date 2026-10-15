@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { interpretar, planAsistencia, variacionQueToca, type AsistenciaLeida, type ClienteLeido } from "./asistenciaWeb";
+import { duracionEsDeLaWeb, interpretar, minutosDelDia, planAsistencia, variacionQueToca, type AsistenciaLeida, type ClienteLeido } from "./asistenciaWeb";
 
 // 2026-10-14 es miércoles; 2026-10-17, sábado.
 const HOY = "2026-10-14";
@@ -82,5 +82,30 @@ describe("variacionQueToca (gemelo de web/src/variacion.ts)", () => {
   it("rota a la siguiente y se queda en la de hoy si ya entrenó", () => {
     expect(variacionQueToca(1, [vino("2026-10-06", 1, 2)], HOY, 3)).toBe(0);
     expect(variacionQueToca(1, [vino(HOY, 1, 2)], HOY, 3)).toBe(2);
+  });
+});
+
+describe("minutosDelDia", () => {
+  const min = 60_000;
+  it("suma lo que duró cada entrenamiento del día", () => {
+    expect(minutosDelDia([
+      { iniciadaMs: 0, creadaMs: 45 * min },
+      { iniciadaMs: 100 * min, creadaMs: 120 * min },
+    ])).toBe(65);
+  });
+  it("ignora los que no saben cuándo empezaron, y sin ninguno medido es null", () => {
+    expect(minutosDelDia([{ iniciadaMs: null, creadaMs: 10 * min }, { iniciadaMs: 0, creadaMs: 30 * min }])).toBe(30);
+    expect(minutosDelDia([{ iniciadaMs: null, creadaMs: 10 * min }])).toBeNull();
+    expect(minutosDelDia([])).toBeNull();
+  });
+});
+
+describe("duracionEsDeLaWeb", () => {
+  it("solo sin el cronómetro del entrenador", () => {
+    expect(duracionEsDeLaWeb({ asistio: true })).toBe(true);
+    expect(duracionEsDeLaWeb({ asistio: true, horaLlegada: null })).toBe(true);
+    expect(duracionEsDeLaWeb({ asistio: true, horaLlegada: { seconds: 1 } })).toBe(false);
+    expect(duracionEsDeLaWeb({ asistio: false })).toBe(false);
+    expect(duracionEsDeLaWeb(undefined)).toBe(false);
   });
 });

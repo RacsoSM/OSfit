@@ -142,6 +142,17 @@ PESO = {
 }
 
 # Corporales: repeticiones seguidas.
+# La estación de poleas del gimnasio es de polea doble: la pila marca bastante más de lo que se
+# siente. Con los estándares de las tablas, 5 barras de tríceps daban Avanzado a quien el
+# entrenador ve entre Intermedio y Atlética. Él eligió ×1.3 (2026-10-14) y dijo qué ejercicios
+# van en esa estación.
+FACTOR_POLEA_DOBLE = 1.3
+POLEA_DOBLE = {
+    "pullover-polea", "face-pull", "elevaciones-laterales-polea", "curl-polea", "curl-inverso-polea",
+    "curl-muneca-polea", "extension-triceps-polea", "extension-triceps-cuerda",
+    "extension-triceps-trasnuca-polea", "copa-polea-un-brazo", "crunch-polea",
+}
+
 CORPORAL = {
     "lagartijas":              {"H": [3, 15, 30, 45, 65], "M": [1, 5, 15, 28, 40]},
     "fondos-pecho":            {"H": [1, 8, 18, 30, 42], "M": [1, 3, 8, 15, 25]},
@@ -289,6 +300,9 @@ def main() -> None:
             continue
         if tipo == "peso" and i in PESO:
             fam, f, nota = PESO[i]
+            if i in POLEA_DOBLE:
+                f *= FACTOR_POLEA_DOBLE
+                nota = f"{nota}; polea doble ×{FACTOR_POLEA_DOBLE:g}" if nota else f"polea doble ×{FACTOR_POLEA_DOBLE:g}"
             cinco = {s: [round(v * f, 3) for v in FAMILIAS[fam][s]] for s in ("H", "M")}
             est = {s: con_elite(cinco[s], a_ocho(cinco[s]), False) for s in ("H", "M")}
             salida[i] = est

@@ -2,8 +2,8 @@ import type { Asistencia, Cliente, ConfigGrupos, EjercicioBanco, LogroPersonalOt
 import type { IdEstilo } from "./estilo";
 import type { Tirada } from "./tirada";
 import { recordatorioPago } from "./pago";
-import { diaDeHoy, tarjetaDia } from "./ui/tarjetaDia";
-import { ventanaRegistro, type DatosRegistro } from "./ui/registro";
+import { botonEntrenar, diaDeHoy, tarjetaDia } from "./ui/tarjetaDia";
+import { entrenamientoAbierto, ventanaRegistro, type DatosRegistro } from "./ui/registro";
 import type { IndiceBanco } from "./banco";
 import { tarjetaRecordatorioPago } from "./ui/tarjetaRecordatorioPago";
 import { tarjetasStats } from "./ui/tarjetasStats";
@@ -17,6 +17,9 @@ import { invitacionNotificaciones, seccionNotificaciones } from "./ui/tarjetaNot
 import type { EstadoNotificaciones } from "./notificaciones";
 import { tarjetaMusculos, type EstadoSvg } from "./ui/mapaMuscular";
 import { bloquePeso } from "./ui/pesoCorporal";
+import { ventanaComparar, type EstadoComparar } from "./ui/comparar";
+import { promedioMinutos } from "./racha";
+import { resumenSemana } from "./registro";
 import { edadEn, fuerzaPorMusculo, pesoParaFuerza, type FuerzaMusculo } from "./fuerza";
 
 /**
@@ -29,7 +32,7 @@ import { edadEn, fuerzaPorMusculo, pesoParaFuerza, type FuerzaMusculo } from "./
  */
 
 export type IdVentana =
-  | "inicio" | "musculos" | "registro"
+  | "inicio" | "musculos" | "registro" | "comparar"
   | "ranking" | "medallas" | "logros" | "videos" | "ajustes";
 
 /** Todo lo que los listeners de Firestore tienen a mano en cada repintado. */
@@ -64,6 +67,8 @@ export interface DatosCliente {
   configGrupos: ConfigGrupos | null;
   /** Entrenamientos terminados sin internet que esperan a mandarse (`cola.ts`). */
   pendientes?: number;
+  /** Lo que devolvió `compararMusculos`; lo pide `main.ts` al entrar a Compararme. */
+  comparacion?: EstadoComparar;
 }
 
 /** Lo que necesita Registro, armado de lo que hay en cada repintado. Lo usa también `main.ts`. */
@@ -76,6 +81,9 @@ export function datosRegistro(d: DatosCliente): DatosRegistro {
     sesiones: d.sesiones,
     config: d.configGrupos,
     pendientes: d.pendientes ?? 0,
+    promedioMinutos: promedioMinutos(d.asistencias),
+    fuerza: (sesiones) => fuerzaDelCliente({ ...d, sesiones: [...sesiones] }),
+    sexo: d.cliente.sexo === "H" || d.cliente.sexo === "M" ? d.cliente.sexo : null,
   };
 }
 
@@ -85,9 +93,10 @@ export interface Ventana {
   icono: string;
   /**
    * `pie` se pega al fondo del menú, separado del resto. `barra` no sale en el menú: vive solo
-   * en la barra de abajo (ver `BARRA`).
+   * en la barra de abajo (ver `BARRA`). `sub` tampoco: se abre desde dentro de otra ventana
+   * (`PADRE` en `navegacion.ts`).
    */
-  grupo: "principal" | "pie" | "barra";
+  grupo: "principal" | "pie" | "barra" | "sub";
   /** Se puede abrir, pero todavía muestra "Muy pronto". */
   proximamente?: boolean;
   /** Lo que va dentro de `#contenido`. */
@@ -100,7 +109,8 @@ export interface Ventana {
 }
 
 /**
- * Lo que hoy es "hoy": el recordatorio de pago (si toca), el día con sus dos acciones, la
+ * Lo que hoy es "hoy": el recordatorio de pago (si toca), el día con "▶ Empezar
+ * entrenamiento" y sus dos acciones, la
  * invitación a activar las notificaciones (si toca), la racha, revivirla y el calendario, en
  * ese orden. El recordatorio va primero porque es lo único
  * de la página con fecha límite; abajo del calendario nadie lo vería. Cada acción vive junto al
@@ -114,9 +124,10 @@ function inicio(d: DatosCliente): string {
       ${hojaDeMotivosAbierta() ? "" : accionHoyNoPuedo(d.cliente, d.hoy, d.yaAviso)}`;
   return `
       ${tarjetaRecordatorioPago(recordatorioPago(d.cliente, d.hoy))}
-      ${tarjetaDia(d.cliente, d.hoy, acciones, d.asistencias)}
+      ${tarjetaDia(d.cliente, d.hoy, acciones, d.asistencias,
+        botonEntrenar(diaDeHoy(d.cliente, d.hoy, d.asistencias), entrenamientoAbierto()))}
       ${invitacionNotificaciones(d.notificaciones, d.invitacionDescartada)}
-      ${tarjetasStats(d.asistencias, d.hoy)}
+      ${tarjetasStats(d.asistencias, d.hoy, d.sesiones ? resumenSemana(d.sesiones, d.hoy).entrenamientos : null)}
       ${tarjetaRevivir(d.cliente, d.hoy, d.asistencias, d.tiradaEsteMes, d.tiradaMesAnterior)}
       ${calendario(d.asistencias, d.mesVisible, d.hoy)}
     `;
@@ -141,12 +152,16 @@ export const VENTANAS: readonly Ventana[] = [
   {
     id: "musculos", titulo: "Músculos", icono: "💪", grupo: "barra",
     // Sin sexo el mapa ya avisa que falta su perfil; con él, sin peso no deja pasar.
-    pintar: (d) => tarjetaMusculos(d.cliente.sexo, d.mapas, fuerzaDelCliente(d), d.cliente.peso ?? null)
-      + (d.cliente.sexo === "H" || d.cliente.sexo === "M" ? bloquePeso(d.cliente.peso) : ""),
+    pintar: (d) => tarjetaMusculos(d.cliente.sexo, d.mapas, fuerzaDelCliente(d), d.cliente.peso ?? null,
+      d.cliente.sexo === "H" || d.cliente.sexo === "M" ? bloquePeso(d.cliente.peso) : ""),
   },
   {
     id: "registro", titulo: "Registro", icono: "📝", grupo: "barra",
     pintar: (d) => ventanaRegistro(datosRegistro(d)),
+  },
+  {
+    id: "comparar", titulo: "Compararme", icono: "👥", grupo: "sub",
+    pintar: (d) => ventanaComparar(d.comparacion ?? { estado: "cargando" }, d.cliente.sexo, d.mapas),
   },
   {
     id: "ranking", titulo: "Ranking", icono: "🏆", grupo: "principal",

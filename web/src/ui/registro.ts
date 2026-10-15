@@ -1,10 +1,14 @@
 import type { ConfigGrupos, Ejercicio, EjercicioBanco, Sesion } from "../datos";
+import { RANGOS, nombreRango, type FuerzaMusculo } from "../fuerza";
+import { armarResumen, sesionDeEnvio, type Resumen } from "../resumen";
+import { insigniaRango } from "./insigniaRango";
 import { claveBanco, urlGif, urlVideo, type IndiceBanco } from "../banco";
 import { seccionesRegistro } from "../grupos";
 import {
   agregarEjercicio,
   agregarSerie,
   borradorDeSesion,
+  borradorGuiado,
   cambiarSerie,
   cambiarUnidad,
   idNuevo,
@@ -27,6 +31,7 @@ import { rechazoDefinitivo } from "../cola";
 import { escapar } from "./tarjetaDia";
 import { aterrizar, despegar } from "./vueloRegistro";
 import { conectarDeslizar } from "./deslizarRegistro";
+import { cronometro } from "./cronometro";
 
 /**
  * La ventana Registro: la clienta anota lo que entrenó con su coach en el gym, por
@@ -70,9 +75,21 @@ export interface DatosRegistro {
   config: ConfigGrupos | null;
   /** Entrenamientos terminados sin internet que esperan a mandarse (`cola.ts`). */
   pendientes?: number;
+  /**
+   * Minutos promedio por sesión, de sus asistencias (`promedioMinutos`); null sin sesiones
+   * medidas. Estaba en Inicio y se cambió de lugar con el "n / 5" (entrenador, 2026-10-14).
+   */
+  promedioMinutos?: number | null;
+  /**
+   * Su fuerza por músculo con esas sesiones (`fuerzaDelCliente`), para el resumen al terminar:
+   * se calcula sin y con el entrenamiento recién hecho para ver qué subió de rango. Vacío si
+   * le falta sexo o peso.
+   */
+  fuerza?: (sesiones: readonly Sesion[]) => Record<string, FuerzaMusculo>;
+  sexo?: "H" | "M" | null;
 }
 
-type Vista = "inicio" | "historial" | "elegir" | "capturar";
+type Vista = "inicio" | "historial" | "elegir" | "capturar" | "resumen";
 
 interface Estado {
   vista: Vista;
@@ -98,6 +115,8 @@ interface Estado {
   avanzando: boolean;
   /** El último cambio fue deslizando de lado: la tarjeta nueva entra de lado y no de abajo. */
   lateral: boolean;
+  /** El entrenamiento recién terminado, para su pantalla de resumen; null fuera de ella. */
+  resumen: (Resumen & { dia: string | null }) | null;
 }
 
 const LLAVE_BORRADOR = "osfit:registro-borrador";
@@ -117,11 +136,44 @@ const estado: Estado = {
   borrando: null,
   avanzando: true,
   lateral: false,
+  resumen: null,
 };
 
 /** Solo para los tests: poner la ventana en una vista y con un borrador dados. */
-export function ponerEstadoRegistro(parcial: Partial<Pick<Estado, "vista" | "borrador" | "error" | "activo">>): void {
-  Object.assign(estado, { guardado: false, enVuelo: false, error: null, activo: null, aviso: null, borrando: null }, parcial);
+export function ponerEstadoRegistro(parcial: Partial<Pick<Estado, "vista" | "borrador" | "error" | "activo" | "resumen">>): void {
+  Object.assign(estado, { guardado: false, enVuelo: false, error: null, activo: null, aviso: null, borrando: null, resumen: null }, parcial);
+}
+
+/**
+ * Qué hay abierto en Registro, para el botón de la tarjeta del día: "nuevo" es un
+ * entrenamiento en curso (se continúa), "edicion" la corrección de uno pasado.
+ */
+export function entrenamientoAbierto(): "nuevo" | "edicion" | null {
+  const b = estado.borrador;
+  return !b ? null : b.edicion ? "edicion" : "nuevo";
+}
+
+/**
+ * "▶ Empezar" en la tarjeta del día (backlog 2, punto 7): abre la misma pantalla de captura
+ * de Registro con los ejercicios que le recomienda su rutina ya cargados, el primero en grande.
+ * Con un entrenamiento ya abierto no arma otro: la deja en el que lleva. Devuelve si empezó
+ * uno nuevo, para que quien la llama marque la asistencia como con "Iniciar entrenamiento".
+ */
+export function empezarGuiado(d: DatosRegistro, ahora = Date.now()): boolean {
+  estado.guardado = false;
+  estado.error = null;
+  estado.aviso = null;
+  if (estado.borrador) {
+    estado.vista = "capturar";
+    return false;
+  }
+  if (!d.dia) return false;
+  guardarBorrador(borradorGuiado(idNuevo(), d.hoy, ahora, d.dia, d.indice, d.sesiones ?? []));
+  estado.vista = "capturar";
+  estado.activo = 0;
+  estado.avanzando = true;
+  estado.lateral = false;
+  return true;
 }
 
 function guardarBorrador(b: Borrador | null): void {
@@ -254,12 +306,6 @@ function filaReciente(s: Sesion): string {
  * el botón para empezar y sus entrenamientos recientes. Todo sale de lo que ella anotó; de la
  * rutina solo se toma el nombre del día que le toca, para el botón.
  */
-/**
- * Los entrenamientos que se buscan por semana: el "2 / 5" del resumen. El mismo para todas,
- * tenga su rutina los días que tenga (decisión del entrenador, 2026-10-14).
- */
-const OBJETIVO_SEMANAL = 5;
-
 function vistaInicio(d: DatosRegistro): string {
   const n = d.pendientes ?? 0;
   // Guardado sin internet y ya se mandó (la cola quedó vacía): es un guardado normal.
@@ -281,10 +327,10 @@ function vistaInicio(d: DatosRegistro): string {
       </li>`;
   }).join("");
 
-  const meta = `<span class="registro-dato-de"> / ${OBJETIVO_SEMANAL}</span>`;
+  const promedio = d.promedioMinutos ?? null;
   const datos = `
     <div class="registro-datos">
-      <div class="registro-dato"><strong>${semana.entrenamientos}${meta}</strong><span>entrenamientos</span></div>
+      <div class="registro-dato"><strong>${promedio === null ? "—" : duracion(promedio)}</strong><span>promedio por sesión</span></div>
       <div class="registro-dato"><strong>${semana.minutos === null ? "—" : duracion(semana.minutos)}</strong><span>entrenando</span></div>
       <div class="registro-dato"><strong>${semana.series}</strong><span>series</span></div>
     </div>`;
@@ -346,9 +392,19 @@ function opcion(e: EjercicioBanco): string {
     </button>`;
 }
 
+/**
+ * El cronómetro arriba del entrenamiento en curso, desde que lo inició. No en una corrección
+ * (ya terminó) ni en los borradores de antes de guardar la hora de inicio.
+ */
+function cronometroDelBorrador(): string {
+  const b = estado.borrador;
+  return b && !b.edicion && typeof b.iniciado === "number" ? cronometro(b.iniciado) : "";
+}
+
 function vistaElegir(d: DatosRegistro): string {
   if (d.banco.length === 0) {
     return `
+      ${cronometroDelBorrador()}
       <button class="boton-texto registro-volver" data-accion="volver">← Volver</button>
       <p class="accion-nota">Cargando ejercicios…</p>`;
   }
@@ -370,6 +426,7 @@ function vistaElegir(d: DatosRegistro): string {
     ? `<p class="accion-nota" style="margin:2px 2px 0">Hoy te toca ${escapar(d.dia.nombreDia.trim())}</p>`
     : "";
   return `
+    ${cronometroDelBorrador()}
     <button class="boton-texto registro-volver" data-accion="volver">← Volver</button>
     <p class="confirmar-titulo">¿Qué ejercicio hiciste?</p>
     ${hoy}
@@ -459,6 +516,7 @@ function tarjetaActiva(e: EjercicioBorrador, i: number, total: number, delBanco?
         <button class="registro-quitar registro-quitar-ej" data-quitar-ej="${i}" aria-label="Quitar ${escapar(e.nombre)}">✕</button>
       </div>
       <p class="registro-activo-nombre">${escapar(e.nombre)}</p>
+      ${e.objetivo ? `<p class="registro-objetivo">Tu rutina: ${escapar(e.objetivo)}</p>` : ""}
       ${unidad}
       ${nota}
       ${e.series.map((s, j) => filaSerie(e, i, s, j)).join("")}
@@ -501,15 +559,74 @@ function vistaCapturar(d: DatosRegistro): string {
       <p><strong>Agrega tu primer ejercicio</strong></p>
       <p style="color: var(--texto-tenue); font-size: 14px">Elige el que te puso tu coach y anota tus series.</p>
     </div>`;
+  // Los de su rutina que no están en el banco no se pueden guardar: se le dice cuáles, para
+  // que elija el más parecido del grid si quiere anotarlos.
+  const faltan = b.guiado?.sinLigar ?? [];
+  const sinLigar = faltan.length === 0 ? "" : `
+    <p class="accion-nota registro-sin-ligar">${faltan.length === 1 ? "Este ejercicio de tu rutina no está" : "Estos ejercicios de tu rutina no están"} en la lista: ${escapar(faltan.join(", "))}. Si los haces, agrega el más parecido con "+ Agregar ejercicio".</p>`;
   const off = estado.enVuelo ? "disabled" : "";
   return `
+    ${cronometroDelBorrador()}
     ${hay ? ejerciciosDelEntrenamiento(b, d.banco) : ""}
     ${vacio}
+    ${sinLigar}
     ${error}
     <button class="boton${hay ? " secundario" : ""}" data-accion="agregar" ${off}>+ Agregar ejercicio</button>
     ${hay ? `<button class="boton" data-accion="guardar" ${off}>${estado.enVuelo ? "Guardando…" : b.edicion ? "Guardar cambios" : "Terminar entrenamiento"}</button>` : ""}
     ${hay ? CREDITO : ""}
     <button class="boton-texto registro-eliminar" data-accion="descartar" ${off}>${b.edicion ? "Cancelar cambios" : "Eliminar entrenamiento"}</button>`;
+}
+
+// ── Resumen ──────────────────────────────────────────────────────────────────
+
+/**
+ * Al terminar un entrenamiento, de Registro o guiado: cuánto duró y cuánto hizo, si algún
+ * músculo subió de rango, y los músculos que trabajó. Ver `resumen.ts`.
+ */
+function vistaResumen(r: Resumen & { dia: string | null }, sexo: "H" | "M"): string {
+  const dato = (valor: string, texto: string) =>
+    `<div class="registro-dato"><strong>${escapar(valor)}</strong><span>${texto}</span></div>`;
+  const datos = `
+    <div class="registro-datos resumen-datos">
+      ${dato(r.minutos === null ? "—" : duracion(r.minutos), "entrenando")}
+      ${dato(String(r.ejercicios), r.ejercicios === 1 ? "ejercicio" : "ejercicios")}
+      ${dato(String(r.series), r.series === 1 ? "serie" : "series")}
+      ${dato(`${r.kilos.toLocaleString("es-MX")} kg`, "levantados")}
+    </div>`;
+  const subidas = r.subidas.length === 0 ? "" : `
+    <div class="tarjeta resumen-subidas">
+      <p class="tarjeta-titulo">${r.subidas.length === 1 ? "¡Subiste de rango!" : "¡Subiste de rango en " + r.subidas.length + " músculos!"}</p>
+      ${r.subidas.map((s) => `
+        <div class="resumen-subida">
+          ${insigniaRango(s.despues, 44, `resumen-${s.musculo}`)}
+          <span class="resumen-subida-texto">
+            <strong>${escapar(s.nombre)}</strong>
+            <span>${s.antes === null ? "" : `${escapar(nombreRango(RANGOS[s.antes].desde, sexo))} → `}${escapar(nombreRango(s.nivel, sexo))}</span>
+          </span>
+        </div>`).join("")}
+    </div>`;
+  const musculos = r.musculos.length === 0 ? "" : `
+    <div class="tarjeta">
+      <p class="tarjeta-titulo">Músculos que trabajaste</p>
+      <div class="resumen-musculos">
+        ${r.musculos.map((m) => `<span class="resumen-musculo${m.principal ? " principal" : ""}">${escapar(m.nombre)}</span>`).join("")}
+      </div>
+    </div>`;
+  const nota = r.enTelefono
+    ? `<p class="registro-pendientes">📱 Se guardó en tu teléfono y se enviará solo en cuanto tengas internet.</p>`
+    : "";
+  return `
+    <div class="resumen">
+      <p class="resumen-emoji" aria-hidden="true">${r.subidas.length > 0 ? "🏆" : "🎉"}</p>
+      <p class="resumen-titulo">¡Entrenamiento terminado!</p>
+      ${r.dia ? `<p class="resumen-dia">${escapar(r.dia)}</p>` : ""}
+    </div>
+    ${nota}
+    ${datos}
+    ${subidas}
+    ${musculos}
+    <button class="boton" data-accion="listo">Listo</button>
+    <button class="boton secundario resumen-musculos-boton" data-accion="ver-musculos">💪 Ver mis músculos</button>`;
 }
 
 /**
@@ -524,7 +641,7 @@ export function cabeceraRegistro(): { titulo: string; detalle: string } | null {
   if (b.edicion) return { titulo: "Editando entrenamiento", detalle: enPalabras(b.fecha) };
   const desde = horaDeMs(b.iniciado);
   return {
-    titulo: "Entrenamiento en curso",
+    titulo: b.guiado?.nombreDia ? `Entrenando · ${b.guiado.nombreDia}` : "Entrenamiento en curso",
     detalle: `${enPalabras(b.fecha)}${desde ? ` · desde las ${desde}` : ""}`,
   };
 }
@@ -534,7 +651,9 @@ export function ventanaRegistro(d: DatosRegistro): string {
   // Con un entrenamiento abierto, Registro se abre en él; sin uno, no hay qué capturar ni elegir.
   if (estado.vista === "inicio" && estado.borrador) estado.vista = "capturar";
   if ((estado.vista === "capturar" || estado.vista === "elegir") && !estado.borrador) estado.vista = "inicio";
-  const cuerpo = estado.vista === "elegir" ? vistaElegir(d)
+  if (estado.vista === "resumen" && !estado.resumen) estado.vista = "inicio";
+  const cuerpo = estado.vista === "resumen" && estado.resumen ? vistaResumen(estado.resumen, d.sexo === "M" ? "M" : "H")
+    : estado.vista === "elegir" ? vistaElegir(d)
     : estado.vista === "capturar" ? vistaCapturar(d)
     : estado.vista === "historial" ? vistaHistorial(d)
     : vistaInicio(d);
@@ -559,6 +678,8 @@ export interface AccionesRegistro {
   encolar?: (envio: Envio) => void;
   /** Al iniciar un entrenamiento nuevo: marca su asistencia de hoy (`marcarAsistencia`). */
   alIniciar?: () => void;
+  /** "Ver mis músculos" del resumen: abre la ventana Músculos. */
+  verMusculos?: () => void;
 }
 
 /**
@@ -623,6 +744,17 @@ export function conectarRegistro(
       return;
     }
     if (accion === "agregar" && b) { ir("elegir"); return; }
+    if (accion === "listo" || accion === "ver-musculos") {
+      estado.resumen = null;
+      estado.guardado = false;
+      if (accion === "ver-musculos" && acciones.verMusculos) {
+        estado.vista = "inicio";
+        acciones.verMusculos();
+        return;
+      }
+      ir("inicio");
+      return;
+    }
     if (accion === "historial") { estado.guardado = false; estado.aviso = null; ir("historial"); return; }
     // Volver siempre lleva al entrenamiento si hay uno abierto, y si no, al inicio de Registro.
     if (accion === "volver") { ir(b ? "capturar" : "inicio"); return; }
@@ -644,13 +776,32 @@ export function conectarRegistro(
       const edicion = b.edicion === true;
       // Uno nuevo lleva su día y la hora en que terminó: si se manda tarde, valen esos.
       const datos: Envio = edicion ? envio.datos : { ...envio.datos, fecha: b.fecha, terminadaEn: Date.now() };
+      /** El resumen se arma con lo que había antes de guardar: así se ve qué subió de rango. */
+      const resumir = (enTelefono: boolean): void => {
+        const previas = d.sesiones ?? [];
+        const fuerza = d.fuerza ?? (() => ({}));
+        estado.resumen = {
+          ...armarResumen({
+            envio: datos,
+            iniciado: b.iniciado,
+            terminado: datos.terminadaEn ?? Date.now(),
+            banco: d.banco,
+            fuerzaAntes: fuerza(previas),
+            fuerzaDespues: fuerza([sesionDeEnvio(datos, b.fecha, d.banco), ...previas]),
+            enTelefono,
+            guiado: b.guiado !== undefined,
+          }),
+          dia: b.guiado?.nombreDia || null,
+        };
+      };
       /** Sin internet: se queda en el teléfono y se manda solo cuando vuelva la señal. */
       const enTelefono = (): void => {
         acciones.encolar?.(datos);
         estado.enVuelo = false;
+        resumir(true);
         guardarBorrador(null);
         estado.guardado = "en-telefono";
-        ir("inicio");
+        ir("resumen");
       };
       const puedeEsperar = !edicion && acciones.encolar !== undefined;
       // Si el teléfono ya sabe que no hay red, ni se intenta: sería esperar a que falle.
@@ -668,8 +819,9 @@ export function conectarRegistro(
             estado.aviso = "Cambios guardados ✓";
             ir("historial");
           } else {
+            resumir(false);
             estado.guardado = "enviado";
-            ir("inicio");
+            ir("resumen");
           }
         },
         (error) => {

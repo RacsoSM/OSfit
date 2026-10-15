@@ -115,11 +115,29 @@ export function diaDeHoy(
   };
 }
 
+/**
+ * El botón del entrenamiento guiado (backlog 2, punto 7): grande y lo primero de la tarjeta.
+ * Abre la pantalla de captura de Registro con los ejercicios de hoy ya cargados. Con uno
+ * abierto, lo continúa. Sin ejercicios en el día no hay qué guiar y no sale.
+ */
+export function botonEntrenar(
+  dia: { ejercicios: readonly Ejercicio[] } | null,
+  abierto: "nuevo" | "edicion" | null
+): string {
+  if (!dia || dia.ejercicios.length === 0) return "";
+  const texto = abierto === "nuevo" ? "Continuar entrenamiento" : "Empezar entrenamiento guiado";
+  // Triángulo dibujado y no el carácter ▶: el carácter se sienta en la línea base de la fuente
+  // y se ve más alto que el texto; el SVG se centra exacto con `align-items: center`.
+  const play = `<svg class="hoy-empezar-play" viewBox="0 0 20 20" aria-hidden="true"><path d="M5 2.5v15l13-7.5z" fill="currentColor"/></svg>`;
+  return `<button id="empezar-entrenamiento" class="boton hoy-empezar">${play}<span>${texto}</span></button>`;
+}
+
 export function tarjetaDia(
   cliente: Cliente,
   hoy: string,
   acciones = "",
-  asistencias: Asistencia[] = []
+  asistencias: Asistencia[] = [],
+  entrenar = ""
 ): string {
   const dias = cliente.rutinaAsignada?.dias ?? [];
 
@@ -178,6 +196,7 @@ export function tarjetaDia(
       <span class="hoy-fantasmitas" aria-hidden="true"><i></i><i></i><i></i></span>
       <p class="tarjeta-titulo">Hoy te toca</p>
       <p class="hoy-dia">Día ${indice + 1}<br>${escapar(dias[indice]?.nombreDia ?? "")}</p>
+      ${entrenar}
       ${listaEjercicios(
         dias[indice]
           ? conSusPesos(cliente, ejerciciosDeHoy(dias[indice], indice, asistencias, hoy))

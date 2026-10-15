@@ -49,8 +49,6 @@ export function necesitaPeso(peso: number | null | undefined): boolean {
   return pesoActual(peso) === null;
 }
 
-const kg = (n: number) => `${n.toLocaleString("es-MX", { maximumFractionDigits: 1 })} kg`;
-
 /**
  * El aviso que bloquea la ventana, o la línea para actualizar el peso. Va después del mapa:
  * el velo es `fixed`, tapa todo menos la barra de abajo, así que puede salir a otra ventana.
@@ -58,11 +56,11 @@ const kg = (n: number) => `${n.toLocaleString("es-MX", { maximumFractionDigits: 
 export function bloquePeso(pesoCliente: number | null | undefined): string {
   const peso = pesoActual(pesoCliente);
   const obligatorio = peso === null;
+  // Con peso, solo el botón: el número no se muestra en la pantalla (entrenador, 2026-10-14).
   if (!obligatorio && !editando) {
     return `
       <p class="peso-linea">
-        Tu peso corporal: <strong>${kg(peso)}</strong>
-        <button type="button" class="boton-texto" id="peso-actualizar">Actualizar</button>
+        <button type="button" class="boton-texto" id="peso-actualizar">Actualizar peso corporal</button>
       </p>`;
   }
   const valor = (borrador ?? (peso === null ? "" : String(peso))).replace(/"/g, "");

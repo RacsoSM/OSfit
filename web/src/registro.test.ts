@@ -4,6 +4,7 @@ import {
   agregarEjercicio,
   agregarSerie,
   borradorDeSesion,
+  borradorGuiado,
   cambiarSerie,
   cambiarUnidad,
   leerBorrador,
@@ -16,7 +17,9 @@ import {
   resumenSeries,
   ultimasSeries,
   repsDudosas,
+  objetivoDeRutina,
 } from "./registro";
+import { indiceBanco } from "./banco";
 import { barrasAKg } from "./barras";
 
 function ej(campos: Partial<EjercicioBanco> = {}): EjercicioBanco {
@@ -333,3 +336,53 @@ describe("repsDudosas", () => {
   });
 });
 
+
+describe("borradorGuiado", () => {
+  const banco = [ej({ alias: ["press banca"] }), dominadas, plancha];
+  const dia = {
+    nombreDia: " Pecho y espalda ",
+    ejercicios: [
+      { nombre: "Press banca", series: 4, repeticiones: "10-12", pesoONota: "30 kg" },
+      { nombre: "Dominadas", series: 3, repeticiones: "al fallo", pesoONota: "" },
+      { nombre: "Pec deck raro", series: 3, repeticiones: "12", pesoONota: "" },
+      { nombre: "press banca", series: 2, repeticiones: "8", pesoONota: "" },
+    ],
+  };
+
+  it("carga los ejercicios del día en orden, con las series de la rutina y lo que pide", () => {
+    const b = borradorGuiado("guiado123", "2026-10-12", 1000, dia, indiceBanco(banco), []);
+    expect(b.iniciado).toBe(1000);
+    expect(b.ejercicios.map((e) => e.ejercicioId)).toEqual(["press-banca", "dominadas"]);
+    expect(b.ejercicios[0].series).toHaveLength(4);
+    expect(b.ejercicios[0].objetivo).toBe("4 × 10-12 · 30 kg");
+    expect(b.ejercicios[1].series).toHaveLength(3);
+    expect(b.guiado).toEqual({ nombreDia: "Pecho y espalda", sinLigar: ["Pec deck raro"] });
+  });
+
+  it("prellena con lo de la última vez", () => {
+    const sesion = {
+      id: "s1", fecha: "2026-10-10", origen: "manual",
+      ejercicios: [{ ejercicioId: "press-banca", nombre: "Press de banca", series: [{ reps: 8, peso: 40 }] }],
+    } as unknown as Sesion;
+    const b = borradorGuiado("guiado123", "2026-10-12", 1000, dia, indiceBanco(banco), [sesion]);
+    expect(b.ejercicios[0].series).toEqual([{ reps: "8", peso: "40" }]);
+  });
+
+  it("se envía como guiado", () => {
+    let b = borradorGuiado("guiado123", "2026-10-12", 1000, dia, indiceBanco(banco), []);
+    b = cambiarSerie(b, 0, 0, "reps", "10");
+    b = cambiarSerie(b, 0, 0, "peso", "30");
+    const r = paraEnviar(b);
+    expect(r.ok && r.datos.origen).toBe("guiado");
+    const manual = paraEnviar(cambiarSerie(cambiarSerie(agregarEjercicio(vacio(), ej(), null, 1), 0, 0, "reps", "5"), 0, 0, "peso", "20"));
+    expect(manual.ok && manual.datos.origen).toBeUndefined();
+  });
+});
+
+describe("objetivoDeRutina", () => {
+  it("arma series × reps y la nota", () => {
+    expect(objetivoDeRutina({ nombre: "x", series: 4, repeticiones: "10", pesoONota: "" })).toBe("4 × 10");
+    expect(objetivoDeRutina({ nombre: "x", series: 3, repeticiones: "", pesoONota: "ligero" })).toBe("3 series · ligero");
+    expect(objetivoDeRutina({ nombre: "x", series: 0, repeticiones: "", pesoONota: "" })).toBe("");
+  });
+});

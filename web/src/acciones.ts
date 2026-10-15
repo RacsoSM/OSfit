@@ -1,4 +1,5 @@
 import { httpsCallable } from "firebase/functions";
+import type { PersonaComparar } from "./ui/comparar";
 import { functions } from "./firebase";
 import type { Ranking } from "./datos";
 import type { Envio } from "./registro";
@@ -47,6 +48,15 @@ export const jugarRuleta = httpsCallable<
 export const obtenerRanking = httpsCallable<Record<string, never>, Ranking>(
   functions,
   "obtenerRanking"
+);
+
+/**
+ * Compararme: todas las que tienen algún músculo con rango, con su nivel por músculo. Lo arma
+ * el servidor porque cada clienta solo puede leer sus propias sesiones.
+ */
+export const compararMusculos = httpsCallable<Record<string, never>, { personas: PersonaComparar[] }>(
+  functions,
+  "compararMusculos"
 );
 
 /**

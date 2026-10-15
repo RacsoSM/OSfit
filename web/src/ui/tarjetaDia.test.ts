@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Asistencia, Cliente, Ejercicio } from "../datos";
-import { diaDeHoy, tarjetaDia } from "./tarjetaDia";
+import { botonEntrenar, diaDeHoy, tarjetaDia } from "./tarjetaDia";
 
 /** 2026-09-15 es lunes; 2026-09-19 viernes; 2026-09-20 domingo. */
 const LUNES = "2026-09-15";
@@ -226,5 +226,17 @@ describe("diaDeHoy", () => {
   it("fin de semana o sin rutina no hay día", () => {
     expect(diaDeHoy(cliente([ejercicio()]), DOMINGO)).toBeNull();
     expect(diaDeHoy(cliente([], { rutinaAsignada: null }), LUNES)).toBeNull();
+  });
+});
+
+describe("botonEntrenar", () => {
+  const dia = { ejercicios: [{ nombre: "Sentadilla", series: 4, repeticiones: "10", pesoONota: "" }] };
+  it("sale con ejercicios y continúa si ya hay uno abierto", () => {
+    expect(botonEntrenar(dia, null)).toContain("Empezar entrenamiento guiado");
+    expect(botonEntrenar(dia, "nuevo")).toContain("Continuar entrenamiento");
+  });
+  it("no sale sin día o sin ejercicios", () => {
+    expect(botonEntrenar(null, null)).toBe("");
+    expect(botonEntrenar({ ejercicios: [] }, null)).toBe("");
   });
 });

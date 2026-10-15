@@ -4,6 +4,7 @@ import {
   rangoGeneral, repartoRangos, siguienteRango, type Comparacion, type FuerzaMusculo,
 } from "../fuerza";
 import { COLORES_RANGO, insigniaRango } from "./insigniaRango";
+import { conectarHoja } from "./deslizarHoja";
 import { escapar } from "./tarjetaDia";
 import { seccionVacia } from "./tarjetaInsignias";
 
@@ -139,6 +140,11 @@ const ICONO_GIRAR = icono(
   '<path d="M20 12a8 8 0 0 1-13.9 5.4"/><path d="M4 12a8 8 0 0 1 13.9-5.4"/>'
   + '<path d="M18 2.8v3.9h-3.9"/><path d="M6 21.2v-3.9h3.9"/>'
 );
+/** Compararme: dos personas, de línea como los otros dos. */
+const ICONO_COMUNIDAD = icono(
+  '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/>'
+  + '<path d="M16 4.6a3.5 3.5 0 0 1 0 6.8"/><path d="M18.5 14.2a6.5 6.5 0 0 1 3 5.8"/>'
+);
 const ICONO_AYUDA = icono(
   '<path d="M7.4 7.9a4.6 4.6 0 1 1 6.5 4.2c-1.1.5-1.9 1.5-1.9 2.7v.8"/><path d="M12 20.1v.1"/>'
 );
@@ -220,7 +226,7 @@ export function detalleMusculo(
   if (!fuerza) {
     return `
       <section class="hoja-detalle" role="dialog" aria-label="${nombre}">
-        <div class="hoja-asa" aria-hidden="true"></div>${cerrar}
+        <div class="hoja-agarre" aria-hidden="true"><div class="hoja-asa"></div></div>${cerrar}
         <p class="hoja-musculo">${nombre}</p>
         <p class="hoja-sin-datos">Sin datos</p>
         <p class="hoja-frase">
@@ -243,7 +249,7 @@ export function detalleMusculo(
     `<button type="button" data-comparar="${c}" aria-pressed="${comparacion === c}">${texto}</button>`;
   return `
       <section class="hoja-detalle" role="dialog" aria-label="${nombre}: ${rango}" style="--color: ${COLORES_RANGO[yo]}">
-        <div class="hoja-asa" aria-hidden="true"></div>${cerrar}
+        <div class="hoja-agarre" aria-hidden="true"><div class="hoja-asa"></div></div>${cerrar}
         <p class="hoja-musculo">${nombre}</p>
         <div class="hoja-cabeza">
           ${insigniaRango(yo, 76, "detalle")}
@@ -337,12 +343,17 @@ export function bloqueRangoGeneral(
  * de CSS sobre lo que ya está (ver `conectarMapa`) y no un repintado que cortaría el giro.
  *
  * `fuerza` es el nivel de cada grupo (`data-musculo`); vacío mientras no exista el registro.
+ *
+ * `pie` va en medio de la fila de abajo, entre Compararme y girar: el "Actualizar peso
+ * corporal" (`bloquePeso`). La fila va debajo de "Toca un músculo…" y los dos íconos a la
+ * altura del peso, no encima del dibujo (pedido del entrenador, 2026-10-14).
  */
 export function tarjetaMusculos(
   sexo: Sexo | null | undefined,
   mapas: Readonly<Record<string, EstadoSvg>>,
   fuerza: Readonly<Record<string, FuerzaMusculo>> = {},
-  peso: number | null = null
+  peso: number | null = null,
+  pie = ""
 ): string {
   if (sexo !== "H" && sexo !== "M") {
     return seccionVacia(
@@ -367,10 +378,15 @@ export function tarjetaMusculos(
             ${cara("espalda", de(a.espalda), !deEspalda, fuerza)}
           </div>
         </div>
+      </div>
+      <div id="mapa-detalle">${detalle}</div>
+      <div class="mapa-pie">
+        <button type="button" class="mapa-comparar" id="abrir-comparar"
+                aria-label="Compararme con los demás" title="Compararme">${ICONO_COMUNIDAD}</button>
+        <div class="mapa-pie-centro">${pie}</div>
         <button type="button" class="mapa-girar" id="girar-mapa"
                 aria-label="${textoBoton(deEspalda)}" title="${textoBoton(deEspalda)}">${ICONO_GIRAR}</button>
       </div>
-      <div id="mapa-detalle">${detalle}</div>
       ${ayudaAbierta ? ayudaMapa(sexo) : ""}
     </section>`;
 }
@@ -496,6 +512,7 @@ export function conectarMapa(
     caja.innerHTML = detalleMusculo(seleccionado, seleccionado ? fuerza[seleccionado] : undefined, sexo, peso);
     if (abriendo) caja.querySelector(".hoja-detalle")?.classList.add("entra");
     caja.querySelector("#cerrar-detalle")?.addEventListener("click", () => elegir(null));
+    conectarHoja(caja.querySelector<HTMLElement>(".hoja-detalle"), () => elegir(null));
   };
   const elegir = (grupo: string | null) => {
     const abriendo = seleccionado === null && grupo !== null;
@@ -509,6 +526,7 @@ export function conectarMapa(
 
   marcarSeleccion(false);
   document.querySelector("#cerrar-detalle")?.addEventListener("click", () => elegir(null));
+  conectarHoja(document.querySelector<HTMLElement>("#mapa-detalle .hoja-detalle"), () => elegir(null));
   // "Todos / Quienes entrenan": delegado en la caja, que sobrevive a `pintarDetalle`.
   document.querySelector("#mapa-detalle")?.addEventListener("click", (e) => {
     const b = (e.target as Element).closest<HTMLElement>("[data-comparar]");

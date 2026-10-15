@@ -1,4 +1,5 @@
-import type { EjercicioBanco, SerieSesion, Sesion } from "./datos";
+import type { Ejercicio, EjercicioBanco, SerieSesion, Sesion } from "./datos";
+import { claveBanco, type IndiceBanco } from "./banco";
 import { lunesDe } from "./dia";
 import { barrasAKg, kgABarras, unidadPorDefecto, type Unidad } from "./barras";
 
@@ -27,6 +28,11 @@ export interface EjercicioBorrador {
    * siempre en kg. Ausente en los borradores de antes del selector: kg.
    */
   unidad?: Unidad;
+  /**
+   * Lo que le pide su rutina ("4 × 10-12 · 30 kg"), solo en el entrenamiento guiado: se
+   * muestra junto a sus series para que sepa qué le toca sin volver a Inicio.
+   */
+  objetivo?: string;
 }
 
 export interface Borrador {
@@ -45,6 +51,12 @@ export interface Borrador {
    * sus horas, y no a `registrarSesion`, que le pondría la fecha de hoy.
    */
   edicion?: boolean;
+  /**
+   * El entrenamiento guiado (backlog 2, punto 7): se empezó con "▶ Empezar" desde la tarjeta
+   * del día y trae ya cargados los ejercicios que le recomienda su rutina. Se guarda con
+   * `origen: "guiado"`. Ausente = uno de Registro, armado a mano.
+   */
+  guiado?: { nombreDia: string; sinLigar: string[] };
   ejercicios: EjercicioBorrador[];
 }
 
@@ -59,6 +71,8 @@ export interface Envio {
    */
   fecha?: string;
   terminadaEn?: number;
+  /** Solo en el guiado; sin él, el servidor lo guarda como "manual". */
+  origen?: "guiado";
   ejercicios: { ejercicioId: string; series: SerieSesion[] }[];
 }
 
@@ -100,6 +114,47 @@ export function agregarEjercicio(
       { ejercicioId: e.id, nombre: e.nombre, tipo: e.tipo, gifRuta: e.gifRuta ?? null, series, unidad },
     ],
   };
+}
+
+/** "4 × 10-12 · 30 kg": lo que dice la rutina de un ejercicio, en una línea. */
+export function objetivoDeRutina(e: Ejercicio): string {
+  const series = e.series > 0 ? `${e.series} × ` : "";
+  const reps = (e.repeticiones ?? "").trim();
+  const nota = (e.pesoONota ?? "").trim();
+  return [`${series}${reps}`.trim().replace(/ ×$/, " series"), nota].filter(Boolean).join(" · ");
+}
+
+/**
+ * El entrenamiento guiado: los ejercicios del día que le toca, en el orden de su rutina, ya
+ * agregados como en Registro (prellenados con lo de la última vez, o con tantas filas como
+ * series diga la rutina). Los que no se encuentran en el banco no se pueden guardar
+ * (`registrarSesion` los rechaza), así que se quedan fuera y se listan en `sinLigar` para
+ * avisarle. Un ejercicio repetido en la rutina entra una sola vez.
+ */
+export function borradorGuiado(
+  id: string,
+  fecha: string,
+  iniciado: number,
+  dia: { nombreDia: string; ejercicios: readonly Ejercicio[] },
+  indice: IndiceBanco,
+  sesiones: readonly Sesion[]
+): Borrador {
+  let b: Borrador = { ...nuevoBorrador(id, fecha, iniciado), guiado: { nombreDia: dia.nombreDia.trim(), sinLigar: [] } };
+  const sinLigar: string[] = [];
+  for (const x of dia.ejercicios) {
+    const e = indice.get(claveBanco(x.nombre ?? ""));
+    if (!e) {
+      if ((x.nombre ?? "").trim() !== "") sinLigar.push(x.nombre.trim());
+      continue;
+    }
+    const antes = b.ejercicios.length;
+    b = agregarEjercicio(b, e, ultimasSeries(sesiones, e.id), x.series > 0 ? x.series : null);
+    if (b.ejercicios.length > antes) {
+      const objetivo = objetivoDeRutina(x);
+      if (objetivo) b.ejercicios[antes] = { ...b.ejercicios[antes], objetivo };
+    }
+  }
+  return { ...b, guiado: { nombreDia: dia.nombreDia.trim(), sinLigar } };
 }
 
 /**
@@ -233,6 +288,7 @@ export function paraEnviar(b: Borrador): { ok: true; datos: Envio } | { ok: fals
   if (ejercicios.length === 0) return { ok: false, error: "Anota al menos una serie antes de guardar." };
   const datos: Envio = { id: b.id, ejercicios };
   if (typeof b.iniciado === "number") datos.iniciadaEn = b.iniciado;
+  if (b.guiado && !b.edicion) datos.origen = "guiado";
   return { ok: true, datos };
 }
 
@@ -298,6 +354,12 @@ export interface ResumenSemana {
 }
 
 const LETRAS = ["L", "M", "M", "J", "V", "S", "D"];
+
+/**
+ * Los entrenamientos que se buscan por semana: el "2 / 5" de la tarjeta de Inicio. El mismo
+ * para todas, tenga su rutina los días que tenga (decisión del entrenador, 2026-10-14).
+ */
+export const OBJETIVO_SEMANAL = 5;
 
 /**
  * Lo que lleva entrenado en la semana de [hoy], de lunes a domingo, contado solo con lo que ELLA

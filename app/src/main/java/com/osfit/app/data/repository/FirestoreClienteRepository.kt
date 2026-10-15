@@ -104,6 +104,10 @@ class FirestoreClienteRepository(
         coleccion.document(clienteId).update("recordatorioPago", activo).await()
     }
 
+    override suspend fun actualizarOcultarEnComparar(clienteId: String, ocultar: Boolean) {
+        coleccion.document(clienteId).update("ocultarEnComparar", ocultar).await()
+    }
+
     override suspend fun actualizarNotificacionesWeb(clienteId: String, habilitada: Boolean) {
         coleccion.document(clienteId).update("notificacionesWeb", habilitada).await()
     }

@@ -1,9 +1,15 @@
 import type { Asistencia } from "../datos";
-import { promedioMinutos, rachaActual } from "../racha";
+import { rachaActual } from "../racha";
+import { OBJETIVO_SEMANAL } from "../registro";
 
-export function tarjetasStats(asistencias: Asistencia[], hoy: string): string {
+/**
+ * La racha y los entrenamientos de la semana ("2 / 5", contados de lo que anotó en Registro).
+ * El promedio de minutos por sesión que iba aquí se cambió de lugar con "Tu semana" de
+ * Registro (entrenador, 2026-10-14). `entrenamientosSemana` es null mientras no llegan sus
+ * sesiones.
+ */
+export function tarjetasStats(asistencias: Asistencia[], hoy: string, entrenamientosSemana: number | null = null): string {
   const racha = rachaActual(asistencias, hoy);
-  const promedio = promedioMinutos(asistencias);
   // Sin ninguna asistencia registrada, un "🔥 0" y un "—" son un cero críptico, no una
   // respuesta: hace falta decir que es porque todavía no hay historial y quién lo llena.
   const sinHistorial = asistencias.length === 0;
@@ -18,10 +24,10 @@ export function tarjetasStats(asistencias: Asistencia[], hoy: string): string {
         </p>
       </div>
       <div class="tarjeta">
-        <p class="tarjeta-titulo">Promedio</p>
-        <p class="numero">${promedio ?? "—"}</p>
+        <p class="tarjeta-titulo">Esta semana</p>
+        <p class="numero">${entrenamientosSemana ?? "—"}<span class="numero-de"> / ${OBJETIVO_SEMANAL}</span></p>
         <p style="color: var(--texto-tenue); font-size: 12px; margin: 0">
-          ${promedio === null ? "aún sin sesiones medidas" : "minutos por sesión"}
+          ${entrenamientosSemana === 1 ? "entrenamiento" : "entrenamientos"}
         </p>
       </div>
     </div>

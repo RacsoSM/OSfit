@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import type { EjercicioBanco, Sesion } from "../datos";
 import { indiceBanco } from "../banco";
 import { agregarEjercicio, borradorDeSesion, nuevoBorrador } from "../registro";
-import { avisoReps, cabeceraRegistro, ponerEstadoRegistro, ventanaRegistro, type DatosRegistro } from "./registro";
+import { avisoReps, cabeceraRegistro, empezarGuiado, entrenamientoAbierto, ponerEstadoRegistro, ventanaRegistro, type DatosRegistro } from "./registro";
 
 const press: EjercicioBanco = {
   id: "press-banca", nombre: "Press de banca", alias: ["press banca"], tipo: "peso", grupo: "pecho",
@@ -57,12 +57,12 @@ describe("inicio", () => {
         { ejercicioId: "plancha", nombre: "Plancha", series: [{ reps: 45, peso: null }] },
       ],
     }];
-    const html = ventanaRegistro(datos({ hoy: "2026-10-13", sesiones }));
+    const html = ventanaRegistro(datos({ hoy: "2026-10-13", sesiones, promedioMinutos: 47 }));
     expect(html).toContain("Tu semana");
     expect(html).toContain("▶ Iniciar entrenamiento · Pecho");
     expect(html).toMatch(/registro-semana-num hecho[^>]*>12</);
     expect(html).toMatch(/registro-semana-num es-hoy[^>]*>13</);
-    expect(html).toMatch(/<strong>1<span class="registro-dato-de"> \/ 5<\/span><\/strong><span>entrenamientos</);
+    expect(html).toContain("<strong>47 min</strong><span>promedio por sesión");
     expect(html).toContain("<strong>52 min</strong>");
     expect(html).toContain("<strong>3</strong><span>series");
     expect(html).toContain("Press de banca y Plancha");
@@ -262,9 +262,83 @@ describe("entrenamientos sin internet", () => {
   });
 });
 
-describe("objetivo de la semana", () => {
-  it("es 5 para todas, tenga su rutina los días que tenga", () => {
-    expect(ventanaRegistro(datos())).toContain('<span class="registro-dato-de"> / 5</span>');
+describe("promedio por sesión", () => {
+  it("sin sesiones medidas dice —, y pasando de una hora usa horas", () => {
+    expect(ventanaRegistro(datos())).toContain("<strong>—</strong><span>promedio por sesión");
+    expect(ventanaRegistro(datos({ promedioMinutos: 65 }))).toContain("<strong>1 h 05</strong><span>promedio por sesión");
   });
 });
 
+
+describe("entrenamiento guiado", () => {
+  it("abre la captura con el ejercicio del día en grande, su GIF y lo que pide la rutina", () => {
+    expect(empezarGuiado(datos(), Date.UTC(2026, 9, 12, 17, 0))).toBe(true);
+    expect(entrenamientoAbierto()).toBe("nuevo");
+    const html = ventanaRegistro(datos());
+    expect(html).toContain("registro-ejercicio activo");
+    expect(html).toContain("Press de banca");
+    expect(html).toContain("ejercicios%2Fpress-banca.webp");
+    expect(html).toContain("Tu rutina: 4 × 10");
+    expect(html.match(/data-campo="reps"/g)).toHaveLength(4);
+    expect(cabeceraRegistro()?.titulo).toBe("Entrenando · Pecho");
+  });
+
+  it("con uno abierto no arma otro", () => {
+    const b = nuevoBorrador("b1234567", "2026-10-12");
+    ponerEstadoRegistro({ vista: "inicio", borrador: b });
+    expect(empezarGuiado(datos())).toBe(false);
+    expect(ventanaRegistro(datos())).toContain("Agrega tu primer ejercicio");
+  });
+
+  it("avisa de los ejercicios de la rutina que no están en el banco", () => {
+    const dia = { nombreDia: "Pecho", ejercicios: [{ nombre: "Máquina inventada", series: 3, repeticiones: "12", pesoONota: "" }] };
+    empezarGuiado(datos({ dia }));
+    expect(ventanaRegistro(datos({ dia }))).toContain("Máquina inventada");
+  });
+});
+
+describe("cronómetro", () => {
+  it("corre desde que inició el entrenamiento, en la captura y al elegir", () => {
+    const inicio = Date.UTC(2026, 9, 12, 17, 0);
+    ponerEstadoRegistro({ vista: "capturar", borrador: nuevoBorrador("b1234567", "2026-10-12", inicio) });
+    expect(ventanaRegistro(datos())).toContain(`data-desde="${inicio}"`);
+    ponerEstadoRegistro({ vista: "elegir", borrador: nuevoBorrador("b1234567", "2026-10-12", inicio) });
+    expect(ventanaRegistro(datos())).toContain(`data-desde="${inicio}"`);
+  });
+  it("no sale al corregir uno ya guardado", () => {
+    ponerEstadoRegistro({ vista: "capturar", borrador: { ...nuevoBorrador("b1234567", "2026-10-12", 1000), edicion: true } });
+    expect(ventanaRegistro(datos())).not.toContain("data-desde");
+  });
+});
+
+describe("resumen al terminar", () => {
+  const resumen = {
+    minutos: 48, ejercicios: 2, series: 7, kilos: 1240,
+    musculos: [{ musculo: "pecho", nombre: "Pecho", principal: true }, { musculo: "hombro", nombre: "Hombros", principal: false }],
+    subidas: [{ musculo: "pecho", nombre: "Pecho", antes: 2, despues: 3, nivel: 4.1 }],
+    enTelefono: false, guiado: true, dia: "Pecho y hombro",
+  };
+  it("muestra duración, lo que hizo, lo que subió de rango y los músculos", () => {
+    ponerEstadoRegistro({ vista: "resumen", borrador: null, resumen });
+    const html = ventanaRegistro(datos({ sexo: "M" }));
+    expect(html).toContain("¡Entrenamiento terminado!");
+    expect(html).toContain("Pecho y hombro");
+    expect(html).toContain("<strong>48 min</strong>");
+    expect(html).toContain("1,240 kg");
+    expect(html).toContain("¡Subiste de rango!");
+    expect(html).toContain("En forma → Intermedio");
+    expect(html).toContain('resumen-musculo principal">Pecho');
+    expect(html).toContain('data-accion="listo"');
+    expect(html).not.toContain("se enviará solo");
+  });
+  it("sin internet avisa que se guardó en el teléfono", () => {
+    ponerEstadoRegistro({ vista: "resumen", borrador: null, resumen: { ...resumen, enTelefono: true, subidas: [] } });
+    const html = ventanaRegistro(datos());
+    expect(html).toContain("se enviará solo");
+    expect(html).not.toContain("Subiste de rango");
+  });
+  it("sin resumen regresa al inicio de Registro", () => {
+    ponerEstadoRegistro({ vista: "resumen", borrador: null });
+    expect(ventanaRegistro(datos())).toContain("Tu semana");
+  });
+});

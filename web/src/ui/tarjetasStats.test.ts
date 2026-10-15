@@ -36,3 +36,19 @@ describe("tarjetasStats", () => {
     expect(html).toContain("día seguido sin faltar");
   });
 });
+
+describe("entrenamientos de la semana", () => {
+  it("muestra n / 5 en lugar del promedio", () => {
+    const html = tarjetasStats([asistencia()], "2026-09-13", 2);
+    expect(html).toContain("Esta semana");
+    expect(html).toMatch(/2<span class="numero-de"> \/ 5<\/span>/);
+    expect(html).toContain("entrenamientos");
+    expect(html).not.toContain("minutos por sesión");
+  });
+  it("mientras no llegan sus sesiones dice —", () => {
+    expect(tarjetasStats([asistencia()], "2026-09-13", null)).toMatch(/—<span class="numero-de"> \/ 5/);
+  });
+  it("en singular con uno", () => {
+    expect(tarjetasStats([asistencia()], "2026-09-13", 1)).toMatch(/>\s*entrenamiento\s*</);
+  });
+});

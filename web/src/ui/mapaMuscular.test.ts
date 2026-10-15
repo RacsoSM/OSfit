@@ -325,3 +325,15 @@ describe("bloqueRangoGeneral", () => {
     expect(tarjetaMusculos("H", {}, {})).not.toContain("rango-general");
   });
 });
+
+describe("botón de Compararme", () => {
+  it("va en el dibujo como ícono, junto al de girar", () => {
+    const html = tarjetaMusculos("M", { "/mapa-muscular-frente-mujer.svg": { estado: "listo", svg: frenteM } });
+    expect(html).toMatch(/class="mapa-comparar" id="abrir-comparar"[\s\S]*?<svg class="mapa-icono"/);
+    expect(html).toContain('id="girar-mapa"');
+  });
+  it("los dos íconos van en la fila de abajo, con el peso en medio", () => {
+    const html = tarjetaMusculos("M", {}, {}, 60, '<p class="peso-linea">PESO</p>');
+    expect(html).toMatch(/class="mapa-pie"[\s\S]*?id="abrir-comparar"[\s\S]*?PESO[\s\S]*?id="girar-mapa"/);
+  });
+});

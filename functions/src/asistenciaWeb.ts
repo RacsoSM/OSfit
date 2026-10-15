@@ -216,3 +216,42 @@ export const marcarAsistencia = onCall({ region: REGION }, async (request) => {
     throw new HttpsError("internal", (error as Error).message);
   }
 });
+
+/**
+ * Los minutos de la asistencia del día, sumando lo que duraron los entrenamientos que anotó
+ * en la web (de "Iniciar"/"Empezar" a "Terminar"). Null si ninguno sabe cuándo empezó.
+ * Pura para probarla. Se recalcula de todos los del día y no se va sumando: así guardar dos
+ * veces el mismo entrenamiento, o borrar uno, deja el número correcto.
+ */
+export function minutosDelDia(sesiones: { iniciadaMs: number | null; creadaMs: number | null }[]): number | null {
+  const medidas = sesiones.filter((s) => s.iniciadaMs !== null && s.creadaMs !== null && s.creadaMs >= s.iniciadaMs);
+  if (medidas.length === 0) return null;
+  return medidas.reduce((total, s) => total + Math.round(((s.creadaMs as number) - (s.iniciadaMs as number)) / 60_000), 0);
+}
+
+/**
+ * Si la duración de esa asistencia la puede escribir la web: hay asistencia y no la cronometró
+ * el entrenador (`horaLlegada`, que pone el cronómetro de su app). Lo que mide él manda.
+ */
+export function duracionEsDeLaWeb(asistencia: { asistio?: unknown; horaLlegada?: unknown } | undefined): boolean {
+  return asistencia?.asistio === true && (asistencia.horaLlegada === undefined || asistencia.horaLlegada === null);
+}
+
+/**
+ * Pone en la asistencia de [fecha] cuánto entrenó según sus entrenamientos de la web, para que
+ * quien entrena sola (sin el cronómetro del entrenador) tenga su tiempo en la app y en su
+ * promedio por sesión. La llaman `registrarSesion` y `borrarSesion`.
+ */
+export async function actualizarDuracionDelDia(clienteId: string, fecha: string): Promise<void> {
+  const firestore = db();
+  const asistencias = await firestore.collection("asistencias")
+    .where("clienteId", "==", clienteId).where("fecha", "==", fecha).get();
+  const asistencia = asistencias.docs[0];
+  if (!asistencia || !duracionEsDeLaWeb(asistencia.data())) return;
+  const sesiones = await firestore.collection("clientes").doc(clienteId).collection("sesiones")
+    .where("fecha", "==", fecha).get();
+  const ms = (v: unknown) => (v && typeof (v as { toMillis?: unknown }).toMillis === "function"
+    ? (v as { toMillis(): number }).toMillis() : null);
+  const minutos = minutosDelDia(sesiones.docs.map((d) => ({ iniciadaMs: ms(d.get("iniciada")), creadaMs: ms(d.get("creada")) })));
+  await asistencia.ref.update({ duracionMinutos: minutos });
+}

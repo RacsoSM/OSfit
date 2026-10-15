@@ -147,6 +147,14 @@ main {
 }
 /* La nota ocupa su propio renglón: es texto libre y puede ser larga ("bajarle, se lastimó"). */
 .ejercicio-nota { flex: 1 0 100%; font-size: 12px; color: rgba(255, 255, 255, 0.78); }
+/* "▶ Empezar entrenamiento guiado": el botón normal del estilo, con el triángulo a la izquierda
+   centrado con el texto. `.boton.hoy-empezar` y no solo la clase: `.boton` va más abajo en
+   este archivo y su `display: block` ganaría. */
+.boton.hoy-empezar {
+  margin: 10px 0 4px;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.hoy-empezar-play { width: 20px; height: 20px; flex: none; }
 .hoy-sin-ejercicios {
   font-size: 13px; color: rgba(255, 255, 255, 0.78); margin: 8px 0 0;
 }
@@ -172,6 +180,8 @@ main {
 .fila { display: flex; gap: 12px; }
 .fila > * { flex: 1; }
 .numero { font-size: 30px; font-weight: 800; line-height: 1; margin: 4px 0; }
+/* El "/ 5" de los entrenamientos de la semana: más chico y tenue, el número es lo que importa. */
+.numero-de { font-size: 0.6em; font-weight: 700; color: var(--texto-tenue); }
 .vacio { text-align: center; padding: 24px 12px; }
 .vacio-emoji { font-size: 40px; }
 /* Las dos acciones. Botones de ancho completo y alto cómodo: el cliente abre esto desde un
@@ -920,10 +930,13 @@ main:has(#barra) { padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
 .mapa-svg .linea, .mapa-svg .linea-mano, .mapa-svg .linea-elevada { pointer-events: none; }
 /* Solo el ícono, chico, en la esquina de abajo a la derecha del dibujo: así el cuerpo
    ocupa casi toda la pantalla. El nombre lo dice `aria-label`. */
-.mapa-girar {
-  position: absolute; right: -8px; bottom: 0; z-index: 1;
-}
-.mapa-girar:focus-visible { outline: 2px solid var(--primario); outline-offset: 3px; }
+/* Debajo de "Toca un músculo…": Compararme, "Actualizar peso corporal" y girar, en una sola fila. */
+.mapa-pie { display: flex; align-items: center; justify-content: space-between; gap: 4px; width: 100%; margin: 4px 0 0; }
+.mapa-pie-centro { flex: 1; min-width: 0; }
+.mapa-pie .peso-linea { margin: 0; }
+.mapa-pie .mapa-comparar { margin-left: -8px; }
+.mapa-pie .mapa-girar { margin-right: -8px; }
+.mapa-girar:focus-visible, .mapa-comparar:focus-visible { outline: 2px solid var(--primario); outline-offset: 3px; }
 .mapa-cargando {
   width: 55%; height: 85%; border-radius: 60px;
   background: var(--superficie-alta); animation: mapa-pulso 1.2s ease-in-out infinite alternate;
@@ -965,7 +978,7 @@ main:has(#barra) { padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
 /* El "?" sube a la esquina de arriba a la izquierda, a la altura del ☰ de la cabecera
    (44 px, justo encima de `.mapa-cuerpo`), y con su mismo tamaño. */
 .mapa-ayuda { position: absolute; left: -8px; top: -44px; z-index: 1; }
-.mapa-ayuda, .mapa-girar {
+.mapa-ayuda, .mapa-girar, .mapa-comparar {
   width: 50px; height: 50px; padding: 0;
   display: flex; align-items: center; justify-content: center;
   border: 0; border-radius: 12px; background: transparent;
@@ -973,7 +986,7 @@ main:has(#barra) { padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
   transition: transform 0.12s ease-out;
   -webkit-tap-highlight-color: transparent;
 }
-.mapa-ayuda:active, .mapa-girar:active { transform: scale(0.94); }
+.mapa-ayuda:active, .mapa-girar:active, .mapa-comparar:active { transform: scale(0.94); }
 .mapa-ayuda { width: 44px; height: 44px; }
 .mapa-ayuda .mapa-icono { stroke-width: 2.2; }
 .mapa-icono {
@@ -1167,7 +1180,6 @@ main:has(#barra) { padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
 }
 .registro-dato strong { font-size: 20px; white-space: nowrap; }
 .registro-dato span { font-size: 12px; color: var(--texto-tenue); }
-.registro-dato .registro-dato-de { display: inline; font-size: 14px; font-weight: 400; }
 .registro-boton-iniciar { margin: 14px 0 6px; padding: 18px 14px; font-size: 17px; border-radius: 16px; }
 .registro-recientes-cabecera { display: flex; justify-content: space-between; align-items: center; margin: 14px 4px 6px; }
 .registro-recientes-titulo {
@@ -1278,7 +1290,11 @@ main:has(#barra) { padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
    rehace por dentro y no debe volver a subir. */
 .hoja-detalle.entra { animation: hoja-sube 260ms cubic-bezier(0.2, 0.8, 0.2, 1); }
 @keyframes hoja-sube { from { transform: translateY(40%); opacity: 0; } to { transform: none; opacity: 1; } }
-.hoja-asa { width: 40px; height: 5px; border-radius: 9px; background: color-mix(in srgb, var(--texto) 25%, transparent); margin: 0 auto 6px; }
+/* La zona de la barrita: se jala hacia abajo para cerrar (`ui/deslizarHoja.ts`). Más alta que la
+   barrita para que el dedo la atine, y sin `touch-action` para que el navegador no la tome
+   como desplazamiento. */
+.hoja-agarre { margin: -10px 40px 0; padding: 10px 0 10px; touch-action: none; cursor: grab; }
+.hoja-asa { width: 40px; height: 5px; border-radius: 9px; background: color-mix(in srgb, var(--texto) 25%, transparent); margin: 0 auto; }
 .hoja-cerrar {
   position: absolute; top: 10px; right: 10px; width: 38px; height: 38px;
   border: 0; border-radius: 50%; background: color-mix(in srgb, var(--texto) 9%, transparent);
@@ -1328,3 +1344,106 @@ main:has(#barra) { padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
 .hoja-sig-texto strong { color: var(--texto); }
 .hoja-otra { margin: 0; font-size: 11px; color: var(--texto-tenue); }
 @media (prefers-reduced-motion: reduce) { .hoja-detalle.entra { animation: none; } .h-barra { transition: none; } }
+
+/* Lo que pide su rutina para el ejercicio, en el entrenamiento guiado. */
+.registro-objetivo { margin: -2px 0 8px; text-align: center; font-size: 14px; font-weight: 700; color: var(--primario); }
+.registro-sin-ligar { margin: 0 2px 12px; }
+
+/* El cronómetro del entrenamiento en curso. Pegado arriba al hacer scroll: entre serie y serie
+   se mira de reojo sin tener que subir. */
+.cronometro {
+  position: sticky; top: 8px; z-index: 5;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  width: fit-content; margin: 0 auto 12px; padding: 6px 16px; border-radius: 999px;
+  background: var(--primario); color: var(--sobre-primario);
+  font-size: 18px; font-weight: 800; box-shadow: 0 3px 10px rgba(0, 0, 0, 0.18);
+}
+.cronometro-tiempo { font-variant-numeric: tabular-nums; }
+
+/* El resumen al terminar un entrenamiento (Registro y guiado). */
+.resumen { text-align: center; margin: 8px 0 14px; }
+.resumen-emoji { font-size: 56px; line-height: 1; margin: 0 0 6px; animation: resumen-brinco 0.6s ease-out; }
+.resumen-titulo { margin: 0; font-size: 24px; font-weight: 800; }
+.resumen-dia { margin: 4px 0 0; color: var(--texto-tenue); font-size: 15px; }
+.resumen-datos { grid-template-columns: repeat(2, minmax(0, 1fr)); margin-bottom: 12px; }
+.resumen-subidas .resumen-subida { display: flex; align-items: center; gap: 12px; padding: 6px 0; }
+.resumen-subida svg { flex: none; }
+.resumen-subida-texto { display: flex; flex-direction: column; gap: 2px; }
+.resumen-subida-texto span { font-size: 13px; color: var(--texto-tenue); }
+.resumen-musculos { display: flex; flex-wrap: wrap; gap: 6px; }
+.resumen-musculo {
+  padding: 5px 11px; border-radius: 999px; font-size: 13px;
+  background: var(--superficie-alta); color: var(--texto-tenue);
+}
+.resumen-musculo.principal { background: var(--primario); color: var(--sobre-primario); font-weight: 700; }
+.resumen-musculos-boton { margin-top: 8px; }
+@keyframes resumen-brinco { 0% { transform: scale(0.4); opacity: 0; } 70% { transform: scale(1.15); } 100% { transform: scale(1); opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .resumen-emoji { animation: none; } }
+
+/* Compararme (dentro de Músculos): la lista con el rango general de cada una y, al tocar a
+   alguien, los dos cuerpos lado a lado con los colores de sus rangos. */
+.cmp-nota { margin: 2px 2px 12px; }
+.cmp-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.cmp-tarjeta {
+  display: flex; flex-direction: column; align-items: center; gap: 3px; min-width: 0;
+  padding: 10px 4px; border: 0; border-radius: 16px; background: var(--superficie);
+  font: inherit; color: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent;
+  transition: transform 0.12s ease-out;
+}
+.cmp-tarjeta:active { transform: scale(0.97); }
+.cmp-tarjeta.tuya { cursor: default; outline: 2px solid var(--primario); outline-offset: -2px; }
+.cmp-tarjeta.tuya:active { transform: none; }
+.cmp-tarjeta-cuerpo { height: 120px; aspect-ratio: 420 / 800; display: flex; align-items: center; justify-content: center; }
+.cmp-tarjeta-cuerpo .mapa-svg { pointer-events: none; }
+.cmp-tarjeta-cuerpo .mapa-cargando { width: 60%; height: 80%; }
+.cmp-tarjeta-cuerpo .musculo { fill: #8f90a6; }
+.cmp-tarjeta-cuerpo .musculo[data-rango="0"] { fill: var(--rango-0); }
+.cmp-tarjeta-cuerpo .musculo[data-rango="1"] { fill: var(--rango-1); }
+.cmp-tarjeta-cuerpo .musculo[data-rango="2"] { fill: var(--rango-2); }
+.cmp-tarjeta-cuerpo .musculo[data-rango="3"] { fill: var(--rango-3); }
+.cmp-tarjeta-cuerpo .musculo[data-rango="4"] { fill: var(--rango-4); }
+.cmp-tarjeta-cuerpo .musculo[data-rango="5"] { fill: var(--rango-5); }
+.cmp-tarjeta-cuerpo .musculo[data-rango="6"] { fill: var(--rango-6); }
+.cmp-tarjeta-cuerpo .musculo[data-rango="7"] { fill: var(--rango-7); }
+.cmp-tarjeta-nombre {
+  font-weight: 800; font-size: 14px; max-width: 100%; margin-top: 4px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.cmp-tarjeta-rango { display: flex; align-items: center; gap: 3px; font-size: 11px; font-weight: 800; max-width: 100%; }
+.cmp-tarjeta-rango svg { flex: none; }
+.cmp-tu {
+  font-size: 11px; font-weight: 800; padding: 1px 7px; border-radius: 999px; margin-left: 4px;
+  background: var(--primario); color: var(--sobre-primario); vertical-align: middle;
+}
+.cmp-cuerpos { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 4px 0 10px; }
+.cmp-cuerpo { margin: 0; min-width: 0; display: flex; flex-direction: column; align-items: center; }
+.cmp-cuerpo figcaption { display: flex; flex-direction: column; align-items: center; margin-bottom: 6px; min-width: 0; max-width: 100%; }
+.cmp-cuerpo-nombre { font-weight: 800; font-size: 15px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cmp-cuerpo-rango { font-size: 12px; font-weight: 700; color: var(--texto-tenue); }
+.cmp-svg { width: 100%; aspect-ratio: 1 / 2; display: flex; align-items: center; justify-content: center; }
+.cmp-svg .mapa-svg { height: 100%; }
+.cmp-cuerpos .musculo { fill: #8f90a6; cursor: pointer; transition: opacity 200ms ease; -webkit-tap-highlight-color: transparent; }
+.cmp-cuerpos .linea { pointer-events: none; }
+.cmp-cuerpos .musculo[data-rango="0"] { fill: var(--rango-0); }
+.cmp-cuerpos .musculo[data-rango="1"] { fill: var(--rango-1); }
+.cmp-cuerpos .musculo[data-rango="2"] { fill: var(--rango-2); }
+.cmp-cuerpos .musculo[data-rango="3"] { fill: var(--rango-3); }
+.cmp-cuerpos .musculo[data-rango="4"] { fill: var(--rango-4); }
+.cmp-cuerpos .musculo[data-rango="5"] { fill: var(--rango-5); }
+.cmp-cuerpos .musculo[data-rango="6"] { fill: var(--rango-6); }
+.cmp-cuerpos .musculo[data-rango="7"] { fill: var(--rango-7); }
+.cmp-girar { margin-bottom: 12px; }
+.cmp-tabla { padding: 6px 10px; }
+.cmp-musculo {
+  display: grid; grid-template-columns: 1.1fr 1fr 1fr; gap: 6px; align-items: center; width: 100%;
+  background: none; border: 0; border-top: 1px solid var(--superficie-alta); padding: 9px 4px;
+  font: inherit; color: inherit; text-align: left; cursor: pointer; border-radius: 8px;
+}
+.cmp-musculo.tocado { background: var(--superficie-alta); }
+.cmp-encabezado { border-top: 0; cursor: default; font-size: 12px; font-weight: 800; color: var(--texto-tenue); text-transform: uppercase; letter-spacing: 0.05em; }
+.cmp-encabezado span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cmp-musculo-nombre { font-weight: 700; font-size: 14px; }
+.cmp-celda { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--texto-tenue); min-width: 0; }
+.cmp-celda i { flex: none; width: 10px; height: 10px; border-radius: 50%; }
+.cmp-celda.gana { color: var(--texto); font-weight: 800; }
+.cmp-celda.sin { padding-left: 16px; }

@@ -4,6 +4,7 @@ export { revivirRacha } from "./revivirRacha";
 export { avisarFalta } from "./avisarFalta";
 export { jugarRuleta } from "./jugarRuleta";
 export { obtenerRanking } from "./ranking";
+export { compararMusculos } from "./comparar";
 export { registrarDispositivo } from "./registrarDispositivo";
 export { enviarNotificacion } from "./enviarNotificacion";
 export { programarAvisos } from "./programarAvisos";
