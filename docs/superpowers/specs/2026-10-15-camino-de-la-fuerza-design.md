@@ -15,7 +15,9 @@ parada es un objetivo concreto y alcanzable en el próximo entrenamiento ("Press
 
 **Decisiones tomadas (entrenador, 2026-10-15):**
 
-- **Un camino por músculo.** Se elige el músculo arriba del camino.
+- **Un camino por músculo, uno a la vez.** Arriba, una franja "Hoy" con una mini tarjeta por
+  cada músculo de su día (2 o 3) y su parada actual; abajo, el camino completo del elegido.
+  No van caminos lado a lado: en un teléfono no caben los objetivos escritos.
 - **Las paradas salen del ejercicio de su mejor marca** en ese músculo, automático (el mismo
   que hoy da el "te faltan X kg"). Si con otro ejercicio llega más lejos, el camino sigue con ese.
 - **Escalones chicos con doble progresión:** primero +1 rep hasta el tope del rango, luego
@@ -98,11 +100,17 @@ mueven de lugar; las paradas en sí (peso × reps) no cambian.
 
 ## Dónde se ve
 
+### Los músculos de hoy
+
+Los **músculos principales** (`musculos[m] === 1`) de los ejercicios de su rutina para hoy, el
+mismo día que pinta la tarjeta del día, en el orden en que aparecen en la rutina y sin
+repetir. Normalmente son 2 o 3. Un día de descanso o sin rutina, no hay "Hoy" y se usa su
+músculo más avanzado en su lugar, para que nada se quede vacío.
+
 ### Tarjeta en Inicio
 
-"El camino de la Fuerza", debajo de la tarjeta del día. Muestra la **parada actual de los
-músculos de su día de hoy**: los músculos principales de los ejercicios de su rutina para hoy
-(el mismo día que pinta la tarjeta del día), hasta 3, por ejemplo:
+"El camino de la Fuerza", debajo de la tarjeta del día: la misma franja "Hoy" que la ventana,
+una fila por músculo con su parada actual:
 
 ```
 El camino de la Fuerza
@@ -111,23 +119,42 @@ El camino de la Fuerza
                                    Ver mi camino ›
 ```
 
-- Un día de descanso o sin rutina: la parada actual de su músculo más avanzado, para que la
-  tarjeta no desaparezca.
-- Tocar una fila abre el camino en ese músculo; "Ver mi camino" lo abre en el primero.
+Tocar una fila abre el camino en ese músculo; "Ver mi camino" lo abre en el primero.
 
 ### Ventana "El camino de la Fuerza"
 
 Subventana de Inicio (`PADRE: { camino: "inicio" }`, con la flecha fija de atrás como Amigos).
 
-- **Arriba:** selector de músculo (chips horizontales con su color de rango), con el músculo
-  elegido marcado.
+```
+ ←  El camino de la Fuerza
+
+ HOY
+ ┌──────────┐ ┌──────────┐ ┌──────────┐
+ │ Pecho  ● │ │ Tríceps  │ │ Hombro   │
+ │ 27.5 × 9 │ │ 15 × 11  │ │ 9 × 10   │
+ └──────────┘ └──────────┘ └──────────┘
+ Otros: Bíceps · Espalda · Pierna · …
+
+        ✅ 25 × 12
+           │
+        ⭐ 27.5 × 9   ← ahora
+           │
+        🔒 27.5 × 10
+```
+
+- **Franja "Hoy":** una mini tarjeta por músculo de hoy, con su parada actual y el color de
+  su rango; la elegida va marcada. Tocar otra cambia de camino.
+- **"Otros":** los demás músculos con camino (o sin marcas, para empezar), en una fila más
+  chica que se desplaza a lo ancho.
+- **Deslizar a los lados** sobre el camino pasa al músculo siguiente o anterior de la franja
+  "Hoy" (y después de "Otros").
 - **El camino:** vertical, con nodos en zigzag suave como Duolingo, unidos por una línea.
   - Cumplida: nodo lleno con ✓.
   - Actual: nodo grande, resaltado, con el objetivo escrito y el ejercicio ("Press de banca ·
     27.5 kg × 9").
   - Bloqueada: nodo apagado con candado y su objetivo en gris.
   - De rango: nodo con la insignia del rango (`insigniaRango`) y su nombre.
-- Al abrir, se desplaza solo hasta la parada actual.
+- Al abrir o cambiar de músculo, se desplaza solo hasta la parada actual.
 - Con decenas de paradas por músculo (por ejemplo, de 20 a 100 kg son ~160), se dibujan
   todas en HTML simple: no hace falta virtualizar a este tamaño.
 - Tiene que verse bien en todos los estilos de la web (neón, cómic, pixel, sakura,
@@ -214,5 +241,5 @@ frontera va en servidor y web como **gemelos** con prueba de igualdad, igual que
 
 ## Preguntas abiertas
 
-- **Varios músculos por día:** cada día trabaja 2 o 3 músculos. Cómo se ven sus caminos en la
-  misma ventana (propuesta en conversación, 2026-10-15).
+Ninguna por ahora: los incrementos, los rangos de reps y cómo se ven varios músculos por día
+quedaron decididos (2026-10-15).
