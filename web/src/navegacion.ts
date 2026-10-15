@@ -12,10 +12,12 @@ import type { IdVentana } from "./ventanas";
  * canjearía como token. La ruta tampoco, porque `resolverSesion` decide con ella si hay que
  * canjear. Con la URL quieta, la sesión no se entera de que existen ventanas.
  *
- * El historial nunca pasa de `[Inicio, ventana]`, más la entrada del menú mientras está
- * abierto: así "atrás" desde cualquier ventana vuelve a Inicio y no recorre todo lo visitado.
- * La excepción son las subventanas (`PADRE`), como Compararme dentro de Músculos: se abren
- * encima de su padre, `[Inicio, Músculos, Compararme]`, para que "atrás" regrese a Músculos.
+ * Cada ventana que se abre queda en el historial, como en cualquier app: el gesto o el botón de
+ * "atrás" regresa a la ventana en la que estaba antes, una por una (decisión del entrenador,
+ * 2026-10-15; antes el historial no pasaba de `[Inicio, ventana]` y "atrás" siempre volvía a
+ * Inicio). El menú abierto tiene su propia entrada, así que "atrás" primero lo cierra. Las
+ * subventanas (`PADRE`), como Amigos dentro de Músculos, se abren encima de su padre, y salir
+ * de ellas hacia el padre es retroceder, para no apilar `Músculos, Amigos, Músculos`.
  *
  * Es el único módulo que toca `history`, y lo recibe inyectado para poder probarlo.
  */
@@ -70,14 +72,7 @@ function irA(id: IdVentana): void {
     historial.back();
     return;
   }
-  if (id === "inicio") {
-    // Volver es retroceder, no empujar: así no se acumulan entradas.
-    esperando = true;
-    historial.back();
-    return;
-  }
-  if (activa === "inicio" || PADRE[id] === activa) historial.pushState({ ventana: id });
-  else historial.replaceState({ ventana: id });
+  historial.pushState({ ventana: id });
   activa = id;
 }
 

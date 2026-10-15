@@ -59,12 +59,25 @@ describe("entre ventanas", () => {
     expect(avisos).toBe(1);
   });
 
-  it("saltar de una a otra reemplaza, así atrás siempre vuelve a Inicio", () => {
+  it("cada ventana queda en el historial: atrás regresa a la anterior", () => {
     abrirVentana("medallas");
     abrirVentana("videos");
-    expect(h.pila()).toEqual([null, { ventana: "videos" }]);
+    expect(h.pila()).toEqual([null, { ventana: "medallas" }, { ventana: "videos" }]);
+    h.atras();
+    expect(ventanaActiva()).toBe("medallas");
     h.atras();
     expect(ventanaActiva()).toBe("inicio");
+  });
+
+  it("también al volver a Inicio con la barra: atrás regresa a donde estaba", () => {
+    abrirVentana("registro");
+    abrirVentana("musculos");
+    abrirVentana("inicio");
+    expect(h.pila()).toEqual([null, { ventana: "registro" }, { ventana: "musculos" }, { ventana: "inicio" }]);
+    h.atras();
+    expect(ventanaActiva()).toBe("musculos");
+    h.atras();
+    expect(ventanaActiva()).toBe("registro");
   });
 
   it("abrir la que ya está activa no toca el historial", () => {
@@ -100,22 +113,22 @@ describe("el menú", () => {
     expect(h.pila()).toEqual([null, { ventana: "logros" }]);
   });
 
-  it("desde Medallas, menú → Videos deja [Inicio, Videos]", () => {
+  it("desde Medallas, menú → Videos deja [Inicio, Medallas, Videos], sin la entrada del menú", () => {
     abrirVentana("medallas");
     abrirMenu();
     abrirVentana("videos");
     h.soltar();
     expect(ventanaActiva()).toBe("videos");
-    expect(h.pila()).toEqual([null, { ventana: "videos" }]);
+    expect(h.pila()).toEqual([null, { ventana: "medallas" }, { ventana: "videos" }]);
   });
 
-  it("desde Medallas, menú → Inicio deja [Inicio]", () => {
+  it("desde Medallas, menú → Inicio deja [Inicio, Medallas, Inicio]", () => {
     abrirVentana("medallas");
     abrirMenu();
     abrirVentana("inicio");
     h.soltar();
     expect(ventanaActiva()).toBe("inicio");
-    expect(h.pila()).toEqual([null]);
+    expect(h.pila()).toEqual([null, { ventana: "medallas" }, { ventana: "inicio" }]);
   });
 
   it("elegir la ventana activa solo cierra el menú", () => {
@@ -151,20 +164,20 @@ describe("subventanas (Compararme dentro de Músculos)", () => {
     expect(ventanaActiva()).toBe("inicio");
   });
 
-  it("ir a otra pestaña desde ella no deja a Músculos colgado en el historial", () => {
+  it("ir a otra pestaña desde ella sale primero a Músculos: atrás regresa a Músculos", () => {
     abrirVentana("comparar");
     abrirVentana("registro");
     h.soltar();
     expect(ventanaActiva()).toBe("registro");
-    expect(h.pila()).toEqual([null, { ventana: "registro" }]);
+    expect(h.pila()).toEqual([null, { ventana: "musculos" }, { ventana: "registro" }]);
   });
 
-  it("a Inicio desde ella regresa hasta el principio", () => {
+  it("volver a Músculos desde ella es retroceder, sin apilar Músculos otra vez", () => {
     abrirVentana("comparar");
-    abrirVentana("inicio");
+    abrirVentana("musculos");
     h.soltar();
-    expect(ventanaActiva()).toBe("inicio");
-    expect(h.pila()).toEqual([null]);
+    expect(ventanaActiva()).toBe("musculos");
+    expect(h.pila()).toEqual([null, { ventana: "musculos" }]);
   });
 
   it("la pestaña de Músculos queda marcada", () => {
