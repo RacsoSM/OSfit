@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import {
-  elegirEnComparar, reiniciarComparar, reiniciarEleccionAmigos, sexosAComparar, ventanaComparar,
+  elegirEnComparar, escogerEnAmigos, modoAmigos, reiniciarComparar, reiniciarEleccionAmigos, sexosAComparar, ventanaComparar,
   type PersonaComparar,
 } from "./comparar";
 
@@ -98,17 +98,43 @@ describe("Amigos: acceso y elección", () => {
     expect(html).toContain("no te ha dado acceso a Amigos");
     expect(html).not.toContain("cmp-grid");
   });
-  it("sin elegir, pregunta antes de mostrar la lista", () => {
+  it("sin elegir, pregunta antes de mostrar la lista, con las tres opciones", () => {
     const html = ventanaComparar(listo, "M", {}, {});
-    expect(html).toContain("¿Quieres que los demás vean tus músculos?");
-    expect(html).toContain('data-cmp="mostrar"');
-    expect(html).toContain('data-cmp="ocultar"');
+    expect(html).toContain("¿Quién puede ver tus músculos?");
+    for (const o of ["todos", "algunos", "nadie"]) expect(html).toContain(`data-cmp="${o}"`);
+    expect(html).toContain("tú tampoco podrás ver");
+    expect(html).not.toContain('data-cmp="cancelar"');
     expect(html).not.toContain('<p class="confirmar-titulo">Amigos</p>');
   });
-  it("ya elegida, la lista dice cómo está y ofrece cambiarlo", () => {
-    expect(ventanaComparar(listo, "M", {}, { mostrarEnAmigos: true })).toContain('data-cmp="ocultar"');
-    const oculta = ventanaComparar(listo, "M", {}, { mostrarEnAmigos: false });
-    expect(oculta).toContain("ocultos para los demás");
-    expect(oculta).toContain('data-cmp="mostrar"');
+  it("oculta: no ve la lista de los demás, solo cómo cambiarlo", () => {
+    const yo = { nombre: "Mía", sexo: "M" as const, esTuyo: true, niveles: { biceps: 3 } };
+    const otra = { nombre: "Bea", sexo: "M" as const, esTuyo: false, niveles: { biceps: 4 } };
+    const html = ventanaComparar({ estado: "listo", personas: [yo, otra] }, "M", {}, { visibilidadAmigos: "nadie" });
+    expect(html).toContain("tampoco ves los de los demás");
+    expect(html).toContain('data-cmp="cambiar"');
+    expect(html).not.toContain("Bea");
+  });
+  it("la versión vieja (sí/no) se lee como todos/nadie", () => {
+    expect(modoAmigos({ mostrarEnAmigos: true })).toBe("todos");
+    expect(modoAmigos({ mostrarEnAmigos: false })).toBe("nadie");
+    expect(modoAmigos({ mostrarEnAmigos: true, visibilidadAmigos: "algunos" })).toBe("algunos");
+    expect(modoAmigos({})).toBeNull();
+  });
+  it("la lista dice quién la ve y ofrece cambiarlo", () => {
+    expect(ventanaComparar(listo, "M", {}, { visibilidadAmigos: "todos" })).toContain("Todos ven tus músculos");
+    const algunas = ventanaComparar(listo, "M", {}, { visibilidadAmigos: "algunos", compartirAmigosCon: ["a", "b"] });
+    expect(algunas).toContain("Solo 2 personas ven tus músculos");
+    expect(algunas).toContain('data-cmp="cambiar"');
+  });
+  it("solo a algunas: la lista de todas, con las marcadas y el botón con la cuenta", () => {
+    const e = { estado: "listo" as const, personas: [], candidatos: [{ id: "a", nombre: "Ana" }, { id: "b", nombre: "Bea" }] };
+    escogerEnAmigos(["b", "ya-no-esta"]);
+    const html = ventanaComparar(e, "M", {}, { visibilidadAmigos: "todos" });
+    expect(html).toContain("¿Con quién quieres compartirlos?");
+    expect(html).toMatch(/data-candidato="a">/);
+    expect(html).toMatch(/data-candidato="b" checked>/);
+    expect(html).toContain("Compartir con 1 persona");
+    escogerEnAmigos([]);
+    expect(ventanaComparar(e, "M", {}, {})).toMatch(/data-cmp="guardar-algunos" disabled>\s*Marca al menos a una persona/);
   });
 });

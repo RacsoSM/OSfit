@@ -1,4 +1,4 @@
-import type { Cliente, Sexo } from "../datos";
+import type { Cliente, ModoAmigos, Sexo } from "../datos";
 import {
   NOMBRES_MUSCULO, indiceRango, nombreMusculo, nombreRango, rangoGeneral, type FuerzaMusculo,
 } from "../fuerza";
@@ -17,7 +17,8 @@ import { archivosMapa, conNiveles, prepararSvg, type EstadoSvg } from "./mapaMus
  * músculo. Nunca pesos.
  *
  * 2026-10-15 pasa a llamarse "Amigos". El entrenador decide quién entra (`sinAccesoAmigos`) y
- * cada quien, la primera vez que entra, decide si los demás la ven (`mostrarEnAmigos`).
+ * cada quien, la primera vez que entra, decide quién la ve (`visibilidadAmigos`): todos, solo
+ * algunas personas que escoge de la lista, o nadie. Con "nadie" tampoco ve a los demás.
  */
 
 /** GEMELO: `PersonaComparar` de `functions/src/comparar.ts`. */
@@ -28,9 +29,21 @@ export interface PersonaComparar {
   niveles: Record<string, number>;
 }
 
+/** GEMELO: `Candidato` de `functions/src/comparar.ts`. */
+export interface Candidato {
+  id: string;
+  nombre: string;
+}
+
+/** Lo que se manda a `elegirMostrarEnAmigos`. */
+export interface EleccionAmigos {
+  modo: ModoAmigos;
+  con?: string[];
+}
+
 export type EstadoComparar =
   | { estado: "cargando" }
-  | { estado: "listo"; personas: PersonaComparar[] }
+  | { estado: "listo"; personas: PersonaComparar[]; candidatos?: Candidato[] }
   | { estado: "error" };
 
 /**
@@ -43,12 +56,18 @@ let musculo: string | null = null;
 
 /**
  * Lo que eligió en esta página mientras el snapshot del cliente no lo trae: así la pregunta
- * no vuelve a salir en el instante entre tocar y que llegue. No se borra al salir de la
+ * no vuelve a salir en el instante entre que se guarda y que llega. No se borra al salir de la
  * ventana: para entonces el snapshot ya trae lo mismo.
  */
-let eleccionLocal: boolean | null = null;
+let eleccionLocal: EleccionAmigos | null = null;
 let guardando = false;
 let errorEleccion = false;
+/** Ya eligió y tocó "Cambiar": se le vuelve a mostrar la pregunta. */
+let cambiando = false;
+/** Con la lista de "Solo algunas personas" abierta: las marcadas. */
+let escogiendo: Set<string> | null = null;
+/** Con quién comparte hoy, del último pintado: de ahí arranca la lista al abrirla. */
+let conGuardadas: string[] = [];
 
 /** Para los tests y al salir de la ventana. */
 export function reiniciarComparar(): void {
@@ -56,6 +75,8 @@ export function reiniciarComparar(): void {
   deEspalda = false;
   musculo = null;
   errorEleccion = false;
+  cambiando = false;
+  escogiendo = null;
 }
 
 /** Para los tests: olvidar lo elegido en la página. */
@@ -63,40 +84,102 @@ export function reiniciarEleccionAmigos(): void {
   eleccionLocal = null;
   guardando = false;
   errorEleccion = false;
+  cambiando = false;
+  escogiendo = null;
 }
 
-type AmigosDelCliente = Pick<Cliente, "sinAccesoAmigos" | "mostrarEnAmigos">;
+/** Para los tests: abrir la lista de "Solo algunas personas" con estas marcadas. */
+export function escogerEnAmigos(ids: string[] | null): void {
+  escogiendo = ids === null ? null : new Set(ids);
+}
 
-/** `true`/`false` si ya eligió; `null` si todavía no. */
-function muestra(c: AmigosDelCliente): boolean | null {
-  return eleccionLocal ?? (typeof c.mostrarEnAmigos === "boolean" ? c.mostrarEnAmigos : null);
+type AmigosDelCliente = Pick<Cliente, "sinAccesoAmigos" | "mostrarEnAmigos" | "visibilidadAmigos" | "compartirAmigosCon">;
+
+/** Lo que eligió, o `null` si todavía no. `mostrarEnAmigos` es la versión vieja, sí/no. */
+export function modoAmigos(c: AmigosDelCliente): ModoAmigos | null {
+  if (eleccionLocal) return eleccionLocal.modo;
+  if (c.visibilidadAmigos === "todos" || c.visibilidadAmigos === "algunos" || c.visibilidadAmigos === "nadie") {
+    return c.visibilidadAmigos;
+  }
+  if (c.mostrarEnAmigos === true) return "todos";
+  if (c.mostrarEnAmigos === false) return "nadie";
+  return null;
+}
+
+function compartidoCon(c: AmigosDelCliente): string[] {
+  return eleccionLocal ? eleccionLocal.con ?? [] : c.compartirAmigosCon ?? [];
 }
 
 const AVISO_ERROR_ELECCION = `<p class="aviso-error">No se pudo guardar. Revisa tu conexión e intenta otra vez.</p>`;
 
-/** La primera vez que entra: que decida antes de ver a nadie. */
-function vistaEleccion(): string {
+/** La primera vez que entra, o al tocar "Cambiar": que decida antes de ver a nadie. */
+function vistaEleccion(puedeCancelar: boolean): string {
   const off = guardando ? " disabled" : "";
   return `
     <div class="tarjeta cmp-eleccion">
-      <p class="confirmar-titulo">¿Quieres que los demás vean tus músculos?</p>
-      <p class="accion-nota">En Amigos se ven el nombre, el rango y el mapa de músculos de quienes
-        decidieron mostrarse. Nunca el peso. Tú eliges si apareces y lo puedes cambiar cuando quieras.</p>
+      <p class="confirmar-titulo">¿Quién puede ver tus músculos?</p>
+      <p class="accion-nota">En Amigos se ven el nombre, el rango y el mapa de músculos. Nunca el
+        peso. Lo puedes cambiar cuando quieras.</p>
       ${errorEleccion ? AVISO_ERROR_ELECCION : ""}
-      <button class="boton" data-cmp="mostrar"${off}>Mostrar mis músculos</button>
-      <button class="boton secundario" data-cmp="ocultar"${off}>Mantenerlos ocultos</button>
-      <p class="accion-nota cmp-nota">Aunque los ocultes, tú sí puedes ver a los demás.</p>
+      <button class="boton" data-cmp="todos"${off}>Mostrarlos a todos</button>
+      <button class="boton secundario" data-cmp="algunos"${off}>Solo a algunas personas</button>
+      <button class="boton secundario" data-cmp="nadie"${off}>Mantenerlos ocultos</button>
+      <p class="accion-nota cmp-nota">Si los ocultas, tú tampoco podrás ver los de los demás.</p>
+      ${puedeCancelar ? `<button class="boton-texto" data-cmp="cancelar"${off}>Cancelar</button>` : ""}
+    </div>`;
+}
+
+/** "Solo a algunas personas": la lista de todas, para marcar con quién compartir. */
+function vistaEscoger(e: EstadoComparar): string {
+  if (e.estado === "cargando") return `<p class="accion-nota" style="text-align:center">Cargando…</p>`;
+  if (e.estado === "error") {
+    return `<p class="aviso-error">No se pudo cargar. Revisa tu conexión e intenta otra vez.</p>
+      <button class="boton" data-cmp="reintentar">Reintentar</button>`;
+  }
+  const marcadas = escogiendo ?? new Set<string>();
+  const candidatos = e.candidatos ?? [];
+  const off = guardando ? " disabled" : "";
+  const lista = candidatos.length === 0
+    ? `<p class="accion-nota">Todavía no hay nadie más en Amigos.</p>`
+    : `<div class="cmp-candidatos">${candidatos.map((c) => `
+        <label class="cmp-candidato">
+          <input type="checkbox" data-candidato="${escapar(c.id)}"${marcadas.has(c.id) ? " checked" : ""}${off}>
+          <span>${escapar(c.nombre)}</span>
+        </label>`).join("")}</div>`;
+  // Solo cuentan las que siguen en la lista: alguien pudo perder el acceso desde la última vez.
+  const n = candidatos.filter((c) => marcadas.has(c.id)).length;
+  return `
+    <div class="tarjeta cmp-eleccion">
+      <p class="confirmar-titulo">¿Con quién quieres compartirlos?</p>
+      <p class="accion-nota">Solo las personas que marques verán tus músculos.</p>
+      ${errorEleccion ? AVISO_ERROR_ELECCION : ""}
+      ${lista}
+      <button class="boton" data-cmp="guardar-algunos"${n === 0 || guardando ? " disabled" : ""}>
+        ${n === 0 ? "Marca al menos a una persona" : `Compartir con ${n === 1 ? "1 persona" : `${n} personas`}`}
+      </button>
+      <button class="boton-texto" data-cmp="cancelar"${off}>Cancelar</button>
+    </div>`;
+}
+
+/** Con "nadie": ni sale ni ve, y se le dice por qué. */
+function vistaOculta(): string {
+  return `
+    <p class="confirmar-titulo">Amigos</p>
+    <div class="tarjeta cmp-eleccion">
+      <p class="accion-nota">Tus músculos están ocultos, así que tampoco ves los de los demás.</p>
+      <button class="boton" data-cmp="cambiar">Elegir quién puede verlos</button>
     </div>`;
 }
 
 /** Arriba de la lista: cómo está y cómo cambiarlo. */
-function lineaVisibilidad(visible: boolean): string {
-  const off = guardando ? " disabled" : "";
+function lineaVisibilidad(modo: ModoAmigos, cuantas: number): string {
+  const texto = modo === "algunos"
+    ? `Solo ${cuantas === 1 ? "1 persona ve" : `${cuantas} personas ven`} tus músculos.`
+    : "Todos ven tus músculos.";
   return `
-    ${errorEleccion ? AVISO_ERROR_ELECCION : ""}
     <p class="accion-nota cmp-visibilidad">
-      ${visible ? "Los demás ven tus músculos." : "Tus músculos están ocultos para los demás."}
-      <button class="boton-texto" data-cmp="${visible ? "ocultar" : "mostrar"}"${off}>${visible ? "Ocultarlos" : "Mostrarlos"}</button>
+      ${texto}
+      <button class="boton-texto" data-cmp="cambiar">Cambiar</button>
     </p>`;
 }
 
@@ -133,7 +216,7 @@ function tarjeta(p: PersonaComparar, i: number, mapas: Readonly<Record<string, E
     </button>`;
 }
 
-function vistaLista(personas: PersonaComparar[], mapas: Readonly<Record<string, EstadoSvg>>, visible: boolean): string {
+function vistaLista(personas: PersonaComparar[], mapas: Readonly<Record<string, EstadoSvg>>, linea: string): string {
   const yo = personas.find((p) => p.esTuyo);
   const nota = yo
     ? `<p class="accion-nota cmp-nota">Toca a alguien para comparar sus músculos con los tuyos.</p>`
@@ -143,7 +226,7 @@ function vistaLista(personas: PersonaComparar[], mapas: Readonly<Record<string, 
     : `<div class="cmp-grid">${personas.map((p, i) => tarjeta(p, i, mapas)).join("")}</div>`;
   return `
     <p class="confirmar-titulo">Amigos</p>
-    ${lineaVisibilidad(visible)}
+    ${linea}
     ${nota}
     ${lista}`;
 }
@@ -229,14 +312,19 @@ export function ventanaComparar(
   cliente: AmigosDelCliente = {}
 ): string {
   let cuerpoHtml: string;
-  const visible = muestra(cliente);
+  const modo = modoAmigos(cliente);
+  conGuardadas = modo === "algunos" ? compartidoCon(cliente) : [];
   let enComparacion = false;
   if (miSexo !== "H" && miSexo !== "M") {
     cuerpoHtml = `<p class="accion-nota">Tu entrenador tiene que completar tu perfil para compararte.</p>`;
   } else if (cliente.sinAccesoAmigos === true) {
     cuerpoHtml = `<p class="accion-nota">Tu entrenador todavía no te ha dado acceso a Amigos.</p>`;
-  } else if (visible === null) {
-    cuerpoHtml = vistaEleccion();
+  } else if (escogiendo !== null) {
+    cuerpoHtml = vistaEscoger(e);
+  } else if (modo === null || cambiando) {
+    cuerpoHtml = vistaEleccion(modo !== null);
+  } else if (modo === "nadie") {
+    cuerpoHtml = vistaOculta();
   } else if (e.estado === "cargando") {
     cuerpoHtml = `<p class="accion-nota" style="text-align:center">Cargando…</p>`;
   } else if (e.estado === "error") {
@@ -247,7 +335,7 @@ export function ventanaComparar(
     enComparacion = otra !== undefined;
     cuerpoHtml = otra
       ? vistaComparacion(e.personas.find((p) => p.esTuyo), miSexo, otra, mapas)
-      : vistaLista(e.personas, mapas, visible);
+      : vistaLista(e.personas, mapas, lineaVisibilidad(modo, compartidoCon(cliente).length));
   }
   // En la comparación la flecha regresa a la lista (va dentro de `vistaComparacion`); en lo
   // demás —la lista, cargando o el error— sale de Amigos a Músculos.
@@ -272,10 +360,27 @@ export function conectarComparar(
   repintar: () => void,
   reintentar: () => void,
   salir: () => void,
-  elegir: (mostrar: boolean) => Promise<unknown>
+  elegir: (eleccion: EleccionAmigos) => Promise<unknown>
 ): void {
   const raiz = document.querySelector<HTMLElement>("#comparar");
   if (!raiz) return;
+  const guardar = (eleccion: EleccionAmigos) => {
+    guardando = true;
+    errorEleccion = false;
+    repintar();
+    elegir(eleccion).then(
+      () => { eleccionLocal = eleccion; guardando = false; cambiando = false; escogiendo = null; repintar(); },
+      () => { guardando = false; errorEleccion = true; repintar(); }
+    );
+  };
+  // Marcar o desmarcar a alguien en "Solo a algunas personas".
+  raiz.addEventListener("change", (ev) => {
+    const caja = (ev.target as Element).closest<HTMLInputElement>("input[data-candidato]");
+    if (!caja || escogiendo === null) return;
+    const id = caja.dataset.candidato!;
+    if (caja.checked) escogiendo.add(id); else escogiendo.delete(id);
+    repintar();
+  });
   raiz.addEventListener("click", (ev) => {
     const objetivo = ev.target as Element;
     // Tocar un músculo en cualquiera de los dos cuerpos lo resalta en ambos.
@@ -307,17 +412,16 @@ export function conectarComparar(
     if (accion === "salir") { salir(); return; }
     if (accion === "girar") { deEspalda = !deEspalda; repintar(); return; }
     if (accion === "reintentar") { reintentar(); return; }
-    if ((accion === "mostrar" || accion === "ocultar") && !guardando) {
-      const mostrar = accion === "mostrar";
-      const antes = eleccionLocal;
-      eleccionLocal = mostrar;
-      guardando = true;
+    if (guardando) return;
+    if (accion === "todos" || accion === "nadie") { guardar({ modo: accion }); return; }
+    if (accion === "algunos") {
+      escogiendo = new Set(conGuardadas);
       errorEleccion = false;
       repintar();
-      elegir(mostrar).then(
-        () => { guardando = false; repintar(); },
-        () => { eleccionLocal = antes; guardando = false; errorEleccion = true; repintar(); }
-      );
+      return;
     }
+    if (accion === "guardar-algunos" && escogiendo) { guardar({ modo: "algunos", con: [...escogiendo] }); return; }
+    if (accion === "cambiar") { cambiando = true; errorEleccion = false; repintar(); return; }
+    if (accion === "cancelar") { cambiando = false; escogiendo = null; errorEleccion = false; repintar(); }
   });
 }

@@ -189,7 +189,12 @@ fun WebClienteScreen(
             item {
                 FilaAmigos(
                     acceso = cliente?.sinAccesoAmigos != true,
-                    eleccion = cliente?.mostrarEnAmigos,
+                    eleccion = cliente?.visibilidadAmigos ?: when (cliente?.mostrarEnAmigos) {
+                        true -> "todos"
+                        false -> "nadie"
+                        null -> null
+                    },
+                    compartidoCon = cliente?.compartirAmigosCon?.size ?: 0,
                     habilitado = cliente != null,
                     onCambiar = viewModel::cambiarAccesoAmigos
                 )
@@ -302,7 +307,8 @@ private fun FilaADistancia(
 @Composable
 private fun FilaAmigos(
     acceso: Boolean,
-    eleccion: Boolean?,
+    eleccion: String?,
+    compartidoCon: Int,
     habilitado: Boolean,
     onCambiar: (Boolean) -> Unit
 ) {
@@ -318,8 +324,11 @@ private fun FilaAmigos(
                 Text(
                     when {
                         !acceso -> "No puede entrar a Amigos ni sale en la lista de los demás."
-                        eleccion == true -> "Puede entrar. Eligió mostrar sus músculos a los demás."
-                        eleccion == false -> "Puede entrar. Eligió mantener sus músculos ocultos."
+                        eleccion == "todos" -> "Puede entrar. Eligió mostrar sus músculos a todos."
+                        eleccion == "algunos" ->
+                            "Puede entrar. Eligió mostrar sus músculos solo a " +
+                                if (compartidoCon == 1) "1 persona." else "$compartidoCon personas."
+                        eleccion == "nadie" -> "Puede entrar. Eligió ocultar sus músculos, así que tampoco ve a los demás."
                         else -> "Puede entrar. Todavía no elige si los demás la ven; mientras, no sale."
                     },
                     style = MaterialTheme.typography.bodySmall

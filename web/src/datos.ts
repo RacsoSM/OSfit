@@ -129,11 +129,21 @@ export interface Cliente {
   /** El entrenador le quitó Amigos desde la app. Ausente es "tiene acceso". */
   sinAccesoAmigos?: boolean;
   /**
-   * Si los demás ven sus músculos en Amigos. Lo elige ella la primera vez que entra
-   * (`elegirMostrarEnAmigos`); ausente es "todavía no elige", y mientras tanto no sale.
+   * Primera versión de la elección de Amigos (sí/no). Se lee como "todos"/"nadie" mientras no
+   * haya `visibilidadAmigos`.
    */
   mostrarEnAmigos?: boolean;
+  /**
+   * Quién ve sus músculos en Amigos. Lo elige ella la primera vez que entra
+   * (`elegirMostrarEnAmigos`); ausente es "todavía no elige", y mientras tanto no sale ni ve.
+   */
+  visibilidadAmigos?: ModoAmigos;
+  /** Con "algunos": los ids de las clientas que sí la ven. */
+  compartirAmigosCon?: string[];
 }
+
+/** GEMELO: `ModoAmigos` de `functions/src/comparar.ts`. Con "nadie" tampoco ve a los demás. */
+export type ModoAmigos = "todos" | "algunos" | "nadie";
 
 export interface Asistencia {
   fecha: string;

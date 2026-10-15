@@ -20,10 +20,34 @@ import {
  * 2026-10-15 la ventana pasa a llamarse "Amigos" y cambian las llaves:
  *  - El entrenador decide quién puede entrar, desde la app (`sinAccesoAmigos`). Quien no
  *    tiene acceso ni ve la lista ni sale en ella.
- *  - Cada quien decide si los demás la ven (`mostrarEnAmigos`, que escribe
- *    `elegirMostrarEnAmigos`). Mientras no elija, no sale: nadie aparece sin haberlo dicho.
- *    Esconderse no le quita ver a los demás.
+ *  - Cada quien decide quién la ve (`visibilidadAmigos`, que escribe `elegirMostrarEnAmigos`):
+ *    todos, solo algunas personas que ella escoge (`compartirAmigosCon`, ids de clientes) o
+ *    nadie. Mientras no elija, no sale: nadie aparece sin haberlo dicho.
+ *  - Quien se oculta tampoco ve a los demás (pedido del entrenador, 2026-10-15). Quien comparte
+ *    con algunas ve a todos los que se muestran a ella.
+ *
+ * `mostrarEnAmigos` (true/false) es la versión de la primera tarde: se lee como "todos"/"nadie"
+ * mientras no haya `visibilidadAmigos`.
  */
+
+/** GEMELO: `ModoAmigos` de `web/src/datos.ts`. */
+export type ModoAmigos = "todos" | "algunos" | "nadie";
+const MODOS: readonly ModoAmigos[] = ["todos", "algunos", "nadie"];
+const esModo = (v: unknown): v is ModoAmigos => MODOS.includes(v as ModoAmigos);
+
+/** Lo elegido, con la versión vieja (`mostrarEnAmigos`) de respaldo; null si no ha elegido. */
+export function modoAmigosDesdeDoc(d: Record<string, unknown>): ModoAmigos | null {
+  if (esModo(d.visibilidadAmigos)) return d.visibilidadAmigos;
+  if (d.mostrarEnAmigos === true) return "todos";
+  if (d.mostrarEnAmigos === false) return "nadie";
+  return null;
+}
+
+/** Alguien a quien se le pueden compartir los músculos, para la lista de "Solo a algunas". */
+export interface Candidato {
+  id: string;
+  nombre: string;
+}
 
 export interface PersonaComparar {
   nombre: string;
@@ -42,8 +66,11 @@ export interface ClienteComparar {
   anioNacimiento: number | null;
   /** El entrenador le quitó Amigos (`sinAccesoAmigos`). */
   sinAcceso: boolean;
-  /** Ella eligió salir (`mostrarEnAmigos === true`). Sin elegir cuenta como no. */
-  muestra: boolean;
+  activo: boolean;
+  /** Lo que eligió (`modoAmigosDesdeDoc`). Sin elegir cuenta como "nadie" pero se le pregunta. */
+  modo: ModoAmigos | null;
+  /** Con "algunos": los ids de clientes que sí la ven. */
+  compartirCon: string[];
 }
 
 export function clienteCompararDesdeDoc(id: string, d: Record<string, unknown>): ClienteComparar {
@@ -56,16 +83,37 @@ export function clienteCompararDesdeDoc(id: string, d: Record<string, unknown>):
     grasa: num(d.porcentajeGrasa),
     anioNacimiento: num(d.anioNacimiento),
     sinAcceso: d.sinAccesoAmigos === true,
-    muestra: d.mostrarEnAmigos === true,
+    activo: d.activo !== false,
+    modo: modoAmigosDesdeDoc(d),
+    compartirCon: Array.isArray(d.compartirAmigosCon)
+      ? d.compartirAmigosCon.filter((x): x is string => typeof x === "string")
+      : [],
   };
 }
 
+/** Si quien ve (`yo`) se puede comparar con los demás: eligió mostrarse a alguien. */
+export function puedeVerALosDemas(yo: ClienteComparar | undefined): boolean {
+  return yo !== undefined && !yo.sinAcceso && (yo.modo === "todos" || yo.modo === "algunos");
+}
+
 /**
- * Quién puede salir: con sexo y peso (sin ellos no hay rango), con acceso, y que haya elegido
- * mostrarse. Ella misma siempre sale en su propia lista, aunque se esconda.
+ * Quién sale en la lista de `yo`: ella misma siempre (con sexo y peso: sin ellos no hay
+ * rango). Los demás, con sexo, peso y acceso, si se muestran a todos o la escogieron a ella; y
+ * solo si ella también se muestra.
  */
-export function puedeSalir(c: ClienteComparar, yoId: string): boolean {
-  return c.sexo !== null && (c.peso ?? 0) > 0 && !c.sinAcceso && (c.muestra || c.id === yoId);
+export function puedeSalir(c: ClienteComparar, yo: ClienteComparar | undefined, yoId: string): boolean {
+  if (c.sexo === null || (c.peso ?? 0) <= 0) return false;
+  if (c.id === yoId) return true;
+  if (c.sinAcceso || !puedeVerALosDemas(yo)) return false;
+  return c.modo === "todos" || (c.modo === "algunos" && c.compartirCon.includes(yoId));
+}
+
+/** Con quién puede compartir: las demás clientas activas con acceso, en orden alfabético. */
+export function candidatosAmigos(clientes: readonly ClienteComparar[], yoId: string): Candidato[] {
+  return clientes
+    .filter((c) => c.id !== yoId && c.activo && !c.sinAcceso)
+    .map((c) => ({ id: c.id, nombre: c.nombre }))
+    .sort((a, b) => a.nombre.localeCompare(b.nombre, "es", { sensitivity: "base" }));
 }
 
 /** La lista ya ordenada: "Tú" primero y luego alfabético. Pura para probarla. */
@@ -77,8 +125,9 @@ export function armarComparacion(
   hoy: string
 ): PersonaComparar[] {
   const personas: PersonaComparar[] = [];
+  const yo = clientes.find((c) => c.id === yoId);
   for (const c of clientes) {
-    if (!puedeSalir(c, yoId)) continue;
+    if (!puedeSalir(c, yo, yoId)) continue;
     const sexo = c.sexo as Sexo;
     const peso = pesoParaFuerza(c.peso as number, sexo, c.grasa);
     const niveles = nivelesPorMusculo(sesiones.get(c.id) ?? [], banco, sexo, peso, hoy, edadEn(c.anioNacimiento, hoy));
@@ -94,7 +143,7 @@ export function armarComparacion(
  * Solo lectura. Lee las clientas, el banco y las sesiones de las últimas 8 semanas de quienes
  * pueden salir: con un gimnasio son unos cientos de lecturas por vez.
  */
-export const compararMusculos = onCall({ region: REGION }, async (request): Promise<{ personas: PersonaComparar[] }> => {
+export const compararMusculos = onCall({ region: REGION }, async (request): Promise<{ personas: PersonaComparar[]; candidatos: Candidato[] }> => {
   const yoId = await clienteDeLaSesion(request);
   const firestore = db();
   const hoy = hoyEnMazatlan();
@@ -104,7 +153,8 @@ export const compararMusculos = onCall({ region: REGION }, async (request): Prom
     firestore.collection("ejercicios").get(),
   ]);
   const clientes = clientesSnap.docs.map((d) => clienteCompararDesdeDoc(d.id, d.data()));
-  if (clientes.find((c) => c.id === yoId)?.sinAcceso) throw new HttpsError("permission-denied", "sin_acceso");
+  const yo = clientes.find((c) => c.id === yoId);
+  if (yo?.sinAcceso) throw new HttpsError("permission-denied", "sin_acceso");
   const banco: EjercicioFuerza[] = bancoSnap.docs.map((d) => ({
     id: d.id,
     tipo: d.get("tipo"),
@@ -112,7 +162,7 @@ export const compararMusculos = onCall({ region: REGION }, async (request): Prom
     estandares: d.get("estandares") ?? null,
   }));
   const sesiones = new Map<string, SesionFuerza[]>();
-  await Promise.all(clientes.filter((c) => puedeSalir(c, yoId)).map(async (c) => {
+  await Promise.all(clientes.filter((c) => puedeSalir(c, yo, yoId)).map(async (c) => {
     const snap = await firestore.collection("clientes").doc(c.id).collection("sesiones")
       .where("fecha", ">=", desde).get();
     sesiones.set(c.id, snap.docs.map((d) => ({
@@ -120,19 +170,48 @@ export const compararMusculos = onCall({ region: REGION }, async (request): Prom
       ejercicios: (d.get("ejercicios") ?? []) as SesionFuerza["ejercicios"],
     })));
   }));
-  return { personas: armarComparacion(clientes, sesiones, banco, yoId, hoy) };
+  return {
+    personas: armarComparacion(clientes, sesiones, banco, yoId, hoy),
+    candidatos: candidatosAmigos(clientes, yoId),
+  };
 });
 
+/** Cuántas personas se pueden escoger a lo más: de sobra para un gimnasio. */
+export const MAX_COMPARTIR = 200;
+
 /**
- * Amigos: la clienta elige si los demás ven sus músculos. Lo pregunta la web la primera vez
- * que entra y se puede cambiar desde la lista. Escribe `clientes/{cid}.mostrarEnAmigos`.
+ * Lo que manda la web, ya validado. Acepta también `{ mostrar: boolean }`, lo que mandaba la
+ * primera versión, por si una página vieja sigue abierta. Null si no sirve.
+ */
+export function eleccionValida(data: unknown): { modo: ModoAmigos; con: string[] } | null {
+  const d = (data ?? {}) as { modo?: unknown; con?: unknown; mostrar?: unknown };
+  if (typeof d.mostrar === "boolean" && d.modo === undefined) return { modo: d.mostrar ? "todos" : "nadie", con: [] };
+  if (!esModo(d.modo)) return null;
+  if (d.modo !== "algunos") return { modo: d.modo, con: [] };
+  if (!Array.isArray(d.con) || d.con.length > MAX_COMPARTIR) return null;
+  const con = [...new Set(d.con.filter((x): x is string => typeof x === "string" && x !== ""))];
+  return con.length === 0 ? null : { modo: "algunos", con };
+}
+
+/**
+ * Amigos: la clienta elige quién ve sus músculos: todos, algunas personas o nadie. Lo pregunta
+ * la web la primera vez que entra y se puede cambiar desde la lista. Las personas escogidas se
+ * guardan solo si son de las que puede escoger (`candidatosAmigos`).
  */
 export const elegirMostrarEnAmigos = onCall({ region: REGION }, async (request) => {
   const clienteId = await clienteDeLaSesion(request);
-  const mostrar = (request.data as { mostrar?: unknown } | null)?.mostrar;
-  if (typeof mostrar !== "boolean") throw new HttpsError("invalid-argument", "mostrar_invalido");
-  const ref = db().collection("clientes").doc(clienteId);
+  const eleccion = eleccionValida(request.data);
+  if (eleccion === null) throw new HttpsError("invalid-argument", "eleccion_invalida");
+  const firestore = db();
+  const ref = firestore.collection("clientes").doc(clienteId);
   if ((await ref.get()).get("sinAccesoAmigos") === true) throw new HttpsError("permission-denied", "sin_acceso");
-  await ref.update({ mostrarEnAmigos: mostrar });
-  return { ok: true, mostrar };
+  let con: string[] = [];
+  if (eleccion.modo === "algunos") {
+    const snap = await firestore.collection("clientes").get();
+    const validos = new Set(candidatosAmigos(snap.docs.map((d) => clienteCompararDesdeDoc(d.id, d.data())), clienteId).map((c) => c.id));
+    con = eleccion.con.filter((id) => validos.has(id));
+    if (con.length === 0) throw new HttpsError("invalid-argument", "eleccion_invalida");
+  }
+  await ref.update({ visibilidadAmigos: eleccion.modo, compartirAmigosCon: con, mostrarEnAmigos: eleccion.modo !== "nadie" });
+  return { ok: true, modo: eleccion.modo, con };
 });

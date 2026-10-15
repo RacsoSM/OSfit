@@ -1604,3 +1604,9 @@ button.registro-serie-num.abierto { border-style: solid; border-color: var(--pri
 .cmp-eleccion .confirmar-titulo { margin: 0; }
 .cmp-visibilidad { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; }
 .cmp-visibilidad .boton-texto { display: inline; width: auto; margin: 0; padding: 0; font-size: inherit; color: var(--primario); font-weight: 600; }
+
+/* Amigos, "Solo a algunas personas": la lista para marcar. */
+.cmp-candidatos { display: flex; flex-direction: column; max-height: 50vh; overflow-y: auto; margin: 0 -4px; }
+.cmp-candidato { display: flex; align-items: center; gap: 12px; padding: 10px 4px; border-bottom: 1px solid rgba(127, 127, 127, 0.2); cursor: pointer; }
+.cmp-candidato:last-child { border-bottom: 0; }
+.cmp-candidato input { width: 20px; height: 20px; accent-color: var(--primario); flex: none; }

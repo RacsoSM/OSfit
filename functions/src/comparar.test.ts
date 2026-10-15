@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { armarComparacion, clienteCompararDesdeDoc, type ClienteComparar } from "./comparar";
+import {
+  armarComparacion, candidatosAmigos, clienteCompararDesdeDoc, eleccionValida, type ClienteComparar,
+} from "./comparar";
 
 const banco = [{ id: "curl", tipo: "peso" as const, musculos: { biceps: 1 },
   estandares: { H: [0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.5], M: [0.05, 0.08, 0.1, 0.13, 0.16, 0.2, 0.24, 0.3] } }];
 const con = (id: string, campos: Partial<ClienteComparar> = {}): ClienteComparar => ({
-  id, nombre: id, sexo: "M", peso: 60, grasa: null, anioNacimiento: null, sinAcceso: false, muestra: true, ...campos,
+  id, nombre: id, sexo: "M", peso: 60, grasa: null, anioNacimiento: null, sinAcceso: false, activo: true, modo: "todos", compartirCon: [], ...campos,
 });
 const curl = [{ fecha: "2026-10-10", ejercicios: [{ ejercicioId: "curl", series: [{ reps: 10, peso: 8 }] }] }];
 const hoy = "2026-10-14";
@@ -19,16 +21,16 @@ describe("armarComparacion", () => {
     expect(r[0].niveles.biceps).toBeGreaterThan(0);
   });
   it("deja fuera a quien no tiene músculos con datos, sexo o peso, y a quien se escondió", () => {
-    const clientes = [con("sin-sesiones"), con("sin-sexo", { sexo: null }), con("sin-peso", { peso: null }), con("escondida", { muestra: false }), con("sin-acceso", { sinAcceso: true }), con("ok")];
-    const ses = new Map(clientes.filter((c) => c.id !== "sin-sesiones").map((c) => [c.id, curl]));
+    const clientes = [con("sin-sesiones"), con("sin-sexo", { sexo: null }), con("sin-peso", { peso: null }), con("escondida", { modo: "nadie" }), con("sin-elegir", { modo: null }), con("sin-acceso", { sinAcceso: true }), con("ok"), con("x")];
+    const ses = new Map(clientes.filter((c) => c.id !== "sin-sesiones" && c.id !== "x").map((c) => [c.id, curl]));
     expect(armarComparacion(clientes, ses, banco, "x", hoy).map((p) => p.nombre)).toEqual(["ok"]);
   });
   it("quien se escondió se sigue viendo a sí misma", () => {
-    const r = armarComparacion([con("yo", { muestra: false })], new Map([["yo", curl]]), banco, "yo", hoy);
+    const r = armarComparacion([con("yo", { modo: "nadie" })], new Map([["yo", curl]]), banco, "yo", hoy);
     expect(r).toHaveLength(1);
   });
   it("no manda pesos ni ids", () => {
-    const r = armarComparacion([con("ok")], new Map([["ok", curl]]), banco, "x", hoy);
+    const r = armarComparacion([con("ok"), con("x")], new Map([["ok", curl]]), banco, "x", hoy);
     expect(Object.keys(r[0]).sort()).toEqual(["esTuyo", "niveles", "nombre", "sexo"]);
   });
 });
@@ -36,9 +38,43 @@ describe("armarComparacion", () => {
 describe("clienteCompararDesdeDoc", () => {
   it("lee los campos y tolera los raros", () => {
     expect(clienteCompararDesdeDoc("a", { nombre: " Ana ", sexo: "M", peso: 61, mostrarEnAmigos: true, sinAccesoAmigos: true }))
-      .toMatchObject({ nombre: "Ana", sexo: "M", peso: 61, muestra: true, sinAcceso: true });
+      .toMatchObject({ nombre: "Ana", sexo: "M", peso: 61, modo: "todos", sinAcceso: true });
+    expect(clienteCompararDesdeDoc("c", { visibilidadAmigos: "algunos", compartirAmigosCon: ["x", 3], mostrarEnAmigos: true }))
+      .toMatchObject({ modo: "algunos", compartirCon: ["x"] });
     // Sin elegir todavía: no sale.
     expect(clienteCompararDesdeDoc("b", { sexo: "X", peso: "70" }))
-      .toMatchObject({ nombre: "Sin nombre", sexo: null, peso: null, muestra: false, sinAcceso: false });
+      .toMatchObject({ nombre: "Sin nombre", sexo: null, peso: null, modo: null, sinAcceso: false });
+  });
+});
+
+describe("Amigos: quién ve a quién", () => {
+  const nombres = (clientes: ClienteComparar[], yoId: string) => {
+    const ses = new Map(clientes.map((c) => [c.id, curl]));
+    return armarComparacion(clientes, ses, banco, yoId, hoy).map((p) => p.nombre);
+  };
+  it("quien se oculta solo se ve a sí misma", () => {
+    expect(nombres([con("yo", { modo: "nadie" }), con("ana")], "yo")).toEqual(["yo"]);
+  });
+  it("quien no ha elegido tampoco ve a nadie", () => {
+    expect(nombres([con("yo", { modo: null }), con("ana")], "yo")).toEqual(["yo"]);
+  });
+  it("solo a algunas: la ven las escogidas y nadie más", () => {
+    const clientes = [con("bea", { modo: "algunos", compartirCon: ["yo"] }), con("cris", { modo: "algunos", compartirCon: ["otra"] }), con("yo")];
+    expect(nombres(clientes, "yo")).toEqual(["yo", "bea"]);
+  });
+  it("quien comparte con algunas ve a todas las que se muestran a ella", () => {
+    const clientes = [con("yo", { modo: "algunos", compartirCon: ["bea"] }), con("ana"), con("bea")];
+    expect(nombres(clientes, "yo")).toEqual(["yo", "ana", "bea"]);
+  });
+  it("candidatos: las demás activas con acceso, en orden", () => {
+    const clientes = [con("yo"), con("Zoe"), con("ana"), con("baja", { activo: false }), con("vetada", { sinAcceso: true })];
+    expect(candidatosAmigos(clientes, "yo")).toEqual([{ id: "ana", nombre: "ana" }, { id: "Zoe", nombre: "Zoe" }]);
+  });
+  it("valida lo que manda la web", () => {
+    expect(eleccionValida({ modo: "todos", con: ["x"] })).toEqual({ modo: "todos", con: [] });
+    expect(eleccionValida({ modo: "algunos", con: ["a", "a", 3, ""] })).toEqual({ modo: "algunos", con: ["a"] });
+    expect(eleccionValida({ modo: "algunos", con: [] })).toBeNull();
+    expect(eleccionValida({ modo: "otro" })).toBeNull();
+    expect(eleccionValida({ mostrar: false })).toEqual({ modo: "nadie", con: [] });
   });
 });

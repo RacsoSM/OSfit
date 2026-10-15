@@ -303,7 +303,7 @@ async function arrancar(): Promise<void> {
     compararMusculos({}).then(
       (r) => {
         if (pedido !== pedidoComparar) return;
-        comparacion = { estado: "listo", personas: r.data.personas };
+        comparacion = { estado: "listo", personas: r.data.personas, candidatos: r.data.candidatos };
         pintar();
       },
       () => {
@@ -560,7 +560,8 @@ async function arrancar(): Promise<void> {
         pintar,
         () => { cargarComparacion(); pintar(); },
         () => abrirVentana("musculos"),
-        (mostrar) => elegirMostrarEnAmigos({ mostrar })
+        // Lo que ve cambia con lo que eligió (con "nadie" no ve a nadie): se vuelve a pedir.
+        (eleccion) => elegirMostrarEnAmigos(eleccion).then((r) => { cargarComparacion(); return r; })
       );
       return;
     }

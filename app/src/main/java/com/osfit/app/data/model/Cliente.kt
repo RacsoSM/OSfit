@@ -98,9 +98,12 @@ data class Cliente(
     // El entrenador le quitó "Amigos" en la web (comparar músculos con los demás). Apagado
     // por defecto: tiene acceso. Sin acceso ni ve la lista ni sale en ella.
     val sinAccesoAmigos: Boolean = false,
-    // Lo que ella eligió en la web: si los demás ven sus músculos en Amigos. Null mientras no
-    // elija, y entonces no sale. Solo lo escribe la función `elegirMostrarEnAmigos`; aquí se
-    // lee para mostrárselo al entrenador.
+    // Lo que ella eligió en la web: quién ve sus músculos en Amigos ("todos", "algunos" o
+    // "nadie"; con "nadie" tampoco ve a los demás). Null mientras no elija, y entonces no sale.
+    // Solo lo escribe la función `elegirMostrarEnAmigos`; aquí se lee para mostrárselo al
+    // entrenador. `mostrarEnAmigos` es la primera versión (sí/no), de respaldo.
+    val visibilidadAmigos: String? = null,
+    val compartirAmigosCon: List<String> = emptyList(),
     val mostrarEnAmigos: Boolean? = null,
     // Cuándo se le revocó el acceso web por última vez. Lo escribe la función
     // `alRevocarAcceso`, nunca la app: las reglas rechazan toda sesión iniciada antes. La
