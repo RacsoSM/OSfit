@@ -1,4 +1,4 @@
-import type { Sexo } from "../datos";
+import type { Cliente, Sexo } from "../datos";
 import {
   NOMBRES_MUSCULO, indiceRango, nombreMusculo, nombreRango, rangoGeneral, type FuerzaMusculo,
 } from "../fuerza";
@@ -7,13 +7,16 @@ import { insigniaRango, COLORES_RANGO } from "./insigniaRango";
 import { archivosMapa, conNiveles, prepararSvg, type EstadoSvg } from "./mapaMuscular";
 
 /**
- * Compararme (dentro de Músculos): todas las que tienen algún músculo con rango, con su rango
+ * Amigos (antes "Compararme", dentro de Músculos): todas las que tienen algún músculo con rango, con su rango
  * general, en orden alfabético y "Tú" primero, para que nadie se sienta abajo (decisión del
  * entrenador, 2026-10-14). Al tocar a alguien salen los dos cuerpos lado a lado, cada uno con
  * los colores de sus rangos, y abajo músculo por músculo.
  *
  * La lista la arma la función `compararMusculos`: solo trae nombre, sexo y el nivel de cada
  * músculo. Nunca pesos.
+ *
+ * 2026-10-15 pasa a llamarse "Amigos". El entrenador decide quién entra (`sinAccesoAmigos`) y
+ * cada quien, la primera vez que entra, decide si los demás la ven (`mostrarEnAmigos`).
  */
 
 /** GEMELO: `PersonaComparar` de `functions/src/comparar.ts`. */
@@ -37,11 +40,63 @@ let elegida: string | null = null;
 let deEspalda = false;
 let musculo: string | null = null;
 
+/**
+ * Lo que eligió en esta página mientras el snapshot del cliente no lo trae: así la pregunta
+ * no vuelve a salir en el instante entre tocar y que llegue. No se borra al salir de la
+ * ventana: para entonces el snapshot ya trae lo mismo.
+ */
+let eleccionLocal: boolean | null = null;
+let guardando = false;
+let errorEleccion = false;
+
 /** Para los tests y al salir de la ventana. */
 export function reiniciarComparar(): void {
   elegida = null;
   deEspalda = false;
   musculo = null;
+  errorEleccion = false;
+}
+
+/** Para los tests: olvidar lo elegido en la página. */
+export function reiniciarEleccionAmigos(): void {
+  eleccionLocal = null;
+  guardando = false;
+  errorEleccion = false;
+}
+
+type AmigosDelCliente = Pick<Cliente, "sinAccesoAmigos" | "mostrarEnAmigos">;
+
+/** `true`/`false` si ya eligió; `null` si todavía no. */
+function muestra(c: AmigosDelCliente): boolean | null {
+  return eleccionLocal ?? (typeof c.mostrarEnAmigos === "boolean" ? c.mostrarEnAmigos : null);
+}
+
+const AVISO_ERROR_ELECCION = `<p class="aviso-error">No se pudo guardar. Revisa tu conexión e intenta otra vez.</p>`;
+
+/** La primera vez que entra: que decida antes de ver a nadie. */
+function vistaEleccion(): string {
+  const off = guardando ? " disabled" : "";
+  return `
+    <div class="tarjeta cmp-eleccion">
+      <p class="confirmar-titulo">¿Quieres que los demás vean tus músculos?</p>
+      <p class="accion-nota">En Amigos se ven el nombre, el rango y el mapa de músculos de quienes
+        decidieron mostrarse. Nunca el peso. Tú eliges si apareces y lo puedes cambiar cuando quieras.</p>
+      ${errorEleccion ? AVISO_ERROR_ELECCION : ""}
+      <button class="boton" data-cmp="mostrar"${off}>Mostrar mis músculos</button>
+      <button class="boton secundario" data-cmp="ocultar"${off}>Mantenerlos ocultos</button>
+      <p class="accion-nota cmp-nota">Aunque los ocultes, tú sí puedes ver a los demás.</p>
+    </div>`;
+}
+
+/** Arriba de la lista: cómo está y cómo cambiarlo. */
+function lineaVisibilidad(visible: boolean): string {
+  const off = guardando ? " disabled" : "";
+  return `
+    ${errorEleccion ? AVISO_ERROR_ELECCION : ""}
+    <p class="accion-nota cmp-visibilidad">
+      ${visible ? "Los demás ven tus músculos." : "Tus músculos están ocultos para los demás."}
+      <button class="boton-texto" data-cmp="${visible ? "ocultar" : "mostrar"}"${off}>${visible ? "Ocultarlos" : "Mostrarlos"}</button>
+    </p>`;
 }
 
 /** Para los tests: abrir directo la comparación con alguien. */
@@ -77,7 +132,7 @@ function tarjeta(p: PersonaComparar, i: number, mapas: Readonly<Record<string, E
     </button>`;
 }
 
-function vistaLista(personas: PersonaComparar[], mapas: Readonly<Record<string, EstadoSvg>>): string {
+function vistaLista(personas: PersonaComparar[], mapas: Readonly<Record<string, EstadoSvg>>, visible: boolean): string {
   const yo = personas.find((p) => p.esTuyo);
   const nota = yo
     ? `<p class="accion-nota cmp-nota">Toca a alguien para comparar sus músculos con los tuyos.</p>`
@@ -87,6 +142,7 @@ function vistaLista(personas: PersonaComparar[], mapas: Readonly<Record<string, 
     : `<div class="cmp-grid">${personas.map((p, i) => tarjeta(p, i, mapas)).join("")}</div>`;
   return `
     <p class="confirmar-titulo">Compárate con el resto</p>
+    ${lineaVisibilidad(visible)}
     ${nota}
     ${lista}`;
 }
@@ -164,15 +220,21 @@ function vistaComparacion(
     </div>`;
 }
 
-/** Lo que va en `#contenido` con Compararme abierto. */
+/** Lo que va en `#contenido` con Amigos abierto. */
 export function ventanaComparar(
   e: EstadoComparar,
   miSexo: Sexo | null | undefined,
-  mapas: Readonly<Record<string, EstadoSvg>>
+  mapas: Readonly<Record<string, EstadoSvg>>,
+  cliente: AmigosDelCliente = {}
 ): string {
   let cuerpoHtml: string;
+  const visible = muestra(cliente);
   if (miSexo !== "H" && miSexo !== "M") {
     cuerpoHtml = `<p class="accion-nota">Tu entrenador tiene que completar tu perfil para compararte.</p>`;
+  } else if (cliente.sinAccesoAmigos === true) {
+    cuerpoHtml = `<p class="accion-nota">Tu entrenador todavía no te ha dado acceso a Amigos.</p>`;
+  } else if (visible === null) {
+    cuerpoHtml = vistaEleccion();
   } else if (e.estado === "cargando") {
     cuerpoHtml = `<p class="accion-nota" style="text-align:center">Cargando…</p>`;
   } else if (e.estado === "error") {
@@ -182,7 +244,7 @@ export function ventanaComparar(
     const otra = elegida === null ? undefined : e.personas.find((p) => p.nombre === elegida && !p.esTuyo);
     cuerpoHtml = otra
       ? vistaComparacion(e.personas.find((p) => p.esTuyo), miSexo, otra, mapas)
-      : vistaLista(e.personas, mapas);
+      : vistaLista(e.personas, mapas, visible);
   }
   return `<div id="comparar" class="comparar">${cuerpoHtml}</div>`;
 }
@@ -200,7 +262,11 @@ export function sexosAComparar(e: EstadoComparar, miSexo: Sexo | null | undefine
 }
 
 /** Un solo listener delegado en `#comparar`: el contenido se rehace en cada repintado. */
-export function conectarComparar(repintar: () => void, reintentar: () => void): void {
+export function conectarComparar(
+  repintar: () => void,
+  reintentar: () => void,
+  elegir: (mostrar: boolean) => Promise<unknown>
+): void {
   const raiz = document.querySelector<HTMLElement>("#comparar");
   if (!raiz) return;
   raiz.addEventListener("click", (ev) => {
@@ -232,6 +298,18 @@ export function conectarComparar(repintar: () => void, reintentar: () => void): 
     const accion = el.dataset.cmp;
     if (accion === "lista") { elegida = null; musculo = null; repintar(); return; }
     if (accion === "girar") { deEspalda = !deEspalda; repintar(); return; }
-    if (accion === "reintentar") reintentar();
+    if (accion === "reintentar") { reintentar(); return; }
+    if ((accion === "mostrar" || accion === "ocultar") && !guardando) {
+      const mostrar = accion === "mostrar";
+      const antes = eleccionLocal;
+      eleccionLocal = mostrar;
+      guardando = true;
+      errorEleccion = false;
+      repintar();
+      elegir(mostrar).then(
+        () => { guardando = false; repintar(); },
+        () => { eleccionLocal = antes; guardando = false; errorEleccion = true; repintar(); }
+      );
+    }
   });
 }

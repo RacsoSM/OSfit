@@ -51,12 +51,18 @@ export const obtenerRanking = httpsCallable<Record<string, never>, Ranking>(
 );
 
 /**
- * Compararme: todas las que tienen algún músculo con rango, con su nivel por músculo. Lo arma
+ * Amigos: todas las que tienen algún músculo con rango, con su nivel por músculo. Lo arma
  * el servidor porque cada clienta solo puede leer sus propias sesiones.
  */
 export const compararMusculos = httpsCallable<Record<string, never>, { personas: PersonaComparar[] }>(
   functions,
   "compararMusculos"
+);
+
+/** Amigos: si los demás ven sus músculos. */
+export const elegirMostrarEnAmigos = httpsCallable<{ mostrar: boolean }, { ok: true; mostrar: boolean }>(
+  functions,
+  "elegirMostrarEnAmigos"
 );
 
 /**

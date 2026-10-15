@@ -139,7 +139,7 @@ describe("el menú", () => {
   });
 });
 
-describe("subventanas (Compararme dentro de Músculos)", () => {
+describe("subventanas (Amigos dentro de Músculos)", () => {
   beforeEach(() => abrirVentana("musculos"));
 
   it("se abre encima de Músculos, y atrás regresa a Músculos", () => {

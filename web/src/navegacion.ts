@@ -14,8 +14,8 @@ import type { IdVentana } from "./ventanas";
  *
  * El historial nunca pasa de `[Inicio, ventana]`, más la entrada del menú mientras está
  * abierto: así "atrás" desde cualquier ventana vuelve a Inicio y no recorre todo lo visitado.
- * La excepción son las subventanas (`PADRE`), como Compararme dentro de Músculos: se abren
- * encima de su padre, `[Inicio, Músculos, Compararme]`, para que "atrás" regrese a Músculos.
+ * La excepción son las subventanas (`PADRE`), como Amigos dentro de Músculos: se abren
+ * encima de su padre, `[Inicio, Músculos, Amigos]`, para que "atrás" regrese a Músculos.
  *
  * Es el único módulo que toca `history`, y lo recibe inyectado para poder probarlo.
  */

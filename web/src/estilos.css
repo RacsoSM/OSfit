@@ -1447,3 +1447,12 @@ main:has(#barra) { padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
 .cmp-celda i { flex: none; width: 10px; height: 10px; border-radius: 50%; }
 .cmp-celda.gana { color: var(--texto); font-weight: 800; }
 .cmp-celda.sin { padding-left: 16px; }
+
+/* Sin acceso a Amigos: el hueco del ícono, para que el peso siga centrado. */
+.mapa-pie .mapa-hueco { visibility: hidden; }
+
+/* Amigos: la pregunta de la primera vez y la línea de "los demás te ven / no". */
+.cmp-eleccion { display: flex; flex-direction: column; gap: 10px; }
+.cmp-eleccion .confirmar-titulo { margin: 0; }
+.cmp-visibilidad { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; }
+.cmp-visibilidad .boton-texto { display: inline; width: auto; margin: 0; padding: 0; font-size: inherit; color: var(--primario); font-weight: 600; }

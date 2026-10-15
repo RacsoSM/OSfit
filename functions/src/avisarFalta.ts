@@ -1,7 +1,7 @@
 import { FieldValue } from "firebase-admin/firestore";
 import { getMessaging } from "firebase-admin/messaging";
 import { logger } from "firebase-functions";
-import { onCall } from "firebase-functions/v2/https";
+import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { REGION, clienteDeLaSesion, db, hoyEnMazatlan } from "./comun";
 
 /**
@@ -41,6 +41,10 @@ const CANAL_AVISOS = "avisos_falta";
 export const avisarFalta = onCall({ region: REGION }, async (request) => {
   const clienteId = await clienteDeLaSesion(request);
   const hoy = hoyEnMazatlan();
+
+  // Quien entrena por su cuenta no tiene a dónde faltar; la web ni le muestra el botón.
+  const cliente = await db().collection("clientes").doc(clienteId).get();
+  if (cliente.get("entrenaADistancia") === true) throw new HttpsError("failed-precondition", "a_distancia");
 
   const doc = db().collection("avisosFalta").doc(`${clienteId}_${hoy}`);
 

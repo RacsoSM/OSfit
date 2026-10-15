@@ -92,9 +92,16 @@ data class Cliente(
     // Qué avisos automáticos le llegan, por llave de [AvisoAutomatico]. Ausente = apagado. Solo
     // salen además con [notificacionesWeb] prendido: esa llave sigue mandando sobre todo.
     val avisosAutomaticos: Map<String, Boolean> = emptyMap(),
-    // Si se esconde de "Compararme" en la web (comparar músculos con los demás). Apagado por
-    // defecto: aparece. Lo lee la función `compararMusculos`.
-    val ocultarEnComparar: Boolean = false,
+    // Entrena por su cuenta, sin venir al gimnasio. Apagado por defecto. Con él la web no le
+    // muestra "Hoy no voy a poder ir" y la función `avisarFalta` lo rechaza.
+    val entrenaADistancia: Boolean = false,
+    // El entrenador le quitó "Amigos" en la web (comparar músculos con los demás). Apagado
+    // por defecto: tiene acceso. Sin acceso ni ve la lista ni sale en ella.
+    val sinAccesoAmigos: Boolean = false,
+    // Lo que ella eligió en la web: si los demás ven sus músculos en Amigos. Null mientras no
+    // elija, y entonces no sale. Solo lo escribe la función `elegirMostrarEnAmigos`; aquí se
+    // lee para mostrárselo al entrenador.
+    val mostrarEnAmigos: Boolean? = null,
     // Cuándo se le revocó el acceso web por última vez. Lo escribe la función
     // `alRevocarAcceso`, nunca la app: las reglas rechazan toda sesión iniciada antes. La
     // ficha lo muestra cuando ya no tiene acceso.

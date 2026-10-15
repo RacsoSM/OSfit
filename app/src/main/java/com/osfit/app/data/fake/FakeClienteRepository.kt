@@ -204,8 +204,12 @@ class FakeClienteRepository : ClienteRepository {
         actualizarCliente(clienteId) { it.copy(recordatorioPago = activo) }
     }
 
-    override suspend fun actualizarOcultarEnComparar(clienteId: String, ocultar: Boolean) {
-        actualizarCliente(clienteId) { it.copy(ocultarEnComparar = ocultar) }
+    override suspend fun actualizarEntrenaADistancia(clienteId: String, aDistancia: Boolean) {
+        actualizarCliente(clienteId) { it.copy(entrenaADistancia = aDistancia) }
+    }
+
+    override suspend fun actualizarSinAccesoAmigos(clienteId: String, sinAcceso: Boolean) {
+        actualizarCliente(clienteId) { it.copy(sinAccesoAmigos = sinAcceso) }
     }
 
     override suspend fun actualizarNotificacionesWeb(clienteId: String, habilitada: Boolean) {

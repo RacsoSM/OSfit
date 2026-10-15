@@ -26,7 +26,7 @@ import type {
 import { hoyEnMazatlan } from "./fecha";
 import { mesAnterior, type Tirada } from "./tirada";
 import {
-  borrarSesion, compararMusculos, editarSesion, guardarPeso, marcarAsistencia, obtenerRanking, registrarEntrada, registrarSesion,
+  borrarSesion, compararMusculos, editarSesion, elegirMostrarEnAmigos, guardarPeso, marcarAsistencia, obtenerRanking, registrarEntrada, registrarSesion,
 } from "./acciones";
 import { modalRuleta, conectarRuleta } from "./ui/ruleta";
 import { conectarRanking, type EstadoRanking } from "./ui/tarjetaRanking";
@@ -199,7 +199,7 @@ async function arrancar(): Promise<void> {
   let ranking: EstadoRanking = { estado: "cargando" };
   /** Número del último pedido: una respuesta de un pedido viejo no pisa a la más nueva. */
   let pedidoRanking = 0;
-  /** Lo de Compararme; se pide cada vez que se entra, como el ranking. */
+  /** Lo de Amigos; se pide cada vez que se entra, como el ranking. */
   let comparacion: EstadoComparar = { estado: "cargando" };
   let pedidoComparar = 0;
   /** Los SVG del mapa muscular ya pedidos, por archivo. Viven lo que dura la página. */
@@ -264,7 +264,7 @@ async function arrancar(): Promise<void> {
    * y los repintados ya no van a la red. Si falla, se reintenta solo al volver a entrar
    * (`reintentar`): reintentar en cada repintado sería un ciclo, porque el fallo repinta.
    */
-  /** Los mapas de su sexo; en Compararme, también los del sexo de con quién se compara. */
+  /** Los mapas de su sexo; en Amigos, también los del sexo de con quién se compara. */
   function cargarMapas(reintentar: boolean, sexos?: readonly ("H" | "M")[]): void {
     const sexo = cliente?.sexo;
     const todos = sexos ?? (sexo === "H" || sexo === "M" ? [sexo] : []);
@@ -506,7 +506,8 @@ async function arrancar(): Promise<void> {
     // el snapshot del cliente llega aquí y el mapa aparece sin salir y volver.
     if (activa.id === "musculos") cargarMapas(activa.id !== ventanaPintada);
     if (activa.id === "comparar") {
-      if (activa.id !== ventanaPintada) { reiniciarComparar(); cargarComparacion(); }
+      // Sin acceso no se pide: la función lo rechazaría, y la ventana ya lo dice.
+      if (activa.id !== ventanaPintada) { reiniciarComparar(); if (cliente.sinAccesoAmigos !== true) cargarComparacion(); }
       cargarMapas(false, sexosAComparar(comparacion, cliente.sexo));
     }
     actualizarCabecera(tituloCabecera(activa));
@@ -546,7 +547,11 @@ async function arrancar(): Promise<void> {
       return;
     }
     if (activa.id === "comparar") {
-      conectarComparar(pintar, () => { cargarComparacion(); pintar(); });
+      conectarComparar(
+        pintar,
+        () => { cargarComparacion(); pintar(); },
+        (mostrar) => elegirMostrarEnAmigos({ mostrar })
+      );
       return;
     }
     if (activa.id === "registro") {

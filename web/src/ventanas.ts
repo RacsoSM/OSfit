@@ -67,7 +67,7 @@ export interface DatosCliente {
   configGrupos: ConfigGrupos | null;
   /** Entrenamientos terminados sin internet que esperan a mandarse (`cola.ts`). */
   pendientes?: number;
-  /** Lo que devolvió `compararMusculos`; lo pide `main.ts` al entrar a Compararme. */
+  /** Lo que devolvió `compararMusculos`; lo pide `main.ts` al entrar a Amigos. */
   comparacion?: EstadoComparar;
 }
 
@@ -121,7 +121,7 @@ function inicio(d: DatosCliente): string {
   const yaAsistioHoy = d.asistencias.some((a) => a.fecha === d.hoy && a.asistio);
   const acciones = `
       ${accionDia(d.cliente, d.hoy, yaAsistioHoy)}
-      ${hojaDeMotivosAbierta() ? "" : accionHoyNoPuedo(d.cliente, d.hoy, d.yaAviso)}`;
+      ${hojaDeMotivosAbierta() || d.cliente.entrenaADistancia === true ? "" : accionHoyNoPuedo(d.cliente, d.hoy, d.yaAviso)}`;
   return `
       ${tarjetaRecordatorioPago(recordatorioPago(d.cliente, d.hoy))}
       ${tarjetaDia(d.cliente, d.hoy, acciones, d.asistencias,
@@ -153,15 +153,16 @@ export const VENTANAS: readonly Ventana[] = [
     id: "musculos", titulo: "Músculos", icono: "💪", grupo: "barra",
     // Sin sexo el mapa ya avisa que falta su perfil; con él, sin peso no deja pasar.
     pintar: (d) => tarjetaMusculos(d.cliente.sexo, d.mapas, fuerzaDelCliente(d), d.cliente.peso ?? null,
-      d.cliente.sexo === "H" || d.cliente.sexo === "M" ? bloquePeso(d.cliente.peso) : ""),
+      d.cliente.sexo === "H" || d.cliente.sexo === "M" ? bloquePeso(d.cliente.peso) : "",
+      d.cliente.sinAccesoAmigos !== true),
   },
   {
     id: "registro", titulo: "Registro", icono: "📝", grupo: "barra",
     pintar: (d) => ventanaRegistro(datosRegistro(d)),
   },
   {
-    id: "comparar", titulo: "Compararme", icono: "👥", grupo: "sub",
-    pintar: (d) => ventanaComparar(d.comparacion ?? { estado: "cargando" }, d.cliente.sexo, d.mapas),
+    id: "comparar", titulo: "Amigos", icono: "👥", grupo: "sub",
+    pintar: (d) => ventanaComparar(d.comparacion ?? { estado: "cargando" }, d.cliente.sexo, d.mapas, d.cliente),
   },
   {
     id: "ranking", titulo: "Ranking", icono: "🏆", grupo: "principal",

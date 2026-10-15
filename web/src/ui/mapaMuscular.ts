@@ -140,7 +140,7 @@ const ICONO_GIRAR = icono(
   '<path d="M20 12a8 8 0 0 1-13.9 5.4"/><path d="M4 12a8 8 0 0 1 13.9-5.4"/>'
   + '<path d="M18 2.8v3.9h-3.9"/><path d="M6 21.2v-3.9h3.9"/>'
 );
-/** Compararme: dos personas, de línea como los otros dos. */
+/** Amigos: dos personas, de línea como los otros dos. */
 const ICONO_COMUNIDAD = icono(
   '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/>'
   + '<path d="M16 4.6a3.5 3.5 0 0 1 0 6.8"/><path d="M18.5 14.2a6.5 6.5 0 0 1 3 5.8"/>'
@@ -344,16 +344,20 @@ export function bloqueRangoGeneral(
  *
  * `fuerza` es el nivel de cada grupo (`data-musculo`); vacío mientras no exista el registro.
  *
- * `pie` va en medio de la fila de abajo, entre Compararme y girar: el "Actualizar peso
+ * `pie` va en medio de la fila de abajo, entre Amigos y girar: el "Actualizar peso
  * corporal" (`bloquePeso`). La fila va debajo de "Toca un músculo…" y los dos íconos a la
  * altura del peso, no encima del dibujo (pedido del entrenador, 2026-10-14).
+ *
+ * Sin acceso a Amigos (`conAmigos` falso) el ícono no sale, pero su hueco se queda para que
+ * el peso siga centrado.
  */
 export function tarjetaMusculos(
   sexo: Sexo | null | undefined,
   mapas: Readonly<Record<string, EstadoSvg>>,
   fuerza: Readonly<Record<string, FuerzaMusculo>> = {},
   peso: number | null = null,
-  pie = ""
+  pie = "",
+  conAmigos = true
 ): string {
   if (sexo !== "H" && sexo !== "M") {
     return seccionVacia(
@@ -381,8 +385,10 @@ export function tarjetaMusculos(
       </div>
       <div id="mapa-detalle">${detalle}</div>
       <div class="mapa-pie">
-        <button type="button" class="mapa-comparar" id="abrir-comparar"
-                aria-label="Compararme con los demás" title="Compararme">${ICONO_COMUNIDAD}</button>
+        ${conAmigos
+          ? `<button type="button" class="mapa-comparar" id="abrir-comparar"
+                aria-label="Amigos: compararme con los demás" title="Amigos">${ICONO_COMUNIDAD}</button>`
+          : `<span class="mapa-comparar mapa-hueco" aria-hidden="true">${ICONO_COMUNIDAD}</span>`}
         <div class="mapa-pie-centro">${pie}</div>
         <button type="button" class="mapa-girar" id="girar-mapa"
                 aria-label="${textoBoton(deEspalda)}" title="${textoBoton(deEspalda)}">${ICONO_GIRAR}</button>

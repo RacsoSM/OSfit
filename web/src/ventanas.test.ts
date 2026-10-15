@@ -32,7 +32,7 @@ describe("el registro de ventanas", () => {
     expect(new Set(ids).size).toBe(ids.length);
   });
 
-  it("va Inicio, Músculos, Registro, Compararme, Ranking, Medallas, Logros, Videos y Ajustes al final", () => {
+  it("va Inicio, Músculos, Registro, Amigos, Ranking, Medallas, Logros, Videos y Ajustes al final", () => {
     expect(VENTANAS.map((v) => v.id)).toEqual(
       ["inicio", "musculos", "registro", "comparar", "ranking", "medallas", "logros", "videos", "ajustes"]
     );
@@ -69,6 +69,14 @@ describe("el registro de ventanas", () => {
 
 describe("la ventana Inicio", () => {
   const html = contenidoDe(ventana("inicio"), datos());
+
+  it("quien entrena a distancia no ve \"Hoy no voy a poder ir\"", () => {
+    // Con rutina: sin ella la tarjeta del día no pinta sus botones.
+    const conRutina = { ...cliente, ultimoDia: 0, ultimoDiaFecha: "2026-09-14", ultimoDiaEsAncla: true, rutinaAsignada: { id: "r1", nombre: "R", dias: [{ nombreDia: "Pierna", ejercicios: [{ nombre: "Sentadilla", series: 4, repeticiones: "10", pesoONota: "" }] }] } } as Cliente;
+    expect(contenidoDe(ventana("inicio"), datos({ cliente: conRutina }))).toContain('id="falta-hoy"');
+    const lejos = contenidoDe(ventana("inicio"), datos({ cliente: { ...conRutina, entrenaADistancia: true } }));
+    expect(lejos).not.toContain('id="falta-hoy"');
+  });
 
   it("el recordatorio de pago va arriba de todo, antes de la tarjeta del día", () => {
     const conRecordatorio = {

@@ -39,7 +39,8 @@ interface ClienteRepository {
     suspend fun actualizarActivo(clienteId: String, activo: Boolean)
     /** Prende o apaga la tarjeta de recordatorio de pago en la web de la clienta. */
     suspend fun actualizarRecordatorioPago(clienteId: String, activo: Boolean)
-    suspend fun actualizarOcultarEnComparar(clienteId: String, ocultar: Boolean)
+    suspend fun actualizarEntrenaADistancia(clienteId: String, aDistancia: Boolean)
+    suspend fun actualizarSinAccesoAmigos(clienteId: String, sinAcceso: Boolean)
     suspend fun actualizarNotificacionesWeb(clienteId: String, habilitada: Boolean)
     /** Prende o apaga un aviso automático; solo toca esa llave del mapa. */
     suspend fun actualizarAvisoAutomatico(clienteId: String, aviso: AvisoAutomatico, activo: Boolean)

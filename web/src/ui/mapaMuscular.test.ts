@@ -326,7 +326,7 @@ describe("bloqueRangoGeneral", () => {
   });
 });
 
-describe("botón de Compararme", () => {
+describe("botón de Amigos", () => {
   it("va en el dibujo como ícono, junto al de girar", () => {
     const html = tarjetaMusculos("M", { "/mapa-muscular-frente-mujer.svg": { estado: "listo", svg: frenteM } });
     expect(html).toMatch(/class="mapa-comparar" id="abrir-comparar"[\s\S]*?<svg class="mapa-icono"/);
@@ -335,5 +335,10 @@ describe("botón de Compararme", () => {
   it("los dos íconos van en la fila de abajo, con el peso en medio", () => {
     const html = tarjetaMusculos("M", {}, {}, 60, '<p class="peso-linea">PESO</p>');
     expect(html).toMatch(/class="mapa-pie"[\s\S]*?id="abrir-comparar"[\s\S]*?PESO[\s\S]*?id="girar-mapa"/);
+  });
+  it("sin acceso a Amigos no hay botón, pero su hueco sigue para centrar el peso", () => {
+    const html = tarjetaMusculos("M", {}, {}, 60, '<p class="peso-linea">PESO</p>', false);
+    expect(html).not.toContain('id="abrir-comparar"');
+    expect(html).toMatch(/class="mapa-comparar mapa-hueco" aria-hidden="true"[\s\S]*?PESO/);
   });
 });

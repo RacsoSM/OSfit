@@ -121,6 +121,18 @@ export interface Cliente {
    */
   porcentajeGrasa?: number | null;
   grasaFecha?: string | null;
+  /**
+   * Entrena por su cuenta, sin venir al gimnasio. Lo prende el entrenador en la app; ausente es
+   * "no". Con él no ve "Hoy no voy a poder ir".
+   */
+  entrenaADistancia?: boolean;
+  /** El entrenador le quitó Amigos desde la app. Ausente es "tiene acceso". */
+  sinAccesoAmigos?: boolean;
+  /**
+   * Si los demás ven sus músculos en Amigos. Lo elige ella la primera vez que entra
+   * (`elegirMostrarEnAmigos`); ausente es "todavía no elige", y mientras tanto no sale.
+   */
+  mostrarEnAmigos?: boolean;
 }
 
 export interface Asistencia {

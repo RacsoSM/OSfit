@@ -1,4 +1,4 @@
-import { onCall } from "firebase-functions/v2/https";
+import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { REGION, clienteDeLaSesion, db, hoyEnMazatlan } from "./comun";
 import {
   SEMANAS_VENTANA, diasAntes, edadEn, nivelesPorMusculo, pesoParaFuerza,
@@ -6,7 +6,7 @@ import {
 } from "./fuerza";
 
 /**
- * "Compararme", en Músculos de la web: todas las clientas con algún músculo con rango, con su
+ * "Amigos" (antes "Compararme"), en Músculos de la web: todas las clientas con algún músculo con rango, con su
  * nivel por músculo, para ver su rango general y sus cuerpos lado a lado.
  *
  * Lo calcula el servidor por lo mismo que el ranking de rachas: las reglas solo dejan que cada
@@ -15,7 +15,14 @@ import {
  *
  * Decisiones del entrenador (2026-10-14): se ven los nombres; en orden alfabético con "Tú"
  * primero, para que nadie se sienta abajo; aparece todo el que tenga al menos un músculo con
- * datos, activo o no; y se puede esconder a una clienta desde la app (`ocultarEnComparar`).
+ * datos, activo o no.
+ *
+ * 2026-10-15 la ventana pasa a llamarse "Amigos" y cambian las llaves:
+ *  - El entrenador decide quién puede entrar, desde la app (`sinAccesoAmigos`). Quien no
+ *    tiene acceso ni ve la lista ni sale en ella.
+ *  - Cada quien decide si los demás la ven (`mostrarEnAmigos`, que escribe
+ *    `elegirMostrarEnAmigos`). Mientras no elija, no sale: nadie aparece sin haberlo dicho.
+ *    Esconderse no le quita ver a los demás.
  */
 
 export interface PersonaComparar {
@@ -33,7 +40,10 @@ export interface ClienteComparar {
   peso: number | null;
   grasa: number | null;
   anioNacimiento: number | null;
-  ocultar: boolean;
+  /** El entrenador le quitó Amigos (`sinAccesoAmigos`). */
+  sinAcceso: boolean;
+  /** Ella eligió salir (`mostrarEnAmigos === true`). Sin elegir cuenta como no. */
+  muestra: boolean;
 }
 
 export function clienteCompararDesdeDoc(id: string, d: Record<string, unknown>): ClienteComparar {
@@ -45,13 +55,17 @@ export function clienteCompararDesdeDoc(id: string, d: Record<string, unknown>):
     peso: num(d.peso),
     grasa: num(d.porcentajeGrasa),
     anioNacimiento: num(d.anioNacimiento),
-    ocultar: d.ocultarEnComparar === true,
+    sinAcceso: d.sinAccesoAmigos === true,
+    muestra: d.mostrarEnAmigos === true,
   };
 }
 
-/** Quién puede salir: con sexo y peso (sin ellos no hay rango), y sin esconder (salvo ella misma). */
+/**
+ * Quién puede salir: con sexo y peso (sin ellos no hay rango), con acceso, y que haya elegido
+ * mostrarse. Ella misma siempre sale en su propia lista, aunque se esconda.
+ */
 export function puedeSalir(c: ClienteComparar, yoId: string): boolean {
-  return c.sexo !== null && (c.peso ?? 0) > 0 && (!c.ocultar || c.id === yoId);
+  return c.sexo !== null && (c.peso ?? 0) > 0 && !c.sinAcceso && (c.muestra || c.id === yoId);
 }
 
 /** La lista ya ordenada: "Tú" primero y luego alfabético. Pura para probarla. */
@@ -90,6 +104,7 @@ export const compararMusculos = onCall({ region: REGION }, async (request): Prom
     firestore.collection("ejercicios").get(),
   ]);
   const clientes = clientesSnap.docs.map((d) => clienteCompararDesdeDoc(d.id, d.data()));
+  if (clientes.find((c) => c.id === yoId)?.sinAcceso) throw new HttpsError("permission-denied", "sin_acceso");
   const banco: EjercicioFuerza[] = bancoSnap.docs.map((d) => ({
     id: d.id,
     tipo: d.get("tipo"),
@@ -106,4 +121,18 @@ export const compararMusculos = onCall({ region: REGION }, async (request): Prom
     })));
   }));
   return { personas: armarComparacion(clientes, sesiones, banco, yoId, hoy) };
+});
+
+/**
+ * Amigos: la clienta elige si los demás ven sus músculos. Lo pregunta la web la primera vez
+ * que entra y se puede cambiar desde la lista. Escribe `clientes/{cid}.mostrarEnAmigos`.
+ */
+export const elegirMostrarEnAmigos = onCall({ region: REGION }, async (request) => {
+  const clienteId = await clienteDeLaSesion(request);
+  const mostrar = (request.data as { mostrar?: unknown } | null)?.mostrar;
+  if (typeof mostrar !== "boolean") throw new HttpsError("invalid-argument", "mostrar_invalido");
+  const ref = db().collection("clientes").doc(clienteId);
+  if ((await ref.get()).get("sinAccesoAmigos") === true) throw new HttpsError("permission-denied", "sin_acceso");
+  await ref.update({ mostrarEnAmigos: mostrar });
+  return { ok: true, mostrar };
 });

@@ -16,6 +16,7 @@ import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.VideoLibrary
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
@@ -89,11 +90,18 @@ class WebClienteViewModel(
         }
     }
 
-    /** El interruptor dice "Aparece": prendido es `ocultarEnComparar = false`. */
-    fun cambiarApareceEnComparar(aparece: Boolean) {
-        _cliente.value = _cliente.value?.copy(ocultarEnComparar = !aparece)
+    fun cambiarEntrenaADistancia(aDistancia: Boolean) {
+        _cliente.value = _cliente.value?.copy(entrenaADistancia = aDistancia)
         viewModelScope.launch {
-            runCatching { clienteRepository.actualizarOcultarEnComparar(clienteId, !aparece) }
+            runCatching { clienteRepository.actualizarEntrenaADistancia(clienteId, aDistancia) }
+        }
+    }
+
+    /** El interruptor dice "Acceso": prendido es `sinAccesoAmigos = false`. */
+    fun cambiarAccesoAmigos(acceso: Boolean) {
+        _cliente.value = _cliente.value?.copy(sinAccesoAmigos = !acceso)
+        viewModelScope.launch {
+            runCatching { clienteRepository.actualizarSinAccesoAmigos(clienteId, !acceso) }
         }
     }
 
@@ -172,10 +180,18 @@ fun WebClienteScreen(
                 )
             }
             item {
-                FilaCompararme(
-                    aparece = cliente?.ocultarEnComparar != true,
+                FilaADistancia(
+                    aDistancia = cliente?.entrenaADistancia == true,
                     habilitado = cliente != null,
-                    onCambiar = viewModel::cambiarApareceEnComparar
+                    onCambiar = viewModel::cambiarEntrenaADistancia
+                )
+            }
+            item {
+                FilaAmigos(
+                    acceso = cliente?.sinAccesoAmigos != true,
+                    eleccion = cliente?.mostrarEnAmigos,
+                    habilitado = cliente != null,
+                    onCambiar = viewModel::cambiarAccesoAmigos
                 )
             }
             item {
@@ -249,12 +265,44 @@ private fun FilaRecordatorioPago(
 }
 
 /**
- * "Compararme" en Músculos de la web: la lista de clientas con su rango y sus cuerpos lado a
- * lado. Aparece por defecto; aquí se apaga para quien no quiera salir.
+ * Para quien entrena por su cuenta, sin venir al gimnasio: la web no le muestra "Hoy no voy a
+ * poder ir", que no tiene sentido si no hay a dónde faltar.
  */
 @Composable
-private fun FilaCompararme(
-    aparece: Boolean,
+private fun FilaADistancia(
+    aDistancia: Boolean,
+    habilitado: Boolean,
+    onCambiar: (Boolean) -> Unit
+) {
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Icon(Icons.Filled.Place, contentDescription = null)
+            Column(modifier = Modifier.weight(1f)) {
+                Text("Entrena a distancia", style = MaterialTheme.typography.titleMedium)
+                Text(
+                    if (aDistancia) "No viene al gimnasio: no ve \"Hoy no voy a poder ir\"."
+                    else "Viene al gimnasio. Préndelo si entrena por su cuenta.",
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
+            Switch(checked = aDistancia, onCheckedChange = onCambiar, enabled = habilitado)
+        }
+    }
+}
+
+/**
+ * "Amigos" en Músculos de la web: la lista de clientas con su rango y sus cuerpos lado a lado.
+ * El entrenador decide quién entra; si los demás la ven lo decide ella en la web, y aquí solo
+ * se muestra lo que eligió.
+ */
+@Composable
+private fun FilaAmigos(
+    acceso: Boolean,
+    eleccion: Boolean?,
     habilitado: Boolean,
     onCambiar: (Boolean) -> Unit
 ) {
@@ -266,14 +314,18 @@ private fun FilaCompararme(
         ) {
             Icon(Icons.Filled.Groups, contentDescription = null)
             Column(modifier = Modifier.weight(1f)) {
-                Text("Aparece en Compararme", style = MaterialTheme.typography.titleMedium)
+                Text("Acceso a Amigos", style = MaterialTheme.typography.titleMedium)
                 Text(
-                    if (aparece) "Los demás ven su nombre, su rango y su mapa de músculos. Nunca su peso."
-                    else "No sale en la lista de los demás, pero sí puede compararse.",
+                    when {
+                        !acceso -> "No puede entrar a Amigos ni sale en la lista de los demás."
+                        eleccion == true -> "Puede entrar. Eligió mostrar sus músculos a los demás."
+                        eleccion == false -> "Puede entrar. Eligió mantener sus músculos ocultos."
+                        else -> "Puede entrar. Todavía no elige si los demás la ven; mientras, no sale."
+                    },
                     style = MaterialTheme.typography.bodySmall
                 )
             }
-            Switch(checked = aparece, onCheckedChange = onCambiar, enabled = habilitado)
+            Switch(checked = acceso, onCheckedChange = onCambiar, enabled = habilitado)
         }
     }
 }
