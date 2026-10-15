@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import {
-  abrirMenu, abrirVentana, cerrarMenu, iniciarNavegacion, menuAbierto, ventanaActiva, ventanaDeBarra,
-  type Historial,
+  abrirMenu, abrirVentana, alRetrocederSub, cerrarMenu, iniciarNavegacion, irSub, marcarSub, menuAbierto,
+  subActiva, ventanaActiva, ventanaDeBarra, type Historial,
 } from "./navegacion";
 
 /**
@@ -20,7 +20,12 @@ function historialFalso(inicial: unknown = null) {
     replaceState(e) { pila[i] = e; },
     back() { if (i > 0) { i--; pendientes++; } },
     alRetroceder(f) { escucha = f; },
-    pila: () => pila.slice(0, i + 1),
+    /** Las entradas hasta la actual, sin `ant` (de dónde venía): solo dónde está cada una. */
+    pila: () => pila.slice(0, i + 1).map((e) => {
+      if (e === null || typeof e !== "object") return e;
+      const { ant: _ant, ...resto } = e as Record<string, unknown>;
+      return resto;
+    }),
     soltar() { while (pendientes > 0) { pendientes--; escucha(); } },
     /** El botón "atrás" del teléfono. */
     atras() { h.back(); h.soltar(); },
@@ -185,3 +190,74 @@ describe("subventanas (Compararme dentro de Músculos)", () => {
     expect(ventanaDeBarra("registro")).toBe("registro");
   });
 });
+
+describe("pantallas dentro de una ventana (Registro)", () => {
+  let puestas: (string | null)[];
+  beforeEach(() => {
+    puestas = [];
+    alRetrocederSub((v, s) => { if (v === "registro") puestas.push(s); });
+    abrirVentana("registro");
+  });
+
+  it("abrir una pantalla la apila, y atrás regresa a la anterior", () => {
+    irSub("capturar", "adelante");
+    irSub("elegir", "adelante");
+    expect(h.pila()).toEqual([
+      null, { ventana: "registro" }, { ventana: "registro", sub: "capturar" }, { ventana: "registro", sub: "elegir" },
+    ]);
+    h.atras();
+    expect(subActiva()).toBe("capturar");
+    expect(puestas).toEqual(["capturar"]);
+    h.atras();
+    expect(subActiva()).toBeNull();
+    expect(puestas).toEqual(["capturar", null]);
+    h.atras();
+    expect(ventanaActiva()).toBe("inicio");
+  });
+
+  it("volver a la pantalla anterior desde la página retrocede en vez de apilar", () => {
+    irSub("capturar", "adelante");
+    irSub("elegir", "adelante");
+    irSub("capturar", "volver"); // eligió un ejercicio
+    h.soltar();
+    expect(h.pila()).toEqual([null, { ventana: "registro" }, { ventana: "registro", sub: "capturar" }]);
+  });
+
+  it("volver a una que no es la anterior reemplaza", () => {
+    irSub("historial", "adelante");
+    irSub("capturar", "volver");
+    expect(h.pila()).toEqual([null, { ventana: "registro" }, { ventana: "registro", sub: "capturar" }]);
+  });
+
+  it("terminar reemplaza la captura por el resumen: atrás no regresa al entrenamiento guardado", () => {
+    irSub("capturar", "adelante");
+    irSub("resumen", "reemplazar");
+    expect(h.pila()).toEqual([null, { ventana: "registro" }, { ventana: "registro", sub: "resumen" }]);
+    irSub(null, "volver"); // "Listo" → inicio de Registro
+    h.soltar();
+    expect(h.pila()).toEqual([null, { ventana: "registro" }]);
+  });
+
+  it("marcar anota la pantalla en la que abrió sin agregar entradas", () => {
+    marcarSub("capturar");
+    expect(h.pila()).toEqual([null, { ventana: "registro", sub: "capturar" }]);
+  });
+
+  it("de otra pestaña, atrás regresa a la pantalla de Registro donde estaba", () => {
+    irSub("historial", "adelante");
+    abrirVentana("musculos");
+    h.atras();
+    expect(ventanaActiva()).toBe("registro");
+    expect(subActiva()).toBe("historial");
+    expect(puestas).toEqual(["historial"]);
+  });
+
+  it("el menú abierto encima de una pantalla regresa a ella al cerrarse", () => {
+    irSub("historial", "adelante");
+    abrirMenu();
+    h.atras();
+    expect(menuAbierto()).toBe(false);
+    expect(subActiva()).toBe("historial");
+  });
+});
+

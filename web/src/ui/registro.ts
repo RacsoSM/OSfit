@@ -89,7 +89,7 @@ export interface DatosRegistro {
   sexo?: "H" | "M" | null;
 }
 
-type Vista = "inicio" | "historial" | "elegir" | "capturar" | "resumen";
+export type Vista = "inicio" | "historial" | "elegir" | "capturar" | "resumen";
 
 interface Estado {
   vista: Vista;
@@ -138,6 +138,17 @@ const estado: Estado = {
   lateral: false,
   resumen: null,
 };
+
+const VISTAS: readonly Vista[] = ["inicio", "historial", "elegir", "capturar", "resumen"];
+
+/**
+ * La pantalla que dice el historial, al hacer "atrás" (`alRetrocederSub` de `navegacion.ts`).
+ * null es la de entrada: inicio, o el entrenamiento si hay uno abierto (`ventanaRegistro`).
+ */
+export function vistaDesdeHistorial(vista: string | null): void {
+  estado.vista = VISTAS.includes(vista as Vista) ? (vista as Vista) : "inicio";
+  estado.error = null;
+}
 
 /** Solo para los tests: poner la ventana en una vista y con un borrador dados. */
 export function ponerEstadoRegistro(parcial: Partial<Pick<Estado, "vista" | "borrador" | "error" | "activo" | "resumen">>): void {
@@ -678,6 +689,11 @@ export interface AccionesRegistro {
   encolar?: (envio: Envio) => void;
   /** Al iniciar un entrenamiento nuevo: marca su asistencia de hoy (`marcarAsistencia`). */
   alIniciar?: () => void;
+  /**
+   * Cada cambio de pantalla, para que el gesto de "atrás" las recorra (`irSub` de
+   * `navegacion.ts`). `marcar` anota la pantalla en la que quedó sin moverse.
+   */
+  navegar?: (vista: Vista, modo: "adelante" | "volver" | "reemplazar" | "marcar") => void;
   /** "Ver mis músculos" del resumen: abre la ventana Músculos. */
   verMusculos?: () => void;
 }
@@ -697,13 +713,16 @@ export function conectarRegistro(
   const raiz = document.querySelector<HTMLElement>("#registro");
   if (!raiz) return;
 
-  const ir = (vista: Vista) => {
+  const ir = (vista: Vista, modo: "adelante" | "volver" | "reemplazar" = "volver") => {
     estado.vista = vista;
     estado.error = null;
     if (vista !== "historial") estado.aviso = null;
+    acciones.navegar?.(vista, modo);
     repintar();
     window.scrollTo(0, 0);
   };
+  // La pantalla en la que quedó (puede haberla decidido `ventanaRegistro` sola).
+  acciones.navegar?.(estado.vista, "marcar");
 
   /**
    * Abre en grande otro ejercicio del entrenamiento: tocando su fila comprimida, con
@@ -740,10 +759,10 @@ export function conectarRegistro(
         guardarBorrador(nuevoBorrador(idNuevo(), d.hoy, Date.now()));
         acciones.alIniciar?.();
       }
-      ir("capturar");
+      ir("capturar", "adelante");
       return;
     }
-    if (accion === "agregar" && b) { ir("elegir"); return; }
+    if (accion === "agregar" && b) { ir("elegir", "adelante"); return; }
     if (accion === "listo" || accion === "ver-musculos") {
       estado.resumen = null;
       estado.guardado = false;
@@ -755,7 +774,7 @@ export function conectarRegistro(
       ir("inicio");
       return;
     }
-    if (accion === "historial") { estado.guardado = false; estado.aviso = null; ir("historial"); return; }
+    if (accion === "historial") { estado.guardado = false; estado.aviso = null; ir("historial", "adelante"); return; }
     // Volver siempre lleva al entrenamiento si hay uno abierto, y si no, al inicio de Registro.
     if (accion === "volver") { ir(b ? "capturar" : "inicio"); return; }
     if (accion === "descartar") {
@@ -801,7 +820,7 @@ export function conectarRegistro(
         resumir(true);
         guardarBorrador(null);
         estado.guardado = "en-telefono";
-        ir("resumen");
+        ir("resumen", "reemplazar");
       };
       const puedeEsperar = !edicion && acciones.encolar !== undefined;
       // Si el teléfono ya sabe que no hay red, ni se intenta: sería esperar a que falle.
@@ -821,7 +840,7 @@ export function conectarRegistro(
           } else {
             resumir(false);
             estado.guardado = "enviado";
-            ir("resumen");
+            ir("resumen", "reemplazar");
           }
         },
         (error) => {
@@ -849,7 +868,7 @@ export function conectarRegistro(
       guardarBorrador(borradorDeSesion(s, d.banco));
       estado.activo = 0;
       estado.aviso = null;
-      ir("capturar");
+      ir("capturar", "adelante");
       return;
     }
     if (el.dataset.borrar !== undefined) {
@@ -897,6 +916,7 @@ export function conectarRegistro(
       estado.vuelo = despegar(el.querySelector<HTMLElement>(".registro-opcion-gif"));
       estado.vista = "capturar";
       estado.error = null;
+      acciones.navegar?.("capturar", "volver");
       repintar();
       return;
     }
