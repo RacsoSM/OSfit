@@ -382,7 +382,7 @@ export function tarjetaMusculos(
       <div id="mapa-detalle">${detalle}</div>
       <div class="mapa-pie">
         <button type="button" class="mapa-comparar" id="abrir-comparar"
-                aria-label="Compararme con los demás" title="Compararme">${ICONO_COMUNIDAD}</button>
+                aria-label="Amigos: compárate con los demás" title="Amigos">${ICONO_COMUNIDAD}</button>
         <div class="mapa-pie-centro">${pie}</div>
         <button type="button" class="mapa-girar" id="girar-mapa"
                 aria-label="${textoBoton(deEspalda)}" title="${textoBoton(deEspalda)}">${ICONO_GIRAR}</button>

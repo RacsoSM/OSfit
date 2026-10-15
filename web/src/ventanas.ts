@@ -160,7 +160,7 @@ export const VENTANAS: readonly Ventana[] = [
     pintar: (d) => ventanaRegistro(datosRegistro(d)),
   },
   {
-    id: "comparar", titulo: "Compararme", icono: "👥", grupo: "sub",
+    id: "comparar", titulo: "Amigos", icono: "👥", grupo: "sub",
     pintar: (d) => ventanaComparar(d.comparacion ?? { estado: "cargando" }, d.cliente.sexo, d.mapas),
   },
   {

@@ -86,7 +86,7 @@ function vistaLista(personas: PersonaComparar[], mapas: Readonly<Record<string, 
     ? `<p class="accion-nota" style="text-align:center">Todavía nadie tiene músculos con rango.</p>`
     : `<div class="cmp-grid">${personas.map((p, i) => tarjeta(p, i, mapas)).join("")}</div>`;
   return `
-    <p class="confirmar-titulo">Compárate con el resto</p>
+    <p class="confirmar-titulo">Amigos</p>
     ${nota}
     ${lista}`;
 }

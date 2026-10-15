@@ -15,7 +15,7 @@ beforeEach(() => reiniciarComparar());
 describe("lista", () => {
   it("cada una con su rango general; tú marcada", () => {
     const html = ventanaComparar(listo, "M", mapas);
-    expect(html).toContain("Compárate con el resto");
+    expect(html).toContain('<p class="confirmar-titulo">Amigos</p>');
     expect(html).toMatch(/Ana <span class="cmp-tu">Tú<\/span>/);
     expect(html).toContain('data-persona="Beto"');
     expect(html).not.toMatch(/kg/);
@@ -54,7 +54,7 @@ describe("comparación", () => {
     expect(sexosAComparar(listo, "M").sort()).toEqual(["H", "M"]);
   });
   it("si ya no está en la lista, regresa a la lista", () => {
-    expect(ventanaComparar({ estado: "listo", personas: [yo] }, "M", mapas)).toContain("Compárate con el resto");
+    expect(ventanaComparar({ estado: "listo", personas: [yo] }, "M", mapas)).toContain('<p class="confirmar-titulo">Amigos</p>');
   });
 });
 
