@@ -517,7 +517,14 @@ main {
 [hidden] { display: none !important; }
 
 /* La cabecera: el ☰ a la derecha, en el mismo renglón que el saludo o el nombre de la ventana. */
-.cabecera { display: flex; align-items: flex-start; gap: 4px; }
+.cabecera { display: flex; align-items: flex-start; gap: 4px; position: relative; }
+/* Qué deploy tiene la clienta (`__VERSION__`), arriba a la izquierda en Inicio. Absoluta, en el
+   margen de arriba de la página: no mueve el saludo. */
+.version-app {
+  position: absolute; top: -13px; left: 0;
+  font-size: 9px; line-height: 1; color: var(--texto-tenue); opacity: 0.6; pointer-events: none;
+}
+.version-app[hidden] { display: none; }
 .cabecera-texto { flex: 1; min-width: 0; }
 .cabecera-menu {
   flex: none; width: 44px; height: 44px; margin: 0 -8px 0 0;
