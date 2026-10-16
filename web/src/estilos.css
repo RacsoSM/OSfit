@@ -884,9 +884,23 @@ main:has(#barra) { padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
    `prepararSvg`); aquí va solo el color de los músculos, que sin registros es "sin datos". */
 /* `padding-top`: el dibujo, los botones y el texto un poco más abajo del título (2026-10-11):
    sobraba espacio arriba de la barra y se veían pegados al encabezado. */
+/* `--mapa-alto`: lo que puede medir el cuerpo. Antes era `72vh`, pero en el teléfono `vh` cuenta
+   la pantalla como si las barras del navegador no estuvieran: en iPhone con Safari y en
+   pantallas cortas el cuerpo salía más alto que lo visible y la fila de abajo (Amigos, peso,
+   girar) quedaba bajo la barra (2026-10-16). Ahora es la altura visible (`svh`, con las barras
+   del navegador puestas) menos lo demás de la pantalla sin rango general: cabecera, márgenes,
+   "Toca un músculo…", la fila de abajo y la barra (medido: 235 px), y las orillas del iPhone.
+   Mínimo 260 px: en una pantalla más corta que eso la página se desplaza. Sin `svh` (navegadores
+   viejos) se queda el cálculo de antes. */
 .mapa-cuerpo {
   position: relative;
   display: flex; flex-direction: column; align-items: center; padding-top: 20px;
+  --mapa-alto: min(72vh, 720px);
+}
+@supports (height: 100svh) {
+  .mapa-cuerpo {
+    --mapa-alto: min(720px, max(260px, calc(100svh - 235px - env(safe-area-inset-top) - env(safe-area-inset-bottom))));
+  }
 }
 /* El dibujo con sus dos botones. Los botones van en las orillas de la escena (todo el ancho)
    y no del marco: el marco se encoge con un músculo tocado y los llevaba encima de la cabeza
@@ -898,7 +912,7 @@ main:has(#barra) { padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
    pero Safari lo resolvía en 0 y en iPhone el cuerpo no aparecía. */
 .mapa-marco {
   position: relative;
-  width: min(100%, calc(min(72vh, 720px) * 420 / 800)); aspect-ratio: 420 / 800;
+  width: min(100%, calc(var(--mapa-alto) * 420 / 800)); aspect-ratio: 420 / 800;
   transition: width 220ms ease;
 }
 /* Con un músculo tocado el cuerpo se encoge lo justo para que el panel quepa entero arriba de
@@ -906,13 +920,13 @@ main:has(#barra) { padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
 /* Con un músculo tocado, su hoja de detalle sube desde abajo y tapa la mitad de abajo de la
    pantalla: el cuerpo se encoge para que se siga viendo arriba, con el músculo tocado. */
 .mapa-cuerpo.con-detalle .mapa-marco {
-  width: min(100%, calc(max(150px, min(72vh, 720px) - 330px) * 420 / 800));
+  width: min(100%, calc(max(150px, var(--mapa-alto) - 330px) * 420 / 800));
 }
 /* Con el rango general arriba, el cuerpo cede su alto para que todo siga cabiendo arriba de
    la barra sin desplazar la página. Con un músculo tocado el bloque se oculta (manda la hoja)
    y vale la regla de `.con-detalle`. */
 .mapa-cuerpo.con-general:not(.con-detalle) .mapa-marco {
-  width: min(100%, calc((min(72vh, 720px) - 70px) * 420 / 800));
+  width: min(100%, calc((var(--mapa-alto) - 70px) * 420 / 800));
 }
 /* Centrado y sin tarjeta, alineado con el cuerpo (propuesta C, 2026-10-13). Sube hasta la
    fila del ☰ y del "?": la insignia queda entre los dos, que van en las esquinas, y el texto
@@ -931,7 +945,7 @@ main:has(#barra) { padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
 .mapa-cuerpo.con-detalle .rango-general { display: none; }
 /* Un músculo sin datos tiene una hoja chica (solo el aviso): el cuerpo se encoge menos. */
 .mapa-cuerpo.con-detalle.sin-datos .mapa-marco {
-  width: min(100%, calc((min(72vh, 720px) - 150px) * 420 / 800));
+  width: min(100%, calc((var(--mapa-alto) - 150px) * 420 / 800));
 }
 .mapa-giro {
   position: absolute; inset: 0;
