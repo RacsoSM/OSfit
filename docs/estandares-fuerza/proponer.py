@@ -112,7 +112,7 @@ PESO = {
     "elevaciones-frontales": ("lateral", 2.20, "con disco, a dos manos: el peso del disco, ×2 sobre el de una sola mano (decisión del entrenador, 2026-10-16)"),
     "pajaros": ("lateral", 0.90, "por mancuerna"),
     "rear-delt-maquina": ("militar", 0.75, "máquina: varía por marca"),
-    "face-pull": ("triceps", 0.90, "polea"),
+    "face-pull": ("triceps", 1.17, "polea; base ×1.3 sobre 0.90 (decisión del entrenador, 2026-10-16)"),
     "curl-barra": ("curl", 1.00, ""),
     "curl-barra-z": ("curl", 1.00, ""),
     "curl-polea": ("curl", 1.00, ""),
