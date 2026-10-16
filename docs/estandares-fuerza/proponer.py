@@ -109,7 +109,7 @@ PESO = {
     "remo-al-menton": ("militar", 0.80, ""),
     "elevaciones-laterales": ("lateral", 1.00, "por mancuerna"),
     "elevaciones-laterales-polea": ("lateral", 0.80, "por lado"),
-    "elevaciones-frontales": ("lateral", 1.10, "por mancuerna"),
+    "elevaciones-frontales": ("lateral", 2.20, "con disco, a dos manos: el peso del disco, ×2 sobre el de una sola mano (decisión del entrenador, 2026-10-16)"),
     "pajaros": ("lateral", 0.90, "por mancuerna"),
     "rear-delt-maquina": ("militar", 0.75, "máquina: varía por marca"),
     "face-pull": ("triceps", 0.90, "polea"),

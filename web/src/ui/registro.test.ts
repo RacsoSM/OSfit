@@ -165,6 +165,17 @@ describe("capturar", () => {
     expect(html).toContain("Sin anotar");
   });
 
+  it("con nota de peso del banco (disco), la muestra en lugar de la de mancuerna", () => {
+    const frontales: EjercicioBanco = {
+      id: "elevaciones-frontales", nombre: "Elevaciones frontales con disco", tipo: "peso", grupo: "hombro",
+      musculos: { hombro: 1 }, gifRuta: null, notaPeso: "Ingresa el peso del disco.", pesoPorMancuerna: true,
+    };
+    ponerEstadoRegistro({ vista: "capturar", borrador: agregarEjercicio(nuevoBorrador("b1234567", "2026-10-12"), frontales, null, 2) });
+    const html = ventanaRegistro(datos({ banco: [frontales], indice: indiceBanco([frontales]) }));
+    expect(html).toContain("Ingresa el peso del disco.");
+    expect(html).not.toContain("el peso de una mancuerna");
+  });
+
   it("sin elegir uno, el activo es el último agregado", () => {
     let b = agregarEjercicio(nuevoBorrador("b1234567", "2026-10-12"), press, null, 2);
     b = agregarEjercicio(b, plancha, null, 1);

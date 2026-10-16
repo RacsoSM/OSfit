@@ -143,6 +143,8 @@ export function documentoDe(e, conGif, existente = null) {
     musculos: e.musculos,
     gifRuta: conGif ? rutaGif(e.id) : null,
     atribucion: conGif ? ATRIBUCION : null,
+    // Cómo se anota el peso cuando no es lo de siempre ("Ingresa el peso del disco.").
+    ...(e.notaPeso ? { notaPeso: e.notaPeso } : {}),
   };
   if (existente?.editadoEnApp === true) return doc;
   return { nombre: e.nombre, alias: e.alias ?? [], ...doc };

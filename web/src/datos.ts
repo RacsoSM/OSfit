@@ -59,6 +59,12 @@ export interface EjercicioBanco {
    * recuerda. Lo carga el mismo script. Opcional por la razón de siempre.
    */
   pesoPorMancuerna?: boolean;
+  /**
+   * Cómo se anota el peso cuando no es lo de siempre, por ejemplo "Ingresa el peso del disco."
+   * en las elevaciones frontales, que en el gimnasio se hacen con disco. Registro lo muestra
+   * debajo del peso. Opcional por la razón de siempre.
+   */
+  notaPeso?: string;
 }
 
 /** "H" o "M". Gemelo de `Sexo` en `data/model/Sexo.kt`. */

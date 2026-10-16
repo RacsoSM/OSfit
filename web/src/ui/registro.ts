@@ -667,9 +667,11 @@ function notaPeso(e: EjercicioBorrador, delBanco: EjercicioBanco | undefined): s
     ? `<p class="accion-nota">Con tu peso corporal. En kg, solo si agregaste peso extra.</p>`
     : e.unidad === "barras"
       ? `<p class="accion-nota">Cuántas barras de la máquina pusiste.</p>`
-      : delBanco?.pesoPorMancuerna
-        ? `<p class="accion-nota">En kg, el peso de una mancuerna.</p>`
-        : "";
+      : delBanco?.notaPeso
+        ? `<p class="accion-nota">${escapar(delBanco.notaPeso)}</p>`
+        : delBanco?.pesoPorMancuerna
+          ? `<p class="accion-nota">En kg, el peso de una mancuerna.</p>`
+          : "";
 }
 
 /** Barras o kg, solo en los de peso. Las máquinas de placas abren en barras (`barras.ts`). */
