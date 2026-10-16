@@ -137,4 +137,12 @@ describe("Amigos: acceso y elección", () => {
     escogerEnAmigos([]);
     expect(ventanaComparar(e, "M", {}, {})).toMatch(/data-cmp="guardar-algunos" disabled>\s*Marca al menos a una persona/);
   });
+  it("el administrador ve la lista aunque se oculte, y se le dice que ve a todos", () => {
+    const yo = { nombre: "Said", sexo: "H" as const, esTuyo: true, niveles: { biceps: 3 } };
+    const otra = { nombre: "Bea", sexo: "M" as const, esTuyo: false, niveles: { biceps: 4 } };
+    const html = ventanaComparar({ estado: "listo", personas: [yo, otra] }, "H", {}, { visibilidadAmigos: "nadie", adminAmigos: true });
+    expect(html).toContain("Bea");
+    expect(html).toContain("Como administrador, ves a todos.");
+    expect(html).toContain("ocultos para los demás");
+  });
 });

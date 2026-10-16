@@ -523,7 +523,7 @@ async function arrancar(): Promise<void> {
     if (activa.id === "musculos") cargarMapas(activa.id !== ventanaPintada);
     if (activa.id === "comparar") {
       // Sin acceso no se pide: la función lo rechazaría, y la ventana ya lo dice.
-      if (activa.id !== ventanaPintada) { reiniciarComparar(); if (cliente.sinAccesoAmigos !== true) cargarComparacion(); }
+      if (activa.id !== ventanaPintada) { reiniciarComparar(); if (cliente.sinAccesoAmigos !== true || cliente.adminAmigos === true) cargarComparacion(); }
       cargarMapas(false, sexosAComparar(comparacion, cliente.sexo));
     }
     actualizarCabecera(tituloCabecera(activa));

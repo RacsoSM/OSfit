@@ -146,6 +146,11 @@ export interface Cliente {
   visibilidadAmigos?: ModoAmigos;
   /** Con "algunos": los ids de las clientas que sí la ven. */
   compartirAmigosCon?: string[];
+  /**
+   * Administrador de Amigos: ve a todos, sin importar lo que eligieron (hoy solo el perfil de
+   * Said). Se pone a mano en Firestore; ausente es "no".
+   */
+  adminAmigos?: boolean;
 }
 
 /** GEMELO: `ModoAmigos` de `functions/src/comparar.ts`. Con "nadie" tampoco ve a los demás. */

@@ -25,6 +25,9 @@ import {
  *    nadie. Mientras no elija, no sale: nadie aparece sin haberlo dicho.
  *  - Quien se oculta tampoco ve a los demás (pedido del entrenador, 2026-10-15). Quien comparte
  *    con algunas ve a todos los que se muestran a ella.
+ *  - El administrador (`adminAmigos`, hoy solo el perfil de Said; se pone a mano, la app ni la
+ *    web lo escriben) ve a todos los que tienen datos, sin importar lo que eligieron ni el
+ *    acceso (pedido del entrenador, 2026-10-16). Lo que él muestra sigue su propia elección.
  *
  * `mostrarEnAmigos` (true/false) es la versión de la primera tarde: se lee como "todos"/"nadie"
  * mientras no haya `visibilidadAmigos`.
@@ -67,6 +70,8 @@ export interface ClienteComparar {
   /** El entrenador le quitó Amigos (`sinAccesoAmigos`). */
   sinAcceso: boolean;
   activo: boolean;
+  /** Administrador de Amigos: ve a todos (`adminAmigos`). */
+  admin: boolean;
   /** Lo que eligió (`modoAmigosDesdeDoc`). Sin elegir cuenta como "nadie" pero se le pregunta. */
   modo: ModoAmigos | null;
   /** Con "algunos": los ids de clientes que sí la ven. */
@@ -84,6 +89,7 @@ export function clienteCompararDesdeDoc(id: string, d: Record<string, unknown>):
     anioNacimiento: num(d.anioNacimiento),
     sinAcceso: d.sinAccesoAmigos === true,
     activo: d.activo !== false,
+    admin: d.adminAmigos === true,
     modo: modoAmigosDesdeDoc(d),
     compartirCon: Array.isArray(d.compartirAmigosCon)
       ? d.compartirAmigosCon.filter((x): x is string => typeof x === "string")
@@ -93,6 +99,7 @@ export function clienteCompararDesdeDoc(id: string, d: Record<string, unknown>):
 
 /** Si quien ve (`yo`) se puede comparar con los demás: eligió mostrarse a alguien. */
 export function puedeVerALosDemas(yo: ClienteComparar | undefined): boolean {
+  if (yo?.admin) return true;
   return yo !== undefined && !yo.sinAcceso && (yo.modo === "todos" || yo.modo === "algunos");
 }
 
@@ -104,6 +111,7 @@ export function puedeVerALosDemas(yo: ClienteComparar | undefined): boolean {
 export function puedeSalir(c: ClienteComparar, yo: ClienteComparar | undefined, yoId: string): boolean {
   if (c.sexo === null || (c.peso ?? 0) <= 0) return false;
   if (c.id === yoId) return true;
+  if (yo?.admin) return true;
   if (c.sinAcceso || !puedeVerALosDemas(yo)) return false;
   return c.modo === "todos" || (c.modo === "algunos" && c.compartirCon.includes(yoId));
 }
@@ -154,7 +162,7 @@ export const compararMusculos = onCall({ region: REGION }, async (request): Prom
   ]);
   const clientes = clientesSnap.docs.map((d) => clienteCompararDesdeDoc(d.id, d.data()));
   const yo = clientes.find((c) => c.id === yoId);
-  if (yo?.sinAcceso) throw new HttpsError("permission-denied", "sin_acceso");
+  if (yo?.sinAcceso && !yo.admin) throw new HttpsError("permission-denied", "sin_acceso");
   const banco: EjercicioFuerza[] = bancoSnap.docs.map((d) => ({
     id: d.id,
     tipo: d.get("tipo"),

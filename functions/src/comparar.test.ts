@@ -6,7 +6,7 @@ import {
 const banco = [{ id: "curl", tipo: "peso" as const, musculos: { biceps: 1 },
   estandares: { H: [0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.5], M: [0.05, 0.08, 0.1, 0.13, 0.16, 0.2, 0.24, 0.3] } }];
 const con = (id: string, campos: Partial<ClienteComparar> = {}): ClienteComparar => ({
-  id, nombre: id, sexo: "M", peso: 60, grasa: null, anioNacimiento: null, sinAcceso: false, activo: true, modo: "todos", compartirCon: [], ...campos,
+  id, nombre: id, sexo: "M", peso: 60, grasa: null, anioNacimiento: null, sinAcceso: false, activo: true, admin: false, modo: "todos", compartirCon: [], ...campos,
 });
 const curl = [{ fecha: "2026-10-10", ejercicios: [{ ejercicioId: "curl", series: [{ reps: 10, peso: 8 }] }] }];
 const hoy = "2026-10-14";
@@ -65,6 +65,14 @@ describe("Amigos: quién ve a quién", () => {
   it("quien comparte con algunas ve a todas las que se muestran a ella", () => {
     const clientes = [con("yo", { modo: "algunos", compartirCon: ["bea"] }), con("ana"), con("bea")];
     expect(nombres(clientes, "yo")).toEqual(["yo", "ana", "bea"]);
+  });
+  it("el administrador ve a todos con datos, aunque se oculten, no elijan o no tengan acceso", () => {
+    const clientes = [con("yo", { admin: true, modo: "nadie" }), con("oculta", { modo: "nadie" }), con("sin-elegir", { modo: null }),
+      con("vetada", { sinAcceso: true }), con("algunas", { modo: "algunos", compartirCon: ["otra"] }), con("sin-peso", { peso: null })];
+    expect(nombres(clientes, "yo")).toEqual(["yo", "algunas", "oculta", "sin-elegir", "vetada"]);
+  });
+  it("lo que ve el administrador no cambia lo que ven los demás de él", () => {
+    expect(nombres([con("yo"), con("admin", { admin: true, modo: "nadie" })], "yo")).toEqual(["yo"]);
   });
   it("candidatos: las demás activas con acceso, en orden", () => {
     const clientes = [con("yo"), con("Zoe"), con("ana"), con("baja", { activo: false }), con("vetada", { sinAcceso: true })];

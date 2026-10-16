@@ -93,7 +93,7 @@ export function escogerEnAmigos(ids: string[] | null): void {
   escogiendo = ids === null ? null : new Set(ids);
 }
 
-type AmigosDelCliente = Pick<Cliente, "sinAccesoAmigos" | "mostrarEnAmigos" | "visibilidadAmigos" | "compartirAmigosCon">;
+type AmigosDelCliente = Pick<Cliente, "sinAccesoAmigos" | "mostrarEnAmigos" | "visibilidadAmigos" | "compartirAmigosCon" | "adminAmigos">;
 
 /** Lo que eligió, o `null` si todavía no. `mostrarEnAmigos` es la versión vieja, sí/no. */
 export function modoAmigos(c: AmigosDelCliente): ModoAmigos | null {
@@ -171,16 +171,18 @@ function vistaOculta(): string {
     </div>`;
 }
 
-/** Arriba de la lista: cómo está y cómo cambiarlo. */
-function lineaVisibilidad(modo: ModoAmigos, cuantas: number): string {
+/** Arriba de la lista: cómo está y cómo cambiarlo. El administrador además ve que ve a todos. */
+function lineaVisibilidad(modo: ModoAmigos, cuantas: number, admin = false): string {
   const texto = modo === "algunos"
     ? `Solo ${cuantas === 1 ? "1 persona ve" : `${cuantas} personas ven`} tus músculos.`
+    : modo === "nadie" ? "Tus músculos están ocultos para los demás."
     : "Todos ven tus músculos.";
   return `
     <p class="accion-nota cmp-visibilidad">
       ${texto}
       <button class="boton-texto" data-cmp="cambiar">Cambiar</button>
-    </p>`;
+    </p>
+    ${admin ? `<p class="accion-nota cmp-visibilidad">Como administrador, ves a todos.</p>` : ""}`;
 }
 
 /** Para los tests: abrir directo la comparación con alguien. */
@@ -317,13 +319,13 @@ export function ventanaComparar(
   let enComparacion = false;
   if (miSexo !== "H" && miSexo !== "M") {
     cuerpoHtml = `<p class="accion-nota">Tu entrenador tiene que completar tu perfil para compararte.</p>`;
-  } else if (cliente.sinAccesoAmigos === true) {
+  } else if (cliente.sinAccesoAmigos === true && cliente.adminAmigos !== true) {
     cuerpoHtml = `<p class="accion-nota">Tu entrenador todavía no te ha dado acceso a Amigos.</p>`;
   } else if (escogiendo !== null) {
     cuerpoHtml = vistaEscoger(e);
   } else if (modo === null || cambiando) {
     cuerpoHtml = vistaEleccion(modo !== null);
-  } else if (modo === "nadie") {
+  } else if (modo === "nadie" && cliente.adminAmigos !== true) {
     cuerpoHtml = vistaOculta();
   } else if (e.estado === "cargando") {
     cuerpoHtml = `<p class="accion-nota" style="text-align:center">Cargando…</p>`;
@@ -335,7 +337,7 @@ export function ventanaComparar(
     enComparacion = otra !== undefined;
     cuerpoHtml = otra
       ? vistaComparacion(e.personas.find((p) => p.esTuyo), miSexo, otra, mapas)
-      : vistaLista(e.personas, mapas, lineaVisibilidad(modo, compartidoCon(cliente).length));
+      : vistaLista(e.personas, mapas, lineaVisibilidad(modo, compartidoCon(cliente).length, cliente.adminAmigos === true));
   }
   // En la comparación la flecha regresa a la lista (va dentro de `vistaComparacion`); en lo
   // demás —la lista, cargando o el error— sale de Amigos a Músculos.
