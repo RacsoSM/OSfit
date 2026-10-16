@@ -150,7 +150,7 @@ FACTOR_POLEA_DOBLE = 1.3
 POLEA_DOBLE = {
     "pullover-polea", "face-pull", "elevaciones-laterales-polea", "curl-polea", "curl-inverso-polea",
     "curl-muneca-polea", "extension-triceps-polea", "extension-triceps-cuerda",
-    "extension-triceps-trasnuca-polea", "copa-polea-un-brazo", "crunch-polea",
+    "extension-triceps-trasnuca-polea", "copa-polea-un-brazo", "crunch-polea", "cruce-poleas",
 }
 
 CORPORAL = {
