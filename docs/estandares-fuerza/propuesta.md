@@ -276,7 +276,7 @@ Los porcentajes salen de un modelo: entre quienes entrenan, la fuerza se reparte
 |  | M | 5 kg | 6 kg | 8 kg | 10 kg | 12 kg | 14 kg | 16 kg | 22.5 kg |
 | Press francés | H | 15 kg | 20 kg | 27.5 kg | 32.5 kg | 40 kg | 42.5 kg | 47.5 kg | 67.5 kg |
 |  | M | 7 kg | 10 kg | 12 kg | 16 kg | 19 kg | 22.5 kg | 25 kg | 35 kg |
-| Extensión de tríceps con mancuerna | H · una mancuerna, dos manos | 8 kg | 12 kg | 15 kg | 19 kg | 22.5 kg | 25 kg | 27.5 kg | 37.5 kg |
+| Extensión de tríceps con mancuerna | H · copa a dos manos: el peso de la pesa completa, no por brazo | 8 kg | 12 kg | 15 kg | 19 kg | 22.5 kg | 25 kg | 27.5 kg | 37.5 kg |
 |  | M | 4 kg | 5 kg | 7 kg | 9 kg | 11 kg | 12 kg | 14 kg | 20 kg |
 | Patada de tríceps | H · por mancuerna | 4 kg | 5 kg | 7 kg | 8 kg | 10 kg | 11 kg | 12 kg | 17 kg |
 |  | M | 2 kg | 2 kg | 3 kg | 4 kg | 5 kg | 5 kg | 6 kg | 9 kg |

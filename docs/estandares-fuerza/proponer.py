@@ -136,7 +136,7 @@ PESO = {
     "extension-triceps-trasnuca-polea": ("triceps", 0.85, ""),
     "copa-polea-un-brazo": ("triceps", 0.40, "un brazo; polea"),
     "press-frances": ("triceps", 0.80, ""),
-    "extension-triceps-mancuerna": ("triceps", 0.45, "una mancuerna, dos manos"),
+    "extension-triceps-mancuerna": ("triceps", 0.45, "copa a dos manos: el peso de la pesa completa, no por brazo"),
     "patada-triceps": ("triceps", 0.20, "por mancuerna"),
     "crunch-polea": ("crunch", 1.00, ""),
 }
