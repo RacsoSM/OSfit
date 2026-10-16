@@ -56,7 +56,7 @@ PESO = {
     "press-inclinado-mancuernas": ("banca", 0.33, "por mancuerna"),
     "aperturas-mancuernas": ("banca", 0.20, "por mancuerna"),
     "aperturas-inclinadas": ("banca", 0.18, "por mancuerna"),
-    "cruce-poleas": ("banca", 0.18, "por lado; depende de la polea"),
+    "cruce-poleas": ("banca", 0.36, "por lado; base ×2 sobre 0.18 y polea doble ×1.3 = ×2.6 (decisión del entrenador, 2026-10-16)"),
     "pec-deck": ("banca", 0.80, "máquina: varía por marca"),
     "press-pecho-maquina": ("banca", 0.90, "máquina: varía por marca"),
     "sentadilla": ("sentadilla", 1.00, ""),

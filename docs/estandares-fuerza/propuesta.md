@@ -49,8 +49,8 @@ Los porcentajes salen de un modelo: entre quienes entrenan, la fuerza se reparte
 |  | M | 3 kg | 4 kg | 6 kg | 8 kg | 9 kg | 10 kg | 10 kg | 16 kg |
 | Aperturas inclinadas con mancuernas | H · por mancuerna | 7 kg | 8 kg | 10 kg | 12 kg | 14 kg | 15 kg | 17 kg | 22.5 kg |
 |  | M | 3 kg | 4 kg | 5 kg | 7 kg | 8 kg | 9 kg | 9 kg | 14 kg |
-| Cruce de poleas | H · por lado; depende de la polea; polea doble ×1.3 | 9 kg | 11 kg | 13 kg | 15 kg | 18 kg | 20 kg | 22.5 kg | 30 kg |
-|  | M | 3 kg | 5 kg | 7 kg | 9 kg | 10 kg | 11 kg | 12 kg | 18 kg |
+| Cruce de poleas | H · por lado; base ×2 sobre 0.18 y polea doble ×1.3 = ×2.6 (decisión del entrenador, 2026-10-16); polea doble ×1.3 | 18 kg | 22.5 kg | 27.5 kg | 30 kg | 35 kg | 40 kg | 45 kg | 62.5 kg |
+|  | M | 7 kg | 11 kg | 14 kg | 18 kg | 20 kg | 22.5 kg | 25 kg | 37.5 kg |
 | Pec deck | H · máquina: varía por marca | 30 kg | 37.5 kg | 45 kg | 52.5 kg | 60 kg | 67.5 kg | 77.5 kg | 105 kg |
 |  | M | 12 kg | 18 kg | 25 kg | 30 kg | 35 kg | 37.5 kg | 40 kg | 62.5 kg |
 | Press de pecho en máquina | H · máquina: varía por marca | 35 kg | 42.5 kg | 50 kg | 60 kg | 67.5 kg | 77.5 kg | 85 kg | 117.5 kg |
