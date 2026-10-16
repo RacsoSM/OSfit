@@ -14,8 +14,11 @@ import { REGION } from "./comun";
  * garantiza que no las recicle de vez en cuando, pero casi siempre basta.
  */
 
-/** Las que más se esperan: guardar el entrenamiento, Amigos y la asistencia al empezar. */
-export const DESPERTAR = ["registrarSesion", "compararMusculos", "marcarAsistencia"] as const;
+/**
+ * Las que más se esperan: guardar el entrenamiento, Amigos, la asistencia al empezar y
+ * `sesion`, que canjea el link cuando el teléfono perdió la sesión guardada (pasa en iPhone).
+ */
+export const DESPERTAR = ["registrarSesion", "compararMusculos", "marcarAsistencia", "sesion"] as const;
 
 export function urlDe(nombre: string, proyecto: string): string {
   return `https://${REGION}-${proyecto}.cloudfunctions.net/${nombre}`;
