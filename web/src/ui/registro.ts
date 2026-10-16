@@ -367,8 +367,9 @@ function filaReciente(s: Sesion): string {
  */
 function vistaInicio(d: DatosRegistro): string {
   const n = d.pendientes ?? 0;
-  // Guardado sin internet y ya se mandó (la cola quedó vacía): es un guardado normal.
-  const aviso = estado.guardado === "en-telefono" && n > 0
+  // Recién terminado y todavía en la cola (sin internet, o mandándose por detrás): se dice que
+  // está en el teléfono. Cuando la cola queda vacía es un guardado normal.
+  const aviso = estado.guardado && n > 0
     ? `<p class="aviso-ok">¡Entrenamiento guardado en tu teléfono! 📱 Se enviará solo en cuanto tengas internet.</p>`
     : estado.guardado ? `<p class="aviso-ok">¡Entrenamiento guardado! 💪</p>`
     : n > 0 ? `<p class="registro-pendientes">📤 ${n === 1 ? "1 entrenamiento espera" : `${n} entrenamientos esperan`} internet para enviarse.</p>`
@@ -938,6 +939,8 @@ export interface AccionesRegistro {
   borrar: (id: string) => Promise<unknown>;
   /** Guarda en el teléfono uno nuevo que no se pudo mandar, para mandarlo después (`cola.ts`). */
   encolar?: (envio: Envio) => void;
+  /** Manda ya lo que está en la cola, sin esperar al siguiente intento (`enviarCola`). */
+  enviarAhora?: () => void;
   /** Al iniciar un entrenamiento nuevo: marca su asistencia de hoy (`marcarAsistencia`). */
   alIniciar?: () => void;
   /**
@@ -1097,6 +1100,18 @@ export function conectarRegistro(
       const puedeEsperar = !edicion && acciones.encolar !== undefined;
       // Si el teléfono ya sabe que no hay red, ni se intenta: sería esperar a que falle.
       if (puedeEsperar && navigator.onLine === false) { enTelefono(); return; }
+      // Uno nuevo no espera al servidor (tarda 1 a 4 s): se guarda en la cola del teléfono, sale
+      // el resumen al instante y la cola lo manda por detrás (`enviarAhora`), con sus
+      // reintentos. Mandarlo dos veces no lo duplica: el id lo pone el borrador.
+      if (puedeEsperar && acciones.enviarAhora) {
+        acciones.encolar!(datos);
+        resumir(false);
+        guardarBorrador(null);
+        estado.guardado = "enviado";
+        ir("resumen", "reemplazar");
+        acciones.enviarAhora();
+        return;
+      }
       estado.enVuelo = true;
       estado.error = null;
       repintar();

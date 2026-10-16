@@ -223,21 +223,29 @@ async function arrancar(): Promise<void> {
   const cola = almacenCola((() => { try { return localStorage; } catch { return null; } })());
   let pendientes = pendientesDe(cola.leer(), clienteId).length;
   let enviandoCola = false;
+  let otraVuelta = false;
 
   /**
    * Manda los entrenamientos que esperan internet. Se llama al abrir, al volver la señal y
    * cada minuto mientras quede alguno: en iOS el evento `online` no siempre llega.
    */
   function enviarCola(): void {
-    if (enviandoCola || pendientes === 0) return;
+    if (pendientes === 0) return;
+    // Uno que entra a la cola mientras se manda otra tanda se manda al terminar esa, no un
+    // minuto después: es el que la clienta acaba de terminar.
+    if (enviandoCola) { otraVuelta = true; return; }
     enviandoCola = true;
+    otraVuelta = false;
     enviarPendientes(cola, clienteId, (envio) => registrarSesion(envio))
       .then((quedan) => {
         const cambio = quedan !== pendientes;
         pendientes = quedan;
         if (cambio) pintar();
       })
-      .finally(() => { enviandoCola = false; });
+      .finally(() => {
+        enviandoCola = false;
+        if (otraVuelta) enviarCola();
+      });
   }
 
   /** Llave en el navegador para "Ahora no". Se pierde si borran datos: vuelve a salir, no es grave. */
@@ -578,6 +586,7 @@ async function arrancar(): Promise<void> {
           cola.guardar(encolar(cola.leer(), { clienteId, envio }));
           pendientes = pendientesDe(cola.leer(), clienteId).length;
         },
+        enviarAhora: enviarCola,
         // Sin esperarla ni avisar si falla: sin internet la marca el entrenamiento al llegar.
         alIniciar: () => { marcarAsistencia({}).catch(() => {}); },
         // Inicio es la pantalla de entrada (null): así "volver" a ella retrocede.

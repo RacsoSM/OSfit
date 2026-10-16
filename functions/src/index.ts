@@ -13,3 +13,4 @@ export { registrarEntrada } from "./registrarEntrada";
 export { borrarSesion, editarSesion, registrarSesion } from "./registrarSesion";
 export { marcarAsistencia } from "./asistenciaWeb";
 export { guardarPeso } from "./guardarPeso";
+export { despertarFunciones } from "./despertador";
