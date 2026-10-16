@@ -153,6 +153,14 @@ POLEA_DOBLE = {
     "extension-triceps-trasnuca-polea", "copa-polea-un-brazo", "crunch-polea", "cruce-poleas",
 }
 
+# Factor aparte por sexo, encima del de `PESO`, para los ejercicios donde un solo factor no
+# deja bien a los dos. Curl femoral acostado: 10 barras (45 kg) × 8 es de un hombre muy fuerte,
+# y con ×0.6 eso es Élite; las mujeres con ×0.8 (Brianda, 5 barras × 8, en Intermedio).
+# Decisión del entrenador, 2026-10-16.
+FACTOR_POR_SEXO = {
+    "curl-femoral-acostado": {"H": 0.6, "M": 0.8},
+}
+
 CORPORAL = {
     "lagartijas":              {"H": [3, 15, 30, 45, 65], "M": [1, 5, 15, 28, 40]},
     "fondos-pecho":            {"H": [1, 8, 18, 30, 42], "M": [1, 3, 8, 15, 25]},
@@ -303,7 +311,11 @@ def main() -> None:
             if i in POLEA_DOBLE:
                 f *= FACTOR_POLEA_DOBLE
                 nota = f"{nota}; polea doble ×{FACTOR_POLEA_DOBLE:g}" if nota else f"polea doble ×{FACTOR_POLEA_DOBLE:g}"
-            cinco = {s: [round(v * f, 3) for v in FAMILIAS[fam][s]] for s in ("H", "M")}
+            por_sexo = FACTOR_POR_SEXO.get(i, {"H": 1, "M": 1})
+            if i in FACTOR_POR_SEXO:
+                extra = f"H ×{por_sexo['H']:g}, M ×{por_sexo['M']:g}"
+                nota = f"{nota}; {extra}" if nota else extra
+            cinco = {s: [round(v * f * por_sexo[s], 3) for v in FAMILIAS[fam][s]] for s in ("H", "M")}
             est = {s: con_elite(cinco[s], a_ocho(cinco[s]), False) for s in ("H", "M")}
             salida[i] = est
             for s in ("H", "M"):
