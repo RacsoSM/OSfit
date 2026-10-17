@@ -29,11 +29,6 @@ function aMediodia(fecha: string): Date {
   return new Date(`${fecha}T12:00:00Z`);
 }
 
-export function esFinDeSemana(fecha: string): boolean {
-  const dia = aMediodia(fecha).getUTCDay();
-  return dia === 0 || dia === 6;
-}
-
 /** GEMELO: `domingoAnterior` de `web/src/dia.ts`. */
 function domingoAnterior(fecha: string): string {
   const d = aMediodia(fecha);
@@ -126,7 +121,8 @@ export function planAsistencia(
   const { trio } = cliente;
   const posterior = trio.fecha == null ||
     (trio.esAncla ? fecha > trio.fecha : fecha >= trio.fecha);
-  const dia = total > 0 && posterior && !esFinDeSemana(fecha)
+  // El fin de semana también avanza la rutina: se entrena como cualquier día (2026-10-17).
+  const dia = total > 0 && posterior
     ? interpretar(trio, total, fecha, cliente.reinicioSemanal)
     : null;
   if (dia === null || dia === DESCANSO) {

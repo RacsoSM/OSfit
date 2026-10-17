@@ -1,20 +1,15 @@
 import type { Asistencia, Cliente, DiaRutina, Ejercicio } from "../datos";
-import { DESCANSO, interpretar, lunesDe } from "../dia";
+import { DESCANSO, interpretar } from "../dia";
 import { conPesosPropios } from "../pesosPropios";
 import { variacionQueToca } from "../variacion";
 
-/** Sábado y domingo no cuentan para la racha, así que la página lo dice en vez de mostrar
- *  un día de rutina que nadie va a hacer. */
+/**
+ * Sábado o domingo. Desde 2026-10-17 se entrena también en fin de semana, pero es opcional:
+ * no se ofrece "Hoy no voy a poder ir" ni "Revivir mi racha" (faltar no rompe la racha).
+ */
 export function esFinDeSemana(fecha: string): boolean {
   const dia = new Date(`${fecha}T12:00:00`).getUTCDay();
   return dia === 0 || dia === 6;
-}
-
-/** El lunes de la semana que viene, para anunciar qué toca cuando hoy es fin de semana. */
-function proximoLunes(fecha: string): string {
-  const d = new Date(`${lunesDe(fecha)}T12:00:00`);
-  d.setUTCDate(d.getUTCDate() + 7);
-  return d.toISOString().slice(0, 10);
 }
 
 /**
@@ -89,8 +84,8 @@ function listaEjercicios(ejercicios: Ejercicio[]): string {
 }
 
 /**
- * El día que le toca hoy y sus ejercicios, o null si hoy no toca nada (sin rutina, fin de
- * semana o descanso). Es la misma cuenta que pinta la tarjeta; la usa Registro para ofrecer
+ * El día que le toca hoy y sus ejercicios, o null si hoy no toca nada (sin rutina o
+ * descanso). El fin de semana toca como cualquier día (2026-10-17: antes no había día). Es la misma cuenta que pinta la tarjeta; la usa Registro para ofrecer
  * primero los ejercicios del día.
  */
 export function diaDeHoy(
@@ -99,7 +94,7 @@ export function diaDeHoy(
   asistencias: Asistencia[] = []
 ): { nombreDia: string; ejercicios: Ejercicio[] } | null {
   const dias = cliente.rutinaAsignada?.dias ?? [];
-  if (dias.length === 0 || esFinDeSemana(hoy)) return null;
+  if (dias.length === 0) return null;
   const trio = {
     dia: cliente.ultimoDia,
     fecha: cliente.ultimoDiaFecha,
@@ -159,21 +154,8 @@ export function tarjetaDia(
     esAncla: cliente.ultimoDiaEsAncla,
   };
 
-  if (esFinDeSemana(hoy)) {
-    // Se pregunta por el LUNES, no por hoy. Con el ciclo rodante daba lo mismo; con el
-    // reinicio semanal, hoy responde DESCANSO y el lunes responde el día 1.
-    const elLunes = interpretar(trio, dias.length, proximoLunes(hoy), reinicioSemanal);
-    const proximo = typeof elLunes === "number" ? dias[elLunes]?.nombreDia ?? "" : "";
-    return `
-      <div class="tarjeta vacio">
-        <div class="vacio-emoji">😴</div>
-        <p><strong>Hoy toca descansar</strong></p>
-        <p style="color: var(--texto-tenue); font-size: 14px">
-          El lunes te toca ${escapar(proximo)}.
-        </p>
-      </div>`;
-  }
-
+  // El fin de semana se entrena como cualquier día (decisión del entrenador, 2026-10-17).
+  // Antes aquí salía "Hoy toca descansar, el lunes te toca…".
   const indice = interpretar(trio, dias.length, hoy, reinicioSemanal);
 
   if (indice === DESCANSO) {

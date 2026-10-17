@@ -22,6 +22,12 @@ describe("fechasQueCuentan", () => {
 });
 
 describe("rachaActual", () => {
+  it("el fin de semana suma si vino y no corta si no", () => {
+    // 2026-09-11 viernes, 12 sábado, 13 domingo, 14 lunes
+    expect(rachaActual(cuentan(vino("2026-09-11"), vino("2026-09-14")), "2026-09-14")).toBe(2);
+    expect(rachaActual(cuentan(vino("2026-09-11"), vino("2026-09-12"), vino("2026-09-14")), "2026-09-14")).toBe(3);
+  });
+
   // 2026-09-08 martes, 09 miercoles, 10 jueves, 11 viernes, 14 lunes
   it("cuenta dias habiles seguidos", () => {
     expect(rachaActual(cuentan(vino("2026-09-08"), vino("2026-09-09"), vino("2026-09-10")), "2026-09-10")).toBe(3);
@@ -49,6 +55,10 @@ describe("rachaActual", () => {
 });
 
 describe("rachaMasLarga", () => {
+  it("el fin de semana suma si vino y no corta si no", () => {
+    expect(rachaMasLarga(cuentan(vino("2026-09-11"), vino("2026-09-12"), vino("2026-09-13"), vino("2026-09-14")))).toBe(4);
+    expect(rachaMasLarga(cuentan(vino("2026-09-11"), vino("2026-09-14")))).toBe(2);
+  });
   it("encuentra la corrida mas larga aunque no sea la ultima", () => {
     const set = cuentan(
       vino("2026-09-01"), vino("2026-09-02"), vino("2026-09-03"), vino("2026-09-04"), // mar-vie: 4

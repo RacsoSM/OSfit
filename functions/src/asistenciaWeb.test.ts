@@ -54,9 +54,14 @@ describe("planAsistencia", () => {
     expect(planAsistencia(c, null, historial, HOY)).toMatchObject({ diaRutinaRealizado: 1, variacionRealizada: 2 });
   });
 
-  it("fin de semana o sin rutina: asistencia sin día, la rutina no se mueve", () => {
-    expect(planAsistencia(cliente(), null, [], "2026-10-17"))
-      .toEqual({ accion: "marcar", diaRutinaRealizado: null, variacionRealizada: null, trio: null });
+  it("el fin de semana mueve la rutina como cualquier día", () => {
+    const sabado = "2026-10-17";
+    const plan = planAsistencia(cliente(), null, [], sabado);
+    expect(plan).toMatchObject({ accion: "marcar", trio: { ultimoDiaFecha: sabado, ultimoDiaEsAncla: false } });
+    expect(typeof (plan as { diaRutinaRealizado: unknown }).diaRutinaRealizado).toBe("number");
+  });
+
+  it("sin rutina: asistencia sin día, la rutina no se mueve", () => {
     expect(planAsistencia(cliente({ variacionesPorDia: [] }), null, [], HOY))
       .toMatchObject({ diaRutinaRealizado: null, trio: null });
   });

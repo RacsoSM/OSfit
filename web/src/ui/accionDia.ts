@@ -2,7 +2,7 @@ import type { Cliente } from "../datos";
 import { MOTIVOS, motivosPara } from "../motivos";
 import { cambiarDia } from "../acciones";
 import { horaEnMazatlan } from "../fecha";
-import { escapar, esFinDeSemana } from "./tarjetaDia";
+import { escapar } from "./tarjetaDia";
 
 /** Mismo tope que `MOTIVO_MAXIMO` en `functions/src/cambiarDia.ts`. */
 const MOTIVO_MAXIMO = 200;
@@ -113,7 +113,8 @@ function hoja(cliente: Cliente): string {
 /**
  * "Quiero cambiar el día que me toca" (spec, "Tarjeta del día"), con su hoja de motivos.
  *
- * No se muestra el fin de semana — no hay día que cambiar — ni sin rutina asignada. Con el
+ * No se muestra sin rutina asignada. El fin de semana sí: se entrena como cualquier día
+ * (2026-10-17). Con el
  * cliente inactivo la acción queda deshabilitada: su historial es suyo, cambiar una rutina
  * que no está haciendo no.
  *
@@ -124,7 +125,7 @@ function hoja(cliente: Cliente): string {
  */
 export function accionDia(cliente: Cliente, hoy: string, yaAsistioHoy: boolean): string {
   const dias = cliente.rutinaAsignada?.dias ?? [];
-  if (dias.length === 0 || esFinDeSemana(hoy)) return "";
+  if (dias.length === 0) return "";
 
   if (!cliente.activo) {
     return `

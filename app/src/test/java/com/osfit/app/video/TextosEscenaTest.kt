@@ -32,6 +32,8 @@ class TextosEscenaTest {
         assertEquals("Este mes asististe ", TextosEscena.asistenciaPrefijo(escena.copy(unidad = "mes")))
         assertEquals("9 días", TextosEscena.asistenciaDias(escena))
         assertEquals(" de 10 días hábiles", TextosEscena.asistenciaSufijo(escena))
+        // Con fines de semana puede venir más días que los hábiles: entonces no se compara.
+        assertEquals("", TextosEscena.asistenciaSufijo(escena.copy(dias = 11)))
         assertEquals("2h 5min", TextosEscena.tiempoDuracion(125))
         assertEquals("0h 0min", TextosEscena.tiempoDuracion(0))
         assertEquals("9 días seguidos", TextosEscena.rachaDias(9))

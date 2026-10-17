@@ -30,11 +30,11 @@ export function rachaActual(asistencias: Asistencia[], hoy: string): number {
 
   let racha = 0;
   // Tope de seguridad: sin él, un dato raro colgaría la pestaña del cliente.
+  // Entre semana, faltar corta. El fin de semana es opcional (2026-10-17): si vino suma, si
+  // no vino se salta sin cortar.
   for (let i = 0; i < 3650; i++) {
-    if (esDiaHabil(fecha)) {
-      if (!cuentan.has(fecha)) break;
-      racha++;
-    }
+    if (cuentan.has(fecha)) racha++;
+    else if (esDiaHabil(fecha)) break;
     fecha = restarUnDia(fecha);
   }
   return racha;

@@ -76,7 +76,7 @@ import { botonAtras } from "./botonAtras";
 
 export interface DatosRegistro {
   hoy: string;
-  /** El día que le toca hoy según su rutina, o null (fin de semana, descanso, sin rutina). */
+  /** El día que le toca hoy según su rutina, o null (descanso o sin rutina). */
   dia: { nombreDia: string; ejercicios: Ejercicio[] } | null;
   banco: readonly EjercicioBanco[];
   indice: IndiceBanco;

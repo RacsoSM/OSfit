@@ -35,11 +35,11 @@ export function rachaActual(cuentan: Set<string>, hoy: string): number {
 
   let racha = 0;
   // Tope de seguridad, igual que en la web: un dato raro no debe colgar la funcion.
+  // Entre semana, faltar corta. El fin de semana es opcional (2026-10-17): si vino suma, si
+  // no vino se salta sin cortar.
   for (let i = 0; i < 3650; i++) {
-    if (esDiaHabil(fecha)) {
-      if (!cuentan.has(fecha)) break;
-      racha++;
-    }
+    if (cuentan.has(fecha)) racha++;
+    else if (esDiaHabil(fecha)) break;
     fecha = moverDias(fecha, -1);
   }
   return racha;
@@ -54,7 +54,7 @@ export function rachaActual(cuentan: Set<string>, hoy: string): number {
  */
 const TOPE_DIAS_HISTORIA = 3650 * 3;
 
-/** La corrida mas larga de dias habiles contados, del primer al ultimo registro. */
+/** La corrida mas larga, del primer al ultimo registro: el fin de semana suma si vino y no corta si no. */
 export function rachaMasLarga(cuentan: Set<string>): number {
   if (cuentan.size === 0) return 0;
   const fechas = [...cuentan].sort();
@@ -66,11 +66,10 @@ export function rachaMasLarga(cuentan: Set<string>): number {
   let mejor = 0;
   let actual = 0;
   for (let fecha = inicio; fecha <= fin; fecha = moverDias(fecha, 1)) {
-    if (!esDiaHabil(fecha)) continue;
     if (cuentan.has(fecha)) {
       actual++;
       if (actual > mejor) mejor = actual;
-    } else {
+    } else if (esDiaHabil(fecha)) {
       actual = 0;
     }
   }

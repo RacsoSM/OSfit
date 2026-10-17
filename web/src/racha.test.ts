@@ -19,9 +19,24 @@ describe("rachaActual", () => {
     expect(rachaActual([vino("2026-09-08"), justificada("2026-09-09"), vino("2026-09-10")], "2026-09-10")).toBe(3);
   });
 
-  it("el fin de semana ni suma ni corta", () => {
+  it("el fin de semana sin venir no corta", () => {
     // 2026-09-11 viernes, 12 sábado, 13 domingo, 14 lunes
     expect(rachaActual([vino("2026-09-11"), vino("2026-09-14")], "2026-09-14")).toBe(2);
+  });
+
+  it("el fin de semana que sí vino suma", () => {
+    expect(rachaActual([vino("2026-09-11"), vino("2026-09-12"), vino("2026-09-13"), vino("2026-09-14")], "2026-09-14")).toBe(4);
+    expect(rachaActual([vino("2026-09-11"), vino("2026-09-13"), vino("2026-09-14")], "2026-09-14")).toBe(3);
+  });
+
+  it("hoy sábado sin venir no corta; si vino, suma", () => {
+    expect(rachaActual([vino("2026-09-10"), vino("2026-09-11")], "2026-09-12")).toBe(2);
+    expect(rachaActual([vino("2026-09-10"), vino("2026-09-11"), vino("2026-09-12")], "2026-09-12")).toBe(3);
+  });
+
+  it("faltar entre semana sigue cortando aunque haya venido el fin de semana", () => {
+    // Vino sábado 12 y domingo 13, faltó el viernes 11.
+    expect(rachaActual([vino("2026-09-10"), vino("2026-09-12"), vino("2026-09-13")], "2026-09-13")).toBe(2);
   });
 
   it("hoy sin registro todavía no corta la racha", () => {

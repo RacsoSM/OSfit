@@ -22,13 +22,34 @@ class RachaCalculatorTest {
     }
 
     @Test
-    fun `racha actual no se rompe ni suma por fin de semana`() {
+    fun `racha actual no se rompe por un fin de semana sin venir`() {
         val fechas = setOf(
             LocalDate.parse("2026-08-21"), // viernes
             LocalDate.parse("2026-08-24")  // lunes siguiente
         )
         val racha = RachaCalculator.calcularRachaActual(fechas, hoy = LocalDate.parse("2026-08-24"))
         assertEquals(2, racha)
+    }
+
+    @Test
+    fun `racha actual suma el fin de semana que si vino`() {
+        val fechas = setOf(
+            LocalDate.parse("2026-08-21"), // viernes
+            LocalDate.parse("2026-08-22"), // sábado
+            LocalDate.parse("2026-08-24")  // lunes
+        )
+        assertEquals(3, RachaCalculator.calcularRachaActual(fechas, hoy = LocalDate.parse("2026-08-24")))
+        assertEquals(3, RachaCalculator.calcularRachaMasLarga(fechas))
+    }
+
+    @Test
+    fun `faltar entre semana corta aunque haya venido el fin de semana`() {
+        val fechas = setOf(
+            LocalDate.parse("2026-08-20"), // jueves; falta el viernes 21
+            LocalDate.parse("2026-08-22"), // sábado
+            LocalDate.parse("2026-08-23")  // domingo
+        )
+        assertEquals(2, RachaCalculator.calcularRachaActual(fechas, hoy = LocalDate.parse("2026-08-23")))
     }
 
     @Test

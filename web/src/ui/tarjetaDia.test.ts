@@ -34,10 +34,11 @@ function cliente(ejercicios: Ejercicio[], campos: Partial<Cliente> = {}): Client
 }
 
 describe("tarjetaDia", () => {
-  it("fin de semana no lista ejercicios aunque el día los tenga", () => {
+  it("el fin de semana se entrena como cualquier día: lista sus ejercicios", () => {
     const html = tarjetaDia(cliente([ejercicio({ nombre: "Press banca" })]), DOMINGO);
-    expect(html).toContain("Hoy toca descansar");
-    expect(html).not.toContain("Press banca");
+    expect(html).toContain("Hoy te toca");
+    expect(html).toContain("Press banca");
+    expect(html).not.toContain("Hoy toca descansar");
   });
 
   it("sin rutina asignada sigue mostrando la tarjeta de siembra", () => {
@@ -164,7 +165,7 @@ describe("tarjetaDia", () => {
     expect(html).not.toContain("40 kg");
   });
 
-  it("en sábado anuncia el día 1 de una rutina con reinicio semanal", () => {
+  it("con reinicio semanal, el sábado le toca el día que le faltó de la semana", () => {
     const clienteConReinicio = cliente([], {
       nombre: "Elena",
       rutinaAsignada: {
@@ -187,12 +188,12 @@ describe("tarjetaDia", () => {
 
     const html = tarjetaDia(clienteConReinicio, SABADO_RS);
 
-    expect(html).toContain("Hoy toca descansar");
-    expect(html).toContain("Pierna (cuádriceps)");
-    expect(html).not.toContain("Pierna completa");
+    // Hizo el día 4 el viernes: el sábado puede hacer el 5, que le faltaba.
+    expect(html).toContain("Hoy te toca");
+    expect(html).toContain("Pierna completa");
   });
 
-  it("sin reinicio semanal el sábado sigue anunciando lo de siempre", () => {
+  it("sin reinicio semanal, el sábado sigue el ciclo", () => {
     const clienteSinReinicio = cliente([], {
       nombre: "Jaime",
       rutinaAsignada: {
@@ -211,7 +212,8 @@ describe("tarjetaDia", () => {
 
     const html = tarjetaDia(clienteSinReinicio, SABADO_RS);
 
-    expect(html).toContain("Hoy toca descansar");
+    // Terminó el día 3 (el último) el viernes: el sábado vuelve al 1.
+    expect(html).toContain("Hoy te toca");
     expect(html).toContain("Pecho y espalda");
   });
 });
@@ -223,8 +225,8 @@ describe("diaDeHoy", () => {
     expect(r?.ejercicios.map((e) => e.nombre)).toEqual(["Sentadilla"]);
   });
 
-  it("fin de semana o sin rutina no hay día", () => {
-    expect(diaDeHoy(cliente([ejercicio()]), DOMINGO)).toBeNull();
+  it("el fin de semana hay día; sin rutina no", () => {
+    expect(diaDeHoy(cliente([ejercicio()]), DOMINGO)?.nombreDia).toBe("Pecho y espalda");
     expect(diaDeHoy(cliente([], { rutinaAsignada: null }), LUNES)).toBeNull();
   });
 });

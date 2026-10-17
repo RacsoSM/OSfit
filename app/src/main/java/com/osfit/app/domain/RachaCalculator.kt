@@ -6,8 +6,9 @@ import java.time.LocalDate
 import java.time.temporal.ChronoUnit
 
 /**
- * Calcula rachas de asistencia contando solo días hábiles (lunes-viernes).
- * Los fines de semana ni suman ni rompen la racha.
+ * Calcula rachas de asistencia. Entre semana (lunes-viernes) faltar rompe la racha. El fin de
+ * semana es opcional (decisión del entrenador, 2026-10-17): si vino suma, si no vino se salta
+ * sin romperla. GEMELO: `web/src/racha.ts` y `functions/src/rachas.ts`.
  */
 object RachaCalculator {
 
@@ -30,13 +31,12 @@ object RachaCalculator {
             fecha = fecha.minusDays(1)
         }
         var racha = 0
-        while (true) {
-            if (esDiaHabil(fecha)) {
-                if (fecha in fechasAsistencia) {
-                    racha++
-                } else {
-                    break
-                }
+        // Tope de seguridad, igual que en la web y el servidor.
+        repeat(3650) {
+            if (fecha in fechasAsistencia) {
+                racha++
+            } else if (esDiaHabil(fecha)) {
+                return racha
             }
             fecha = fecha.minusDays(1)
         }
@@ -53,13 +53,11 @@ object RachaCalculator {
         var actual = 0
         var fecha = inicio
         while (!fecha.isAfter(fin)) {
-            if (esDiaHabil(fecha)) {
-                if (fecha in fechasAsistencia) {
-                    actual++
-                    if (actual > mejor) mejor = actual
-                } else {
-                    actual = 0
-                }
+            if (fecha in fechasAsistencia) {
+                actual++
+                if (actual > mejor) mejor = actual
+            } else if (esDiaHabil(fecha)) {
+                actual = 0
             }
             fecha = fecha.plusDays(1)
         }

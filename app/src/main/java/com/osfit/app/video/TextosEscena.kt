@@ -24,7 +24,10 @@ internal object TextosEscena {
     fun asistenciaPrefijo(e: EscenaResumen.Asistencia): String =
         "${determinante(e.unidad, mayuscula = true)} ${e.unidad} asististe "
     fun asistenciaDias(e: EscenaResumen.Asistencia): String = "${e.dias} días"
-    fun asistenciaSufijo(e: EscenaResumen.Asistencia): String = " de ${e.diasHabiles} días hábiles"
+    // Con fines de semana (desde 2026-10-17) puede venir más días que los hábiles: "9 de 8"
+    // no tiene sentido, así que entonces se dice solo cuántos días vino.
+    fun asistenciaSufijo(e: EscenaResumen.Asistencia): String =
+        if (e.dias > e.diasHabiles) "" else " de ${e.diasHabiles} días hábiles"
     fun tiempoDuracion(minutos: Int): String = "${minutos / 60}h ${minutos % 60}min"
     fun rachaDias(dias: Int): String = "${dias} días seguidos"
 
