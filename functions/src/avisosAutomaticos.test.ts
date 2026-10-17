@@ -20,7 +20,7 @@ const semana = ["2026-09-14", "2026-09-15", "2026-09-16", "2026-09-17"].map(vino
 
 const cliente = (c: Partial<ClienteParaAvisos> = {}): ClienteParaAvisos => ({
   id: "ana", activo: true, notificacionesWeb: true,
-  avisosAutomaticos: { rachaPerdida: true, recordatorioPago: true }, fechaPago: null, ...c,
+  avisosAutomaticos: { rachaPerdida: true, recordatorioPago: true }, fechaPago: null, reviveExtraOtorgado: false, ...c,
 });
 
 describe("quiere", () => {

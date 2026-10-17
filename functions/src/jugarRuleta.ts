@@ -26,10 +26,18 @@ export const MAXIMO_POR_MES = 3;
  */
 export const RACHA_PARA_REVIVE_EXTRA = 30;
 
-/** 3 al mes, o 4 si alguna vez llegó a una racha de 30. Antes del castigo de la ruleta. */
-export function maximoDeRevives(asistencias: AsistenciaParaRacha[]): number {
-  const extra = rachaMasLarga(fechasQueCuentan(asistencias)) >= RACHA_PARA_REVIVE_EXTRA;
-  return MAXIMO_POR_MES + (extra ? 1 : 0);
+/**
+ * Si tiene el revive extra (y la llama azul): llegó alguna vez a una racha de 30, o el
+ * entrenador se lo dio a mano con `reviveExtraOtorgado` en su ficha (la excepción de Said,
+ * 2026-10-17). Ese campo solo lo escribe el entrenador (`firestore.rules`).
+ */
+export function tieneReviveExtra(asistencias: AsistenciaParaRacha[], otorgado: boolean): boolean {
+  return otorgado || rachaMasLarga(fechasQueCuentan(asistencias)) >= RACHA_PARA_REVIVE_EXTRA;
+}
+
+/** 3 al mes, o 4 con el revive extra. Antes del castigo de la ruleta. */
+export function maximoDeRevives(asistencias: AsistenciaParaRacha[], otorgado: boolean): number {
+  return MAXIMO_POR_MES + (tieneReviveExtra(asistencias, otorgado) ? 1 : 0);
 }
 
 /**
@@ -215,6 +223,7 @@ export const jugarRuleta = onCall({ region: REGION }, async (request) => {
 
   const clienteSnap = await firestore.collection("clientes").doc(clienteId).get();
   const activo = clienteSnap.get("activo") === true;
+  const otorgado = clienteSnap.get("reviveExtraOtorgado") === true;
 
   const todas = await firestore.collection("asistencias").where("clienteId", "==", clienteId).get();
   const asistencias: (AsistenciaParaRacha & { justificadaPorCliente: boolean })[] = todas.docs.map(
@@ -240,7 +249,7 @@ export const jugarRuleta = onCall({ region: REGION }, async (request) => {
   const tiradaAnterior: TiradaParaCastigo | null = tiradaAnteriorSnap.exists
     ? { gano: tiradaAnteriorSnap.get("gano") === true }
     : null;
-  const disponibles = calcularDisponibles(gastados, castigoDelMes(tiradaAnterior), maximoDeRevives(asistencias));
+  const disponibles = calcularDisponibles(gastados, castigoDelMes(tiradaAnterior), maximoDeRevives(asistencias, otorgado));
 
   const refTirada = firestore.collection("ruletas").doc(`${clienteId}_${mes}`);
   const yaJugo = (await refTirada.get()).exists;

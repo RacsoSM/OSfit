@@ -19,6 +19,10 @@ describe("la llama de la racha", () => {
     expect(tarjetasStats(corrida("2026-08-03", 30), "2026-10-17")).toContain('class="llama-azul"');
   });
 
+  it("en Inicio también es azul con el revive extra dado a mano", () => {
+    expect(tarjetasStats(corrida("2026-08-03", 3), "2026-10-17", null, true)).toContain('class="llama-azul"');
+  });
+
   it("en el ranking la pinta azul la fila que lo trae del servidor", () => {
     const html = tarjetaRanking({
       estado: "listo",

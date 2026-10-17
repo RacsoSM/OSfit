@@ -9,7 +9,8 @@ import {
 
 const HOY = "2026-09-10"; // jueves
 
-const cliente = (id: string, nombre: string, activo = true): ClienteParaRanking => ({ id, nombre, activo });
+const cliente = (id: string, nombre: string, activo = true, reviveExtraOtorgado = false): ClienteParaRanking =>
+  ({ id, nombre, activo, reviveExtraOtorgado });
 
 /** `dias` dias habiles seguidos terminando ayer (miercoles 09), asi la racha actual es `dias`. */
 function racha(clienteId: string, dias: number): AsistenciaParaRanking[] {
@@ -135,13 +136,19 @@ describe("armarRanking", () => {
     expect(ana(r.historica)).toMatchObject({ racha: 30, llamaAzul: true });
     expect(r.actual.find((f) => f.nombre === "Beto")?.llamaAzul).toBe(false);
   });
+
+  it("también va azul para quien tiene el revive extra dado a mano", () => {
+    const r = armarRanking([cliente("s", "Said", true, true)], racha("s", 2), "s", HOY);
+    expect(r.actual[0]).toMatchObject({ racha: 2, llamaAzul: true });
+  });
 });
 
 describe("normalizacion de documentos", () => {
   it("un cliente sin nombre queda como 'Sin nombre' y sin activo cuenta como inactivo", () => {
-    expect(clienteDesdeDoc("a", {})).toEqual({ id: "a", nombre: "Sin nombre", activo: false });
-    expect(clienteDesdeDoc("b", { nombre: 42, activo: "si" })).toEqual({ id: "b", nombre: "Sin nombre", activo: false });
-    expect(clienteDesdeDoc("c", { nombre: "Caro", activo: true })).toEqual({ id: "c", nombre: "Caro", activo: true });
+    expect(clienteDesdeDoc("a", {})).toEqual({ id: "a", nombre: "Sin nombre", activo: false, reviveExtraOtorgado: false });
+    expect(clienteDesdeDoc("b", { nombre: 42, activo: "si" })).toEqual({ id: "b", nombre: "Sin nombre", activo: false, reviveExtraOtorgado: false });
+    expect(clienteDesdeDoc("c", { nombre: "Caro", activo: true })).toEqual({ id: "c", nombre: "Caro", activo: true, reviveExtraOtorgado: false });
+    expect(clienteDesdeDoc("d", { nombre: "Said", activo: true, reviveExtraOtorgado: true }).reviveExtraOtorgado).toBe(true);
   });
 
   it("una asistencia sin fecha o sin clienteId se descarta", () => {

@@ -52,7 +52,12 @@ async function encolar(tipo: TipoAviso, clienteId: string, ocasion: string, m: M
 }
 
 /** Vidas que le quedan este mes, o si le toca la ruleta. Mismas reglas que `revivirRacha`. */
-async function salidaRacha(clienteId: string, hoy: string, asistencias: FirebaseFirestore.DocumentData[]): Promise<SalidaRacha> {
+async function salidaRacha(
+  clienteId: string,
+  hoy: string,
+  asistencias: FirebaseFirestore.DocumentData[],
+  otorgado: boolean
+): Promise<SalidaRacha> {
   const mes = hoy.slice(0, 7);
   const gastados = asistencias.filter(
     (a) => a.justificadaPorCliente === true && a.justificada === true &&
@@ -68,7 +73,7 @@ async function salidaRacha(clienteId: string, hoy: string, asistencias: Firebase
     asistio: a.asistio === true,
     justificada: a.justificada === true,
   }));
-  const vidas = calcularDisponibles(gastados, castigo, maximoDeRevives(paraRacha));
+  const vidas = calcularDisponibles(gastados, castigo, maximoDeRevives(paraRacha, otorgado));
   if (vidas > 0) return { vidas };
   return actual.exists ? { nada: true } : { ruleta: true };
 }
@@ -93,7 +98,7 @@ async function avisosDe(c: ClienteParaAvisos, hoy: string): Promise<number> {
       hoy
     );
     if (perdida) {
-      const m = mensajeRacha(perdida.dias, await salidaRacha(c.id, hoy, crudas));
+      const m = mensajeRacha(perdida.dias, await salidaRacha(c.id, hoy, crudas, c.reviveExtraOtorgado));
       if (await encolar("rachaPerdida", c.id, perdida.fecha, m)) encolados++;
     }
   }
@@ -118,6 +123,7 @@ export const programarAvisos = onSchedule(
         notificacionesWeb: true,
         avisosAutomaticos: avisosDesdeDoc(d.data()),
         fechaPago: pago && typeof pago.toDate === "function" ? fechaEnMazatlan(pago) : null,
+        reviveExtraOtorgado: d.get("reviveExtraOtorgado") === true,
       };
     });
 

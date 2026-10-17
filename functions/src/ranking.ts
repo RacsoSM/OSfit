@@ -1,6 +1,6 @@
 import { onCall } from "firebase-functions/v2/https";
 import { REGION, clienteDeLaSesion, db, hoyEnMazatlan } from "./comun";
-import { RACHA_PARA_REVIVE_EXTRA } from "./jugarRuleta";
+import { tieneReviveExtra } from "./jugarRuleta";
 import { fechasQueCuentan, rachaActual, rachaMasLarga } from "./rachas";
 
 /**
@@ -35,6 +35,8 @@ export interface ClienteParaRanking {
   id: string;
   nombre: string;
   activo: boolean;
+  /** El revive extra a mano: su llama va azul aunque no haya llegado a 30. */
+  reviveExtraOtorgado: boolean;
 }
 
 export interface AsistenciaParaRanking {
@@ -47,7 +49,7 @@ export interface AsistenciaParaRanking {
 /** `activo` ausente o de tipo raro cuenta como inactivo: sale de la actual, sigue en la historica. */
 export function clienteDesdeDoc(id: string, datos: Record<string, unknown>): ClienteParaRanking {
   const nombre = typeof datos.nombre === "string" && datos.nombre.trim() !== "" ? datos.nombre : "Sin nombre";
-  return { id, nombre, activo: datos.activo === true };
+  return { id, nombre, activo: datos.activo === true, reviveExtraOtorgado: datos.reviveExtraOtorgado === true };
 }
 
 /** Mismo formato que valida `revivirRacha.ts`: AAAA-MM-DD. */
@@ -100,10 +102,11 @@ export function armarRanking(
   const actual: Omit<FilaRanking, "puesto">[] = [];
   const historica: Omit<FilaRanking, "puesto">[] = [];
   for (const c of clientes) {
-    const cuentan = fechasQueCuentan(porCliente.get(c.id) ?? []);
+    const suyas = porCliente.get(c.id) ?? [];
+    const cuentan = fechasQueCuentan(suyas);
     const esTuyo = c.id === clienteId;
     const masLarga = rachaMasLarga(cuentan);
-    const llamaAzul = masLarga >= RACHA_PARA_REVIVE_EXTRA;
+    const llamaAzul = tieneReviveExtra(suyas, c.reviveExtraOtorgado);
     if (c.activo) actual.push({ nombre: c.nombre, racha: rachaActual(cuentan, hoy), esTuyo, llamaAzul });
     historica.push({ nombre: c.nombre, racha: masLarga, esTuyo, llamaAzul });
   }

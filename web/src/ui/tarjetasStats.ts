@@ -10,7 +10,13 @@ import { OBJETIVO_SEMANAL } from "../registro";
  * Registro (entrenador, 2026-10-14). `entrenamientosSemana` es null mientras no llegan sus
  * sesiones.
  */
-export function tarjetasStats(asistencias: Asistencia[], hoy: string, entrenamientosSemana: number | null = null): string {
+export function tarjetasStats(
+  asistencias: Asistencia[],
+  hoy: string,
+  entrenamientosSemana: number | null = null,
+  /** El revive extra dado a mano (`reviveExtraOtorgado`): también pinta la llama azul. */
+  reviveExtraOtorgado = false
+): string {
   const racha = rachaActual(asistencias, hoy);
   // Sin ninguna asistencia registrada, un "🔥 0" y un "—" son un cero críptico, no una
   // respuesta: hace falta decir que es porque todavía no hay historial y quién lo llena.
@@ -20,7 +26,7 @@ export function tarjetasStats(asistencias: Asistencia[], hoy: string, entrenamie
     <div class="fila">
       <div class="tarjeta">
         <p class="tarjeta-titulo">Tu racha</p>
-        <p class="numero">${llama(tieneReviveExtra(asistencias))} ${racha}</p>
+        <p class="numero">${llama(tieneReviveExtra(asistencias, reviveExtraOtorgado))} ${racha}</p>
         <p style="color: var(--texto-tenue); font-size: 12px; margin: 0">
           ${sinHistorial ? "arranca con tu primera sesión" : racha === 1 ? "día seguido sin faltar" : "días seguidos sin faltar"}
         </p>

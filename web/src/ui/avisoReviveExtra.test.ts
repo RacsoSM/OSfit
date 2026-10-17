@@ -13,19 +13,24 @@ function corrida(desde: string, dias: number): Asistencia[] {
 
 describe("avisoReviveExtra", () => {
   it("sale al llegar a 30 y dice los números", () => {
-    const html = avisoReviveExtra(corrida("2026-08-03", 30), false);
+    const html = avisoReviveExtra(corrida("2026-08-03", 30), false, false);
     expect(html).toContain("Cumpliste 30 días de racha");
-    expect(html).toMatch(/4 revives al mes en vez de 3/);
+    expect(html).toContain("comodín extra para revivir tu racha");
+    expect(html).toMatch(/4 comodines al mes en vez de\s+3/);
     expect(html).toContain("tu llama ahora es azul");
     expect(html).toContain('class="llama-azul"');
     expect(html).toContain('id="revive-extra-visto"');
   });
 
   it("no sale antes de 30", () => {
-    expect(avisoReviveExtra(corrida("2026-08-03", 29), false)).toBe("");
+    expect(avisoReviveExtra(corrida("2026-08-03", 29), false, false)).toBe("");
+  });
+
+  it("sale también con el revive extra dado a mano, sin racha de 30", () => {
+    expect(avisoReviveExtra(corrida("2026-08-03", 3), false, true)).toContain("tu llama ahora es azul");
   });
 
   it("no vuelve a salir una vez cerrado", () => {
-    expect(avisoReviveExtra(corrida("2026-08-03", 30), true)).toBe("");
+    expect(avisoReviveExtra(corrida("2026-08-03", 30), true, false)).toBe("");
   });
 });

@@ -98,6 +98,9 @@ data class Cliente(
     // El entrenador le quitó "Amigos" en la web (comparar músculos con los demás). Apagado
     // por defecto: tiene acceso. Sin acceso ni ve la lista ni sale en ella.
     val sinAccesoAmigos: Boolean = false,
+    // El revive extra (y la llama azul) dado a mano, sin haber llegado a una racha de 30: la
+    // excepción de Said, 2026-10-17. Ver `CupoRevivesCalculator.tieneReviveExtra`.
+    val reviveExtraOtorgado: Boolean = false,
     // Lo que ella eligió en la web: quién ve sus músculos en Amigos ("todos", "algunos" o
     // "nadie"; con "nadie" tampoco ve a los demás). Null mientras no elija, y entonces no sale.
     // Solo lo escribe la función `elegirMostrarEnAmigos`; aquí se lee para mostrárselo al

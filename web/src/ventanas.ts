@@ -132,8 +132,9 @@ function inicio(d: DatosCliente): string {
       ${tarjetaDia(d.cliente, d.hoy, acciones, d.asistencias,
         botonEntrenar(diaDeHoy(d.cliente, d.hoy, d.asistencias), entrenamientoAbierto()))}
       ${invitacionNotificaciones(d.notificaciones, d.invitacionDescartada)}
-      ${tarjetasStats(d.asistencias, d.hoy, d.sesiones ? resumenSemana(d.sesiones, d.hoy).entrenamientos : null)}
-      ${avisoReviveExtra(d.asistencias, d.reviveExtraVisto)}
+      ${tarjetasStats(d.asistencias, d.hoy, d.sesiones ? resumenSemana(d.sesiones, d.hoy).entrenamientos : null,
+        d.cliente.reviveExtraOtorgado === true)}
+      ${avisoReviveExtra(d.asistencias, d.reviveExtraVisto, d.cliente.reviveExtraOtorgado === true)}
       ${tarjetaRevivir(d.cliente, d.hoy, d.asistencias, d.tiradaEsteMes, d.tiradaMesAnterior)}
       ${calendario(d.asistencias, d.mesVisible, d.hoy)}
     `;

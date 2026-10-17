@@ -11,18 +11,19 @@ import { llama } from "./llama";
  * datos vuelve a salir una vez, que no es grave.
  *
  * Desde el 2026-10-17 también anuncia la llama azul (pedido del entrenador para Caro y
- * Brianda, las primeras en llegar a 30). Por eso la llave en `main.ts` es la v2: quien ya
- * había cerrado la primera versión, que no hablaba de la llama, la ve una vez más.
+ * Brianda, las primeras en llegar a 30), y lo llama "comodín para revivir la racha". Cada
+ * cambio de texto sube la versión de la llave en `main.ts` (va en la v3), para que quien ya
+ * había cerrado una versión anterior vea la nueva una vez más.
  */
-export function avisoReviveExtra(asistencias: Asistencia[], visto: boolean): string {
-  if (visto || !tieneReviveExtra(asistencias)) return "";
+export function avisoReviveExtra(asistencias: Asistencia[], visto: boolean, otorgado: boolean): string {
+  if (visto || !tieneReviveExtra(asistencias, otorgado)) return "";
   return `
     <div class="tarjeta">
       <p class="tarjeta-titulo">⭐ ¡Cumpliste ${RACHA_PARA_REVIVE_EXTRA} días de racha!</p>
       <p class="ajuste-nota">
-        Por llegar a ${RACHA_PARA_REVIVE_EXTRA} días ganaste un revive extra para siempre: desde
-        ahora tienes ${MAXIMO_POR_MES + 1} revives al mes en vez de ${MAXIMO_POR_MES}, aunque tu racha se
-        rompa.
+        Por llegar a ${RACHA_PARA_REVIVE_EXTRA} días ganaste un comodín extra para revivir tu racha,
+        para siempre: desde ahora tienes ${MAXIMO_POR_MES + 1} comodines al mes en vez de
+        ${MAXIMO_POR_MES}, aunque tu racha se rompa.
       </p>
       <p class="ajuste-nota">Y tu llama ahora es azul ${llama(true)}</p>
       <button class="boton" id="revive-extra-visto">¡Genial!</button>

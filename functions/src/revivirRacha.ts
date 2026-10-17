@@ -91,12 +91,15 @@ export const revivirRacha = onCall({ region: REGION }, async (request) => {
     ? { gano: tiradaAnteriorSnap.get("gano") === true }
     : null;
 
+  // El revive extra a mano (`reviveExtraOtorgado`) vive en la ficha, no en las asistencias.
+  const otorgado = (await firestore.collection("clientes").doc(clienteId).get()).get("reviveExtraOtorgado") === true;
+
   const existente = asistencias.find((a) => a.fecha === fecha);
   const yaGastada =
     existente?.justificadaPorCliente === true &&
     existente?.justificada === true &&
     fecha.startsWith(`${mes}-`);
-  const cupo = cupoDelRevive(gastados, castigoDelMes(tiradaAnterior), yaGastada, maximoDeRevives(asistencias));
+  const cupo = cupoDelRevive(gastados, castigoDelMes(tiradaAnterior), yaGastada, maximoDeRevives(asistencias, otorgado));
   if (cupo.sinCupo) {
     throw new HttpsError("resource-exhausted", "sin_cupo");
   }

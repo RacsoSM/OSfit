@@ -122,6 +122,12 @@ class CupoRevivesCalculatorTest {
     }
 
     @Test
+    fun `el entrenador lo puede dar a mano aunque no haya llegado a 30`() {
+        assertEquals(4, CupoRevivesCalculator.maximoPorMes(corrida("2026-08-03", 5), otorgado = true))
+        assertEquals(3, CupoRevivesCalculator.disponiblesEnElMes(corrida("2026-08-03", 5), "2026-10", castigo = 1, otorgado = true))
+    }
+
+    @Test
     fun `el castigo de la ruleta se le resta al 4`() {
         val historial = corrida("2026-08-03", 30) + falta("2026-10-06", porCliente = true)
         assertEquals(3, CupoRevivesCalculator.disponiblesEnElMes(historial, "2026-10"))

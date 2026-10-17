@@ -29,14 +29,18 @@ export const MAXIMO_POR_MES = 3;
  */
 export const RACHA_PARA_REVIVE_EXTRA = 30;
 
-/** Si ya ganó el revive extra por llegar a una racha de 30. */
-export function tieneReviveExtra(asistencias: Asistencia[]): boolean {
-  return rachaMasLarga(asistencias) >= RACHA_PARA_REVIVE_EXTRA;
+/**
+ * Si tiene el revive extra (y la llama azul): llegó alguna vez a una racha de 30, o el
+ * entrenador se lo dio a mano con `reviveExtraOtorgado` en su ficha (la excepción de Said,
+ * 2026-10-17). GEMELO: `tieneReviveExtra` en `functions/src/jugarRuleta.ts`.
+ */
+export function tieneReviveExtra(asistencias: Asistencia[], otorgado: boolean): boolean {
+  return otorgado || rachaMasLarga(asistencias) >= RACHA_PARA_REVIVE_EXTRA;
 }
 
 /** 3 al mes, o 4 con el revive extra. Antes del castigo de la ruleta, que se le resta a este. */
-export function maximoPorMes(asistencias: Asistencia[]): number {
-  return MAXIMO_POR_MES + (tieneReviveExtra(asistencias) ? 1 : 0);
+export function maximoPorMes(asistencias: Asistencia[], otorgado: boolean): number {
+  return MAXIMO_POR_MES + (tieneReviveExtra(asistencias, otorgado) ? 1 : 0);
 }
 
 /**
@@ -63,7 +67,8 @@ export function gastadosEnElMes(asistencias: Asistencia[], mes: string): number 
 export function disponiblesEnElMes(
   asistencias: Asistencia[],
   mes: string,
-  castigo = 0
+  castigo = 0,
+  otorgado = false
 ): number {
-  return Math.max(maximoPorMes(asistencias) - castigo - gastadosEnElMes(asistencias, mes), 0);
+  return Math.max(maximoPorMes(asistencias, otorgado) - castigo - gastadosEnElMes(asistencias, mes), 0);
 }

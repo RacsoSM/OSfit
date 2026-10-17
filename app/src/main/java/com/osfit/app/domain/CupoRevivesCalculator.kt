@@ -31,14 +31,18 @@ object CupoRevivesCalculator {
      */
     const val RACHA_PARA_REVIVE_EXTRA = 30
 
-    /** Si ya ganó el revive extra por llegar a una racha de 30. */
-    fun tieneReviveExtra(asistencias: List<Asistencia>): Boolean =
-        RachaCalculator.calcularRachaMasLarga(RachaCalculator.fechasQueCuentan(asistencias)) >=
+    /**
+     * Si tiene el revive extra (y la llama azul): llegó alguna vez a una racha de 30, o el
+     * entrenador se lo dio a mano con [otorgado] (`Cliente.reviveExtraOtorgado`).
+     */
+    fun tieneReviveExtra(asistencias: List<Asistencia>, otorgado: Boolean = false): Boolean =
+        otorgado ||
+            RachaCalculator.calcularRachaMasLarga(RachaCalculator.fechasQueCuentan(asistencias)) >=
             RACHA_PARA_REVIVE_EXTRA
 
     /** 3 al mes, o 4 con el revive extra. Antes del castigo de la ruleta, que se le resta a este. */
-    fun maximoPorMes(asistencias: List<Asistencia>): Int =
-        MAXIMO_POR_MES + if (tieneReviveExtra(asistencias)) 1 else 0
+    fun maximoPorMes(asistencias: List<Asistencia>, otorgado: Boolean = false): Int =
+        MAXIMO_POR_MES + if (tieneReviveExtra(asistencias, otorgado)) 1 else 0
 
     /**
      * [mes] en formato `AAAA-MM`. Las fechas son strings ISO, así que comparar por prefijo
@@ -58,6 +62,10 @@ object CupoRevivesCalculator {
      * (0 o 1). Entra como parámetro y no se lee acá: este objeto es puro y se prueba en la
      * JVM, sin Firestore. Quien lo llama ya tiene el documento de la tirada.
      */
-    fun disponiblesEnElMes(asistencias: List<Asistencia>, mes: String, castigo: Int = 0): Int =
-        (maximoPorMes(asistencias) - castigo - gastadosEnElMes(asistencias, mes)).coerceAtLeast(0)
+    fun disponiblesEnElMes(
+        asistencias: List<Asistencia>,
+        mes: String,
+        castigo: Int = 0,
+        otorgado: Boolean = false
+    ): Int = (maximoPorMes(asistencias, otorgado) - castigo - gastadosEnElMes(asistencias, mes)).coerceAtLeast(0)
 }

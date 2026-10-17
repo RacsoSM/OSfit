@@ -113,12 +113,17 @@ function corrida(desde: string, dias: number): Asistencia[] {
 // en `functions/src/jugarRuleta.test.ts` y `CupoRevivesCalculatorTest` en Kotlin.
 describe("revive extra por racha de 30", () => {
   it("con 29 son 3; con 30, 4", () => {
-    expect(maximoPorMes(corrida("2026-08-03", 29))).toBe(3);
-    expect(maximoPorMes(corrida("2026-08-03", 30))).toBe(4);
+    expect(maximoPorMes(corrida("2026-08-03", 29), false)).toBe(3);
+    expect(maximoPorMes(corrida("2026-08-03", 30), false)).toBe(4);
   });
 
   it("lo conserva aunque la racha se rompa", () => {
-    expect(maximoPorMes([...corrida("2026-08-03", 30), ...corrida("2026-09-03", 2)])).toBe(4);
+    expect(maximoPorMes([...corrida("2026-08-03", 30), ...corrida("2026-09-03", 2)], false)).toBe(4);
+  });
+
+  it("el entrenador lo puede dar a mano (reviveExtraOtorgado)", () => {
+    expect(maximoPorMes(corrida("2026-08-03", 5), true)).toBe(4);
+    expect(disponiblesEnElMes(corrida("2026-08-03", 5), "2026-10", 1, true)).toBe(3);
   });
 
   it("el castigo de la ruleta se le resta al 4", () => {

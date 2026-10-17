@@ -196,8 +196,8 @@ class ClienteDetailViewModel(
      * la página del cliente — justo la discusión que este dato existe para zanjar.
      */
     val revivesDisponibles: StateFlow<Int> =
-        combine(asistenciasDelCliente, tiradaMesPrevio, mesActualFlow) { asistencias, tirada, mes ->
-            CupoRevivesCalculator.disponiblesEnElMes(asistencias, mes, castigoDe(tirada))
+        combine(asistenciasDelCliente, tiradaMesPrevio, mesActualFlow, cliente) { asistencias, tirada, mes, c ->
+            CupoRevivesCalculator.disponiblesEnElMes(asistencias, mes, castigoDe(tirada), c?.reviveExtraOtorgado == true)
         }.stateIn(
             viewModelScope,
             SharingStarted.WhileSubscribed(5000),
@@ -209,8 +209,8 @@ class ClienteDetailViewModel(
      * la ruleta el mes pasado.
      */
     val revivesMaximo: StateFlow<Int> =
-        combine(asistenciasDelCliente, tiradaMesPrevio) { asistencias, tirada ->
-            CupoRevivesCalculator.maximoPorMes(asistencias) - castigoDe(tirada)
+        combine(asistenciasDelCliente, tiradaMesPrevio, cliente) { asistencias, tirada, c ->
+            CupoRevivesCalculator.maximoPorMes(asistencias, c?.reviveExtraOtorgado == true) - castigoDe(tirada)
         }.stateIn(
             viewModelScope,
             SharingStarted.WhileSubscribed(5000),
@@ -218,9 +218,10 @@ class ClienteDetailViewModel(
         )
 
     /** Si su máximo trae el revive extra por racha de 30, para poder decir POR QUÉ tiene más. */
-    val tieneReviveExtra: StateFlow<Boolean> = asistenciasDelCliente
-        .map { CupoRevivesCalculator.tieneReviveExtra(it) }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
+    val tieneReviveExtra: StateFlow<Boolean> =
+        combine(asistenciasDelCliente, cliente) { asistencias, c ->
+            CupoRevivesCalculator.tieneReviveExtra(asistencias, c?.reviveExtraOtorgado == true)
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
 
     /** El mes en que perdió, para poder decir POR QUÉ le quedan menos. */
     val mesQuePerdioLaRuleta: StateFlow<String?> = tiradaMesPrevio

@@ -179,25 +179,30 @@ function corrida(desde: string, dias: number) {
 // que lo conserva aunque la racha se rompa, y el castigo de la ruleta se le resta a ese 4.
 describe("maximoDeRevives", () => {
   it("sin haber llegado a 30, son 3", () => {
-    expect(maximoDeRevives([])).toBe(3);
-    expect(maximoDeRevives(corrida("2026-08-03", 29))).toBe(3);
+    expect(maximoDeRevives([], false)).toBe(3);
+    expect(maximoDeRevives(corrida("2026-08-03", 29), false)).toBe(3);
   });
 
   it("con una racha de 30, son 4", () => {
-    expect(maximoDeRevives(corrida("2026-08-03", 30))).toBe(4);
+    expect(maximoDeRevives(corrida("2026-08-03", 30), false)).toBe(4);
   });
 
   it("los conserva aunque la racha se haya roto después", () => {
     // 30 seguidos en agosto, falta el martes 2026-09-02 y vuelve dos días.
     const historial = [...corrida("2026-08-03", 30), ...corrida("2026-09-03", 2)];
-    expect(maximoDeRevives(historial)).toBe(4);
+    expect(maximoDeRevives(historial, false)).toBe(4);
   });
 
   it("las justificadas cuentan para llegar a 30, como en la racha", () => {
     const conRevive = corrida("2026-08-03", 30).map((a, i) =>
       i === 10 ? { ...a, asistio: false, justificada: true } : a
     );
-    expect(maximoDeRevives(conRevive)).toBe(4);
+    expect(maximoDeRevives(conRevive, false)).toBe(4);
+  });
+
+  it("el entrenador lo puede dar a mano aunque no haya llegado a 30", () => {
+    expect(maximoDeRevives([], true)).toBe(4);
+    expect(maximoDeRevives(corrida("2026-08-03", 5), true)).toBe(4);
   });
 
   it("perder la ruleta le deja 3 al que tiene 4", () => {

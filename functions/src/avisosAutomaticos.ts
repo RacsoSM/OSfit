@@ -29,6 +29,8 @@ export interface ClienteParaAvisos {
   avisosAutomaticos: Partial<Record<TipoAviso, boolean>>;
   /** Fecha de pago en AAAA-MM-DD de Mazatlán, o null si no tiene. */
   fechaPago: string | null;
+  /** El revive extra que dio el entrenador a mano (ver `tieneReviveExtra` en `jugarRuleta.ts`). */
+  reviveExtraOtorgado: boolean;
 }
 
 /** Ante la duda, no: un campo ausente o de tipo raro deja el aviso apagado. */

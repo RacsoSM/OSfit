@@ -150,9 +150,10 @@ export function tarjetaRevivir(
   if (rota === null && estado.exito !== "revivir") return "";
 
   const castigo = castigoDelMes(tiradaMesAnterior);
-  conExtra = tieneReviveExtra(asistencias);
-  maximoDelMes = maximoPorMes(asistencias) - castigo;
-  const disponibles = disponiblesEnElMes(asistencias, hoy.slice(0, 7), castigo);
+  const otorgado = cliente.reviveExtraOtorgado === true;
+  conExtra = tieneReviveExtra(asistencias, otorgado);
+  maximoDelMes = maximoPorMes(asistencias, otorgado) - castigo;
+  const disponibles = disponiblesEnElMes(asistencias, hoy.slice(0, 7), castigo, otorgado);
   const sinCupo = disponibles === 0;
   const bloqueado = !cliente.activo || sinCupo || estado.enVuelo;
 

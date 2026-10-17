@@ -135,6 +135,11 @@ export interface Cliente {
   /** El entrenador le quitó Amigos desde la app. Ausente es "tiene acceso". */
   sinAccesoAmigos?: boolean;
   /**
+   * El revive extra (y la llama azul) dado a mano por el entrenador, sin haber llegado a una
+   * racha de 30. Solo lo escribe él (`firestore.rules`). Ver `tieneReviveExtra` en `cupo.ts`.
+   */
+  reviveExtraOtorgado?: boolean;
+  /**
    * Primera versión de la elección de Amigos (sí/no). Se lee como "todos"/"nadie" mientras no
    * haya `visibilidadAmigos`.
    */
