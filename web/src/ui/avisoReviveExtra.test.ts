@@ -14,8 +14,10 @@ function corrida(desde: string, dias: number): Asistencia[] {
 describe("avisoReviveExtra", () => {
   it("sale al llegar a 30 y dice los números", () => {
     const html = avisoReviveExtra(corrida("2026-08-03", 30), false);
-    expect(html).toContain("Revive extra");
-    expect(html).toContain("4 revives al mes en vez de 3");
+    expect(html).toContain("Cumpliste 30 días de racha");
+    expect(html).toMatch(/4 revives al mes en vez de 3/);
+    expect(html).toContain("tu llama ahora es azul");
+    expect(html).toContain('class="llama-azul"');
     expect(html).toContain('id="revive-extra-visto"');
   });
 
