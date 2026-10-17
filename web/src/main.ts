@@ -271,9 +271,9 @@ async function arrancar(): Promise<void> {
   }
 
   /** Llave en el navegador para el aviso del revive extra. Igual que la invitación: si se pierde, sale otra vez. */
-  // La versión sube con cada cambio de texto del aviso (ver `avisoReviveExtra.ts`): v2 anunció
-  // la llama azul, v3 lo llama "comodín para revivir la racha".
-  const LLAVE_REVIVE_EXTRA = "osfit:revive-extra-visto-v3";
+  // La versión sube con cada cambio del aviso (ver `avisoReviveExtra.ts`): v2 anunció la llama
+  // azul, v3 lo llamó "comodín para revivir la racha", v4 lo volvió ventana emergente.
+  const LLAVE_REVIVE_EXTRA = "osfit:revive-extra-visto-v4";
   let reviveExtraVisto = (() => {
     try { return localStorage.getItem(LLAVE_REVIVE_EXTRA) === "1"; } catch { return false; }
   })();

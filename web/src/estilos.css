@@ -1648,3 +1648,30 @@ button.registro-serie-num.abierto { border-style: solid; border-color: var(--pri
 /* La llama de quien alguna vez llegó a una racha de 30 (ver `ui/llama.ts`): el 🔥 con el tono
    rotado. 190° da un azul limpio en los emoji de Google y de Apple. */
 .llama-azul { display: inline-block; filter: hue-rotate(190deg); }
+
+/* El aviso del comodín extra y la llama azul (`ui/avisoReviveExtra.ts`): ventana emergente
+   sobre todo, barra y menú incluidos, como el de reps. Como tarjeta entre las demás casi no
+   se veía. La entrada solo la primera vez que se pinta (clase `entrando`). */
+.logro-velo {
+  position: fixed; inset: 0; z-index: 30;
+  display: flex; align-items: center; justify-content: center;
+  padding: calc(16px + env(safe-area-inset-top)) 16px calc(16px + env(safe-area-inset-bottom));
+  background: rgba(0, 0, 0, 0.65);
+  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+}
+.logro-velo.entrando { animation: logro-velo-entrar 0.25s ease-out both; }
+.logro-aviso {
+  width: 100%; max-width: 340px; margin: 0; padding: 22px 20px 18px; text-align: center;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.55);
+}
+.logro-aviso.entrando { animation: logro-entrar 0.45s cubic-bezier(0.2, 1.4, 0.4, 1) both; }
+.logro-llama { font-size: 64px; line-height: 1; margin-bottom: 6px; }
+.logro-titulo { margin: 6px 0 8px; font-size: 20px; font-weight: 800; line-height: 1.3; }
+.logro-texto { margin: 0 0 10px; font-size: 15px; line-height: 1.45; color: var(--texto-tenue); }
+.logro-texto strong { color: var(--texto); }
+.logro-aviso .boton { margin-top: 6px; }
+@keyframes logro-velo-entrar { from { opacity: 0; } to { opacity: 1; } }
+@keyframes logro-entrar { from { opacity: 0; transform: scale(0.85); } to { opacity: 1; transform: scale(1); } }
+@media (prefers-reduced-motion: reduce) {
+  .logro-velo.entrando, .logro-aviso.entrando { animation: none; }
+}

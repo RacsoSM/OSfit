@@ -11,13 +11,16 @@ function corrida(desde: string, dias: number): Asistencia[] {
   });
 }
 
+/** Lo que se lee, sin etiquetas ni saltos: el texto lleva negritas en medio. */
+const texto = (html: string) => html.replace(/<[^>]+>/g, "").replace(/\s+/g, " ");
+
 describe("avisoReviveExtra", () => {
   it("sale al llegar a 30 y dice los números", () => {
     const html = avisoReviveExtra(corrida("2026-08-03", 30), false, false);
-    expect(html).toContain("Cumpliste 30 días de racha");
-    expect(html).toContain("comodín extra para revivir tu racha");
-    expect(html).toMatch(/4 comodines al mes en vez de\s+3/);
-    expect(html).toContain("tu llama ahora es azul");
+    expect(texto(html)).toContain("Cumpliste 30 días de racha");
+    expect(texto(html)).toContain("comodín extra para revivir tu racha");
+    expect(texto(html)).toContain("4 comodines al mes en vez de 3");
+    expect(texto(html)).toContain("tu llama ahora es azul");
     expect(html).toContain('class="llama-azul"');
     expect(html).toContain('id="revive-extra-visto"');
   });
@@ -27,7 +30,15 @@ describe("avisoReviveExtra", () => {
   });
 
   it("sale también con el revive extra dado a mano, sin racha de 30", () => {
-    expect(avisoReviveExtra(corrida("2026-08-03", 3), false, true)).toContain("tu llama ahora es azul");
+    expect(texto(avisoReviveExtra(corrida("2026-08-03", 3), false, true))).toContain("tu llama ahora es azul");
+  });
+
+  it("es una ventana emergente, y la entrada no se repite en cada repintado", () => {
+    avisoReviveExtra(corrida("2026-08-03", 30), false, false);
+    const otra = avisoReviveExtra(corrida("2026-08-03", 30), false, false);
+    expect(otra).toContain('role="dialog"');
+    expect(otra).toContain('class="logro-velo"');
+    expect(otra).not.toContain("entrando");
   });
 
   it("no vuelve a salir una vez cerrado", () => {

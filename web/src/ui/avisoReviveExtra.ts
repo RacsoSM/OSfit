@@ -12,21 +12,37 @@ import { llama } from "./llama";
  *
  * Desde el 2026-10-17 también anuncia la llama azul (pedido del entrenador para Caro y
  * Brianda, las primeras en llegar a 30), y lo llama "comodín para revivir la racha". Cada
- * cambio de texto sube la versión de la llave en `main.ts` (va en la v3), para que quien ya
- * había cerrado una versión anterior vea la nueva una vez más.
+ * cambio de texto o de forma sube la versión de la llave en `main.ts` (va en la v4: ventana
+ * emergente), para que quien ya había cerrado una versión anterior vea la nueva una vez más.
+ */
+/**
+ * La entrada (el "pop") solo la primera vez que se pinta: `#contenido` se rehace en cada
+ * snapshot de Firestore y, sin esto, la ventana volvería a saltar cada vez que el entrenador
+ * marca una asistencia.
+ */
+let yaEntro = false;
+
+/**
+ * Ventana emergente sobre todo, barra incluida (como el aviso de reps): en una tarjeta entre
+ * las demás casi no se veía (entrenador, 2026-10-17).
  */
 export function avisoReviveExtra(asistencias: Asistencia[], visto: boolean, otorgado: boolean): string {
   if (visto || !tieneReviveExtra(asistencias, otorgado)) return "";
+  const entrada = yaEntro ? "" : " entrando";
+  yaEntro = true;
   return `
-    <div class="tarjeta">
-      <p class="tarjeta-titulo">⭐ ¡Cumpliste ${RACHA_PARA_REVIVE_EXTRA} días de racha!</p>
-      <p class="ajuste-nota">
-        Por llegar a ${RACHA_PARA_REVIVE_EXTRA} días ganaste un comodín extra para revivir tu racha,
-        para siempre: desde ahora tienes ${MAXIMO_POR_MES + 1} comodines al mes en vez de
-        ${MAXIMO_POR_MES}, aunque tu racha se rompa.
-      </p>
-      <p class="ajuste-nota">Y tu llama ahora es azul ${llama(true)}</p>
-      <button class="boton" id="revive-extra-visto">¡Genial!</button>
+    <div class="logro-velo${entrada}">
+      <div class="logro-aviso tarjeta${entrada}" role="dialog" aria-modal="true" aria-labelledby="logro-titulo">
+        <div class="logro-llama">${llama(true)}</div>
+        <p class="logro-titulo" id="logro-titulo">¡Cumpliste ${RACHA_PARA_REVIVE_EXTRA} días de racha!</p>
+        <p class="logro-texto">
+          Ganaste un <strong>comodín extra</strong> para revivir tu racha, para siempre: desde ahora
+          tienes <strong>${MAXIMO_POR_MES + 1} comodines al mes</strong> en vez de ${MAXIMO_POR_MES}, aunque tu
+          racha se rompa.
+        </p>
+        <p class="logro-texto">Y tu llama ahora es <strong>azul</strong>.</p>
+        <button class="boton" id="revive-extra-visto">¡Genial!</button>
+      </div>
     </div>`;
 }
 
