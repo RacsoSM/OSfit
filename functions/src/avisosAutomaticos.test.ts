@@ -107,9 +107,9 @@ describe("rachaPerdida", () => {
 describe("mensajeRacha", () => {
   it("con vidas, la invita a revivirla y dice cuántas", () => {
     expect(mensajeRacha(5, { vidas: 2 }).texto).toBe(
-      "Se rompió tu racha de 5 días. Todavía te quedan 2 vidas: entra a tu página y revívela."
+      "Se rompió tu racha de 5 días. Todavía te quedan 2 comodines: entra a tu página y revívela."
     );
-    expect(mensajeRacha(5, { vidas: 1 }).texto).toContain("te queda 1 vida");
+    expect(mensajeRacha(5, { vidas: 1 }).texto).toContain("te queda 1 comodín");
   });
 
   it("sin vidas, la ruleta", () => {

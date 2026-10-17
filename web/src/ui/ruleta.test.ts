@@ -52,7 +52,7 @@ describe("modalRuleta", () => {
     abrirRuleta();
     marcarResultado({ tipo: "perdio", color: "rojo" });
     const html = modalRuleta();
-    expect(html).toMatch(/tendrás\s+un revive menos/);
+    expect(html).toMatch(/tendrás\s+un comodín menos/);
     expect(html).not.toMatch(/^Perdiste\.?$/);
   });
 

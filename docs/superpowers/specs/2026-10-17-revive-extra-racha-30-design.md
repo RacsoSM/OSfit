@@ -38,10 +38,18 @@ ningún llamador se quede con el 3 fijo.
 
 - **Clienta (web):** el aviso en Inicio, debajo de su racha, hasta que toca "¡Genial!" (se
   recuerda en el navegador, como la invitación a los avisos). Al revivir, el diálogo dice
-  "¿Usar uno de tus 4 revives ⭐?". Al perder la ruleta: "El próximo mes tendrás un revive
+  "¿Usar uno de tus 4 comodines ⭐?". Al perder la ruleta: "El próximo mes tendrás un comodín
   menos" (antes decía "2 en vez de 3", que ya no siempre es cierto).
-- **Entrenador (app):** en la ficha, "Revives: x de 4 disponibles este mes ⭐ (uno extra por
+- **Entrenador (app):** en la ficha, "Comodines: x de 4 disponibles este mes ⭐ (uno extra por
   su racha de 30)".
+
+**Nombre:** para la gente son **comodines** (entrenador, 2026-10-17), en la web, en las
+notificaciones de racha perdida y en la app; antes se decía "revives" y "vidas". En el código
+siguen llamándose revives (`revivirRacha`, `reviveExtraOtorgado`…).
+
+**Excepción a mano:** `reviveExtraOtorgado: true` en la ficha del cliente cuenta como haber
+llegado a 30 en todos lados (comodín extra, llama azul y aviso). Solo lo escribe el
+entrenador. Primer uso: la cuenta de Said.
 
 ## Llama azul
 

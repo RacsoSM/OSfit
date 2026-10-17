@@ -100,16 +100,16 @@ export function mensajeRacha(dias: number, salida: SalidaRacha): Mensaje {
   const titulo = "Perdiste tu racha 💔";
   const inicio = `Se rompió tu racha de ${dias} días.`;
   if ("vidas" in salida) {
-    const v = salida.vidas === 1 ? "te queda 1 vida" : `te quedan ${salida.vidas} vidas`;
+    const v = salida.vidas === 1 ? "te queda 1 comodín" : `te quedan ${salida.vidas} comodines`;
     return { titulo, texto: `${inicio} Todavía ${v}: entra a tu página y revívela.` };
   }
   if ("ruleta" in salida) {
     return {
       titulo,
-      texto: `${inicio} Ya no te quedan vidas, pero puedes jugar la ruleta en tu página para revivirla.`,
+      texto: `${inicio} Ya no te quedan comodines, pero puedes jugar la ruleta en tu página para revivirla.`,
     };
   }
-  return { titulo, texto: `${inicio} Ya no te quedan vidas este mes. ¡Hoy puedes empezar una nueva!` };
+  return { titulo, texto: `${inicio} Ya no te quedan comodines este mes. ¡Hoy puedes empezar una nueva!` };
 }
 
 const MS_POR_DIA = 24 * 60 * 60 * 1000;

@@ -33,7 +33,7 @@ describe("tarjetaRevivir", () => {
 
   it("sin cupo y sin haber jugado ofrece la propuesta", () => {
     const html = tarjetaRevivir(cliente(), HOY, conFaltaRota(3), null, null);
-    expect(html).toContain("Te quedaste sin vidas");
+    expect(html).toContain("Te quedaste sin comodines");
     expect(html).toContain("Leer propuesta");
     expect(html).not.toContain("Revivir mi racha");
   });

@@ -103,7 +103,7 @@ function acuse(fase: Fase): string {
       return `<p class="aviso-ok">Cayó en ${NOMBRE[fase.color].cayo}. ¡Has revivido tu racha!</p>`;
     case "perdio":
       return `<p class="aviso-error">Cayó en ${NOMBRE[fase.color].cayo}. El próximo mes tendrás
-              un revive menos.</p>`;
+              un comodín menos.</p>`;
     case "prueba":
       return `<p class="accion-nota">Cayó en ${NOMBRE[fase.color].cayo}. Tirada de prueba — esta no cuenta.</p>`;
     case "error":

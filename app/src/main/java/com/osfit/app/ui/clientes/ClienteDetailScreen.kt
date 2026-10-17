@@ -460,7 +460,7 @@ fun ClienteDetailScreen(
                         }
                         Text(
                             buildString {
-                                append("Revives: $revivesDisponibles de $revivesMaximo disponibles este mes")
+                                append("Comodines: $revivesDisponibles de $revivesMaximo disponibles este mes")
                                 // Decir POR QUÉ: si la app del entrenador y la del cliente
                                 // muestran números distintos sin explicación, el reclamo por
                                 // WhatsApp le llega a él.

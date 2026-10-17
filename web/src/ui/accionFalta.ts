@@ -80,7 +80,7 @@ function cuantosQuedan(disponibles: number, castigado: boolean): string {
  */
 function confirmacion(disponibles: number): string {
   return `
-    <p class="confirmar-titulo">¿Usar uno de tus ${maximoDelMes} revives${conExtra ? " ⭐" : ""}?</p>
+    <p class="confirmar-titulo">¿Usar uno de tus ${maximoDelMes} comodines${conExtra ? " ⭐" : ""}?</p>
     <p class="accion-nota">${cuantosQuedan(disponibles, false)}</p>
     <div class="fila-botones">
       <button id="falta-cancelar" class="boton secundario" ${estado.enVuelo ? "disabled" : ""}>
@@ -170,11 +170,11 @@ export function tarjetaRevivir(
       : estado.exito === "revivir"
         ? ACUSE_REVIVIR
         : ofreceJuego
-          ? `<p class="accion-nota">💔 Te quedaste sin vidas para revivir tu racha… pero te
+          ? `<p class="accion-nota">💔 Te quedaste sin comodines para revivir tu racha… pero te
                tengo una propuesta.</p>
              <button id="falta-propuesta" class="boton">Leer propuesta</button>`
           : sinNadaQueOfrecer
-            ? `<p class="accion-nota">Ya usaste tus revives de este mes. Y tu tirada.</p>`
+            ? `<p class="accion-nota">Ya usaste tus comodines de este mes. Y tu tirada.</p>`
             : `<button id="falta-revivir" class="boton secundario" ${bloqueado ? "disabled" : ""}>
                  💔 Revivir mi racha
                </button>
@@ -261,7 +261,7 @@ export function conectarAccionFalta(
         origen: "revivir",
         texto:
           codigo === "functions/resource-exhausted"
-            ? `Ya usaste tus ${maximoDelMes} revives de este mes.`
+            ? `Ya usaste tus ${maximoDelMes} comodines de este mes.`
             : "No pudimos registrar tu aviso. Inténtalo otra vez en un momento.",
       };
       estado.pendiente = null;
