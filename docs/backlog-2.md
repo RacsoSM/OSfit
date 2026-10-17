@@ -542,6 +542,11 @@ página después del deploy necesita señal para que se guarde.
 
 ## 12. Que cada APK diga qué versión es
 
+**Hecho (2026-10-17):** `versionName` = `AAMMDD.HHMM-commit` (hora de Mazatlán, como la web; con
+`+` si se compiló con cambios sin commit) y `versionCode` = minutos desde 2024, que siempre sube
+aunque el clon de la sesión sea parcial (`app/build.gradle.kts`). La versión sale al final del
+menú ☰ de la app. Pendiente, lo opcional: guardar en Firestore qué versión usa cada teléfono.
+
 > "si agrégalo al backlog"
 
 El 2026-10-13 el papá del entrenador usó la app de entrenador con un APK más viejo y vio cómo

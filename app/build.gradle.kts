@@ -1,5 +1,10 @@
 import java.util.Properties
 import java.io.FileInputStream
+import java.time.Duration
+import java.time.Instant
+import java.time.ZoneId
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
 
 val localProperties = Properties().apply {
     val localPropertiesFile = rootProject.file("local.properties")
@@ -7,6 +12,34 @@ val localProperties = Properties().apply {
         load(FileInputStream(localPropertiesFile))
     }
 }
+
+/**
+ * La versión de cada APK (backlog 2, punto 12): todos decían 1 / "1.0" y no había forma de saber
+ * qué versión tenía cada teléfono.
+ *
+ * - `versionName` = fecha y hora de la compilación en Mazatlán, `AAMMDD.HHMM`, como la versión
+ *   de la web (`web/vite.config.ts`), más el commit corto: `261017.2125-79d36a3`. Con un `+` al
+ *   final si se compiló con cambios sin commit: entonces el commit no describe todo el código.
+ * - `versionCode` = minutos desde 2024 al compilar. No sale de la cuenta de commits a
+ *   propósito: los clones de las sesiones son parciales y esa cuenta cambia según la copia, y
+ *   un `versionCode` que baja hace que Android rechace el APK como "versión anterior".
+ */
+val momentoDelBuild: ZonedDateTime =
+    ZonedDateTime.now(ZoneId.of("America/Mazatlan"))
+val versionCodeDelBuild: Int = Duration.between(
+    Instant.parse("2024-01-01T00:00:00Z"), momentoDelBuild.toInstant()
+).toMinutes().toInt()
+val commitDelBuild: String = runCatching {
+    providers.exec { commandLine("git", "rev-parse", "--short", "HEAD") }
+        .standardOutput.asText.get().trim()
+}.getOrNull()?.takeIf { it.isNotEmpty() } ?: "sin-git"
+val conCambiosSinCommit: Boolean = runCatching {
+    providers.exec { commandLine("git", "status", "--porcelain", "--untracked-files=no") }
+        .standardOutput.asText.get().isNotBlank()
+}.getOrDefault(false)
+val versionNameDelBuild: String =
+    momentoDelBuild.format(DateTimeFormatter.ofPattern("yyMMdd.HHmm")) + "-" + commitDelBuild +
+        (if (conCambiosSinCommit) "+" else "")
 
 plugins {
     id("com.android.application")
@@ -23,8 +56,8 @@ android {
         applicationId = "com.osfit.app"
         minSdk = 26
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = versionCodeDelBuild
+        versionName = versionNameDelBuild
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         buildConfigField(
