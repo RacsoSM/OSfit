@@ -100,6 +100,7 @@ fun ClienteDetailScreen(
     val plantillas by viewModel.plantillasDisponibles.collectAsState()
     val eliminado by viewModel.eliminado.collectAsState()
     val rachaActual by viewModel.rachaActual.collectAsState()
+    val llamaAzul by viewModel.tieneReviveExtra.collectAsState()
     val diaQueToca by viewModel.diaQueToca.collectAsState()
     val faltas by viewModel.faltas.collectAsState()
     val resumenViewModel: ResumenClienteViewModel = viewModel(
@@ -177,6 +178,7 @@ fun ClienteDetailScreen(
                         if (nombreListo && rachaActual > 0) {
                             RachaBadge(
                                 racha = rachaActual,
+                                azul = llamaAzul,
                                 iconSize = 28.sp,
                                 textStyle = MaterialTheme.typography.headlineSmall
                             )

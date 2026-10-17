@@ -1,4 +1,5 @@
 import type { FilaRanking, Ranking } from "../datos";
+import { llama } from "./llama";
 import { escapar } from "./tarjetaDia";
 
 /**
@@ -45,7 +46,7 @@ function fila(f: FilaRanking): string {
       <li class="ranking-fila${f.esTuyo ? " tuya" : ""}">
         <span class="ranking-puesto">${MEDALLAS[f.puesto] ?? f.puesto}</span>
         <span class="ranking-nombre${colorNombre ? ` ${colorNombre}` : ""}">${nombre}</span>
-        <span class="ranking-racha">🔥 ${f.racha}</span>
+        <span class="ranking-racha">${llama(f.llamaAzul === true)} ${f.racha}</span>
       </li>`;
 }
 

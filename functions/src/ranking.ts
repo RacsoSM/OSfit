@@ -1,5 +1,6 @@
 import { onCall } from "firebase-functions/v2/https";
 import { REGION, clienteDeLaSesion, db, hoyEnMazatlan } from "./comun";
+import { RACHA_PARA_REVIVE_EXTRA } from "./jugarRuleta";
 import { fechasQueCuentan, rachaActual, rachaMasLarga } from "./rachas";
 
 /**
@@ -16,6 +17,11 @@ export interface FilaRanking {
   nombre: string;
   racha: number;
   esTuyo: boolean;
+  /**
+   * Su llama va azul: alguna vez llegó a una racha de 30 (la del revive extra, ver
+   * `maximoDeRevives`). Va en las dos pestañas, porque es de la persona y no de la racha.
+   */
+  llamaAzul: boolean;
 }
 
 export interface Ranking {
@@ -74,7 +80,7 @@ function ordenar(filas: Omit<FilaRanking, "puesto">[]): FilaRanking[] {
   let puesto = 0;
   return ordenadas.map((f, i) => {
     if (i === 0 || f.racha !== ordenadas[i - 1].racha) puesto += 1;
-    return { puesto, nombre: f.nombre, racha: f.racha, esTuyo: f.esTuyo };
+    return { puesto, nombre: f.nombre, racha: f.racha, esTuyo: f.esTuyo, llamaAzul: f.llamaAzul };
   });
 }
 
@@ -96,8 +102,10 @@ export function armarRanking(
   for (const c of clientes) {
     const cuentan = fechasQueCuentan(porCliente.get(c.id) ?? []);
     const esTuyo = c.id === clienteId;
-    if (c.activo) actual.push({ nombre: c.nombre, racha: rachaActual(cuentan, hoy), esTuyo });
-    historica.push({ nombre: c.nombre, racha: rachaMasLarga(cuentan), esTuyo });
+    const masLarga = rachaMasLarga(cuentan);
+    const llamaAzul = masLarga >= RACHA_PARA_REVIVE_EXTRA;
+    if (c.activo) actual.push({ nombre: c.nombre, racha: rachaActual(cuentan, hoy), esTuyo, llamaAzul });
+    historica.push({ nombre: c.nombre, racha: masLarga, esTuyo, llamaAzul });
   }
   return { actual: ordenar(actual), historica: ordenar(historica) };
 }

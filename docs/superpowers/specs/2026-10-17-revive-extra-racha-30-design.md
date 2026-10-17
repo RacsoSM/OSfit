@@ -43,6 +43,18 @@ ningún llamador se quede con el 3 fijo.
 - **Entrenador (app):** en la ficha, "Revives: x de 4 disponibles este mes ⭐ (uno extra por
   su racha de 30)".
 
+## Llama azul
+
+Quien tiene el revive extra también tiene la **llama azul**: el 🔥 de su racha se ve azul en
+Inicio, en el Ranking (las dos pestañas, aunque su racha actual ya se haya roto) y en su
+ficha de la app del entrenador. Misma condición: racha más larga ≥ 30.
+
+- **Web:** `ui/llama.ts` y `.llama-azul` (`filter: hue-rotate(190deg)`; no hay emoji de llama
+  azul). En el ranking la decide el servidor (`llamaAzul` en cada fila de `obtenerRanking`),
+  porque la página no puede leer las asistencias de los demás.
+- **App:** `RachaBadge(azul = …)` rota el tono con la misma matriz que el `hue-rotate` de CSS,
+  y pinta el número azul en vez del rojo.
+
 ## Despliegue
 
 Primero las funciones y después la web: con la web nueva y el servidor viejo, la página le

@@ -1,5 +1,7 @@
 import type { Asistencia } from "../datos";
+import { tieneReviveExtra } from "../cupo";
 import { rachaActual } from "../racha";
+import { llama } from "./llama";
 import { OBJETIVO_SEMANAL } from "../registro";
 
 /**
@@ -18,7 +20,7 @@ export function tarjetasStats(asistencias: Asistencia[], hoy: string, entrenamie
     <div class="fila">
       <div class="tarjeta">
         <p class="tarjeta-titulo">Tu racha</p>
-        <p class="numero">🔥 ${racha}</p>
+        <p class="numero">${llama(tieneReviveExtra(asistencias))} ${racha}</p>
         <p style="color: var(--texto-tenue); font-size: 12px; margin: 0">
           ${sinHistorial ? "arranca con tu primera sesión" : racha === 1 ? "día seguido sin faltar" : "días seguidos sin faltar"}
         </p>

@@ -103,7 +103,7 @@ describe("armarRanking", () => {
       [1, "Ana", 2],
       [2, "Nuevo", 0],
     ]);
-    expect(r.historica.at(-1)).toEqual({ puesto: 2, nombre: "Nuevo", racha: 0, esTuyo: true });
+    expect(r.historica.at(-1)).toEqual({ puesto: 2, nombre: "Nuevo", racha: 0, esTuyo: true, llamaAzul: false });
   });
 
   // Review Focus: asistencias de un cliente borrado no crean filas.
@@ -116,9 +116,24 @@ describe("armarRanking", () => {
     expect(armarRanking([], [], "a", HOY)).toEqual({ actual: [], historica: [] });
   });
 
-  it("las filas solo llevan puesto, nombre, racha y esTuyo", () => {
+  it("las filas solo llevan puesto, nombre, racha, esTuyo y llamaAzul", () => {
     const r = armarRanking([cliente("a", "Ana")], racha("a", 1), "a", HOY);
-    expect(Object.keys(r.actual[0]).sort()).toEqual(["esTuyo", "nombre", "puesto", "racha"]);
+    expect(Object.keys(r.actual[0]).sort()).toEqual(["esTuyo", "llamaAzul", "nombre", "puesto", "racha"]);
+  });
+
+  // Llama azul (entrenador, 2026-10-17): quien alguna vez llegó a 30, en las dos pestañas y
+  // aunque su racha actual ya se haya roto.
+  it("la llama va azul para quien alguna vez llegó a una racha de 30", () => {
+    const treinta = Array.from({ length: 30 }, (_, i) => {
+      const d = new Date("2026-07-01T12:00:00Z");
+      d.setUTCDate(d.getUTCDate() + i);
+      return { clienteId: "a", fecha: d.toISOString().slice(0, 10), asistio: true, justificada: false };
+    });
+    const r = armarRanking([cliente("a", "Ana"), cliente("b", "Beto")], [...treinta, ...racha("b", 5)], "b", HOY);
+    const ana = (filas: typeof r.actual) => filas.find((f) => f.nombre === "Ana");
+    expect(ana(r.actual)).toMatchObject({ racha: 0, llamaAzul: true });
+    expect(ana(r.historica)).toMatchObject({ racha: 30, llamaAzul: true });
+    expect(r.actual.find((f) => f.nombre === "Beto")?.llamaAzul).toBe(false);
   });
 });
 

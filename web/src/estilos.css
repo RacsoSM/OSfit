@@ -1644,3 +1644,7 @@ button.registro-serie-num.abierto { border-style: solid; border-color: var(--pri
 .cmp-candidato { display: flex; align-items: center; gap: 12px; padding: 10px 4px; border-bottom: 1px solid rgba(127, 127, 127, 0.2); cursor: pointer; }
 .cmp-candidato:last-child { border-bottom: 0; }
 .cmp-candidato input { width: 20px; height: 20px; accent-color: var(--primario); flex: none; }
+
+/* La llama de quien alguna vez llegó a una racha de 30 (ver `ui/llama.ts`): el 🔥 con el tono
+   rotado. 190° da un azul limpio en los emoji de Google y de Apple. */
+.llama-azul { display: inline-block; filter: hue-rotate(190deg); }

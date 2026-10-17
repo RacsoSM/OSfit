@@ -528,6 +528,8 @@ export interface FilaRanking {
   nombre: string;
   racha: number;
   esTuyo: boolean;
+  /** Alguna vez llegó a una racha de 30: su llama va azul. Opcional: un servidor viejo no la manda. */
+  llamaAzul?: boolean;
 }
 
 export interface Ranking {
