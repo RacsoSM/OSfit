@@ -20,13 +20,15 @@ export type Unidad = "kg" | "barras";
 /**
  * Los ejercicios del banco que se hacen en máquina de placas (o en polea, que cuelga de la
  * misma pila). Ahí Registro abre en barras; en todo lo demás, en kg. Fuera a propósito:
- * prensa, sentadilla hack, Smith y elevación de talones sentado, que casi siempre son de
- * discos; y dominadas asistidas, donde la pila resta peso en vez de sumarlo.
+ * prensa de 45° (la "Prensa en máquina" horizontal sí es de placas), sentadilla hack, Smith
+ * y elevación de talones sentado, que casi siempre son de discos; y dominadas asistidas,
+ * donde la pila resta peso en vez de sumarlo.
  */
 const MAQUINAS_DE_BARRAS: ReadonlySet<string> = new Set([
   "cruce-poleas",
   "pec-deck",
   "prensa-horizontal-una-pierna",
+  "prensa-maquina",
   "extension-cuadriceps",
   "curl-femoral-acostado",
   "curl-femoral-sentado",

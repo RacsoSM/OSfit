@@ -22,7 +22,8 @@ de los medios: `docs/licencias/GymVisual.md`.
 - **Semilla curada de 91 ejercicios**, no los 1,324 del dataset: los nombres del dataset
   están solo en inglés, y para ligar hacen falta nombres en español revisados a mano. Cada
   entrada apunta a su animación con `gifOrigen` (id del dataset). Ampliar el banco es
-  agregar entradas al JSON y volver a cargar.
+  agregar entradas al JSON y volver a cargar. Si el dataset no trae el ejercicio, la entrada
+  lleva un GIF propio (`gifArchivo` + `derivadoDe`): ver `docs/generargifs.md` (2026-10-17).
 - **Sin `estandares`** por ahora: sigue abierto quién los llena. La carga escribe con
   `merge`, así que agregarlos después no se pisa.
 - **WebP animado, no GIF:** ~40 kB en vez de ~125 kB, con los mismos cuadros.

@@ -17,11 +17,15 @@
  * que se agreguen después), vuelve a subir el mismo archivo y respeta los nombres que el
  * entrenador cambió desde la app.
  *
+ * Un ejercicio con `gifArchivo` en vez de `gifOrigen` usa un GIF propio, hecho a partir de una
+ * animación del dataset: se lee de `scripts/salida/propios/` y hay que generarlo antes con su
+ * script de `scripts/gifsPropios/` (ver `docs/generargifs.md`).
+ *
  * **Por qué WebP y no el GIF tal cual:** el mismo GIF de 180×180 pasa de ~125 kB a ~40 kB
  * con los mismos cuadros, y la página la abren con datos móviles. Todos los navegadores que
  * abren la web (Safari 14+, Chrome) muestran WebP animado.
  */
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import sharp from "sharp";
 import {
   DATASET,
@@ -42,6 +46,18 @@ async function descargar(url) {
   const r = await fetch(url);
   if (!r.ok) throw new Error(`${r.status} al bajar ${url}`);
   return Buffer.from(await r.arrayBuffer());
+}
+
+/** El GIF de un ejercicio: el propio si tiene `gifArchivo`, si no el del dataset. */
+async function gifDe(e, gifPorId) {
+  if (!e.gifArchivo) return descargar(urlDelDataset(gifPorId.get(e.gifOrigen)));
+  const archivo = new URL(`./salida/propios/${e.gifArchivo}`, import.meta.url);
+  if (!existsSync(archivo)) {
+    throw new Error(
+      `falta salida/propios/${e.gifArchivo}: genéralo con su script de scripts/gifsPropios/`
+    );
+  }
+  return readFileSync(archivo);
 }
 
 async function aWebp(gif) {
@@ -88,7 +104,7 @@ async function main() {
   let fallidos = 0;
   for (const e of elegidos) {
     try {
-      const webp = await aWebp(await descargar(urlDelDataset(gifPorId.get(e.gifOrigen))));
+      const webp = await aWebp(await gifDe(e, gifPorId));
       if (prueba) {
         writeFileSync(new URL(`./salida/${e.id}.webp`, import.meta.url), webp);
       } else {

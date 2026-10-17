@@ -7,6 +7,7 @@ describe("barras", () => {
     expect(unidadPorDefecto("extension-cuadriceps")).toBe("barras");
     expect(unidadPorDefecto("press-banca")).toBe("kg");
     expect(unidadPorDefecto("prensa")).toBe("kg");
+    expect(unidadPorDefecto("prensa-maquina")).toBe("barras");
   });
 
   it("convierte de ida y vuelta sin decimales basura", () => {

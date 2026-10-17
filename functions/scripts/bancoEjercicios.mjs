@@ -97,7 +97,19 @@ export function validarSemilla(semilla, idsDelDataset) {
       if (peso !== 1 && peso !== 0.5) errores.push(`${donde}: ${m} pesa ${peso}, va 1 o 0.5`);
     }
 
-    if (idsDelDataset && !idsDelDataset.has(e.gifOrigen)) {
+    // El GIF sale del dataset tal cual (`gifOrigen`) o es uno propio hecho a partir de una
+    // animación del dataset (`gifArchivo` + `derivadoDe`, ver `docs/generargifs.md`).
+    if (e.gifArchivo !== undefined) {
+      if (e.gifOrigen !== undefined) {
+        errores.push(`${donde}: lleva gifOrigen o gifArchivo, no los dos`);
+      }
+      if (typeof e.gifArchivo !== "string" || !/^[a-z0-9]+(-[a-z0-9]+)*\.gif$/.test(e.gifArchivo)) {
+        errores.push(`${donde}: gifArchivo tiene que ser un .gif en minúsculas y guiones`);
+      }
+      if (idsDelDataset && !idsDelDataset.has(e.derivadoDe)) {
+        errores.push(`${donde}: derivadoDe ${e.derivadoDe} no está en el dataset`);
+      }
+    } else if (idsDelDataset && !idsDelDataset.has(e.gifOrigen)) {
       errores.push(`${donde}: el GIF ${e.gifOrigen} no está en el dataset`);
     }
 
@@ -130,7 +142,8 @@ export function rutaGif(id) {
 /**
  * El documento `ejercicios/{id}`. Sin `estandares`: todavía no se decide quién los llena
  * (pregunta abierta del spec), y la carga escribe con `merge` para no borrarlos cuando
- * lleguen. `gifOrigen` tampoco va: es dato de la carga, no de la página.
+ * lleguen. `gifOrigen`, `gifArchivo` y `derivadoDe` tampoco van: son datos de la carga, no
+ * de la página. Un GIF propio derivado de Gym visual lleva la misma atribución.
  *
  * Si el entrenador renombró el ejercicio desde la app (`editadoEnApp` en el documento que ya
  * existe), no se escriben `nombre` ni `alias`: volver a correr la carga le regresaría el

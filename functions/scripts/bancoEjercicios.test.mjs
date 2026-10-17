@@ -51,6 +51,20 @@ describe("validarSemilla", () => {
     expect(validarSemilla([ejercicio()], new Set(["0001"])))
       .toEqual(["press-banca: el GIF 0025 no está en el dataset"]);
   });
+
+  it("acepta un GIF propio si dice de qué animación del dataset sale", () => {
+    const propio = ejercicio({ gifOrigen: undefined, gifArchivo: "press-banca.gif", derivadoDe: "0001" });
+    expect(validarSemilla([propio], new Set(["0001"]))).toEqual([]);
+    expect(validarSemilla([{ ...propio, derivadoDe: "9999" }], new Set(["0001"])))
+      .toEqual(["press-banca: derivadoDe 9999 no está en el dataset"]);
+  });
+
+  it("no deja gifOrigen y gifArchivo juntos, ni un archivo que no sea .gif", () => {
+    expect(validarSemilla([ejercicio({ gifArchivo: "press-banca.gif", derivadoDe: "0025" })]))
+      .toEqual(["press-banca: lleva gifOrigen o gifArchivo, no los dos"]);
+    expect(validarSemilla([ejercicio({ gifOrigen: undefined, gifArchivo: "Press.png" })]))
+      .toEqual(["press-banca: gifArchivo tiene que ser un .gif en minúsculas y guiones"]);
+  });
 });
 
 describe("documentoDe", () => {
@@ -59,6 +73,10 @@ describe("documentoDe", () => {
     expect(doc.gifRuta).toBe("ejercicios/press-banca.webp");
     expect(doc.atribucion).toContain("Gym visual");
     expect(doc).not.toHaveProperty("gifOrigen");
+    const propio = documentoDe(ejercicio({ gifOrigen: undefined, gifArchivo: "x.gif", derivadoDe: "0025" }), true);
+    expect(propio).not.toHaveProperty("gifArchivo");
+    expect(propio).not.toHaveProperty("derivadoDe");
+    expect(propio.atribucion).toContain("Gym visual");
     expect(doc.grupo).toBe("pecho");
   });
 

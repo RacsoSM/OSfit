@@ -13,6 +13,11 @@ commit `7455efae41b330c265e7cd4b78dfa848e7ce5ebd` (ver `functions/scripts/bancoE
   (`atribucion`) y en la página ("Animaciones © Gym visual", en Registro: el grid para elegir
   ejercicio y la captura de series).
 
+**Derivadas (2026-10-17):** según revisó el entrenador, Gym visual permite obras derivadas en
+su estilo. `prensa-maquina` es una: la prensa a dos piernas hecha a partir de 2611 (ver
+`docs/generargifs.md`). Lleva la misma atribución y tampoco se versiona: se regenera con
+`functions/scripts/gifsPropios/prensa_maquina.py`.
+
 **Estado (2026-10-10):** el entrenador está en contacto con Gym visual para la licencia de uso
 en OSfit. Los archivos convertidos no se versionan en el repo (`functions/scripts/salida/`
 está en `.gitignore`); solo viven en Storage.
