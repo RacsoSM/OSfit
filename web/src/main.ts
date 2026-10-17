@@ -53,7 +53,7 @@ import {
 import {
   cabeceraRegistro, conectarRegistro, empezarGuiado, entrenamientoAbierto, vistaDesdeHistorial,
 } from "./ui/registro";
-import { barraInferior, conectarBarra } from "./ui/barraInferior";
+import { barraInferior, conectarBarra, marcarSexoBarra } from "./ui/barraInferior";
 import { archivosMapa, conectarMapa, type EstadoSvg } from "./ui/mapaMuscular";
 import { conectarPeso } from "./ui/pesoCorporal";
 import { conectarDeslizarMenu } from "./ui/deslizarMenu";
@@ -512,6 +512,7 @@ async function arrancar(): Promise<void> {
     }
     prepararEstructura(cliente.nombre);
     actualizarNombre(cliente.nombre);
+    marcarSexoBarra(cliente.sexo);
     const contenido = document.querySelector<HTMLElement>("#contenido");
     if (!contenido) return;
 

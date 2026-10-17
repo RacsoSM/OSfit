@@ -867,16 +867,36 @@ body.menu-abierto { overflow: hidden; }
   background: var(--superficie);
   border-top: 1px solid var(--superficie-alta);
 }
+/* Ícono arriba del nombre; la activa pone el ícono sobre una pastilla del color de la paleta
+   (opción "B", 2026-10-17). Compacta a propósito: con 4 px más que la de solo texto, los
+   `calc(… + env(safe-area-inset-bottom))` que dependen de su alto se corrieron lo mismo. */
 .barra-opcion {
-  flex: 1; max-width: 160px; min-height: 44px;
-  display: flex; align-items: center; justify-content: center;
+  flex: 1; max-width: 160px; min-height: 48px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
   border: 0; border-radius: 12px; background: transparent;
-  color: var(--texto-tenue); font: inherit; font-size: 15px; cursor: pointer;
+  color: var(--texto-tenue); font: inherit; font-size: 11px; line-height: 13px; cursor: pointer;
 }
-.barra-opcion.activa { color: var(--primario); font-weight: 700; }
+.barra-icono {
+  position: relative; width: 56px; height: 28px;
+  display: flex; align-items: center; justify-content: center;
+}
+/* La pastilla: el primario a 18 % detrás del ícono. Con un ::before y opacidad en vez de
+   `color-mix`, que Safari 14–16.1 no tiene. */
+.barra-icono::before {
+  content: ""; position: absolute; inset: 0; border-radius: 14px;
+  background: var(--primario); opacity: 0; transition: opacity 0.15s;
+}
+.barra-icono svg { position: relative; display: block; }
+.barra-opcion.activa { color: var(--primario); font-weight: 600; }
+.barra-opcion.activa .barra-icono::before { opacity: 0.18; }
 .barra-opcion:focus-visible { outline: 2px solid var(--primario); outline-offset: -2px; }
+/* El busto de Músculos va un poco más grande: es relleno y sin margen, y a 24 se ve chico
+   junto a los de línea. Solo se ve el del sexo de la clienta (`marcarSexoBarra`). */
+.barra-busto { width: 26px; height: 26px; }
+.barra:not([data-sexo="M"]) .barra-busto-M,
+.barra[data-sexo="M"] .barra-busto-H { display: none; }
 /* Que lo último de la página no quede tapado por la barra. */
-main:has(#barra) { padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
+main:has(#barra) { padding-bottom: calc(68px + env(safe-area-inset-bottom)); }
 
 /* El mapa muscular: un solo cuerpo grande, directo sobre el fondo de la página, y un botón
    que lo gira. Las dos caras están una detrás de la otra y girar es rotar el contenedor:
@@ -899,7 +919,7 @@ main:has(#barra) { padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
 }
 @supports (height: 100svh) {
   .mapa-cuerpo {
-    --mapa-alto: min(720px, max(260px, calc(100svh - 235px - env(safe-area-inset-top) - env(safe-area-inset-bottom))));
+    --mapa-alto: min(720px, max(260px, calc(100svh - 239px - env(safe-area-inset-top) - env(safe-area-inset-bottom))));
   }
 }
 /* El dibujo con sus dos botones. Los botones van en las orillas de la escena (todo el ancho)
@@ -1267,7 +1287,7 @@ button.registro-serie-num.abierto { border-style: solid; border-color: var(--pri
 /* Lo elegido y "Agregar biserie", fijo sobre la barra de abajo (z 10). */
 .registro-barra-biserie {
   position: fixed; z-index: 9; left: 50%; transform: translateX(-50%);
-  bottom: calc(68px + env(safe-area-inset-bottom)); width: min(calc(100% - 24px), 456px); box-sizing: border-box;
+  bottom: calc(72px + env(safe-area-inset-bottom)); width: min(calc(100% - 24px), 456px); box-sizing: border-box;
   display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 16px;
   background: var(--superficie); box-shadow: 0 6px 24px rgba(0, 0, 0, 0.55);
 }
@@ -1443,7 +1463,7 @@ button.registro-serie-num.abierto { border-style: solid; border-color: var(--pri
   --color: #8f90a6;
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 9;
   max-width: 480px; margin: 0 auto; max-height: 74vh; overflow-y: auto;
-  padding: 10px 18px calc(78px + env(safe-area-inset-bottom));
+  padding: 10px 18px calc(82px + env(safe-area-inset-bottom));
   border-radius: 22px 22px 0 0; text-align: center;
   background: linear-gradient(to bottom, color-mix(in srgb, var(--color) 20%, var(--superficie)), var(--superficie) 46%);
   box-shadow: 0 -12px 30px rgba(0, 0, 0, 0.5);
