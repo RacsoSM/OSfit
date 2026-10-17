@@ -97,6 +97,8 @@ export interface Ventana {
    * (`PADRE` en `navegacion.ts`).
    */
   grupo: "principal" | "pie" | "barra" | "sub";
+  /** No sale en el menú: la función está apagada pero su código se queda. */
+  oculta?: boolean;
   /** Se puede abrir, pero todavía muestra "Muy pronto". */
   proximamente?: boolean;
   /** Lo que va dentro de `#contenido`. */
@@ -176,7 +178,9 @@ export const VENTANAS: readonly Ventana[] = [
     id: "logros", titulo: "Logros personales", icono: "⭐", grupo: "principal",
     pintar: (d) => tarjetaLogrosPersonales(d.logros),
   },
-  { id: "videos", titulo: "Videos", icono: "🎬", grupo: "principal", contenedorPropio: "videos" },
+  // Oculta con los resúmenes en video (decisión del entrenador, 2026-10-17; ver
+  // `FuncionesActivas.VIDEOS_RESUMEN` en la app). La ventana sigue existiendo.
+  { id: "videos", titulo: "Videos", icono: "🎬", grupo: "principal", contenedorPropio: "videos", oculta: true },
   {
     id: "ajustes", titulo: "Ajustes", icono: "⚙️", grupo: "pie",
     pintar: (d) => tarjetaAjustes(d.estilo) + seccionNotificaciones(d.notificaciones, d.activandoNotificaciones),

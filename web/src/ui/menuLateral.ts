@@ -80,7 +80,7 @@ function opcion(v: Ventana): string {
  */
 export function panelMenu(ventanas: readonly Ventana[], nombre: string): string {
   const de = (grupo: Ventana["grupo"]) =>
-    ventanas.filter((v) => v.grupo === grupo).map(opcion).join("");
+    ventanas.filter((v) => v.grupo === grupo && !v.oculta).map(opcion).join("");
   return `
     <div class="menu-velo" data-cerrar-menu></div>
     <nav class="menu-panel" id="menu-panel" aria-label="Menú">

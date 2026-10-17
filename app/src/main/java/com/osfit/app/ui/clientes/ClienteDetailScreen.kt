@@ -374,8 +374,11 @@ fun ClienteDetailScreen(
                     AccionCard(
                         icono = Icons.Filled.Videocam,
                         texto = when {
+                            generandoResumen && !com.osfit.app.FuncionesActivas.VIDEOS_RESUMEN -> "Guardando..."
                             generandoResumen -> "Generando... ${(progresoResumen * 100).toInt()}%"
                             cargandoMedalla -> "Calculando..."
+                            // Sin videos el botón solo otorga medalla y logros de la quincena.
+                            !com.osfit.app.FuncionesActivas.VIDEOS_RESUMEN -> "Medallas de la quincena"
                             else -> "Resumen quincenal"
                         },
                         modifier = Modifier.weight(1f),

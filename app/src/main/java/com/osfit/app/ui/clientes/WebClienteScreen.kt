@@ -221,7 +221,7 @@ private fun seccionesWeb(
     onVerVideosWeb: (String) -> Unit,
     onVerPaletaWeb: (String) -> Unit,
     onVerRutinaWeb: (String) -> Unit
-) = listOf(
+) = listOfNotNull(
     // Primera de la lista: es lo que la clienta abre a diario, a diferencia de los videos
     // (quincenales) y de la paleta (se elige una vez).
     SeccionWeb(
@@ -229,11 +229,12 @@ private fun seccionesWeb(
         texto = "Rutina y variaciones",
         alAbrir = onVerRutinaWeb
     ),
-    SeccionWeb(
+    // Apagados con los resúmenes en video (`FuncionesActivas.VIDEOS_RESUMEN`).
+    if (com.osfit.app.FuncionesActivas.VIDEOS_RESUMEN) SeccionWeb(
         icono = Icons.Filled.VideoLibrary,
         texto = "Videos en la web",
         alAbrir = onVerVideosWeb
-    ),
+    ) else null,
     SeccionWeb(
         icono = Icons.Filled.Palette,
         texto = "Paleta de colores",

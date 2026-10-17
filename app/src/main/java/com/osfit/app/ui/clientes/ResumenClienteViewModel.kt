@@ -290,6 +290,11 @@ class ResumenClienteViewModel(
                         )
                     }
                 )
+                // Con los videos apagados, la quincena solo otorga medalla y logros.
+                if (!com.osfit.app.FuncionesActivas.VIDEOS_RESUMEN) {
+                    _mensaje.value = "Medalla y logros de la quincena guardados"
+                    return@launch
+                }
                 val generado = ResumenVideoGenerator.generarYCompartir(
                     contextoApp, preparacion.resumen, elegida, logrosElegidos
                 ) { fraccion -> _progreso.value = fraccion }
