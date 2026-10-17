@@ -19,6 +19,7 @@ import { tarjetaMusculos, type EstadoSvg } from "./ui/mapaMuscular";
 import { bloquePeso } from "./ui/pesoCorporal";
 import { ventanaComparar, type EstadoComparar } from "./ui/comparar";
 import { promedioMinutos } from "./racha";
+import { avisoReviveExtra } from "./ui/avisoReviveExtra";
 import { resumenSemana } from "./registro";
 import { edadEn, fuerzaPorMusculo, pesoParaFuerza, type FuerzaMusculo } from "./fuerza";
 
@@ -54,6 +55,8 @@ export interface DatosCliente {
   notificaciones: EstadoNotificaciones;
   /** Si ya dijo "Ahora no" a la invitación de Inicio. Lo guarda el navegador. */
   invitacionDescartada: boolean;
+  /** Si ya cerró el aviso del revive extra por racha de 30. Lo guarda el navegador. */
+  reviveExtraVisto: boolean;
   /** Mientras el permiso y el registro están en curso: el botón se deshabilita. */
   activandoNotificaciones: boolean;
   /** Los SVG del mapa muscular por archivo; los pide `main.ts` al entrar a Músculos. */
@@ -130,6 +133,7 @@ function inicio(d: DatosCliente): string {
         botonEntrenar(diaDeHoy(d.cliente, d.hoy, d.asistencias), entrenamientoAbierto()))}
       ${invitacionNotificaciones(d.notificaciones, d.invitacionDescartada)}
       ${tarjetasStats(d.asistencias, d.hoy, d.sesiones ? resumenSemana(d.sesiones, d.hoy).entrenamientos : null)}
+      ${avisoReviveExtra(d.asistencias, d.reviveExtraVisto)}
       ${tarjetaRevivir(d.cliente, d.hoy, d.asistencias, d.tiradaEsteMes, d.tiradaMesAnterior)}
       ${calendario(d.asistencias, d.mesVisible, d.hoy)}
     `;

@@ -406,6 +406,7 @@ fun ClienteDetailScreen(
                 val acceso by viewModel.accesoWeb.collectAsState()
                 val revivesDisponibles by viewModel.revivesDisponibles.collectAsState()
                 val revivesMaximo by viewModel.revivesMaximo.collectAsState()
+                val reviveExtra by viewModel.tieneReviveExtra.collectAsState()
                 val mesPerdio by viewModel.mesQuePerdioLaRuleta.collectAsState()
                 val alcance = rememberCoroutineScope()
                 Spacer(modifier = Modifier.height(12.dp))
@@ -461,6 +462,7 @@ fun ClienteDetailScreen(
                                 // Decir POR QUÉ: si la app del entrenador y la del cliente
                                 // muestran números distintos sin explicación, el reclamo por
                                 // WhatsApp le llega a él.
+                                if (reviveExtra) append(" ⭐ (uno extra por su racha de 30)")
                                 mesPerdio?.let { append(" (perdió la ruleta en $it)") }
                             },
                             style = MaterialTheme.typography.bodySmall,

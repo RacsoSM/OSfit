@@ -204,14 +204,23 @@ class ClienteDetailViewModel(
             CupoRevivesCalculator.MAXIMO_POR_MES
         )
 
-    /** El máximo de este mes: 3, o 2 si perdió la ruleta el mes pasado. */
-    val revivesMaximo: StateFlow<Int> = tiradaMesPrevio
-        .map { tirada -> CupoRevivesCalculator.MAXIMO_POR_MES - castigoDe(tirada) }
-        .stateIn(
+    /**
+     * El máximo de este mes: 3 (4 si alguna vez llegó a una racha de 30), uno menos si perdió
+     * la ruleta el mes pasado.
+     */
+    val revivesMaximo: StateFlow<Int> =
+        combine(asistenciasDelCliente, tiradaMesPrevio) { asistencias, tirada ->
+            CupoRevivesCalculator.maximoPorMes(asistencias) - castigoDe(tirada)
+        }.stateIn(
             viewModelScope,
             SharingStarted.WhileSubscribed(5000),
             CupoRevivesCalculator.MAXIMO_POR_MES
         )
+
+    /** Si su máximo trae el revive extra por racha de 30, para poder decir POR QUÉ tiene más. */
+    val tieneReviveExtra: StateFlow<Boolean> = asistenciasDelCliente
+        .map { CupoRevivesCalculator.tieneReviveExtra(it) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
 
     /** El mes en que perdió, para poder decir POR QUÉ le quedan menos. */
     val mesQuePerdioLaRuleta: StateFlow<String?> = tiradaMesPrevio

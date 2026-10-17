@@ -1,5 +1,5 @@
 import type { Asistencia, Cliente } from "../datos";
-import { MAXIMO_POR_MES, disponiblesEnElMes } from "../cupo";
+import { MAXIMO_POR_MES, disponiblesEnElMes, maximoPorMes, tieneReviveExtra } from "../cupo";
 import { faltaQueRompioLaRacha } from "../faltaRompio";
 import { avisarFalta, revivirRacha } from "../acciones";
 import { escapar, esFinDeSemana } from "./tarjetaDia";
@@ -41,7 +41,8 @@ interface Estado {
 const estado: Estado = { pendiente: null, enVuelo: false, exito: null, error: null };
 
 /**
- * El máximo real de revives de este mes: 3, o 2 si perdió la ruleta el mes pasado.
+ * El máximo real de revives de este mes: 3 (4 con el revive extra por racha de 30), uno menos
+ * si perdió la ruleta el mes pasado.
  *
  * Lo deja `tarjetaRevivir` al pintar, en vez de recalcularlo donde se usa, porque ni el
  * diálogo ni el conectado reciben la tirada del mes anterior. Decir "te quedan 2 este mes
@@ -50,6 +51,8 @@ const estado: Estado = { pendiente: null, enVuelo: false, exito: null, error: nu
  * que poder explicarse solo.
  */
 let maximoDelMes = MAXIMO_POR_MES;
+/** Si su máximo incluye el revive extra: el diálogo lo marca con ⭐. */
+let conExtra = false;
 
 function enPalabras(fecha: string): string {
   return new Intl.DateTimeFormat("es-MX", {
@@ -77,7 +80,7 @@ function cuantosQuedan(disponibles: number, castigado: boolean): string {
  */
 function confirmacion(disponibles: number): string {
   return `
-    <p class="confirmar-titulo">¿Usar uno de tus ${maximoDelMes} revives?</p>
+    <p class="confirmar-titulo">¿Usar uno de tus ${maximoDelMes} revives${conExtra ? " ⭐" : ""}?</p>
     <p class="accion-nota">${cuantosQuedan(disponibles, false)}</p>
     <div class="fila-botones">
       <button id="falta-cancelar" class="boton secundario" ${estado.enVuelo ? "disabled" : ""}>
@@ -147,7 +150,8 @@ export function tarjetaRevivir(
   if (rota === null && estado.exito !== "revivir") return "";
 
   const castigo = castigoDelMes(tiradaMesAnterior);
-  maximoDelMes = MAXIMO_POR_MES - castigo;
+  conExtra = tieneReviveExtra(asistencias);
+  maximoDelMes = maximoPorMes(asistencias) - castigo;
   const disponibles = disponiblesEnElMes(asistencias, hoy.slice(0, 7), castigo);
   const sinCupo = disponibles === 0;
   const bloqueado = !cliente.activo || sinCupo || estado.enVuelo;

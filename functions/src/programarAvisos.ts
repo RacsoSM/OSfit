@@ -15,7 +15,7 @@ import {
   type SalidaRacha,
   type TipoAviso,
 } from "./avisosAutomaticos";
-import { calcularDisponibles } from "./jugarRuleta";
+import { calcularDisponibles, maximoDeRevives } from "./jugarRuleta";
 import { castigoDelMes, mesAnterior } from "./reglasRuleta";
 
 /** Código gRPC de "ya existe": el aviso de esa ocasión ya se había creado. */
@@ -63,7 +63,12 @@ async function salidaRacha(clienteId: string, hoy: string, asistencias: Firebase
     db().collection("ruletas").doc(`${clienteId}_${mes}`).get(),
   ]);
   const castigo = castigoDelMes(anterior.exists ? { gano: anterior.get("gano") === true } : null);
-  const vidas = calcularDisponibles(gastados, castigo);
+  const paraRacha = asistencias.map((a) => ({
+    fecha: typeof a.fecha === "string" ? a.fecha : "",
+    asistio: a.asistio === true,
+    justificada: a.justificada === true,
+  }));
+  const vidas = calcularDisponibles(gastados, castigo, maximoDeRevives(paraRacha));
   if (vidas > 0) return { vidas };
   return actual.exists ? { nada: true } : { ruleta: true };
 }

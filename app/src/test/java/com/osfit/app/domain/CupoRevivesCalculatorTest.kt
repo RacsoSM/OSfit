@@ -96,4 +96,35 @@ class CupoRevivesCalculatorTest {
         )
         assertEquals(2, CupoRevivesCalculator.disponiblesEnElMes(asistencias, "2026-09"))
     }
+
+    /** [dias] asistencias seguidas (todos los días) desde [desde]. */
+    private fun corrida(desde: String, dias: Int): List<Asistencia> =
+        (0 until dias).map {
+            Asistencia(
+                clienteId = "ana",
+                fecha = java.time.LocalDate.parse(desde).plusDays(it.toLong()).toString(),
+                asistio = true
+            )
+        }
+
+    // Revive extra por racha de 30 (entrenador, 2026-10-17). Mismos casos que `cupo.test.ts`
+    // en la web y `maximoDeRevives` en `functions/src/jugarRuleta.test.ts`.
+    @Test
+    fun `con 29 son 3 y con 30 son 4`() {
+        assertEquals(3, CupoRevivesCalculator.maximoPorMes(corrida("2026-08-03", 29)))
+        assertEquals(4, CupoRevivesCalculator.maximoPorMes(corrida("2026-08-03", 30)))
+    }
+
+    @Test
+    fun `el revive extra se conserva aunque la racha se rompa`() {
+        val historial = corrida("2026-08-03", 30) + corrida("2026-09-03", 2)
+        assertEquals(4, CupoRevivesCalculator.maximoPorMes(historial))
+    }
+
+    @Test
+    fun `el castigo de la ruleta se le resta al 4`() {
+        val historial = corrida("2026-08-03", 30) + falta("2026-10-06", porCliente = true)
+        assertEquals(3, CupoRevivesCalculator.disponiblesEnElMes(historial, "2026-10"))
+        assertEquals(2, CupoRevivesCalculator.disponiblesEnElMes(historial, "2026-10", castigo = 1))
+    }
 }

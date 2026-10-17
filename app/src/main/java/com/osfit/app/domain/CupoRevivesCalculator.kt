@@ -22,6 +22,25 @@ object CupoRevivesCalculator {
     const val MAXIMO_POR_MES = 3
 
     /**
+     * Quien alguna vez llegó a esta racha tiene un revive más al mes, para siempre: aunque la
+     * racha se rompa después (entrenador, 2026-10-17). Tampoco se guarda: sale de la racha más
+     * larga de su historial, así que si el entrenador corrige asistencias se corrige solo.
+     *
+     * GEMELO: `maximoPorMes` en `web/src/cupo.ts` y `maximoDeRevives` en
+     * `functions/src/jugarRuleta.ts`.
+     */
+    const val RACHA_PARA_REVIVE_EXTRA = 30
+
+    /** Si ya ganó el revive extra por llegar a una racha de 30. */
+    fun tieneReviveExtra(asistencias: List<Asistencia>): Boolean =
+        RachaCalculator.calcularRachaMasLarga(RachaCalculator.fechasQueCuentan(asistencias)) >=
+            RACHA_PARA_REVIVE_EXTRA
+
+    /** 3 al mes, o 4 con el revive extra. Antes del castigo de la ruleta, que se le resta a este. */
+    fun maximoPorMes(asistencias: List<Asistencia>): Int =
+        MAXIMO_POR_MES + if (tieneReviveExtra(asistencias)) 1 else 0
+
+    /**
      * [mes] en formato `AAAA-MM`. Las fechas son strings ISO, así que comparar por prefijo
      * es exacto y no necesita parsear nada.
      *
@@ -40,5 +59,5 @@ object CupoRevivesCalculator {
      * JVM, sin Firestore. Quien lo llama ya tiene el documento de la tirada.
      */
     fun disponiblesEnElMes(asistencias: List<Asistencia>, mes: String, castigo: Int = 0): Int =
-        (MAXIMO_POR_MES - castigo - gastadosEnElMes(asistencias, mes)).coerceAtLeast(0)
+        (maximoPorMes(asistencias) - castigo - gastadosEnElMes(asistencias, mes)).coerceAtLeast(0)
 }

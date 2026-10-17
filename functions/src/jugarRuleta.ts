@@ -1,6 +1,7 @@
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { REGION, clienteDeLaSesion, db, hoyEnMazatlan } from "./comun";
 import { faltaQueRompioLaRacha, type AsistenciaParaRacha } from "./faltaRompio";
+import { fechasQueCuentan, rachaMasLarga } from "./rachas";
 import {
   COLORES,
   castigoDelMes,
@@ -13,7 +14,23 @@ import {
 } from "./reglasRuleta";
 
 /** Mismo tope que `CupoRevivesCalculator.MAXIMO_POR_MES` en Kotlin y `cupo.ts` en la web. */
-const MAXIMO_POR_MES = 3;
+export const MAXIMO_POR_MES = 3;
+
+/**
+ * Quien alguna vez llegó a esta racha tiene un revive más al mes, para siempre: aunque la
+ * racha se rompa después (entrenador, 2026-10-17). Se deduce de la racha MÁS LARGA de su
+ * historial y no se guarda en ningún lado, por lo mismo que el cupo: si el entrenador corrige
+ * asistencias, el máximo se corrige solo.
+ *
+ * GEMELO: `maximoPorMes` en `web/src/cupo.ts` y `CupoRevivesCalculator.maximoPorMes`.
+ */
+export const RACHA_PARA_REVIVE_EXTRA = 30;
+
+/** 3 al mes, o 4 si alguna vez llegó a una racha de 30. Antes del castigo de la ruleta. */
+export function maximoDeRevives(asistencias: AsistenciaParaRacha[]): number {
+  const extra = rachaMasLarga(fechasQueCuentan(asistencias)) >= RACHA_PARA_REVIVE_EXTRA;
+  return MAXIMO_POR_MES + (extra ? 1 : 0);
+}
 
 /**
  * El cupo es un solo número, derivado de las asistencias y del castigo del mes anterior.
@@ -25,9 +42,12 @@ const MAXIMO_POR_MES = 3;
  * gastó sus 2 revives la página le mostraría cupo 0 y le ofrecería jugar, pero el servidor
  * calcularía cupo 1 y le respondería `todavia_tiene_cupo`, rechazando la tirada que la propia
  * página acaba de ofrecerle — justo a la clienta que ya perdió una vez.
+ *
+ * [maximo] es el de `maximoDeRevives`: el castigo se le resta a ese (con 4, perder deja 3).
+ * Es obligatorio a propósito, para que ningún llamador se quede con el 3 fijo de antes.
  */
-export function calcularDisponibles(gastados: number, castigo: number): number {
-  return Math.max(MAXIMO_POR_MES - castigo - gastados, 0);
+export function calcularDisponibles(gastados: number, castigo: number, maximo: number): number {
+  return Math.max(maximo - castigo - gastados, 0);
 }
 
 /**
@@ -177,7 +197,8 @@ const CODIGO_HTTP: Record<
 
 /**
  * La ruleta: el cliente sin cupo y con la racha rota apuesta a un color. Si acierta se le
- * justifica la falta sin gastar cupo; si falla, el mes siguiente tendrá 2 revives en vez de 3.
+ * justifica la falta sin gastar cupo; si falla, el mes siguiente tendrá un revive menos (2 en vez
+ * de 3, o 3 en vez de 4).
  *
  * TODO lo que manda la página se revalida acá. Igual que `revivirRacha` no confía en la fecha
  * que le mandan, esta no confía en "te juro que no tengo vidas": el cupo y la falta rota se
@@ -219,7 +240,7 @@ export const jugarRuleta = onCall({ region: REGION }, async (request) => {
   const tiradaAnterior: TiradaParaCastigo | null = tiradaAnteriorSnap.exists
     ? { gano: tiradaAnteriorSnap.get("gano") === true }
     : null;
-  const disponibles = calcularDisponibles(gastados, castigoDelMes(tiradaAnterior));
+  const disponibles = calcularDisponibles(gastados, castigoDelMes(tiradaAnterior), maximoDeRevives(asistencias));
 
   const refTirada = firestore.collection("ruletas").doc(`${clienteId}_${mes}`);
   const yaJugo = (await refTirada.get()).exists;

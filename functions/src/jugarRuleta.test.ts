@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   aplicarTirada,
   calcularDisponibles,
+  maximoDeRevives,
   crearJustificarFalta,
   esErrorDeDocumentoExistente,
   type DepsTirada,
@@ -76,11 +77,11 @@ describe("aplicarTirada", () => {
 // spec prohíbe.
 describe("calcularDisponibles", () => {
   it("sin castigo, resta solo lo gastado", () => {
-    expect(calcularDisponibles(1, 0)).toBe(2);
+    expect(calcularDisponibles(1, 0, 3)).toBe(2);
   });
 
   it("nunca baja de cero", () => {
-    expect(calcularDisponibles(3, 1)).toBe(0);
+    expect(calcularDisponibles(3, 1, 3)).toBe(0);
   });
 
   // El caso que el brief calculaba mal: un cliente castigado (máximo 2) que ya gastó sus 2
@@ -88,11 +89,11 @@ describe("calcularDisponibles", () => {
   // daría 1 y el servidor respondería `todavia_tiene_cupo`, rechazando la tirada que la
   // página ya le había ofrecido.
   it("castigado y con dos gastadas, el cupo llega a cero y no a uno", () => {
-    expect(calcularDisponibles(2, 1)).toBe(0);
+    expect(calcularDisponibles(2, 1, 3)).toBe(0);
   });
 
   it("ese cero no bloquea la tirada en motivoDeRechazo", () => {
-    const disponibles = calcularDisponibles(2, 1);
+    const disponibles = calcularDisponibles(2, 1, 3);
     expect(
       motivoDeRechazo({ activo: true, faltaRota: "2026-09-16", disponibles, yaJugo: false })
     ).toBeNull();
@@ -162,5 +163,44 @@ describe("crearJustificarFalta", () => {
         justificadaPorCliente: false,
       })
     );
+  });
+});
+
+/** `dias` asistencias seguidas (todos los días, fin de semana incluido) desde `desde`. */
+function corrida(desde: string, dias: number) {
+  return Array.from({ length: dias }, (_, i) => {
+    const d = new Date(`${desde}T12:00:00Z`);
+    d.setUTCDate(d.getUTCDate() + i);
+    return { fecha: d.toISOString().slice(0, 10), asistio: true, justificada: false };
+  });
+}
+
+// Revive extra por racha de 30 (entrenador, 2026-10-17). Se deduce de la racha más larga, así
+// que lo conserva aunque la racha se rompa, y el castigo de la ruleta se le resta a ese 4.
+describe("maximoDeRevives", () => {
+  it("sin haber llegado a 30, son 3", () => {
+    expect(maximoDeRevives([])).toBe(3);
+    expect(maximoDeRevives(corrida("2026-08-03", 29))).toBe(3);
+  });
+
+  it("con una racha de 30, son 4", () => {
+    expect(maximoDeRevives(corrida("2026-08-03", 30))).toBe(4);
+  });
+
+  it("los conserva aunque la racha se haya roto después", () => {
+    // 30 seguidos en agosto, falta el martes 2026-09-02 y vuelve dos días.
+    const historial = [...corrida("2026-08-03", 30), ...corrida("2026-09-03", 2)];
+    expect(maximoDeRevives(historial)).toBe(4);
+  });
+
+  it("las justificadas cuentan para llegar a 30, como en la racha", () => {
+    const conRevive = corrida("2026-08-03", 30).map((a, i) =>
+      i === 10 ? { ...a, asistio: false, justificada: true } : a
+    );
+    expect(maximoDeRevives(conRevive)).toBe(4);
+  });
+
+  it("perder la ruleta le deja 3 al que tiene 4", () => {
+    expect(calcularDisponibles(0, 1, 4)).toBe(3);
   });
 });

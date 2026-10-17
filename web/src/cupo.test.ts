@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { disponiblesEnElMes, gastadosEnElMes } from "./cupo";
+import { disponiblesEnElMes, gastadosEnElMes, maximoPorMes } from "./cupo";
+import type { Asistencia } from "./datos";
 
 /**
  * GEMELO: `CupoRevivesCalculatorTest` en Kotlin. Los mismos casos, las mismas fechas y los
@@ -96,5 +97,33 @@ describe("cupo de revives", () => {
   it("sin tercer parametro se comporta como antes", () => {
     const asistencias = [falta("2026-09-01", true)];
     expect(disponiblesEnElMes(asistencias, "2026-09")).toBe(2);
+  });
+});
+
+/** `dias` asistencias seguidas (todos los días) desde `desde`. */
+function corrida(desde: string, dias: number): Asistencia[] {
+  return Array.from({ length: dias }, (_, i) => {
+    const d = new Date(`${desde}T12:00:00Z`);
+    d.setUTCDate(d.getUTCDate() + i);
+    return { fecha: d.toISOString().slice(0, 10), asistio: true, justificada: false };
+  });
+}
+
+// Revive extra por racha de 30 (entrenador, 2026-10-17). Mismos casos que `maximoDeRevives`
+// en `functions/src/jugarRuleta.test.ts` y `CupoRevivesCalculatorTest` en Kotlin.
+describe("revive extra por racha de 30", () => {
+  it("con 29 son 3; con 30, 4", () => {
+    expect(maximoPorMes(corrida("2026-08-03", 29))).toBe(3);
+    expect(maximoPorMes(corrida("2026-08-03", 30))).toBe(4);
+  });
+
+  it("lo conserva aunque la racha se rompa", () => {
+    expect(maximoPorMes([...corrida("2026-08-03", 30), ...corrida("2026-09-03", 2)])).toBe(4);
+  });
+
+  it("el castigo de la ruleta se le resta al 4", () => {
+    const historial = [...corrida("2026-08-03", 30), falta("2026-10-06", true)];
+    expect(disponiblesEnElMes(historial, "2026-10", 0)).toBe(3);
+    expect(disponiblesEnElMes(historial, "2026-10", 1)).toBe(2);
   });
 });

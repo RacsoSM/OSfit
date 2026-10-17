@@ -1,4 +1,5 @@
 import type { Asistencia } from "./datos";
+import { rachaMasLarga } from "./racha";
 
 /**
  * Cupo mensual de revives del cliente.
@@ -17,6 +18,26 @@ import type { Asistencia } from "./datos";
  */
 
 export const MAXIMO_POR_MES = 3;
+
+/**
+ * Quien alguna vez llegó a esta racha tiene un revive más al mes, para siempre: aunque la
+ * racha se rompa después (entrenador, 2026-10-17). Tampoco se guarda: sale de la racha más
+ * larga de su historial, así que si el entrenador corrige asistencias se corrige solo.
+ *
+ * GEMELO: `maximoDeRevives` en `functions/src/jugarRuleta.ts` y
+ * `CupoRevivesCalculator.maximoPorMes`.
+ */
+export const RACHA_PARA_REVIVE_EXTRA = 30;
+
+/** Si ya ganó el revive extra por llegar a una racha de 30. */
+export function tieneReviveExtra(asistencias: Asistencia[]): boolean {
+  return rachaMasLarga(asistencias) >= RACHA_PARA_REVIVE_EXTRA;
+}
+
+/** 3 al mes, o 4 con el revive extra. Antes del castigo de la ruleta, que se le resta a este. */
+export function maximoPorMes(asistencias: Asistencia[]): number {
+  return MAXIMO_POR_MES + (tieneReviveExtra(asistencias) ? 1 : 0);
+}
 
 /**
  * [mes] en formato `AAAA-MM`. Las fechas son strings ISO, así que comparar por prefijo es
@@ -44,5 +65,5 @@ export function disponiblesEnElMes(
   mes: string,
   castigo = 0
 ): number {
-  return Math.max(MAXIMO_POR_MES - castigo - gastadosEnElMes(asistencias, mes), 0);
+  return Math.max(maximoPorMes(asistencias) - castigo - gastadosEnElMes(asistencias, mes), 0);
 }

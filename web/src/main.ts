@@ -34,6 +34,7 @@ import { conectarAjustes } from "./ui/tarjetaAjustes";
 import { estadoNotificaciones, plataforma } from "./notificaciones";
 import { activarNotificaciones, entornoDelNavegador, sincronizarToken } from "./notificacionesNavegador";
 import { conectarNotificaciones } from "./ui/tarjetaNotificaciones";
+import { conectarAvisoReviveExtra } from "./ui/avisoReviveExtra";
 import { almacenDeEstilo, ponerEstilo } from "./ui/cambioDeEstilo";
 import { estiloGuardado, type IdEstilo } from "./estilo";
 import { cerrarSesion, credencialLista, huellaDeLaSesion, iniciarSesion, urlDeDescarga } from "./firebase";
@@ -267,6 +268,18 @@ async function arrancar(): Promise<void> {
       activandoNotificaciones = false;
       pintar();
     });
+  }
+
+  /** Llave en el navegador para el aviso del revive extra. Igual que la invitación: si se pierde, sale otra vez. */
+  const LLAVE_REVIVE_EXTRA = "osfit:revive-extra-visto";
+  let reviveExtraVisto = (() => {
+    try { return localStorage.getItem(LLAVE_REVIVE_EXTRA) === "1"; } catch { return false; }
+  })();
+
+  function alCerrarReviveExtra(): void {
+    reviveExtraVisto = true;
+    try { localStorage.setItem(LLAVE_REVIVE_EXTRA, "1"); } catch { /* se pierde el recuerdo, no la página */ }
+    pintar();
   }
 
   function alDescartarInvitacion(): void {
@@ -533,6 +546,7 @@ async function arrancar(): Promise<void> {
       tiradaEsteMes, tiradaMesAnterior, ranking, estilo,
       notificaciones: estadoNotificaciones(cliente.notificacionesWeb === true, entornoDelNavegador()),
       invitacionDescartada,
+      reviveExtraVisto,
       activandoNotificaciones,
       mapas,
       banco,
@@ -636,6 +650,7 @@ async function arrancar(): Promise<void> {
     conectarAccionDia(pintar);
     conectarAccionFalta(hoy, asistencias, pintar);
     conectarNotificaciones(alActivarNotificaciones, alDescartarInvitacion);
+    conectarAvisoReviveExtra(alCerrarReviveExtra);
     document.querySelector("#mes-anterior")?.addEventListener("click", () => {
       mesVisible = moverMes(mesVisible, -1);
       pintar();

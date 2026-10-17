@@ -2,7 +2,7 @@ import { HttpsError, onCall } from "firebase-functions/v2/https";
 import type { DocumentReference } from "firebase-admin/firestore";
 import { REGION, clienteDeLaSesion, db, hoyEnMazatlan } from "./comun";
 import { faltaQueRompioLaRacha, type AsistenciaParaRacha } from "./faltaRompio";
-import { calcularDisponibles } from "./jugarRuleta";
+import { calcularDisponibles, maximoDeRevives } from "./jugarRuleta";
 import { castigoDelMes, mesAnterior, type TiradaParaCastigo } from "./reglasRuleta";
 
 /**
@@ -21,9 +21,10 @@ import { castigoDelMes, mesAnterior, type TiradaParaCastigo } from "./reglasRule
 export function cupoDelRevive(
   gastados: number,
   castigo: number,
-  yaGastada: boolean
+  yaGastada: boolean,
+  maximo: number
 ): { sinCupo: boolean; disponibles: number } {
-  const antes = calcularDisponibles(gastados, castigo);
+  const antes = calcularDisponibles(gastados, castigo, maximo);
   return { sinCupo: antes <= 0, disponibles: Math.max(yaGastada ? antes : antes - 1, 0) };
 }
 
@@ -34,8 +35,8 @@ interface AsistenciaConRef extends AsistenciaParaRacha {
 }
 
 /**
- * Justifica una falta del cliente ("revivir la racha"), con cupo de 3 por mes — 2 si perdio
- * la ruleta el mes pasado.
+ * Justifica una falta del cliente ("revivir la racha"), con cupo de 3 por mes (4 si alguna vez
+ * llego a una racha de 30, ver `maximoDeRevives`) — uno menos si perdio la ruleta el mes pasado.
  *
  * El cupo no se guarda en ningun contador: se cuenta sobre las asistencias del mes, igual que
  * `CupoRevivesCalculator`, para que si el entrenador desmarca una justificada desde su app el
@@ -95,7 +96,7 @@ export const revivirRacha = onCall({ region: REGION }, async (request) => {
     existente?.justificadaPorCliente === true &&
     existente?.justificada === true &&
     fecha.startsWith(`${mes}-`);
-  const cupo = cupoDelRevive(gastados, castigoDelMes(tiradaAnterior), yaGastada);
+  const cupo = cupoDelRevive(gastados, castigoDelMes(tiradaAnterior), yaGastada, maximoDeRevives(asistencias));
   if (cupo.sinCupo) {
     throw new HttpsError("resource-exhausted", "sin_cupo");
   }
