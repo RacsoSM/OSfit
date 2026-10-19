@@ -854,3 +854,46 @@ la hubiera marcado él. También refresca en la ficha el trío que lee la web (`
 - **Eliminar el entrenamiento no quita la asistencia:** ya estaba en el gimnasio.
 - El documento lleva `marcadaDesde: "registro"`, para saber de dónde salió; la app lo ignora.
 
+
+## 22. Estadísticas: progresión por músculo o por ejercicio
+
+> "agregar un nuevo apartado de estadísticas en el menú de la derecha arriba, ahí debes poder escoger o un músculo o un ejercicio, y te debe de aparecer tu progresión en una gráfica, así como un par de cards y datos básicos de cada ejercicio que selecciones o músculo" (2026-10-19)
+
+En la web de la clienta, una ventana nueva **Estadísticas** en el menú ☰ (arriba a la derecha),
+junto a Ranking, Medallas y Logros personales (`VENTANAS` en `web/src/ventanas.ts`, grupo
+`principal`).
+
+Qué debe tener:
+
+- **Un selector arriba:** elegir **un músculo** o **un ejercicio**. Los ejercicios, los que ya
+  registró (no todo el banco), quizá agrupados por músculo y con buscador como en Registro.
+- **Una gráfica de su progresión** en el tiempo con lo que guardó en Registro.
+- **Un par de tarjetas con datos básicos** del músculo o ejercicio elegido.
+
+Lo que ya existe y se puede reusar:
+
+- Las sesiones de Registro (`clientes/{cid}/sesiones`), con sus series de peso y reps. Ojo: la
+  web solo escucha las últimas **60** (`datos.ts`, unos tres meses). Para una progresión más
+  larga habría que pedir más o guardar un resumen por ejercicio en el servidor (el camino de la
+  Fuerza, punto 13, ya guarda marcas de siempre).
+- `web/src/fuerza.ts`: `unoRm` (1RM estimado por Epley) para la línea de un ejercicio, y
+  `fuerzaPorMusculo` / `nivelDe` / `rangoDe` para el nivel y el rango de un músculo.
+- La unidad de cada ejercicio (barras o kg, `web/src/barras.ts`): la gráfica y las tarjetas
+  deben mostrarla igual que Registro.
+
+A decidir en el spec:
+
+- **Qué se grafica.** Ejercicio: 1RM estimado, peso máximo por sesión o volumen
+  (peso × reps). Músculo: su nivel de fuerza o el volumen semanal de todos sus ejercicios.
+  Rango de tiempo (4 semanas, 3 meses, todo).
+- **Qué tarjetas.** Ideas: mejor marca y fecha, 1RM estimado actual, cambio contra hace un mes
+  (+x kg / +x %), veces que lo ha hecho, última vez, series y reps totales; para un músculo, su
+  rango actual y cuánto falta para el siguiente (`siguienteRango`), y sus ejercicios más
+  hechos.
+- **Corporales y de tiempo** (lagartijas, plancha): graficar reps o segundos en vez de peso.
+- **Sin datos:** qué ve quien todavía no registra ese ejercicio o músculo.
+- **La gráfica:** dibujada a mano en SVG (como el mapa muscular) o con una librería; que se vea
+  bien en todos los estilos de la web (neón, cómic, pixel, sakura, minimalista, halloween) y en
+  el teléfono.
+- Si también va en la app del entrenador para ver la de cada clienta (ya hay
+  `EstadisticasScreen.kt`, que es de asistencia).
