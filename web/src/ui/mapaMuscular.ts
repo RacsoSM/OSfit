@@ -107,10 +107,60 @@ export function reiniciarMapa(): void {
  * de "sin datos".
  */
 export function conNiveles(svg: string, fuerza: Readonly<Record<string, FuerzaMusculo>>): string {
-  return svg.replace(/class="musculo" data-musculo="([^"]+)"/g, (todo, grupo: string) => {
+  const idBrillo = `${/<svg id="([^"]+)"/.exec(svg)?.[1] ?? "mapa"}-brillo-elite`;
+  let hayElite = false;
+  const pintado = svg.replace(/class="musculo" data-musculo="([^"]+)"/g, (todo, grupo: string) => {
     const f = fuerza[grupo];
-    return f ? `${todo} data-rango="${indiceRango(f.nivel)}"` : todo;
+    if (!f) return todo;
+    const rango = indiceRango(f.nivel);
+    if (rango !== RANGO_ELITE) return `${todo} data-rango="${rango}"`;
+    hayElite = true;
+    return `${todo} data-rango="${rango}" filter="url(#${idBrillo})"`;
   });
+  if (!hayElite) return pintado;
+  // Al final de su grupo, para que el halo quede por encima de los músculos vecinos y no
+  // debajo (en el SVG, lo último se dibuja arriba). Las líneas blancas siguen encima de todo.
+  const alFrente = pintado.replace(/(<g id="[^"]*musculos">)([\s\S]*?)(<\/g>)/, (_, abre: string, dentro: string, cierra: string) => {
+    const elite: string[] = [];
+    const resto = dentro.replace(/<path class="musculo"[^>]*brillo-elite[^>]*\/>\s*/g, (p) => {
+      elite.push(p.trim());
+      return "";
+    });
+    return `${abre}${resto}${elite.join("")}${cierra}`;
+  });
+  return alFrente.replace(/(<svg\b[^>]*>)/, `$1${filtroBrilloElite(idBrillo)}`);
+}
+
+/** Élite es el último rango de `RANGOS`: no hay nada arriba. */
+const RANGO_ELITE = RANGOS.length - 1;
+
+/**
+ * El resplandor de un músculo en Élite (entrenador, 2026-10-19): además de su oro, un halo
+ * dorado que "respira", para que se lea que no hay un nivel más alto. Es un filtro SVG y no un
+ * `filter: drop-shadow` de CSS porque Safari no aplica filtros de CSS a lo de adentro de un
+ * SVG. El halo sale de la silueta (`SourceAlpha`) y no del color, así sigue dorado aunque el
+ * músculo esté tocado y tome el color del estilo. Sin animación si el teléfono pide menos
+ * movimiento. Las unidades son las del dibujo (420 de ancho).
+ */
+function filtroBrilloElite(id: string): string {
+  const quieto =
+    typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+  const latido = (atributo: string, valores: string) =>
+    quieto ? "" : `<animate attributeName="${atributo}" values="${valores}" dur="2.6s" repeatCount="indefinite"/>`;
+  // El halo: la silueta engordada y difuminada, en oro. El músculo: su color, que en cada
+  // latido se aclara un poco hacia el amarillo, como algo que brilla por sí mismo.
+  return `<defs><filter id="${id}" x="-60%" y="-60%" width="220%" height="220%" color-interpolation-filters="sRGB">`
+    + `<feMorphology in="SourceAlpha" operator="dilate" radius="4" result="gordo"/>`
+    + `<feGaussianBlur in="gordo" stdDeviation="10" result="difuso">${latido("stdDeviation", "7;15;7")}</feGaussianBlur>`
+    + `<feFlood flood-color="#ffd54a" flood-opacity="0.9" result="oro">${latido("flood-opacity", "0.7;1;0.7")}</feFlood>`
+    + `<feComposite in="oro" in2="difuso" operator="in" result="halo"/>`
+    + `<feComponentTransfer in="SourceGraphic" result="vivo">`
+    + `<feFuncR type="linear" slope="1"/>`
+    + `<feFuncG type="linear" slope="1.05">${latido("slope", "1;1.18;1")}</feFuncG>`
+    + `<feFuncB type="linear" slope="1.1" intercept="0">${latido("intercept", "0;0.22;0")}</feFuncB>`
+    + `</feComponentTransfer>`
+    + `<feMerge><feMergeNode in="halo"/><feMergeNode in="halo"/><feMergeNode in="vivo"/></feMerge>`
+    + `</filter></defs>`;
 }
 
 function cara(

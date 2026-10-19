@@ -267,6 +267,34 @@ describe("conNiveles", () => {
   it("Élite es el último", () => {
     expect(conNiveles(svg, { pecho: { nivel: 8 } })).toContain('data-rango="7"');
   });
+
+  // Resplandor de Élite (entrenador, 2026-10-19): no hay nivel más alto.
+  describe("resplandor de Élite", () => {
+    const mapa = `<svg id="mapa-frente" viewBox="0 0 420 800"><g id="mapa-frente-musculos">${svg}`
+      + '<path class="musculo" data-musculo="hombro" d="M2"/></g><g id="mapa-frente-lineas"></g></svg>';
+
+    it("el músculo en Élite lleva el filtro, y el filtro va una sola vez en el SVG", () => {
+      const h = conNiveles(mapa, { pecho: { nivel: 8 }, biceps: { nivel: 8.4 }, hombro: { nivel: 5 } });
+      expect(h).toMatch(/data-musculo="pecho" data-rango="7" filter="url\(#mapa-frente-brillo-elite\)"/);
+      expect(h).toMatch(/data-musculo="biceps" data-rango="7" filter="url\(#mapa-frente-brillo-elite\)"/);
+      expect(h).not.toMatch(/data-musculo="hombro"[^>]*filter=/);
+      expect(h.match(/<filter /g)).toHaveLength(1);
+      expect(h).toContain('<svg id="mapa-frente" viewBox="0 0 420 800"><defs><filter id="mapa-frente-brillo-elite"');
+    });
+
+    it("los músculos en Élite pasan al final de su grupo, para que el halo quede encima", () => {
+      const h = conNiveles(mapa, { pecho: { nivel: 8 }, hombro: { nivel: 5 } });
+      const orden = [...h.matchAll(/data-musculo="(\w+)"/g)].map((m) => m[1]);
+      expect(orden).toEqual(["biceps", "hombro", "pecho"]);
+      expect(h.indexOf('data-musculo="pecho"')).toBeLessThan(h.indexOf('id="mapa-frente-lineas"'));
+    });
+
+    it("sin Élite no cambia nada más que los rangos", () => {
+      const h = conNiveles(mapa, { pecho: { nivel: 7.9 } });
+      expect(h).not.toContain("<filter");
+      expect(h).not.toContain("brillo-elite");
+    });
+  });
 });
 
 describe("ayudaMapa", () => {
