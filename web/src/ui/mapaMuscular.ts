@@ -107,7 +107,7 @@ export function reiniciarMapa(): void {
  * de "sin datos".
  */
 export function conNiveles(svg: string, fuerza: Readonly<Record<string, FuerzaMusculo>>): string {
-  const idBrillo = `${/<svg id="([^"]+)"/.exec(svg)?.[1] ?? "mapa"}-brillo-elite`;
+  const prefijo = `${/<svg id="([^"]+)"/.exec(svg)?.[1] ?? "mapa"}-elite`;
   let hayElite = false;
   const pintado = svg.replace(/class="musculo" data-musculo="([^"]+)"/g, (todo, grupo: string) => {
     const f = fuerza[grupo];
@@ -115,52 +115,103 @@ export function conNiveles(svg: string, fuerza: Readonly<Record<string, FuerzaMu
     const rango = indiceRango(f.nivel);
     if (rango !== RANGO_ELITE) return `${todo} data-rango="${rango}"`;
     hayElite = true;
-    return `${todo} data-rango="${rango}" filter="url(#${idBrillo})"`;
+    return `${todo} data-rango="${rango}" filter="url(#${prefijo}-halo)"`;
   });
   if (!hayElite) return pintado;
+
+  const quieto =
+    typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches === true;
+  const ancho = Number(/viewBox="[\d.-]+ [\d.-]+ ([\d.]+)/.exec(svg)?.[1] ?? 420);
+  const chispas: string[] = [];
   // Al final de su grupo, para que el halo quede por encima de los músculos vecinos y no
-  // debajo (en el SVG, lo último se dibuja arriba). Las líneas blancas siguen encima de todo.
+  // debajo (en el SVG, lo último se dibuja arriba). Cada uno va seguido de su destello: una
+  // copia de su silueta pintada con el reflejo. Las líneas blancas siguen encima de todo.
   const alFrente = pintado.replace(/(<g id="[^"]*musculos">)([\s\S]*?)(<\/g>)/, (_, abre: string, dentro: string, cierra: string) => {
     const elite: string[] = [];
-    const resto = dentro.replace(/<path class="musculo"[^>]*brillo-elite[^>]*\/>\s*/g, (p) => {
-      elite.push(p.trim());
+    const resto = dentro.replace(/<path\b[^>]*class="musculo"[^>]*-elite-halo[^>]*\/>\s*/g, (p) => {
+      const d = /\sd="([^"]+)"/.exec(p)?.[1] ?? "";
+      elite.push(p.trim() + `<path class="destello-elite" d="${d}" fill="url(#${prefijo}-destello)" pointer-events="none"/>`);
+      if (!quieto) chispas.push(...chispasDe(d, chispas.length));
       return "";
     });
     return `${abre}${resto}${elite.join("")}${cierra}`;
   });
-  return alFrente.replace(/(<svg\b[^>]*>)/, `$1${filtroBrilloElite(idBrillo)}`);
+  const conChispas = chispas.length > 0
+    ? alFrente.replace(/<\/svg>\s*$/, `<g class="chispas-elite" filter="url(#${prefijo}-chispa)" pointer-events="none">${chispas.join("")}</g></svg>`)
+    : alFrente;
+  return conChispas.replace(/(<svg\b[^>]*>)/, `$1${defsElite(prefijo, ancho, quieto)}`);
 }
 
 /** Élite es el último rango de `RANGOS`: no hay nada arriba. */
 const RANGO_ELITE = RANGOS.length - 1;
 
+/** Una vuelta del destello y de cada chispa, en segundos. */
+const CICLO_ELITE = 2.6;
+
+/** Estrella de cuatro puntas de radio 10, centrada en 0,0: la chispa. */
+const ESTRELLA = "M0 -10C1.5 -2 2 -1.5 10 0C2 1.5 1.5 2 0 10C-1.5 2 -2 1.5 -10 0C-2 -1.5 -1.5 -2 0 -10Z";
+
 /**
- * El resplandor de un músculo en Élite (entrenador, 2026-10-19): además de su oro, un halo
- * dorado que "respira", para que se lea que no hay un nivel más alto. Es un filtro SVG y no un
- * `filter: drop-shadow` de CSS porque Safari no aplica filtros de CSS a lo de adentro de un
- * SVG. El halo sale de la silueta (`SourceAlpha`) y no del color, así sigue dorado aunque el
- * músculo esté tocado y tome el color del estilo. Sin animación si el teléfono pide menos
- * movimiento. Las unidades son las del dibujo (420 de ancho).
+ * Las chispas de un músculo: dos estrellitas en puntos fijos de su caja (sacada de las
+ * coordenadas de su path; aquí no hay `getBBox`, el SVG todavía es texto). Leves: chicas, una a
+ * la vez y con desfase entre todas, para que no parpadee el cuerpo entero junto.
  */
-function filtroBrilloElite(id: string): string {
-  const quieto =
-    typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-  const latido = (atributo: string, valores: string) =>
-    quieto ? "" : `<animate attributeName="${atributo}" values="${valores}" dur="2.6s" repeatCount="indefinite"/>`;
-  // El halo: la silueta engordada y difuminada, en oro. El músculo: su color, que en cada
-  // latido se aclara un poco hacia el amarillo, como algo que brilla por sí mismo.
-  return `<defs><filter id="${id}" x="-60%" y="-60%" width="220%" height="220%" color-interpolation-filters="sRGB">`
-    + `<feMorphology in="SourceAlpha" operator="dilate" radius="4" result="gordo"/>`
-    + `<feGaussianBlur in="gordo" stdDeviation="10" result="difuso">${latido("stdDeviation", "7;15;7")}</feGaussianBlur>`
-    + `<feFlood flood-color="#ffd54a" flood-opacity="0.9" result="oro">${latido("flood-opacity", "0.7;1;0.7")}</feFlood>`
+function chispasDe(d: string, yaHay: number): string[] {
+  const n = (d.match(/-?\d+(?:\.\d+)?/g) ?? []).map(Number);
+  const xs = n.filter((_, i) => i % 2 === 0);
+  const ys = n.filter((_, i) => i % 2 === 1);
+  if (xs.length === 0 || ys.length === 0) return [];
+  const [x0, x1, y0, y1] = [Math.min(...xs), Math.max(...xs), Math.min(...ys), Math.max(...ys)];
+  return ([[0.28, 0.3], [0.7, 0.68]] as const).map(([fx, fy], i) => {
+    const x = (x0 + (x1 - x0) * fx).toFixed(1);
+    const y = (y0 + (y1 - y0) * fy).toFixed(1);
+    // Inicio negativo: cada una arranca ya a media vuelta, sin quedarse quieta y entera
+    // esperando su turno. La escala se suma al `translate`, por eso este no lleva escala propia.
+    const desfase = (((yaHay + i) * 0.83) % CICLO_ELITE).toFixed(2);
+    return `<path d="${ESTRELLA}" fill="#fffbe6" transform="translate(${x} ${y})">`
+      + `<animateTransform attributeName="transform" type="scale" additive="sum" values="0;0.75;0;0"`
+      + ` keyTimes="0;0.15;0.3;1" dur="${CICLO_ELITE}s" begin="-${desfase}s" repeatCount="indefinite"/></path>`;
+  });
+}
+
+/**
+ * Lo que necesita un músculo en Élite (entrenador, 2026-10-19, propuesta "E" con chispas de la
+ * "D"): además de su oro, un halo dorado quieto, un destello que cruza el oro como la luz sobre
+ * una medalla y unas chispas leves, para que se lea que no hay un nivel más alto.
+ *
+ * Son filtros y degradados SVG y no `filter`/`drop-shadow` de CSS porque Safari no aplica los
+ * filtros de CSS a lo de adentro de un SVG. El halo sale de la silueta (`SourceAlpha`) y no del
+ * color: sigue dorado aunque el músculo esté tocado y tome el color del estilo. Si el teléfono
+ * pide menos movimiento queda solo el halo, sin destello ni chispas. Las medidas son las del
+ * dibujo ([ancho] = el ancho de su `viewBox`).
+ */
+function defsElite(prefijo: string, ancho: number, quieto: boolean): string {
+  const destello = quieto
+    ? `gradientTransform="translate(${-2 * ancho} 0)"`
+    : "";
+  const barrido = quieto
+    ? ""
+    : `<animateTransform attributeName="gradientTransform" type="translate" values="-180 0;${ancho} 0;${ancho} 0"`
+      + ` keyTimes="0;0.6;1" dur="${CICLO_ELITE}s" repeatCount="indefinite"/>`;
+  return `<defs>`
+    + `<filter id="${prefijo}-halo" x="-60%" y="-60%" width="220%" height="220%" color-interpolation-filters="sRGB">`
+    + `<feMorphology in="SourceAlpha" operator="dilate" radius="3" result="gordo"/>`
+    + `<feGaussianBlur in="gordo" stdDeviation="9" result="difuso"/>`
+    + `<feFlood flood-color="#ffd54a" flood-opacity="0.75" result="oro"/>`
     + `<feComposite in="oro" in2="difuso" operator="in" result="halo"/>`
-    + `<feComponentTransfer in="SourceGraphic" result="vivo">`
-    + `<feFuncR type="linear" slope="1"/>`
-    + `<feFuncG type="linear" slope="1.05">${latido("slope", "1;1.18;1")}</feFuncG>`
-    + `<feFuncB type="linear" slope="1.1" intercept="0">${latido("intercept", "0;0.22;0")}</feFuncB>`
-    + `</feComponentTransfer>`
-    + `<feMerge><feMergeNode in="halo"/><feMergeNode in="halo"/><feMergeNode in="vivo"/></feMerge>`
-    + `</filter></defs>`;
+    + `<feMerge><feMergeNode in="halo"/><feMergeNode in="SourceGraphic"/></feMerge>`
+    + `</filter>`
+    + `<linearGradient id="${prefijo}-destello" gradientUnits="userSpaceOnUse" x1="0" y1="200" x2="180" y2="260" ${destello}>`
+    + `<stop offset="0.3" stop-color="#fff" stop-opacity="0"/>`
+    + `<stop offset="0.5" stop-color="#fff" stop-opacity="0.85"/>`
+    + `<stop offset="0.7" stop-color="#fff" stop-opacity="0"/>`
+    + barrido
+    + `</linearGradient>`
+    + `<filter id="${prefijo}-chispa" x="-100%" y="-100%" width="300%" height="300%">`
+    + `<feGaussianBlur in="SourceGraphic" stdDeviation="2" result="b"/>`
+    + `<feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>`
+    + `</filter>`
+    + `</defs>`;
 }
 
 function cara(

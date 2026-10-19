@@ -268,31 +268,53 @@ describe("conNiveles", () => {
     expect(conNiveles(svg, { pecho: { nivel: 8 } })).toContain('data-rango="7"');
   });
 
-  // Resplandor de Élite (entrenador, 2026-10-19): no hay nivel más alto.
-  describe("resplandor de Élite", () => {
-    const mapa = `<svg id="mapa-frente" viewBox="0 0 420 800"><g id="mapa-frente-musculos">${svg}`
+  // Brillo de Élite (entrenador, 2026-10-19): halo, destello y chispas leves; no hay nivel más alto.
+  describe("brillo de Élite", () => {
+    const mapa = `<svg id="mapa-frente" viewBox="0 0 420 800"><g id="mapa-frente-musculos">`
+      // Como en el SVG real: el id va antes de la clase.
+      + '<path id="mapa-frente-musculo-pecho" class="musculo" data-musculo="pecho" d="M100,200 C120,210 140,220 160,260 Z"/>'
+      + '<path class="musculo" data-musculo="biceps" d="M1"/>'
       + '<path class="musculo" data-musculo="hombro" d="M2"/></g><g id="mapa-frente-lineas"></g></svg>';
+    const conPecho = (fuerza: Record<string, { nivel: number }>) => conNiveles(mapa, fuerza as never);
 
-    it("el músculo en Élite lleva el filtro, y el filtro va una sola vez en el SVG", () => {
-      const h = conNiveles(mapa, { pecho: { nivel: 8 }, biceps: { nivel: 8.4 }, hombro: { nivel: 5 } });
-      expect(h).toMatch(/data-musculo="pecho" data-rango="7" filter="url\(#mapa-frente-brillo-elite\)"/);
-      expect(h).toMatch(/data-musculo="biceps" data-rango="7" filter="url\(#mapa-frente-brillo-elite\)"/);
+    it("el músculo en Élite lleva el halo, y las definiciones van una sola vez", () => {
+      const h = conPecho({ pecho: { nivel: 8 }, biceps: { nivel: 8.4 }, hombro: { nivel: 5 } });
+      expect(h).toMatch(/data-musculo="pecho" data-rango="7" filter="url\(#mapa-frente-elite-halo\)"/);
+      expect(h).toMatch(/data-musculo="biceps" data-rango="7" filter="url\(#mapa-frente-elite-halo\)"/);
       expect(h).not.toMatch(/data-musculo="hombro"[^>]*filter=/);
-      expect(h.match(/<filter /g)).toHaveLength(1);
-      expect(h).toContain('<svg id="mapa-frente" viewBox="0 0 420 800"><defs><filter id="mapa-frente-brillo-elite"');
+      expect(h.match(/<defs>/g)).toHaveLength(1);
+      expect(h).toContain('<svg id="mapa-frente" viewBox="0 0 420 800"><defs><filter id="mapa-frente-elite-halo"');
+    });
+
+    it("cada músculo en Élite va seguido de su destello, con su misma silueta", () => {
+      const h = conPecho({ pecho: { nivel: 8 } });
+      expect(h).toContain('filter="url(#mapa-frente-elite-halo)" d="M100,200 C120,210 140,220 160,260 Z"/>'
+        + '<path class="destello-elite" d="M100,200 C120,210 140,220 160,260 Z" fill="url(#mapa-frente-elite-destello)"');
+      expect(h).toContain('<linearGradient id="mapa-frente-elite-destello"');
+    });
+
+    it("dos chispas por músculo en Élite, dentro de su caja, encima de las líneas", () => {
+      const h = conPecho({ pecho: { nivel: 8 } });
+      const chispas = [...h.matchAll(/<path d="M0 -10[^"]*" fill="#fffbe6" transform="translate\(([\d.]+) ([\d.]+)\)"/g)].map((m) => [Number(m[1]), Number(m[2])]);
+      expect(chispas).toHaveLength(2);
+      for (const [x, y] of chispas) {
+        expect(x).toBeGreaterThanOrEqual(100); expect(x).toBeLessThanOrEqual(160);
+        expect(y).toBeGreaterThanOrEqual(200); expect(y).toBeLessThanOrEqual(260);
+      }
+      expect(h.indexOf('class="chispas-elite"')).toBeGreaterThan(h.indexOf('id="mapa-frente-lineas"'));
     });
 
     it("los músculos en Élite pasan al final de su grupo, para que el halo quede encima", () => {
-      const h = conNiveles(mapa, { pecho: { nivel: 8 }, hombro: { nivel: 5 } });
+      const h = conPecho({ pecho: { nivel: 8 }, hombro: { nivel: 5 } });
       const orden = [...h.matchAll(/data-musculo="(\w+)"/g)].map((m) => m[1]);
       expect(orden).toEqual(["biceps", "hombro", "pecho"]);
       expect(h.indexOf('data-musculo="pecho"')).toBeLessThan(h.indexOf('id="mapa-frente-lineas"'));
     });
 
     it("sin Élite no cambia nada más que los rangos", () => {
-      const h = conNiveles(mapa, { pecho: { nivel: 7.9 } });
-      expect(h).not.toContain("<filter");
-      expect(h).not.toContain("brillo-elite");
+      const h = conPecho({ pecho: { nivel: 7.9 } });
+      expect(h).not.toContain("<defs>");
+      expect(h).not.toContain("elite");
     });
   });
 });

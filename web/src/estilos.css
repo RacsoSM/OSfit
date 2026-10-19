@@ -996,6 +996,8 @@ main:has(#barra) { padding-bottom: calc(68px + env(safe-area-inset-bottom)); }
 /* El músculo tocado se agranda y toma el color del estilo; el resto se apaga para que
    destaque. La cara de atrás no recibe toques: girada, sigue ahí aunque no se vea. */
 .mapa-giro.con-seleccion .musculo:not(.seleccionado) { opacity: 0.35; }
+/* El destello y las chispas de Élite (`conNiveles`) se apagan igual que los músculos. */
+.mapa-giro.con-seleccion .destello-elite, .mapa-giro.con-seleccion .chispas-elite { opacity: 0.35; }
 .mapa-cuerpo .musculo.seleccionado {
   fill: var(--primario);
   /* Un borde que contraste lo encierra, para que se lea qué músculo es aunque el color del
