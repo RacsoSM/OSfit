@@ -108,6 +108,7 @@
 
   { "id": "crunch", "nombre": "Crunch abdominal", "alias": ["crunch", "crunches", "abdominales", "abdominal", "encogimientos abdominales"], "tipo": "corporal", "grupo": "abdomen", "musculos": { "abdomen": 1 }, "gifOrigen": "0274" },
   { "id": "crunch-polea", "nombre": "Crunch en polea", "alias": ["abdominal en polea", "crunch polea", "crunch con cuerda"], "tipo": "peso", "grupo": "abdomen", "musculos": { "abdomen": 1 }, "gifOrigen": "0175" },
+  { "id": "crunch-maquina", "nombre": "Crunch en máquina", "alias": ["crunch maquina", "crunch en maquina", "abdominal en maquina", "abdominales en maquina", "maquina de abdominales", "maquina de crunch", "ab crunch machine"], "tipo": "peso", "grupo": "abdomen", "musculos": { "abdomen": 1 }, "gifOrigen": "0595" },
   { "id": "abdominales-completos", "nombre": "Abdominales completos", "alias": ["sit up", "sit ups", "abdominales completas"], "tipo": "corporal", "grupo": "abdomen", "musculos": { "abdomen": 1 }, "gifOrigen": "0735" },
   { "id": "elevacion-piernas-colgado", "nombre": "Elevación de piernas colgado", "alias": ["elevaciones de piernas colgado", "elevacion de piernas en barra", "piernas colgado"], "tipo": "corporal", "grupo": "abdomen", "musculos": { "abdomen": 1 }, "gifOrigen": "0472" },
   { "id": "elevacion-piernas", "nombre": "Elevación de piernas acostado", "alias": ["elevacion de piernas", "elevaciones de piernas", "levantamiento de piernas", "leg raises"], "tipo": "corporal", "grupo": "abdomen", "musculos": { "abdomen": 1 }, "gifOrigen": "0620" },

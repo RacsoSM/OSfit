@@ -52,6 +52,7 @@ const MAQUINAS_DE_BARRAS: ReadonlySet<string> = new Set([
   "extension-triceps-cuerda",
   "extension-triceps-trasnuca-polea",
   "crunch-polea",
+  "crunch-maquina",
 ]);
 
 /** En qué unidad abre el ejercicio en Registro. */
