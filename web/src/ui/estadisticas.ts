@@ -92,6 +92,14 @@ function datosClave(r: ResumenEjercicio): string {
       dato("Peso máximo", kg(r.pesoMaximo ?? 0), ""),
     ].join("");
   }
+  if (r.tipo === "cardio") {
+    return [
+      dato("Minutos totales", numero(r.reps), "en toda tu historia"),
+      veces,
+      dato("Sesión más larga", `${numero(r.mejor?.reps ?? 0)} min`, mejorFecha),
+      dato("Velocidad máxima", r.velocidadMaxima === null ? "—" : numero(r.velocidadMaxima), r.velocidadMaxima === null ? "sin anotar" : ""),
+    ].join("");
+  }
   if (r.tipo === "tiempo") {
     return [
       dato("Serie más larga", duracion(r.mejor?.reps ?? 0), mejorFecha),
@@ -155,7 +163,7 @@ function vistaEjercicio(d: DatosEstadisticas, h: EjercicioHecho, sesiones: reado
         <button type="button" data-estad-modo="1rm" aria-pressed="${m === "1rm"}" class="${m === "1rm" ? "activa" : ""}">1RM</button>
         <button type="button" data-estad-modo="sesiones" aria-pressed="${m === "sesiones"}" class="${m === "sesiones" ? "activa" : ""}">Sesiones</button>
       </div>`
-    : `<p class="tarjeta-titulo">${h.tipo === "tiempo" ? "Tu serie más larga por sesión" : "Tus reps máximas por sesión"}</p>`;
+    : `<p class="tarjeta-titulo">${h.tipo === "cardio" ? "Tus minutos por sesión" : h.tipo === "tiempo" ? "Tu serie más larga por sesión" : "Tus reps máximas por sesión"}</p>`;
   const explicacion = conPeso
     ? `<p class="estad-nota">${m === "1rm"
       ? "Tu máximo estimado para una repetición, sacado de tu mejor serie de cada día."
@@ -172,7 +180,7 @@ function vistaEjercicio(d: DatosEstadisticas, h: EjercicioHecho, sesiones: reado
     <div class="tarjeta">
       ${pestanas}
       ${lecturaGrafica(puntos, formato)}
-      ${graficaLinea(puntos, { formato, unidad: conPeso ? "kg" : h.tipo === "tiempo" ? "segundos" : "reps" })}
+      ${graficaLinea(puntos, { formato, unidad: conPeso ? "kg" : h.tipo === "cardio" ? "minutos" : h.tipo === "tiempo" ? "segundos" : "reps" })}
       ${explicacion}
     </div>
     <div class="tarjeta">

@@ -22,7 +22,14 @@ export interface CaidaBorrador { reps: string; peso: string; }
  * `caidas`: las bajadas del dropset de esa serie, en orden. Se agregan tocando el número de la
  * serie (decisión del entrenador, 2026-10-15). Ausente en una serie normal.
  */
-export interface SerieBorrador { reps: string; peso: string; caidas?: CaidaBorrador[]; }
+export interface SerieBorrador {
+  reps: string;
+  peso: string;
+  caidas?: CaidaBorrador[];
+  /** Solo en cardio, donde `reps` son los minutos (ver la spec de cardio). */
+  inclinacion?: string;
+  velocidad?: string;
+}
 
 export interface EjercicioBorrador {
   ejercicioId: string;
@@ -99,6 +106,55 @@ const SERIE_VACIA: SerieBorrador = { reps: "", peso: "" };
 export const MAX_CAIDAS = 5;
 const MAX_SERIES = 20;
 
+/** La anotación de una máquina de cardio, con lo de la última vez si lo hay. */
+function serieCardio(previa: SerieSesion | null): SerieBorrador {
+  const texto = (n: number | undefined) => (n === undefined ? "" : String(n));
+  return previa
+    ? { reps: String(previa.reps), peso: "", inclinacion: texto(previa.inclinacion), velocidad: texto(previa.velocidad) }
+    : { reps: "", peso: "", inclinacion: "", velocidad: "" };
+}
+
+/** Lo que se escribe de una máquina de cardio (ver la spec de cardio). */
+export interface CamposCardio { minutos: string; inclinacion: string; velocidad: string; }
+
+/**
+ * Agrega una máquina de cardio con lo que anotó, o le cambia lo anotado si ya estaba: "Registrar
+ * cardio" con un entrenamiento abierto (ver la spec de cardio).
+ */
+export function agregarCardio(b: Borrador, e: EjercicioBanco, c: CamposCardio): Borrador {
+  const serie: SerieBorrador = { reps: c.minutos, peso: "", inclinacion: c.inclinacion, velocidad: c.velocidad };
+  const ya = b.ejercicios.findIndex((x) => x.ejercicioId === e.id);
+  if (ya >= 0) return conSeries(b, ya, () => [serie]);
+  return {
+    ...b,
+    ejercicios: [...b.ejercicios, { ejercicioId: e.id, nombre: e.nombre, tipo: e.tipo, gifRuta: e.gifRuta ?? null, series: [serie] }],
+  };
+}
+
+/**
+ * "Registrar cardio" sin entrenamiento abierto: un entrenamiento propio con solo esa máquina,
+ * que empezó hace los minutos que anotó y terminó ahora. O el error en palabras de la clienta.
+ */
+export function envioCardio(
+  e: EjercicioBanco, c: CamposCardio, id: string, hoy: string, ahora: number
+): { ok: true; datos: Envio } | { ok: false; error: string } {
+  // Sin nada escrito, `paraEnviar` lo saltaría como una serie en blanco: aquí faltan los minutos.
+  if (c.minutos.trim() === "") return { ok: false, error: `${e.nombre}: faltan los minutos.` };
+  const envio = paraEnviar(agregarCardio(nuevoBorrador(id, hoy), e, c));
+  if (!envio.ok) return envio;
+  const minutos = envio.datos.ejercicios[0]?.series[0]?.reps ?? 0;
+  return { ok: true, datos: { ...envio.datos, iniciadaEn: ahora - minutos * 60_000, fecha: hoy, terminadaEn: ahora } };
+}
+
+/** "25 min · inclinación 8 · 5.5 km/h": una anotación de cardio, para el historial. */
+export function textoCardio(s: { reps: number; inclinacion?: number; velocidad?: number }, ejercicioId?: string): string {
+  return [
+    `${s.reps} min`,
+    s.inclinacion !== undefined ? `inclinación ${s.inclinacion}` : null,
+    s.velocidad !== undefined ? (ejercicioId === "caminadora" ? `${s.velocidad} km/h` : `velocidad ${s.velocidad}`) : null,
+  ].filter(Boolean).join(" · ");
+}
+
 /** Un entrenamiento recién iniciado, todavía sin ejercicios. */
 export function nuevoBorrador(id: string, fecha: string, iniciado?: number): Borrador {
   return iniciado === undefined ? { id, fecha, ejercicios: [] } : { id, fecha, iniciado, ejercicios: [] };
@@ -125,7 +181,9 @@ export function agregarEjercicio(
   // Lo de la última vez está guardado en kg; en barras se muestra en barras.
   const pesoPrevio = (kg: number | null) =>
     kg === null ? "" : String(unidad === "barras" ? kgABarras(kg) : kg);
-  const series: SerieBorrador[] = previas && previas.length > 0
+  const series: SerieBorrador[] = e.tipo === "cardio"
+    ? [serieCardio(previas?.[0] ?? null)]
+    : previas && previas.length > 0
     ? previas.map((s) => ({
       reps: String(s.reps),
       peso: pesoPrevio(s.peso),
@@ -410,7 +468,7 @@ export const REPS_DUDOSAS = 20;
  * campo son segundos, y 30 o 60 es lo normal.
  */
 export function repsDudosas(texto: string, tipo: EjercicioBanco["tipo"]): number | null {
-  if (tipo === "tiempo") return null;
+  if (tipo === "tiempo" || tipo === "cardio") return null;
   const n = numero(texto);
   return n !== null && n > REPS_DUDOSAS ? n : null;
 }
@@ -436,6 +494,23 @@ export function paraEnviar(b: Borrador): { ok: true; datos: Envio } | { ok: fals
       // Se guarda siempre en kg: las barras se convierten aquí y en ningún otro lado.
       return { reps, peso: escrito !== null && e.unidad === "barras" ? barrasAKg(escrito) : escrito };
     };
+    if (e.tipo === "cardio") {
+      const s = e.series[0];
+      const vacio = (t?: string) => (t ?? "").trim() === "";
+      if (!s || (vacio(s.reps) && vacio(s.inclinacion) && vacio(s.velocidad))) continue;
+      const minutos = numero(s.reps);
+      if (minutos === null) return { ok: false, error: `${e.nombre}: faltan los minutos.` };
+      if (!Number.isInteger(minutos) || minutos < 1) return { ok: false, error: `${e.nombre}: los minutos van en número entero.` };
+      const serie: SerieSesion = { reps: minutos, peso: null };
+      for (const [campo, nombre] of [["inclinacion", "la inclinación"], ["velocidad", "la velocidad"]] as const) {
+        if (vacio(s[campo])) continue;
+        const n = numero(s[campo] ?? "");
+        if (n === null || Number.isNaN(n) || n < 0) return { ok: false, error: `${e.nombre}: ${nombre} no es un número.` };
+        serie[campo] = n;
+      }
+      ejercicios.push({ ejercicioId: e.ejercicioId, series: [serie] });
+      continue;
+    }
     const enBlanco = (s: CaidaBorrador) => s.reps.trim() === "" && s.peso.trim() === "";
     const series: SerieSesion[] = [];
     for (const [i, s] of e.series.entries()) {
@@ -516,6 +591,12 @@ export function cierreAutomatico(
  * cuando no es el activo. Cuenta solo las series con algo escrito.
  */
 export function resumenSeries(e: EjercicioBorrador): string {
+  if (e.tipo === "cardio") {
+    const s = e.series[0];
+    if (!s || s.reps.trim() === "") return "Sin anotar";
+    const n = (t?: string) => (t && t.trim() !== "" ? Number(t.trim().replace(",", ".")) : undefined);
+    return textoCardio({ reps: Number(s.reps.trim()), inclinacion: n(s.inclinacion), velocidad: n(s.velocidad) }, e.ejercicioId);
+  }
   const llenas = e.series.filter((s) => s.reps.trim() !== "" || s.peso.trim() !== "");
   if (llenas.length === 0) return "Sin anotar";
   const una = (s: CaidaBorrador) => {
@@ -572,6 +653,8 @@ export interface ResumenSemana {
   /** null si ninguna sesión de la semana sabe cuándo empezó: no se inventa una duración. */
   minutos: number | null;
   series: number;
+  /** Los minutos en las máquinas de cardio (su `reps`); 0 sin banco o sin cardio. */
+  minutosCardio: number;
 }
 
 const LETRAS = ["L", "M", "M", "J", "V", "S", "D"];
@@ -589,7 +672,10 @@ export const OBJETIVO_SEMANAL = 5;
  * Las fechas se arman a mediodía UTC, como `lunesDe`, para que la zona del navegador no mueva
  * un día a la semana de al lado.
  */
-export function resumenSemana(sesiones: readonly Sesion[], hoy: string): ResumenSemana {
+export function resumenSemana(
+  sesiones: readonly Sesion[], hoy: string, banco: readonly EjercicioBanco[] = []
+): ResumenSemana {
+  const cardio = new Set(banco.filter((b) => b.tipo === "cardio").map((b) => b.id));
   const lunes = new Date(`${lunesDe(hoy)}T12:00:00Z`);
   const fechas = LETRAS.map((_, i) => {
     const d = new Date(lunes);
@@ -613,6 +699,9 @@ export function resumenSemana(sesiones: readonly Sesion[], hoy: string): Resumen
     entrenamientos: deLaSemana.length,
     minutos,
     series: deLaSemana.reduce((total, s) => total + s.ejercicios.reduce((n, e) => n + e.series.length, 0), 0),
+    minutosCardio: deLaSemana.reduce((total, s) => total + s.ejercicios
+      .filter((e) => cardio.has(e.ejercicioId))
+      .reduce((n, e) => n + e.series.reduce((m, x) => m + x.reps, 0), 0), 0),
   };
 }
 

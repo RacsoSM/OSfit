@@ -11,7 +11,7 @@ export type Sexo = "H" | "M";
 
 export interface EjercicioFuerza {
   id: string;
-  tipo: "peso" | "corporal" | "tiempo";
+  tipo: "peso" | "corporal" | "tiempo" | "cardio";
   musculos: Record<string, number>;
   estandares?: Record<Sexo, readonly number[]> | null;
 }
@@ -107,7 +107,7 @@ export function nivelesPorMusculo(
     if (s.fecha < desde || s.fecha > hoy) continue;
     for (const e of s.ejercicios) {
       const b = porId.get(e.ejercicioId);
-      if (!b || !b.estandares || b.tipo === "tiempo") continue;
+      if (!b || !b.estandares || b.tipo === "tiempo" || b.tipo === "cardio") continue;
       for (const serie of e.series) {
         const marca = factor * (b.tipo === "peso"
           ? (serie.peso ?? 0) > 0 ? (unoRm(serie.peso as number, serie.reps) / pesoCorporal) * porPeso : 0

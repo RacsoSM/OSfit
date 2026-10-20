@@ -17,7 +17,7 @@ export function erroresEstandares(archivo, semilla) {
   for (const [id, x] of Object.entries(archivo)) {
     const e = porId.get(id);
     if (!e) { errores.push(`${id}: no está en la semilla`); continue; }
-    if (e.tipo === "tiempo") errores.push(`${id}: es de tiempo, no lleva estándares`);
+    if (e.tipo === "tiempo" || e.tipo === "cardio") errores.push(`${id}: es de ${e.tipo}, no lleva estándares`);
     if (typeof x?.pesoPorMancuerna !== "boolean") errores.push(`${id}: falta pesoPorMancuerna`);
     if (x?.pesoPorMancuerna && e.tipo !== "peso") errores.push(`${id}: por mancuerna sin ser de peso`);
     for (const sexo of ["H", "M"]) {

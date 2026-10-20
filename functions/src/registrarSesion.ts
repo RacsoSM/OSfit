@@ -11,13 +11,20 @@ import { actualizarDuracionDelDia, marcarAsistenciaDelDia } from "./asistenciaWe
  * Ver `docs/superpowers/specs/2026-10-10-mapa-fuerza-entrenamiento-design.md`, "Sesiones".
  */
 
-export interface DelBanco { nombre: string; tipo: "peso" | "corporal" | "tiempo"; }
+export interface DelBanco { nombre: string; tipo: "peso" | "corporal" | "tiempo" | "cardio"; }
 
 /**
  * `caidas`: las bajadas de un dropset, hechas sin descanso después de la serie. Se guardan para
  * el historial y el volumen; la fuerza (`fuerza.ts`) solo lee `reps` y `peso` de la serie.
  */
-export interface Serie { reps: number; peso: number | null; caidas?: { reps: number; peso: number | null }[]; }
+export interface Serie {
+  reps: number;
+  peso: number | null;
+  caidas?: { reps: number; peso: number | null }[];
+  /** Solo en cardio (`reps` son los minutos): lo que marcó la máquina, si lo anotó. */
+  inclinacion?: number;
+  velocidad?: number;
+}
 /** `biserie`: los dos ejercicios de una biserie llevan la misma marca y van seguidos. */
 export interface EjercicioSesion { ejercicioId: string; nombre: string; series: Serie[]; biserie?: string; }
 export interface SesionValida { id: string; ejercicios: EjercicioSesion[]; }
@@ -29,6 +36,10 @@ const MAX_REPS = 100;
 /** En los de tiempo, `reps` son segundos: una hora de plancha ya es un error de captura. */
 const MAX_SEGUNDOS = 3600;
 const MAX_CAIDAS = 5;
+/** Cardio: `reps` son minutos; cinco horas en una máquina ya es un error de captura. */
+const MAX_MINUTOS = 300;
+const MAX_INCLINACION = 30;
+const MAX_VELOCIDAD = 40;
 const BISERIE_VALIDA = /^b[0-9]{1,3}$/;
 
 /**
@@ -42,7 +53,7 @@ const ID_VALIDO = /^[A-Za-z0-9_-]{8,40}$/;
 function marcaValida(s: unknown, tipo: DelBanco["tipo"]): { reps: number; peso: number | null } | null {
   if (typeof s !== "object" || s === null) return null;
   const { reps, peso } = s as { reps?: unknown; peso?: unknown };
-  const maxReps = tipo === "tiempo" ? MAX_SEGUNDOS : MAX_REPS;
+  const maxReps = tipo === "tiempo" ? MAX_SEGUNDOS : tipo === "cardio" ? MAX_MINUTOS : MAX_REPS;
   if (typeof reps !== "number" || !Number.isInteger(reps) || reps < 1 || reps > maxReps) return null;
 
   const sinPeso = peso === null || peso === undefined;
@@ -50,14 +61,31 @@ function marcaValida(s: unknown, tipo: DelBanco["tipo"]): { reps: number; peso: 
   if (tipo === "peso" && !pesoOk) return null;
   // En los corporales el peso es lastre opcional (dominadas con cinturón).
   if (tipo === "corporal" && !sinPeso && !pesoOk) return null;
-  if (tipo === "tiempo" && !sinPeso) return null;
+  if ((tipo === "tiempo" || tipo === "cardio") && !sinPeso) return null;
   return { reps, peso: pesoOk ? (peso as number) : null };
 }
 
-/** Una serie con sus bajadas, si trae. En los de tiempo no hay dropset. */
+/** Un número opcional entre 0 y `max`: undefined si no vino, null si vino mal. */
+function opcional(v: unknown, max: number): number | undefined | null {
+  if (v === undefined || v === null) return undefined;
+  return typeof v === "number" && Number.isFinite(v) && v >= 0 && v <= max ? v : null;
+}
+
+/**
+ * Una serie con sus bajadas, si trae. En los de tiempo y cardio no hay dropset; en cardio van
+ * además la inclinación y la velocidad, opcionales.
+ */
 function serieValida(s: unknown, tipo: DelBanco["tipo"]): Serie | null {
   const serie = marcaValida(s, tipo);
   if (!serie) return null;
+  if (tipo === "cardio") {
+    const { inclinacion, velocidad } = s as { inclinacion?: unknown; velocidad?: unknown };
+    const i = opcional(inclinacion, MAX_INCLINACION), v = opcional(velocidad, MAX_VELOCIDAD);
+    if (i === null || v === null) return null;
+    const { caidas } = s as { caidas?: unknown };
+    if (Array.isArray(caidas) && caidas.length > 0) return null;
+    return { ...serie, ...(i !== undefined ? { inclinacion: i } : {}), ...(v !== undefined ? { velocidad: v } : {}) };
+  }
   const caidas = (s as { caidas?: unknown }).caidas;
   if (caidas === undefined || caidas === null) return serie;
   if (!Array.isArray(caidas) || caidas.length > MAX_CAIDAS || tipo === "tiempo") return null;
@@ -91,6 +119,8 @@ export function sesionValida(data: unknown, banco: ReadonlyMap<string, DelBanco>
     if (!Array.isArray(series) || series.length === 0 || series.length > MAX_SERIES) {
       return "serie_invalida";
     }
+    // El cardio es una sola anotación: los minutos en la máquina.
+    if (delBanco.tipo === "cardio" && series.length !== 1) return "serie_invalida";
     const validas: Serie[] = [];
     for (const s of series) {
       const v = serieValida(s, delBanco.tipo);

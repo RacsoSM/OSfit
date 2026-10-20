@@ -23,6 +23,10 @@ import {
   nuevoBorrador,
   paraEnviar,
   cierreAutomatico,
+  agregarCardio,
+  envioCardio,
+  textoCardio,
+  type CamposCardio,
   HORAS_CIERRE,
   quitarBloque,
   quitarCaida,
@@ -103,7 +107,7 @@ export interface DatosRegistro {
   sexo?: "H" | "M" | null;
 }
 
-export type Vista = "inicio" | "historial" | "elegir" | "capturar" | "resumen";
+export type Vista = "inicio" | "historial" | "elegir" | "capturar" | "resumen" | "cardio" | "cardio-datos";
 
 interface Estado {
   vista: Vista;
@@ -114,6 +118,10 @@ interface Estado {
   guardado: false | "enviado" | "en-telefono";
   /** Se cerró solo por llevar más de 3 horas abierto (`cerrarSiVencido`): con lo completo, o descartado. */
   cierreAuto: "enviado" | "descartado" | null;
+  /** "Registrar cardio": la máquina elegida y lo que lleva escrito (ver la spec de cardio). */
+  cardio: ({ id: string } & CamposCardio) | null;
+  /** "🏃 Cardio guardado: Caminadora, 25 min", en el inicio de Registro después de guardarlo solo. */
+  avisoCardio: string | null;
   /** El ejercicio recién agregado, para llevarle la vista al pintar. */
   enfocar: number | null;
   /** El GIF que va volando del grid a su tarjeta (ver `vueloRegistro.ts`); null si no hay. */
@@ -167,6 +175,8 @@ const estado: Estado = {
   error: null,
   guardado: false,
   cierreAuto: null,
+  cardio: null,
+  avisoCardio: null,
   enfocar: null,
   vuelo: null,
   activo: null,
@@ -180,7 +190,7 @@ const estado: Estado = {
   menuSerie: null,
 };
 
-const VISTAS: readonly Vista[] = ["inicio", "historial", "elegir", "capturar", "resumen"];
+const VISTAS: readonly Vista[] = ["inicio", "historial", "elegir", "capturar", "resumen", "cardio", "cardio-datos"];
 
 /**
  * La pantalla que dice el historial, al hacer "atrás" (`alRetrocederSub` de `navegacion.ts`).
@@ -194,10 +204,10 @@ export function vistaDesdeHistorial(vista: string | null): void {
 
 /** Solo para los tests: poner la ventana en una vista y con un borrador dados. */
 export function ponerEstadoRegistro(
-  parcial: Partial<Pick<Estado, "vista" | "borrador" | "error" | "activo" | "resumen" | "modoElegir" | "seleccion" | "menuSerie">>
+  parcial: Partial<Pick<Estado, "vista" | "borrador" | "error" | "activo" | "resumen" | "modoElegir" | "seleccion" | "menuSerie" | "cardio">>
 ): void {
   Object.assign(estado, {
-    guardado: false, cierreAuto: null, enVuelo: false, error: null, activo: null, aviso: null, borrando: null, resumen: null,
+    guardado: false, cierreAuto: null, cardio: null, avisoCardio: null, enVuelo: false, error: null, activo: null, aviso: null, borrando: null, resumen: null,
     modoElegir: "uno", seleccion: [], menuSerie: null,
   }, parcial);
 }
@@ -349,7 +359,8 @@ const repsConfirmadas = new Set<string>();
 
 // ── Inicio e historial ───────────────────────────────────────────────────────
 
-function textoSerie(s: SerieSesion, tipo: "tiempo" | "otro"): string {
+function textoSerie(s: SerieSesion, tipo: "tiempo" | "cardio" | "otro", ejercicioId?: string): string {
+  if (tipo === "cardio") return textoCardio(s, ejercicioId);
   const una = (x: { reps: number; peso: number | null }) => tipo === "tiempo"
     ? `${x.reps} s`
     : x.peso === null ? `× ${x.reps}` : `${x.peso} kg × ${x.reps}`;
@@ -369,14 +380,15 @@ function horario(s: Sesion): string {
 
 function tarjetaSesion(s: Sesion, banco: readonly EjercicioBanco[]): string {
   const filas = s.ejercicios.map((e, i) => {
-    const tipo = banco.find((x) => x.id === e.ejercicioId)?.tipo === "tiempo" ? "tiempo" : "otro";
+    const delBanco = banco.find((x) => x.id === e.ejercicioId)?.tipo;
+    const tipo = delBanco === "tiempo" || delBanco === "cardio" ? delBanco : "otro";
     // En una biserie, el primero de los dos es la A.
     const letra = !e.biserie ? null : s.ejercicios[i - 1]?.biserie === e.biserie ? "B" : "A";
     const marca = letra ? `<span class="registro-letra" aria-label="Biserie, ejercicio ${letra}">${letra}</span>` : "";
     return `
       <li class="registro-hist-ej${letra === "B" ? " biserie-b" : ""}">
         <span class="registro-hist-nombre">${marca}${escapar(e.nombre)}</span>
-        <span class="registro-hist-series">${e.series.map((x) => escapar(textoSerie(x, tipo))).join(" · ")}</span>
+        <span class="registro-hist-series">${e.series.map((x) => escapar(textoSerie(x, tipo, e.ejercicioId))).join(" · ")}</span>
       </li>`;
   }).join("");
   const cuando = horario(s);
@@ -437,7 +449,9 @@ function vistaInicio(d: DatosRegistro): string {
   const n = d.pendientes ?? 0;
   // Recién terminado y todavía en la cola (sin internet, o mandándose por detrás): se dice que
   // está en el teléfono. Cuando la cola queda vacía es un guardado normal.
-  const aviso = estado.cierreAuto === "enviado"
+  const aviso = estado.avisoCardio
+    ? `<p class="aviso-ok">${escapar(estado.avisoCardio)}</p>`
+    : estado.cierreAuto === "enviado"
     ? `<p class="aviso-ok">⏰ Tu entrenamiento llevaba más de ${HORAS_CIERRE} horas abierto: lo cerramos solo y lo guardamos con las series que completaste.</p>`
     : estado.cierreAuto === "descartado"
       ? `<p class="registro-pendientes">⏰ Tu entrenamiento llevaba más de ${HORAS_CIERRE} horas abierto y no tenía ninguna serie completa, así que lo descartamos.</p>`
@@ -447,7 +461,7 @@ function vistaInicio(d: DatosRegistro): string {
     : n > 0 ? `<p class="registro-pendientes">📤 ${n === 1 ? "1 entrenamiento espera" : `${n} entrenamientos esperan`} ${modoSinDatos() ? "a que desactives el modo sin datos" : "internet"} para enviarse.</p>`
     : "";
   const sesiones = d.sesiones ?? [];
-  const semana = resumenSemana(sesiones, d.hoy);
+  const semana = resumenSemana(sesiones, d.hoy, d.banco);
 
   const dias = semana.dias.map((x) => {
     const clase = x.entreno ? " hecho" : x.esHoy ? " es-hoy" : "";
@@ -465,7 +479,8 @@ function vistaInicio(d: DatosRegistro): string {
       <div class="registro-dato"><strong>${promedio === null ? "—" : duracion(promedio)}</strong><span>promedio por sesión</span></div>
       <div class="registro-dato"><strong>${semana.minutos === null ? "—" : duracion(semana.minutos)}</strong><span>entrenando</span></div>
       <div class="registro-dato"><strong>${semana.series}</strong><span>series</span></div>
-    </div>`;
+    </div>
+    ${semana.minutosCardio > 0 ? `<p class="registro-semana-cardio">🏃 ${duracion(semana.minutosCardio)} de cardio esta semana</p>` : ""}`;
 
   const nombreDia = d.dia?.nombreDia.trim();
   const boton = `<button class="boton registro-boton-iniciar" data-accion="iniciar">▶ Iniciar entrenamiento${nombreDia ? ` · ${escapar(nombreDia)}` : ""}</button>`;
@@ -489,6 +504,7 @@ function vistaInicio(d: DatosRegistro): string {
       ${datos}
     </div>
     ${boton}
+    ${hayCardio(d) ? `<button class="boton secundario registro-boton-cardio" data-accion="cardio">🏃 Registrar cardio</button>` : ""}
     ${recientes}`;
 }
 
@@ -780,6 +796,21 @@ function navUnidades(us: readonly number[][], ua: number): string {
  * al siguiente. Es el único con campos: los demás solo muestran su resumen.
  */
 function tarjetaActiva(e: EjercicioBorrador, i: number, nav: string, delBanco?: EjercicioBanco): string {
+  if (e.tipo === "cardio") {
+    const s = e.series[0] ?? { reps: "", peso: "" };
+    const campo = (c: "reps" | "inclinacion" | "velocidad", valor: string | undefined) =>
+      `data-ej="${i}" data-serie="0" data-campo="${c}" value="${escapar(valor ?? "")}"`;
+    return `
+    <div class="tarjeta registro-ejercicio activo" data-indice="${i}">
+      <div class="registro-activo-gif">
+        ${medioGrande(e, delBanco)}
+        <button class="registro-quitar registro-quitar-ej" data-quitar-ej="${i}" aria-label="Quitar ${escapar(e.nombre)}">✕</button>
+      </div>
+      <p class="registro-activo-nombre">${escapar(e.nombre)}</p>
+      ${camposCardio(e.ejercicioId, campo("reps", s.reps), campo("inclinacion", s.inclinacion), campo("velocidad", s.velocidad))}
+      ${nav}
+    </div>`;
+  }
   return `
     <div class="tarjeta registro-ejercicio activo" data-indice="${i}">
       <div class="registro-activo-gif">
@@ -885,6 +916,72 @@ function ejerciciosDelEntrenamiento(b: Borrador, banco: readonly EjercicioBanco[
     ${abajo ? `<div class="registro-compactos">${abajo}</div>` : ""}`;
 }
 
+// ── Cardio ───────────────────────────────────────────────────────────────────
+
+/** El orden de las máquinas en "¿En qué hiciste cardio?"; las que se agreguen después van al final. */
+const ORDEN_CARDIO = ["caminadora", "escaladora", "eliptica", "bicicleta"];
+
+function maquinasCardio(d: DatosRegistro): EjercicioBanco[] {
+  const pos = (id: string) => (ORDEN_CARDIO.indexOf(id) + 1 || 99);
+  return d.banco.filter((b) => b.tipo === "cardio").sort((a, b) => pos(a.id) - pos(b.id) || a.nombre.localeCompare(b.nombre, "es"));
+}
+
+/** Sin máquinas en el banco (antes de cargarlas), el botón no sale: no habría qué elegir. */
+function hayCardio(d: DatosRegistro): boolean {
+  return d.banco.some((b) => b.tipo === "cardio");
+}
+
+/** La caminadora y la elíptica son las únicas con inclinación. */
+const CON_INCLINACION = new Set(["caminadora", "eliptica"]);
+
+/**
+ * Los renglones de una máquina: minutos y, opcionales, inclinación y velocidad. `atributos` lleva
+ * cómo se liga cada campo (al borrador del entrenamiento o al formulario de "Registrar cardio").
+ */
+function camposCardio(id: string, minutos: string, inclinacion: string, velocidad: string): string {
+  const renglon = (titulo: string, nota: string, atributos: string, modo: "numeric" | "decimal") => `
+      <label class="cardio-campo">
+        <span>${titulo}${nota ? `<small>${nota}</small>` : ""}</span>
+        <input class="cardio-input" ${atributos} inputmode="${modo}" placeholder="0" autocomplete="off">
+      </label>`;
+  return `
+    <div class="cardio-campos">
+      ${renglon("Minutos", "", minutos, "numeric")}
+      ${CON_INCLINACION.has(id) ? renglon("Inclinación", "opcional", inclinacion, "decimal") : ""}
+      ${renglon("Velocidad", id === "caminadora" ? "km/h · opcional" : "opcional", velocidad, "decimal")}
+    </div>`;
+}
+
+function vistaCardio(d: DatosRegistro): string {
+  const tarjetas = maquinasCardio(d).map((m) => `
+      <button class="cardio-maquina" data-cardio="${escapar(m.id)}">
+        ${gif(m.gifRuta, "cardio-maquina-gif", 160)}
+        <span>${escapar(m.nombre)}</span>
+      </button>`).join("");
+  return `
+    <p class="confirmar-titulo cardio-titulo">¿En qué hiciste cardio?</p>
+    <div class="cardio-maquinas">${tarjetas}</div>
+    <p class="accion-nota">${estado.borrador ? "Se agrega a tu entrenamiento de hoy." : "Toca una máquina para anotar tu tiempo."}</p>
+    ${CREDITO}`;
+}
+
+function vistaCardioDatos(d: DatosRegistro): string {
+  const c = estado.cardio;
+  const m = c ? d.banco.find((b) => b.id === c.id) : undefined;
+  if (!c || !m) return vistaCardio(d);
+  const campo = (k: keyof CamposCardio) => `data-cardio-campo="${k}" value="${escapar(c[k])}"`;
+  const error = estado.error ? `<p class="aviso-error" style="margin:0 0 12px">${escapar(estado.error)}</p>` : "";
+  return `
+    <div class="tarjeta cardio-cabeza">
+      ${gif(m.gifRuta, "cardio-cabeza-gif", 64)}
+      <div><p class="registro-activo-nombre">${escapar(m.nombre)}</p><p class="accion-nota">Anota lo que marca la pantalla de la máquina.</p></div>
+    </div>
+    <div class="tarjeta">${camposCardio(m.id, campo("minutos"), campo("inclinacion"), campo("velocidad"))}</div>
+    ${error}
+    <button class="boton" data-accion="guardar-cardio">${estado.borrador ? "Agregar a mi entrenamiento" : "Guardar cardio"}</button>
+    ${CREDITO}`;
+}
+
 function vistaCapturar(d: DatosRegistro): string {
   const b = estado.borrador;
   if (!b) return "";
@@ -908,6 +1005,7 @@ function vistaCapturar(d: DatosRegistro): string {
     ${sinLigar}
     ${error}
     <button class="boton${hay ? " secundario" : ""}" data-accion="agregar" ${off}>+ Agregar ejercicio</button>
+    ${!b.edicion && hayCardio(d) ? `<button class="boton secundario registro-boton-cardio" data-accion="cardio" ${off}>🏃 Agregar cardio</button>` : ""}
     ${hay ? `<button class="boton" data-accion="guardar" ${off}>${estado.enVuelo ? "Guardando…" : b.edicion ? "Guardar cambios" : "Terminar entrenamiento"}</button>` : ""}
     ${hay ? CREDITO : ""}
     <button class="boton-texto registro-eliminar" data-accion="descartar" ${off}>${b.edicion ? "Cancelar cambios" : "Eliminar entrenamiento"}</button>`;
@@ -992,6 +1090,8 @@ export function ventanaRegistro(d: DatosRegistro): string {
     : estado.vista === "elegir" ? vistaElegir(d)
     : estado.vista === "capturar" ? vistaCapturar(d)
     : estado.vista === "historial" ? vistaHistorial(d)
+    : estado.vista === "cardio" ? vistaCardio(d)
+    : estado.vista === "cardio-datos" ? vistaCardioDatos(d)
     : vistaInicio(d);
   return `<div id="registro" class="registro">${cuerpo}</div>`;
 }
@@ -1095,7 +1195,50 @@ export function conectarRegistro(
     const b = estado.borrador;
 
     const accion = el.dataset.accion;
+    if (accion === "cardio") {
+      estado.cardio = null;
+      estado.avisoCardio = null;
+      ir("cardio", "adelante");
+      return;
+    }
+    if (el.dataset.cardio) {
+      const id = el.dataset.cardio;
+      // Abre con lo de la última vez que la usó: casi siempre repite.
+      const previa = ultimasSeries(d.sesiones ?? [], id)?.[0];
+      const texto = (n: number | undefined) => (n === undefined ? "" : String(n));
+      estado.cardio = previa
+        ? { id, minutos: String(previa.reps), inclinacion: texto(previa.inclinacion), velocidad: texto(previa.velocidad) }
+        : { id, minutos: "", inclinacion: "", velocidad: "" };
+      ir("cardio-datos", "adelante");
+      return;
+    }
+    if (accion === "guardar-cardio" && estado.cardio) {
+      const m = d.banco.find((x) => x.id === estado.cardio?.id);
+      if (!m) return;
+      const ahora = Date.now();
+      const r = envioCardio(m, estado.cardio, idNuevo(), d.hoy, ahora);
+      if (!r.ok) { estado.error = r.error; repintar(); return; }
+      if (b && !b.edicion) {
+        // Con un entrenamiento abierto se agrega a ese y se abre en grande.
+        const nuevo = agregarCardio(b, m, estado.cardio);
+        guardarBorrador({ ...nuevo, anotado: ahora });
+        estado.activo = nuevo.ejercicios.findIndex((x) => x.ejercicioId === m.id);
+        estado.cardio = null;
+        ir("capturar", "reemplazar");
+        return;
+      }
+      // Sin entrenamiento abierto es uno propio: se manda por la cola, como uno terminado.
+      acciones.encolar?.(r.datos);
+      acciones.enviarAhora?.();
+      estado.avisoCardio = `🏃 Cardio guardado: ${m.nombre}, ${r.datos.ejercicios[0]?.series[0]?.reps ?? 0} min`;
+      estado.cardio = null;
+      estado.guardado = false;
+      estado.cierreAuto = null;
+      ir("inicio", "reemplazar");
+      return;
+    }
     if (accion === "iniciar") {
+      estado.avisoCardio = null;
       estado.guardado = false;
       estado.cierreAuto = null;
       if (!b) {
@@ -1413,11 +1556,18 @@ export function conectarRegistro(
   raiz.addEventListener("input", (ev) => {
     const input = ev.target as HTMLInputElement;
     const { ej, serie, campo, caida } = input.dataset;
+    const cardio = input.dataset.cardioCampo;
+    if (estado.cardio && (cardio === "minutos" || cardio === "inclinacion" || cardio === "velocidad")) {
+      estado.cardio = { ...estado.cardio, [cardio]: input.value };
+      return;
+    }
     if (!estado.borrador || ej === undefined || serie === undefined) return;
-    if (campo !== "reps" && campo !== "peso") return;
+    if (campo !== "reps" && campo !== "peso" && campo !== "inclinacion" && campo !== "velocidad") return;
     const cambiado = caida === undefined
       ? cambiarSerie(estado.borrador, Number(ej), Number(serie), campo, input.value)
-      : cambiarCaida(estado.borrador, Number(ej), Number(serie), Number(caida), campo, input.value);
+      : campo === "reps" || campo === "peso"
+        ? cambiarCaida(estado.borrador, Number(ej), Number(serie), Number(caida), campo, input.value)
+        : estado.borrador;
     // La hora de su última anotación: con la que se cierra si se olvida de terminarlo.
     guardarBorrador({ ...cambiado, anotado: Date.now() });
   });

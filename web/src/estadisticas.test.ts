@@ -115,3 +115,24 @@ describe("nivelesMusculo", () => {
     expect(nivelesMusculo(sesiones, banco, "abdomen", { sexo: "M", peso: 60, edad: null })).toEqual([]);
   });
 });
+
+describe("cardio en Estadísticas", () => {
+  const ses: Sesion[] = [
+    sesion("2026-10-16", [{ ejercicioId: "caminadora", nombre: "Caminadora", series: [{ reps: 25, peso: null, velocidad: 5.5 }] }]),
+    sesion("2026-10-16", [{ ejercicioId: "caminadora", nombre: "Caminadora", series: [{ reps: 10, peso: null }] }]),
+    sesion("2026-10-10", [{ ejercicioId: "caminadora", nombre: "Caminadora", series: [{ reps: 30, peso: null, velocidad: 6 }] }]),
+  ];
+
+  it("minutos totales, la sesión más larga y la velocidad máxima", () => {
+    expect(resumenEjercicio(ses, "caminadora", "cardio", "2026-10-20")).toMatchObject({
+      veces: 2, reps: 65, mejor: { reps: 30, fecha: "2026-10-10" }, velocidadMaxima: 6, kgTotales: 0,
+    });
+  });
+
+  it("la gráfica suma los minutos de cada día", () => {
+    expect(puntosEjercicio(ses, "caminadora", "cardio", "1rm")).toEqual([
+      { fecha: "2026-10-10", valor: 30, etiqueta: "30 min" },
+      { fecha: "2026-10-16", valor: 35, etiqueta: "35 min" },
+    ]);
+  });
+});

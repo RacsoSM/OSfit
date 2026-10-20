@@ -11,11 +11,14 @@ import { fuerzaPorMusculo, nombreRango, unoRm } from "./fuerza";
 
 type Tipo = EjercicioBanco["tipo"];
 
-/** Una serie suelta, ya sin la anidación de las bajadas. */
-interface Serie { reps: number; peso: number | null; }
+/** Una serie suelta, ya sin la anidación de las bajadas. En cardio, `reps` son los minutos. */
+interface Serie { reps: number; peso: number | null; velocidad?: number; }
 
 function seriesDe(series: readonly SerieSesion[]): Serie[] {
-  return series.flatMap((s) => [{ reps: s.reps, peso: s.peso }, ...(s.caidas ?? [])]);
+  return series.flatMap((s) => [
+    { reps: s.reps, peso: s.peso, ...(s.velocidad !== undefined ? { velocidad: s.velocidad } : {}) },
+    ...(s.caidas ?? []),
+  ]);
 }
 
 /** Lo que hizo de un ejercicio en cada fecha, la más vieja primero. Dos sesiones el mismo día se juntan. */
@@ -103,6 +106,8 @@ export interface ResumenEjercicio {
   mejor: MejorSerie | null;
   /** 1RM estimado de hoy menos el de hace 30 días (lo mejor hasta esa fecha); null si no hay con qué comparar. */
   cambio30: number | null;
+  /** La velocidad más alta que anotó. Solo cardio. */
+  velocidadMaxima: number | null;
   primera: string | null;
   ultima: string | null;
 }
@@ -127,14 +132,19 @@ export function resumenEjercicio(sesiones: readonly Sesion[], ejercicioId: strin
   const todas = dias.flatMap((d) => d.series.map((s) => ({ ...s, fecha: d.fecha })));
   const base: ResumenEjercicio = {
     tipo, veces: dias.length, series: todas.length, reps: todas.reduce((n, s) => n + s.reps, 0),
-    kgTotales: 0, pesoMaximo: null, unoRm: null, mejor: null, cambio30: null,
+    kgTotales: 0, pesoMaximo: null, unoRm: null, mejor: null, cambio30: null, velocidadMaxima: null,
     primera: dias[0]?.fecha ?? null, ultima: dias[dias.length - 1]?.fecha ?? null,
   };
   if (todas.length === 0) return base;
 
   if (tipo !== "peso") {
     const mejor = todas.reduce((a, b) => (b.reps > a.reps ? b : a));
-    return { ...base, mejor: { reps: mejor.reps, peso: null, fecha: mejor.fecha } };
+    const velocidades = todas.flatMap((s) => (s.velocidad !== undefined ? [s.velocidad] : []));
+    return {
+      ...base,
+      mejor: { reps: mejor.reps, peso: null, fecha: mejor.fecha },
+      velocidadMaxima: tipo === "cardio" && velocidades.length > 0 ? Math.max(...velocidades) : null,
+    };
   }
 
   const conPeso = todas.filter((s) => s.peso !== null && s.peso > 0);
@@ -166,6 +176,7 @@ export type ModoGrafica = "1rm" | "sesiones";
 /** "60 kg × 6", sin ".0" de más. */
 export function textoSerie(s: Serie, tipo: Tipo): string {
   if (tipo === "tiempo") return `${s.reps} s`;
+  if (tipo === "cardio") return `${s.reps} min`;
   if (s.peso === null || s.peso === 0) return `${s.reps} reps`;
   return `${redondear(s.peso)} kg × ${s.reps}`;
 }
@@ -177,6 +188,11 @@ export function textoSerie(s: Serie, tipo: Tipo): string {
  */
 export function puntosEjercicio(sesiones: readonly Sesion[], ejercicioId: string, tipo: Tipo, modo: ModoGrafica): Punto[] {
   return porFecha(sesiones, ejercicioId).flatMap(({ fecha, series }) => {
+    if (tipo === "cardio") {
+      // Si ese día usó la máquina dos veces, cuentan los minutos de las dos.
+      const minutos = series.reduce((n, s) => n + s.reps, 0);
+      return [{ fecha, valor: minutos, etiqueta: `${minutos} min` }];
+    }
     if (tipo !== "peso") {
       const mejor = series.reduce((a, b) => (b.reps > a.reps ? b : a));
       return [{ fecha, valor: mejor.reps, etiqueta: textoSerie(mejor, tipo) }];

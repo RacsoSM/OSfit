@@ -17,7 +17,7 @@ export const MUSCULOS_SVG = [
   "infraespinoso", "dorsal", "lumbar", "gluteo", "cuadriceps", "isquiotibiales", "pantorrilla",
 ];
 
-export const TIPOS = ["peso", "corporal", "tiempo"];
+export const TIPOS = ["peso", "corporal", "tiempo", "cardio"];
 
 /**
  * Los grupos con los que se arma el grid de Registro ("Pecho:", "Hombro:"…). Cada ejercicio

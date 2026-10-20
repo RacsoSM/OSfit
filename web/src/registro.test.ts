@@ -2,6 +2,9 @@ import { describe, expect, it } from "vitest";
 import type { EjercicioBanco, Sesion } from "./datos";
 import {
   MAX_CAIDAS,
+  agregarCardio,
+  envioCardio,
+  textoCardio,
   cierreAutomatico,
   type Borrador,
   agregarBiserie,
@@ -574,3 +577,55 @@ describe("cierre automático a las 3 horas", () => {
     expect(r?.tipo === "enviar" && r.datos.ejercicios[0].series).toEqual([{ reps: 10, peso: 40, caidas: [{ reps: 8, peso: 30 }] }]);
   });
 });
+
+describe("cardio", () => {
+  const caminadora: EjercicioBanco = { id: "caminadora", nombre: "Caminadora", tipo: "cardio", grupo: "cardio", musculos: { cuadriceps: 0.5 }, gifRuta: null };
+  const bici: EjercicioBanco = { id: "bicicleta", nombre: "Bicicleta", tipo: "cardio", grupo: "cardio", musculos: {}, gifRuta: null };
+  const ahora = Date.UTC(2026, 9, 20, 18, 0);
+
+  it("sin entrenamiento abierto, es uno propio que empezó hace los minutos anotados", () => {
+    const r = envioCardio(caminadora, { minutos: "25", inclinacion: "8", velocidad: "5,5" }, "b1234567", "2026-10-20", ahora);
+    expect(r).toEqual({ ok: true, datos: {
+      id: "b1234567", fecha: "2026-10-20", iniciadaEn: ahora - 25 * 60_000, terminadaEn: ahora,
+      ejercicios: [{ ejercicioId: "caminadora", series: [{ reps: 25, peso: null, inclinacion: 8, velocidad: 5.5 }] }],
+    } });
+  });
+
+  it("la inclinación y la velocidad son opcionales; los minutos no", () => {
+    const r = envioCardio(bici, { minutos: "30", inclinacion: "", velocidad: "" }, "b1234567", "2026-10-20", ahora);
+    expect(r.ok && r.datos.ejercicios[0].series).toEqual([{ reps: 30, peso: null }]);
+    expect(envioCardio(bici, { minutos: "", inclinacion: "", velocidad: "6" }, "b1234567", "2026-10-20", ahora))
+      .toEqual({ ok: false, error: "Bicicleta: faltan los minutos." });
+    expect(envioCardio(bici, { minutos: "", inclinacion: "", velocidad: "" }, "b1234567", "2026-10-20", ahora))
+      .toEqual({ ok: false, error: "Bicicleta: faltan los minutos." });
+    expect(envioCardio(bici, { minutos: "12.5", inclinacion: "", velocidad: "" }, "b1234567", "2026-10-20", ahora))
+      .toEqual({ ok: false, error: "Bicicleta: los minutos van en número entero." });
+    expect(envioCardio(bici, { minutos: "20", inclinacion: "", velocidad: "rápido" }, "b1234567", "2026-10-20", ahora))
+      .toEqual({ ok: false, error: "Bicicleta: la velocidad no es un número." });
+  });
+
+  it("con un entrenamiento abierto se agrega a ese, y otra vez la misma máquina la corrige", () => {
+    let b = agregarCardio(nuevoBorrador("b1234567", "2026-10-20", ahora), caminadora, { minutos: "20", inclinacion: "", velocidad: "" });
+    b = agregarCardio(b, caminadora, { minutos: "25", inclinacion: "", velocidad: "" });
+    expect(b.ejercicios).toHaveLength(1);
+    expect(paraEnviar(b)).toMatchObject({ ok: true, datos: { ejercicios: [{ ejercicioId: "caminadora", series: [{ reps: 25, peso: null }] }] } });
+  });
+
+  it("al elegirla de la lista trae lo de la última vez, en una sola anotación", () => {
+    const b = agregarEjercicio(nuevoBorrador("b1234567", "2026-10-20"), caminadora, [{ reps: 25, peso: null, velocidad: 5.5 }], 4);
+    expect(b.ejercicios[0].series).toEqual([{ reps: "25", peso: "", inclinacion: "", velocidad: "5.5" }]);
+    expect(resumenSeries(b.ejercicios[0])).toBe("25 min · 5.5 km/h");
+  });
+
+  it("el texto del historial", () => {
+    expect(textoCardio({ reps: 25, inclinacion: 8, velocidad: 5.5 }, "caminadora")).toBe("25 min · inclinación 8 · 5.5 km/h");
+    expect(textoCardio({ reps: 30, velocidad: 7 }, "bicicleta")).toBe("30 min · velocidad 7");
+  });
+
+  it("Tu semana suma los minutos de cardio", () => {
+    const sesiones: Sesion[] = [{ id: "s", fecha: "2026-10-20", origen: "manual", ejercicios: [{ ejercicioId: "caminadora", nombre: "Caminadora", series: [{ reps: 25, peso: null }] }] }];
+    expect(resumenSemana(sesiones, "2026-10-20", [caminadora]).minutosCardio).toBe(25);
+    expect(resumenSemana(sesiones, "2026-10-20").minutosCardio).toBe(0);
+  });
+});
+

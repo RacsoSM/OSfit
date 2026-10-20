@@ -34,7 +34,8 @@ export interface EjercicioBanco {
   nombre: string;
   /** Otras formas de escribirlo ("bulgaras", "split squat"). Opcional: un doc a mano puede no traerlo. */
   alias?: string[];
-  tipo: "peso" | "corporal" | "tiempo";
+  /** `cardio`: las máquinas (caminadora, escaladora…); su serie única lleva los minutos en `reps`. */
+  tipo: "peso" | "corporal" | "tiempo" | "cardio";
   /** Su grupo en el grid de Registro (ver `grupos.ts`). Opcional: los docs anteriores no lo traen. */
   grupo?: string;
   /** Grupo del SVG (`data-musculo`) → 1 principal, 0.5 secundario. */
@@ -323,7 +324,14 @@ export function observarConfigGrupos(alCambiar: (c: ConfigGrupos | null) => void
  * el volumen pero no para la fuerza (decisión del entrenador, 2026-10-15), que solo lee
  * `reps` y `peso`. Ausente en una serie normal.
  */
-export interface SerieSesion { reps: number; peso: number | null; caidas?: { reps: number; peso: number | null }[]; }
+export interface SerieSesion {
+  reps: number;
+  peso: number | null;
+  caidas?: { reps: number; peso: number | null }[];
+  /** Solo en cardio (`reps` son los minutos): lo que marcó la máquina. Opcionales. */
+  inclinacion?: number;
+  velocidad?: number;
+}
 
 /**
  * Lo que registró en un entrenamiento: `clientes/{cid}/sesiones/{id}`. Lo escribe solo la

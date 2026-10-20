@@ -5,6 +5,7 @@ const banco = new Map<string, DelBanco>([
   ["press-banca", { nombre: "Press de banca", tipo: "peso" }],
   ["dominadas", { nombre: "Dominadas", tipo: "corporal" }],
   ["plancha", { nombre: "Plancha", tipo: "tiempo" }],
+  ["caminadora", { nombre: "Caminadora", tipo: "cardio" }],
 ]);
 
 const ID = "a1b2c3d4e5f6";
@@ -181,3 +182,40 @@ describe("origenValido", () => {
     expect(origenValido("otra cosa")).toBe("manual");
   });
 });
+
+describe("sesionValida con cardio", () => {
+  const con = (serie: unknown, mas: unknown[] = []) =>
+    sesionValida({ id: ID, ejercicios: [{ ejercicioId: "caminadora", series: [serie, ...mas] }] }, banco);
+
+  it("guarda minutos, inclinación y velocidad, con el nombre del banco", () => {
+    expect(con({ reps: 25, peso: null, inclinacion: 8, velocidad: 5.5 })).toEqual({
+      id: ID, ejercicios: [{ ejercicioId: "caminadora", nombre: "Caminadora", series: [{ reps: 25, peso: null, inclinacion: 8, velocidad: 5.5 }] }],
+    });
+  });
+
+  it("la inclinación y la velocidad son opcionales", () => {
+    expect(con({ reps: 30, peso: null })).toMatchObject({ ejercicios: [{ series: [{ reps: 30, peso: null }] }] });
+  });
+
+  it("minutos enteros de 1 a 300, sin peso", () => {
+    expect(con({ reps: 0, peso: null })).toBe("serie_invalida");
+    expect(con({ reps: 301, peso: null })).toBe("serie_invalida");
+    expect(con({ reps: 12.5, peso: null })).toBe("serie_invalida");
+    expect(con({ reps: 20, peso: 10 })).toBe("serie_invalida");
+  });
+
+  it("rechaza inclinación o velocidad fuera de rango, y más de una anotación o bajadas", () => {
+    expect(con({ reps: 20, peso: null, inclinacion: 31 })).toBe("serie_invalida");
+    expect(con({ reps: 20, peso: null, velocidad: -1 })).toBe("serie_invalida");
+    expect(con({ reps: 20, peso: null, velocidad: "5" })).toBe("serie_invalida");
+    expect(con({ reps: 20, peso: null }, [{ reps: 10, peso: null }])).toBe("serie_invalida");
+    expect(con({ reps: 20, peso: null, caidas: [{ reps: 5, peso: null }] })).toBe("serie_invalida");
+  });
+
+  it("los demás tipos no guardan inclinación ni velocidad", () => {
+    const r = sesionValida({ id: ID, ejercicios: [{ ejercicioId: "plancha", series: [{ reps: 40, peso: null, velocidad: 5 }] }] }, banco);
+    expect(r).toMatchObject({ ejercicios: [{ series: [{ reps: 40, peso: null }] }] });
+    expect(JSON.stringify(r)).not.toContain("velocidad");
+  });
+});
+

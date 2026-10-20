@@ -966,3 +966,19 @@ servidor no puede cerrarlo. Decisiones del entrenador:
 - Va por la cola (`cola.ts`), así que sin internet o con el modo sin datos se manda después.
   Registro le avisa: "⏰ Tu entrenamiento llevaba más de 3 horas abierto: lo cerramos solo…".
 
+## 25. Registrar cardio — ✅ HECHO (2026-10-20)
+
+> "quiero agregar un apartado para que registren su cardio tambien, que aparezcan las opciones (en que hiciste cardio? y aparezca una caminadora, escaladora, eliptica, bicicleta" (2026-10-20)
+
+Spec: `docs/superpowers/specs/2026-10-20-cardio-design.md`. El entrenador eligió entre tres
+maquetas la "B": un botón **"🏃 Registrar cardio"** en Registro → "¿En qué hiciste cardio?" con
+caminadora, escaladora, elíptica y bicicleta → minutos (obligatorio), inclinación (solo caminadora
+y elíptica) y velocidad (opcionales).
+
+- Sin entrenamiento abierto se guarda solo, como un entrenamiento propio (cuenta en "Tu semana" y
+  marca la asistencia); con uno abierto se agrega a ese ("🏃 Agregar cardio").
+- Tipo nuevo `cardio` en el banco: una sola serie con `reps` = minutos, más `inclinacion` y
+  `velocidad`. `registrarSesion` lo valida.
+- "Tu semana" suma los minutos de cardio; Estadísticas muestra minutos totales, sesión más larga,
+  velocidad máxima y los minutos por día.
+
