@@ -79,8 +79,9 @@ anota.
 Diseño elegido por el entrenador entre cuatro maquetas (2026-10-20): la **A** ("tarjetas
 arriba"), con el selector cambiado por la opción **1** de tres.
 
-1. **Selector arriba:** una tarjeta con el GIF y el nombre de lo elegido (o la insignia y el
-   nombre del músculo) y "Cambiar ›". Al tocarla sube una hoja con un buscador y sus ejercicios
+1. **Selector arriba:** una tarjeta con el nombre de lo elegido y su músculo (o la insignia, el
+   nombre y el rango del músculo) y "Cambiar ›". Sin GIF ni cuántas veces lo hizo (entrenador,
+   2026-10-20): eso va en la hoja. Al tocarla sube una hoja con un buscador y sus ejercicios
    agrupados por músculo; cada músculo lleva su rango actual en una pastilla y tocar su nombre
    abre la vista del músculo. Un ejercicio que trabaja dos músculos principales sale en los dos.
    Abre en el ejercicio que hizo más recientemente.

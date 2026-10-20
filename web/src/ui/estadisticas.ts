@@ -132,11 +132,12 @@ function grupoPrincipal(banco: readonly EjercicioBanco[], id: string): string | 
 function tarjetaElegido(d: DatosEstadisticas, e: Elegido, hechos: readonly EjercicioHecho[]): string {
   let figura: string, nombre: string, nota: string;
   if (e.tipo === "ejercicio") {
-    const h = hechos.find((x) => x.id === e.id);
+    // Sin GIF ni cuántas veces (entrenador, 2026-10-20): el ejercicio ya sale en grande debajo,
+    // y las veces van en la hoja de "Cambiar" y en los datos clave.
     const grupo = grupoPrincipal(d.banco, e.id);
-    figura = gifDe(d.banco, e.id, "estad-elegido-figura");
-    nombre = h?.nombre ?? e.id;
-    nota = [grupo ? nombreMusculo(grupo) : null, h ? `${h.veces} ${h.veces === 1 ? "vez" : "veces"}` : null].filter(Boolean).join(" · ");
+    figura = "";
+    nombre = hechos.find((x) => x.id === e.id)?.nombre ?? e.id;
+    nota = grupo ? nombreMusculo(grupo) : "";
   } else {
     const f = d.fuerza[e.id];
     figura = f
@@ -148,7 +149,7 @@ function tarjetaElegido(d: DatosEstadisticas, e: Elegido, hechos: readonly Ejerc
   return `
     <button type="button" class="tarjeta estad-elegido" data-estad="cambiar" aria-haspopup="dialog">
       ${figura}
-      <span class="estad-elegido-texto"><strong>${escapar(nombre)}</strong><small>${escapar(nota)}</small></span>
+      <span class="estad-elegido-texto"><strong>${escapar(nombre)}</strong>${nota ? `<small>${escapar(nota)}</small>` : ""}</span>
       <span class="estad-cambiar">Cambiar ›</span>
     </button>`;
 }

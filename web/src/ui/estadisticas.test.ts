@@ -41,6 +41,14 @@ describe("ventanaEstadisticas", () => {
     expect(html).toContain("Cambiar ›");
   });
 
+  it("la tarjeta de Cambiar de un ejercicio va sin GIF ni cuántas veces: solo su nombre y su músculo", () => {
+    const html = ventanaEstadisticas(datos());
+    const tarjeta = html.slice(html.indexOf("estad-elegido"), html.indexOf("Cambiar ›"));
+    expect(tarjeta).not.toContain("<img");
+    expect(tarjeta).not.toContain("veces");
+    expect(tarjeta).toContain("<small>Pecho</small>");
+  });
+
   it("un ejercicio de peso trae sus datos clave y los dos apartados de la gráfica", () => {
     const html = ventanaEstadisticas(datos());
     expect(html).toContain("1RM estimado");
