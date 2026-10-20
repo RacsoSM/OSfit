@@ -12,6 +12,7 @@ import {
   observarBanco,
   observarSesiones,
   observarConfigGrupos,
+  observarHistorial,
 } from "./datos";
 import type {
   Cliente,
@@ -42,6 +43,7 @@ import {
   alBloquear, conexionDelNavegador, esWifi, guardarModoSinDatos, modoSinDatos, sugerirApagar,
 } from "./sinDatos";
 import { conectarSinDatos } from "./ui/tarjetaSinDatos";
+import { conectarEstadisticas } from "./ui/estadisticas";
 import { mostrarAvisoSinDatos, quitarAvisoSinDatos } from "./ui/avisoSinDatos";
 import { almacenesDelNavegador, saludDeLosAlmacenes } from "./sesion";
 import type { MotivoSinAcceso, ResultadoSesion } from "./sesion";
@@ -223,6 +225,12 @@ async function arrancar(): Promise<void> {
   let indice: IndiceBanco = new Map();
   /** Sus sesiones de Registro; null hasta que llegan. */
   let sesiones: Sesion[] | null = null;
+  /**
+   * Todo su historial, para Estadísticas. Se pide la primera vez que entra a esa ventana y
+   * sigue escuchando: las demás pantallas abren con las últimas 60 (`sesiones`).
+   */
+  let historial: Sesion[] | null = null;
+  let historialPedido = false;
   /** Los ejercicios por grupo del grid de Registro; null si el entrenador no configura ninguno. */
   let configGrupos: ConfigGrupos | null = null;
   /** Los entrenamientos que se terminaron sin internet, en el teléfono (`cola.ts`). */
@@ -594,6 +602,10 @@ async function arrancar(): Promise<void> {
       if (activa.id !== ventanaPintada) { reiniciarComparar(); if (cliente.sinAccesoAmigos !== true || cliente.adminAmigos === true) cargarComparacion(); }
       cargarMapas(false, sexosAComparar(comparacion, cliente.sexo));
     }
+    if (activa.id === "estadisticas" && !historialPedido) {
+      historialPedido = true;
+      observarHistorial(clienteId, (s) => { historial = s; pintar(); });
+    }
     actualizarCabecera(tituloCabecera(activa));
     const datos = {
       cliente, hoy, asistencias, mesVisible, yaAviso, medallas, logros,
@@ -611,6 +623,7 @@ async function arrancar(): Promise<void> {
       comparacion,
       sinDatos: modoSinDatos(),
       avisaWifi: conexion?.type !== undefined,
+      historial,
     };
     contenido.innerHTML = contenidoDe(activa, datos);
     marcarBotonAtras(contenido);
@@ -669,6 +682,10 @@ async function arrancar(): Promise<void> {
         verMusculos: () => abrirVentana("musculos"),
         apagarSinDatos: () => { cambiarSinDatos(false); },
       });
+      return;
+    }
+    if (activa.id === "estadisticas") {
+      conectarEstadisticas(pintar, () => abrirVentana("registro"));
       return;
     }
     if (activa.id === "ranking") {

@@ -369,6 +369,25 @@ export function observarSesiones(clienteId: string, alCambiar: (s: Sesion[]) => 
 }
 
 /**
+ * Todo su historial, para Estadísticas (backlog 2, punto 22). Aparte de `observarSesiones` y
+ * solo al abrir esa ventana: las demás pantallas abren con las últimas 60 y no pagan cientos
+ * de lecturas en cada apertura. Después de la primera carga solo cuestan los cambios.
+ */
+export function observarHistorial(clienteId: string, alCambiar: (s: Sesion[]) => void) {
+  const consulta = query(collection(db, "clientes", clienteId, "sesiones"), orderBy("creada", "desc"));
+  return escuchar("historial", (alLlegar, alFallar) =>
+    onSnapshot(
+      consulta,
+      (snap) => {
+        alLlegar();
+        alCambiar(snap.docs.map((d) => ({ ...(d.data() as Omit<Sesion, "id">), id: d.id })));
+      },
+      alFallar
+    )
+  );
+}
+
+/**
  * El banco completo. Son menos de cien documentos y casi nunca cambian: con el caché en
  * IndexedDB de `firebase.ts`, desde la segunda visita sale del teléfono sin gastar lecturas.
  */

@@ -14,6 +14,7 @@ import { seccionVacia, tarjetaLogrosPersonales, tarjetaMedallas } from "./ui/tar
 import { tarjetaRanking, type EstadoRanking } from "./ui/tarjetaRanking";
 import { tarjetaAjustes } from "./ui/tarjetaAjustes";
 import { tarjetaSinDatos } from "./ui/tarjetaSinDatos";
+import { ventanaEstadisticas, type DatosEstadisticas } from "./ui/estadisticas";
 import { invitacionNotificaciones, seccionNotificaciones } from "./ui/tarjetaNotificaciones";
 import type { EstadoNotificaciones } from "./notificaciones";
 import { tarjetaMusculos, type EstadoSvg } from "./ui/mapaMuscular";
@@ -34,7 +35,7 @@ import { edadEn, fuerzaPorMusculo, pesoParaFuerza, type FuerzaMusculo } from "./
  */
 
 export type IdVentana =
-  | "inicio" | "musculos" | "registro" | "comparar"
+  | "inicio" | "musculos" | "registro" | "comparar" | "estadisticas"
   | "ranking" | "medallas" | "logros" | "videos" | "ajustes";
 
 /** Todo lo que los listeners de Firestore tienen a mano en cada repintado. */
@@ -77,6 +78,27 @@ export interface DatosCliente {
   sinDatos?: boolean;
   /** Si este navegador dice cuándo hay Wi-Fi (en iPhone no). */
   avisaWifi?: boolean;
+  /** Todo su historial, para Estadísticas; null mientras no llega (se pide al abrir esa ventana). */
+  historial?: Sesion[] | null;
+}
+
+/** Lo que necesita Estadísticas. Mientras llega el historial completo, usa las últimas que ya hay. */
+export function datosEstadisticas(d: DatosCliente): DatosEstadisticas {
+  const { sexo, peso, porcentajeGrasa, anioNacimiento } = d.cliente;
+  const conSexo = sexo === "H" || sexo === "M";
+  const perfil = conSexo && peso
+    ? { sexo, peso: pesoParaFuerza(peso, sexo, porcentajeGrasa), edad: edadEn(anioNacimiento, d.hoy) }
+    : null;
+  return {
+    sesiones: d.historial ?? d.sesiones,
+    cargandoHistorial: !d.historial,
+    banco: d.banco,
+    hoy: d.hoy,
+    sexo: conSexo ? sexo : null,
+    perfil,
+    fuerza: fuerzaDelCliente(d),
+    peso: peso ?? null,
+  };
 }
 
 /** Lo que necesita Registro, armado de lo que hay en cada repintado. Lo usa también `main.ts`. */
@@ -175,6 +197,10 @@ export const VENTANAS: readonly Ventana[] = [
   {
     id: "comparar", titulo: "Amigos", icono: "👥", grupo: "sub",
     pintar: (d) => ventanaComparar(d.comparacion ?? { estado: "cargando" }, d.cliente.sexo, d.mapas, d.cliente),
+  },
+  {
+    id: "estadisticas", titulo: "Estadísticas", icono: "📈", grupo: "principal",
+    pintar: (d) => ventanaEstadisticas(datosEstadisticas(d)),
   },
   {
     id: "ranking", titulo: "Ranking", icono: "🏆", grupo: "principal",

@@ -840,7 +840,23 @@ la hubiera marcado él. También refresca en la ficha el trío que lee la web (`
 - El documento lleva `marcadaDesde: "registro"`, para saber de dónde salió; la app lo ignora.
 
 
-## 22. Estadísticas: progresión por músculo o por ejercicio
+## 22. Estadísticas: progresión por músculo o por ejercicio — ✅ HECHO (2026-10-20), falta verlo en el teléfono
+
+**Hecho (2026-10-20):** ventana **Estadísticas** en el menú ☰. Spec:
+`docs/superpowers/specs/2026-10-20-estadisticas-design.md`. El entrenador eligió entre cuatro
+maquetas la "A" (tarjetas arriba) con el selector de tarjeta + hoja con buscador.
+
+- **Todo el historial:** al abrir la ventana se escucha toda la colección de sesiones
+  (`observarHistorial`); las demás pantallas siguen con las últimas 60. Las 8 semanas del rango
+  de Músculos **no cambian** (decisión del entrenador).
+- **Ejercicio:** tarjetas con 1RM estimado (y cuánto subió en 30 días), mejor serie, kg
+  levantados en toda su historia, veces, reps totales y peso máximo (corporales y de tiempo con
+  las suyas); gráfica con dos apartados, **1RM** y **Sesiones** (la serie más pesada de cada día,
+  tal cual); y la lista de sus sesiones.
+- **Músculo:** su rango actual y lo que le falta para el siguiente, la gráfica de su nivel con
+  las franjas de cada rango y sus ejercicios.
+- Tocar o arrastrar sobre la gráfica muestra la fecha y la serie de cada punto.
+
 
 > "agregar un nuevo apartado de estadísticas en el menú de la derecha arriba, ahí debes poder escoger o un músculo o un ejercicio, y te debe de aparecer tu progresión en una gráfica, así como un par de cards y datos básicos de cada ejercicio que selecciones o músculo" (2026-10-19)
 

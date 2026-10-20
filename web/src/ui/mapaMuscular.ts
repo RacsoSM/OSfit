@@ -272,7 +272,7 @@ function textoFalta(s: Extract<ReturnType<typeof siguienteRango>, { tipo: "falta
 }
 
 /** Lo que le falta para el siguiente rango, o que ya está en el más alto. */
-function bloqueSiguiente(f: FuerzaMusculo, sexo: Sexo, peso: number, musculo: string): string {
+export function bloqueSiguiente(f: FuerzaMusculo, sexo: Sexo, peso: number, musculo: string): string {
   const s = siguienteRango(f, peso);
   if (s.tipo === "maximo") {
     return `<div class="hoja-sig"><p class="hoja-sig-texto">Estás en el rango más alto. ¡Sigue así!</p></div>`;

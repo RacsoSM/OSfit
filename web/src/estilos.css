@@ -1701,3 +1701,78 @@ button.registro-serie-num.abierto { border-style: solid; border-color: var(--pri
 @media (prefers-reduced-motion: reduce) {
   .logro-velo.entrando, .logro-aviso.entrando { animation: none; }
 }
+
+/* Estadísticas (`ui/estadisticas.ts`, diseño "A" del entrenador, 2026-10-20). */
+.estad-elegido {
+  display: flex; align-items: center; gap: 12px; width: 100%; padding: 10px 14px 10px 10px;
+  border: 1px solid var(--superficie-alta); color: var(--texto); font: inherit; text-align: left; cursor: pointer;
+}
+.estad-elegido-figura { flex: none; width: 52px; height: 52px; border-radius: 12px; background: #fff; object-fit: cover; }
+.estad-elegido-figura.estad-insignia { background: none; display: flex; align-items: center; justify-content: center; }
+.estad-sin-gif { display: flex; align-items: center; justify-content: center; font-size: 24px; background: var(--superficie-alta); }
+.estad-elegido-texto { flex: 1; min-width: 0; }
+.estad-elegido-texto strong { display: block; font-size: 18px; line-height: 1.25; }
+.estad-elegido-texto small { color: var(--texto-tenue); font-size: 12px; }
+.estad-cambiar { flex: none; color: var(--primario); font-weight: 700; font-size: 14px; }
+.estad-elegido:focus-visible { outline: 2px solid var(--primario); outline-offset: 2px; }
+.estad-datos { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+.estad-datos .tarjeta { margin: 0; padding: 12px 14px; min-width: 0; }
+.estad-dato-valor { font-size: 22px; font-weight: 800; line-height: 1.15; margin: 2px 0 0; overflow-wrap: anywhere; }
+.estad-dato-nota { font-size: 12px; color: var(--texto-tenue); margin: 2px 0 0; min-height: 1em; }
+.estad-sube { color: var(--verde); font-weight: 700; }
+.estad-nota { font-size: 12px; color: var(--texto-tenue); margin: 8px 2px 0; }
+.estad-cargando-todo { margin: -4px 2px 10px; }
+.estad-rango { font-size: 24px; font-weight: 800; margin: 2px 0 4px; }
+/* "1RM | Sesiones": el mismo control segmentado que "Barras | Kg" de Registro. */
+.estad-seg { display: flex; gap: 3px; padding: 3px; margin-bottom: 8px; border-radius: 12px; background: var(--superficie-alta); }
+.estad-seg button {
+  flex: 1; padding: 7px 0; border: 0; border-radius: 9px; background: transparent;
+  color: var(--texto-tenue); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer;
+}
+.estad-seg button.activa { background: var(--primario); color: var(--sobre-primario); }
+.estad-seg button:focus-visible { outline: 2px solid var(--primario); outline-offset: 2px; }
+.estad-hist, .estad-lista { list-style: none; margin: 0; padding: 0; }
+.estad-hist li { display: flex; gap: 10px; padding: 9px 0; border-top: 1px solid var(--superficie-alta); font-size: 14px; }
+.estad-hist li:first-child, .estad-lista li:first-child .estad-fila-ej { border-top: 0; }
+.estad-hist-fecha { flex: none; width: 52px; color: var(--texto-tenue); font-weight: 600; }
+.estad-fila-ej {
+  display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px 2px;
+  border: 0; border-top: 1px solid var(--superficie-alta); background: none;
+  color: var(--texto); font: inherit; font-size: 14px; text-align: left; cursor: pointer;
+}
+.estad-fila-ej > span:nth-of-type(1) { flex: 1; min-width: 0; }
+.estad-fila-ej strong { display: block; font-weight: 600; }
+.estad-fila-ej small { color: var(--texto-tenue); font-size: 12px; }
+.estad-fila-gif { flex: none; width: 36px; height: 36px; border-radius: 8px; background: #fff; object-fit: cover; font-size: 18px; }
+
+/* La gráfica (`ui/grafica.ts`): una serie en el color de la paleta, rejilla recesiva. */
+.grafica { display: block; width: 100%; height: auto; overflow: visible; touch-action: pan-y; user-select: none; }
+.grafica-lectura { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin: 2px 2px 6px; }
+.grafica-lectura strong { font-size: 20px; font-weight: 800; }
+.grafica-lectura span { font-size: 12px; color: var(--texto-tenue); text-align: right; }
+.grafica-rejilla { stroke: var(--superficie-alta); stroke-width: 1; }
+.grafica-eje { font-size: 10px; fill: var(--texto-tenue); }
+.grafica-banda { font-size: 9px; fill: var(--texto-tenue); }
+.grafica-linea { fill: none; stroke: var(--primario); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.grafica-punto { fill: var(--primario); stroke: var(--superficie); stroke-width: 2; }
+.grafica-guia { stroke: var(--texto-tenue); stroke-width: 1; opacity: 0.5; }
+
+/* La hoja de "Cambiar": sube desde abajo, encima de la barra (z 10) y debajo del menú (z 20). */
+.estad-velo { position: fixed; inset: 0; z-index: 12; background: rgba(0, 0, 0, 0.55); }
+.estad-hoja {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 13;
+  max-width: 480px; margin: 0 auto; max-height: 80vh; display: flex; flex-direction: column;
+  padding: 10px 16px calc(16px + env(safe-area-inset-bottom));
+  border-radius: 22px 22px 0 0; background: var(--superficie); box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.45);
+}
+.estad-buscar {
+  width: 100%; padding: 12px 14px; margin-bottom: 6px; border: 0; border-radius: 12px;
+  background: var(--superficie-alta); color: var(--texto); font: inherit; font-size: 16px;
+}
+.estad-buscar:focus-visible { outline: 2px solid var(--primario); outline-offset: 1px; }
+.estad-hoja-cuerpo { overflow-y: auto; overscroll-behavior: contain; }
+.estad-grupo-titulo {
+  display: flex; align-items: center; justify-content: space-between; width: 100%; margin: 10px 0 2px; padding: 6px 2px;
+  border: 0; background: none; color: var(--texto); font: inherit; font-size: 15px; font-weight: 800; text-align: left; cursor: pointer;
+}
+.estad-pastilla { padding: 3px 10px; border: 1px solid currentColor; border-radius: 999px; font-size: 12px; font-weight: 700; color: var(--primario); }
