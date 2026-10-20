@@ -5,6 +5,10 @@
  *    el JS y el CSS del build, los SVG del mapa y los íconos. Sin señal, Registro sigue
  *    funcionando y lo que se termine se manda después (`src/cola.ts`).
  * 2. Muestra los avisos del entrenador y abre la página al tocarlos.
+ * 3. El modo sin datos de Ajustes (`src/sinDatos.ts`): con él puesto no deja salir ningún
+ *    pedido a internet y contesta solo con lo guardado. Para que con el modo se vean los GIF
+ *    de los ejercicios, las imágenes y las fuentes del estilo, esos se guardan al verlos con
+ *    señal (`CACHE_MEDIOS`).
  *
  * Cómo no se queda con una versión vieja: el HTML va **red primero**. Con señal siempre llega
  * el del último deploy (hosting lo sirve con `no-cache`), y solo sin señal se usa el guardado.
@@ -21,6 +25,32 @@ const CACHE = "osfit-pagina-v1";
 const PAGINA = "/";
 /** Con señal pero muy lenta, a los 5 s se usa la página guardada en vez de seguir esperando. */
 const ESPERA_RED_MS = 5000;
+/**
+ * Los GIF e imágenes de Storage y las fuentes de Google, guardados al verlos. Los GIF pesan
+ * ~40 kB, así que el banco entero cabe en unos 5 MB. Los videos (`.mp4`) no se guardan: pesan
+ * más y el navegador los pide por pedazos.
+ */
+const CACHE_MEDIOS = "osfit-medios-v1";
+/** GEMELOS de `CACHE_AJUSTES` y `MARCA_SIN_DATOS` en `src/sinDatos.ts`. */
+const CACHE_AJUSTES = "osfit-ajustes";
+const MARCA_SIN_DATOS = "/__modo-sin-datos";
+
+/**
+ * Si el modo sin datos está puesto; `null` mientras se lee. El service worker se apaga solo
+ * cuando no lo usan y al volver a prender pierde lo que tenía en memoria, por eso la página
+ * deja el modo en un caché y aquí se lee al arrancar. Con la página abierta, el cambio llega
+ * además por mensaje, sin esperar a que se apague.
+ */
+let sinDatos = null;
+const leyendoModo = caches
+  .open(CACHE_AJUSTES)
+  .then((cache) => cache.match(MARCA_SIN_DATOS))
+  .then((marca) => { if (sinDatos === null) sinDatos = !!marca; })
+  .catch(() => { if (sinDatos === null) sinDatos = false; });
+
+self.addEventListener("message", (evento) => {
+  if (evento.data && evento.data.tipo === "modo-sin-datos") sinDatos = !!evento.data.activo;
+});
 
 self.addEventListener("install", (evento) => {
   self.skipWaiting();
@@ -40,22 +70,83 @@ self.addEventListener("activate", (evento) =>
 );
 
 self.addEventListener("fetch", (evento) => {
-  const pedido = evento.request;
-  if (pedido.method !== "GET") return;
-  const url = new URL(pedido.url);
-  // Solo lo de este sitio. Firebase, Storage y las fuentes van directo, como siempre.
-  if (url.origin !== self.location.origin) return;
-  // `/version.json` siempre a la red y sin guardar: dice si hay un deploy más nuevo (`src/version.ts`).
-  if (url.pathname === "/sw.js" || url.pathname === "/version.json" || url.pathname.startsWith("/__/")) return;
-
-  if (pedido.mode === "navigate") {
-    evento.respondWith(paginaRedPrimero(evento));
-  } else if (url.pathname.startsWith("/assets/")) {
-    evento.respondWith(cachePrimero(pedido));
-  } else {
-    evento.respondWith(redPrimero(pedido));
+  if (sinDatos === true) {
+    evento.respondWith(soloGuardado(evento.request));
+    return;
   }
+  // Recién prendido y sin saber todavía el modo: se toman todos los pedidos hasta saberlo.
+  // Es solo el primer instante después de prender; lo normal es saberlo ya.
+  if (sinDatos === null) {
+    evento.respondWith(
+      leyendoModo.then(() => (sinDatos ? soloGuardado(evento.request) : respuestaNormal(evento) || fetch(evento.request)))
+    );
+    return;
+  }
+  const respuesta = respuestaNormal(evento);
+  if (respuesta) evento.respondWith(respuesta);
 });
+
+/**
+ * La respuesta con señal, o `null` para dejar que el navegador vaya directo a la red, como si
+ * no hubiera service worker.
+ */
+function respuestaNormal(evento) {
+  const pedido = evento.request;
+  if (pedido.method !== "GET") return null;
+  const url = new URL(pedido.url);
+  if (esMedio(url)) return medioGuardado(evento);
+  // Del resto, solo lo de este sitio. Firebase va directo, como siempre.
+  if (url.origin !== self.location.origin) return null;
+  // `/version.json` siempre a la red y sin guardar: dice si hay un deploy más nuevo (`src/version.ts`).
+  if (url.pathname === "/sw.js" || url.pathname === "/version.json" || url.pathname.startsWith("/__/")) return null;
+
+  if (pedido.mode === "navigate") return paginaRedPrimero(evento);
+  if (url.pathname.startsWith("/assets/")) return cachePrimero(pedido);
+  return redPrimero(pedido);
+}
+
+/**
+ * Con el modo sin datos: lo guardado o nada. `Response.error()` la página lo ve como un fallo
+ * de red, que es lo que ya sabe manejar.
+ */
+async function soloGuardado(pedido) {
+  if (pedido.method !== "GET") return Response.error();
+  const url = new URL(pedido.url);
+  const llave = pedido.mode === "navigate" && url.origin === self.location.origin ? PAGINA : pedido;
+  // `ignoreVary`: lo guardado con un pedido que traía `Origin` (los `<script type="module">`)
+  // no empataría con uno que no lo trae si el servidor contestó `Vary: Origin`.
+  return (await caches.match(llave, { ignoreVary: true })) || Response.error();
+}
+
+/** Los archivos de Storage (menos los videos) y las fuentes de Google. */
+function esMedio(url) {
+  if (url.hostname === "fonts.googleapis.com" || url.hostname === "fonts.gstatic.com") return true;
+  // `alt=media` es el archivo; sin él es la consulta de metadatos de `getDownloadURL`.
+  return url.hostname === "firebasestorage.googleapis.com" &&
+    url.searchParams.get("alt") === "media" && !url.pathname.endsWith(".mp4");
+}
+
+/**
+ * Lo guardado al instante y, por detrás, se refresca de la red para la próxima vez (casi
+ * siempre lo contesta el caché HTTP del navegador sin gastar datos). Se pide con `cors`, no
+ * como lo pide un `<img>`: así la respuesta se puede leer y guardar con su tamaño real (las
+ * opacas cuentan como varios MB contra la cuota). Storage y Google Fonts mandan CORS abierto.
+ */
+async function medioGuardado(evento) {
+  const pedido = evento.request;
+  const cache = await caches.open(CACHE_MEDIOS);
+  const guardado = await cache.match(pedido.url);
+  const deRed = fetch(pedido.url, { mode: "cors", credentials: "omit" }).then((respuesta) => {
+    if (respuesta.ok) return cache.put(pedido.url, respuesta.clone()).then(() => respuesta, () => respuesta);
+    return respuesta;
+  });
+  if (guardado) {
+    evento.waitUntil(deRed.catch(() => {}));
+    return guardado;
+  }
+  // Si el pedido con CORS falla, el de siempre.
+  return deRed.catch(() => fetch(pedido));
+}
 
 /** El HTML: el de la red si llega a tiempo; si no, el guardado. */
 async function paginaRedPrimero(evento) {

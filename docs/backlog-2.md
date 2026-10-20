@@ -897,3 +897,43 @@ A decidir en el spec:
   el teléfono.
 - Si también va en la app del entrenador para ver la de cada clienta (ya hay
   `EstadisticasScreen.kt`, que es de asistencia).
+
+## 23. Modo sin datos en Ajustes — ✅ HECHO (2026-10-20), falta probarlo en un teléfono
+
+> "quiero que haya un botón para activar el modo offline desde los ajustes, para cuando eso este activo no se usen datos, cuando detecte internet de wifi, que sugiera cambiarlo de nuevo" (2026-10-20)
+
+En la web de la clienta, **Ajustes → Datos móviles → Modo sin datos** (un interruptor). Se
+guarda en el teléfono. Con el modo puesto la página se porta como sin señal (punto 11) y no
+sale a internet:
+
+- **Firestore con la red apagada** (`disableNetwork`): las pantallas muestran lo guardado en el
+  teléfono. Al apagar el modo se renueva la credencial y Firestore pide solo lo que cambió.
+- **Las funciones no se llaman** (`llamable` en `web/src/acciones.ts`): fallan al instante como
+  sin red. Si fue un toque de la clienta (ruleta, ranking, Amigos, revivir, editar o borrar un
+  entrenamiento, su peso) sale una franja "Esto necesita internet…" con **Desactivar**.
+- **Registro:** "Terminar entrenamiento" lo deja en la cola del teléfono y se manda al apagar el
+  modo. Los mensajes dicen "cuando desactives el modo sin datos". La tarjeta grande muestra el
+  GIF, no el video.
+- **El service worker** (`web/public/sw.js`) es la red de seguridad: con el modo no deja salir
+  ningún pedido y contesta solo con lo guardado. Se entera por un caché (`osfit-ajustes`) y por
+  mensaje, porque se apaga solo y pierde la memoria. Probado en Chromium: la página recarga
+  desde el caché, Firestore, las funciones y `/version.json` quedan bloqueados (también después
+  de reiniciar el service worker) y al apagarlo todo vuelve.
+- Ni se pregunta por versión nueva ni se vuelve a registrar el service worker.
+- **Pastilla "✈️ Sin datos"** junto al ☰ mientras está puesto (tocarla abre Ajustes), para que
+  no parezca que la página se trabó.
+- **Wi-Fi:** al detectar Wi-Fi sale la franja "📶 Estás en Wi-Fi. ¿Desactivar el modo sin
+  datos?". Con "✕" no insiste hasta que vuelva a entrar a un Wi-Fi. **Solo funciona en
+  Android/Chrome**: Safari y los navegadores de iPhone no dicen el tipo de conexión
+  (`navigator.connection`), y Ajustes le avisa que ahí lo desactive ella.
+- **Fuentes del estilo:** se guardan al verlas con señal (`osfit-medios-v1`), así el estilo se
+  ve igual sin datos.
+
+Pendiente:
+
+- **GIF de los ejercicios sin datos:** el service worker ya intenta guardarlos al verlos, pero
+  Storage no manda cabeceras CORS y sin ellas no se pueden guardar (guardarlos opacos inflaría la
+  cuota del sitio y el navegador podría borrar el caché de Firestore). Hace falta configurar CORS
+  en el bucket (`gsutil cors set` con `GET` para el dominio de la web). Mientras, sin datos solo
+  se ven los GIF que el navegador tenga en su caché propio; los demás salen vacíos.
+- Probarlo en un teléfono Android con Wi-Fi y datos, y en un iPhone.

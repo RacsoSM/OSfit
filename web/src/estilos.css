@@ -526,6 +526,15 @@ main {
 }
 .version-app[hidden] { display: none; }
 .cabecera-texto { flex: 1; min-width: 0; }
+/* "Sin datos" junto al ☰ (`marcarSinDatos` en `menuLateral.ts`): con el modo puesto nada se
+   actualiza, y esto dice por qué. Tocarla abre Ajustes. Con fondo y encima: el cómic y sakura
+   ponen su adorno (el ¡POW!, el sello) en esa esquina de la cabecera. */
+.pastilla-sin-datos {
+  flex: none; align-self: center; margin-top: 2px; padding: 4px 10px; position: relative; z-index: 1;
+  border: 1px solid var(--primario); border-radius: 999px; background: var(--superficie);
+  color: var(--primario); font: inherit; font-size: 12px; font-weight: 700; white-space: nowrap; cursor: pointer;
+}
+.pastilla-sin-datos:focus-visible { outline: 2px solid var(--primario); outline-offset: 2px; }
 .cabecera-menu {
   flex: none; width: 44px; height: 44px; margin: 0 -8px 0 0;
   border: 0; border-radius: 12px; background: transparent;
@@ -686,6 +695,21 @@ body.menu-abierto { overflow: hidden; }
 }
 .ajuste-nota { font-size: 13px; margin: 10px 2px 0; }
 .ajuste-tenue { color: var(--texto-tenue); font-size: 12px; margin-top: 4px; }
+/* El interruptor del modo sin datos (`tarjetaSinDatos.ts`), en el renglón de su etiqueta. */
+.ajuste-interruptor { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.ajuste-interruptor .ajuste-etiqueta { margin: 6px 2px; }
+.interruptor {
+  flex: none; position: relative; width: 52px; height: 30px; padding: 0;
+  border: 0; border-radius: 15px; background: var(--superficie-alta); cursor: pointer;
+  transition: background 160ms ease; -webkit-tap-highlight-color: transparent;
+}
+.interruptor[aria-checked="true"] { background: var(--primario); }
+.interruptor-bolita {
+  position: absolute; top: 3px; left: 3px; width: 24px; height: 24px; border-radius: 50%;
+  background: var(--texto); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35); transition: transform 160ms ease;
+}
+.interruptor[aria-checked="true"] .interruptor-bolita { transform: translateX(22px); background: var(--sobre-primario); }
+.interruptor:focus-visible { outline: 2px solid var(--primario); outline-offset: 2px; }
 
 /* Las transiciones del cambio de estilo (`cambioDeEstilo.ts`). Viven acá y no en la hoja de
    cada estilo porque la mitad que tapa corre con el estilo VIEJO todavía puesto: colgadas de

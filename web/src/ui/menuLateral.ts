@@ -23,13 +23,25 @@ export function cabecera(saludoHtml: string): string {
         <h1 class="titulo-ventana" id="titulo-ventana" hidden></h1>
         <p class="detalle-ventana" id="detalle-ventana" hidden></p>
       </div>
+      <button type="button" class="pastilla-sin-datos" id="pastilla-sin-datos" hidden
+              aria-label="Modo sin datos puesto. Abrir Ajustes">✈️ Sin datos</button>
       <button type="button" class="cabecera-menu" id="abrir-menu"
               aria-label="Abrir menú" aria-controls="menu-panel" aria-expanded="false">☰</button>
     </header>`;
 }
 
-export function conectarCabecera(abrirMenu: () => void): void {
+export function conectarCabecera(abrirMenu: () => void, abrirAjustes: () => void): void {
   document.querySelector("#abrir-menu")?.addEventListener("click", abrirMenu);
+  document.querySelector("#pastilla-sin-datos")?.addEventListener("click", abrirAjustes);
+}
+
+/**
+ * La pastilla de la cabecera que recuerda que el modo sin datos está puesto: con él, nada se
+ * actualiza, y sin el recordatorio parecería que la página se trabó. Tocarla abre Ajustes.
+ */
+export function marcarSinDatos(activo: boolean): void {
+  const p = document.querySelector<HTMLElement>("#pastilla-sin-datos");
+  if (p) p.hidden = !activo;
 }
 
 /**

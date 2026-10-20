@@ -7,7 +7,7 @@ import {
   signInWithCustomToken,
   signOut,
 } from "firebase/auth";
-import { initializeFirestore, persistentLocalCache } from "firebase/firestore";
+import { disableNetwork, enableNetwork, initializeFirestore, persistentLocalCache } from "firebase/firestore";
 import { getFunctions } from "firebase/functions";
 import {
   almacenesDelNavegador,
@@ -49,6 +49,15 @@ export const app = initializeApp(firebaseConfig);
  * la ventaja, nunca la página.
  */
 export const db = initializeFirestore(app, { localCache: persistentLocalCache() });
+
+/**
+ * Apaga o prende la red de Firestore, para el modo sin datos (`sinDatos.ts`). Apagada, los
+ * listeners siguen vivos y entregan lo que hay en el caché del teléfono; al prenderla, el SDK
+ * pide solo lo que cambió mientras tanto.
+ */
+export function redDeFirestore(activa: boolean): Promise<void> {
+  return activa ? enableNetwork(db) : disableNetwork(db);
+}
 
 /**
  * La URL de descarga de un archivo de Storage.

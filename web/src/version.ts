@@ -10,6 +10,7 @@
  * para no cambiarle la pantalla a media serie. Recargar no pierde nada: el entrenamiento en curso
  * y la cola sin internet viven en el navegador.
  */
+import { modoSinDatos } from "./sinDatos";
 
 /** Cada cuánto se vuelve a preguntar mientras la página está a la vista. */
 export const CADA_MS = 30 * 60_000;
@@ -38,7 +39,10 @@ export interface Entorno {
 
 export const entornoDelNavegador = (): Entorno => ({
   // `no-store`: ni el navegador ni un proxy deben contestar con una copia guardada.
-  pedir: () => fetch("/version.json", { cache: "no-store" }).then((r) => (r.ok ? r.json() : null)),
+  // Con el modo sin datos ni se pregunta (`sinDatos.ts`): se revisa al volver a la página ya sin él.
+  pedir: () => modoSinDatos()
+    ? Promise.resolve(null)
+    : fetch("/version.json", { cache: "no-store" }).then((r) => (r.ok ? r.json() : null)),
   visible: () => document.visibilityState === "visible",
   alVolver: (escucha) => {
     document.addEventListener("visibilitychange", () => {

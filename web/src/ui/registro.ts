@@ -3,6 +3,7 @@ import { RANGOS, nombreRango, type FuerzaMusculo } from "../fuerza";
 import { armarResumen, sesionDeEnvio, type Resumen } from "../resumen";
 import { insigniaRango } from "./insigniaRango";
 import { claveBanco, urlGif, urlVideo, type IndiceBanco } from "../banco";
+import { modoSinDatos } from "../sinDatos";
 import { seccionesRegistro } from "../grupos";
 import {
   MAX_CAIDAS,
@@ -365,14 +366,19 @@ function filaReciente(s: Sesion): string {
  * el botón para empezar y sus entrenamientos recientes. Todo sale de lo que ella anotó; de la
  * rutina solo se toma el nombre del día que le toca, para el botón.
  */
+/** Cuándo sale lo que espera en la cola: con el modo sin datos, hasta que lo apague. */
+function cuandoSeEnvia(): string {
+  return modoSinDatos() ? "cuando desactives el modo sin datos" : "solo en cuanto tengas internet";
+}
+
 function vistaInicio(d: DatosRegistro): string {
   const n = d.pendientes ?? 0;
   // Recién terminado y todavía en la cola (sin internet, o mandándose por detrás): se dice que
   // está en el teléfono. Cuando la cola queda vacía es un guardado normal.
   const aviso = estado.guardado && n > 0
-    ? `<p class="aviso-ok">¡Entrenamiento guardado en tu teléfono! 📱 Se enviará solo en cuanto tengas internet.</p>`
+    ? `<p class="aviso-ok">¡Entrenamiento guardado en tu teléfono! 📱 Se enviará ${cuandoSeEnvia()}.</p>`
     : estado.guardado ? `<p class="aviso-ok">¡Entrenamiento guardado! 💪</p>`
-    : n > 0 ? `<p class="registro-pendientes">📤 ${n === 1 ? "1 entrenamiento espera" : `${n} entrenamientos esperan`} internet para enviarse.</p>`
+    : n > 0 ? `<p class="registro-pendientes">📤 ${n === 1 ? "1 entrenamiento espera" : `${n} entrenamientos esperan`} ${modoSinDatos() ? "a que desactives el modo sin datos" : "internet"} para enviarse.</p>`
     : "";
   const sesiones = d.sesiones ?? [];
   const semana = resumenSemana(sesiones, d.hoy);
@@ -654,7 +660,8 @@ function indiceActivo(b: Borrador): number {
 function medioGrande(e: EjercicioBorrador, delBanco: EjercicioBanco | undefined): string {
   const gifRuta = delBanco?.gifRuta ?? e.gifRuta;
   const video = urlVideo(delBanco?.videoRuta);
-  if (!video) return gif(gifRuta, "registro-ej-gif", 180);
+  // Sin datos, el GIF: el video no se guarda en el teléfono y bajarlo es justo lo que se evita.
+  if (!video || modoSinDatos()) return gif(gifRuta, "registro-ej-gif", 180);
   const poster = urlGif(gifRuta);
   return `<video class="registro-ej-gif registro-ej-video" src="${escapar(video)}"
       ${poster ? `poster="${escapar(poster)}"` : ""} width="260" height="260"
@@ -876,7 +883,7 @@ function vistaResumen(r: Resumen & { dia: string | null }, sexo: "H" | "M"): str
       </div>
     </div>`;
   const nota = r.enTelefono
-    ? `<p class="registro-pendientes">📱 Se guardó en tu teléfono y se enviará solo en cuanto tengas internet.</p>`
+    ? `<p class="registro-pendientes">📱 Se guardó en tu teléfono y se enviará ${cuandoSeEnvia()}.</p>`
     : "";
   return `
     <div class="resumen">
@@ -1099,7 +1106,7 @@ export function conectarRegistro(
       };
       const puedeEsperar = !edicion && acciones.encolar !== undefined;
       // Si el teléfono ya sabe que no hay red, ni se intenta: sería esperar a que falle.
-      if (puedeEsperar && navigator.onLine === false) { enTelefono(); return; }
+      if (puedeEsperar && (navigator.onLine === false || modoSinDatos())) { enTelefono(); return; }
       // Uno nuevo no espera al servidor (tarda 1 a 4 s): se guarda en la cola del teléfono, sale
       // el resumen al instante y la cola lo manda por detrás (`enviarAhora`), con sus
       // reintentos. Mandarlo dos veces no lo duplica: el id lo pone el borrador.
@@ -1134,7 +1141,9 @@ export function conectarRegistro(
           if (puedeEsperar && !rechazoDefinitivo(error)) { enTelefono(); return; }
           // El borrador se queda: con señal de vuelta, "Guardar" reescribe la misma sesión.
           estado.enVuelo = false;
-          estado.error = "No se pudo guardar. Revisa tu conexión e intenta otra vez; lo que anotaste sigue aquí.";
+          estado.error = modoSinDatos()
+            ? "Estás en modo sin datos: desactívalo en Ajustes para guardar los cambios. Lo que anotaste sigue aquí."
+            : "No se pudo guardar. Revisa tu conexión e intenta otra vez; lo que anotaste sigue aquí.";
           repintar();
         }
       );
@@ -1171,7 +1180,9 @@ export function conectarRegistro(
         () => { estado.borrando = null; estado.aviso = "Entrenamiento eliminado"; repintar(); },
         () => {
           estado.borrando = null;
-          estado.error = "No se pudo eliminar. Revisa tu conexión e intenta otra vez.";
+          estado.error = modoSinDatos()
+            ? "Estás en modo sin datos: desactívalo en Ajustes para eliminarlo."
+            : "No se pudo eliminar. Revisa tu conexión e intenta otra vez.";
           repintar();
         }
       );

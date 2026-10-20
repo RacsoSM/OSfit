@@ -13,6 +13,7 @@ import { calendario } from "./ui/calendario";
 import { seccionVacia, tarjetaLogrosPersonales, tarjetaMedallas } from "./ui/tarjetaInsignias";
 import { tarjetaRanking, type EstadoRanking } from "./ui/tarjetaRanking";
 import { tarjetaAjustes } from "./ui/tarjetaAjustes";
+import { tarjetaSinDatos } from "./ui/tarjetaSinDatos";
 import { invitacionNotificaciones, seccionNotificaciones } from "./ui/tarjetaNotificaciones";
 import type { EstadoNotificaciones } from "./notificaciones";
 import { tarjetaMusculos, type EstadoSvg } from "./ui/mapaMuscular";
@@ -72,6 +73,10 @@ export interface DatosCliente {
   pendientes?: number;
   /** Lo que devolvió `compararMusculos`; lo pide `main.ts` al entrar a Amigos. */
   comparacion?: EstadoComparar;
+  /** El modo sin datos de Ajustes (`sinDatos.ts`). Lo guarda el navegador. */
+  sinDatos?: boolean;
+  /** Si este navegador dice cuándo hay Wi-Fi (en iPhone no). */
+  avisaWifi?: boolean;
 }
 
 /** Lo que necesita Registro, armado de lo que hay en cada repintado. Lo usa también `main.ts`. */
@@ -188,7 +193,7 @@ export const VENTANAS: readonly Ventana[] = [
   { id: "videos", titulo: "Videos", icono: "🎬", grupo: "principal", contenedorPropio: "videos", oculta: true },
   {
     id: "ajustes", titulo: "Ajustes", icono: "⚙️", grupo: "pie",
-    pintar: (d) => tarjetaAjustes(d.estilo) + seccionNotificaciones(d.notificaciones, d.activandoNotificaciones),
+    pintar: (d) => tarjetaAjustes(d.estilo) + tarjetaSinDatos(d.sinDatos ?? false, d.avisaWifi ?? false) + seccionNotificaciones(d.notificaciones, d.activandoNotificaciones),
   },
 ];
 

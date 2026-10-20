@@ -37,7 +37,12 @@ import { conectarNotificaciones } from "./ui/tarjetaNotificaciones";
 import { conectarAvisoReviveExtra } from "./ui/avisoReviveExtra";
 import { almacenDeEstilo, ponerEstilo } from "./ui/cambioDeEstilo";
 import { estiloGuardado, type IdEstilo } from "./estilo";
-import { cerrarSesion, credencialLista, huellaDeLaSesion, iniciarSesion, urlDeDescarga } from "./firebase";
+import { cerrarSesion, credencialLista, huellaDeLaSesion, iniciarSesion, redDeFirestore, urlDeDescarga } from "./firebase";
+import {
+  alBloquear, conexionDelNavegador, esWifi, guardarModoSinDatos, modoSinDatos, sugerirApagar,
+} from "./sinDatos";
+import { conectarSinDatos } from "./ui/tarjetaSinDatos";
+import { mostrarAvisoSinDatos, quitarAvisoSinDatos } from "./ui/avisoSinDatos";
 import { almacenesDelNavegador, saludDeLosAlmacenes } from "./sesion";
 import type { MotivoSinAcceso, ResultadoSesion } from "./sesion";
 import { aplicarPaleta } from "./paleta";
@@ -71,7 +76,7 @@ import { mostrarAvisoVersion } from "./ui/avisoVersion";
 import { vigilarVersion } from "./version";
 import {
   actualizarCabecera, aplicarMenuAbierto, cabecera, conectarCabecera, conectarMenu,
-  marcarVentanaActiva, panelMenu,
+  marcarSinDatos, marcarVentanaActiva, panelMenu,
 } from "./ui/menuLateral";
 import type { VideoConUrl } from "./ui/tarjetaVideos";
 import { iniciarCronometros } from "./ui/cronometro";
@@ -231,7 +236,8 @@ async function arrancar(): Promise<void> {
    * cada minuto mientras quede alguno: en iOS el evento `online` no siempre llega.
    */
   function enviarCola(): void {
-    if (pendientes === 0) return;
+    // Con el modo sin datos esperan a que lo apague (`cambiarSinDatos` la vuelve a llamar).
+    if (pendientes === 0 || modoSinDatos()) return;
     // Uno que entra a la cola mientras se manda otra tanda se manda al terminar esa, no un
     // minuto después: es el que la clienta acaba de terminar.
     if (enviandoCola) { otraVuelta = true; return; }
@@ -247,6 +253,48 @@ async function arrancar(): Promise<void> {
         enviandoCola = false;
         if (otraVuelta) enviarCola();
       });
+  }
+
+  /** Para saber si hay Wi-Fi; null en los navegadores que no lo dicen (Safari, iPhone). */
+  const conexion = conexionDelNavegador();
+  /** Dijo "Ahora no" a apagar el modo en este Wi-Fi. Se olvida al salir del Wi-Fi. */
+  let wifiDescartado = false;
+  /** Los últimos videos que llegaron, para pedir sus URL al apagar el modo sin datos. */
+  let videosCrudos: VideoResumen[] = [];
+
+  /** Prende o apaga el modo sin datos (`sinDatos.ts`), desde Ajustes o desde la franja. */
+  async function cambiarSinDatos(activo: boolean): Promise<void> {
+    await guardarModoSinDatos(activo);
+    wifiDescartado = false;
+    quitarAvisoSinDatos();
+    pintar();
+    if (activo) {
+      await redDeFirestore(false).catch(() => {});
+      return;
+    }
+    // El token pudo vencer mientras tanto (duran una hora): primero la credencial, luego la
+    // red, igual que al arrancar.
+    await credencialLista().catch(() => {});
+    await redDeFirestore(true).catch(() => {});
+    enviarCola();
+    resolverVideos(videosCrudos);
+  }
+
+  /**
+   * Con el modo puesto y el teléfono en Wi-Fi, ofrece apagarlo. Si dice "Ahora no", no
+   * insiste hasta que vuelva a entrar a un Wi-Fi.
+   */
+  function revisarWifi(): void {
+    if (!esWifi(conexion?.type)) {
+      wifiDescartado = false;
+      return;
+    }
+    if (!sugerirApagar(modoSinDatos(), conexion?.type, wifiDescartado)) return;
+    mostrarAvisoSinDatos(
+      "📶 Estás en Wi-Fi. ¿Desactivar el modo sin datos?",
+      () => { cambiarSinDatos(false); },
+      () => { wifiDescartado = true; }
+    );
   }
 
   /** Llave en el navegador para "Ahora no". Se pierde si borran datos: vuelve a salir, no es grave. */
@@ -362,9 +410,12 @@ async function arrancar(): Promise<void> {
    * propio error y esa tarjeta queda con `url: null`.
    */
   async function resolverVideos(crudos: VideoResumen[]): Promise<void> {
+    videosCrudos = crudos;
     const recientes = ultimosRangoDescendente(crudos, MAXIMO_VIDEOS);
     videos = await Promise.all(
       recientes.map(async (v) => {
+        // Sin datos no se pide: la tarjeta queda sin video hasta que apague el modo.
+        if (modoSinDatos()) return { ...v, url: null };
         try {
           const url = await urlDeDescarga(v.rutaStorage);
           return { ...v, url };
@@ -396,7 +447,7 @@ async function arrancar(): Promise<void> {
       `<div id="videos" hidden></div><div id="barra">${barra}</div>` +
       `<div id="menu"></div><div id="ruleta"></div>`;
     conectarSaludo();
-    conectarCabecera(abrirMenu);
+    conectarCabecera(abrirMenu, () => abrirVentana("ajustes"));
     conectarBarra(abrirVentana);
     // Jalar desde la orilla derecha abre el menú, solo en las pestañas de la barra.
     conectarDeslizarMenu(() => !menuAbierto() && BARRA.includes(ventanaActiva()), abrirMenu);
@@ -528,6 +579,7 @@ async function arrancar(): Promise<void> {
     prepararEstructura(cliente.nombre);
     actualizarNombre(cliente.nombre);
     marcarSexoBarra(cliente.sexo);
+    marcarSinDatos(modoSinDatos());
     const contenido = document.querySelector<HTMLElement>("#contenido");
     if (!contenido) return;
 
@@ -557,6 +609,8 @@ async function arrancar(): Promise<void> {
       configGrupos,
       pendientes,
       comparacion,
+      sinDatos: modoSinDatos(),
+      avisaWifi: conexion?.type !== undefined,
     };
     contenido.innerHTML = contenidoDe(activa, datos);
     marcarBotonAtras(contenido);
@@ -628,6 +682,7 @@ async function arrancar(): Promise<void> {
         estilo = nuevo;
         pintar();
       });
+      conectarSinDatos((activo) => { cambiarSinDatos(activo); });
       conectarNotificaciones(alActivarNotificaciones, alDescartarInvitacion);
       return;
     }
@@ -681,12 +736,23 @@ async function arrancar(): Promise<void> {
   // La credencial antes que los listeners: pedir datos en el hueco entre entrar y que el
   // cliente de Firestore se entere vuelve como `permission-denied`. Sin internet no se puede
   // renovar, y no importa: Firestore muestra lo que tiene guardado en el teléfono.
-  await credencialLista().catch(() => {});
+  // Con el modo sin datos, Firestore ni sale a la red: los listeners entregan lo guardado en el
+  // teléfono y la credencial no hace falta hasta que lo apague.
+  if (modoSinDatos()) await redDeFirestore(false).catch(() => {});
+  else await credencialLista().catch(() => {});
 
   // Lo que se terminó sin internet sale en cuanto hay señal.
   enviarCola();
   window.addEventListener("online", enviarCola);
   setInterval(enviarCola, 60_000);
+
+  alBloquear(() => mostrarAvisoSinDatos(
+    "Esto necesita internet y tienes el modo sin datos.",
+    () => { cambiarSinDatos(false); },
+    () => {}
+  ));
+  conexion?.addEventListener("change", revisarWifi);
+  revisarWifi();
 
   // Una vez por carga y sin esperarla: es para la ficha del entrenador, no para ella. Si
   // falla, esta apertura no queda anotada y nada más.
@@ -767,7 +833,9 @@ async function arrancar(): Promise<void> {
  * Antes solo se registraba al activar los avisos; ahora siempre, y después de cargar para no
  * competir con el arranque.
  */
-if ("serviceWorker" in navigator) {
+// Con el modo sin datos no se registra: registrar revisa en la red si hay un `sw.js` nuevo, y
+// el que ya está instalado sigue sirviendo la página.
+if ("serviceWorker" in navigator && !modoSinDatos()) {
   window.addEventListener("load", () => {
     navigator.serviceWorker.register("/sw.js").catch(() => {});
   });
