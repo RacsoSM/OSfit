@@ -667,6 +667,7 @@ async function arrancar(): Promise<void> {
           else irSub(s, modo);
         },
         verMusculos: () => abrirVentana("musculos"),
+        apagarSinDatos: () => { cambiarSinDatos(false); },
       });
       return;
     }

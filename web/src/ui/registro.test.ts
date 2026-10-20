@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import type { EjercicioBanco, Sesion } from "../datos";
 import { indiceBanco } from "../banco";
 import { agregarBiserie, agregarEjercicio, borradorDeSesion, nuevoBorrador } from "../registro";
-import { avisoReps, cabeceraRegistro, empezarGuiado, entrenamientoAbierto, ponerEstadoRegistro, ventanaRegistro, type DatosRegistro } from "./registro";
+import { avisoReps, avisoTerminadoSinDatos, cabeceraRegistro, empezarGuiado, entrenamientoAbierto, ponerEstadoRegistro, ventanaRegistro, type DatosRegistro } from "./registro";
 
 const press: EjercicioBanco = {
   id: "press-banca", nombre: "Press de banca", alias: ["press banca"], tipo: "peso", grupo: "pecho",
@@ -420,5 +420,20 @@ describe("biseries y dropsets", () => {
     expect(html).toContain('ejercicio A">A</span>Press de banca');
     expect(html).toContain('ejercicio B">B</span>Remo con barra');
     expect(html).toContain("40 kg × 10 ↓ 30 kg × 8");
+  });
+});
+
+describe("aviso al terminar con el modo sin datos", () => {
+  it("dice que hace falta internet y recomienda quitar el modo al tener conexión", () => {
+    const html = avisoTerminadoSinDatos(true);
+    expect(html).toContain("se necesita conexión a internet");
+    expect(html).toContain("quites el modo sin datos");
+    expect(html).toContain(`role="alertdialog"`);
+    expect(html).toContain(`data-sin-datos-fin="entendido"`);
+  });
+
+  it("ofrece quitar el modo solo si hay quien lo apague", () => {
+    expect(avisoTerminadoSinDatos(true)).toContain(`data-sin-datos-fin="apagar"`);
+    expect(avisoTerminadoSinDatos(false)).not.toContain(`data-sin-datos-fin="apagar"`);
   });
 });

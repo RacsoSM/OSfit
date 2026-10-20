@@ -913,7 +913,11 @@ sale a internet:
   entrenamiento, su peso) sale una franja "Esto necesita internet…" con **Desactivar**.
 - **Registro:** "Terminar entrenamiento" lo deja en la cola del teléfono y se manda al apagar el
   modo. Los mensajes dicen "cuando desactives el modo sin datos". La tarjeta grande muestra el
-  GIF, no el video.
+  GIF, no el video. Al terminar (en Registro o en el modo guiado) sale además una ventana:
+  "Tu entrenamiento quedó guardado en tu teléfono… Para mandarlo al servidor se necesita
+  conexión a internet. Te recomendamos que, cuando tengas conexión, quites el modo sin datos en
+  Ajustes", con **Entendido** y **Ya tengo internet: quitar el modo** (pedido del entrenador,
+  2026-10-20).
 - **El service worker** (`web/public/sw.js`) es la red de seguridad: con el modo no deja salir
   ningún pedido y contesta solo con lo guardado. Se entera por un caché (`osfit-ajustes`) y por
   mensaje, porque se apaga solo y pierde la memoria. Probado en Chromium: la página recarga

@@ -282,6 +282,38 @@ export function avisoReps(reps: number): string {
     </div>`;
 }
 
+/**
+ * Al terminar un entrenamiento con el modo sin datos puesto (pedido del entrenador,
+ * 2026-10-20): queda en el teléfono y no sale hasta que lo quite, así que se le dice en una
+ * ventana y no solo en la nota del resumen, que se puede pasar por alto. Mismo velo que el de
+ * las reps; "Quitar el modo" solo se ofrece si hay quien lo apague.
+ */
+export function avisoTerminadoSinDatos(puedeApagar: boolean): string {
+  return `
+    <div class="reps-velo" id="sin-datos-velo">
+      <div class="reps-aviso tarjeta" role="alertdialog" aria-modal="true" aria-labelledby="sin-datos-titulo" aria-describedby="sin-datos-texto">
+        <p class="reps-titulo" id="sin-datos-titulo">📱 Tu entrenamiento quedó guardado en tu teléfono</p>
+        <p class="reps-texto" id="sin-datos-texto">Para mandarlo al servidor se necesita conexión a internet. Te recomendamos que, cuando tengas conexión, quites el modo sin datos en Ajustes: se enviará solo.</p>
+        ${puedeApagar ? `<button type="button" class="boton secundario" data-sin-datos-fin="apagar">Ya tengo internet: quitar el modo</button>` : ""}
+        <button type="button" class="boton" data-sin-datos-fin="entendido">Entendido</button>
+      </div>
+    </div>`;
+}
+
+function mostrarTerminadoSinDatos(apagar: (() => void) | undefined): void {
+  if (document.querySelector("#sin-datos-velo")) return;
+  document.body.insertAdjacentHTML("beforeend", avisoTerminadoSinDatos(apagar !== undefined));
+  const velo = document.querySelector<HTMLElement>("#sin-datos-velo");
+  if (!velo) return;
+  velo.querySelector<HTMLElement>('[data-sin-datos-fin="entendido"]')?.focus();
+  velo.addEventListener("click", (e) => {
+    const boton = (e.target as HTMLElement).closest<HTMLElement>("[data-sin-datos-fin]");
+    if (!boton) return;
+    velo.remove();
+    if (boton.dataset.sinDatosFin === "apagar") apagar?.();
+  });
+}
+
 /** Las reps que ya confirmó ("ej:serie:reps"), para no volver a preguntar por las mismas. */
 const repsConfirmadas = new Set<string>();
 
@@ -957,6 +989,8 @@ export interface AccionesRegistro {
   navegar?: (vista: Vista, modo: "adelante" | "volver" | "reemplazar" | "marcar") => void;
   /** "Ver mis músculos" del resumen: abre la ventana Músculos. */
   verMusculos?: () => void;
+  /** Quita el modo sin datos (`sinDatos.ts`), desde el aviso al terminar con el modo puesto. */
+  apagarSinDatos?: () => void;
 }
 
 /**
@@ -1103,6 +1137,7 @@ export function conectarRegistro(
         guardarBorrador(null);
         estado.guardado = "en-telefono";
         ir("resumen", "reemplazar");
+        if (modoSinDatos()) mostrarTerminadoSinDatos(acciones.apagarSinDatos);
       };
       const puedeEsperar = !edicion && acciones.encolar !== undefined;
       // Si el teléfono ya sabe que no hay red, ni se intenta: sería esperar a que falle.
