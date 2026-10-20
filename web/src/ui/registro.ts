@@ -295,7 +295,7 @@ function gif(ruta: string | null | undefined, clase: string, lado: number): stri
 }
 
 /** Los términos del dataset piden el crédito junto a las animaciones, donde se muestren. */
-const CREDITO = `<p class="registro-credito">Animaciones © Gym visual</p>`;
+export const CREDITO = `<p class="registro-credito">Animaciones © Gym visual</p>`;
 
 /**
  * El aviso cuando escribe muchas reps (backlog 2, punto 15.4), con las palabras del
@@ -728,8 +728,15 @@ function indiceActivo(b: Borrador): number {
  * entrenamiento ya abierto aparece sin tener que empezar otro.
  */
 function medioGrande(e: EjercicioBorrador, delBanco: EjercicioBanco | undefined): string {
-  const gifRuta = delBanco?.gifRuta ?? e.gifRuta;
-  const video = urlVideo(delBanco?.videoRuta);
+  return medioDelEjercicio(delBanco?.gifRuta ?? e.gifRuta, delBanco?.videoRuta);
+}
+
+/**
+ * Un ejercicio en grande: su video HD en bucle si lo tiene (con el GIF de póster), o su GIF.
+ * Lo usan la tarjeta activa de Registro y Estadísticas, para que se vea igual en las dos.
+ */
+export function medioDelEjercicio(gifRuta: string | null | undefined, videoRuta: string | null | undefined): string {
+  const video = urlVideo(videoRuta);
   // Sin datos, el GIF: el video no se guarda en el teléfono y bajarlo es justo lo que se evita.
   if (!video || modoSinDatos()) return gif(gifRuta, "registro-ej-gif", 180);
   const poster = urlGif(gifRuta);

@@ -84,7 +84,9 @@ arriba"), con el selector cambiado por la opción **1** de tres.
    agrupados por músculo; cada músculo lleva su rango actual en una pastilla y tocar su nombre
    abre la vista del músculo. Un ejercicio que trabaja dos músculos principales sale en los dos.
    Abre en el ejercicio que hizo más recientemente.
-2. **Ejercicio:** tarjetas con los datos clave en dos columnas; la gráfica con sus dos
+2. **Ejercicio:** el ejercicio **en grande**, igual que la tarjeta activa de Registro (su video HD
+   en bucle si lo tiene, si no su GIF, con el crédito de Gym visual; pedido del entrenador,
+   2026-10-20); tarjetas con los datos clave en dos columnas; la gráfica con sus dos
    apartados ("1RM | Sesiones") cuando aplica; abajo la lista de sus sesiones (fecha y series),
    de la más nueva a la más vieja, que es además la vista en tabla de la gráfica.
 3. **Músculo:** su rango actual (insignia y nombre) y cuánto falta para el siguiente; la gráfica

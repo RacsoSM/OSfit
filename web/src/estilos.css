@@ -1802,3 +1802,6 @@ button.registro-serie-num.abierto { border-style: solid; border-color: var(--pri
   background: var(--fondo); color: var(--texto); font: inherit; font-size: 18px; font-weight: 700; text-align: center;
 }
 .cardio-input:focus { outline: none; border-color: var(--primario); }
+/* El ejercicio en grande en Estadísticas, como la tarjeta activa de Registro. */
+.estad-medio { padding-top: 16px; padding-bottom: 8px; }
+.estad-medio .registro-activo-gif { margin-bottom: 4px; }

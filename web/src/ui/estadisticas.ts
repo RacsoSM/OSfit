@@ -9,6 +9,7 @@ import { escapar } from "./tarjetaDia";
 import { conectarGrafica, fechaCorta, graficaLinea, lecturaGrafica, type Banda } from "./grafica";
 import { COLORES_RANGO, insigniaRango } from "./insigniaRango";
 import { bloqueSiguiente } from "./mapaMuscular";
+import { CREDITO, medioDelEjercicio } from "./registro";
 
 /**
  * La ventana Estadísticas (backlog 2, punto 22; ver
@@ -175,7 +176,13 @@ function vistaEjercicio(d: DatosEstadisticas, h: EjercicioHecho, sesiones: reado
   const mas = historial.length > visibles
     ? `<button type="button" class="boton-texto" data-estad="mas">Ver más (${historial.length - visibles})</button>`
     : "";
+  // El ejercicio en grande, como cuando se abre en Registro (entrenador, 2026-10-20).
+  const delBanco = d.banco.find((b) => b.id === h.id);
   return `
+    <div class="tarjeta estad-medio">
+      <div class="registro-activo-gif">${medioDelEjercicio(delBanco?.gifRuta, delBanco?.videoRuta)}</div>
+      ${CREDITO}
+    </div>
     <div class="estad-datos">${datosClave(r)}</div>
     <div class="tarjeta">
       ${pestanas}
