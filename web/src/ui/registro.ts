@@ -23,12 +23,7 @@ import {
   nuevoBorrador,
   paraEnviar,
   cierreAutomatico,
-  agregarCardio,
-  envioCardio,
-  entrenamientoDelDia,
-  sumarCardio,
   textoCardio,
-  type CamposCardio,
   HORAS_CIERRE,
   quitarBloque,
   quitarCaida,
@@ -109,7 +104,7 @@ export interface DatosRegistro {
   sexo?: "H" | "M" | null;
 }
 
-export type Vista = "inicio" | "historial" | "elegir" | "capturar" | "resumen" | "cardio" | "cardio-datos";
+export type Vista = "inicio" | "historial" | "elegir" | "capturar" | "resumen" | "cardio";
 
 interface Estado {
   vista: Vista;
@@ -120,10 +115,6 @@ interface Estado {
   guardado: false | "enviado" | "en-telefono";
   /** Se cerró solo por llevar más de 3 horas abierto (`cerrarSiVencido`): con lo completo, o descartado. */
   cierreAuto: "enviado" | "descartado" | null;
-  /** "Registrar cardio": la máquina elegida y lo que lleva escrito (ver la spec de cardio). */
-  cardio: ({ id: string } & CamposCardio) | null;
-  /** "🏃 Cardio guardado: Caminadora, 25 min", en el inicio de Registro después de guardarlo solo. */
-  avisoCardio: string | null;
   /** El ejercicio recién agregado, para llevarle la vista al pintar. */
   enfocar: number | null;
   /** El GIF que va volando del grid a su tarjeta (ver `vueloRegistro.ts`); null si no hay. */
@@ -177,8 +168,6 @@ const estado: Estado = {
   error: null,
   guardado: false,
   cierreAuto: null,
-  cardio: null,
-  avisoCardio: null,
   enfocar: null,
   vuelo: null,
   activo: null,
@@ -192,7 +181,7 @@ const estado: Estado = {
   menuSerie: null,
 };
 
-const VISTAS: readonly Vista[] = ["inicio", "historial", "elegir", "capturar", "resumen", "cardio", "cardio-datos"];
+const VISTAS: readonly Vista[] = ["inicio", "historial", "elegir", "capturar", "resumen", "cardio"];
 
 /**
  * La pantalla que dice el historial, al hacer "atrás" (`alRetrocederSub` de `navegacion.ts`).
@@ -206,10 +195,10 @@ export function vistaDesdeHistorial(vista: string | null): void {
 
 /** Solo para los tests: poner la ventana en una vista y con un borrador dados. */
 export function ponerEstadoRegistro(
-  parcial: Partial<Pick<Estado, "vista" | "borrador" | "error" | "activo" | "resumen" | "modoElegir" | "seleccion" | "menuSerie" | "cardio">>
+  parcial: Partial<Pick<Estado, "vista" | "borrador" | "error" | "activo" | "resumen" | "modoElegir" | "seleccion" | "menuSerie">>
 ): void {
   Object.assign(estado, {
-    guardado: false, cierreAuto: null, cardio: null, avisoCardio: null, enVuelo: false, error: null, activo: null, aviso: null, borrando: null, resumen: null,
+    guardado: false, cierreAuto: null, enVuelo: false, error: null, activo: null, aviso: null, borrando: null, resumen: null,
     modoElegir: "uno", seleccion: [], menuSerie: null,
   }, parcial);
 }
@@ -451,9 +440,7 @@ function vistaInicio(d: DatosRegistro): string {
   const n = d.pendientes ?? 0;
   // Recién terminado y todavía en la cola (sin internet, o mandándose por detrás): se dice que
   // está en el teléfono. Cuando la cola queda vacía es un guardado normal.
-  const aviso = estado.avisoCardio
-    ? `<p class="aviso-ok">${escapar(estado.avisoCardio)}</p>`
-    : estado.cierreAuto === "enviado"
+  const aviso = estado.cierreAuto === "enviado"
     ? `<p class="aviso-ok">⏰ Tu entrenamiento llevaba más de ${HORAS_CIERRE} horas abierto: lo cerramos solo y lo guardamos con las series que completaste.</p>`
     : estado.cierreAuto === "descartado"
       ? `<p class="registro-pendientes">⏰ Tu entrenamiento llevaba más de ${HORAS_CIERRE} horas abierto y no tenía ninguna serie completa, así que lo descartamos.</p>`
@@ -506,7 +493,6 @@ function vistaInicio(d: DatosRegistro): string {
       ${datos}
     </div>
     ${boton}
-    ${hayCardio(d) ? `<button class="boton secundario registro-boton-cardio" data-accion="cardio">🏃 Registrar cardio</button>` : ""}
     ${recientes}`;
 }
 
@@ -933,17 +919,13 @@ function hayCardio(d: DatosRegistro): boolean {
   return d.banco.some((b) => b.tipo === "cardio");
 }
 
-/** Si el cardio va a un entrenamiento de hoy: el abierto, o uno ya guardado hoy. */
-function hayDeHoy(d: DatosRegistro): boolean {
-  return (estado.borrador !== null && !estado.borrador.edicion) || (d.sesiones ?? []).some((s) => s.fecha === d.hoy);
-}
-
 /** La caminadora y la elíptica son las únicas con inclinación. */
 const CON_INCLINACION = new Set(["caminadora", "eliptica"]);
 
 /**
- * Los renglones de una máquina: minutos y, opcionales, inclinación y velocidad. `atributos` lleva
- * cómo se liga cada campo (al borrador del entrenamiento o al formulario de "Registrar cardio").
+ * Los renglones de una máquina en el entrenamiento, en vez de la tabla de series: minutos y,
+ * opcionales, inclinación y velocidad. Cada argumento son los atributos que ligan el campo a su
+ * serie del borrador.
  */
 function camposCardio(id: string, minutos: string, inclinacion: string, velocidad: string): string {
   const renglon = (titulo: string, nota: string, atributos: string, modo: "numeric" | "decimal") => `
@@ -961,31 +943,15 @@ function camposCardio(id: string, minutos: string, inclinacion: string, velocida
 
 function vistaCardio(d: DatosRegistro): string {
   const tarjetas = maquinasCardio(d).map((m) => `
-      <button class="cardio-maquina" data-cardio="${escapar(m.id)}">
+      <button class="cardio-maquina" data-agregar="${escapar(m.id)}">
         ${gif(m.gifRuta, "cardio-maquina-gif", 160)}
         <span>${escapar(m.nombre)}</span>
       </button>`).join("");
   return `
+    ${botonAtras(`data-accion="volver"`)}
     <p class="confirmar-titulo cardio-titulo">¿En qué hiciste cardio?</p>
     <div class="cardio-maquinas">${tarjetas}</div>
-    <p class="accion-nota">${hayDeHoy(d) ? "Se agrega a tu entrenamiento de hoy." : "Toca una máquina para anotar tu tiempo."}</p>
-    ${CREDITO}`;
-}
-
-function vistaCardioDatos(d: DatosRegistro): string {
-  const c = estado.cardio;
-  const m = c ? d.banco.find((b) => b.id === c.id) : undefined;
-  if (!c || !m) return vistaCardio(d);
-  const campo = (k: keyof CamposCardio) => `data-cardio-campo="${k}" value="${escapar(c[k])}"`;
-  const error = estado.error ? `<p class="aviso-error" style="margin:0 0 12px">${escapar(estado.error)}</p>` : "";
-  return `
-    <div class="tarjeta cardio-cabeza">
-      ${gif(m.gifRuta, "cardio-cabeza-gif", 64)}
-      <div><p class="registro-activo-nombre">${escapar(m.nombre)}</p><p class="accion-nota">Anota lo que marca la pantalla de la máquina.</p></div>
-    </div>
-    <div class="tarjeta">${camposCardio(m.id, campo("minutos"), campo("inclinacion"), campo("velocidad"))}</div>
-    ${error}
-    <button class="boton" data-accion="guardar-cardio">${hayDeHoy(d) ? "Agregar a mi entrenamiento" : "Guardar cardio"}</button>
+    <p class="accion-nota">Se agrega a tu entrenamiento como un ejercicio más: ahí anotas los minutos, la inclinación y la velocidad.</p>
     ${CREDITO}`;
 }
 
@@ -1091,14 +1057,13 @@ export function cabeceraRegistro(): { titulo: string; detalle: string } | null {
 export function ventanaRegistro(d: DatosRegistro): string {
   // Con un entrenamiento abierto, Registro se abre en él; sin uno, no hay qué capturar ni elegir.
   if (estado.vista === "inicio" && estado.borrador) estado.vista = "capturar";
-  if ((estado.vista === "capturar" || estado.vista === "elegir") && !estado.borrador) estado.vista = "inicio";
+  if ((estado.vista === "capturar" || estado.vista === "elegir" || estado.vista === "cardio") && !estado.borrador) estado.vista = "inicio";
   if (estado.vista === "resumen" && !estado.resumen) estado.vista = "inicio";
   const cuerpo = estado.vista === "resumen" && estado.resumen ? vistaResumen(estado.resumen, d.sexo === "M" ? "M" : "H")
     : estado.vista === "elegir" ? vistaElegir(d)
     : estado.vista === "capturar" ? vistaCapturar(d)
     : estado.vista === "historial" ? vistaHistorial(d)
     : estado.vista === "cardio" ? vistaCardio(d)
-    : estado.vista === "cardio-datos" ? vistaCardioDatos(d)
     : vistaInicio(d);
   return `<div id="registro" class="registro">${cuerpo}</div>`;
 }
@@ -1132,8 +1097,6 @@ export interface AccionesRegistro {
   verMusculos?: () => void;
   /** Quita el modo sin datos (`sinDatos.ts`), desde el aviso al terminar con el modo puesto. */
   apagarSinDatos?: () => void;
-  /** Los entrenamientos de esta clienta que esperan en la cola, para agregarles el cardio del día. */
-  pendientes?: () => Envio[];
 }
 
 /**
@@ -1204,56 +1167,11 @@ export function conectarRegistro(
     const b = estado.borrador;
 
     const accion = el.dataset.accion;
-    if (accion === "cardio") {
-      estado.cardio = null;
-      estado.avisoCardio = null;
+    if (accion === "cardio" && b && !b.edicion) {
       ir("cardio", "adelante");
       return;
     }
-    if (el.dataset.cardio) {
-      const id = el.dataset.cardio;
-      // Abre con lo de la última vez que la usó: casi siempre repite.
-      const previa = ultimasSeries(d.sesiones ?? [], id)?.[0];
-      const texto = (n: number | undefined) => (n === undefined ? "" : String(n));
-      estado.cardio = previa
-        ? { id, minutos: String(previa.reps), inclinacion: texto(previa.inclinacion), velocidad: texto(previa.velocidad) }
-        : { id, minutos: "", inclinacion: "", velocidad: "" };
-      ir("cardio-datos", "adelante");
-      return;
-    }
-    if (accion === "guardar-cardio" && estado.cardio) {
-      const m = d.banco.find((x) => x.id === estado.cardio?.id);
-      if (!m) return;
-      const ahora = Date.now();
-      const r = envioCardio(m, estado.cardio, idNuevo(), d.hoy, ahora);
-      if (!r.ok) { estado.error = r.error; repintar(); return; }
-      if (b && !b.edicion) {
-        // Con un entrenamiento abierto se agrega a ese y se abre en grande.
-        const nuevo = agregarCardio(b, m, estado.cardio);
-        guardarBorrador({ ...nuevo, anotado: ahora });
-        estado.activo = nuevo.ejercicios.findIndex((x) => x.ejercicioId === m.id);
-        estado.cardio = null;
-        ir("capturar", "reemplazar");
-        return;
-      }
-      // Sin entrenamiento abierto, se agrega al que ya guardó hoy: se reenvía con el mismo id y
-      // el servidor lo reescribe. Si hoy no hay ninguno, es uno propio. Las dos van por la cola,
-      // así que sirven sin internet.
-      const minutos = r.datos.ejercicios[0]?.series[0]?.reps ?? 0;
-      const delDia = entrenamientoDelDia(d.sesiones ?? [], acciones.pendientes?.() ?? [], d.hoy, d.banco);
-      acciones.encolar?.(delDia ? sumarCardio(delDia, r.datos.ejercicios[0], ahora) : r.datos);
-      acciones.enviarAhora?.();
-      estado.avisoCardio = delDia
-        ? `🏃 Cardio agregado a tu entrenamiento de hoy: ${m.nombre}, ${minutos} min`
-        : `🏃 Cardio guardado: ${m.nombre}, ${minutos} min`;
-      estado.cardio = null;
-      estado.guardado = false;
-      estado.cierreAuto = null;
-      ir("inicio", "reemplazar");
-      return;
-    }
     if (accion === "iniciar") {
-      estado.avisoCardio = null;
       estado.guardado = false;
       estado.cierreAuto = null;
       if (!b) {
@@ -1480,7 +1398,7 @@ export function conectarRegistro(
       estado.lateral = false;
       // Antes de repintar: el grid desaparece en el repintado y el clon tiene que medirse aquí.
       estado.vuelo?.remove();
-      estado.vuelo = despegar(el.querySelector<HTMLElement>(".registro-opcion-gif"));
+      estado.vuelo = despegar(el.querySelector<HTMLElement>(".registro-opcion-gif, .cardio-maquina-gif"));
       estado.vista = "capturar";
       estado.error = null;
       acciones.navegar?.("capturar", "volver");
@@ -1571,11 +1489,6 @@ export function conectarRegistro(
   raiz.addEventListener("input", (ev) => {
     const input = ev.target as HTMLInputElement;
     const { ej, serie, campo, caida } = input.dataset;
-    const cardio = input.dataset.cardioCampo;
-    if (estado.cardio && (cardio === "minutos" || cardio === "inclinacion" || cardio === "velocidad")) {
-      estado.cardio = { ...estado.cardio, [cardio]: input.value };
-      return;
-    }
     if (!estado.borrador || ej === undefined || serie === undefined) return;
     if (campo !== "reps" && campo !== "peso" && campo !== "inclinacion" && campo !== "velocidad") return;
     const cambiado = caida === undefined

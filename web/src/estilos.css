@@ -1777,7 +1777,7 @@ button.registro-serie-num.abierto { border-style: solid; border-color: var(--pri
 }
 .estad-pastilla { padding: 3px 10px; border: 1px solid currentColor; border-radius: 999px; font-size: 12px; font-weight: 700; color: var(--primario); }
 
-/* Cardio (spec de cardio, 2026-10-20): "¿En qué hiciste cardio?" y sus datos. */
+/* Cardio (spec de cardio, 2026-10-20): "¿En qué hiciste cardio?" y sus campos en el entrenamiento. */
 .registro-boton-cardio { margin-top: 10px; }
 .registro-semana-cardio { margin: 10px 2px 0; font-size: 13px; color: var(--texto-tenue); }
 .cardio-titulo { font-size: 22px; margin: 4px 2px 14px; }
@@ -1790,10 +1790,6 @@ button.registro-serie-num.abierto { border-style: solid; border-color: var(--pri
 .cardio-maquina:active { border-color: var(--primario); }
 .cardio-maquina:focus-visible { outline: 2px solid var(--primario); outline-offset: 2px; }
 .cardio-maquina-gif { width: 100%; height: auto; aspect-ratio: 1; border-radius: 12px; background: #fff; object-fit: cover; }
-.cardio-cabeza { display: flex; align-items: center; gap: 12px; }
-.cardio-cabeza .registro-activo-nombre { margin: 0; text-align: left; }
-.cardio-cabeza .accion-nota { margin: 2px 0 0; }
-.cardio-cabeza-gif { flex: none; width: 64px; height: 64px; border-radius: 12px; background: #fff; object-fit: cover; }
 .cardio-campos { margin-top: 4px; }
 .cardio-campo {
   display: flex; align-items: center; justify-content: space-between; gap: 12px;

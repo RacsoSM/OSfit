@@ -970,14 +970,13 @@ servidor no puede cerrarlo. Decisiones del entrenador:
 
 > "quiero agregar un apartado para que registren su cardio tambien, que aparezcan las opciones (en que hiciste cardio? y aparezca una caminadora, escaladora, eliptica, bicicleta" (2026-10-20)
 
-Spec: `docs/superpowers/specs/2026-10-20-cardio-design.md`. El entrenador eligió entre tres
-maquetas la "B": un botón **"🏃 Registrar cardio"** en Registro → "¿En qué hiciste cardio?" con
-caminadora, escaladora, elíptica y bicicleta → minutos (obligatorio), inclinación (solo caminadora
-y elíptica) y velocidad (opcionales).
+Spec: `docs/superpowers/specs/2026-10-20-cardio-design.md`. Va **solo dentro de un
+entrenamiento**: "🏃 Agregar cardio" → "¿En qué hiciste cardio?" (con flecha de atrás) con
+caminadora, escaladora, elíptica y bicicleta → se agrega como un ejercicio más, cuya tarjeta pide
+minutos (obligatorio), inclinación (caminadora y elíptica) y velocidad en vez de series. Primero se
+hizo como botón aparte en Registro, con cardio guardado solo o pegado al entrenamiento del día; el
+entrenador lo cambió el mismo día.
 
-- Sin entrenamiento abierto se guarda solo, como un entrenamiento propio (cuenta en "Tu semana" y
-  marca la asistencia); con uno abierto se agrega a ese ("🏃 Agregar cardio"); y si ya guardó uno
-  ese día, se agrega a ese (se reenvía con el mismo id y el servidor lo reescribe).
 - Tipo nuevo `cardio` en el banco: una sola serie con `reps` = minutos, más `inclinacion` y
   `velocidad`. `registrarSesion` lo valida.
 - "Tu semana" suma los minutos de cardio; Estadísticas muestra minutos totales, sesión más larga,

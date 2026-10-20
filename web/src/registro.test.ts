@@ -2,11 +2,6 @@ import { describe, expect, it } from "vitest";
 import type { EjercicioBanco, Sesion } from "./datos";
 import {
   MAX_CAIDAS,
-  entrenamientoDelDia,
-  envioDeSesion,
-  sumarCardio,
-  agregarCardio,
-  envioCardio,
   textoCardio,
   cierreAutomatico,
   type Borrador,
@@ -583,35 +578,26 @@ describe("cierre automático a las 3 horas", () => {
 
 describe("cardio", () => {
   const caminadora: EjercicioBanco = { id: "caminadora", nombre: "Caminadora", tipo: "cardio", grupo: "cardio", musculos: { cuadriceps: 0.5 }, gifRuta: null };
-  const bici: EjercicioBanco = { id: "bicicleta", nombre: "Bicicleta", tipo: "cardio", grupo: "cardio", musculos: {}, gifRuta: null };
-  const ahora = Date.UTC(2026, 9, 20, 18, 0);
+  const conMinutos = (serie: Record<string, string>) => paraEnviar({
+    id: "b1234567", fecha: "2026-10-20",
+    ejercicios: [{ ejercicioId: "caminadora", nombre: "Caminadora", tipo: "cardio", gifRuta: null, series: [{ reps: "", peso: "", ...serie }] }],
+  });
 
-  it("sin entrenamiento abierto, es uno propio que empezó hace los minutos anotados", () => {
-    const r = envioCardio(caminadora, { minutos: "25", inclinacion: "8", velocidad: "5,5" }, "b1234567", "2026-10-20", ahora);
-    expect(r).toEqual({ ok: true, datos: {
-      id: "b1234567", fecha: "2026-10-20", iniciadaEn: ahora - 25 * 60_000, terminadaEn: ahora,
-      ejercicios: [{ ejercicioId: "caminadora", series: [{ reps: 25, peso: null, inclinacion: 8, velocidad: 5.5 }] }],
-    } });
+  it("se manda como una sola anotación: minutos en reps, más inclinación y velocidad", () => {
+    expect(conMinutos({ reps: "25", inclinacion: "8", velocidad: "5,5" })).toMatchObject({
+      ok: true, datos: { ejercicios: [{ ejercicioId: "caminadora", series: [{ reps: 25, peso: null, inclinacion: 8, velocidad: 5.5 }] }] },
+    });
   });
 
   it("la inclinación y la velocidad son opcionales; los minutos no", () => {
-    const r = envioCardio(bici, { minutos: "30", inclinacion: "", velocidad: "" }, "b1234567", "2026-10-20", ahora);
-    expect(r.ok && r.datos.ejercicios[0].series).toEqual([{ reps: 30, peso: null }]);
-    expect(envioCardio(bici, { minutos: "", inclinacion: "", velocidad: "6" }, "b1234567", "2026-10-20", ahora))
-      .toEqual({ ok: false, error: "Bicicleta: faltan los minutos." });
-    expect(envioCardio(bici, { minutos: "", inclinacion: "", velocidad: "" }, "b1234567", "2026-10-20", ahora))
-      .toEqual({ ok: false, error: "Bicicleta: faltan los minutos." });
-    expect(envioCardio(bici, { minutos: "12.5", inclinacion: "", velocidad: "" }, "b1234567", "2026-10-20", ahora))
-      .toEqual({ ok: false, error: "Bicicleta: los minutos van en número entero." });
-    expect(envioCardio(bici, { minutos: "20", inclinacion: "", velocidad: "rápido" }, "b1234567", "2026-10-20", ahora))
-      .toEqual({ ok: false, error: "Bicicleta: la velocidad no es un número." });
+    expect(conMinutos({ reps: "30" })).toMatchObject({ ok: true, datos: { ejercicios: [{ series: [{ reps: 30, peso: null }] }] } });
+    expect(conMinutos({ velocidad: "6" })).toEqual({ ok: false, error: "Caminadora: faltan los minutos." });
+    expect(conMinutos({ reps: "12.5" })).toEqual({ ok: false, error: "Caminadora: los minutos van en número entero." });
+    expect(conMinutos({ reps: "20", velocidad: "rápido" })).toEqual({ ok: false, error: "Caminadora: la velocidad no es un número." });
   });
 
-  it("con un entrenamiento abierto se agrega a ese, y otra vez la misma máquina la corrige", () => {
-    let b = agregarCardio(nuevoBorrador("b1234567", "2026-10-20", ahora), caminadora, { minutos: "20", inclinacion: "", velocidad: "" });
-    b = agregarCardio(b, caminadora, { minutos: "25", inclinacion: "", velocidad: "" });
-    expect(b.ejercicios).toHaveLength(1);
-    expect(paraEnviar(b)).toMatchObject({ ok: true, datos: { ejercicios: [{ ejercicioId: "caminadora", series: [{ reps: 25, peso: null }] }] } });
+  it("sin nada escrito no se manda, como una serie en blanco", () => {
+    expect(conMinutos({})).toEqual({ ok: false, error: "Anota al menos una serie antes de guardar." });
   });
 
   it("al elegirla de la lista trae lo de la última vez, en una sola anotación", () => {
@@ -631,48 +617,3 @@ describe("cardio", () => {
     expect(resumenSemana(sesiones, "2026-10-20").minutosCardio).toBe(0);
   });
 });
-
-describe("cardio agregado al entrenamiento del día", () => {
-  const caminadora: EjercicioBanco = { id: "caminadora", nombre: "Caminadora", tipo: "cardio", musculos: {}, gifRuta: null };
-  const press: EjercicioBanco = { id: "press-banca", nombre: "Press de banca", tipo: "peso", musculos: { pecho: 1 }, gifRuta: null };
-  const banco = [caminadora, press];
-  const ts = (ms: number) => ({ toDate: () => new Date(ms) }) as unknown as Sesion["creada"];
-  const inicio = Date.UTC(2026, 9, 20, 15, 0), fin = inicio + 50 * 60_000, ahora = fin + 30 * 60_000;
-  const deHoy: Sesion = {
-    id: "s-hoy-1234", fecha: "2026-10-20", origen: "guiado", iniciada: ts(inicio), creada: ts(fin),
-    ejercicios: [{ ejercicioId: "press-banca", nombre: "Press de banca", series: [{ reps: 10, peso: 40 }] }],
-  };
-  const cardio = { ejercicioId: "caminadora", series: [{ reps: 25, peso: null, velocidad: 5.5 }] };
-
-  it("reenvía el de hoy con su id, sus horas y su origen", () => {
-    expect(envioDeSesion(deHoy)).toEqual({
-      id: "s-hoy-1234", fecha: "2026-10-20", iniciadaEn: inicio, terminadaEn: fin, origen: "guiado",
-      ejercicios: [{ ejercicioId: "press-banca", series: [{ reps: 10, peso: 40 }] }],
-    });
-  });
-
-  it("le agrega el cardio y lo termina ahora", () => {
-    const r = sumarCardio(envioDeSesion(deHoy), cardio, ahora);
-    expect(r.id).toBe("s-hoy-1234");
-    expect(r.terminadaEn).toBe(ahora);
-    expect(r.ejercicios.map((e) => e.ejercicioId)).toEqual(["press-banca", "caminadora"]);
-  });
-
-  it("si ya traía esa máquina, suma los minutos", () => {
-    const una = sumarCardio(envioDeSesion(deHoy), cardio, ahora);
-    const dos = sumarCardio(una, { ejercicioId: "caminadora", series: [{ reps: 10, peso: null }] }, ahora + 60_000);
-    expect(dos.ejercicios[1].series).toEqual([{ reps: 35, peso: null, velocidad: 5.5 }]);
-  });
-
-  it("busca primero el que espera en la cola, luego el guardado de hoy; nunca uno de otro día", () => {
-    const enCola = { id: "cola-1234", fecha: "2026-10-20", terminadaEn: ahora, ejercicios: [] };
-    expect(entrenamientoDelDia([deHoy], [enCola], "2026-10-20", banco)?.id).toBe("cola-1234");
-    expect(entrenamientoDelDia([deHoy], [], "2026-10-20", banco)?.id).toBe("s-hoy-1234");
-    expect(entrenamientoDelDia([deHoy], [], "2026-10-21", banco)).toBeNull();
-  });
-
-  it("si el de hoy trae un ejercicio que ya no está en el banco, el cardio va solo", () => {
-    expect(entrenamientoDelDia([deHoy], [], "2026-10-20", [caminadora])).toBeNull();
-  });
-});
-

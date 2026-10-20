@@ -682,7 +682,6 @@ async function arrancar(): Promise<void> {
         editar: (envio) => editarSesion(envio),
         borrar: (id) => borrarSesion({ id }),
         encolar: encolarEnvio,
-        pendientes: () => pendientesDe(cola.leer(), clienteId).map((p) => p.envio),
         enviarAhora: enviarCola,
         // Sin esperarla ni avisar si falla: sin internet la marca el entrenamiento al llegar.
         alIniciar: () => { marcarAsistencia({}).catch(() => {}); },
