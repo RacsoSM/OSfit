@@ -945,3 +945,24 @@ Pendiente:
   gs://osfit-cccfe.firebasestorage.app` (o `setCorsConfiguration` de `@google-cloud/storage`). Si se
   agrega un dominio propio a la web, va también ahí.
 - Probarlo en un teléfono Android con Wi-Fi y datos, y en un iPhone.
+
+## 24. Cerrar solo un entrenamiento que lleva más de 3 horas abierto — ✅ HECHO (2026-10-20)
+
+> "has algun trigger o algo que haga que cuando un entrenamiento este abierto por mas de 3 horas, automaticamente lo cierre y lo mande" (2026-10-20)
+
+Un entrenamiento en curso vive **solo en el teléfono** (el borrador de Registro en
+`localStorage`); el servidor no sabe que existe hasta que se termina, así que un trigger del
+servidor no puede cerrarlo. Decisiones del entrenador:
+
+- **Lo revisa el teléfono** (`revisarCierreAutomatico` en `main.ts`): al abrir la página, al
+  volver a ella y cada minuto. Si la clienta no vuelve a abrir la página, se cierra la próxima
+  vez que la abra.
+- **A las 3 horas de iniciado** (`HORAS_CIERRE`), en Registro o en el modo guiado. Una corrección
+  de un entrenamiento pasado no se cierra sola.
+- **Termina a la hora de su última anotación** (el borrador guarda `anotado` al escribir una
+  serie); si no anotó nada, a las 3 horas justas.
+- **Se manda solo lo completo** (`soloCompletas`): las series y bajadas a medio llenar se
+  descartan. Sin ninguna serie completa, el entrenamiento se descarta sin mandar nada.
+- Va por la cola (`cola.ts`), así que sin internet o con el modo sin datos se manda después.
+  Registro le avisa: "⏰ Tu entrenamiento llevaba más de 3 horas abierto: lo cerramos solo…".
+

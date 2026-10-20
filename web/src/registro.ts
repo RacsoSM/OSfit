@@ -69,6 +69,11 @@ export interface Borrador {
    * `origen: "guiado"`. Ausente = uno de Registro, armado a mano.
    */
   guiado?: { nombreDia: string; sinLigar: string[] };
+  /**
+   * Cuándo escribió por última vez una serie (ms): la hora con que se cierra solo si se queda
+   * abierto (`cierreAutomatico`). Opcional: los borradores de antes no la traen.
+   */
+  anotado?: number;
   ejercicios: EjercicioBorrador[];
 }
 
@@ -461,6 +466,49 @@ export function paraEnviar(b: Borrador): { ok: true; datos: Envio } | { ok: fals
   if (typeof b.iniciado === "number") datos.iniciadaEn = b.iniciado;
   if (b.guiado && !b.edicion) datos.origen = "guiado";
   return { ok: true, datos };
+}
+
+/**
+ * Las horas que puede quedarse abierto un entrenamiento antes de cerrarse solo (entrenador,
+ * 2026-10-20): nadie entrena tres horas seguidas, así que es uno que se olvidó de terminar.
+ */
+export const HORAS_CIERRE = 3;
+
+/**
+ * El borrador sin las series ni las bajadas a medio llenar: las que `paraEnviar` reclamaría.
+ * Al cerrarse solo no hay a quién preguntarle qué le faltó, así que se manda lo completo.
+ */
+export function soloCompletas(b: Borrador): Borrador {
+  const completa = (e: EjercicioBorrador, s: SerieBorrador) =>
+    paraEnviar({ ...b, ejercicios: [{ ...e, biserie: undefined, series: [{ ...s, caidas: undefined }] }] }).ok;
+  return {
+    ...b,
+    ejercicios: b.ejercicios.map((e) => ({
+      ...e,
+      series: e.series
+        .filter((s) => completa(e, s))
+        .map((s) => (s.caidas ? { ...s, caidas: s.caidas.filter((c) => completa(e, c)) } : s)),
+    })),
+  };
+}
+
+/**
+ * Si un entrenamiento lleva más de `HORAS_CIERRE` abierto, qué hacer con él: mandarlo con lo
+ * completo, terminado a la hora de su última anotación (o a las 3 horas si nunca anotó), o
+ * descartarlo si no tiene ninguna serie completa. null si todavía no toca, o si no aplica: una
+ * corrección de uno pasado no se cierra sola, y uno sin hora de inicio no se sabe cuánto lleva.
+ */
+export function cierreAutomatico(
+  b: Borrador | null,
+  ahora: number
+): { tipo: "enviar"; datos: Envio } | { tipo: "descartar" } | null {
+  if (!b || b.edicion || typeof b.iniciado !== "number") return null;
+  const limite = b.iniciado + HORAS_CIERRE * 3_600_000;
+  if (ahora < limite) return null;
+  const envio = paraEnviar(soloCompletas(b));
+  if (!envio.ok) return { tipo: "descartar" };
+  const fin = typeof b.anotado === "number" && b.anotado > b.iniciado ? Math.min(b.anotado, limite) : limite;
+  return { tipo: "enviar", datos: { ...envio.datos, fecha: b.fecha, terminadaEn: fin } };
 }
 
 /**

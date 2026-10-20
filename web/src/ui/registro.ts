@@ -22,6 +22,8 @@ import {
   nombresDeSesion,
   nuevoBorrador,
   paraEnviar,
+  cierreAutomatico,
+  HORAS_CIERRE,
   quitarBloque,
   quitarCaida,
   quitarEjercicio,
@@ -110,6 +112,8 @@ interface Estado {
   error: string | null;
   /** Se acaba de terminar uno: "enviado" llegó al servidor; "en-telefono", se guardó sin internet. */
   guardado: false | "enviado" | "en-telefono";
+  /** Se cerró solo por llevar más de 3 horas abierto (`cerrarSiVencido`): con lo completo, o descartado. */
+  cierreAuto: "enviado" | "descartado" | null;
   /** El ejercicio recién agregado, para llevarle la vista al pintar. */
   enfocar: number | null;
   /** El GIF que va volando del grid a su tarjeta (ver `vueloRegistro.ts`); null si no hay. */
@@ -162,6 +166,7 @@ const estado: Estado = {
   enVuelo: false,
   error: null,
   guardado: false,
+  cierreAuto: null,
   enfocar: null,
   vuelo: null,
   activo: null,
@@ -192,7 +197,7 @@ export function ponerEstadoRegistro(
   parcial: Partial<Pick<Estado, "vista" | "borrador" | "error" | "activo" | "resumen" | "modoElegir" | "seleccion" | "menuSerie">>
 ): void {
   Object.assign(estado, {
-    guardado: false, enVuelo: false, error: null, activo: null, aviso: null, borrando: null, resumen: null,
+    guardado: false, cierreAuto: null, enVuelo: false, error: null, activo: null, aviso: null, borrando: null, resumen: null,
     modoElegir: "uno", seleccion: [], menuSerie: null,
   }, parcial);
 }
@@ -214,6 +219,7 @@ export function entrenamientoAbierto(): "nuevo" | "edicion" | null {
  */
 export function empezarGuiado(d: DatosRegistro, ahora = Date.now()): boolean {
   estado.guardado = false;
+  estado.cierreAuto = null;
   estado.error = null;
   estado.aviso = null;
   if (estado.borrador) {
@@ -227,6 +233,30 @@ export function empezarGuiado(d: DatosRegistro, ahora = Date.now()): boolean {
   estado.activo = 0;
   estado.avanzando = true;
   estado.lateral = false;
+  return true;
+}
+
+/**
+ * Cierra el entrenamiento abierto si lleva más de `HORAS_CIERRE` (entrenador, 2026-10-20): lo
+ * manda por la cola con lo completo, o lo descarta si no tiene nada completo. El entrenamiento
+ * vive solo en el teléfono, así que esto lo revisa la página (`main.ts`: al abrir, al volver y
+ * cada minuto); no hay servidor que pueda cerrarlo. Devuelve si cerró algo, para repintar.
+ */
+export function cerrarSiVencido(
+  acciones: Pick<AccionesRegistro, "encolar" | "enviarAhora">,
+  ahora = Date.now()
+): boolean {
+  const r = cierreAutomatico(estado.borrador, ahora);
+  if (!r) return false;
+  if (r.tipo === "enviar") {
+    acciones.encolar?.(r.datos);
+    acciones.enviarAhora?.();
+  }
+  guardarBorrador(null);
+  Object.assign(estado, {
+    vista: "inicio", resumen: null, error: null, guardado: false, activo: null, menuSerie: null,
+    cierreAuto: r.tipo === "enviar" ? "enviado" : "descartado",
+  });
   return true;
 }
 
@@ -407,7 +437,11 @@ function vistaInicio(d: DatosRegistro): string {
   const n = d.pendientes ?? 0;
   // Recién terminado y todavía en la cola (sin internet, o mandándose por detrás): se dice que
   // está en el teléfono. Cuando la cola queda vacía es un guardado normal.
-  const aviso = estado.guardado && n > 0
+  const aviso = estado.cierreAuto === "enviado"
+    ? `<p class="aviso-ok">⏰ Tu entrenamiento llevaba más de ${HORAS_CIERRE} horas abierto: lo cerramos solo y lo guardamos con las series que completaste.</p>`
+    : estado.cierreAuto === "descartado"
+      ? `<p class="registro-pendientes">⏰ Tu entrenamiento llevaba más de ${HORAS_CIERRE} horas abierto y no tenía ninguna serie completa, así que lo descartamos.</p>`
+    : estado.guardado && n > 0
     ? `<p class="aviso-ok">¡Entrenamiento guardado en tu teléfono! 📱 Se enviará ${cuandoSeEnvia()}.</p>`
     : estado.guardado ? `<p class="aviso-ok">¡Entrenamiento guardado! 💪</p>`
     : n > 0 ? `<p class="registro-pendientes">📤 ${n === 1 ? "1 entrenamiento espera" : `${n} entrenamientos esperan`} ${modoSinDatos() ? "a que desactives el modo sin datos" : "internet"} para enviarse.</p>`
@@ -1063,6 +1097,7 @@ export function conectarRegistro(
     const accion = el.dataset.accion;
     if (accion === "iniciar") {
       estado.guardado = false;
+      estado.cierreAuto = null;
       if (!b) {
         guardarBorrador(nuevoBorrador(idNuevo(), d.hoy, Date.now()));
         acciones.alIniciar?.();
@@ -1380,9 +1415,11 @@ export function conectarRegistro(
     const { ej, serie, campo, caida } = input.dataset;
     if (!estado.borrador || ej === undefined || serie === undefined) return;
     if (campo !== "reps" && campo !== "peso") return;
-    guardarBorrador(caida === undefined
+    const cambiado = caida === undefined
       ? cambiarSerie(estado.borrador, Number(ej), Number(serie), campo, input.value)
-      : cambiarCaida(estado.borrador, Number(ej), Number(serie), Number(caida), campo, input.value));
+      : cambiarCaida(estado.borrador, Number(ej), Number(serie), Number(caida), campo, input.value);
+    // La hora de su última anotación: con la que se cierra si se olvida de terminarlo.
+    guardarBorrador({ ...cambiado, anotado: Date.now() });
   });
 
   /**

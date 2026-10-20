@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import type { EjercicioBanco, Sesion } from "../datos";
 import { indiceBanco } from "../banco";
 import { agregarBiserie, agregarEjercicio, borradorDeSesion, nuevoBorrador } from "../registro";
-import { avisoReps, avisoTerminadoSinDatos, cabeceraRegistro, empezarGuiado, entrenamientoAbierto, ponerEstadoRegistro, ventanaRegistro, type DatosRegistro } from "./registro";
+import { avisoReps, avisoTerminadoSinDatos, cerrarSiVencido, cabeceraRegistro, empezarGuiado, entrenamientoAbierto, ponerEstadoRegistro, ventanaRegistro, type DatosRegistro } from "./registro";
 
 const press: EjercicioBanco = {
   id: "press-banca", nombre: "Press de banca", alias: ["press banca"], tipo: "peso", grupo: "pecho",
@@ -435,5 +435,31 @@ describe("aviso al terminar con el modo sin datos", () => {
   it("ofrece quitar el modo solo si hay quien lo apague", () => {
     expect(avisoTerminadoSinDatos(true)).toContain(`data-sin-datos-fin="apagar"`);
     expect(avisoTerminadoSinDatos(false)).not.toContain(`data-sin-datos-fin="apagar"`);
+  });
+});
+
+describe("cierre automático de un entrenamiento olvidado", () => {
+  const inicio = Date.UTC(2026, 9, 12, 15, 0);
+  const abierto = () => ({
+    ...nuevoBorrador("b1234567", "2026-10-12", inicio),
+    ejercicios: [{ ejercicioId: "press-banca", nombre: "Press de banca", tipo: "peso" as const, gifRuta: null, series: [{ reps: "10", peso: "40" }] }],
+  });
+
+  it("a las 3 horas lo manda por la cola, lo quita de la pantalla y lo dice en Registro", () => {
+    ponerEstadoRegistro({ vista: "capturar", borrador: abierto() });
+    const encolados: unknown[] = [];
+    let enviado = false;
+    const cerro = cerrarSiVencido({ encolar: (e) => encolados.push(e), enviarAhora: () => { enviado = true; } }, inicio + 3 * 3_600_000);
+    expect(cerro).toBe(true);
+    expect(encolados).toHaveLength(1);
+    expect(enviado).toBe(true);
+    expect(entrenamientoAbierto()).toBeNull();
+    expect(ventanaRegistro(datos())).toContain("lo cerramos solo");
+  });
+
+  it("antes de las 3 horas no lo toca", () => {
+    ponerEstadoRegistro({ vista: "capturar", borrador: abierto() });
+    expect(cerrarSiVencido({ encolar: () => {}, enviarAhora: () => {} }, inicio + 60_000)).toBe(false);
+    expect(entrenamientoAbierto()).toBe("nuevo");
   });
 });

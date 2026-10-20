@@ -49,6 +49,7 @@ import { almacenesDelNavegador, saludDeLosAlmacenes } from "./sesion";
 import type { MotivoSinAcceso, ResultadoSesion } from "./sesion";
 import { aplicarPaleta } from "./paleta";
 import { almacenCola, encolar, enviarPendientes, pendientesDe } from "./cola";
+import type { Envio } from "./registro";
 import { indiceBanco, type IndiceBanco } from "./banco";
 import { saludo, conectarSaludo, actualizarNombre } from "./ui/saludo";
 import { conectarAccionDia } from "./ui/accionDia";
@@ -59,7 +60,7 @@ import {
   BARRA, VENTANAS, contenidoDe, datosRegistro, fuerzaDelCliente, tituloCabecera, ventana, type IdVentana,
 } from "./ventanas";
 import {
-  cabeceraRegistro, conectarRegistro, empezarGuiado, entrenamientoAbierto, vistaDesdeHistorial,
+  cabeceraRegistro, cerrarSiVencido, conectarRegistro, empezarGuiado, entrenamientoAbierto, vistaDesdeHistorial,
 } from "./ui/registro";
 import { barraInferior, conectarBarra, marcarSexoBarra } from "./ui/barraInferior";
 import { archivosMapa, conectarMapa, type EstadoSvg } from "./ui/mapaMuscular";
@@ -261,6 +262,20 @@ async function arrancar(): Promise<void> {
         enviandoCola = false;
         if (otraVuelta) enviarCola();
       });
+  }
+
+  /** Guarda en la cola del teléfono un entrenamiento terminado, para mandarlo (`cola.ts`). */
+  function encolarEnvio(envio: Envio): void {
+    cola.guardar(encolar(cola.leer(), { clienteId, envio }));
+    pendientes = pendientesDe(cola.leer(), clienteId).length;
+  }
+
+  /**
+   * Un entrenamiento abierto más de 3 horas se cierra solo (`cerrarSiVencido`). Vive solo en el
+   * teléfono, así que se revisa al abrir, al volver a la página y cada minuto.
+   */
+  function revisarCierreAutomatico(): void {
+    if (cerrarSiVencido({ encolar: encolarEnvio, enviarAhora: enviarCola })) pintar();
   }
 
   /** Para saber si hay Wi-Fi; null en los navegadores que no lo dicen (Safari, iPhone). */
@@ -666,10 +681,7 @@ async function arrancar(): Promise<void> {
         guardar: (envio) => registrarSesion(envio),
         editar: (envio) => editarSesion(envio),
         borrar: (id) => borrarSesion({ id }),
-        encolar: (envio) => {
-          cola.guardar(encolar(cola.leer(), { clienteId, envio }));
-          pendientes = pendientesDe(cola.leer(), clienteId).length;
-        },
+        encolar: encolarEnvio,
         enviarAhora: enviarCola,
         // Sin esperarla ni avisar si falla: sin internet la marca el entrenamiento al llegar.
         alIniciar: () => { marcarAsistencia({}).catch(() => {}); },
@@ -763,6 +775,12 @@ async function arrancar(): Promise<void> {
   enviarCola();
   window.addEventListener("online", enviarCola);
   setInterval(enviarCola, 60_000);
+
+  revisarCierreAutomatico();
+  setInterval(revisarCierreAutomatico, 60_000);
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") revisarCierreAutomatico();
+  });
 
   alBloquear(() => mostrarAvisoSinDatos(
     "Esto necesita internet y tienes el modo sin datos.",

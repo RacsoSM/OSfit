@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import type { EjercicioBanco, Sesion } from "./datos";
 import {
   MAX_CAIDAS,
+  cierreAutomatico,
+  type Borrador,
   agregarBiserie,
   agregarCaida,
   agregarEjercicio,
@@ -512,5 +514,63 @@ describe("biserie", () => {
       ],
     };
     expect(unidades(borradorDeSesion(s, [ej(), remo]))).toEqual([[0, 1]]);
+  });
+});
+
+describe("cierre automático a las 3 horas", () => {
+  const HORA = 3_600_000;
+  const inicio = Date.UTC(2026, 9, 20, 15, 0);
+  const borrador = (campos: Partial<Borrador> = {}): Borrador => ({
+    id: "b1234567", fecha: "2026-10-20", iniciado: inicio,
+    ejercicios: [
+      {
+        ejercicioId: "press-banca", nombre: "Press de banca", tipo: "peso", gifRuta: null, unidad: "kg",
+        series: [{ reps: "10", peso: "40" }, { reps: "8", peso: "" }, { reps: "", peso: "" }],
+      },
+      { ejercicioId: "plancha", nombre: "Plancha", tipo: "tiempo", gifRuta: null, series: [{ reps: "", peso: "" }] },
+    ],
+    ...campos,
+  });
+
+  it("antes de las 3 horas no hace nada", () => {
+    expect(cierreAutomatico(borrador(), inicio + 3 * HORA - 1)).toBeNull();
+  });
+
+  it("a las 3 horas lo manda con lo completo y deja fuera la serie a medio llenar", () => {
+    const r = cierreAutomatico(borrador({ anotado: inicio + 50 * 60_000 }), inicio + 3 * HORA);
+    expect(r?.tipo).toBe("enviar");
+    if (r?.tipo !== "enviar") return;
+    expect(r.datos.ejercicios).toEqual([{ ejercicioId: "press-banca", series: [{ reps: 10, peso: 40 }] }]);
+    expect(r.datos.fecha).toBe("2026-10-20");
+    expect(r.datos.iniciadaEn).toBe(inicio);
+  });
+
+  it("lo da por terminado a la hora de su última anotación", () => {
+    const r = cierreAutomatico(borrador({ anotado: inicio + 50 * 60_000 }), inicio + 5 * HORA);
+    expect(r?.tipo === "enviar" && r.datos.terminadaEn).toBe(inicio + 50 * 60_000);
+  });
+
+  it("si nunca anotó después de iniciar, a las 3 horas justas", () => {
+    const r = cierreAutomatico(borrador(), inicio + 5 * HORA);
+    expect(r?.tipo === "enviar" && r.datos.terminadaEn).toBe(inicio + 3 * HORA);
+  });
+
+  it("sin ninguna serie completa se descarta", () => {
+    const vacio = borrador({ ejercicios: [{ ejercicioId: "press-banca", nombre: "Press de banca", tipo: "peso", gifRuta: null, series: [{ reps: "8", peso: "" }] }] });
+    expect(cierreAutomatico(vacio, inicio + 3 * HORA)).toEqual({ tipo: "descartar" });
+  });
+
+  it("una corrección de un entrenamiento pasado, o uno sin hora de inicio, no se cierra solo", () => {
+    expect(cierreAutomatico(borrador({ edicion: true }), inicio + 9 * HORA)).toBeNull();
+    expect(cierreAutomatico(borrador({ iniciado: undefined }), inicio + 9 * HORA)).toBeNull();
+  });
+
+  it("se queda la bajada completa y se va la incompleta", () => {
+    const b = borrador({ ejercicios: [{
+      ejercicioId: "press-banca", nombre: "Press de banca", tipo: "peso", gifRuta: null,
+      series: [{ reps: "10", peso: "40", caidas: [{ reps: "8", peso: "30" }, { reps: "6", peso: "" }] }],
+    }] });
+    const r = cierreAutomatico(b, inicio + 3 * HORA);
+    expect(r?.tipo === "enviar" && r.datos.ejercicios[0].series).toEqual([{ reps: 10, peso: 40, caidas: [{ reps: 8, peso: 30 }] }]);
   });
 });
