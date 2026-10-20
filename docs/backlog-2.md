@@ -840,7 +840,7 @@ la hubiera marcado él. También refresca en la ficha el trío que lee la web (`
 - El documento lleva `marcadaDesde: "registro"`, para saber de dónde salió; la app lo ignora.
 
 
-## 22. Estadísticas: progresión por músculo o por ejercicio — ✅ HECHO (2026-10-20), falta verlo en el teléfono
+## 22. Estadísticas: progresión por músculo o por ejercicio — ✅ HECHO (2026-10-20)
 
 **Hecho (2026-10-20):** ventana **Estadísticas** en el menú ☰. Spec:
 `docs/superpowers/specs/2026-10-20-estadisticas-design.md`. El entrenador eligió entre cuatro
