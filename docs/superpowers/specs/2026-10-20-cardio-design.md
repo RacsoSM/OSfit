@@ -15,6 +15,12 @@ registrar el cardio: en qué máquina, cuántos minutos y, si quieren, la inclin
     para quien solo fue a hacer cardio, y cuenta en "Tu semana" y en su asistencia como cualquier
     entrenamiento.
   - **Con un entrenamiento abierto**, se agrega a ese y se regresa a él.
+  - **Con un entrenamiento ya guardado ese día** (pedido del entrenador, el mismo 2026-10-20), se
+    agrega a ese en vez de crear otro: se reenvía por la cola con el mismo id, su día, sus horas y
+    su origen, y el servidor lo reescribe (`registrarSesion` guarda con `set`). Termina a la hora
+    del cardio. Si espera en la cola, se agrega al de la cola. Si ya traía esa máquina, se suman
+    los minutos. Si trae un ejercicio que ya no está en el banco, el cardio va solo, porque el
+    servidor rechazaría el entrenamiento entero.
 - **Las máquinas:** caminadora, escaladora, elíptica y bicicleta, con sus animaciones de Gym
   visual (`3666`, `2311`, `2141`, `0798`).
 - **Los datos:** **minutos** (obligatorio), **inclinación** y **velocidad** (opcionales). La

@@ -146,6 +146,62 @@ export function envioCardio(
   return { ok: true, datos: { ...envio.datos, iniciadaEn: ahora - minutos * 60_000, fecha: hoy, terminadaEn: ahora } };
 }
 
+/**
+ * Un entrenamiento ya guardado, como se le vuelve a mandar al servidor: mismo id (lo reescribe
+ * en vez de crear otro), su día, sus horas y su origen. Para agregarle el cardio de ese día.
+ */
+export function envioDeSesion(s: Sesion): Envio {
+  const ms = (t: Sesion["creada"]) => (t ? t.toDate().getTime() : undefined);
+  const iniciadaEn = ms(s.iniciada), terminadaEn = ms(s.creada);
+  return {
+    id: s.id,
+    fecha: s.fecha,
+    ...(iniciadaEn !== undefined ? { iniciadaEn } : {}),
+    ...(terminadaEn !== undefined ? { terminadaEn } : {}),
+    ...(s.origen === "guiado" ? { origen: "guiado" as const } : {}),
+    ejercicios: s.ejercicios.map((e) => ({ ejercicioId: e.ejercicioId, series: e.series, ...(e.biserie ? { biserie: e.biserie } : {}) })),
+  };
+}
+
+/**
+ * Le agrega el cardio a un entrenamiento de ese mismo día (entrenador, 2026-10-20: "si hay un
+ * entrenamiento registrado en ese día, que se agregue a ese"). Si ya traía esa máquina, se suman
+ * los minutos y se queda la inclinación y la velocidad nuevas. Termina ahora: el cardio fue lo
+ * último que hizo.
+ */
+export function sumarCardio(base: Envio, cardio: Envio["ejercicios"][number], ahora: number): Envio {
+  const nueva = cardio.series[0];
+  const ya = base.ejercicios.findIndex((e) => e.ejercicioId === cardio.ejercicioId);
+  const ejercicios = ya < 0
+    ? [...base.ejercicios, cardio]
+    : base.ejercicios.map((e, i) => {
+      if (i !== ya) return e;
+      const vieja = e.series[0];
+      return { ...e, series: [{ ...vieja, ...nueva, reps: (vieja?.reps ?? 0) + nueva.reps }] };
+    });
+  return { ...base, ejercicios, terminadaEn: Math.max(base.terminadaEn ?? 0, ahora) };
+}
+
+/**
+ * El entrenamiento de hoy al que se le agrega el cardio, ya listo para reenviar: el que espera en
+ * la cola del teléfono (el más reciente), o el último guardado de hoy. null si no hay, o si trae un
+ * ejercicio que ya no está en el banco: el servidor lo rechazaría y con él se perdería el cardio,
+ * así que ahí el cardio va solo.
+ */
+export function entrenamientoDelDia(
+  sesiones: readonly Sesion[], pendientes: readonly Envio[], hoy: string, banco: readonly EjercicioBanco[]
+): Envio | null {
+  const enCola = pendientes
+    .filter((p) => p.fecha === hoy)
+    .sort((a, b) => (b.terminadaEn ?? 0) - (a.terminadaEn ?? 0))[0];
+  // Llegan de la más nueva a la más vieja.
+  const guardado = sesiones.find((s) => s.fecha === hoy);
+  const base = enCola ?? (guardado ? envioDeSesion(guardado) : null);
+  if (!base) return null;
+  const ids = new Set(banco.map((b) => b.id));
+  return base.ejercicios.every((e) => ids.has(e.ejercicioId)) ? base : null;
+}
+
 /** "25 min · inclinación 8 · 5.5 km/h": una anotación de cardio, para el historial. */
 export function textoCardio(s: { reps: number; inclinacion?: number; velocidad?: number }, ejercicioId?: string): string {
   return [

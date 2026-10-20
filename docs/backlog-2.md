@@ -976,7 +976,8 @@ caminadora, escaladora, elíptica y bicicleta → minutos (obligatorio), inclina
 y elíptica) y velocidad (opcionales).
 
 - Sin entrenamiento abierto se guarda solo, como un entrenamiento propio (cuenta en "Tu semana" y
-  marca la asistencia); con uno abierto se agrega a ese ("🏃 Agregar cardio").
+  marca la asistencia); con uno abierto se agrega a ese ("🏃 Agregar cardio"); y si ya guardó uno
+  ese día, se agrega a ese (se reenvía con el mismo id y el servidor lo reescribe).
 - Tipo nuevo `cardio` en el banco: una sola serie con `reps` = minutos, más `inclinacion` y
   `velocidad`. `registrarSesion` lo valida.
 - "Tu semana" suma los minutos de cardio; Estadísticas muestra minutos totales, sesión más larga,

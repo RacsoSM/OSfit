@@ -2,6 +2,9 @@ import { describe, expect, it } from "vitest";
 import type { EjercicioBanco, Sesion } from "./datos";
 import {
   MAX_CAIDAS,
+  entrenamientoDelDia,
+  envioDeSesion,
+  sumarCardio,
   agregarCardio,
   envioCardio,
   textoCardio,
@@ -626,6 +629,50 @@ describe("cardio", () => {
     const sesiones: Sesion[] = [{ id: "s", fecha: "2026-10-20", origen: "manual", ejercicios: [{ ejercicioId: "caminadora", nombre: "Caminadora", series: [{ reps: 25, peso: null }] }] }];
     expect(resumenSemana(sesiones, "2026-10-20", [caminadora]).minutosCardio).toBe(25);
     expect(resumenSemana(sesiones, "2026-10-20").minutosCardio).toBe(0);
+  });
+});
+
+describe("cardio agregado al entrenamiento del día", () => {
+  const caminadora: EjercicioBanco = { id: "caminadora", nombre: "Caminadora", tipo: "cardio", musculos: {}, gifRuta: null };
+  const press: EjercicioBanco = { id: "press-banca", nombre: "Press de banca", tipo: "peso", musculos: { pecho: 1 }, gifRuta: null };
+  const banco = [caminadora, press];
+  const ts = (ms: number) => ({ toDate: () => new Date(ms) }) as unknown as Sesion["creada"];
+  const inicio = Date.UTC(2026, 9, 20, 15, 0), fin = inicio + 50 * 60_000, ahora = fin + 30 * 60_000;
+  const deHoy: Sesion = {
+    id: "s-hoy-1234", fecha: "2026-10-20", origen: "guiado", iniciada: ts(inicio), creada: ts(fin),
+    ejercicios: [{ ejercicioId: "press-banca", nombre: "Press de banca", series: [{ reps: 10, peso: 40 }] }],
+  };
+  const cardio = { ejercicioId: "caminadora", series: [{ reps: 25, peso: null, velocidad: 5.5 }] };
+
+  it("reenvía el de hoy con su id, sus horas y su origen", () => {
+    expect(envioDeSesion(deHoy)).toEqual({
+      id: "s-hoy-1234", fecha: "2026-10-20", iniciadaEn: inicio, terminadaEn: fin, origen: "guiado",
+      ejercicios: [{ ejercicioId: "press-banca", series: [{ reps: 10, peso: 40 }] }],
+    });
+  });
+
+  it("le agrega el cardio y lo termina ahora", () => {
+    const r = sumarCardio(envioDeSesion(deHoy), cardio, ahora);
+    expect(r.id).toBe("s-hoy-1234");
+    expect(r.terminadaEn).toBe(ahora);
+    expect(r.ejercicios.map((e) => e.ejercicioId)).toEqual(["press-banca", "caminadora"]);
+  });
+
+  it("si ya traía esa máquina, suma los minutos", () => {
+    const una = sumarCardio(envioDeSesion(deHoy), cardio, ahora);
+    const dos = sumarCardio(una, { ejercicioId: "caminadora", series: [{ reps: 10, peso: null }] }, ahora + 60_000);
+    expect(dos.ejercicios[1].series).toEqual([{ reps: 35, peso: null, velocidad: 5.5 }]);
+  });
+
+  it("busca primero el que espera en la cola, luego el guardado de hoy; nunca uno de otro día", () => {
+    const enCola = { id: "cola-1234", fecha: "2026-10-20", terminadaEn: ahora, ejercicios: [] };
+    expect(entrenamientoDelDia([deHoy], [enCola], "2026-10-20", banco)?.id).toBe("cola-1234");
+    expect(entrenamientoDelDia([deHoy], [], "2026-10-20", banco)?.id).toBe("s-hoy-1234");
+    expect(entrenamientoDelDia([deHoy], [], "2026-10-21", banco)).toBeNull();
+  });
+
+  it("si el de hoy trae un ejercicio que ya no está en el banco, el cardio va solo", () => {
+    expect(entrenamientoDelDia([deHoy], [], "2026-10-20", [caminadora])).toBeNull();
   });
 });
 

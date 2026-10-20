@@ -25,6 +25,8 @@ import {
   cierreAutomatico,
   agregarCardio,
   envioCardio,
+  entrenamientoDelDia,
+  sumarCardio,
   textoCardio,
   type CamposCardio,
   HORAS_CIERRE,
@@ -931,6 +933,11 @@ function hayCardio(d: DatosRegistro): boolean {
   return d.banco.some((b) => b.tipo === "cardio");
 }
 
+/** Si el cardio va a un entrenamiento de hoy: el abierto, o uno ya guardado hoy. */
+function hayDeHoy(d: DatosRegistro): boolean {
+  return (estado.borrador !== null && !estado.borrador.edicion) || (d.sesiones ?? []).some((s) => s.fecha === d.hoy);
+}
+
 /** La caminadora y la elíptica son las únicas con inclinación. */
 const CON_INCLINACION = new Set(["caminadora", "eliptica"]);
 
@@ -961,7 +968,7 @@ function vistaCardio(d: DatosRegistro): string {
   return `
     <p class="confirmar-titulo cardio-titulo">¿En qué hiciste cardio?</p>
     <div class="cardio-maquinas">${tarjetas}</div>
-    <p class="accion-nota">${estado.borrador ? "Se agrega a tu entrenamiento de hoy." : "Toca una máquina para anotar tu tiempo."}</p>
+    <p class="accion-nota">${hayDeHoy(d) ? "Se agrega a tu entrenamiento de hoy." : "Toca una máquina para anotar tu tiempo."}</p>
     ${CREDITO}`;
 }
 
@@ -978,7 +985,7 @@ function vistaCardioDatos(d: DatosRegistro): string {
     </div>
     <div class="tarjeta">${camposCardio(m.id, campo("minutos"), campo("inclinacion"), campo("velocidad"))}</div>
     ${error}
-    <button class="boton" data-accion="guardar-cardio">${estado.borrador ? "Agregar a mi entrenamiento" : "Guardar cardio"}</button>
+    <button class="boton" data-accion="guardar-cardio">${hayDeHoy(d) ? "Agregar a mi entrenamiento" : "Guardar cardio"}</button>
     ${CREDITO}`;
 }
 
@@ -1125,6 +1132,8 @@ export interface AccionesRegistro {
   verMusculos?: () => void;
   /** Quita el modo sin datos (`sinDatos.ts`), desde el aviso al terminar con el modo puesto. */
   apagarSinDatos?: () => void;
+  /** Los entrenamientos de esta clienta que esperan en la cola, para agregarles el cardio del día. */
+  pendientes?: () => Envio[];
 }
 
 /**
@@ -1227,10 +1236,16 @@ export function conectarRegistro(
         ir("capturar", "reemplazar");
         return;
       }
-      // Sin entrenamiento abierto es uno propio: se manda por la cola, como uno terminado.
-      acciones.encolar?.(r.datos);
+      // Sin entrenamiento abierto, se agrega al que ya guardó hoy: se reenvía con el mismo id y
+      // el servidor lo reescribe. Si hoy no hay ninguno, es uno propio. Las dos van por la cola,
+      // así que sirven sin internet.
+      const minutos = r.datos.ejercicios[0]?.series[0]?.reps ?? 0;
+      const delDia = entrenamientoDelDia(d.sesiones ?? [], acciones.pendientes?.() ?? [], d.hoy, d.banco);
+      acciones.encolar?.(delDia ? sumarCardio(delDia, r.datos.ejercicios[0], ahora) : r.datos);
       acciones.enviarAhora?.();
-      estado.avisoCardio = `🏃 Cardio guardado: ${m.nombre}, ${r.datos.ejercicios[0]?.series[0]?.reps ?? 0} min`;
+      estado.avisoCardio = delDia
+        ? `🏃 Cardio agregado a tu entrenamiento de hoy: ${m.nombre}, ${minutos} min`
+        : `🏃 Cardio guardado: ${m.nombre}, ${minutos} min`;
       estado.cardio = null;
       estado.guardado = false;
       estado.cierreAuto = null;
