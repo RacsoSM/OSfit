@@ -1805,3 +1805,6 @@ button.registro-serie-num.abierto { border-style: solid; border-color: var(--pri
 /* El ejercicio en grande en Estadísticas, como la tarjeta activa de Registro. */
 .estad-medio { padding-top: 16px; padding-bottom: 8px; }
 .estad-medio .registro-activo-gif { margin-bottom: 4px; }
+/* Un 20 % más chico que en Registro (entrenador, 2026-10-20): aquí lo principal son los datos. */
+.estad-medio .registro-activo-gif .registro-ej-gif { width: min(100%, 144px); }
+.estad-medio .registro-activo-gif .registro-ej-video { width: min(100%, 208px); }
