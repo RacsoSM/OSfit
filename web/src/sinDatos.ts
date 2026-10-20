@@ -141,6 +141,11 @@ export async function guardarFaltantes(
 /**
  * Los GIF en el mismo caché que usa el service worker. Se piden con `cors`, como él (ver
  * `medioGuardado` en `public/sw.js`): así la respuesta se guarda con su tamaño real.
+ *
+ * `cache: "reload"`: el caché HTTP del navegador puede tener el GIF de antes de que el bucket
+ * tuviera CORS (2026-10-20), sin `Access-Control-Allow-Origin` ni `Vary: Origin` y vigente 30
+ * días. Pedido con CORS, el navegador contestaba con esa copia y lo bloqueaba: así fallaron 115
+ * de 121 en el teléfono del entrenador. "reload" lo baja de la red y deja la copia buena.
  */
 export function almacenDelNavegador(): AlmacenMedios {
   return {
@@ -148,7 +153,7 @@ export function almacenDelNavegador(): AlmacenMedios {
       return (await (await caches.open(CACHE_MEDIOS)).match(url)) !== undefined;
     },
     async bajar(url) {
-      const respuesta = await fetch(url, { mode: "cors", credentials: "omit" });
+      const respuesta = await fetch(url, { mode: "cors", credentials: "omit", cache: "reload" });
       if (!respuesta.ok) throw new Error(String(respuesta.status));
       await (await caches.open(CACHE_MEDIOS)).put(url, respuesta);
     },

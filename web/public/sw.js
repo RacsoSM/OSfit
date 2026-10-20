@@ -136,7 +136,10 @@ async function medioGuardado(evento) {
   const pedido = evento.request;
   const cache = await caches.open(CACHE_MEDIOS);
   const guardado = await cache.match(pedido.url);
-  const deRed = fetch(pedido.url, { mode: "cors", credentials: "omit" }).then((respuesta) => {
+  // Sin copia guardada, "reload": el caché HTTP puede tener el GIF de antes de que el bucket
+  // tuviera CORS, sin sus cabeceras, y con él el pedido CORS fallaba (ver `almacenDelNavegador`
+  // en `src/sinDatos.ts`). Con copia, el refresco de fondo usa el caché HTTP para no gastar datos.
+  const deRed = fetch(pedido.url, { mode: "cors", credentials: "omit", cache: guardado ? "default" : "reload" }).then((respuesta) => {
     if (respuesta.ok) return cache.put(pedido.url, respuesta.clone()).then(() => respuesta, () => respuesta);
     return respuesta;
   });

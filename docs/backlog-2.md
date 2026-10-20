@@ -938,7 +938,12 @@ sale a internet:
   demás. Ahora, al prender el interruptor, primero se bajan los que falten (`guardarFaltantes`:
   121 GIF, 3.8 MB, ~10 s) con el avance en Ajustes ("Guardando los ejercicios… 80 de 121") y
   luego se corta la red. Si alguno falla, se avisa. Probado en producción: después de cerrar y
-  abrir el navegador con el modo puesto, se ven los 121.
+  abrir el navegador con el modo puesto, se ven los 121. **Arreglo (mismo día):** en el teléfono del entrenador
+  fallaron 115 de 121. Esos GIF estaban en el caché HTTP del navegador desde antes de que el
+  bucket tuviera CORS (sin `Access-Control-Allow-Origin` ni `Vary: Origin`, vigentes 30 días), y
+  el navegador contestaba el pedido CORS con esa copia y lo bloqueaba. Ahora se piden con
+  `cache: "reload"` (la descarga y el service worker cuando no tiene copia). Reproducido con un
+  servidor que imita a Storage antes y después de CORS: falla como estaba y pasa con el arreglo.
 
 Pendiente:
 
