@@ -291,7 +291,7 @@ Plan: `superpowers/plans/2026-10-10-revocar-acceso.md`.
 Implementado y desplegado (2026-10-10): funciones, reglas y web en producción; app instalada.
 Verificado por el entrenador en su teléfono (2026-10-10).
 
-## 7. Barra de abajo con Músculos y Registro, y Entrenar en Inicio — 🟡 PARCIAL: barra, Músculos, Registro y modo guiado hechos; falta verlo en el teléfono
+## 7. Barra de abajo con Músculos y Registro, y Entrenar en Inicio — ✅ HECHO (marcado por el entrenador, 2026-10-20)
 
 > "eso me agrada más, añadelo al backlog como urgente antes de proponer el spec"
 
@@ -540,7 +540,7 @@ Sigue sin hacerse: editar o borrar entrenamientos sin red, y que "Tu semana" cue
 esperan internet (aparecen cuando llegan al servidor). La primera vez que una clienta abre la
 página después del deploy necesita señal para que se guarde.
 
-## 12. Que cada APK diga qué versión es
+## 12. Que cada APK diga qué versión es — ✅ HECHO (marcado por el entrenador, 2026-10-20)
 
 **Hecho (2026-10-17):** `versionName` = `AAMMDD.HHMM-commit` (hora de Mazatlán, como la web; con
 `+` si se compiló con cambios sin commit) y `versionCode` = minutos desde 2024, que siempre sube
@@ -642,7 +642,7 @@ reverse fly*). Quedó como `rear-delt-maquina`, con los alias "rear delt" (los P
 como estaban), estándares = militar × 0.75, video HD del camino 1 y en Ejercicios por grupo →
 Hombro después de los Pájaros. La de polea no hizo falta.
 
-## 15. Lo que salió al estrenar Registro con clientas reales (2026-10-13)
+## 15. Lo que salió al estrenar Registro con clientas reales (2026-10-13) — ✅ HECHO (marcado por el entrenador, 2026-10-20)
 
 Primer día de Registro (que cada clienta anote sus pesos) con clientas reales. Notas del
 entrenador, tal cual:
@@ -776,22 +776,7 @@ con ventaja) distorsiona más que cualquier factor. Falta poder configurarlo por
 - Ojo: con esto, bajar grasa sin ganar fuerza ya no sube el nivel (antes sí, porque pesaba
   menos). Medir siempre con el mismo aparato y en las mismas condiciones.
 
-## 19. Cambiar un ejercicio por otro al editar un entrenamiento, sin perder las series
-
-> "sí, agrégalo al backlog" (2026-10-14)
-
-Al editar un entrenamiento del historial no hay forma de reemplazar un ejercicio por otro
-conservando lo anotado: hay que quitarlo, agregar el bueno y volver a escribir las series.
-Pasó con un cliente que registró "Patada de glúteo con liga" cuando la hizo en máquina (punto 15,
-ya existe `patada-gluteo-maquina`).
-
-Idea: en la tarjeta del ejercicio, en modo edición (y quizá también en un entrenamiento en
-curso), un botón "Cambiar ejercicio" que abra el grid de elegir y reemplace el ejercicio
-dejando sus series. Cuidado con el tipo: de un corporal a uno de peso, las series sin peso
-quedan a medio llenar y `paraEnviar` las va a reclamar; de uno de peso a uno de tiempo, el
-peso sobra. Y con la unidad (barras o kg) del ejercicio nuevo.
-
-## 20. Prensa sentado a dos piernas: recrear la animación para cuádriceps
+## 20. Prensa sentado a dos piernas: recrear la animación para cuádriceps — ✅ HECHO (marcado por el entrenador, 2026-10-20)
 
 > "la prensa esa la dejaremos para después, déjala en el backlog" (2026-10-14)
 
@@ -898,7 +883,7 @@ A decidir en el spec:
 - Si también va en la app del entrenador para ver la de cada clienta (ya hay
   `EstadisticasScreen.kt`, que es de asistencia).
 
-## 23. Modo sin datos en Ajustes — ✅ HECHO (2026-10-20), falta probarlo en un teléfono
+## 23. Modo sin datos en Ajustes — ✅ HECHO (marcado por el entrenador, 2026-10-20)
 
 > "quiero que haya un botón para activar el modo offline desde los ajustes, para cuando eso este activo no se usen datos, cuando detecte internet de wifi, que sugiera cambiarlo de nuevo" (2026-10-20)
 
