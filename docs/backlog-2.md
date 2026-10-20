@@ -931,9 +931,12 @@ sale a internet:
 
 Pendiente:
 
-- **GIF de los ejercicios sin datos:** el service worker ya intenta guardarlos al verlos, pero
-  Storage no manda cabeceras CORS y sin ellas no se pueden guardar (guardarlos opacos inflaría la
-  cuota del sitio y el navegador podría borrar el caché de Firestore). Hace falta configurar CORS
-  en el bucket (`gsutil cors set` con `GET` para el dominio de la web). Mientras, sin datos solo
-  se ven los GIF que el navegador tenga en su caché propio; los demás salen vacíos.
+- ✅ **HECHO (2026-10-20).** ~~**GIF de los ejercicios sin datos.**~~ El bucket ya tiene CORS
+  (`storage.cors.json` en la raíz: `GET`/`HEAD` desde `osfit-cccfe.web.app` y
+  `osfit-cccfe.firebaseapp.com`), así que el service worker guarda cada GIF e imagen de Storage
+  al verlos con señal y sin datos se ven los que ya vio. Antes no se podía: sin CORS habría que
+  guardarlos opacos, que inflan la cuota del sitio y el navegador podría borrar el caché de
+  Firestore. Para cambiarla, editar el archivo y aplicarlo con `gsutil cors set storage.cors.json
+  gs://osfit-cccfe.firebasestorage.app` (o `setCorsConfiguration` de `@google-cloud/storage`). Si se
+  agrega un dominio propio a la web, va también ahí.
 - Probarlo en un teléfono Android con Wi-Fi y datos, y en un iPhone.
