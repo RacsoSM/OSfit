@@ -40,7 +40,8 @@ import { almacenDeEstilo, ponerEstilo } from "./ui/cambioDeEstilo";
 import { estiloGuardado, type IdEstilo } from "./estilo";
 import { cerrarSesion, credencialLista, huellaDeLaSesion, iniciarSesion, redDeFirestore, urlDeDescarga } from "./firebase";
 import {
-  alBloquear, conexionDelNavegador, esWifi, guardarModoSinDatos, modoSinDatos, sugerirApagar,
+  alBloquear, almacenDelNavegador, conexionDelNavegador, esWifi, guardarFaltantes, guardarModoSinDatos, modoSinDatos,
+  sugerirApagar,
 } from "./sinDatos";
 import { conectarSinDatos } from "./ui/tarjetaSinDatos";
 import { conectarEstadisticas } from "./ui/estadisticas";
@@ -50,7 +51,7 @@ import type { MotivoSinAcceso, ResultadoSesion } from "./sesion";
 import { aplicarPaleta } from "./paleta";
 import { almacenCola, encolar, enviarPendientes, pendientesDe } from "./cola";
 import type { Envio } from "./registro";
-import { indiceBanco, type IndiceBanco } from "./banco";
+import { indiceBanco, urlGif, type IndiceBanco } from "./banco";
 import { saludo, conectarSaludo, actualizarNombre } from "./ui/saludo";
 import { conectarAccionDia } from "./ui/accionDia";
 import { conectarAccionFalta } from "./ui/accionFalta";
@@ -285,8 +286,27 @@ async function arrancar(): Promise<void> {
   /** Los últimos videos que llegaron, para pedir sus URL al apagar el modo sin datos. */
   let videosCrudos: VideoResumen[] = [];
 
+  /** Mientras se bajan los GIF al prender el modo sin datos: el avance que ve en Ajustes. */
+  let guardandoGifs: { hechos: number; total: number } | null = null;
+  let avisoGifs: string | null = null;
+
   /** Prende o apaga el modo sin datos (`sinDatos.ts`), desde Ajustes o desde la franja. */
   async function cambiarSinDatos(activo: boolean): Promise<void> {
+    if (activo) {
+      if (guardandoGifs) return;
+      // Antes de cortar la red, los GIF del banco que falten (entrenador, 2026-10-20): sin datos
+      // solo se ve lo guardado, y el service worker solo guarda los que se mostraron.
+      const urls = banco.flatMap((b) => urlGif(b.gifRuta) ?? []);
+      guardandoGifs = { hechos: 0, total: 0 };
+      pintar();
+      const { fallidos } = await guardarFaltantes(urls, almacenDelNavegador(), (hechos, total) => {
+        guardandoGifs = { hechos, total };
+        pintar();
+      });
+      guardandoGifs = null;
+      avisoGifs = fallidos === 0 ? null
+        : `${fallidos === 1 ? "1 ejercicio no se pudo guardar" : `${fallidos} ejercicios no se pudieron guardar`}: sin datos se verán sin imagen. Desactívalo y actívalo con internet para reintentar.`;
+    }
     await guardarModoSinDatos(activo);
     wifiDescartado = false;
     quitarAvisoSinDatos();
@@ -638,6 +658,8 @@ async function arrancar(): Promise<void> {
       comparacion,
       sinDatos: modoSinDatos(),
       avisaWifi: conexion?.type !== undefined,
+      guardandoGifs,
+      avisoGifs,
       historial,
     };
     contenido.innerHTML = contenidoDe(activa, datos);

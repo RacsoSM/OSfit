@@ -23,3 +23,15 @@ describe("tarjetaSinDatos", () => {
     expect(tarjetaSinDatos(true, true)).toContain("te sugeriremos desactivarlo");
   });
 });
+
+describe("tarjetaSinDatos al guardar los ejercicios", () => {
+  it("mientras se bajan los GIF, muestra el avance y el interruptor espera", () => {
+    const html = tarjetaSinDatos(false, true, { hechos: 80, total: 121 });
+    expect(html).toContain("Guardando los ejercicios en tu teléfono para verlos sin datos… 80 de 121");
+    expect(html).toContain(`disabled aria-busy="true"`);
+  });
+
+  it("si algo no se pudo guardar, lo dice", () => {
+    expect(tarjetaSinDatos(true, true, null, "2 ejercicios no se pudieron guardar")).toContain("2 ejercicios no se pudieron guardar");
+  });
+});

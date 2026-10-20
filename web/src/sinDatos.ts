@@ -15,6 +15,8 @@
  */
 
 export const LLAVE_SIN_DATOS = "osfit:modo-sin-datos";
+/** GEMELO de `CACHE_MEDIOS` en `public/sw.js`: donde el service worker guarda los GIF. */
+export const CACHE_MEDIOS = "osfit-medios-v1";
 /** GEMELOS de `CACHE_AJUSTES` y `MARCA_SIN_DATOS` en `public/sw.js`. */
 export const CACHE_AJUSTES = "osfit-ajustes";
 export const MARCA_SIN_DATOS = "/__modo-sin-datos";
@@ -103,3 +105,53 @@ export interface Conexion {
 export function conexionDelNavegador(): Conexion | null {
   return (navigator as Navigator & { connection?: Conexion }).connection ?? null;
 }
+
+/** Lo que usa `guardarFaltantes`, inyectado para probarlo sin navegador. */
+export interface AlmacenMedios {
+  tiene(url: string): Promise<boolean>;
+  bajar(url: string): Promise<void>;
+}
+
+/**
+ * Baja al teléfono los GIF que todavía no tiene, unos cuantos a la vez, avisando el avance. Se
+ * llama al prender el modo sin datos (entrenador, 2026-10-20): sin esto solo se ven sin datos
+ * los GIF que se mostraron alguna vez con internet. Uno que falla no detiene a los demás.
+ */
+export async function guardarFaltantes(
+  urls: readonly string[],
+  almacen: AlmacenMedios,
+  alAvanzar: (hechos: number, total: number) => void,
+  simultaneos = 6
+): Promise<{ fallidos: number }> {
+  const faltan: string[] = [];
+  for (const u of new Set(urls)) if (!(await almacen.tiene(u).catch(() => false))) faltan.push(u);
+  let hechos = 0, fallidos = 0, siguiente = 0;
+  alAvanzar(0, faltan.length);
+  const trabajador = async () => {
+    while (siguiente < faltan.length) {
+      const u = faltan[siguiente++];
+      try { await almacen.bajar(u); } catch { fallidos++; }
+      alAvanzar(++hechos, faltan.length);
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(simultaneos, faltan.length) }, trabajador));
+  return { fallidos };
+}
+
+/**
+ * Los GIF en el mismo caché que usa el service worker. Se piden con `cors`, como él (ver
+ * `medioGuardado` en `public/sw.js`): así la respuesta se guarda con su tamaño real.
+ */
+export function almacenDelNavegador(): AlmacenMedios {
+  return {
+    async tiene(url) {
+      return (await (await caches.open(CACHE_MEDIOS)).match(url)) !== undefined;
+    },
+    async bajar(url) {
+      const respuesta = await fetch(url, { mode: "cors", credentials: "omit" });
+      if (!respuesta.ok) throw new Error(String(respuesta.status));
+      await (await caches.open(CACHE_MEDIOS)).put(url, respuesta);
+    },
+  };
+}
+

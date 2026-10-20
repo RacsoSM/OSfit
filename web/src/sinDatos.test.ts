@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { errorSinDatos, esWifi, modoSinDatos, sugerirApagar } from "./sinDatos";
+import { errorSinDatos, esWifi, guardarFaltantes, modoSinDatos, sugerirApagar } from "./sinDatos";
 import { rechazoDefinitivo } from "./cola";
 
 describe("modo sin datos", () => {
@@ -28,3 +28,27 @@ describe("modo sin datos", () => {
     expect(sugerirApagar(true, undefined, false)).toBe(false);
   });
 });
+
+describe("guardarFaltantes", () => {
+  it("baja solo los que faltan, sin repetir, y avisa el avance", async () => {
+    const guardados = new Set(["a"]);
+    const bajados: string[] = [];
+    const avance: string[] = [];
+    const r = await guardarFaltantes(["a", "b", "c", "b"], {
+      tiene: async (u) => guardados.has(u),
+      bajar: async (u) => { bajados.push(u); guardados.add(u); },
+    }, (h, t) => avance.push(`${h}/${t}`), 1);
+    expect(bajados).toEqual(["b", "c"]);
+    expect(avance).toEqual(["0/2", "1/2", "2/2"]);
+    expect(r.fallidos).toBe(0);
+  });
+
+  it("uno que falla no detiene a los demás", async () => {
+    const r = await guardarFaltantes(["a", "b", "c"], {
+      tiene: async () => false,
+      bajar: async (u) => { if (u === "b") throw new Error("sin red"); },
+    }, () => {});
+    expect(r.fallidos).toBe(1);
+  });
+});
+

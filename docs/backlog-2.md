@@ -933,6 +933,12 @@ sale a internet:
   (`navigator.connection`), y Ajustes le avisa que ahí lo desactive ella.
 - **Fuentes del estilo:** se guardan al verlas con señal (`osfit-medios-v1`), así el estilo se
   ve igual sin datos.
+- **Todos los GIF al prenderlo** (entrenador, 2026-10-20): el service worker solo guardaba los GIF
+  que se habían mostrado con internet, así que al cerrar y abrir la página sin datos faltaban los
+  demás. Ahora, al prender el interruptor, primero se bajan los que falten (`guardarFaltantes`:
+  121 GIF, 3.8 MB, ~10 s) con el avance en Ajustes ("Guardando los ejercicios… 80 de 121") y
+  luego se corta la red. Si alguno falla, se avisa. Probado en producción: después de cerrar y
+  abrir el navegador con el modo puesto, se ven los 121.
 
 Pendiente:
 

@@ -9,9 +9,19 @@ import { escapar } from "./tarjetaDia";
  *
  * `avisaWifi`: si este navegador dice cuándo hay Wi-Fi. En iPhone no lo dice, y se avisa para
  * que nadie espere la sugerencia de apagarlo.
+ *
+ * `guardando`: al prenderlo, mientras se bajan los GIF que faltan (`guardarFaltantes`); el
+ * interruptor espera. `avisoGifs`: lo que no se pudo guardar, si algo falló.
  */
-export function tarjetaSinDatos(activo: boolean, avisaWifi: boolean): string {
-  const nota = activo
+export function tarjetaSinDatos(
+  activo: boolean,
+  avisaWifi: boolean,
+  guardando: { hechos: number; total: number } | null = null,
+  avisoGifs: string | null = null
+): string {
+  const nota = guardando
+    ? `Guardando los ejercicios en tu teléfono para verlos sin datos…${guardando.total > 0 ? ` ${guardando.hechos} de ${guardando.total}` : ""}`
+    : activo
     ? "No se usa internet. Ves lo guardado en este teléfono, y lo que termines en Registro se envía al desactivarlo. La ruleta, el ranking, Amigos, revivir la racha y los videos necesitan internet."
     : "Para no gastar tus datos móviles: la página usa solo lo guardado en este teléfono, y tus entrenamientos se envían cuando lo desactives.";
   const wifi = avisaWifi
@@ -23,11 +33,12 @@ export function tarjetaSinDatos(activo: boolean, avisaWifi: boolean): string {
       <div class="ajuste-interruptor">
         <span class="ajuste-etiqueta" id="sin-datos-etiqueta">Modo sin datos</span>
         <button type="button" class="interruptor" id="interruptor-sin-datos" role="switch"
-                aria-checked="${activo}" aria-labelledby="sin-datos-etiqueta" aria-describedby="sin-datos-nota">
+                aria-checked="${activo}" aria-labelledby="sin-datos-etiqueta" aria-describedby="sin-datos-nota"${guardando ? ` disabled aria-busy="true"` : ""}>
           <span class="interruptor-bolita" aria-hidden="true"></span>
         </button>
       </div>
-      <p class="ajuste-nota" id="sin-datos-nota">${escapar(nota)}</p>
+      <p class="ajuste-nota" id="sin-datos-nota" aria-live="polite">${escapar(nota)}</p>
+      ${avisoGifs && !guardando ? `<p class="ajuste-nota">${escapar(avisoGifs)}</p>` : ""}
       <p class="ajuste-nota ajuste-tenue">${escapar(wifi)} Se guarda en este teléfono.</p>
     </div>`;
 }
@@ -35,5 +46,7 @@ export function tarjetaSinDatos(activo: boolean, avisaWifi: boolean): string {
 /** Cuelga el interruptor. Como el resto de `conectar*`, se vuelve a llamar en cada repintado. */
 export function conectarSinDatos(alCambiar: (activo: boolean) => void): void {
   const boton = document.querySelector<HTMLButtonElement>("#interruptor-sin-datos");
-  boton?.addEventListener("click", () => alCambiar(boton.getAttribute("aria-checked") !== "true"));
+  boton?.addEventListener("click", () => {
+    if (!boton.disabled) alCambiar(boton.getAttribute("aria-checked") !== "true");
+  });
 }

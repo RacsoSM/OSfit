@@ -78,6 +78,10 @@ export interface DatosCliente {
   sinDatos?: boolean;
   /** Si este navegador dice cuándo hay Wi-Fi (en iPhone no). */
   avisaWifi?: boolean;
+  /** Al prender el modo sin datos, el avance de los GIF que se bajan antes de cortar la red. */
+  guardandoGifs?: { hechos: number; total: number } | null;
+  /** Cuántos GIF no se pudieron guardar la última vez, en palabras; null si todo salió. */
+  avisoGifs?: string | null;
   /** Todo su historial, para Estadísticas; null mientras no llega (se pide al abrir esa ventana). */
   historial?: Sesion[] | null;
 }
@@ -219,7 +223,7 @@ export const VENTANAS: readonly Ventana[] = [
   { id: "videos", titulo: "Videos", icono: "🎬", grupo: "principal", contenedorPropio: "videos", oculta: true },
   {
     id: "ajustes", titulo: "Ajustes", icono: "⚙️", grupo: "pie",
-    pintar: (d) => tarjetaAjustes(d.estilo) + tarjetaSinDatos(d.sinDatos ?? false, d.avisaWifi ?? false) + seccionNotificaciones(d.notificaciones, d.activandoNotificaciones),
+    pintar: (d) => tarjetaAjustes(d.estilo) + tarjetaSinDatos(d.sinDatos ?? false, d.avisaWifi ?? false, d.guardandoGifs ?? null, d.avisoGifs ?? null) + seccionNotificaciones(d.notificaciones, d.activandoNotificaciones),
   },
 ];
 
