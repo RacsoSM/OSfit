@@ -72,6 +72,9 @@ PESO = {
     "buenos-dias": ("muerto", 0.45, ""),
     "prensa": ("prensa", 1.00, "máquina: varía por marca"),
     "prensa-horizontal-una-pierna": ("prensa", 0.40, "una pierna; máquina"),
+    # La misma máquina de placas que la de una pierna, con las dos: el doble (2026-10-21). La de
+    # 45° (×1.00) es de discos y en una pila sus números no se alcanzan.
+    "prensa-maquina": ("prensa", 0.80, "dos piernas: el doble de la de una; máquina de placas"),
     "extension-cuadriceps": ("extension", 1.00, "máquina"),
     "curl-femoral-acostado": ("femoral", 1.00, "máquina"),
     "curl-femoral-sentado": ("femoral", 1.10, "máquina"),
@@ -139,6 +142,8 @@ PESO = {
     "extension-triceps-mancuerna": ("triceps", 0.45, "copa a dos manos: el peso de la pesa completa, no por brazo"),
     "patada-triceps": ("triceps", 0.20, "por mancuerna"),
     "crunch-polea": ("crunch", 1.00, ""),
+    # Máquina de placas, no la estación de polea doble: sin el ×1.3 del de polea (2026-10-21).
+    "crunch-maquina": ("crunch", 1.00, "máquina: varía por marca"),
 }
 
 # Corporales: repeticiones seguidas.
@@ -300,8 +305,8 @@ def main() -> None:
     for e in banco:
         i, tipo, grupo = e["id"], e["tipo"], e["grupo"]
         filas.setdefault(grupo, [])
-        if tipo == "tiempo":
-            filas[grupo].append(f"| {e['nombre']} | — | de tiempo: no pinta el mapa |" + " |" * (len(NIVELES) - 1))
+        if tipo in ("tiempo", "cardio"):
+            filas[grupo].append(f"| {e['nombre']} | — | de {tipo}: no pinta el mapa |" + " |" * (len(NIVELES) - 1))
             continue
         if i in SIN_ESTANDAR:
             filas[grupo].append(f"| {e['nombre']} | — | sin estándar: {SIN_ESTANDAR[i]} |" + " |" * (len(NIVELES) - 1))

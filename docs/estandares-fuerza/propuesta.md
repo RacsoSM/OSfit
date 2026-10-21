@@ -82,6 +82,8 @@ Los porcentajes salen de un modelo: entre quienes entrenan, la fuerza se reparte
 |  | M | 45 kg | 67.5 kg | 90 kg | 112.5 kg | 135 kg | 150 kg | 165 kg | 235 kg |
 | Prensa horizontal a una pierna | H · una pierna; máquina | 37.5 kg | 50 kg | 60 kg | 75 kg | 90 kg | 100 kg | 107.5 kg | 150 kg |
 |  | M | 18 kg | 27.5 kg | 35 kg | 45 kg | 55 kg | 60 kg | 67.5 kg | 95 kg |
+| Prensa en máquina | H · dos piernas: el doble de la de una; máquina de placas | 75 kg | 97.5 kg | 120 kg | 150 kg | 180 kg | 197.5 kg | 217.5 kg | 300 kg |
+|  | M | 35 kg | 55 kg | 72.5 kg | 90 kg | 107.5 kg | 120 kg | 132.5 kg | 187.5 kg |
 | Extensión de cuádriceps | H · máquina | 37.5 kg | 47.5 kg | 55 kg | 70 kg | 85 kg | 95 kg | 102.5 kg | 142.5 kg |
 |  | M | 20 kg | 27.5 kg | 32.5 kg | 42.5 kg | 50 kg | 55 kg | 60 kg | 85 kg |
 | Zancadas con mancuernas | H · por mancuerna | 14 kg | 19 kg | 22.5 kg | 25 kg | 27.5 kg | 32.5 kg | 35 kg | 47.5 kg |
@@ -295,6 +297,8 @@ Los porcentajes salen de un modelo: entre quienes entrenan, la fuerza se reparte
 |  | M | 8 reps | 14 reps | 20 reps | 29 reps | 38 reps | 42 reps | 47 reps | 74 reps |
 | Crunch en polea | H · polea doble ×1.3 | 30 kg | 42.5 kg | 52.5 kg | 67.5 kg | 82.5 kg | 90 kg | 100 kg | 142.5 kg |
 |  | M | 16 kg | 22.5 kg | 27.5 kg | 35 kg | 42.5 kg | 47.5 kg | 52.5 kg | 77.5 kg |
+| Crunch en máquina | H · máquina: varía por marca | 22.5 kg | 32.5 kg | 40 kg | 52.5 kg | 65 kg | 70 kg | 77.5 kg | 110 kg |
+|  | M | 12 kg | 16 kg | 20 kg | 27.5 kg | 32.5 kg | 37.5 kg | 40 kg | 60 kg |
 | Abdominales completos | H | 5 reps | 12 reps | 20 reps | 28 reps | 35 reps | 38 reps | 42 reps | 69 reps |
 |  | M | 3 reps | 9 reps | 15 reps | 22 reps | 28 reps | 32 reps | 36 reps | 60 reps |
 | Elevación de piernas colgado | H | 1 rep | 4 reps | 6 reps | 9 reps | 12 reps | 14 reps | 17 reps | 30 reps |
@@ -318,3 +322,7 @@ Los porcentajes salen de un modelo: entre quienes entrenan, la fuerza se reparte
 | Caminata del granjero | — | de tiempo: no pinta el mapa | | | | | | | |
 | Saltar la cuerda | — | de tiempo: no pinta el mapa | | | | | | | |
 | Cuerdas de batalla | — | de tiempo: no pinta el mapa | | | | | | | |
+| Caminadora | — | de cardio: no pinta el mapa | | | | | | | |
+| Escaladora | — | de cardio: no pinta el mapa | | | | | | | |
+| Elíptica | — | de cardio: no pinta el mapa | | | | | | | |
+| Bicicleta | — | de cardio: no pinta el mapa | | | | | | | |
