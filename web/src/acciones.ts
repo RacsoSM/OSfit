@@ -2,6 +2,7 @@ import { httpsCallable, type HttpsCallableResult } from "firebase/functions";
 import type { Candidato, EleccionAmigos, PersonaComparar } from "./ui/comparar";
 import { functions } from "./firebase";
 import type { Ranking } from "./datos";
+import type { DatosBatalla } from "./batalla";
 import type { Envio } from "./registro";
 import { avisarBloqueo, errorSinDatos, modoSinDatos } from "./sinDatos";
 
@@ -73,6 +74,9 @@ export const compararMusculos = llamable<Record<string, never>, { personas: Pers
 
 /** Amigos: quién ve sus músculos. `con` solo con "algunos": los ids de las escogidas. */
 export const elegirMostrarEnAmigos = llamable<EleccionAmigos, { ok: true }>("elegirMostrarEnAmigos");
+
+/** Batalla en Amigos: las mejores series de las dos en los ejercicios que tienen en común. */
+export const batallaAmigos = llamable<{ nombre: string }, DatosBatalla>("batallaAmigos");
 
 /**
  * Guarda el token de notificaciones de este teléfono. Si el entrenador no la habilitó, el
