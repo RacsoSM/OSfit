@@ -6,6 +6,8 @@ import { escapar } from "./tarjetaDia";
 import { botonAtras } from "./botonAtras";
 import { insigniaRango, COLORES_RANGO } from "./insigniaRango";
 import { archivosMapa, conNiveles, prepararSvg, type EstadoSvg } from "./mapaMuscular";
+import type { DatosBatalla } from "../batalla";
+import { ICONO_BATALLA, abrirBatalla, batallaCon, cambioBatalla, clicBatalla, reiniciarBatalla, vistaBatalla } from "./batalla";
 
 /**
  * Amigos (antes "Compararme", dentro de Músculos): todas las que tienen algún músculo con rango, con su rango
@@ -19,6 +21,10 @@ import { archivosMapa, conNiveles, prepararSvg, type EstadoSvg } from "./mapaMus
  * 2026-10-15 pasa a llamarse "Amigos". El entrenador decide quién entra (`sinAccesoAmigos`) y
  * cada quien, la primera vez que entra, decide quién la ve (`visibilidadAmigos`): todos, solo
  * algunas personas que escoge de la lista, o nadie. Con "nadie" tampoco ve a los demás.
+ *
+ * 2026-10-21: en la comparación con alguien está el botón de Batalla (`./batalla.ts`). A quien
+ * se ve en Amigos se le puede retar, y en la batalla sí se ven sus mejores series con peso
+ * (decisión del entrenador): por eso la pregunta ya no promete "nunca el peso".
  */
 
 /** GEMELO: `PersonaComparar` de `functions/src/comparar.ts`. */
@@ -71,6 +77,7 @@ let conGuardadas: string[] = [];
 
 /** Para los tests y al salir de la ventana. */
 export function reiniciarComparar(): void {
+  reiniciarBatalla();
   elegida = null;
   deEspalda = false;
   musculo = null;
@@ -118,8 +125,9 @@ function vistaEleccion(puedeCancelar: boolean): string {
   return `
     <div class="tarjeta cmp-eleccion">
       <p class="confirmar-titulo">¿Quién puede ver tus músculos?</p>
-      <p class="accion-nota">En Amigos se ven el nombre, el rango y el mapa de músculos. Nunca el
-        peso. Lo puedes cambiar cuando quieras.</p>
+      <p class="accion-nota">En Amigos se ven tu nombre, tu rango y tu mapa de músculos. Quien te
+        vea también podrá retarte a una batalla, donde se comparan sus mejores series con las tuyas,
+        con su peso. Lo puedes cambiar cuando quieras.</p>
       ${errorEleccion ? AVISO_ERROR_ELECCION : ""}
       <button class="boton" data-cmp="todos"${off}>Mostrarlos a todos</button>
       <button class="boton secundario" data-cmp="algunos"${off}>Solo a algunas personas</button>
@@ -293,6 +301,7 @@ function vistaComparacion(
   return `
     ${botonAtras(`data-cmp="lista"`)}
     ${resalte}
+
     <div class="cmp-cuerpos">
       ${cuerpo("a", "Tú", miSexo, mia, mapas)}
       ${cuerpo("b", otra.nombre, otra.sexo, suya, mapas)}
@@ -303,7 +312,31 @@ function vistaComparacion(
         <span></span><span>Tú</span><span>${escapar(otra.nombre)}</span>
       </div>
       ${filas}
+    </div>
+    ${barraBatalla(yo, otra)}`;
+}
+
+/**
+ * La invitación a la batalla: una barra fija sobre la de navegación, con el degradado del
+ * cartel de la Arena y los dos avatares (propuesta "L", entrenador, 2026-10-21). Antes era un
+ * botón ancho arriba de los cuerpos que se veía como la acción principal de la pantalla.
+ */
+function barraBatalla(yo: PersonaComparar | undefined, otra: PersonaComparar): string {
+  const inicial = (n: string) => escapar(Array.from(n.trim())[0]?.toUpperCase() ?? "?");
+  return `
+    <div class="bat-barra">
+      <span class="bat-barra-avatares" aria-hidden="true">
+        <span class="a">${inicial(yo?.nombre ?? "Tú")}</span><span class="b">${inicial(otra.nombre)}</span>
+      </span>
+      <span class="bat-barra-texto">${yo ? "¿Quién es más fuerte?" : "Registra tus entrenamientos para batallar"}</span>
+      <button class="bat-barra-boton" data-cmp="batalla" aria-label="Batalla contra ${escapar(otra.nombre)}" ${yo ? "" : "disabled"}>${ICONO_BATALLA}<span>Batalla</span></button>
     </div>`;
+}
+
+/** Su rango general por nombre ("Atlética"), para el cartel de la batalla. */
+function rangoDe(p: PersonaComparar | undefined): string | null {
+  const g = p ? rangoGeneral(fuerzaDe(p)) : null;
+  return g && p ? nombreRango(g.nivel, p.sexo) : null;
 }
 
 /** Lo que va en `#contenido` con Amigos abierto. */
@@ -335,7 +368,9 @@ export function ventanaComparar(
   } else {
     const otra = elegida === null ? undefined : e.personas.find((p) => p.nombre === elegida && !p.esTuyo);
     enComparacion = otra !== undefined;
-    cuerpoHtml = otra
+    cuerpoHtml = otra && batallaCon(otra.nombre)
+      ? vistaBatalla({ a: rangoDe(e.personas.find((p) => p.esTuyo)), b: rangoDe(otra) })
+      : otra
       ? vistaComparacion(e.personas.find((p) => p.esTuyo), miSexo, otra, mapas)
       : vistaLista(e.personas, mapas, lineaVisibilidad(modo, compartidoCon(cliente).length, cliente.adminAmigos === true));
   }
@@ -362,7 +397,8 @@ export function conectarComparar(
   repintar: () => void,
   reintentar: () => void,
   salir: () => void,
-  elegir: (eleccion: EleccionAmigos) => Promise<unknown>
+  elegir: (eleccion: EleccionAmigos) => Promise<unknown>,
+  pedirBatalla: (nombre: string) => Promise<DatosBatalla> = () => Promise.reject(new Error("sin batalla"))
 ): void {
   const raiz = document.querySelector<HTMLElement>("#comparar");
   if (!raiz) return;
@@ -377,6 +413,7 @@ export function conectarComparar(
   };
   // Marcar o desmarcar a alguien en "Solo a algunas personas".
   raiz.addEventListener("change", (ev) => {
+    if (cambioBatalla(ev.target as Element, repintar)) return;
     const caja = (ev.target as Element).closest<HTMLInputElement>("input[data-candidato]");
     if (!caja || escogiendo === null) return;
     const id = caja.dataset.candidato!;
@@ -395,6 +432,7 @@ export function conectarComparar(
     }
     const el = objetivo.closest<HTMLElement>("button");
     if (!el) return;
+    if (clicBatalla(el, repintar, pedirBatalla)) return;
     if (el.dataset.persona !== undefined) {
       const p = el.dataset.persona;
       if (el.classList.contains("tuya")) return;
@@ -411,6 +449,7 @@ export function conectarComparar(
     }
     const accion = el.dataset.cmp;
     if (accion === "lista") { elegida = null; musculo = null; repintar(); return; }
+    if (accion === "batalla" && elegida !== null) { abrirBatalla(elegida, pedirBatalla, repintar); repintar(); window.scrollTo(0, 0); return; }
     if (accion === "salir") { salir(); return; }
     if (accion === "girar") { deEspalda = !deEspalda; repintar(); return; }
     if (accion === "reintentar") { reintentar(); return; }

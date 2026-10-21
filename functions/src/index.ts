@@ -5,6 +5,7 @@ export { avisarFalta } from "./avisarFalta";
 export { jugarRuleta } from "./jugarRuleta";
 export { obtenerRanking } from "./ranking";
 export { compararMusculos, elegirMostrarEnAmigos } from "./comparar";
+export { batallaAmigos } from "./batalla";
 export { registrarDispositivo } from "./registrarDispositivo";
 export { enviarNotificacion } from "./enviarNotificacion";
 export { programarAvisos } from "./programarAvisos";

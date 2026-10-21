@@ -27,7 +27,7 @@ import type {
 import { hoyEnMazatlan } from "./fecha";
 import { mesAnterior, type Tirada } from "./tirada";
 import {
-  borrarSesion, compararMusculos, editarSesion, elegirMostrarEnAmigos, guardarPeso, marcarAsistencia, obtenerRanking, registrarEntrada, registrarSesion,
+  batallaAmigos, borrarSesion, compararMusculos, editarSesion, elegirMostrarEnAmigos, guardarPeso, marcarAsistencia, obtenerRanking, registrarEntrada, registrarSesion,
 } from "./acciones";
 import { modalRuleta, conectarRuleta } from "./ui/ruleta";
 import { conectarRanking, type EstadoRanking } from "./ui/tarjetaRanking";
@@ -690,7 +690,8 @@ async function arrancar(): Promise<void> {
         () => { cargarComparacion(); pintar(); },
         () => abrirVentana("musculos"),
         // Lo que ve cambia con lo que eligió (con "nadie" no ve a nadie): se vuelve a pedir.
-        (eleccion) => elegirMostrarEnAmigos(eleccion).then((r) => { cargarComparacion(); return r; })
+        (eleccion) => elegirMostrarEnAmigos(eleccion).then((r) => { cargarComparacion(); return r; }),
+        (nombre) => batallaAmigos({ nombre }).then((r) => r.data)
       );
       return;
     }

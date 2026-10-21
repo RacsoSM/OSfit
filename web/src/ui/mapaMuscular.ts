@@ -275,7 +275,13 @@ function textoFalta(s: Extract<ReturnType<typeof siguienteRango>, { tipo: "falta
 export function bloqueSiguiente(f: FuerzaMusculo, sexo: Sexo, peso: number, musculo: string): string {
   const s = siguienteRango(f, peso);
   if (s.tipo === "maximo") {
-    return `<div class="hoja-sig"><p class="hoja-sig-texto">Estás en el rango más alto. ¡Sigue así!</p></div>`;
+    // También en Élite, su mejor serie y de qué ejercicio, como en los demás rangos
+    // (entrenador, 2026-10-21): es lo que la llevó hasta arriba.
+    const o = f.origen;
+    const mejor = o
+      ? ` Tu mejor serie: ${serieTexto(o.serie)} en <strong>${escapar(o.nombre)}</strong>.`
+      : "";
+    return `<div class="hoja-sig"><p class="hoja-sig-texto">Estás en el rango más alto. ¡Sigue así!${mejor}</p></div>`;
   }
   const actual = indiceRango(f.nivel);
   const barra = `

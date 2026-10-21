@@ -243,6 +243,20 @@ describe("detalleMusculo", () => {
     expect(detalleMusculo("pecho", f, "H", 75)).toMatch(/Te faltan <strong>[\d.]+ kg por mancuerna<\/strong>/);
   });
 
+  it("en Élite también dice su mejor serie y de qué ejercicio", () => {
+    const f = {
+      nivel: 8,
+      origen: {
+        ejercicioId: "crunch-maquina", nombre: "Crunch en máquina", tipo: "peso" as const, cuanto: 1,
+        serie: { reps: 12, peso: 31.5 }, estandares: [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8],
+        pesoPorMancuerna: false,
+      },
+    };
+    const h = detalleMusculo("abdomen", f, "M", 60);
+    expect(h).toContain("Estás en el rango más alto.");
+    expect(h).toContain("Tu mejor serie: 31.5 kg × 12 en <strong>Crunch en máquina</strong>.");
+  });
+
   it("sin su peso no promete kilos", () => {
     expect(detalleMusculo("pecho", { nivel: 1.05 }, "H")).not.toContain("para llegar al siguiente rango");
   });
