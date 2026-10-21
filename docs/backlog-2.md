@@ -1019,3 +1019,12 @@ en un renglón plegable **"🌐 A distancia · N"**, cerrado por defecto, despu�
 y antes de los inactivos. Tocarlo los muestra u oculta. Un inactivo va con los inactivos aunque
 sea a distancia. La separación vive en `domain/ListaClientes.kt`, con pruebas.
 
+## 28. El entrenamiento guiado, solo para quien entrena a distancia — ✅ HECHO (2026-10-21)
+
+> "quiero que el modo guiado, el botón para acceder a el, solo le aparezca a las personas que estén marcadas en la app de entrenador como \"Entrena a distancia\"" (2026-10-21)
+
+En Inicio de la web, el botón "▶ Empezar entrenamiento guiado" (y "Continuar entrenamiento")
+de la tarjeta del día solo sale si la clienta tiene `entrenaADistancia`. Las demás siguen
+registrando en Registro, que también continúa un entrenamiento abierto. El interruptor de la
+app lo explica: "ve el entrenamiento guiado" / "no ve el entrenamiento guiado".
+
