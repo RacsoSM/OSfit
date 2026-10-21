@@ -253,7 +253,7 @@ function vistaMenu(b: EstadoBatalla, d: DatosBatalla, rangos: RangosCartel): str
   return `
     ${cartel(d, rangos)}
     ${opciones}
-    <p class="accion-nota bat-regla">Gana quien levanta más en proporción a su peso corporal, con su mejor serie de todo su historial. A las mujeres se les da una ventaja moderada.</p>`;
+    <p class="accion-nota bat-regla">Gana quien levanta más en proporción a su peso corporal, con su mejor serie de todo su historial.</p>`;
 }
 
 function vistaLista(b: EstadoBatalla, d: DatosBatalla): string {
