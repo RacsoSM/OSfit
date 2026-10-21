@@ -73,12 +73,12 @@ describe("agregarEjercicio", () => {
 });
 
 describe("editar series", () => {
-  it("cambia un campo, agrega copiando la última y quita", () => {
+  it("cambia un campo, agrega en blanco y quita", () => {
     let b = agregarEjercicio(vacio(), ej(), null, 1);
     b = cambiarSerie(b, 0, 0, "peso", "50");
     b = cambiarSerie(b, 0, 0, "reps", "6");
     b = agregarSerie(b, 0);
-    expect(b.ejercicios[0].series).toEqual([{ reps: "6", peso: "50" }, { reps: "6", peso: "50" }]);
+    expect(b.ejercicios[0].series).toEqual([{ reps: "6", peso: "50" }, { reps: "", peso: "" }]);
     b = quitarSerie(b, 0, 0);
     expect(b.ejercicios[0].series).toHaveLength(1);
   });
@@ -418,9 +418,9 @@ describe("dropset", () => {
     expect(b.ejercicios[0].series[0].caidas).toHaveLength(MAX_CAIDAS);
   });
 
-  it("la serie nueva copia el peso de la anterior pero no sus bajadas", () => {
+  it("la serie nueva entra en blanco, sin el peso de la anterior ni sus bajadas", () => {
     const b = agregarSerie(agregarCaida(conPress(), 0, 0), 0);
-    expect(b.ejercicios[0].series[1]).toEqual({ reps: "10", peso: "40" });
+    expect(b.ejercicios[0].series[1]).toEqual({ reps: "", peso: "" });
   });
 
   it("se envían en kg y se saltan las bajadas en blanco", () => {

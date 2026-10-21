@@ -249,15 +249,12 @@ export function cambiarSerie(
 }
 
 /**
- * La serie nueva copia la anterior: casi siempre se repite el peso y cambia poco más. Las
- * bajadas no: el drop suele ser solo de la última.
+ * La serie nueva entra en blanco, sin copiar la anterior (entrenador, 2026-10-21): lo copiado
+ * se guardaba aunque no fuera lo que hizo.
  */
 export function agregarSerie(b: Borrador, iEj: number): Borrador {
-  return conSeries(b, iEj, (series) => {
-    if (series.length >= MAX_SERIES) return series;
-    const { reps, peso } = series[series.length - 1] ?? SERIE_VACIA;
-    return [...series, { reps, peso }];
-  });
+  return conSeries(b, iEj, (series) =>
+    series.length >= MAX_SERIES ? series : [...series, { ...SERIE_VACIA }]);
 }
 
 /** Quitar la única serie la deja en blanco: para sacar el ejercicio está `quitarEjercicio`. */
@@ -351,7 +348,7 @@ export function agregarBiserie(
   };
 }
 
-/** Una ronda más: una serie a cada uno de la biserie, copiando la anterior de cada quien. */
+/** Una ronda más: una serie en blanco a cada uno de la biserie. */
 export function agregarRonda(b: Borrador, iEj: number): Borrador {
   const otro = companero(b, iEj);
   const conUna = agregarSerie(b, iEj);
