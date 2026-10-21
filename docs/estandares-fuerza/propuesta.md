@@ -297,8 +297,8 @@ Los porcentajes salen de un modelo: entre quienes entrenan, la fuerza se reparte
 |  | M | 8 reps | 14 reps | 20 reps | 29 reps | 38 reps | 42 reps | 47 reps | 74 reps |
 | Crunch en polea | H · polea doble ×1.3 | 30 kg | 42.5 kg | 52.5 kg | 67.5 kg | 82.5 kg | 90 kg | 100 kg | 142.5 kg |
 |  | M | 16 kg | 22.5 kg | 27.5 kg | 35 kg | 42.5 kg | 47.5 kg | 52.5 kg | 77.5 kg |
-| Crunch en máquina | H · máquina: varía por marca | 22.5 kg | 32.5 kg | 40 kg | 52.5 kg | 65 kg | 70 kg | 77.5 kg | 110 kg |
-|  | M | 12 kg | 16 kg | 20 kg | 27.5 kg | 32.5 kg | 37.5 kg | 40 kg | 60 kg |
+| Crunch en máquina | H · máquina de placas | 25 kg | 35 kg | 47.5 kg | 60 kg | 72.5 kg | 80 kg | 87.5 kg | 122.5 kg |
+|  | M | 14 kg | 19 kg | 22.5 kg | 30 kg | 37.5 kg | 42.5 kg | 45 kg | 67.5 kg |
 | Abdominales completos | H | 5 reps | 12 reps | 20 reps | 28 reps | 35 reps | 38 reps | 42 reps | 69 reps |
 |  | M | 3 reps | 9 reps | 15 reps | 22 reps | 28 reps | 32 reps | 36 reps | 60 reps |
 | Elevación de piernas colgado | H | 1 rep | 4 reps | 6 reps | 9 reps | 12 reps | 14 reps | 17 reps | 30 reps |

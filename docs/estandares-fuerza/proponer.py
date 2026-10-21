@@ -142,8 +142,9 @@ PESO = {
     "extension-triceps-mancuerna": ("triceps", 0.45, "copa a dos manos: el peso de la pesa completa, no por brazo"),
     "patada-triceps": ("triceps", 0.20, "por mancuerna"),
     "crunch-polea": ("crunch", 1.00, ""),
-    # Máquina de placas, no la estación de polea doble: sin el ×1.3 del de polea (2026-10-21).
-    "crunch-maquina": ("crunch", 1.00, "máquina: varía por marca"),
+    # Máquina de placas, no la estación de polea doble. ×1.13: el entrenador quiere a Dulce
+    # (M, 31.5 kg × 12) en Fuerte, a media banda; con ×1.00 salía Avanzada (2026-10-21).
+    "crunch-maquina": ("crunch", 1.13, "máquina de placas"),
 }
 
 # Corporales: repeticiones seguidas.
