@@ -73,6 +73,16 @@ describe("armarBatalla", () => {
     expect(r.ejercicios[0].a).toMatchObject({ reps: 60, peso: null, unoRm: null, puntaje: 60 });
   });
 
+  it("el % de su peso solo entre hombres: con una mujer no viaja", () => {
+    const press = ses({ ejercicioId: "press-banca", series: [{ reps: 10, peso: 60 }] });
+    const entreHombres = armarBatalla(said, { ...said, nombre: "Beto", peso: 80 }, press, press, banco);
+    // 80 kg de 1RM: 107 % de 75 kg y 100 % de 80 kg.
+    expect([entreHombres.ejercicios[0].a.porPeso, entreHombres.ejercicios[0].b.porPeso]).toEqual([107, 100]);
+    const mixta = armarBatalla(said, caro, press, press, banco);
+    expect([mixta.ejercicios[0].a.porPeso, mixta.ejercicios[0].b.porPeso]).toEqual([null, null]);
+    expect(armarBatalla(caro, said, press, press, banco).ejercicios[0].a.porPeso).toBeNull();
+  });
+
   it("junta las series de todo el historial, no solo de una sesión", () => {
     const a = [...ses({ ejercicioId: "curl", series: [{ reps: 8, peso: 8 }] }), ...ses({ ejercicioId: "curl", series: [{ reps: 8, peso: 12 }] })];
     const r = armarBatalla(said, caro, a, ses({ ejercicioId: "curl", series: [{ reps: 8, peso: 6 }] }), banco);

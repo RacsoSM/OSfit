@@ -75,6 +75,17 @@ describe("vistaBatalla", () => {
     expect(html).not.toContain("data-bat-destapar");
   });
 
+  it("el % de su peso sale si el servidor lo manda (solo entre hombres)", () => {
+    const conPct: DatosBatalla = { ...d, ejercicios: d.ejercicios.map((e) => ({ ...e, a: { ...e.a, porPeso: 120 }, b: { ...e.b, porPeso: 92 } })) };
+    ponerBatalla({ rival: "Bogue <3", datos: { estado: "listo", datos: conPct }, eleccion: { modo: "ejercicio", ejercicio: "curl" }, inicio: 0 });
+    let html = vistaBatalla();
+    expect(html).toContain("120 % de tu peso");
+    expect(html).toContain("92 % de su peso");
+    ponerBatalla({ rival: "Bogue <3", datos: { estado: "listo", datos: d }, eleccion: { modo: "ejercicio", ejercicio: "curl" }, inicio: 0 });
+    html = vistaBatalla();
+    expect(html).not.toContain("% de tu peso");
+  });
+
   it("el resultado de un ejercicio, con corona y la nota de mancuerna", () => {
     ponerBatalla({ rival: "Bogue <3", datos: { estado: "listo", datos: d }, eleccion: { modo: "ejercicio", ejercicio: "curl" }, inicio: 0 });
     const html = vistaBatalla();

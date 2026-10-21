@@ -39,7 +39,9 @@ export interface MarcaBatalla {
   /**
    * El 1RM como % de su peso corporal (el de `pesoParaFuerza`), redondeado: lo que la página
    * enseña para explicar por qué gana quien gana. Sin los ajustes de edad y sexo. Null en los
-   * que no son de peso.
+   * que no son de peso, y en toda batalla donde alguna es mujer: junto al 1RM deja despejar el
+   * peso corporal, y solo se enseña entre hombres (entrenador, 2026-10-21). Se quita aquí, en
+   * el servidor, para que su peso ni siquiera viaje al navegador.
    */
   porPeso: number | null;
   /** Con lo que se decide quién gana: más es mejor. */
@@ -152,6 +154,8 @@ export function armarBatalla(
   const porId = new Map(banco.map((e) => [e.id, e]));
   const mejoresA = mejoresPorEjercicio(sesionesA, porId, a);
   const mejoresB = mejoresPorEjercicio(sesionesB, porId, b);
+  const conPorcentaje = a.sexo === "H" && b.sexo === "H";
+  const marca = (m: MarcaBatalla): MarcaBatalla => (conPorcentaje ? m : { ...m, porPeso: null });
   const ejercicios: EjercicioBatalla[] = [];
   for (const [id, marcaA] of mejoresA) {
     const marcaB = mejoresB.get(id);
@@ -163,8 +167,8 @@ export function armarBatalla(
       tipo: e.tipo as EjercicioBatalla["tipo"],
       musculos: Object.entries(e.musculos ?? {}).filter(([, cuanto]) => cuanto >= 1).map(([m]) => m),
       pesoPorMancuerna: e.pesoPorMancuerna === true,
-      a: marcaA,
-      b: marcaB,
+      a: marca(marcaA),
+      b: marca(marcaB),
     });
   }
   ejercicios.sort((x, y) => x.nombre.localeCompare(y.nombre, "es", { sensitivity: "base" }));
