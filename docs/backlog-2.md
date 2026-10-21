@@ -993,3 +993,20 @@ entrenador lo cambió el mismo día.
 - "Tu semana" suma los minutos de cardio; Estadísticas muestra minutos totales, sesión más larga,
   velocidad máxima y los minutos por día.
 
+## 26. Calendario de la app: contra los clientes de ese día y sin los de a distancia — ✅ HECHO (2026-10-21)
+
+> "en mi app de entrenador, no se toma en cuenta cuanta gente habia a la hora de pintar el calendario, ademas, no se debe tomar en cuenta la gente que entrena a distancia para esa metrica" (2026-10-21)
+
+El color de cada día era "fueron ÷ clientes activos de hoy", así que los días viejos salían en
+rojo (había menos clientes entonces) y contaban los que entrenan a distancia. Ahora
+(`domain/AsistenciaCalendario.kt`, con pruebas):
+
+- **Contra los clientes que había ese día.** No se guarda la fecha de baja y la de ingreso solo
+  la tienen 6 de 14, así que cada cliente cuenta desde su ingreso o su primera asistencia (lo que
+  sea antes) y, si ya está inactivo, hasta su último registro. Uno activo sin nada cuenta desde hoy.
+- **Sin los de a distancia** (`entrenaADistancia`), ni en el total ni en los que fueron.
+- Los umbrales siguen igual (verde ≥ 65 %, amarillo ≥ 35 %).
+
+Con los datos reales, 29 de 49 días cambian de color, todos hacia arriba (p. ej. 26 de agosto:
+6/14 amarillo → 9/9 verde).
+
