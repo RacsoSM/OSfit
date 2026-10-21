@@ -74,7 +74,7 @@ PESO = {
     "prensa-horizontal-una-pierna": ("prensa", 0.40, "una pierna; máquina"),
     # La misma máquina de placas que la de una pierna, con las dos: el doble (2026-10-21). La de
     # 45° (×1.00) es de discos y en una pila sus números no se alcanzan.
-    "prensa-maquina": ("prensa", 0.80, "dos piernas: el doble de la de una; máquina de placas"),
+    "prensa-maquina": ("prensa", 0.235, "máquina de 16 barras: un H de hasta 90 kg llega a Élite con la pila completa × 12"),
     "extension-cuadriceps": ("extension", 1.00, "máquina"),
     "curl-femoral-acostado": ("femoral", 1.00, "máquina"),
     "curl-femoral-sentado": ("femoral", 1.10, "máquina"),

@@ -82,8 +82,8 @@ Los porcentajes salen de un modelo: entre quienes entrenan, la fuerza se reparte
 |  | M | 45 kg | 67.5 kg | 90 kg | 112.5 kg | 135 kg | 150 kg | 165 kg | 235 kg |
 | Prensa horizontal a una pierna | H · una pierna; máquina | 37.5 kg | 50 kg | 60 kg | 75 kg | 90 kg | 100 kg | 107.5 kg | 150 kg |
 |  | M | 18 kg | 27.5 kg | 35 kg | 45 kg | 55 kg | 60 kg | 67.5 kg | 95 kg |
-| Prensa en máquina | H · dos piernas: el doble de la de una; máquina de placas | 75 kg | 97.5 kg | 120 kg | 150 kg | 180 kg | 197.5 kg | 217.5 kg | 300 kg |
-|  | M | 35 kg | 55 kg | 72.5 kg | 90 kg | 107.5 kg | 120 kg | 132.5 kg | 187.5 kg |
+| Prensa en máquina | H · máquina de 16 barras: un H de hasta 90 kg llega a Élite con la pila completa × 12 | 22.5 kg | 27.5 kg | 35 kg | 45 kg | 52.5 kg | 57.5 kg | 62.5 kg | 87.5 kg |
+|  | M | 11 kg | 16 kg | 20 kg | 27.5 kg | 32.5 kg | 35 kg | 40 kg | 55 kg |
 | Extensión de cuádriceps | H · máquina | 37.5 kg | 47.5 kg | 55 kg | 70 kg | 85 kg | 95 kg | 102.5 kg | 142.5 kg |
 |  | M | 20 kg | 27.5 kg | 32.5 kg | 42.5 kg | 50 kg | 55 kg | 60 kg | 85 kg |
 | Zancadas con mancuernas | H · por mancuerna | 14 kg | 19 kg | 22.5 kg | 25 kg | 27.5 kg | 32.5 kg | 35 kg | 47.5 kg |
