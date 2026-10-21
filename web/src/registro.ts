@@ -106,13 +106,8 @@ const SERIE_VACIA: SerieBorrador = { reps: "", peso: "" };
 export const MAX_CAIDAS = 5;
 const MAX_SERIES = 20;
 
-/** La anotación de una máquina de cardio, con lo de la última vez si lo hay. */
-function serieCardio(previa: SerieSesion | null): SerieBorrador {
-  const texto = (n: number | undefined) => (n === undefined ? "" : String(n));
-  return previa
-    ? { reps: String(previa.reps), peso: "", inclinacion: texto(previa.inclinacion), velocidad: texto(previa.velocidad) }
-    : { reps: "", peso: "", inclinacion: "", velocidad: "" };
-}
+/** La anotación de una máquina de cardio, en blanco. */
+const SERIE_CARDIO: SerieBorrador = { reps: "", peso: "", inclinacion: "", velocidad: "" };
 
 /** "25 min · inclinación 8 · 5.5 km/h": una anotación de cardio, para el historial. */
 export function textoCardio(s: { reps: number; inclinacion?: number; velocidad?: number }, ejercicioId?: string): string {
@@ -134,8 +129,11 @@ export function idNuevo(): string {
 }
 
 /**
- * Agrega el ejercicio con sus series prellenadas: lo que hizo la última vez si existe, y si
- * no, tantas filas vacías como series diga su rutina (o una). Si ya estaba, no lo duplica.
+ * Agrega el ejercicio. Si ya lo había hecho en otra sesión entra sin series y sin nada
+ * escrito: lo de la vez pasada ya no se copia (entrenador, 2026-10-21), porque terminaba
+ * guardándose sin que ella lo cambiara. Si nunca lo hizo, tantas filas vacías como series
+ * diga su rutina (o una). El cardio siempre trae su fila, en blanco: es donde se anota. Si
+ * ya estaba, no lo duplica.
  */
 export function agregarEjercicio(
   b: Borrador,
@@ -146,17 +144,10 @@ export function agregarEjercicio(
   if (b.ejercicios.some((x) => x.ejercicioId === e.id)) return b;
   // Solo los de peso eligen unidad: en los corporales el peso es lastre y va en kg.
   const unidad: Unidad = e.tipo === "peso" ? unidadPorDefecto(e.id) : "kg";
-  // Lo de la última vez está guardado en kg; en barras se muestra en barras.
-  const pesoPrevio = (kg: number | null) =>
-    kg === null ? "" : String(unidad === "barras" ? kgABarras(kg) : kg);
   const series: SerieBorrador[] = e.tipo === "cardio"
-    ? [serieCardio(previas?.[0] ?? null)]
+    ? [{ ...SERIE_CARDIO }]
     : previas && previas.length > 0
-    ? previas.map((s) => ({
-      reps: String(s.reps),
-      peso: pesoPrevio(s.peso),
-      ...(s.caidas?.length ? { caidas: s.caidas.map((c) => ({ reps: String(c.reps), peso: pesoPrevio(c.peso) })) } : {}),
-    }))
+    ? []
     : Array.from({ length: Math.min(Math.max(seriesRutina ?? 1, 1), 10) }, () => ({ ...SERIE_VACIA }));
   return {
     ...b,

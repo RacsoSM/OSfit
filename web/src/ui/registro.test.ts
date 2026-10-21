@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import type { EjercicioBanco, Sesion } from "../datos";
 import { indiceBanco } from "../banco";
-import { agregarBiserie, agregarEjercicio, borradorDeSesion, nuevoBorrador } from "../registro";
+import { agregarBiserie, agregarCaida, agregarEjercicio, borradorDeSesion, nuevoBorrador } from "../registro";
 import { avisoReps, avisoTerminadoSinDatos, cerrarSiVencido, cabeceraRegistro, empezarGuiado, entrenamientoAbierto, ponerEstadoRegistro, ventanaRegistro, type DatosRegistro } from "./registro";
 
 const press: EjercicioBanco = {
@@ -357,9 +357,9 @@ describe("resumen al terminar", () => {
 describe("biseries y dropsets", () => {
   const remo: EjercicioBanco = { id: "remo", nombre: "Remo con barra", tipo: "peso", grupo: "espalda", musculos: { espalda: 1 }, gifRuta: null };
   const conRemo = (campos: Partial<DatosRegistro> = {}) => datos({ banco: [press, plancha, remo], indice: indiceBanco([press, plancha, remo]), ...campos });
-  const biserie = () => agregarBiserie(nuevoBorrador("b1234567", "2026-10-12", Date.now()),
-    { e: press, previas: [{ reps: 10, peso: 40, caidas: [{ reps: 8, peso: 30 }] }], seriesRutina: null },
-    { e: remo, previas: null, seriesRutina: 1 });
+  const biserie = () => agregarCaida(agregarBiserie(nuevoBorrador("b1234567", "2026-10-12", Date.now()),
+    { e: press, previas: null, seriesRutina: 1 },
+    { e: remo, previas: null, seriesRutina: 1 }), 0, 0);
 
   it("el selector abre en un ejercicio; en biserie marca A y B y habilita agregarlas", () => {
     ponerEstadoRegistro({ vista: "elegir", borrador: nuevoBorrador("b1234567", "2026-10-12") });
@@ -395,7 +395,7 @@ describe("biseries y dropsets", () => {
   });
 
   it("tocar el número de la serie ofrece agregar una bajada", () => {
-    const b = agregarEjercicio(nuevoBorrador("b1234567", "2026-10-12", Date.now()), press, [{ reps: 10, peso: 40 }], null);
+    const b = agregarEjercicio(nuevoBorrador("b1234567", "2026-10-12", Date.now()), press, null, 1);
     ponerEstadoRegistro({ vista: "capturar", borrador: b });
     expect(ventanaRegistro(datos())).not.toContain("data-agregar-caida");
     ponerEstadoRegistro({ vista: "capturar", borrador: b, menuSerie: "0:0" });
