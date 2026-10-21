@@ -7,7 +7,8 @@ import { NOMBRES_MUSCULO } from "./fuerza";
  * en los ejercicios que las dos tienen; aquí se cuenta quién gana cada uno y quién la batalla.
  *
  * Cada ejercicio lo gana el `puntaje` más alto: lo que levanta en proporción a su peso
- * corporal, con los ajustes de sexo, edad y peso del mapa (ver `functions/src/batalla.ts`). La
+ * corporal, con los ajustes de edad y peso del mapa y medio ajuste por sexo (ver
+ * `functions/src/batalla.ts`). La
  * batalla la gana quien gana más ejercicios; si es por uno, "por una diferencia mínima".
  */
 

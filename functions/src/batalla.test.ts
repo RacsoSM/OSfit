@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { armarBatalla, puntajeDe, type EjercicioBatallaBanco } from "./batalla";
+import { armarBatalla, eliteDeReferencia, puntajeDe, type EjercicioBatallaBanco } from "./batalla";
 
 const estandares = { H: [0.5, 0.6, 0.75, 0.9, 1, 1.15, 1.3, 1.5], M: [0.25, 0.4, 0.5, 0.6, 0.75, 0.85, 1, 1.2] };
 const banco: EjercicioBatallaBanco[] = [
@@ -17,8 +17,21 @@ describe("puntajeDe", () => {
   it("en los de peso es el 1RM entre su peso, sobre el Élite de su sexo", () => {
     // 60 × (1 + 10/30) = 80 kg; 80 / 75 = 1.0667; ÷ 1.5 = 0.711.
     expect(puntajeDe(banco[0], { reps: 10, peso: 60 }, said)).toBeCloseTo(0.711, 3);
-    // Una mujer de 60 kg con 40 × 10: 53.3 / 60 = 0.889; ÷ 1.2 = 0.741, le gana.
-    expect(puntajeDe(banco[0], { reps: 10, peso: 40 }, caro)).toBeCloseTo(0.741, 3);
+    // Una mujer de 60 kg con 40 × 10: 53.3 / 60 = 0.889; ÷ 1.35 (medio entre su Élite, 1.2, y
+    // el de ellos, 1.5) = 0.658: no le gana. Con el Élite de mujeres completo (0.741) ganaba.
+    expect(puntajeDe(banco[0], { reps: 10, peso: 40 }, caro)).toBeCloseTo(0.658, 3);
+  });
+
+  it("medio ajuste por sexo: ellas contra el punto medio de los dos Élite", () => {
+    expect(eliteDeReferencia(banco[0], "H")).toBe(1.5);
+    expect(eliteDeReferencia(banco[0], "M")).toBeCloseTo(1.35, 5);
+    expect(eliteDeReferencia(banco[2], "M")).toBeNull();
+    // El caso que lo pidió: Said (73 kg, 22) contra Estela (60 kg, 38) en extensión de cuádriceps.
+    const ext: EjercicioBatallaBanco = { id: "extension-cuadriceps", nombre: "Extensión", tipo: "peso", musculos: { cuadriceps: 1 },
+      estandares: { H: [0.5, 0.625, 0.75, 0.95, 1.15, 1.255, 1.36, 1.891], M: [0.35, 0.45, 0.55, 0.7, 0.85, 0.935, 1.02, 1.435] } };
+    const yo = puntajeDe(ext, { reps: 9, peso: 67.5 }, { sexo: "H", peso: 73, edad: 22 });
+    const estela = puntajeDe(ext, { reps: 11, peso: 40.5 }, { sexo: "M", peso: 60, edad: 38 });
+    expect(yo).toBeGreaterThan(estela);
   });
 
   it("los corporales cuentan reps y los de tiempo segundos, sin ajuste por edad", () => {

@@ -12,9 +12,9 @@ import { edadEn, factorEdad, factorPeso, pesoParaFuerza, unoRm, type Sexo } from
  * que esa persona vea sus mejores series, pesos incluidos (decisión del entrenador,
  * 2026-10-21). Solo viajan las dos personas; de las demás, nada.
  *
- * Gana quien levanta más en proporción a su peso corporal, con los mismos ajustes del mapa
- * (`puntajeDe`): así una batalla entre un hombre y una mujer, o entre alguien de 90 kg y
- * alguien de 55 kg, es pareja.
+ * Gana quien levanta más en proporción a su peso corporal, con los ajustes de peso y edad del
+ * mapa y medio ajuste por sexo (`puntajeDe`): así una batalla entre alguien de 90 kg y alguien
+ * de 55 kg es pareja, y una entre un hombre y una mujer también, sin regalarle la pelea a ella.
  */
 
 export interface EjercicioBatallaBanco {
@@ -69,10 +69,16 @@ export interface Peleador {
 
 /**
  * La marca de una serie, la misma que usa el mapa (1RM ÷ peso corporal × `factorPeso`, o las
- * reps), por `factorEdad`. Con estándares se divide entre el Élite de su sexo: eso empareja
- * hombres y mujeres, que tienen tablas distintas, y no se topa en 8 como el nivel, así que dos
- * Élite todavía se pueden ganar. Sin estándares queda la marca (en los de tiempo, los
- * segundos).
+ * reps), por `factorEdad`. Con estándares se divide entre un Élite de referencia, que no se
+ * topa en 8 como el nivel, así que dos Élite todavía se pueden ganar. Sin estándares queda la
+ * marca (en los de tiempo, los segundos).
+ *
+ * El Élite de referencia es el de su sexo en los hombres y, en las mujeres, el punto medio
+ * entre el de ellas y el de ellos: **medio ajuste por sexo** (entrenador, 2026-10-21). Con el
+ * Élite de mujeres completo, cada kilo de ella valía +32 % en una extensión de cuádriceps y
+ * +53 % en tríceps contra un hombre: sumado a que dividir entre el peso ya favorece a quien
+ * pesa menos, una mujer de 60 kg le ganaba a un hombre de 73 kg que levantaba 1.20 veces su
+ * peso contra 0.92 de ella. Entre dos personas del mismo sexo el resultado no cambia.
  */
 export function puntajeDe(
   e: EjercicioBatallaBanco,
@@ -88,8 +94,17 @@ export function puntajeDe(
     marca = serie.reps;
   }
   if (e.tipo !== "tiempo") marca *= factorEdad(p.edad);
-  const elite = e.estandares?.[p.sexo]?.at(-1);
-  return elite && elite > 0 && e.tipo !== "tiempo" ? marca / elite : marca;
+  const elite = eliteDeReferencia(e, p.sexo);
+  return elite && e.tipo !== "tiempo" ? marca / elite : marca;
+}
+
+/** El Élite contra el que se mide (ver `puntajeDe`); null sin estándares. */
+export function eliteDeReferencia(e: EjercicioBatallaBanco, sexo: Sexo): number | null {
+  const h = e.estandares?.H?.at(-1);
+  const m = e.estandares?.M?.at(-1);
+  if (sexo === "H") return h && h > 0 ? h : null;
+  if (!(m && m > 0)) return null;
+  return h && h > 0 ? (m + h) / 2 : m;
 }
 
 /** Ejercicio → su mejor serie en todo su historial (el puntaje más alto). Sin cardio. */
