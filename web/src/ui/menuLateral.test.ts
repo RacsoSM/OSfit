@@ -10,9 +10,9 @@ function opciones(html: string): string[] {
 describe("panelMenu", () => {
   const html = panelMenu(VENTANAS, "Ana");
 
-  it("lista las ventanas del registro en orden, sin las ocultas (Videos, 2026-10-17)", () => {
+  it("lista las ventanas del registro en orden, sin las ocultas (Videos, 2026-10-17; Medallas y Logros, 2026-10-21)", () => {
     expect(opciones(html)).toEqual(
-      ["Inicio", "Estadísticas", "Ranking", "Medallas", "Logros personales", "Ajustes"]
+      ["Inicio", "Estadísticas", "Ranking", "Ajustes"]
     );
   });
 

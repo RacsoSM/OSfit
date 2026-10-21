@@ -210,12 +210,14 @@ export const VENTANAS: readonly Ventana[] = [
     id: "ranking", titulo: "Ranking", icono: "🏆", grupo: "principal",
     pintar: (d) => tarjetaRanking(d.ranking),
   },
+  // Medallas y Logros personales, ocultas del menú (decisión del entrenador, 2026-10-21). Las
+  // ventanas siguen existiendo: volver a mostrarlas es quitar `oculta`.
   {
-    id: "medallas", titulo: "Medallas", icono: "🏅", grupo: "principal",
+    id: "medallas", titulo: "Medallas", icono: "🏅", grupo: "principal", oculta: true,
     pintar: (d) => tarjetaMedallas(d.medallas),
   },
   {
-    id: "logros", titulo: "Logros personales", icono: "⭐", grupo: "principal",
+    id: "logros", titulo: "Logros personales", icono: "⭐", grupo: "principal", oculta: true,
     pintar: (d) => tarjetaLogrosPersonales(d.logros),
   },
   // Oculta con los resúmenes en video (decisión del entrenador, 2026-10-17; ver
