@@ -1827,7 +1827,12 @@ body:has(.batalla) :is(.fondo, .fondo-pixel, .fondo-sakura, .fondo-halloween, .p
 .bat-retar span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .icono-batalla { width: 24px; height: 24px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .bat-retar .icono-batalla { width: 20px; height: 20px; }
-.bat-cargando { text-align: center; margin-top: 40px; }
+/* Al centro de la pantalla y grande: es lo único que hay mientras llega la batalla. */
+.batalla .bat-cargando {
+  min-height: 60vh; margin: 0; display: flex; align-items: center; justify-content: center; text-align: center;
+  font-size: 22px; font-weight: 800; color: #F3EEF8; animation: bat-latido 1.4s ease-in-out infinite;
+}
+@keyframes bat-latido { 50% { opacity: 0.55; } }
 
 /* El cartel partido en diagonal (propuesta A), arriba del menú y como anuncio del resultado. */
 .bat-cartel {
@@ -2062,5 +2067,5 @@ body:has(.batalla) :is(.fondo, .fondo-pixel, .fondo-sakura, .fondo-halloween, .p
 .bat-destapar-todo { display: block; margin: 14px auto 0; color: #c9bfd8; text-decoration: underline; }
 .batalla .bat-otra { margin-top: 14px; background: var(--bat-oro); color: #2b1d00; font-weight: 900; }
 @media (prefers-reduced-motion: reduce) {
-  .bat-cartel.entrando, .bat-cartel.entrando .bat-corona, .bat-celda.destapando { animation: none !important; }
+  .bat-cartel.entrando, .bat-cartel.entrando .bat-corona, .bat-celda.destapando, .batalla .bat-cargando { animation: none !important; }
 }
