@@ -104,16 +104,16 @@ export function resolverBatalla(ejercicios: readonly EjercicioBatalla[]): Result
 }
 
 /** "Bogue ganó la batalla por una diferencia mínima": el titular del resultado. */
-export function textoResultado(r: Resultado, d: DatosBatalla): { titulo: string; detalle: string } {
+export function textoResultado(r: Resultado, d: DatosBatalla): { titulo: string; detalle: string; como: string } {
   const marcador = r.filas.length === 1 ? "" : `${r.victorias.a} a ${r.victorias.b}`;
   if (r.ganador === null) {
-    return { titulo: "¡Empate!", detalle: marcador ? `Quedaron ${marcador}: nadie se lleva esta batalla.` : "Quedaron parejas: nadie se lleva esta batalla." };
+    return { titulo: "¡Empate!", detalle: marcador ? `Quedaron ${marcador}: nadie se lleva esta batalla.` : "Quedaron parejas: nadie se lleva esta batalla.", como: "nadie se la lleva" };
   }
   const quien = r.ganador === "a" ? "Ganaste" : `${d.b.nombre} ganó`;
   const como = r.margen === "minima" ? "por una diferencia mínima"
     : r.margen === "aplastante" ? "de forma aplastante"
     : "con claridad";
-  return { titulo: `¡${quien} la batalla!`, detalle: `${marcador ? `${marcador}, ` : ""}${como}.` };
+  return { titulo: `¡${quien} la batalla!`, detalle: `${marcador ? `${marcador}, ` : ""}${como}.`, como };
 }
 
 /** "40 kg × 8", "15 reps" o "60 s": la mejor serie, como se anotó. */

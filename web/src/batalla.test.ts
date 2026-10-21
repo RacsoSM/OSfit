@@ -32,7 +32,7 @@ describe("resolverBatalla", () => {
     expect(r.victorias).toEqual({ a: 2, b: 3 });
     expect(r.ganador).toBe("b");
     expect(r.margen).toBe("minima");
-    expect(textoResultado(r, d)).toEqual({ titulo: "¡Bogue ganó la batalla!", detalle: "2 a 3, por una diferencia mínima." });
+    expect(textoResultado(r, d)).toEqual({ titulo: "¡Bogue ganó la batalla!", detalle: "2 a 3, por una diferencia mínima.", como: "por una diferencia mínima" });
   });
 
   it("3 a 0 es aplastante; 4 a 1, con claridad; parejos, empate", () => {

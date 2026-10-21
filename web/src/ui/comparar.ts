@@ -7,7 +7,7 @@ import { botonAtras } from "./botonAtras";
 import { insigniaRango, COLORES_RANGO } from "./insigniaRango";
 import { archivosMapa, conNiveles, prepararSvg, type EstadoSvg } from "./mapaMuscular";
 import type { DatosBatalla } from "../batalla";
-import { ICONO_BATALLA, abrirBatalla, batallaCon, clicBatalla, reiniciarBatalla, vistaBatalla } from "./batalla";
+import { ICONO_BATALLA, abrirBatalla, batallaCon, cambioBatalla, clicBatalla, reiniciarBatalla, vistaBatalla } from "./batalla";
 
 /**
  * Amigos (antes "Compararme", dentro de Músculos): todas las que tienen algún músculo con rango, con su rango
@@ -316,6 +316,12 @@ function vistaComparacion(
     </div>`;
 }
 
+/** Su rango general por nombre ("Atlética"), para el cartel de la batalla. */
+function rangoDe(p: PersonaComparar | undefined): string | null {
+  const g = p ? rangoGeneral(fuerzaDe(p)) : null;
+  return g && p ? nombreRango(g.nivel, p.sexo) : null;
+}
+
 /** Lo que va en `#contenido` con Amigos abierto. */
 export function ventanaComparar(
   e: EstadoComparar,
@@ -346,7 +352,7 @@ export function ventanaComparar(
     const otra = elegida === null ? undefined : e.personas.find((p) => p.nombre === elegida && !p.esTuyo);
     enComparacion = otra !== undefined;
     cuerpoHtml = otra && batallaCon(otra.nombre)
-      ? vistaBatalla()
+      ? vistaBatalla({ a: rangoDe(e.personas.find((p) => p.esTuyo)), b: rangoDe(otra) })
       : otra
       ? vistaComparacion(e.personas.find((p) => p.esTuyo), miSexo, otra, mapas)
       : vistaLista(e.personas, mapas, lineaVisibilidad(modo, compartidoCon(cliente).length, cliente.adminAmigos === true));
@@ -390,6 +396,7 @@ export function conectarComparar(
   };
   // Marcar o desmarcar a alguien en "Solo a algunas personas".
   raiz.addEventListener("change", (ev) => {
+    if (cambioBatalla(ev.target as Element, repintar)) return;
     const caja = (ev.target as Element).closest<HTMLInputElement>("input[data-candidato]");
     if (!caja || escogiendo === null) return;
     const id = caja.dataset.candidato!;

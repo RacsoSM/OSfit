@@ -27,19 +27,31 @@ describe("vistaBatalla", () => {
     expect(vistaBatalla()).toContain('data-bat="reintentar"');
   });
 
-  it("por músculo ofrece los que tienen en común; por ejercicio, cada uno", () => {
+  it("el menú: cartel con rangos, los tres combates y la casilla de suspenso", () => {
     ponerBatalla({ rival: "Bogue <3", datos: { estado: "listo", datos: d } });
+    const html = vistaBatalla({ a: "Atlético", b: "Fuerte" });
+    expect(html).toContain("bat-cartel");
+    expect(html).toContain("Atlético");
+    expect(html).toContain("Bogue &lt;3");
+    expect(html).not.toContain("Bogue <3");
+    expect(html).toContain('data-bat="todo"');
+    expect(html).toContain("Los 3 ejercicios en común");
+    expect(html).toContain('data-bat-vista="musculo"');
+    expect(html).toContain("2 músculos para elegir");
+    expect(html).toContain('data-bat-vista="ejercicio"');
+    expect(html).toContain("Modo suspenso");
+    expect(html).toContain('data-bat="cerrar"');
+  });
+
+  it("las listas de músculos y de ejercicios; la flecha regresa al menú", () => {
+    ponerBatalla({ rival: "Bogue <3", datos: { estado: "listo", datos: d }, vista: "musculo" });
     let html = vistaBatalla();
     expect(html).toContain('data-bat-musculo="pecho"');
     expect(html).toContain("2 ejercicios");
-    expect(html).toContain('data-bat-musculo="biceps"');
-    expect(html).toContain("Bogue &lt;3");
-    expect(html).not.toContain("Bogue <3");
-    ponerBatalla({ rival: "Bogue <3", datos: { estado: "listo", datos: d }, modo: "ejercicio" });
+    expect(html).toContain('data-bat="menu"');
+    ponerBatalla({ rival: "Bogue <3", datos: { estado: "listo", datos: d }, vista: "ejercicio" });
     html = vistaBatalla();
     expect(html).toContain('data-bat-ejercicio="press-banca"');
-    ponerBatalla({ rival: "Bogue <3", datos: { estado: "listo", datos: d }, modo: "todo" });
-    expect(vistaBatalla()).toContain("los 3 ejercicios");
   });
 
   it("sin ejercicios en común lo dice", () => {
@@ -60,13 +72,46 @@ describe("vistaBatalla", () => {
     expect(html).toContain("1RM ≈ 93.3 kg");
     expect(html).toContain("30 reps");
     expect(html).toContain('data-bat="otra"');
+    expect(html).not.toContain("data-bat-destapar");
   });
 
-  it("el resultado de un ejercicio, y la nota de mancuerna", () => {
+  it("el resultado de un ejercicio, con corona y la nota de mancuerna", () => {
     ponerBatalla({ rival: "Bogue <3", datos: { estado: "listo", datos: d }, eleccion: { modo: "ejercicio", ejercicio: "curl" }, inicio: 0 });
     const html = vistaBatalla();
     expect(html).toContain("¡Ganaste la batalla!");
+    expect(html).toContain("bat-corona");
     expect(html).toContain("por mancuerna");
+  });
+
+  it("modo suspenso: todo tapado, sin ganador ni marcador hasta destapar", () => {
+    ponerBatalla({ rival: "Bogue <3", suspenso: true, datos: { estado: "listo", datos: d }, eleccion: { modo: "musculo", musculo: "pecho" }, inicio: 0 });
+    const html = vistaBatalla();
+    expect(html).toContain('data-bat-destapar="0:a"');
+    expect(html).toContain('data-bat-destapar="1:b"');
+    expect(html).not.toContain("60 kg × 8");
+    expect(html).not.toContain("¡Empate!");
+    expect(html).toContain("Quedan 2 ejercicios por destapar");
+    expect(html).toContain('data-bat="destapar-todo"');
+  });
+
+  it("modo suspenso: una destapada espera a la otra; con las dos sube el marcador", () => {
+    const base = { rival: "Bogue <3", suspenso: true, datos: { estado: "listo" as const, datos: d }, eleccion: { modo: "musculo" as const, musculo: "pecho" }, inicio: 0 };
+    ponerBatalla({ ...base, destapadas: new Set(["0:a"]) });
+    let html = vistaBatalla();
+    expect(html).toContain("60 kg × 8");
+    expect(html).toContain("Esperando a Bogue &lt;3…");
+    expect(html).not.toContain("bat-gana");
+    ponerBatalla({ ...base, destapadas: new Set(["0:a", "0:b"]) });
+    html = vistaBatalla();
+    // El press lo gana Bogue: 0 a 1, y falta uno.
+    expect(html).toMatch(/<strong>0<\/strong>[\s\S]*<strong>1<\/strong>/);
+    expect(html).toContain("Queda 1 ejercicio por destapar");
+    expect(html).toContain("bat-gana");
+    ponerBatalla({ ...base, destapadas: new Set(["0:a", "0:b", "1:a", "1:b"]) });
+    html = vistaBatalla();
+    expect(html).toContain("¡Empate!");
+    expect(html).not.toContain("data-bat-destapar");
+    expect(html).not.toContain("destapar-todo");
   });
 });
 
