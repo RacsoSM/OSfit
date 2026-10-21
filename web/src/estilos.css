@@ -1823,10 +1823,32 @@ body:has(.batalla)::before {
 body:has(.batalla) :is(.fondo, .fondo-pixel, .fondo-sakura, .fondo-halloween, .petalos-frente) { visibility: hidden; }
 .batalla { --bat-a: #ff8a50; --bat-a-claro: #ffb08a; --bat-a-fondo: #1b0f0a; --bat-b: #4aa8ff; --bat-b-claro: #9fd0ff; --bat-b-fondo: #071a2b; --bat-oro: #ffd54a; color: #F3EEF8; }
 .batalla .accion-nota { color: #b9aec9; }
-.bat-retar { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 0 0 12px; }
-.bat-retar span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* La barra fija de la comparación (propuesta "L"): sobre la de navegación, que mide ~55 px más
+   lo que usa de la rayita del iPhone (`max(4px, safe-area − 12px)`). */
+.bat-barra {
+  position: fixed; z-index: 9; left: 50%; transform: translateX(-50%);
+  bottom: calc(63px + max(0px, env(safe-area-inset-bottom) - 12px));
+  width: min(calc(100% - 24px), 456px); box-sizing: border-box;
+  display: flex; align-items: center; gap: 10px; padding: 10px 10px 10px 14px; border-radius: 18px;
+  background: linear-gradient(115deg, #ff8a50 0%, #c2532a 49.6%, #1d4f7a 50.4%, #4aa8ff 100%);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.55);
+}
+.comparar:has(.bat-barra) { padding-bottom: 84px; }
+.bat-barra-avatares { display: flex; flex: none; }
+.bat-barra-avatares span {
+  width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900;
+}
+.bat-barra-avatares .a { background: #1b0f0a; color: #ff8a50; box-shadow: 0 0 0 2px #ffb08a; }
+.bat-barra-avatares .b { background: #071a2b; color: #4aa8ff; box-shadow: 0 0 0 2px #9fd0ff; margin-left: -8px; }
+.bat-barra-texto { flex: 1; min-width: 0; font-size: 14px; font-weight: 800; color: #fff; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5); line-height: 1.2; }
+.bat-barra-boton {
+  flex: none; display: flex; align-items: center; gap: 6px; border: 0; border-radius: 12px; padding: 11px 14px;
+  background: #ffd54a; color: #2b1d00; font: inherit; font-size: 14px; font-weight: 900; cursor: pointer;
+}
+.bat-barra-boton .icono-batalla { width: 18px; height: 18px; }
+.bat-barra-boton:active { transform: scale(0.96); }
+.bat-barra-boton:disabled { opacity: 0.5; cursor: default; }
 .icono-batalla { width: 24px; height: 24px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-.bat-retar .icono-batalla { width: 20px; height: 20px; }
 /* Al centro de la pantalla y grande: es lo único que hay mientras llega la batalla. */
 .batalla .bat-cargando {
   min-height: 60vh; margin: 0; display: flex; align-items: center; justify-content: center; text-align: center;

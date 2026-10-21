@@ -131,6 +131,7 @@ describe("en Amigos", () => {
 
   it("sin músculos propios el botón está apagado", () => {
     const html = ventanaComparar({ estado: "listo", personas: [bogue] }, "H", {}, { mostrarEnAmigos: true });
-    expect(html).toMatch(/data-cmp="batalla" disabled/);
+    expect(html).toMatch(/data-cmp="batalla"[^>]*disabled/);
+    expect(html).toContain("Registra tus entrenamientos para batallar");
   });
 });

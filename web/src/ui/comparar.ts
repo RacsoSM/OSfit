@@ -301,8 +301,7 @@ function vistaComparacion(
   return `
     ${botonAtras(`data-cmp="lista"`)}
     ${resalte}
-    <button class="boton bat-retar" data-cmp="batalla" ${yo ? "" : "disabled"}>${ICONO_BATALLA}<span>Batalla contra ${escapar(otra.nombre)}</span></button>
-    ${yo ? "" : `<p class="accion-nota cmp-nota">Para batallar necesitas tener músculos con rango: registra tus entrenamientos.</p>`}
+
     <div class="cmp-cuerpos">
       ${cuerpo("a", "Tú", miSexo, mia, mapas)}
       ${cuerpo("b", otra.nombre, otra.sexo, suya, mapas)}
@@ -313,6 +312,24 @@ function vistaComparacion(
         <span></span><span>Tú</span><span>${escapar(otra.nombre)}</span>
       </div>
       ${filas}
+    </div>
+    ${barraBatalla(yo, otra)}`;
+}
+
+/**
+ * La invitación a la batalla: una barra fija sobre la de navegación, con el degradado del
+ * cartel de la Arena y los dos avatares (propuesta "L", entrenador, 2026-10-21). Antes era un
+ * botón ancho arriba de los cuerpos que se veía como la acción principal de la pantalla.
+ */
+function barraBatalla(yo: PersonaComparar | undefined, otra: PersonaComparar): string {
+  const inicial = (n: string) => escapar(Array.from(n.trim())[0]?.toUpperCase() ?? "?");
+  return `
+    <div class="bat-barra">
+      <span class="bat-barra-avatares" aria-hidden="true">
+        <span class="a">${inicial(yo?.nombre ?? "Tú")}</span><span class="b">${inicial(otra.nombre)}</span>
+      </span>
+      <span class="bat-barra-texto">${yo ? "¿Quién es más fuerte?" : "Registra tus entrenamientos para batallar"}</span>
+      <button class="bat-barra-boton" data-cmp="batalla" aria-label="Batalla contra ${escapar(otra.nombre)}" ${yo ? "" : "disabled"}>${ICONO_BATALLA}<span>Batalla</span></button>
     </div>`;
 }
 
