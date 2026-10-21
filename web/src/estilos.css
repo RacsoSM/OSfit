@@ -2084,6 +2084,8 @@ body:has(.batalla) :is(.fondo, .fondo-pixel, .fondo-sakura, .fondo-halloween, .p
 @keyframes bat-destapar { 0% { transform: rotateY(90deg) scale(0.9); opacity: 0.2; } 100% { transform: none; opacity: 1; } }
 .bat-serie { font-weight: 800; font-size: 15px; }
 .bat-rm { font-size: 12px; color: #b9aec9; }
+.bat-pct { font-size: 11px; font-weight: 800; color: #F3EEF8; background: rgba(255, 255, 255, 0.1); border-radius: 99px; padding: 2px 8px; margin-top: 3px; }
+.bat-celda.gana .bat-pct { background: rgba(255, 213, 74, 0.2); color: var(--bat-oro); }
 .bat-espera { font-size: 11px; color: #b9aec9; font-style: italic; }
 .bat-gana { font-size: 10px; font-weight: 900; letter-spacing: 0.06em; text-transform: uppercase; color: var(--bat-oro); }
 .bat-destapar-todo { display: block; margin: 14px auto 0; color: #c9bfd8; text-decoration: underline; }

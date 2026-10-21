@@ -316,11 +316,16 @@ function celda(
   const m = e[lado];
   const gano = completa && gana === lado;
   const rm = m.unoRm !== null ? `<span class="bat-rm">1RM ≈ ${m.unoRm} kg</span>` : "";
+  // Cuánto levanta para su peso: es lo que decide, y explica por qué a veces gana el 1RM menor.
+  const pct = m.porPeso != null
+    ? `<span class="bat-pct">${m.porPeso} % de ${lado === "a" ? "tu" : "su"} peso</span>`
+    : "";
   const espera = otraTapada ? `<span class="bat-espera">${lado === "a" ? `Esperando a ${escapar(rival)}…` : "Esperando tu serie…"}</span>` : "";
   return `
     <div class="bat-celda${gano ? " gana" : ""}${recien ? " destapando" : ""}">
       <span class="bat-serie">${escapar(textoSerie(e, m))}</span>
       ${rm}
+      ${pct}
       ${espera}
       ${gano ? `<span class="bat-gana">Gana</span>` : ""}
     </div>`;

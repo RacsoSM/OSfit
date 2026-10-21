@@ -17,6 +17,8 @@ export interface MarcaBatalla {
   reps: number;
   peso: number | null;
   unoRm: number | null;
+  /** El 1RM como % de su peso corporal. Opcional: una respuesta vieja del servidor no lo trae. */
+  porPeso?: number | null;
   puntaje: number;
 }
 

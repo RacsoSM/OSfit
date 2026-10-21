@@ -36,6 +36,12 @@ export interface MarcaBatalla {
   peso: number | null;
   /** 1RM estimado en kg (Epley, como el mapa); null en los que no son de peso. */
   unoRm: number | null;
+  /**
+   * El 1RM como % de su peso corporal (el de `pesoParaFuerza`), redondeado: lo que la página
+   * enseña para explicar por qué gana quien gana. Sin los ajustes de edad y sexo. Null en los
+   * que no son de peso.
+   */
+  porPeso: number | null;
   /** Con lo que se decide quién gana: más es mejor. */
   puntaje: number;
 }
@@ -126,6 +132,7 @@ export function mejoresPorEjercicio(
           reps: serie.reps,
           peso: e.tipo === "peso" ? serie.peso : null,
           unoRm: rm === null ? null : Math.round(rm * 10) / 10,
+          porPeso: rm === null ? null : Math.round((rm / p.peso) * 100),
           puntaje: Math.round(puntaje * 10000) / 10000,
         });
       }
