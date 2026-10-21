@@ -1010,3 +1010,12 @@ rojo (había menos clientes entonces) y contaban los que entrenan a distancia. A
 Con los datos reales, 29 de 49 días cambian de color, todos hacia arriba (p. ej. 26 de agosto:
 6/14 amarillo → 9/9 verde).
 
+## 27. Juntar a los que entrenan a distancia en la lista de Clientes — ✅ HECHO (2026-10-21)
+
+> "quiero poder juntar a los clientes que entrenan a distancia y poder como comprimirlos para que no me aparezcan en mi pestaña principal de entrenador" (2026-10-21)
+
+En la pestaña Clientes de la app, los activos que entrenan a distancia (`entrenaADistancia`) van
+en un renglón plegable **"🌐 A distancia · N"**, cerrado por defecto, después de los presenciales
+y antes de los inactivos. Tocarlo los muestra u oculta. Un inactivo va con los inactivos aunque
+sea a distancia. La separación vive en `domain/ListaClientes.kt`, con pruebas.
+
