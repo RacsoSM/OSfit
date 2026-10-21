@@ -1812,7 +1812,15 @@ button.registro-serie-num.abierto { border-style: solid; border-color: var(--pri
 /* ── Batalla (Amigos, 2026-10-21) ─────────────────────────────────────────── */
 /* La "Arena": el fondo morado de la pelea en toda la ventana. Tú en naranja y la rival en
    azul, fijos: con el color de la paleta las dos podían quedar del mismo color. */
-body:has(.batalla) { background: #0c0a10 radial-gradient(circle at 50% 320px, #3b2a5c 0%, #1a1426 420px, #0c0a10 760px) no-repeat; }
+/* Una capa fija de toda la pantalla, como `.fondo`: pintado en `body` solo cubría el alto del
+   contenido (mientras carga o corre la animación, media pantalla), y el fondo de la paleta,
+   que va encima, se veía debajo. Con la batalla abierta, las capas de la paleta se esconden. */
+body:has(.batalla) { background: #0c0a10; }
+body:has(.batalla)::before {
+  content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  background: radial-gradient(circle at 50% 35%, #3b2a5c 0%, #1a1426 50%, #0c0a10 100%);
+}
+body:has(.batalla) :is(.fondo, .fondo-pixel, .fondo-sakura, .fondo-halloween, .petalos-frente) { visibility: hidden; }
 .batalla { --bat-a: #ff8a50; --bat-a-claro: #ffb08a; --bat-a-fondo: #1b0f0a; --bat-b: #4aa8ff; --bat-b-claro: #9fd0ff; --bat-b-fondo: #071a2b; --bat-oro: #ffd54a; color: #F3EEF8; }
 .batalla .accion-nota { color: #b9aec9; }
 .bat-retar { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 0 0 12px; }
