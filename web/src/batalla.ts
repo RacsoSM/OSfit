@@ -64,12 +64,26 @@ export interface Resultado {
   margen: "minima" | "clara" | "aplastante" | null;
 }
 
-/** Dos puntajes a menos de 0.5 % uno del otro son empate: es menos que lo que mide Epley. */
+/**
+ * Cómo se decide cada ejercicio (interruptor de la batalla, entrenador, 2026-10-22):
+ * - `justo`: el `puntaje`, lo que levanta para su peso con los ajustes (lo de siempre).
+ * - `real`: la fuerza absoluta, sin ningún ajuste: el 1RM en kg en los de peso, y las reps o
+ *   los segundos en los demás. No importa cuánto pesas, sino cuánto cargas.
+ */
+export type ModoComparacion = "justo" | "real";
+
+/** Con lo que se compara una marca en ese modo: más es mejor. */
+export function valorDe(e: EjercicioBatalla, m: MarcaBatalla, modo: ModoComparacion = "justo"): number {
+  if (modo === "justo") return m.puntaje;
+  return e.tipo === "peso" ? m.unoRm ?? 0 : m.reps;
+}
+
+/** Dos marcas a menos de 0.5 % una de la otra son empate: es menos que lo que mide Epley. */
 const EMPATE = 0.005;
 
-export function ganaEjercicio(e: EjercicioBatalla): Lado | null {
-  const { puntaje: pa } = e.a;
-  const { puntaje: pb } = e.b;
+export function ganaEjercicio(e: EjercicioBatalla, modo: ModoComparacion = "justo"): Lado | null {
+  const pa = valorDe(e, e.a, modo);
+  const pb = valorDe(e, e.b, modo);
   const mayor = Math.max(pa, pb);
   if (mayor <= 0 || Math.abs(pa - pb) / mayor < EMPATE) return null;
   return pa > pb ? "a" : "b";
@@ -88,8 +102,8 @@ export function ejerciciosDe(d: DatosBatalla, eleccion: Eleccion): EjercicioBata
   return d.ejercicios.filter((e) => e.id === eleccion.ejercicio);
 }
 
-export function resolverBatalla(ejercicios: readonly EjercicioBatalla[]): Resultado {
-  const filas = ejercicios.map((ejercicio) => ({ ejercicio, gana: ganaEjercicio(ejercicio) }));
+export function resolverBatalla(ejercicios: readonly EjercicioBatalla[], modo: ModoComparacion = "justo"): Resultado {
+  const filas = ejercicios.map((ejercicio) => ({ ejercicio, gana: ganaEjercicio(ejercicio, modo) }));
   const victorias = { a: filas.filter((f) => f.gana === "a").length, b: filas.filter((f) => f.gana === "b").length };
   if (victorias.a === victorias.b) return { filas, victorias, ganador: null, margen: null };
   const ganador: Lado = victorias.a > victorias.b ? "a" : "b";
@@ -98,7 +112,7 @@ export function resolverBatalla(ejercicios: readonly EjercicioBatalla[]): Result
   if (filas.length === 1) {
     // Un solo ejercicio: el margen es cuánto más levantó en proporción.
     const e = filas[0].ejercicio;
-    const ventaja = e[ganador].puntaje / e[perdedor].puntaje - 1;
+    const ventaja = valorDe(e, e[ganador], modo) / valorDe(e, e[perdedor], modo) - 1;
     margen = ventaja < 0.05 ? "minima" : ventaja < 0.25 ? "clara" : "aplastante";
   } else {
     const diferencia = victorias[ganador] - victorias[perdedor];

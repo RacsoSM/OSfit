@@ -86,6 +86,27 @@ describe("vistaBatalla", () => {
     expect(html).not.toContain("% de tu peso");
   });
 
+  it("el interruptor: Modo justo de entrada; en Modo real cambian el texto, el ganador y se va el %", () => {
+    ponerBatalla({ rival: "Bogue <3", datos: { estado: "listo", datos: d } });
+    let html = vistaBatalla();
+    expect(html).toMatch(/role="switch"[^>]*data-bat-justo checked/);
+    expect(html).toContain("Modo justo");
+    expect(html).toContain("es lo más justo");
+    ponerBatalla({ rival: "Bogue <3", datos: { estado: "listo", datos: d }, modo: "real" });
+    html = vistaBatalla();
+    expect(html).toContain("Modo real");
+    expect(html).toContain("no importa cuánto pesas, sino cuánto cargas");
+    expect(html).toContain("Gana quien carga más kilos");
+    const conPct: DatosBatalla = { ...d, ejercicios: d.ejercicios.map((e) => ({ ...e, a: { ...e.a, porPeso: 120 }, b: { ...e.b, porPeso: 92 } })) };
+    // El press: para su peso gana Bogue (0.8 contra 0.7) y en kilos también (93.3 contra 76).
+    // El curl: tú 16 kg contra 13.3 kg: lo ganas en los dos modos.
+    ponerBatalla({ rival: "Bogue <3", modo: "real", datos: { estado: "listo", datos: conPct }, eleccion: { modo: "ejercicio", ejercicio: "curl" }, inicio: 0 });
+    html = vistaBatalla();
+    expect(html).toContain("· Modo real");
+    expect(html).toContain("¡Ganaste la batalla!");
+    expect(html).not.toContain("% de tu peso");
+  });
+
   it("el resultado de un ejercicio, con corona y la nota de mancuerna", () => {
     ponerBatalla({ rival: "Bogue <3", datos: { estado: "listo", datos: d }, eleccion: { modo: "ejercicio", ejercicio: "curl" }, inicio: 0 });
     const html = vistaBatalla();

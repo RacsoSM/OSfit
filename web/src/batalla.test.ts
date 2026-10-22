@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  ejerciciosDe, ganaEjercicio, musculosEnComun, resolverBatalla, textoResultado, textoSerie,
+  ejerciciosDe, ganaEjercicio, musculosEnComun, resolverBatalla, textoResultado, textoSerie, valorDe,
   type DatosBatalla, type EjercicioBatalla,
 } from "./batalla";
 
@@ -19,6 +19,28 @@ describe("ganaEjercicio", () => {
     expect(ganaEjercicio(ej("x", [], 0.8, 0.7))).toBe("a");
     expect(ganaEjercicio(ej("x", [], 0.7, 0.8))).toBe("b");
     expect(ganaEjercicio(ej("x", [], 0.8, 0.798))).toBeNull();
+  });
+});
+
+describe("Modo real", () => {
+  it("compara los kilos del 1RM tal cual, sin el peso corporal", () => {
+    // a: 53.3 kg de 1RM pero más para su peso; b: 63.3 kg.
+    const e = ej("x", [], 0.9, 0.7);
+    expect(ganaEjercicio(e)).toBe("a");
+    expect(ganaEjercicio(e, "real")).toBe("b");
+    expect(valorDe(e, e.b, "real")).toBe(63.3);
+  });
+
+  it("en los que no son de peso cuenta reps o segundos", () => {
+    const e = ej("x", [], 0.9, 0.7, { tipo: "corporal", a: { reps: 20, peso: null, unoRm: null, puntaje: 0.9 }, b: { reps: 25, peso: null, unoRm: null, puntaje: 0.7 } });
+    expect(ganaEjercicio(e, "real")).toBe("b");
+  });
+
+  it("el resultado y su margen usan el modo", () => {
+    const r = resolverBatalla([ej("x", [], 0.9, 0.7)], "real");
+    expect(r.ganador).toBe("b");
+    // 63.3 / 53.3 − 1 = 19 %: con claridad.
+    expect(r.margen).toBe("clara");
   });
 });
 

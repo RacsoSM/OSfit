@@ -1,5 +1,5 @@
 import {
-  ejerciciosDe, musculosEnComun, resolverBatalla, textoResultado, textoSerie,
+  ejerciciosDe, musculosEnComun, resolverBatalla, textoResultado, textoSerie, type ModoComparacion,
   type DatosBatalla, type Eleccion, type EjercicioBatalla, type Lado, type Resultado,
 } from "../batalla";
 import { nombreMusculo } from "../fuerza";
@@ -27,6 +27,8 @@ export const DURACION_ANIMACION = 3000;
 const DURACION_QUIETA = 400;
 /** El modo suspenso se recuerda en el navegador: es un gusto de cada quien. */
 const LLAVE_SUSPENSO = "osfit:batalla-suspenso";
+/** El interruptor Modo justo / Modo real, también por navegador. */
+const LLAVE_MODO = "osfit:batalla-modo";
 
 export type DatosCargados =
   | { estado: "cargando" }
@@ -45,6 +47,8 @@ interface EstadoBatalla {
   inicio: number | null;
   duracion: number;
   suspenso: boolean;
+  /** Modo justo (para su peso, con ajustes) o real (los kilos tal cual). */
+  modo: ModoComparacion;
   /** Las series ya destapadas, `<fila>:<a|b>`. Sin suspenso no se usa. */
   destapadas: Set<string>;
   /** La última destapada: entra con su vuelta. */
@@ -80,13 +84,13 @@ export function reiniciarBatalla(): void {
 function nueva(rival: string): EstadoBatalla {
   return {
     rival, datos: { estado: "cargando" }, vista: "menu", eleccion: null, inicio: null,
-    duracion: DURACION_ANIMACION, suspenso: suspensoGuardado(), destapadas: new Set(),
+    duracion: DURACION_ANIMACION, suspenso: suspensoGuardado(), modo: modoGuardado(), destapadas: new Set(),
   };
 }
 
 /** Para los tests: abrir la batalla en un estado dado. */
 export function ponerBatalla(e: Partial<EstadoBatalla> & { rival: string } | null): void {
-  batalla = e === null ? null : { ...nueva(e.rival), suspenso: false, ...e };
+  batalla = e === null ? null : { ...nueva(e.rival), suspenso: false, modo: "justo", ...e };
 }
 
 /** Si hay una batalla abierta con esa persona. */
@@ -101,6 +105,30 @@ function suspensoGuardado(): boolean {
   } catch {
     return true;
   }
+}
+
+function modoGuardado(): ModoComparacion {
+  try {
+    // Justo de entrada: es como se pensó la batalla.
+    return localStorage.getItem(LLAVE_MODO) === "real" ? "real" : "justo";
+  } catch {
+    return "justo";
+  }
+}
+
+function guardarModo(modo: ModoComparacion): void {
+  try {
+    localStorage.setItem(LLAVE_MODO, modo);
+  } catch {
+    // Sin almacenamiento solo se olvida para la próxima vez.
+  }
+}
+
+/** La regla en una línea, según el modo. */
+function regla(modo: ModoComparacion): string {
+  return modo === "real"
+    ? "Gana quien carga más kilos, con su mejor serie de todo su historial."
+    : "Gana quien levanta más en proporción a su peso corporal, con su mejor serie de todo su historial.";
 }
 
 function guardarSuspenso(valor: boolean): void {
@@ -243,6 +271,16 @@ function vistaMenu(b: EstadoBatalla, d: DatosBatalla, rangos: RangosCartel): str
           <span class="bat-combate-texto"><span>Uno contra uno</span><small>Un solo ejercicio, cara a cara</small></span>
         </button>
       </div>
+      <label class="bat-interruptor">
+        <span class="bat-suspenso-texto">
+          <span>${b.modo === "justo" ? "Modo justo" : "Modo real"}</span>
+          <small>${b.modo === "justo"
+            ? "Este modo compara el 1RM contra el peso corporal de cada persona: es lo más justo."
+            : "Esta opción toma en cuenta la fuerza absoluta: no importa cuánto pesas, sino cuánto cargas."}</small>
+        </span>
+        <input type="checkbox" role="switch" class="bat-switch" data-bat-justo${b.modo === "justo" ? " checked" : ""}
+               aria-label="Modo justo">
+      </label>
       <label class="bat-suspenso">
         <input type="checkbox" data-bat-suspenso${b.suspenso ? " checked" : ""}>
         <span class="bat-suspenso-texto">
@@ -253,7 +291,7 @@ function vistaMenu(b: EstadoBatalla, d: DatosBatalla, rangos: RangosCartel): str
   return `
     ${cartel(d, rangos)}
     ${opciones}
-    <p class="accion-nota bat-regla">Gana quien levanta más en proporción a su peso corporal, con su mejor serie de todo su historial.</p>`;
+    <p class="accion-nota bat-regla">${regla(b.modo)}</p>`;
 }
 
 function vistaLista(b: EstadoBatalla, d: DatosBatalla): string {
@@ -303,7 +341,7 @@ function vistaAnimacion(b: EstadoBatalla, d: DatosBatalla): string {
 /** Una serie: destapada (con su 1RM) o, en suspenso, una tarjeta con "?" para tocar. */
 function celda(
   e: EjercicioBatalla, i: number, lado: Lado, gana: Lado | null, completa: boolean,
-  tapada: boolean, otraTapada: boolean, recien: boolean, rival: string
+  tapada: boolean, otraTapada: boolean, recien: boolean, rival: string, conPct: boolean
 ): string {
   if (tapada) {
     const texto = lado === "a" ? "Tu serie" : `Serie de ${rival}`;
@@ -317,7 +355,8 @@ function celda(
   const gano = completa && gana === lado;
   const rm = m.unoRm !== null ? `<span class="bat-rm">1RM ≈ ${m.unoRm} kg</span>` : "";
   // Cuánto levanta para su peso: es lo que decide, y explica por qué a veces gana el 1RM menor.
-  const pct = m.porPeso != null
+  // En Modo real no decide nada: solo cuenta en el justo.
+  const pct = conPct && m.porPeso != null
     ? `<span class="bat-pct">${m.porPeso} % de ${lado === "a" ? "tu" : "su"} peso</span>`
     : "";
   const espera = otraTapada ? `<span class="bat-espera">${lado === "a" ? `Esperando a ${escapar(rival)}…` : "Esperando tu serie…"}</span>` : "";
@@ -332,14 +371,14 @@ function celda(
 }
 
 function vistaResultado(b: EstadoBatalla, d: DatosBatalla, rangos: RangosCartel): string {
-  const r = resolverBatalla(ejerciciosDe(d, b.eleccion!));
+  const r = resolverBatalla(ejerciciosDe(d, b.eleccion!), b.modo);
   const tapada = (i: number, l: Lado) => b.suspenso && !b.destapadas.has(`${i}:${l}`);
   const completas = r.filas.map((_, i) => !tapada(i, "a") && !tapada(i, "b"));
   const faltan = completas.filter((c) => !c).length;
   const filas = r.filas.map(({ ejercicio: e, gana }, i) => {
     const completa = completas[i];
     const c = (l: Lado) => celda(e, i, l, gana, completa, tapada(i, l), tapada(i, l === "a" ? "b" : "a"),
-      b.recien === `${i}:${l}`, d.b.nombre);
+      b.recien === `${i}:${l}`, d.b.nombre, b.modo === "justo");
     return `
     <div class="bat-fila">
       <p class="bat-fila-nombre">${escapar(e.nombre)}${e.pesoPorMancuerna ? ` <span class="bat-fila-nota">por mancuerna</span>` : ""}${completa && gana === null ? ` <span class="bat-empate">Empate</span>` : ""}</p>
@@ -365,7 +404,7 @@ function vistaResultado(b: EstadoBatalla, d: DatosBatalla, rangos: RangosCartel)
     b.anunciado = true;
   }
   return `
-    <p class="bat-tema">${escapar(tituloEleccion(b.eleccion!, d))}${b.suspenso ? " · Modo suspenso" : ""}</p>
+    <p class="bat-tema">${escapar(tituloEleccion(b.eleccion!, d))}${b.modo === "real" ? " · Modo real" : ""}${b.suspenso ? " · Modo suspenso" : ""}</p>
     ${arriba}
     <div class="bat-tabla">
       <div class="bat-celdas bat-encabezado" aria-hidden="true"><span>Tú</span><span>${escapar(d.b.nombre)}</span></div>
@@ -404,9 +443,19 @@ export function vistaBatalla(rangos: RangosCartel = { a: null, b: null }): strin
   return `${botonAtras(`data-bat="${atras}"`)}<div class="batalla">${cuerpo}</div>`;
 }
 
-/** La casilla del modo suspenso; true si el cambio era suyo. Lo llama el `change` de `#comparar`. */
+/**
+ * La casilla del modo suspenso o el interruptor justo/real; true si el cambio era suyo. Lo
+ * llama el `change` de `#comparar`.
+ */
 export function cambioBatalla(el: Element, repintar: () => void): boolean {
-  if (!batalla || !(el instanceof HTMLInputElement) || el.dataset.batSuspenso === undefined) return false;
+  if (!batalla || !(el instanceof HTMLInputElement)) return false;
+  if (el.dataset.batJusto !== undefined) {
+    batalla.modo = el.checked ? "justo" : "real";
+    guardarModo(batalla.modo);
+    repintar();
+    return true;
+  }
+  if (el.dataset.batSuspenso === undefined) return false;
   batalla.suspenso = el.checked;
   guardarSuspenso(el.checked);
   repintar();
