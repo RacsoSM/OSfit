@@ -2474,6 +2474,31 @@
     },
     "pesoPorMancuerna": false
   },
+  "fondos-maquina": {
+    "estandares": {
+      "H": [
+        0.45,
+        0.562,
+        0.675,
+        0.788,
+        0.9,
+        1.024,
+        1.147,
+        1.577
+      ],
+      "M": [
+        0.225,
+        0.338,
+        0.45,
+        0.562,
+        0.675,
+        0.72,
+        0.765,
+        1.179
+      ]
+    },
+    "pesoPorMancuerna": false
+  },
   "press-cerrado": {
     "estandares": {
       "H": [

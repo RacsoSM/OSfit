@@ -244,4 +244,6 @@ crédito "Animaciones © Gym visual" en la página, junto a donde se muestran.
   ver la spec de cardio). Revisados con §6.2; URLs `200 video/mp4`. **`caminadora` se saltó:** su
   GIF (`3666`) no es de 2 poses sino de 4 (24 cuadros: 1 s, 0.5 s, 0.5 s y 1 s con fundidos
   entre ellas), así que se queda con su GIF, como los otros de patrón distinto.
+- **2026-10-22:** subido `fondos-maquina` (nuevo en el banco, GIF `1451`, máquina de fondos
+  sentado, no asistida). Revisado con §6.2; URL `200 video/mp4`.
 - **Pendiente:** que el entrenador lo vea en su teléfono (web y app, §6.4).

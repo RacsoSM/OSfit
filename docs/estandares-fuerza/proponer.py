@@ -141,6 +141,9 @@ PESO = {
     "press-frances": ("triceps", 0.80, ""),
     "extension-triceps-mancuerna": ("triceps", 0.45, "copa a dos manos: el peso de la pesa completa, no por brazo"),
     "patada-triceps": ("triceps", 0.20, "por mancuerna"),
+    # Máquina de fondos sentado, de placas (GIF 1451). Como el press de pecho en máquina: el
+    # empuje lo lleva el pecho y el tríceps juntos (2026-10-22).
+    "fondos-maquina": ("banca", 0.90, "máquina: varía por marca"),
     "crunch-polea": ("crunch", 1.00, ""),
     # Máquina de placas, no la estación de polea doble. ×1.13: el entrenador quiere a Dulce
     # (M, 31.5 kg × 12) en Fuerte, a media banda; con ×1.00 salía Avanzada (2026-10-21).

@@ -286,6 +286,8 @@ Los porcentajes salen de un modelo: entre quienes entrenan, la fuerza se reparte
 |  | M | 3 reps | 6 reps | 10 reps | 16 reps | 22 reps | 26 reps | 30 reps | 48 reps |
 | Fondos de tríceps en paralelas | H | 1 rep | 4 reps | 8 reps | 13 reps | 18 reps | 22 reps | 26 reps | 42 reps |
 |  | M | 1 rep | 2 reps | 3 reps | 6 reps | 8 reps | 10 reps | 13 reps | 22 reps |
+| Fondos en máquina | H · máquina: varía por marca | 35 kg | 42.5 kg | 50 kg | 60 kg | 67.5 kg | 77.5 kg | 85 kg | 117.5 kg |
+|  | M | 14 kg | 20 kg | 27.5 kg | 32.5 kg | 40 kg | 42.5 kg | 45 kg | 70 kg |
 | Press cerrado | H | 32.5 kg | 40 kg | 47.5 kg | 55 kg | 65 kg | 72.5 kg | 82.5 kg | 112.5 kg |
 |  | M | 13 kg | 19 kg | 25 kg | 32.5 kg | 37.5 kg | 40 kg | 42.5 kg | 67.5 kg |
 
