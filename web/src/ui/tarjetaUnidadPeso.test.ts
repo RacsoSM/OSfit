@@ -8,7 +8,7 @@ describe("tarjetaUnidadPeso", () => {
     expect(apagado).toContain('aria-checked="false"');
     const prendido = tarjetaUnidadPeso(true);
     expect(prendido).toContain('aria-checked="true"');
-    expect(prendido).toContain("libras o barras");
+    expect(prendido).toContain("barras, kg o libras");
     expect(prendido).toContain("se sigue viendo en kg");
   });
 });

@@ -394,6 +394,22 @@ describe("biseries y dropsets", () => {
     expect(html).not.toContain("data-quitar-serie");
   });
 
+  it("en libras, el selector trae Barras, Kg y Lb, con Lb marcado", () => {
+    const b = agregarEjercicio(nuevoBorrador("b1234567", "2026-10-12", Date.now()), press, null, 1, "lb");
+    ponerEstadoRegistro({ vista: "capturar", borrador: b });
+    const html = ventanaRegistro(datos());
+    expect(html).toContain('data-unidad="0:barras"');
+    expect(html).toContain('data-unidad="0:kg"');
+    expect(html).toMatch(/data-unidad="0:lb" aria-pressed="true"/);
+    expect(html).toContain("<span>lb</span>");
+  });
+
+  it("sin libras, solo Barras y Kg", () => {
+    const b = agregarEjercicio(nuevoBorrador("b1234567", "2026-10-12", Date.now()), press, null, 1);
+    ponerEstadoRegistro({ vista: "capturar", borrador: b });
+    expect(ventanaRegistro(datos())).not.toContain('data-unidad="0:lb"');
+  });
+
   it("tocar el número de la serie ofrece agregar una bajada", () => {
     const b = agregarEjercicio(nuevoBorrador("b1234567", "2026-10-12", Date.now()), press, null, 1);
     ponerEstadoRegistro({ vista: "capturar", borrador: b });

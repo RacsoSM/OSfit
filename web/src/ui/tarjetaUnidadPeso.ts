@@ -2,8 +2,8 @@ import { guardarRegistroEnLibras } from "../unidadPeso";
 
 /**
  * Ajustes › "Registrar en libras" (entrenador, 2026-10-22). Con el interruptor prendido, en
- * Registro el peso se anota en libras o en barras, nunca en kg; se guarda en kg y en todo lo
- * demás de la página se sigue viendo en kg. Mismo interruptor que el del modo sin datos.
+ * Registro el selector suma Lb a Barras y Kg, y el peso libre abre en libras; se guarda en kg y
+ * en todo lo demás de la página se sigue viendo en kg. Mismo interruptor que el del modo sin datos.
  */
 export function tarjetaUnidadPeso(enLibras: boolean): string {
   return `
@@ -17,7 +17,7 @@ export function tarjetaUnidadPeso(enLibras: boolean): string {
         </button>
       </div>
       <p class="ajuste-nota" id="libras-nota">${enLibras
-        ? "Al registrar tus ejercicios eliges entre libras o barras. Las convertimos a kg por ti: en el resto de la página todo se sigue viendo en kg."
+        ? "Al registrar tus ejercicios eliges entre barras, kg o libras (abren en libras). Las convertimos a kg por ti: en el resto de la página todo se sigue viendo en kg."
         : "Si tus pesas o discos están en libras, actívalo: en Registro podrás anotar en libras en vez de kg."}</p>
       <p class="ajuste-nota ajuste-tenue">Se guarda en este teléfono.</p>
     </div>`;

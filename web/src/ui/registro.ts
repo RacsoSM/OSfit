@@ -44,6 +44,7 @@ import {
 import { rechazoDefinitivo } from "../cola";
 import { escapar } from "./tarjetaDia";
 import { unidadLibre } from "../unidadPeso";
+import type { Unidad } from "../barras";
 import { aterrizar, despegar } from "./vueloRegistro";
 import { conectarDeslizar } from "./deslizarRegistro";
 import { cronometro } from "./cronometro";
@@ -763,18 +764,20 @@ function notaPeso(e: EjercicioBorrador, delBanco: EjercicioBanco | undefined): s
 }
 
 /**
- * Barras o kg (o lb con "Registrar en libras"), solo en los de peso. Las máquinas de placas
- * abren en barras (`barras.ts`). Si ya estaba en kg o lb, se respeta lo que trae aunque se
- * haya cambiado el ajuste a la mitad del entrenamiento.
+ * Barras o kg, solo en los de peso; con "Registrar en libras" también Lb, como tercera opción
+ * (entrenador, 2026-10-22). Las máquinas de placas abren en barras (`barras.ts`). Si el
+ * ejercicio ya venía en lb, el botón sigue aunque se haya apagado el ajuste a la mitad.
  */
 function selectorUnidad(e: EjercicioBorrador, i: number): string {
   if (e.tipo !== "peso") return "";
-  const enBarras = e.unidad === "barras";
-  const libre = e.unidad === "kg" || e.unidad === "lb" ? e.unidad : unidadLibre();
+  const actual = e.unidad ?? "kg";
+  const opciones: [Unidad, string][] = [["barras", "Barras"], ["kg", "Kg"]];
+  if (unidadLibre() === "lb" || actual === "lb") opciones.push(["lb", "Lb"]);
+  const botones = opciones.map(([u, texto]) =>
+    `<button data-unidad="${i}:${u}" aria-pressed="${actual === u}" class="${actual === u ? "activa" : ""}">${texto}</button>`).join("");
   return `
       <div class="registro-unidad" role="group" aria-label="Unidad del peso${escapar(` de ${e.nombre}`)}">
-        <button data-unidad="${i}:barras" aria-pressed="${enBarras}" class="${enBarras ? "activa" : ""}">Barras</button>
-        <button data-unidad="${i}:${libre}" aria-pressed="${!enBarras}" class="${enBarras ? "" : "activa"}">${libre === "lb" ? "Lb" : "Kg"}</button>
+        ${botones}
       </div>`;
 }
 
