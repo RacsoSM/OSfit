@@ -281,12 +281,13 @@ function vistaMenu(b: EstadoBatalla, d: DatosBatalla, rangos: RangosCartel): str
         <input type="checkbox" role="switch" class="bat-switch" data-bat-justo${b.modo === "justo" ? " checked" : ""}
                aria-label="Modo justo">
       </label>
-      <label class="bat-suspenso">
-        <input type="checkbox" data-bat-suspenso${b.suspenso ? " checked" : ""}>
+      <label class="bat-interruptor suspenso">
         <span class="bat-suspenso-texto">
           <span>Modo suspenso</span>
           <small>Este modo hace que cada resultado sea más divertido: tú destapas las series una por una.</small>
         </span>
+        <input type="checkbox" role="switch" class="bat-switch" data-bat-suspenso${b.suspenso ? " checked" : ""}
+               aria-label="Modo suspenso">
       </label>`;
   return `
     ${cartel(d, rangos)}

@@ -1936,12 +1936,10 @@ body:has(.batalla) :is(.fondo, .fondo-pixel, .fondo-sakura, .fondo-halloween, .p
 .bat-switch:checked { background: var(--bat-oro); }
 .bat-switch:checked::before { transform: translateX(22px); }
 .bat-switch:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
-.bat-interruptor + .bat-suspenso { margin-top: 10px; }
-.bat-suspenso {
-  display: flex; align-items: flex-start; gap: 12px; margin-top: 16px; padding: 14px 16px; border-radius: 16px; cursor: pointer;
-  background: rgba(176, 124, 255, 0.12); border: 1px solid rgba(176, 124, 255, 0.35);
-}
-.bat-suspenso input { width: 22px; height: 22px; margin: 1px 0 0; flex: none; accent-color: #b07cff; }
+.bat-interruptor + .bat-interruptor { margin-top: 10px; }
+/* El de suspenso, en el morado de la casilla que era antes. */
+.bat-interruptor.suspenso { background: rgba(176, 124, 255, 0.12); border-color: rgba(176, 124, 255, 0.35); }
+.bat-interruptor.suspenso .bat-switch:checked { background: #b07cff; }
 .bat-suspenso-texto { display: flex; flex-direction: column; gap: 3px; }
 .bat-suspenso-texto > span { font-size: 16px; font-weight: 900; }
 .bat-suspenso-texto small { font-size: 12px; line-height: 1.35; color: #c9bfd8; }
