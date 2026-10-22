@@ -290,8 +290,8 @@ private fun FilaADistancia(
             Column(modifier = Modifier.weight(1f)) {
                 Text("Entrena a distancia", style = MaterialTheme.typography.titleMedium)
                 Text(
-                    if (aDistancia) "No viene al gimnasio: no ve \"Hoy no voy a poder ir\"."
-                    else "Viene al gimnasio. Préndelo si entrena por su cuenta.",
+                    if (aDistancia) "No viene al gimnasio: ve el entrenamiento guiado y no ve \"Hoy no voy a poder ir\"."
+                    else "Viene al gimnasio: no ve el entrenamiento guiado. Préndelo si entrena por su cuenta.",
                     style = MaterialTheme.typography.bodySmall
                 )
             }

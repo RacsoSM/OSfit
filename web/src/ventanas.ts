@@ -161,7 +161,9 @@ function inicio(d: DatosCliente): string {
   return `
       ${tarjetaRecordatorioPago(recordatorioPago(d.cliente, d.hoy))}
       ${tarjetaDia(d.cliente, d.hoy, acciones, d.asistencias,
-        botonEntrenar(diaDeHoy(d.cliente, d.hoy, d.asistencias), entrenamientoAbierto()))}
+        // El modo guiado, solo para quien entrena a distancia (entrenador, 2026-10-21): en el
+        // gimnasio lo guía él. Los demás siguen con Registro, que también continúa uno abierto.
+        d.cliente.entrenaADistancia === true ? botonEntrenar(diaDeHoy(d.cliente, d.hoy, d.asistencias), entrenamientoAbierto()) : "")}
       ${invitacionNotificaciones(d.notificaciones, d.invitacionDescartada)}
       ${tarjetasStats(d.asistencias, d.hoy, d.sesiones ? resumenSemana(d.sesiones, d.hoy).entrenamientos : null,
         d.cliente.reviveExtraOtorgado === true)}

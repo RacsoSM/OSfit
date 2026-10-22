@@ -15,6 +15,9 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.Public
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -31,6 +34,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -41,6 +45,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.osfit.app.data.model.Cliente
+import com.osfit.app.domain.ListaClientes
 import com.osfit.app.domain.PagoCalculator
 import com.osfit.app.domain.RutinaProgressCalculator
 import com.osfit.app.ui.common.TextoMaquinaEscribir
@@ -66,6 +71,8 @@ fun ClientesListScreen(
     // vuelve a consultar los avisos del día nuevo.
     LaunchedEffect(hoy) { viewModel.fijarFecha(hoy.toString()) }
     var mostrarDialogo by remember { mutableStateOf(false) }
+    // Cerrado por defecto y sin recordarse al cerrar la app: el punto es que no estorben.
+    var aDistanciaAbierto by rememberSaveable { mutableStateOf(false) }
 
     Scaffold(
         floatingActionButton = {
@@ -85,8 +92,8 @@ fun ClientesListScreen(
                 contentPadding = PaddingValues(top = 12.dp, bottom = 88.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                item { EncabezadoSaludo() }
-                items(clientes, key = { it.id }) { cliente ->
+                val grupos = ListaClientes.agrupar(clientes)
+                val fila: @Composable (Cliente) -> Unit = { cliente ->
                     ClienteItem(
                         cliente = cliente,
                         diaQueToca = diaQueTocaPorCliente[cliente.id] ?: 0,
@@ -95,6 +102,19 @@ fun ClientesListScreen(
                         onClick = { onClienteClick(cliente.id) }
                     )
                 }
+                item { EncabezadoSaludo() }
+                items(grupos.presenciales, key = { it.id }) { fila(it) }
+                if (grupos.aDistancia.isNotEmpty()) {
+                    item(key = "grupo-a-distancia") {
+                        GrupoADistancia(
+                            cantidad = grupos.aDistancia.size,
+                            abierto = aDistanciaAbierto,
+                            onCambiar = { aDistanciaAbierto = !aDistanciaAbierto }
+                        )
+                    }
+                    if (aDistanciaAbierto) items(grupos.aDistancia, key = { it.id }) { fila(it) }
+                }
+                items(grupos.inactivos, key = { it.id }) { fila(it) }
             }
         }
     }
@@ -140,6 +160,35 @@ private fun EncabezadoSaludo() {
                 texto = fecha,
                 style = MaterialTheme.typography.titleSmall,
                 empezar = saludoListo
+            )
+        }
+    }
+}
+
+/**
+ * El renglón que junta a los que entrenan a distancia (`ListaClientes`). Tocarlo los muestra u
+ * oculta; con la flecha y el número se sabe que hay alguien adentro sin tener que abrirlo.
+ */
+@Composable
+private fun GrupoADistancia(cantidad: Int, abierto: Boolean, onCambiar: () -> Unit) {
+    Card(
+        onClick = onCambiar,
+        modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(Icons.Filled.Public, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(
+                "A distancia · $cantidad",
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.weight(1f).padding(start = 12.dp)
+            )
+            Icon(
+                if (abierto) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
+                contentDescription = if (abierto) "Ocultar a los que entrenan a distancia" else "Ver a los que entrenan a distancia"
             )
         }
     }

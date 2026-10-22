@@ -32,9 +32,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.osfit.app.data.model.Asistencia
+import com.osfit.app.domain.AsistenciaCalendario
 import java.time.LocalDate
 import java.time.YearMonth
+import java.time.ZoneId
 import java.time.format.TextStyle
 import java.util.Locale
 
@@ -49,11 +50,20 @@ fun CalendarioScreen(
     viewModel: CalendarioViewModel = viewModel()
 ) {
     val mesVisible by viewModel.mesVisible.collectAsState()
-    val clientesActivos by viewModel.clientesActivos.collectAsState()
-    val asistenciasDelMes by viewModel.asistenciasDelMes.collectAsState()
+    val clientes by viewModel.clientes.collectAsState()
+    val asistencias by viewModel.asistencias.collectAsState()
 
-    val colorPorFecha: Map<LocalDate, Color> = remember(asistenciasDelMes, clientesActivos, mesVisible) {
-        calcularColoresPorFecha(asistenciasDelMes, clientesActivos.map { it.id }.toSet(), mesVisible)
+    val colorPorFecha: Map<LocalDate, Color> = remember(asistencias, clientes, mesVisible) {
+        val delCalendario = clientes.map { c ->
+            AsistenciaCalendario.ClienteDelCalendario(
+                id = c.id,
+                activo = c.activo,
+                aDistancia = c.entrenaADistancia,
+                ingreso = c.fechaIngreso?.toDate()?.toInstant()?.atZone(ZoneId.systemDefault())?.toLocalDate()
+            )
+        }
+        AsistenciaCalendario.nivelesDelMes(delCalendario, asistencias, mesVisible, LocalDate.now())
+            .mapValues { (_, nivel) -> colorDe(nivel) }
     }
 
     Scaffold(
@@ -78,33 +88,11 @@ fun CalendarioScreen(
     }
 }
 
-private fun calcularColoresPorFecha(
-    asistencias: List<Asistencia>,
-    idsClientesActivos: Set<String>,
-    mesVisible: YearMonth
-): Map<LocalDate, Color> {
-    if (idsClientesActivos.isEmpty()) return emptyMap()
-    val registrosPorFecha = asistencias
-        .filter { it.clienteId in idsClientesActivos }
-        .groupBy { it.fecha }
-
-    val primerDiaDelMes = mesVisible.atDay(1)
-    return (0 until mesVisible.lengthOfMonth()).associate { offset ->
-        val fecha = primerDiaDelMes.plusDays(offset.toLong())
-        val registrosDelDia = registrosPorFecha[fecha.toString()]
-        val asistieron = registrosDelDia?.count { it.asistio } ?: 0
-        val color = if (registrosDelDia.isNullOrEmpty() || asistieron == 0) {
-            GrisSinDatos
-        } else {
-            val porcentaje = asistieron.toDouble() / idsClientesActivos.size
-            when {
-                porcentaje >= 0.65 -> VerdeBuenaAsistencia
-                porcentaje >= 0.35 -> AmarilloAsistenciaMedia
-                else -> RojoBajaAsistencia
-            }
-        }
-        fecha to color
-    }
+private fun colorDe(nivel: AsistenciaCalendario.Nivel): Color = when (nivel) {
+    AsistenciaCalendario.Nivel.BUENA -> VerdeBuenaAsistencia
+    AsistenciaCalendario.Nivel.MEDIA -> AmarilloAsistenciaMedia
+    AsistenciaCalendario.Nivel.BAJA -> RojoBajaAsistencia
+    AsistenciaCalendario.Nivel.SIN_DATOS -> GrisSinDatos
 }
 
 @Composable

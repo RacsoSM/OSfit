@@ -993,3 +993,38 @@ entrenador lo cambió el mismo día.
 - "Tu semana" suma los minutos de cardio; Estadísticas muestra minutos totales, sesión más larga,
   velocidad máxima y los minutos por día.
 
+## 26. Calendario de la app: contra los clientes de ese día y sin los de a distancia — ✅ HECHO (2026-10-21)
+
+> "en mi app de entrenador, no se toma en cuenta cuanta gente habia a la hora de pintar el calendario, ademas, no se debe tomar en cuenta la gente que entrena a distancia para esa metrica" (2026-10-21)
+
+El color de cada día era "fueron ÷ clientes activos de hoy", así que los días viejos salían en
+rojo (había menos clientes entonces) y contaban los que entrenan a distancia. Ahora
+(`domain/AsistenciaCalendario.kt`, con pruebas):
+
+- **Contra los clientes que había ese día.** No se guarda la fecha de baja y la de ingreso solo
+  la tienen 6 de 14, así que cada cliente cuenta desde su ingreso o su primera asistencia (lo que
+  sea antes) y, si ya está inactivo, hasta su último registro. Uno activo sin nada cuenta desde hoy.
+- **Sin los de a distancia** (`entrenaADistancia`), ni en el total ni en los que fueron.
+- Los umbrales siguen igual (verde ≥ 65 %, amarillo ≥ 35 %).
+
+Con los datos reales, 29 de 49 días cambian de color, todos hacia arriba (p. ej. 26 de agosto:
+6/14 amarillo → 9/9 verde).
+
+## 27. Juntar a los que entrenan a distancia en la lista de Clientes — ✅ HECHO (2026-10-21)
+
+> "quiero poder juntar a los clientes que entrenan a distancia y poder como comprimirlos para que no me aparezcan en mi pestaña principal de entrenador" (2026-10-21)
+
+En la pestaña Clientes de la app, los activos que entrenan a distancia (`entrenaADistancia`) van
+en un renglón plegable **"🌐 A distancia · N"**, cerrado por defecto, después de los presenciales
+y antes de los inactivos. Tocarlo los muestra u oculta. Un inactivo va con los inactivos aunque
+sea a distancia. La separación vive en `domain/ListaClientes.kt`, con pruebas.
+
+## 28. El entrenamiento guiado, solo para quien entrena a distancia — ✅ HECHO (2026-10-21)
+
+> "quiero que el modo guiado, el botón para acceder a el, solo le aparezca a las personas que estén marcadas en la app de entrenador como \"Entrena a distancia\"" (2026-10-21)
+
+En Inicio de la web, el botón "▶ Empezar entrenamiento guiado" (y "Continuar entrenamiento")
+de la tarjeta del día solo sale si la clienta tiene `entrenaADistancia`. Las demás siguen
+registrando en Registro, que también continúa un entrenamiento abierto. El interruptor de la
+app lo explica: "ve el entrenamiento guiado" / "no ve el entrenamiento guiado".
+

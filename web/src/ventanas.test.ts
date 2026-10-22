@@ -79,6 +79,13 @@ describe("la ventana Inicio", () => {
     expect(lejos).not.toContain('id="falta-hoy"');
   });
 
+  it("el botón del entrenamiento guiado solo le sale a quien entrena a distancia", () => {
+    const conRutina = { ...cliente, ultimoDia: 0, ultimoDiaFecha: "2026-09-14", ultimoDiaEsAncla: true, rutinaAsignada: { id: "r1", nombre: "R", dias: [{ nombreDia: "Pierna", ejercicios: [{ nombre: "Sentadilla", series: 4, repeticiones: "10", pesoONota: "" }] }] } } as Cliente;
+    expect(contenidoDe(ventana("inicio"), datos({ cliente: conRutina }))).not.toContain('id="empezar-entrenamiento"');
+    expect(contenidoDe(ventana("inicio"), datos({ cliente: { ...conRutina, entrenaADistancia: true } })))
+      .toContain('id="empezar-entrenamiento"');
+  });
+
   it("el recordatorio de pago va arriba de todo, antes de la tarjeta del día", () => {
     const conRecordatorio = {
       ...cliente,
