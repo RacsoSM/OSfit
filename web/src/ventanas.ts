@@ -10,6 +10,8 @@ import { tarjetasStats } from "./ui/tarjetasStats";
 import { accionDia, hojaDeMotivosAbierta } from "./ui/accionDia";
 import { accionHoyNoPuedo, tarjetaRevivir } from "./ui/accionFalta";
 import { calendario } from "./ui/calendario";
+import { tarjetaUnidadPeso } from "./ui/tarjetaUnidadPeso";
+import { registroEnLibras } from "./unidadPeso";
 import { seccionVacia, tarjetaLogrosPersonales, tarjetaMedallas } from "./ui/tarjetaInsignias";
 import { tarjetaRanking, type EstadoRanking } from "./ui/tarjetaRanking";
 import { tarjetaAjustes } from "./ui/tarjetaAjustes";
@@ -227,7 +229,7 @@ export const VENTANAS: readonly Ventana[] = [
   { id: "videos", titulo: "Videos", icono: "🎬", grupo: "principal", contenedorPropio: "videos", oculta: true },
   {
     id: "ajustes", titulo: "Ajustes", icono: "⚙️", grupo: "pie",
-    pintar: (d) => tarjetaAjustes(d.estilo) + tarjetaSinDatos(d.sinDatos ?? false, d.avisaWifi ?? false, d.guardandoGifs ?? null, d.avisoGifs ?? null) + seccionNotificaciones(d.notificaciones, d.activandoNotificaciones),
+    pintar: (d) => tarjetaAjustes(d.estilo) + tarjetaUnidadPeso(registroEnLibras()) + tarjetaSinDatos(d.sinDatos ?? false, d.avisaWifi ?? false, d.guardandoGifs ?? null, d.avisoGifs ?? null) + seccionNotificaciones(d.notificaciones, d.activandoNotificaciones),
   },
 ];
 

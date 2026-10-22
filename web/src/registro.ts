@@ -1,7 +1,7 @@
 import type { Ejercicio, EjercicioBanco, SerieSesion, Sesion } from "./datos";
 import { claveBanco, type IndiceBanco } from "./banco";
 import { lunesDe } from "./dia";
-import { barrasAKg, kgABarras, unidadPorDefecto, type Unidad } from "./barras";
+import { aKg, deKg, etiquetaUnidad, unidadPorDefecto, type Unidad, type UnidadLibre } from "./barras";
 
 /**
  * El borrador de Registro: lo que la clienta va anotando en el gym, ejercicio por ejercicio,
@@ -139,11 +139,13 @@ export function agregarEjercicio(
   b: Borrador,
   e: EjercicioBanco,
   previas: readonly SerieSesion[] | null,
-  seriesRutina: number | null
+  seriesRutina: number | null,
+  libre: UnidadLibre = "kg"
 ): Borrador {
   if (b.ejercicios.some((x) => x.ejercicioId === e.id)) return b;
-  // Solo los de peso eligen unidad: en los corporales el peso es lastre y va en kg.
-  const unidad: Unidad = e.tipo === "peso" ? unidadPorDefecto(e.id) : "kg";
+  // Solo los de peso eligen unidad: en los corporales el peso es lastre, en kg o en lb según
+  // "Registrar en libras" (`libre`), sin barras.
+  const unidad: Unidad = e.tipo === "peso" ? unidadPorDefecto(e.id, libre) : libre;
   const series: SerieBorrador[] = e.tipo === "cardio"
     ? [{ ...SERIE_CARDIO }]
     : previas && previas.length > 0
@@ -179,7 +181,8 @@ export function borradorGuiado(
   iniciado: number,
   dia: { nombreDia: string; ejercicios: readonly Ejercicio[] },
   indice: IndiceBanco,
-  sesiones: readonly Sesion[]
+  sesiones: readonly Sesion[],
+  libre: UnidadLibre = "kg"
 ): Borrador {
   let b: Borrador = { ...nuevoBorrador(id, fecha, iniciado), guiado: { nombreDia: dia.nombreDia.trim(), sinLigar: [] } };
   const sinLigar: string[] = [];
@@ -190,7 +193,7 @@ export function borradorGuiado(
       continue;
     }
     const antes = b.ejercicios.length;
-    b = agregarEjercicio(b, e, ultimasSeries(sesiones, e.id), x.series > 0 ? x.series : null);
+    b = agregarEjercicio(b, e, ultimasSeries(sesiones, e.id), x.series > 0 ? x.series : null, libre);
     if (b.ejercicios.length > antes) {
       const objetivo = objetivoDeRutina(x);
       if (objetivo) b.ejercicios[antes] = { ...b.ejercicios[antes], objetivo };
@@ -329,10 +332,11 @@ export function unidades(b: Borrador): number[][] {
 export function agregarBiserie(
   b: Borrador,
   a: { e: EjercicioBanco; previas: readonly SerieSesion[] | null; seriesRutina: number | null },
-  c: { e: EjercicioBanco; previas: readonly SerieSesion[] | null; seriesRutina: number | null }
+  c: { e: EjercicioBanco; previas: readonly SerieSesion[] | null; seriesRutina: number | null },
+  libre: UnidadLibre = "kg"
 ): Borrador {
   if (a.e.id === c.e.id || b.ejercicios.some((x) => x.ejercicioId === a.e.id || x.ejercicioId === c.e.id)) return b;
-  const conDos = agregarEjercicio(agregarEjercicio(b, a.e, a.previas, a.seriesRutina), c.e, c.previas, c.seriesRutina);
+  const conDos = agregarEjercicio(agregarEjercicio(b, a.e, a.previas, a.seriesRutina, libre), c.e, c.previas, c.seriesRutina, libre);
   const usadas = new Set(b.ejercicios.map((x) => x.biserie));
   let n = 1;
   while (usadas.has(`b${n}`)) n++;
@@ -370,15 +374,17 @@ export function quitarBloque(b: Borrador, iEj: number): Borrador {
 
 /**
  * Cambia la unidad de un ejercicio y convierte lo que ya escribió, para que el selector no
- * le cambie el peso de fondo: 6 barras pasan a 27 kg, y 27 kg a 6 barras.
+ * le cambie el peso de fondo: 6 barras pasan a 27 kg, y 27 kg a 6 barras; 60 lb a 6 barras.
+ * Se pasa por kg, que es lo que se guarda.
  */
 export function cambiarUnidad(b: Borrador, iEj: number, unidad: Unidad): Borrador {
   const e = b.ejercicios[iEj];
-  if (!e || (e.unidad ?? "kg") === unidad) return b;
+  const antes = e?.unidad ?? "kg";
+  if (!e || antes === unidad) return b;
   const convertir = (texto: string): string => {
     const n = numero(texto);
     if (n === null || Number.isNaN(n)) return texto;
-    return String(unidad === "barras" ? kgABarras(n) : barrasAKg(n));
+    return String(deKg(aKg(n, antes), unidad));
   };
   return {
     ...b,
@@ -447,8 +453,8 @@ export function paraEnviar(b: Borrador): { ok: true; datos: Envio } | { ok: fals
       if (e.tipo === "peso" && escrito === null) {
         return `${donde}: ${e.unidad === "barras" ? "faltan las barras" : "falta el peso"}.`;
       }
-      // Se guarda siempre en kg: las barras se convierten aquí y en ningún otro lado.
-      return { reps, peso: escrito !== null && e.unidad === "barras" ? barrasAKg(escrito) : escrito };
+      // Se guarda siempre en kg: las barras y las libras se convierten aquí y en ningún otro lado.
+      return { reps, peso: escrito !== null ? aKg(escrito, e.unidad ?? "kg") : escrito };
     };
     if (e.tipo === "cardio") {
       const s = e.series[0];
@@ -559,7 +565,7 @@ export function resumenSeries(e: EjercicioBorrador): string {
     const reps = s.reps.trim() || "?";
     if (e.tipo === "tiempo") return `${reps} s`;
     const peso = s.peso.trim().replace(",", ".");
-    const unidad = e.unidad === "barras" ? (peso === "1" ? "barra" : "barras") : "kg";
+    const unidad = etiquetaUnidad(e.unidad ?? "kg", peso);
     return peso === "" ? `× ${reps}` : `${peso} ${unidad} × ${reps}`;
   };
   const conAlgo = (s: CaidaBorrador) => s.reps.trim() !== "" || s.peso.trim() !== "";

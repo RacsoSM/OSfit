@@ -43,6 +43,7 @@ import {
 } from "../registro";
 import { rechazoDefinitivo } from "../cola";
 import { escapar } from "./tarjetaDia";
+import { unidadLibre } from "../unidadPeso";
 import { aterrizar, despegar } from "./vueloRegistro";
 import { conectarDeslizar } from "./deslizarRegistro";
 import { cronometro } from "./cronometro";
@@ -228,7 +229,7 @@ export function empezarGuiado(d: DatosRegistro, ahora = Date.now()): boolean {
     return false;
   }
   if (!d.dia) return false;
-  guardarBorrador(borradorGuiado(idNuevo(), d.hoy, ahora, d.dia, d.indice, d.sesiones ?? []));
+  guardarBorrador(borradorGuiado(idNuevo(), d.hoy, ahora, d.dia, d.indice, d.sesiones ?? [], unidadLibre()));
   posicionElegir = 0;
   estado.vista = "capturar";
   estado.activo = 0;
@@ -654,12 +655,13 @@ function camposSerie(e: EjercicioBorrador, i: number, j: number, s: CaidaBorrado
              value="${escapar(s.reps)}" placeholder="0" aria-label="${escapar(donde)}, ${e.tipo === "tiempo" ? "segundos" : "repeticiones"}">
       <span>${e.tipo === "tiempo" ? "seg" : "reps"}</span>
     </label>`;
-  const enBarras = e.unidad === "barras";
+  const u = e.unidad ?? "kg";
+  const nombre = u === "barras" ? "barras" : u === "lb" ? "libras" : "kilos";
   const peso = e.tipo === "tiempo" ? "" : `
     <label class="registro-campo">
       <input inputmode="decimal" data-ej="${i}" data-serie="${j}"${caida} data-campo="peso"
-             value="${escapar(s.peso)}" placeholder="${e.tipo === "corporal" ? "+0" : "0"}" aria-label="${escapar(donde)}, ${enBarras ? "barras" : "kilos"}">
-      <span>${enBarras ? "barras" : "kg"}</span>
+             value="${escapar(s.peso)}" placeholder="${e.tipo === "corporal" ? "+0" : "0"}" aria-label="${escapar(donde)}, ${nombre}">
+      <span>${u}</span>
     </label>
     <span class="registro-por" aria-hidden="true">×</span>`;
   return `${peso}${reps}`;
@@ -748,25 +750,31 @@ export function medioDelEjercicio(gifRuta: string | null | undefined, videoRuta:
 /** La nota de cómo se anota el peso, si hace falta. */
 function notaPeso(e: EjercicioBorrador, delBanco: EjercicioBanco | undefined): string {
   // Los estándares de fuerza de mancuernas cuentan una sola (`docs/estandares-fuerza/`).
+  const libre = e.unidad === "lb" ? "lb" : "kg";
   return e.tipo === "corporal"
-    ? `<p class="accion-nota">Con tu peso corporal. En kg, solo si agregaste peso extra.</p>`
+    ? `<p class="accion-nota">Con tu peso corporal. En ${libre}, solo si agregaste peso extra.</p>`
     : e.unidad === "barras"
       ? `<p class="accion-nota">Cuántas barras de la máquina pusiste.</p>`
       : delBanco?.notaPeso
         ? `<p class="accion-nota">${escapar(delBanco.notaPeso)}</p>`
         : delBanco?.pesoPorMancuerna
-          ? `<p class="accion-nota">En kg, el peso de una mancuerna.</p>`
+          ? `<p class="accion-nota">En ${libre}, el peso de una mancuerna.</p>`
           : "";
 }
 
-/** Barras o kg, solo en los de peso. Las máquinas de placas abren en barras (`barras.ts`). */
+/**
+ * Barras o kg (o lb con "Registrar en libras"), solo en los de peso. Las máquinas de placas
+ * abren en barras (`barras.ts`). Si ya estaba en kg o lb, se respeta lo que trae aunque se
+ * haya cambiado el ajuste a la mitad del entrenamiento.
+ */
 function selectorUnidad(e: EjercicioBorrador, i: number): string {
   if (e.tipo !== "peso") return "";
   const enBarras = e.unidad === "barras";
+  const libre = e.unidad === "kg" || e.unidad === "lb" ? e.unidad : unidadLibre();
   return `
       <div class="registro-unidad" role="group" aria-label="Unidad del peso${escapar(` de ${e.nombre}`)}">
         <button data-unidad="${i}:barras" aria-pressed="${enBarras}" class="${enBarras ? "activa" : ""}">Barras</button>
-        <button data-unidad="${i}:kg" aria-pressed="${!enBarras}" class="${enBarras ? "" : "activa"}">Kg</button>
+        <button data-unidad="${i}:${libre}" aria-pressed="${!enBarras}" class="${enBarras ? "" : "activa"}">${libre === "lb" ? "Lb" : "Kg"}</button>
       </div>`;
 }
 
@@ -1370,7 +1378,7 @@ export function conectarRegistro(
       const [ea, ec] = estado.seleccion.map((x) => d.banco.find((e) => e.id === x));
       if (!ea || !ec) return;
       const con = (e: EjercicioBanco) => ({ e, previas: ultimasSeries(d.sesiones ?? [], e.id), seriesRutina: seriesDeLaRutina(d, e) });
-      const nuevo = agregarBiserie(b, con(ea), con(ec));
+      const nuevo = agregarBiserie(b, con(ea), con(ec), unidadLibre());
       if (nuevo === b) return;
       guardarBorrador(nuevo);
       const iA = nuevo.ejercicios.findIndex((x) => x.ejercicioId === ea.id);
@@ -1396,7 +1404,7 @@ export function conectarRegistro(
       if (!e) return;
       const ya = b.ejercicios.findIndex((x) => x.ejercicioId === id);
       if (ya < 0) {
-        guardarBorrador(agregarEjercicio(b, e, ultimasSeries(d.sesiones ?? [], id), seriesDeLaRutina(d, e)));
+        guardarBorrador(agregarEjercicio(b, e, ultimasSeries(d.sesiones ?? [], id), seriesDeLaRutina(d, e), unidadLibre()));
       }
       estado.enfocar = ya < 0 ? (estado.borrador?.ejercicios.length ?? 1) - 1 : ya;
       // El que acaba de elegir pasa a ser el activo, en grande.
@@ -1424,7 +1432,7 @@ export function conectarRegistro(
     }
     if (el.dataset.unidad !== undefined) {
       const [i, unidad] = el.dataset.unidad.split(":");
-      if (unidad !== "kg" && unidad !== "barras") return;
+      if (unidad !== "kg" && unidad !== "lb" && unidad !== "barras") return;
       guardarBorrador(cambiarUnidad(b, Number(i), unidad));
       repintar();
       return;

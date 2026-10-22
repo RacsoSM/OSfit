@@ -240,6 +240,35 @@ describe("nombresDeSesion", () => {
   });
 });
 
+describe("unidad: libras (Registrar en libras)", () => {
+  const jalon = ej({ id: "jalon-al-pecho", nombre: "Jalón al pecho" });
+
+  it("con libras, el peso libre y el lastre abren en lb; las máquinas de placas en barras", () => {
+    let b = agregarEjercicio(vacio(), ej(), null, 1, "lb");
+    b = agregarEjercicio(b, jalon, null, 1, "lb");
+    b = agregarEjercicio(b, dominadas, null, 1, "lb");
+    expect(b.ejercicios.map((e) => e.unidad)).toEqual(["lb", "barras", "lb"]);
+  });
+
+  it("se guarda en kg, también las bajadas", () => {
+    let b = agregarEjercicio(vacio(), ej(), null, 1, "lb");
+    b = cambiarSerie(cambiarSerie(b, 0, 0, "peso", "100"), 0, 0, "reps", "8");
+    b = agregarCaida(b, 0, 0);
+    b = cambiarCaida(cambiarCaida(b, 0, 0, 0, "peso", "45"), 0, 0, 0, "reps", "6");
+    const r = paraEnviar(b);
+    expect(r.ok && r.datos.ejercicios[0].series).toEqual([{ reps: 8, peso: 45.4, caidas: [{ reps: 6, peso: 20.4 }] }]);
+    expect(resumenSeries(b.ejercicios[0])).toBe("1 serie · 100 lb × 8 ↓ 45 lb × 6");
+  });
+
+  it("cambiar de lb a barras o a kg convierte lo escrito", () => {
+    let b = agregarEjercicio(vacio(), ej(), null, 1, "lb");
+    b = cambiarSerie(b, 0, 0, "peso", "60");
+    // 60 lb = 27.2 kg = 6 barras.
+    expect(cambiarUnidad(b, 0, "barras").ejercicios[0].series[0].peso).toBe("6");
+    expect(cambiarUnidad(b, 0, "kg").ejercicios[0].series[0].peso).toBe("27.2");
+  });
+});
+
 describe("unidad: barras o kg", () => {
   const jalon = ej({ id: "jalon-al-pecho", nombre: "Jalón al pecho" });
 

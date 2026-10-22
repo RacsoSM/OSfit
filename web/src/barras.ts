@@ -15,7 +15,17 @@
  */
 export const KG_POR_BARRA = 4.5;
 
-export type Unidad = "kg" | "barras";
+/**
+ * En qué se anota el peso en Registro. "lb" solo con "Registrar en libras" prendido en Ajustes
+ * (entrenador, 2026-10-22): entonces el selector ofrece libras en vez de kg. Como las barras,
+ * las libras se convierten a kg al guardar; en todo lo demás se ve en kg.
+ */
+export type Unidad = "kg" | "lb" | "barras";
+/** La unidad del peso libre (no de placas): kg, o lb si así lo pidió. */
+export type UnidadLibre = "kg" | "lb";
+
+/** Una libra en kg, la definición exacta. */
+export const KG_POR_LB = 0.45359237;
 
 /**
  * Los ejercicios del banco que se hacen en máquina de placas (o en polea, que cuelga de la
@@ -55,9 +65,9 @@ const MAQUINAS_DE_BARRAS: ReadonlySet<string> = new Set([
   "crunch-maquina",
 ]);
 
-/** En qué unidad abre el ejercicio en Registro. */
-export function unidadPorDefecto(ejercicioId: string): Unidad {
-  return MAQUINAS_DE_BARRAS.has(ejercicioId) ? "barras" : "kg";
+/** En qué unidad abre el ejercicio en Registro: barras en las de placas, si no la que prefiere. */
+export function unidadPorDefecto(ejercicioId: string, libre: UnidadLibre = "kg"): Unidad {
+  return MAQUINAS_DE_BARRAS.has(ejercicioId) ? "barras" : libre;
 }
 
 /** Barras → kg, redondeado a décimas para no guardar 22.500000000000004. */
@@ -68,4 +78,30 @@ export function barrasAKg(barras: number): number {
 /** Kg → barras, a la barra más cercana (lo que se puede poner en la máquina). */
 export function kgABarras(kg: number): number {
   return Math.round(kg / KG_POR_BARRA);
+}
+
+/** Libras → kg, a décimas como las barras: 45 lb son 20.4 kg. */
+export function lbAKg(lb: number): number {
+  return Math.round(lb * KG_POR_LB * 10) / 10;
+}
+
+/** Kg → libras, a la media libra (los discos en libras van de 2.5 en 2.5): 20.4 kg son 45 lb. */
+export function kgALb(kg: number): number {
+  return Math.round((kg / KG_POR_LB) * 2) / 2;
+}
+
+/** Lo anotado en esa unidad, en kg: lo que se guarda. */
+export function aKg(n: number, unidad: Unidad): number {
+  return unidad === "barras" ? barrasAKg(n) : unidad === "lb" ? lbAKg(n) : n;
+}
+
+/** Kg a lo que se ve en esa unidad (al cambiar el selector). */
+export function deKg(kg: number, unidad: Unidad): number {
+  return unidad === "barras" ? kgABarras(kg) : unidad === "lb" ? kgALb(kg) : kg;
+}
+
+/** El nombre corto de la unidad junto al número: "kg", "lb", "barras" (o "barra"). */
+export function etiquetaUnidad(unidad: Unidad, cuantas?: string): string {
+  if (unidad === "barras") return cuantas === "1" ? "barra" : "barras";
+  return unidad;
 }
