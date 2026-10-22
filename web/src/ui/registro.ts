@@ -44,6 +44,7 @@ import {
 import { rechazoDefinitivo } from "../cola";
 import { escapar } from "./tarjetaDia";
 import { unidadLibre } from "../unidadPeso";
+import { autollenarActivo } from "../autollenado";
 import type { Unidad } from "../barras";
 import { aterrizar, despegar } from "./vueloRegistro";
 import { conectarDeslizar } from "./deslizarRegistro";
@@ -230,7 +231,7 @@ export function empezarGuiado(d: DatosRegistro, ahora = Date.now()): boolean {
     return false;
   }
   if (!d.dia) return false;
-  guardarBorrador(borradorGuiado(idNuevo(), d.hoy, ahora, d.dia, d.indice, d.sesiones ?? [], unidadLibre()));
+  guardarBorrador(borradorGuiado(idNuevo(), d.hoy, ahora, d.dia, d.indice, d.sesiones ?? [], unidadLibre(), autollenarActivo()));
   posicionElegir = 0;
   estado.vista = "capturar";
   estado.activo = 0;
@@ -1381,7 +1382,7 @@ export function conectarRegistro(
       const [ea, ec] = estado.seleccion.map((x) => d.banco.find((e) => e.id === x));
       if (!ea || !ec) return;
       const con = (e: EjercicioBanco) => ({ e, previas: ultimasSeries(d.sesiones ?? [], e.id), seriesRutina: seriesDeLaRutina(d, e) });
-      const nuevo = agregarBiserie(b, con(ea), con(ec), unidadLibre());
+      const nuevo = agregarBiserie(b, con(ea), con(ec), unidadLibre(), autollenarActivo());
       if (nuevo === b) return;
       guardarBorrador(nuevo);
       const iA = nuevo.ejercicios.findIndex((x) => x.ejercicioId === ea.id);
@@ -1407,7 +1408,7 @@ export function conectarRegistro(
       if (!e) return;
       const ya = b.ejercicios.findIndex((x) => x.ejercicioId === id);
       if (ya < 0) {
-        guardarBorrador(agregarEjercicio(b, e, ultimasSeries(d.sesiones ?? [], id), seriesDeLaRutina(d, e), unidadLibre()));
+        guardarBorrador(agregarEjercicio(b, e, ultimasSeries(d.sesiones ?? [], id), seriesDeLaRutina(d, e), unidadLibre(), autollenarActivo()));
       }
       estado.enfocar = ya < 0 ? (estado.borrador?.ejercicios.length ?? 1) - 1 : ya;
       // El que acaba de elegir pasa a ser el activo, en grande.

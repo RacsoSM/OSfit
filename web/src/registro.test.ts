@@ -60,6 +60,18 @@ describe("agregarEjercicio", () => {
     expect(agregarEjercicio(vacio(), ej(), null, null).ejercicios[0].series).toHaveLength(1);
   });
 
+  it("con autollenar, si ya lo había hecho trae lo de la última vez, con sus bajadas", () => {
+    const previas = [{ reps: 10, peso: 40, caidas: [{ reps: 8, peso: 30 }] }, { reps: 8, peso: 42.5 }];
+    const b = agregarEjercicio(vacio(), ej(), previas, 4, "kg", true);
+    expect(b.ejercicios[0].series).toEqual([{ reps: "10", peso: "40", caidas: [{ reps: "8", peso: "30" }] }, { reps: "8", peso: "42.5" }]);
+  });
+
+  it("con autollenar, lo de la vez pasada se muestra en la unidad en que abre", () => {
+    const jalon = ej({ id: "jalon-al-pecho", nombre: "Jalón al pecho" });
+    expect(agregarEjercicio(vacio(), jalon, [{ reps: 10, peso: 27 }], null, "kg", true).ejercicios[0].series[0].peso).toBe("6");
+    expect(agregarEjercicio(vacio(), ej(), [{ reps: 10, peso: 20.4 }], null, "lb", true).ejercicios[0].series[0].peso).toBe("45");
+  });
+
   it("si ya lo había hecho entra sin series: no copia lo de la última vez", () => {
     const b = agregarEjercicio(vacio(), ej(), [{ reps: 10, peso: 40 }, { reps: 8, peso: 42.5 }], 4);
     expect(b.ejercicios[0].series).toEqual([]);
@@ -73,12 +85,12 @@ describe("agregarEjercicio", () => {
 });
 
 describe("editar series", () => {
-  it("cambia un campo, agrega en blanco y quita", () => {
+  it("cambia un campo, agrega copiando la última y quita", () => {
     let b = agregarEjercicio(vacio(), ej(), null, 1);
     b = cambiarSerie(b, 0, 0, "peso", "50");
     b = cambiarSerie(b, 0, 0, "reps", "6");
     b = agregarSerie(b, 0);
-    expect(b.ejercicios[0].series).toEqual([{ reps: "6", peso: "50" }, { reps: "", peso: "" }]);
+    expect(b.ejercicios[0].series).toEqual([{ reps: "6", peso: "50" }, { reps: "6", peso: "50" }]);
     b = quitarSerie(b, 0, 0);
     expect(b.ejercicios[0].series).toHaveLength(1);
   });
@@ -455,9 +467,9 @@ describe("dropset", () => {
     expect(b.ejercicios[0].series[0].caidas).toHaveLength(MAX_CAIDAS);
   });
 
-  it("la serie nueva entra en blanco, sin el peso de la anterior ni sus bajadas", () => {
+  it("la serie nueva copia el peso de la anterior pero no sus bajadas", () => {
     const b = agregarSerie(agregarCaida(conPress(), 0, 0), 0);
-    expect(b.ejercicios[0].series[1]).toEqual({ reps: "", peso: "" });
+    expect(b.ejercicios[0].series[1]).toEqual({ reps: "10", peso: "40" });
   });
 
   it("se envían en kg y se saltan las bajadas en blanco", () => {

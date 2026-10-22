@@ -1,4 +1,5 @@
 import { guardarRegistroEnLibras } from "../unidadPeso";
+import { guardarAutollenar } from "../autollenado";
 
 /**
  * Ajustes › "Registrar en libras" (entrenador, 2026-10-22). Con el interruptor prendido, en
@@ -28,6 +29,37 @@ export function conectarUnidadPeso(repintar: () => void): void {
   const boton = document.querySelector<HTMLButtonElement>("#interruptor-libras");
   boton?.addEventListener("click", () => {
     guardarRegistroEnLibras(boton.getAttribute("aria-checked") !== "true");
+    repintar();
+  });
+}
+
+/**
+ * Ajustes › "Autollenar con lo de la vez pasada" (entrenador, 2026-10-22): al agregar un
+ * ejercicio que ya hizo, trae sus series de la última vez. Mismo interruptor que los demás.
+ */
+export function tarjetaAutollenado(activo: boolean): string {
+  return `
+    <div class="tarjeta">
+      <p class="tarjeta-titulo">Autollenado</p>
+      <div class="ajuste-interruptor">
+        <span class="ajuste-etiqueta" id="autollenar-etiqueta">Autollenar con lo de la vez pasada</span>
+        <button type="button" class="interruptor" id="interruptor-autollenar" role="switch"
+                aria-checked="${activo}" aria-labelledby="autollenar-etiqueta" aria-describedby="autollenar-nota">
+          <span class="interruptor-bolita" aria-hidden="true"></span>
+        </button>
+      </div>
+      <p class="ajuste-nota" id="autollenar-nota">${activo
+        ? "Al agregar en Registro un ejercicio que ya hiciste, aparece con tus series de la última vez. Revísalas antes de terminar: se guardan tal cual."
+        : "Al agregar un ejercicio que ya hiciste, aparece sin series para que anotes lo de hoy. Actívalo si prefieres que traiga tus series de la última vez."}</p>
+      <p class="ajuste-nota ajuste-tenue">Se guarda en este teléfono.</p>
+    </div>`;
+}
+
+/** Cuelga el interruptor. Como el resto de `conectar*`, se vuelve a llamar en cada repintado. */
+export function conectarAutollenado(repintar: () => void): void {
+  const boton = document.querySelector<HTMLButtonElement>("#interruptor-autollenar");
+  boton?.addEventListener("click", () => {
+    guardarAutollenar(boton.getAttribute("aria-checked") !== "true");
     repintar();
   });
 }

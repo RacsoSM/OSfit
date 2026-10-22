@@ -129,26 +129,40 @@ export function idNuevo(): string {
 }
 
 /**
- * Agrega el ejercicio. Si ya lo había hecho en otra sesión entra sin series y sin nada
- * escrito: lo de la vez pasada ya no se copia (entrenador, 2026-10-21), porque terminaba
- * guardándose sin que ella lo cambiara. Si nunca lo hizo, tantas filas vacías como series
- * diga su rutina (o una). El cardio siempre trae su fila, en blanco: es donde se anota. Si
- * ya estaba, no lo duplica.
+ * Agrega el ejercicio. Si ya lo había hecho en otra sesión, depende de "Autollenar con lo de la
+ * vez pasada" en Ajustes (`autollenar`, entrenador, 2026-10-22): prendido, trae las series de
+ * la última vez (con sus bajadas, en la unidad en que abre); apagado, que es lo de entrada,
+ * entra sin series y sin nada escrito, porque lo copiado se guardaba sin que ella lo cambiara.
+ * Si nunca lo hizo, tantas filas vacías como series diga su rutina (o una). El cardio siempre
+ * trae su fila: en blanco, o con lo de la vez pasada si autollena. Si ya estaba, no lo duplica.
  */
 export function agregarEjercicio(
   b: Borrador,
   e: EjercicioBanco,
   previas: readonly SerieSesion[] | null,
   seriesRutina: number | null,
-  libre: UnidadLibre = "kg"
+  libre: UnidadLibre = "kg",
+  autollenar = false
 ): Borrador {
   if (b.ejercicios.some((x) => x.ejercicioId === e.id)) return b;
   // Solo los de peso eligen unidad: en los corporales el peso es lastre, en kg o en lb según
   // "Registrar en libras" (`libre`), sin barras.
   const unidad: Unidad = e.tipo === "peso" ? unidadPorDefecto(e.id, libre) : libre;
+  const hay = previas !== null && previas.length > 0;
+  // Lo de la última vez está guardado en kg; se muestra en la unidad en que abre.
+  const pesoPrevio = (kg: number | null) => (kg === null ? "" : String(deKg(kg, unidad)));
+  const texto = (n: number | undefined) => (n === undefined ? "" : String(n));
   const series: SerieBorrador[] = e.tipo === "cardio"
-    ? [{ ...SERIE_CARDIO }]
-    : previas && previas.length > 0
+    ? [hay && autollenar
+      ? { reps: String(previas![0].reps), peso: "", inclinacion: texto(previas![0].inclinacion), velocidad: texto(previas![0].velocidad) }
+      : { ...SERIE_CARDIO }]
+    : hay && autollenar
+    ? previas!.map((x) => ({
+      reps: String(x.reps),
+      peso: pesoPrevio(x.peso),
+      ...(x.caidas?.length ? { caidas: x.caidas.map((c) => ({ reps: String(c.reps), peso: pesoPrevio(c.peso) })) } : {}),
+    }))
+    : hay
     ? []
     : Array.from({ length: Math.min(Math.max(seriesRutina ?? 1, 1), 10) }, () => ({ ...SERIE_VACIA }));
   return {
@@ -182,7 +196,8 @@ export function borradorGuiado(
   dia: { nombreDia: string; ejercicios: readonly Ejercicio[] },
   indice: IndiceBanco,
   sesiones: readonly Sesion[],
-  libre: UnidadLibre = "kg"
+  libre: UnidadLibre = "kg",
+  autollenar = false
 ): Borrador {
   let b: Borrador = { ...nuevoBorrador(id, fecha, iniciado), guiado: { nombreDia: dia.nombreDia.trim(), sinLigar: [] } };
   const sinLigar: string[] = [];
@@ -193,7 +208,7 @@ export function borradorGuiado(
       continue;
     }
     const antes = b.ejercicios.length;
-    b = agregarEjercicio(b, e, ultimasSeries(sesiones, e.id), x.series > 0 ? x.series : null, libre);
+    b = agregarEjercicio(b, e, ultimasSeries(sesiones, e.id), x.series > 0 ? x.series : null, libre, autollenar);
     if (b.ejercicios.length > antes) {
       const objetivo = objetivoDeRutina(x);
       if (objetivo) b.ejercicios[antes] = { ...b.ejercicios[antes], objetivo };
@@ -252,12 +267,16 @@ export function cambiarSerie(
 }
 
 /**
- * La serie nueva entra en blanco, sin copiar la anterior (entrenador, 2026-10-21): lo copiado
- * se guardaba aunque no fuera lo que hizo.
+ * La serie nueva copia la anterior: casi siempre se repite el peso y cambia poco más. Las
+ * bajadas no: el drop suele ser solo de la última. (Del 2026-10-21 al 22 entraba en blanco;
+ * el entrenador la regresó a copiar.)
  */
 export function agregarSerie(b: Borrador, iEj: number): Borrador {
-  return conSeries(b, iEj, (series) =>
-    series.length >= MAX_SERIES ? series : [...series, { ...SERIE_VACIA }]);
+  return conSeries(b, iEj, (series) => {
+    if (series.length >= MAX_SERIES) return series;
+    const { reps, peso } = series[series.length - 1] ?? SERIE_VACIA;
+    return [...series, { reps, peso }];
+  });
 }
 
 /** Quitar la única serie la deja en blanco: para sacar el ejercicio está `quitarEjercicio`. */
@@ -333,10 +352,11 @@ export function agregarBiserie(
   b: Borrador,
   a: { e: EjercicioBanco; previas: readonly SerieSesion[] | null; seriesRutina: number | null },
   c: { e: EjercicioBanco; previas: readonly SerieSesion[] | null; seriesRutina: number | null },
-  libre: UnidadLibre = "kg"
+  libre: UnidadLibre = "kg",
+  autollenar = false
 ): Borrador {
   if (a.e.id === c.e.id || b.ejercicios.some((x) => x.ejercicioId === a.e.id || x.ejercicioId === c.e.id)) return b;
-  const conDos = agregarEjercicio(agregarEjercicio(b, a.e, a.previas, a.seriesRutina, libre), c.e, c.previas, c.seriesRutina, libre);
+  const conDos = agregarEjercicio(agregarEjercicio(b, a.e, a.previas, a.seriesRutina, libre, autollenar), c.e, c.previas, c.seriesRutina, libre, autollenar);
   const usadas = new Set(b.ejercicios.map((x) => x.biserie));
   let n = 1;
   while (usadas.has(`b${n}`)) n++;
@@ -352,7 +372,7 @@ export function agregarBiserie(
   };
 }
 
-/** Una ronda más: una serie en blanco a cada uno de la biserie. */
+/** Una ronda más: una serie a cada uno de la biserie, copiando la anterior de cada quien. */
 export function agregarRonda(b: Borrador, iEj: number): Borrador {
   const otro = companero(b, iEj);
   const conUna = agregarSerie(b, iEj);

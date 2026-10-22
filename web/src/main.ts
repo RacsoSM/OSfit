@@ -43,7 +43,7 @@ import {
   alBloquear, almacenDelNavegador, conexionDelNavegador, esWifi, guardarFaltantes, guardarModoSinDatos, modoSinDatos,
   sugerirApagar,
 } from "./sinDatos";
-import { conectarUnidadPeso } from "./ui/tarjetaUnidadPeso";
+import { conectarAutollenado, conectarUnidadPeso } from "./ui/tarjetaUnidadPeso";
 import { conectarSinDatos } from "./ui/tarjetaSinDatos";
 import { conectarEstadisticas } from "./ui/estadisticas";
 import { mostrarAvisoSinDatos, quitarAvisoSinDatos } from "./ui/avisoSinDatos";
@@ -738,6 +738,7 @@ async function arrancar(): Promise<void> {
       });
       conectarSinDatos((activo) => { cambiarSinDatos(activo); });
       conectarUnidadPeso(pintar);
+      conectarAutollenado(pintar);
       conectarNotificaciones(alActivarNotificaciones, alDescartarInvitacion);
       return;
     }
