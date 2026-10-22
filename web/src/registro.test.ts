@@ -116,12 +116,20 @@ describe("paraEnviar", () => {
     expect(r.ok && r.datos.ejercicios.map((e) => e.series)).toEqual([[{ reps: 6, peso: null }], [{ reps: 45, peso: null }]]);
   });
 
+  it("sin peso en uno de peso es con su propio peso: se guarda en 0 (2026-10-22)", () => {
+    let b = agregarEjercicio(vacio(), ej(), null, 1);
+    b = cambiarSerie(b, 0, 0, "reps", "15");
+    const r = paraEnviar(b);
+    expect(r.ok && r.datos.ejercicios[0].series).toEqual([{ reps: 15, peso: 0 }]);
+    expect(resumenSeries(b.ejercicios[0])).toBe("1 serie · Tu peso × 15");
+    expect(resumenSeries(cambiarSerie(b, 0, 0, "peso", "0").ejercicios[0])).toBe("1 serie · Tu peso × 15");
+  });
+
   it("explica qué falta en vez de mandar algo que el servidor va a rechazar", () => {
     let b = agregarEjercicio(vacio(), ej(), null, 1);
     b = cambiarSerie(b, 0, 0, "peso", "40");
     expect(paraEnviar(b)).toEqual({ ok: false, error: "Press de banca, serie 1: faltan las repeticiones." });
     b = cambiarSerie(cambiarSerie(b, 0, 0, "reps", "8"), 0, 0, "peso", "");
-    expect(paraEnviar(b)).toEqual({ ok: false, error: "Press de banca, serie 1: falta el peso." });
     expect(paraEnviar(cambiarSerie(b, 0, 0, "peso", "abc")))
       .toEqual({ ok: false, error: "Press de banca, serie 1: el peso no es un número." });
   });
@@ -555,7 +563,7 @@ describe("cierre automático a las 3 horas", () => {
     ejercicios: [
       {
         ejercicioId: "press-banca", nombre: "Press de banca", tipo: "peso", gifRuta: null, unidad: "kg",
-        series: [{ reps: "10", peso: "40" }, { reps: "8", peso: "" }, { reps: "", peso: "" }],
+        series: [{ reps: "10", peso: "40" }, { reps: "", peso: "35" }, { reps: "", peso: "" }],
       },
       { ejercicioId: "plancha", nombre: "Plancha", tipo: "tiempo", gifRuta: null, series: [{ reps: "", peso: "" }] },
     ],
@@ -586,7 +594,7 @@ describe("cierre automático a las 3 horas", () => {
   });
 
   it("sin ninguna serie completa se descarta", () => {
-    const vacio = borrador({ ejercicios: [{ ejercicioId: "press-banca", nombre: "Press de banca", tipo: "peso", gifRuta: null, series: [{ reps: "8", peso: "" }] }] });
+    const vacio = borrador({ ejercicios: [{ ejercicioId: "press-banca", nombre: "Press de banca", tipo: "peso", gifRuta: null, series: [{ reps: "", peso: "35" }] }] });
     expect(cierreAutomatico(vacio, inicio + 3 * HORA)).toEqual({ tipo: "descartar" });
   });
 
@@ -598,7 +606,7 @@ describe("cierre automático a las 3 horas", () => {
   it("se queda la bajada completa y se va la incompleta", () => {
     const b = borrador({ ejercicios: [{
       ejercicioId: "press-banca", nombre: "Press de banca", tipo: "peso", gifRuta: null,
-      series: [{ reps: "10", peso: "40", caidas: [{ reps: "8", peso: "30" }, { reps: "6", peso: "" }] }],
+      series: [{ reps: "10", peso: "40", caidas: [{ reps: "8", peso: "30" }, { reps: "", peso: "20" }] }],
     }] });
     const r = cierreAutomatico(b, inicio + 3 * HORA);
     expect(r?.tipo === "enviar" && r.datos.ejercicios[0].series).toEqual([{ reps: 10, peso: 40, caidas: [{ reps: 8, peso: 30 }] }]);

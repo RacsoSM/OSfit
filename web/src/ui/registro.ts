@@ -356,7 +356,7 @@ function textoSerie(s: SerieSesion, tipo: "tiempo" | "cardio" | "otro", ejercici
   if (tipo === "cardio") return textoCardio(s, ejercicioId);
   const una = (x: { reps: number; peso: number | null }) => tipo === "tiempo"
     ? `${x.reps} s`
-    : x.peso === null ? `× ${x.reps}` : `${x.peso} kg × ${x.reps}`;
+    : x.peso === null ? `× ${x.reps}` : x.peso === 0 && tipo === "otro" ? `Tu peso × ${x.reps}` : `${x.peso} kg × ${x.reps}`;
   // Las bajadas del dropset, pegadas a su serie: "40 kg × 10 ↓ 30 kg × 8".
   return [s, ...(s.caidas ?? [])].map(una).join(" ↓ ");
 }

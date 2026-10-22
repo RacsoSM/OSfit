@@ -450,9 +450,10 @@ export function paraEnviar(b: Borrador): { ok: true; datos: Envio } | { ok: fals
       if (!Number.isInteger(reps) || reps < 1) return `${donde}: las repeticiones van en número entero.`;
       const escrito = e.tipo === "tiempo" ? null : numero(s.peso);
       if (escrito !== null && Number.isNaN(escrito)) return `${donde}: el peso no es un número.`;
-      if (e.tipo === "peso" && escrito === null) {
-        return `${donde}: ${e.unidad === "barras" ? "faltan las barras" : "falta el peso"}.`;
-      }
+      // Sin peso en uno de peso es 0: lo hizo con su propio peso, como la pantorrilla parada
+      // (entrenador, 2026-10-22). Antes se reclamaba "falta el peso" y el "0" gris del campo
+      // hacía creer que ya estaba puesto.
+      if (e.tipo === "peso" && escrito === null) return { reps, peso: 0 };
       // Se guarda siempre en kg: las barras y las libras se convierten aquí y en ningún otro lado.
       return { reps, peso: escrito !== null ? aKg(escrito, e.unidad ?? "kg") : escrito };
     };
@@ -565,6 +566,7 @@ export function resumenSeries(e: EjercicioBorrador): string {
     const reps = s.reps.trim() || "?";
     if (e.tipo === "tiempo") return `${reps} s`;
     const peso = s.peso.trim().replace(",", ".");
+    if (e.tipo === "peso" && (peso === "" || Number(peso) === 0)) return `Tu peso × ${reps}`;
     const unidad = etiquetaUnidad(e.unidad ?? "kg", peso);
     return peso === "" ? `× ${reps}` : `${peso} ${unidad} × ${reps}`;
   };
