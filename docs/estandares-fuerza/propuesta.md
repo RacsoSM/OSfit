@@ -20,7 +20,7 @@ Cada corte se compara contra **toda la población** (incluye a la gente que no e
 |---|---|---|
 | Principiante | 38 % | 3 % |
 | Ascenso | 60 % | 12 % |
-| En forma | 72 % | 25 % |
+| En forma | 73 % | 25 % |
 | Intermedio | 82 % | 42 % |
 | Atlético / Atlética | 88 % | 57 % |
 | Fuerte | 90 % | 65 % |
@@ -51,6 +51,10 @@ Los porcentajes salen de un modelo: entre quienes entrenan, la fuerza se reparte
 |  | M | 3 kg | 4 kg | 5 kg | 7 kg | 8 kg | 9 kg | 9 kg | 14 kg |
 | Cruce de poleas | H · por lado; base ×2 sobre 0.18 y polea doble ×1.3 = ×2.6 (decisión del entrenador, 2026-10-16); polea doble ×1.3 | 18 kg | 22.5 kg | 27.5 kg | 30 kg | 35 kg | 40 kg | 45 kg | 62.5 kg |
 |  | M | 7 kg | 11 kg | 14 kg | 18 kg | 20 kg | 22.5 kg | 25 kg | 37.5 kg |
+| Aperturas en polea media | H · por lado; como el cruce de poleas; polea doble ×1.3 | 18 kg | 22.5 kg | 27.5 kg | 30 kg | 35 kg | 40 kg | 45 kg | 62.5 kg |
+|  | M | 7 kg | 11 kg | 14 kg | 18 kg | 20 kg | 22.5 kg | 25 kg | 37.5 kg |
+| Aperturas en polea alta | H · por lado; como el cruce de poleas; polea doble ×1.3 | 18 kg | 22.5 kg | 27.5 kg | 30 kg | 35 kg | 40 kg | 45 kg | 62.5 kg |
+|  | M | 7 kg | 11 kg | 14 kg | 18 kg | 20 kg | 22.5 kg | 25 kg | 37.5 kg |
 | Pec deck | H · máquina: varía por marca | 30 kg | 37.5 kg | 45 kg | 52.5 kg | 60 kg | 67.5 kg | 77.5 kg | 105 kg |
 |  | M | 12 kg | 18 kg | 25 kg | 30 kg | 35 kg | 37.5 kg | 40 kg | 62.5 kg |
 | Press de pecho en máquina | H · máquina: varía por marca | 35 kg | 42.5 kg | 50 kg | 60 kg | 67.5 kg | 77.5 kg | 85 kg | 117.5 kg |
@@ -72,6 +76,11 @@ Los porcentajes salen de un modelo: entre quienes entrenan, la fuerza se reparte
 |  | M | 27.5 kg | 35 kg | 42.5 kg | 57.5 kg | 72.5 kg | 77.5 kg | 85 kg | 105 kg |
 | Sentadilla hack | H · máquina: varía por marca | 62.5 kg | 82.5 kg | 102.5 kg | 112.5 kg | 125 kg | 140 kg | 157.5 kg | 207.5 kg |
 |  | M | 32.5 kg | 42.5 kg | 50 kg | 65 kg | 82.5 kg | 90 kg | 100 kg | 120 kg |
+| Sentadilla hack en máquina | H · máquina: varía por marca | 62.5 kg | 82.5 kg | 102.5 kg | 112.5 kg | 125 kg | 140 kg | 157.5 kg | 207.5 kg |
+|  | M | 32.5 kg | 42.5 kg | 50 kg | 65 kg | 82.5 kg | 90 kg | 100 kg | 120 kg |
+| Belt squat | H · el peso del disco colgado | 27.5 kg | 37.5 kg | 47.5 kg | 52.5 kg | 55 kg | 65 kg | 72.5 kg | 95 kg |
+|  | M | 15 kg | 19 kg | 22.5 kg | 30 kg | 37.5 kg | 42.5 kg | 45 kg | 55 kg |
+| Sentadilla isométrica en pared | — | de tiempo: no pinta el mapa | | | | | | | |
 | Sentadilla goblet | H · una mancuerna o pesa rusa | 20 kg | 25 kg | 32.5 kg | 35 kg | 40 kg | 45 kg | 50 kg | 67.5 kg |
 |  | M | 10 kg | 13 kg | 16 kg | 20 kg | 27.5 kg | 30 kg | 32.5 kg | 37.5 kg |
 | Sentadilla búlgara | H · por mancuerna | 14 kg | 19 kg | 22.5 kg | 25 kg | 27.5 kg | 32.5 kg | 35 kg | 47.5 kg |
@@ -101,6 +110,8 @@ Los porcentajes salen de un modelo: entre quienes entrenan, la fuerza se reparte
 |---|---|---|---|---|---|---|---|---|---|
 | Sentadilla sumo con mancuerna | H · una mancuerna | 22.5 kg | 27.5 kg | 35 kg | 40 kg | 42.5 kg | 47.5 kg | 55 kg | 72.5 kg |
 |  | M | 11 kg | 14 kg | 17 kg | 22.5 kg | 27.5 kg | 32.5 kg | 35 kg | 42.5 kg |
+| Prensa con pies abiertos | H · máquina: varía por marca | 95 kg | 122.5 kg | 150 kg | 187.5 kg | 225 kg | 247.5 kg | 270 kg | 375 kg |
+|  | M | 45 kg | 67.5 kg | 90 kg | 112.5 kg | 135 kg | 150 kg | 165 kg | 235 kg |
 | Peso muerto sumo | H | 75 kg | 95 kg | 112.5 kg | 130 kg | 150 kg | 162.5 kg | 177.5 kg | 212.5 kg |
 |  | M | 30 kg | 45 kg | 60 kg | 67.5 kg | 75 kg | 82.5 kg | 90 kg | 132.5 kg |
 | Hip thrust | H | 55 kg | 75 kg | 95 kg | 112.5 kg | 130 kg | 145 kg | 160 kg | 220 kg |
@@ -132,6 +143,10 @@ Los porcentajes salen de un modelo: entre quienes entrenan, la fuerza se reparte
 |  | M | 10 kg | 15 kg | 20 kg | 22.5 kg | 25 kg | 27.5 kg | 30 kg | 42.5 kg |
 | Peso muerto con piernas rígidas | H | 55 kg | 67.5 kg | 80 kg | 95 kg | 107.5 kg | 117.5 kg | 127.5 kg | 152.5 kg |
 |  | M | 22.5 kg | 32.5 kg | 42.5 kg | 47.5 kg | 55 kg | 60 kg | 65 kg | 95 kg |
+| Peso muerto con piernas rígidas con mancuernas | H · por mancuerna | 25 kg | 30 kg | 35 kg | 42.5 kg | 47.5 kg | 52.5 kg | 57.5 kg | 67.5 kg |
+|  | M | 10 kg | 14 kg | 19 kg | 22.5 kg | 25 kg | 27.5 kg | 27.5 kg | 42.5 kg |
+| Glute-ham raise | H | 1 rep | 3 reps | 5 reps | 8 reps | 10 reps | 12 reps | 14 reps | 24 reps |
+|  | M | 1 rep | 2 reps | 3 reps | 4 reps | 6 reps | 7 reps | 8 reps | 14 reps |
 | Buenos días con barra | H | 35 kg | 42.5 kg | 50 kg | 60 kg | 67.5 kg | 72.5 kg | 80 kg | 95 kg |
 |  | M | 14 kg | 20 kg | 27.5 kg | 30 kg | 32.5 kg | 37.5 kg | 40 kg | 60 kg |
 
@@ -179,6 +194,10 @@ Los porcentajes salen de un modelo: entre quienes entrenan, la fuerza se reparte
 |  | M | 15 kg | 22.5 kg | 32.5 kg | 42.5 kg | 52.5 kg | 60 kg | 67.5 kg | 100 kg |
 | Pantorrilla en prensa | H · en prensa: varía por marca | 40 kg | 62.5 kg | 82.5 kg | 107.5 kg | 132.5 kg | 150 kg | 167.5 kg | 242.5 kg |
 |  | M | 22.5 kg | 37.5 kg | 50 kg | 65 kg | 82.5 kg | 95 kg | 107.5 kg | 157.5 kg |
+| Pantorrilla en prensa 45° | H · en prensa: varía por marca | 40 kg | 62.5 kg | 82.5 kg | 107.5 kg | 132.5 kg | 150 kg | 167.5 kg | 242.5 kg |
+|  | M | 22.5 kg | 37.5 kg | 50 kg | 65 kg | 82.5 kg | 95 kg | 107.5 kg | 157.5 kg |
+| Elevación de talones en escalón | H | 10 reps | 18 reps | 25 reps | 32 reps | 40 reps | 44 reps | 47 reps | 71 reps |
+|  | M | 8 reps | 14 reps | 20 reps | 28 reps | 35 reps | 38 reps | 42 reps | 65 reps |
 
 ### Trapecio
 
@@ -301,6 +320,8 @@ Los porcentajes salen de un modelo: entre quienes entrenan, la fuerza se reparte
 |  | M | 16 kg | 22.5 kg | 27.5 kg | 35 kg | 42.5 kg | 47.5 kg | 52.5 kg | 77.5 kg |
 | Crunch en máquina | H · máquina de placas | 25 kg | 35 kg | 47.5 kg | 60 kg | 72.5 kg | 80 kg | 87.5 kg | 122.5 kg |
 |  | M | 14 kg | 19 kg | 22.5 kg | 30 kg | 37.5 kg | 42.5 kg | 45 kg | 67.5 kg |
+| Giro en polea | H · polea, de pie con brazos estirados; polea doble ×1.3 | 15 kg | 20 kg | 27.5 kg | 35 kg | 42.5 kg | 45 kg | 50 kg | 70 kg |
+|  | M | 8 kg | 11 kg | 14 kg | 18 kg | 22.5 kg | 25 kg | 27.5 kg | 37.5 kg |
 | Abdominales completos | H | 5 reps | 12 reps | 20 reps | 28 reps | 35 reps | 38 reps | 42 reps | 69 reps |
 |  | M | 3 reps | 9 reps | 15 reps | 22 reps | 28 reps | 32 reps | 36 reps | 60 reps |
 | Elevación de piernas colgado | H | 1 rep | 4 reps | 6 reps | 9 reps | 12 reps | 14 reps | 17 reps | 30 reps |

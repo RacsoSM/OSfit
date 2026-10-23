@@ -57,12 +57,18 @@ PESO = {
     "aperturas-mancuernas": ("banca", 0.20, "por mancuerna"),
     "aperturas-inclinadas": ("banca", 0.18, "por mancuerna"),
     "cruce-poleas": ("banca", 0.36, "por lado; base ×2 sobre 0.18 y polea doble ×1.3 = ×2.6 (decisión del entrenador, 2026-10-16)"),
+    # Las mismas poleas que el cruce, a otra altura: el mismo estándar (2026-10-23).
+    "aperturas-polea-media": ("banca", 0.36, "por lado; como el cruce de poleas"),
+    "aperturas-polea-alta": ("banca", 0.36, "por lado; como el cruce de poleas"),
     "pec-deck": ("banca", 0.80, "máquina: varía por marca"),
     "press-pecho-maquina": ("banca", 0.90, "máquina: varía por marca"),
     "sentadilla": ("sentadilla", 1.00, ""),
     "sentadilla-frontal": ("sentadilla", 0.82, ""),
     "sentadilla-smith": ("sentadilla", 0.95, "máquina: varía por marca"),
     "sentadilla-hack": ("sentadilla", 1.10, "máquina: varía por marca"),
+    "sentadilla-hack-maquina": ("sentadilla", 1.10, "máquina: varía por marca"),
+    # Solo el disco colgado del cinturón: sin barra y sin carga en la espalda (2026-10-23).
+    "belt-squat": ("sentadilla", 0.50, "el peso del disco colgado"),
     "sentadilla-goblet": ("sentadilla", 0.35, "una mancuerna o pesa rusa"),
     "sentadilla-sumo-mancuerna": ("sentadilla", 0.38, "una mancuerna"),
     "sentadilla-bulgara": ("sentadilla", 0.25, "por mancuerna"),
@@ -71,6 +77,7 @@ PESO = {
     "subidas-cajon": ("sentadilla", 0.22, "por mancuerna"),
     "buenos-dias": ("muerto", 0.45, ""),
     "prensa": ("prensa", 1.00, "máquina: varía por marca"),
+    "prensa-pies-abiertos": ("prensa", 1.00, "máquina: varía por marca"),
     "prensa-horizontal-una-pierna": ("prensa", 0.40, "una pierna; máquina"),
     # La misma máquina de placas que la de una pierna, con las dos: el doble (2026-10-21). La de
     # 45° (×1.00) es de discos y en una pila sus números no se alcanzan.
@@ -83,11 +90,13 @@ PESO = {
     "peso-muerto-rumano": ("muerto", 0.75, ""),
     "peso-muerto-piernas-rigidas": ("muerto", 0.72, ""),
     "peso-muerto-rumano-mancuernas": ("muerto", 0.33, "por mancuerna"),
+    "peso-muerto-piernas-rigidas-mancuernas": ("muerto", 0.32, "por mancuerna"),
     "swing-kettlebell": ("muerto", 0.20, "una pesa rusa"),
     "hip-thrust": ("hipthrust", 1.00, ""),
     "pantorrilla-de-pie": ("pantorrilla", 1.00, "máquina"),
     "pantorrilla-sentado": ("pantorrilla", 0.70, "máquina"),
     "pantorrilla-prensa": ("pantorrilla", 1.10, "en prensa: varía por marca"),
+    "pantorrilla-prensa-45": ("pantorrilla", 1.10, "en prensa: varía por marca"),
     "abductores-maquina": ("abductor", 1.00, "máquina"),
     "aductores-maquina": ("abductor", 1.00, "máquina"),
     "patada-gluteo-polea": ("abductor", 0.805, "polea: el peso marcado no es el real, × 2.3 sobre 0.35 (decisión del entrenador, 2026-10-16; antes × 1.3)"),
@@ -148,6 +157,8 @@ PESO = {
     # Máquina de placas, no la estación de polea doble. ×1.13: el entrenador quiere a Dulce
     # (M, 31.5 kg × 12) en Fuerte, a media banda; con ×1.00 salía Avanzada (2026-10-21).
     "crunch-maquina": ("crunch", 1.13, "máquina de placas"),
+    # La rotación mueve bastante menos que el crunch en la misma polea (2026-10-23).
+    "giro-polea": ("crunch", 0.50, "polea, de pie con brazos estirados"),
 }
 
 # Corporales: repeticiones seguidas.
@@ -160,6 +171,7 @@ POLEA_DOBLE = {
     "pullover-polea", "face-pull", "elevaciones-laterales-polea", "curl-polea", "curl-inverso-polea",
     "curl-muneca-polea", "extension-triceps-polea", "extension-triceps-cuerda",
     "extension-triceps-trasnuca-polea", "copa-polea-un-brazo", "crunch-polea", "cruce-poleas",
+    "aperturas-polea-media", "aperturas-polea-alta", "giro-polea",
 }
 
 # Factor aparte por sexo, encima del de `PESO`, para los ejercicios donde un solo factor no
@@ -181,6 +193,8 @@ CORPORAL = {
     "zancadas-caminando":      {"H": [8, 20, 35, 50, 70], "M": [6, 15, 28, 42, 60]},
     "patada-gluteo-liga":      {"H": [10, 20, 35, 50, 70], "M": [10, 20, 35, 50, 70]},
     "hiperextensiones":        {"H": [5, 15, 30, 45, 60], "M": [5, 12, 25, 40, 55]},
+    "glute-ham-raise":         {"H": [1, 5, 10, 16, 24], "M": [1, 3, 6, 10, 15]},
+    "pantorrilla-escalon":     {"H": [10, 25, 40, 55, 75], "M": [8, 20, 35, 50, 70]},
     "crunch":                  {"H": [10, 25, 45, 65, 90], "M": [8, 20, 38, 55, 80]},
     "abdominales-completos":   {"H": [5, 20, 35, 50, 70], "M": [3, 15, 28, 42, 60]},
     "elevacion-piernas-colgado": {"H": [1, 6, 12, 20, 30], "M": [1, 4, 9, 15, 22]},

@@ -36,6 +36,8 @@ export const KG_POR_LB = 0.45359237;
  */
 const MAQUINAS_DE_BARRAS: ReadonlySet<string> = new Set([
   "cruce-poleas",
+  "aperturas-polea-media",
+  "aperturas-polea-alta",
   "pec-deck",
   "prensa-horizontal-una-pierna",
   "prensa-maquina",
@@ -62,6 +64,7 @@ const MAQUINAS_DE_BARRAS: ReadonlySet<string> = new Set([
   "extension-triceps-cuerda",
   "extension-triceps-trasnuca-polea",
   "crunch-polea",
+  "giro-polea",
   "crunch-maquina",
   "fondos-maquina",
 ]);

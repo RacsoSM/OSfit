@@ -47,7 +47,7 @@ describe("nombreRango", () => {
 
 describe("percentilDe (contra toda la población)", () => {
   it("en cada estándar da su porcentaje", () => {
-    expect([0, 1, 2, 3, 4, 5, 6, 7, 8].map(percentilDe)).toEqual([1, 38, 60, 72, 82, 88, 90, 93, 97]);
+    expect([0, 1, 2, 3, 4, 5, 6, 7, 8].map(percentilDe)).toEqual([1, 38, 60, 73, 82, 88, 90, 93, 97]);
   });
 
   it("los porcentajes son los del modelo de docs/estandares-fuerza (percentiles.json)", () => {
@@ -227,7 +227,7 @@ describe("nombreMusculo", () => {
 
 describe("repartoRangos", () => {
   it("contra toda la población, casi todos en Principiante", () => {
-    expect(repartoRangos("todos")).toEqual([60, 12, 10, 6, 2, 3, 4, 3]);
+    expect(repartoRangos("todos")).toEqual([60, 13, 9, 6, 2, 3, 4, 3]);
   });
 
   it("contra quienes entrenan, con la forma de la curva del modelo", () => {

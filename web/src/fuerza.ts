@@ -45,7 +45,7 @@ export const NIVEL_MAX = 8;
  * GEMELO: `docs/estandares-fuerza/percentiles.json`, que genera `proponer.py`; si se regeneran, copiarlos aquí.
  */
 const PERCENTILES_POBLACION: readonly (readonly [number, number])[] = [
-  [0, 1], [1, 38], [2, 60], [3, 72], [4, 82], [5, 88], [6, 90], [7, 93], [8, 97],
+  [0, 1], [1, 38], [2, 60], [3, 73], [4, 82], [5, 88], [6, 90], [7, 93], [8, 97],
 ];
 const PERCENTILES_ENTRENAN: readonly (readonly [number, number])[] = [
   [0, 1], [1, 3], [2, 12], [3, 25], [4, 42], [5, 57], [6, 65], [7, 72], [8, 90],

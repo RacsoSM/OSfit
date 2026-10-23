@@ -246,4 +246,10 @@ crédito "Animaciones © Gym visual" en la página, junto a donde se muestran.
   entre ellas), así que se queda con su GIF, como los otros de patrón distinto.
 - **2026-10-22:** subido `fondos-maquina` (nuevo en el banco, GIF `1451`, máquina de fondos
   sentado, no asistida). Revisado con §6.2; URL `200 video/mp4`.
+- **2026-10-23:** subidos los 11 de la primera lista de `por-agregar.md` (nuevos en el banco):
+  `sentadilla-hack-maquina` (0743), `sentadilla-isometrica` (0624), `prensa-pies-abiertos` (0740),
+  `giro-polea` (0243), `pantorrilla-prensa-45` (1391), `pantorrilla-escalon` (1490), `belt-squat`
+  (0852), `aperturas-polea-media` (0188), `aperturas-polea-alta` (0227), `glute-ham-raise` (3193) y
+  `peso-muerto-piernas-rigidas-mancuernas` (0432). Revisados con §6.2; URLs `200 video/mp4`.
+  `giro-polea` y `pantorrilla-prensa-45` cambian poco entre sus 2 poses: así es el GIF.
 - **Pendiente:** que el entrenador lo vea en su teléfono (web y app, §6.4).
