@@ -1,5 +1,6 @@
 // web/src/ui/ruleta.ts
 import { jugarRuleta } from "../acciones";
+import { MAXIMO_POR_MES } from "../cupo";
 import {
   MINIMO_GIRO_LIBRE_MS,
   COLORES,
@@ -39,9 +40,20 @@ interface Estado {
   abierta: boolean;
   color: Color | null;
   fase: Fase;
+  /**
+   * Los comodines que tendría el próximo mes sin el castigo: 3, o 4 con el revive extra. La
+   * propuesta dice cuánto cuesta perder con su número, no con el de la mayoría: a quien tiene 4
+   * decirle "2 en vez de 3" le promete un castigo de dos.
+   */
+  maximo: number;
 }
 
-const estado: Estado = { abierta: false, color: null, fase: { tipo: "propuesta" } };
+const estado: Estado = {
+  abierta: false,
+  color: null,
+  fase: { tipo: "propuesta" },
+  maximo: MAXIMO_POR_MES,
+};
 
 /**
  * Si el próximo pintado de la rueda tiene que hacer la entrada. Sólo al abrir el modal y al
@@ -53,8 +65,9 @@ let entradaPendiente = false;
 /** Espera [ms] milisegundos. */
 const esperar = (ms: number) => new Promise((listo) => setTimeout(listo, ms));
 
-export function abrirRuleta(): void {
+export function abrirRuleta(maximo: number = MAXIMO_POR_MES): void {
   estado.abierta = true;
+  estado.maximo = maximo;
   entradaPendiente = true;
   estado.color = null;
   estado.fase = { tipo: "propuesta" };
@@ -336,7 +349,8 @@ export function modalRuleta(): string {
          <p class="confirmar-titulo">Te propongo un juego.</p>
          <p class="accion-nota">
            Si adivinas en qué color caerá la ruleta, te revivo tu racha. Si no le atinas, el
-           próximo mes tendrás solo 2 oportunidades para revivir en vez de 3.
+           próximo mes tendrás solo ${estado.maximo - 1} comodines para revivir en vez de
+           ${estado.maximo}.
          </p>
          <p class="ruleta-pregunta">¿Quieres jugar?</p>
          </div>`

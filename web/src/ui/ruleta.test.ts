@@ -5,6 +5,9 @@ import { COLORES, SECTORES } from "./ruletaGiro";
 
 beforeEach(() => cerrarRuleta());
 
+/** El texto sin etiquetas ni saltos: la frase se parte en varias líneas del template. */
+const texto = (html: string) => html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ");
+
 describe("modalRuleta", () => {
   it("cerrada no pinta nada", () => {
     expect(modalRuleta()).toBe("");
@@ -15,8 +18,14 @@ describe("modalRuleta", () => {
     const html = modalRuleta();
     expect(html).toContain("Te propongo un juego");
     expect(html).toContain("te revivo tu racha");
-    expect(html).toContain("2 oportunidades para revivir en vez de 3");
+    expect(texto(html)).toContain("2 comodines para revivir en vez de 3");
     expect(html).toContain("¿Quieres jugar?");
+  });
+
+  // Con el revive extra tiene 4: perder le deja 3, no los "2 en vez de 3" de la mayoría.
+  it("la propuesta cuenta los comodines de cada quien", () => {
+    abrirRuleta(4);
+    expect(texto(modalRuleta())).toContain("3 comodines para revivir en vez de 4");
   });
 
   it("abierta ofrece la salida sin costo", () => {
@@ -70,7 +79,7 @@ describe("modalRuleta", () => {
     marcarResultado({ tipo: "gano", color: "rojo" });
     const html = modalRuleta();
     expect(html).toContain("Has revivido tu racha");
-    expect(html).not.toContain("en vez de 3");
+    expect(texto(html)).not.toContain("en vez de");
   });
 
   // Desde el error se vuelve a apostar, asi que es el unico estado en el que podria apostarse
@@ -80,7 +89,7 @@ describe("modalRuleta", () => {
     marcarResultado({ tipo: "error", texto: "No pudimos girar la ruleta." });
     const html = modalRuleta();
     expect(html).toContain("Te propongo un juego");
-    expect(html).toContain("2 oportunidades para revivir en vez de 3");
+    expect(texto(html)).toContain("2 comodines para revivir en vez de 3");
     expect(html).toContain("No pudimos girar la ruleta.");
   });
 

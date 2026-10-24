@@ -53,6 +53,11 @@ const estado: Estado = { pendiente: null, enVuelo: false, exito: null, error: nu
 let maximoDelMes = MAXIMO_POR_MES;
 /** Si su máximo incluye el revive extra: el diálogo lo marca con ⭐. */
 let conExtra = false;
+/**
+ * Su máximo sin el castigo de este mes: lo que tendría el próximo si no pierde la ruleta, y de
+ * donde la propuesta resta el comodín que cuesta perder.
+ */
+let maximoSinCastigo = MAXIMO_POR_MES;
 
 function enPalabras(fecha: string): string {
   return new Intl.DateTimeFormat("es-MX", {
@@ -152,7 +157,8 @@ export function tarjetaRevivir(
   const castigo = castigoDelMes(tiradaMesAnterior);
   const otorgado = cliente.reviveExtraOtorgado === true;
   conExtra = tieneReviveExtra(asistencias, otorgado);
-  maximoDelMes = maximoPorMes(asistencias, otorgado) - castigo;
+  maximoSinCastigo = maximoPorMes(asistencias, otorgado);
+  maximoDelMes = maximoSinCastigo - castigo;
   const disponibles = disponiblesEnElMes(asistencias, hoy.slice(0, 7), castigo, otorgado);
   const sinCupo = disponibles === 0;
   const bloqueado = !cliente.activo || sinCupo || estado.enVuelo;
@@ -225,7 +231,7 @@ export function conectarAccionFalta(
 
   // La propuesta solo abre el modal: la ruleta tiene su propio estado y su propio conectado.
   document.querySelector("#falta-propuesta")?.addEventListener("click", () => {
-    abrirRuleta();
+    abrirRuleta(maximoSinCastigo);
     repintar();
   });
 
