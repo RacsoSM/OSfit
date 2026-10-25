@@ -39,6 +39,7 @@ import { conectarAvisoReviveExtra } from "./ui/avisoReviveExtra";
 import { almacenDeEstilo, ponerEstilo } from "./ui/cambioDeEstilo";
 import { estiloGuardado, type IdEstilo } from "./estilo";
 import { cerrarSesion, credencialLista, huellaDeLaSesion, iniciarSesion, redDeFirestore, urlDeDescarga } from "./firebase";
+import { esperarRed, hayRed } from "./senal";
 import {
   alBloquear, almacenDelNavegador, conexionDelNavegador, esWifi, guardarFaltantes, guardarModoSinDatos, modoSinDatos,
   sugerirApagar,
@@ -179,7 +180,19 @@ function mostrarSinConexion(): void {
   });
 }
 
+/**
+ * Si de verdad hay internet (`senal.ts`): `/version.json` es chiquito y va siempre a la red. Con
+ * el modo sin datos ni se pregunta: el service worker lo bloquearía.
+ */
+function probarRed(): Promise<boolean> {
+  if (modoSinDatos()) return Promise.resolve(false);
+  return hayRed(() => fetch("/version.json", { cache: "no-store" }));
+}
+
 async function arrancar(): Promise<void> {
+  // En paralelo con la sesión: con red llega mucho antes de que haga falta, y sin ella ya se
+  // sabe cuando los listeners están por salir.
+  const pruebaDeRed = probarRed();
   let sesion: ResultadoSesion;
   try {
     sesion = await iniciarSesion();
@@ -241,6 +254,11 @@ async function arrancar(): Promise<void> {
   let pendientes = pendientesDe(cola.leer(), clienteId).length;
   let enviandoCola = false;
   let otraVuelta = false;
+  /**
+   * Wi-Fi o datos prendidos pero sin internet (`senal.ts`). Firestore va sin red y la cola
+   * espera, como con el modo sin datos, hasta que la prueba vuelva a pasar.
+   */
+  let senalDudosa = false;
 
   /**
    * Manda los entrenamientos que esperan internet. Se llama al abrir, al volver la señal y
@@ -248,7 +266,7 @@ async function arrancar(): Promise<void> {
    */
   function enviarCola(): void {
     // Con el modo sin datos esperan a que lo apague (`cambiarSinDatos` la vuelve a llamar).
-    if (pendientes === 0 || modoSinDatos()) return;
+    if (pendientes === 0 || modoSinDatos() || senalDudosa) return;
     // Uno que entra a la cola mientras se manda otra tanda se manda al terminar esa, no un
     // minuto después: es el que la clienta acaba de terminar.
     if (enviandoCola) { otraVuelta = true; return; }
@@ -316,6 +334,8 @@ async function arrancar(): Promise<void> {
       await redDeFirestore(false).catch(() => {});
       return;
     }
+    // Con señal dudosa la red la vuelve a prender `esperarRed`, cuando de verdad la haya.
+    if (senalDudosa) return;
     // El token pudo vencer mientras tanto (duran una hora): primero la credencial, luego la
     // red, igual que al arrancar.
     await credencialLista().catch(() => {});
@@ -794,8 +814,31 @@ async function arrancar(): Promise<void> {
   // renovar, y no importa: Firestore muestra lo que tiene guardado en el teléfono.
   // Con el modo sin datos, Firestore ni sale a la red: los listeners entregan lo guardado en el
   // teléfono y la credencial no hace falta hasta que lo apague.
+  //
+  // Con señal dudosa, igual que con el modo: Firestore sin red. Si no, con la red "prendida"
+  // espera unos 10 s a convencerse de que no hay antes de dar lo guardado, y la renovación de
+  // la credencial otros tantos. Se vuelve a probar sola hasta que haya internet de verdad.
   if (modoSinDatos()) await redDeFirestore(false).catch(() => {});
-  else await credencialLista().catch(() => {});
+  else if (!(await pruebaDeRed)) {
+    senalDudosa = true;
+    await redDeFirestore(false).catch(() => {});
+    esperarRed(probarRed, async () => {
+      senalDudosa = false;
+      // Con el modo puesto mientras tanto, la red la prende `cambiarSinDatos` al quitarlo.
+      if (modoSinDatos()) return;
+      await credencialLista().catch(() => {});
+      await redDeFirestore(true).catch(() => {});
+      enviarCola();
+    }, {
+      cada: (f, ms) => { const reloj = setInterval(f, ms); return () => clearInterval(reloj); },
+      alVolver: (f) => {
+        window.addEventListener("online", f);
+        document.addEventListener("visibilitychange", () => {
+          if (document.visibilityState === "visible") f();
+        });
+      },
+    });
+  } else await credencialLista().catch(() => {});
 
   // Lo que se terminó sin internet sale en cuanto hay señal.
   enviarCola();

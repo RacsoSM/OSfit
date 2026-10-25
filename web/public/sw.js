@@ -23,8 +23,12 @@
 const CACHE = "osfit-pagina-v1";
 /** Todas las rutas sirven el mismo `index.html` (rewrite de hosting): se guarda una vez. */
 const PAGINA = "/";
-/** Con señal pero muy lenta, a los 5 s se usa la página guardada en vez de seguir esperando. */
-const ESPERA_RED_MS = 5000;
+/**
+ * Con señal pero muy lenta, o con Wi-Fi o datos prendidos sin internet (`src/senal.ts`), a los
+ * 3 s se usa la página guardada en vez de seguir esperando. El HTML pesa unos pocos kB: con
+ * internet de verdad llega mucho antes.
+ */
+const ESPERA_RED_MS = 3000;
 /**
  * Los GIF e imágenes de Storage y las fuentes de Google, guardados al verlos. Los GIF pesan
  * ~40 kB, así que el banco entero cabe en unos 5 MB. Los videos (`.mp4`) no se guardan: pesan

@@ -17,6 +17,7 @@ import {
   URL_SESION,
 } from "./sesion";
 import type { ResultadoSesion } from "./sesion";
+import { conPlazo } from "./senal";
 
 const firebaseConfig = {
   apiKey: "AIzaSyD-VnmxHFK1ptLWFKgAd80caa7EkiD0PZA",
@@ -144,7 +145,9 @@ export function iniciarSesion(): Promise<ResultadoSesion> {
       const usuario = auth.currentUser;
       if (!usuario) return null;
       try {
-        const token = await usuario.getIdTokenResult();
+        // Con plazo: con señal dudosa la renovación no falla, se queda esperando, y la página
+        // con ella (`senal.ts`). Vencido, cuenta como sin internet y entra con lo validado.
+        const token = await conPlazo(usuario.getIdTokenResult(), PLAZO_TOKEN_MS);
         const valida = typeof token.claims.clienteId === "string";
         if (valida) recordarValidada(usuario.uid);
         return valida ? usuario.uid : null;
@@ -180,8 +183,20 @@ export function iniciarSesion(): Promise<ResultadoSesion> {
  */
 export async function credencialLista(): Promise<void> {
   await auth.authStateReady();
-  await auth.currentUser?.getIdToken();
+  if (auth.currentUser) await conPlazo(auth.currentUser.getIdToken(), PLAZO_TOKEN_MS);
 }
+
+/**
+ * Lo que se espera a que se renueve la credencial antes de darla por sin internet. Con red se
+ * renueva en menos de un segundo; con señal dudosa el SDK esperaría unos 30.
+ */
+const PLAZO_TOKEN_MS = 5000;
+/**
+ * Lo que se espera el canje del link. Más largo que el del token: `sesion` en frío tarda unos
+ * segundos (medido: ~3.5 s) y sin él no hay con qué entrar, así que cortarlo antes de tiempo
+ * cuesta más que esperarlo.
+ */
+const PLAZO_CANJE_MS = 15_000;
 
 /**
  * Consigue una credencial nueva cuando la que hay ya no sirve.
@@ -278,15 +293,19 @@ function validadaAntes(uid: string): boolean {
 async function canjear(token: string): Promise<ResultadoSesion> {
   let respuesta: Response;
   try {
-    respuesta = await (canjeAdelantado(token) ??
-      fetch(URL_SESION, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token }),
-      }));
+    respuesta = await conPlazo(
+      canjeAdelantado(token) ??
+        fetch(URL_SESION, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token }),
+        }),
+      PLAZO_CANJE_MS
+    );
   } catch {
     // `fetch` solo rechaza cuando la petición no llegó a ningún lado: sin señal, DNS caído,
-    // la función sin desplegar. Nada de eso dice nada sobre el token.
+    // la función sin desplegar, o se le acabó el plazo con señal dudosa. Nada de eso dice
+    // nada sobre el token.
     return { estado: "sin-conexion" };
   }
 
