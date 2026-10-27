@@ -47,10 +47,16 @@ Armando 1.2 niveles debajo, salvo en las cuatro donde el entrenador cree que van
 | `face-pull` | 54 kg | 44 kg | 1.0 |
 | `curl-femoral-sentado` | 53 kg | 57.5 kg | 1.05 |
 | `patada-gluteo-maquina` | 81 kg | 53 kg | 1.4 |
-| `pullover-polea` | 70 kg | 44 kg | 1.5 |
-| `extension-triceps-trasnuca-polea` | 48 kg | 27 kg | 1.55 |
-| `extension-triceps-polea` | 76 kg | 40 kg | 1.85 |
-| `extension-triceps-cuerda` | 71 kg | 30 kg | 2.2 |
+| `pullover-polea` | 70 kg | 44 kg | 1 (salía 1.5) |
+| `extension-triceps-trasnuca-polea` | 48 kg | 27 kg | 1 (salía 1.55) |
+| `extension-triceps-polea` | 76 kg | 40 kg | 1 (salía 1.85) |
+| `extension-triceps-cuerda` | 71 kg | 30 kg | 1 (salía 2.2) |
+
+**Poleas en 1 por ahora (entrenador, 2026-10-27).** En tríceps y pullover Said mueve 2.4 veces lo
+de Said Armando, cuando en peso libre le saca 1.1–1.3 veces. Una explicación es que la estación de
+Focus es de polea doble (marca de más) y la de Smart Fit carga directo, pero no está verificado y el
+face pull, también en polea, salió parejo. Quedan en 1 hasta que el entrenador lo compruebe en
+Smart Fit (si tiene polea doble, o haciendo su tríceps con cuerda allá).
 
 Lo que no está en la tabla va en 1 hasta tener datos de los dos gimnasios (pec deck, rear delt y
 fondos en máquina solo los ha hecho Said Armando). Son de una persona por gimnasio: se afinan
