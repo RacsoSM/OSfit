@@ -191,6 +191,9 @@ POLEA_DOBLE = {
 FACTOR_POR_SEXO = {
     "curl-femoral-acostado": {"H": 0.6, "M": 0.8},
     "prensa-maquina": {"H": 1.3, "M": 2.0},
+    # Press militar en máquina: con ×0.48 parejo las mujeres salían de más (Estela, 22.5 kg × 15,
+    # en Élite). ×1.5 solo a ellas: Estela en Avanzada y las demás en En forma (2026-10-27).
+    "press-militar-maquina": {"H": 1.0, "M": 1.5},
 }
 
 # Élite puesto a mano, por sexo, cuando el del modelo no cabe en la máquina. Prensa en máquina,
