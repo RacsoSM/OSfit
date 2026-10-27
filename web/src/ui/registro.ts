@@ -116,7 +116,7 @@ interface Estado {
   error: string | null;
   /** Se acaba de terminar uno: "enviado" llegó al servidor; "en-telefono", se guardó sin internet. */
   guardado: false | "enviado" | "en-telefono";
-  /** Se cerró solo por llevar más de 3 horas abierto (`cerrarSiVencido`): con lo completo, o descartado. */
+  /** Se cerró solo por llevar más de `HORAS_CIERRE` abierto (`cerrarSiVencido`): con lo completo, o descartado. */
   cierreAuto: "enviado" | "descartado" | null;
   /** El ejercicio recién agregado, para llevarle la vista al pintar. */
   enfocar: number | null;

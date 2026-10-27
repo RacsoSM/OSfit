@@ -461,11 +461,11 @@ describe("cierre automático de un entrenamiento olvidado", () => {
     ejercicios: [{ ejercicioId: "press-banca", nombre: "Press de banca", tipo: "peso" as const, gifRuta: null, series: [{ reps: "10", peso: "40" }] }],
   });
 
-  it("a las 3 horas lo manda por la cola, lo quita de la pantalla y lo dice en Registro", () => {
+  it("a las 4 horas lo manda por la cola, lo quita de la pantalla y lo dice en Registro", () => {
     ponerEstadoRegistro({ vista: "capturar", borrador: abierto() });
     const encolados: unknown[] = [];
     let enviado = false;
-    const cerro = cerrarSiVencido({ encolar: (e) => encolados.push(e), enviarAhora: () => { enviado = true; } }, inicio + 3 * 3_600_000);
+    const cerro = cerrarSiVencido({ encolar: (e) => encolados.push(e), enviarAhora: () => { enviado = true; } }, inicio + 4 * 3_600_000);
     expect(cerro).toBe(true);
     expect(encolados).toHaveLength(1);
     expect(enviado).toBe(true);
@@ -473,9 +473,9 @@ describe("cierre automático de un entrenamiento olvidado", () => {
     expect(ventanaRegistro(datos())).toContain("lo cerramos solo");
   });
 
-  it("antes de las 3 horas no lo toca", () => {
+  it("antes de las 4 horas no lo toca", () => {
     ponerEstadoRegistro({ vista: "capturar", borrador: abierto() });
-    expect(cerrarSiVencido({ encolar: () => {}, enviarAhora: () => {} }, inicio + 60_000)).toBe(false);
+    expect(cerrarSiVencido({ encolar: () => {}, enviarAhora: () => {} }, inicio + 4 * 3_600_000 - 1)).toBe(false);
     expect(entrenamientoAbierto()).toBe("nuevo");
   });
 });

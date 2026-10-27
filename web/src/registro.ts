@@ -528,9 +528,10 @@ export function paraEnviar(b: Borrador): { ok: true; datos: Envio } | { ok: fals
 
 /**
  * Las horas que puede quedarse abierto un entrenamiento antes de cerrarse solo (entrenador,
- * 2026-10-20): nadie entrena tres horas seguidas, así que es uno que se olvidó de terminar.
+ * 2026-10-20): nadie entrena cuatro horas seguidas, así que es uno que se olvidó de terminar.
+ * Eran 3 hasta el 2026-10-27, cuando el entrenador lo subió a 4.
  */
-export const HORAS_CIERRE = 3;
+export const HORAS_CIERRE = 4;
 
 /**
  * El borrador sin las series ni las bajadas a medio llenar: las que `paraEnviar` reclamaría.
@@ -552,7 +553,7 @@ export function soloCompletas(b: Borrador): Borrador {
 
 /**
  * Si un entrenamiento lleva más de `HORAS_CIERRE` abierto, qué hacer con él: mandarlo con lo
- * completo, terminado a la hora de su última anotación (o a las 3 horas si nunca anotó), o
+ * completo, terminado a la hora de su última anotación (o a las `HORAS_CIERRE` si nunca anotó), o
  * descartarlo si no tiene ninguna serie completa. null si todavía no toca, o si no aplica: una
  * corrección de uno pasado no se cierra sola, y uno sin hora de inicio no se sabe cuánto lleva.
  */

@@ -567,7 +567,7 @@ describe("biserie", () => {
   });
 });
 
-describe("cierre automático a las 3 horas", () => {
+describe("cierre automático a las 4 horas", () => {
   const HORA = 3_600_000;
   const inicio = Date.UTC(2026, 9, 20, 15, 0);
   const borrador = (campos: Partial<Borrador> = {}): Borrador => ({
@@ -582,12 +582,12 @@ describe("cierre automático a las 3 horas", () => {
     ...campos,
   });
 
-  it("antes de las 3 horas no hace nada", () => {
-    expect(cierreAutomatico(borrador(), inicio + 3 * HORA - 1)).toBeNull();
+  it("antes de las 4 horas no hace nada", () => {
+    expect(cierreAutomatico(borrador(), inicio + 4 * HORA - 1)).toBeNull();
   });
 
-  it("a las 3 horas lo manda con lo completo y deja fuera la serie a medio llenar", () => {
-    const r = cierreAutomatico(borrador({ anotado: inicio + 50 * 60_000 }), inicio + 3 * HORA);
+  it("a las 4 horas lo manda con lo completo y deja fuera la serie a medio llenar", () => {
+    const r = cierreAutomatico(borrador({ anotado: inicio + 50 * 60_000 }), inicio + 4 * HORA);
     expect(r?.tipo).toBe("enviar");
     if (r?.tipo !== "enviar") return;
     expect(r.datos.ejercicios).toEqual([{ ejercicioId: "press-banca", series: [{ reps: 10, peso: 40 }] }]);
@@ -600,14 +600,14 @@ describe("cierre automático a las 3 horas", () => {
     expect(r?.tipo === "enviar" && r.datos.terminadaEn).toBe(inicio + 50 * 60_000);
   });
 
-  it("si nunca anotó después de iniciar, a las 3 horas justas", () => {
+  it("si nunca anotó después de iniciar, a las 4 horas justas", () => {
     const r = cierreAutomatico(borrador(), inicio + 5 * HORA);
-    expect(r?.tipo === "enviar" && r.datos.terminadaEn).toBe(inicio + 3 * HORA);
+    expect(r?.tipo === "enviar" && r.datos.terminadaEn).toBe(inicio + 4 * HORA);
   });
 
   it("sin ninguna serie completa se descarta", () => {
     const vacio = borrador({ ejercicios: [{ ejercicioId: "press-banca", nombre: "Press de banca", tipo: "peso", gifRuta: null, series: [{ reps: "", peso: "35" }] }] });
-    expect(cierreAutomatico(vacio, inicio + 3 * HORA)).toEqual({ tipo: "descartar" });
+    expect(cierreAutomatico(vacio, inicio + 4 * HORA)).toEqual({ tipo: "descartar" });
   });
 
   it("una corrección de un entrenamiento pasado, o uno sin hora de inicio, no se cierra solo", () => {
@@ -620,7 +620,7 @@ describe("cierre automático a las 3 horas", () => {
       ejercicioId: "press-banca", nombre: "Press de banca", tipo: "peso", gifRuta: null,
       series: [{ reps: "10", peso: "40", caidas: [{ reps: "8", peso: "30" }, { reps: "", peso: "20" }] }],
     }] });
-    const r = cierreAutomatico(b, inicio + 3 * HORA);
+    const r = cierreAutomatico(b, inicio + 4 * HORA);
     expect(r?.tipo === "enviar" && r.datos.ejercicios[0].series).toEqual([{ reps: 10, peso: 40, caidas: [{ reps: 8, peso: 30 }] }]);
   });
 });

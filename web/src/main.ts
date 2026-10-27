@@ -291,7 +291,7 @@ async function arrancar(): Promise<void> {
   }
 
   /**
-   * Un entrenamiento abierto más de 3 horas se cierra solo (`cerrarSiVencido`). Vive solo en el
+   * Un entrenamiento abierto más de 4 horas (`HORAS_CIERRE`) se cierra solo (`cerrarSiVencido`). Vive solo en el
    * teléfono, así que se revisa al abrir, al volver a la página y cada minuto.
    */
   function revisarCierreAutomatico(): void {
