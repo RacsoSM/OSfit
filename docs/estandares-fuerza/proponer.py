@@ -178,8 +178,11 @@ POLEA_DOBLE = {
 # deja bien a los dos. Curl femoral acostado: 10 barras (45 kg) × 8 es de un hombre muy fuerte,
 # y con ×0.6 eso es Élite; las mujeres con ×0.8 (Brianda, 5 barras × 8, en Intermedio).
 # Decisión del entrenador, 2026-10-16.
+# Prensa en máquina, mujeres ×2: 50 kg × 12 de una clienta de 70 kg salía en Élite, y el
+# entrenador dice que en esa máquina es lo normal; con ×2 queda al inicio de Atlética (2026-10-27).
 FACTOR_POR_SEXO = {
     "curl-femoral-acostado": {"H": 0.6, "M": 0.8},
+    "prensa-maquina": {"H": 1.0, "M": 2.0},
 }
 
 CORPORAL = {
