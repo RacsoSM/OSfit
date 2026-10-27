@@ -1,0 +1,16 @@
+{
+  "pecho": ["press-banca", "press-banca-inclinado", "press-mancuernas", "press-inclinado-mancuernas", "press-pecho-maquina"],
+  "dorsal": ["jalon-al-pecho", "jalon-agarre-abierto", "remo-con-barra", "remo-mancuerna", "remo-sentado-polea", "remo-en-t", "remo-maquina"],
+  "hombro": ["press-militar", "press-militar-sentado", "press-hombro-mancuernas", "press-militar-maquina", "elevaciones-laterales"],
+  "trapecio": ["encogimientos-barra", "encogimientos-mancuernas"],
+  "infraespinoso": ["face-pull"],
+  "biceps": ["curl-barra", "curl-barra-z", "curl-mancuernas", "curl-predicador", "curl-martillo"],
+  "triceps": ["press-cerrado", "fondos-triceps", "press-frances", "extension-triceps-polea", "extension-triceps-cuerda", "extension-triceps-mancuerna"],
+  "antebrazo": ["curl-muneca-barra", "curl-inverso-barra"],
+  "abdomen": ["crunch-polea", "crunch-maquina", "elevacion-piernas-colgado", "plancha"],
+  "lumbar": ["peso-muerto", "hiperextensiones", "buenos-dias"],
+  "gluteo": ["hip-thrust", "patada-gluteo-polea", "patada-gluteo-maquina", "sentadilla-sumo-mancuerna"],
+  "cuadriceps": ["sentadilla", "sentadilla-smith", "sentadilla-hack", "sentadilla-hack-maquina", "prensa", "extension-cuadriceps"],
+  "isquiotibiales": ["curl-femoral-acostado", "curl-femoral-sentado", "peso-muerto-rumano"],
+  "pantorrilla": ["pantorrilla-de-pie", "pantorrilla-sentado"]
+}
