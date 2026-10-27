@@ -37,7 +37,7 @@ Armando 1.2 niveles debajo, salvo en las cuatro donde el entrenador cree que van
 | `abductores-maquina` | 59 kg | 109 kg | 0.45 |
 | `aductores-maquina` | 64 kg | 109 kg | 0.5 |
 | `press-militar-maquina` | 34 kg | 49 kg | 0.6 |
-| `pantorrilla-sentado` | 51 kg | 84 kg | 1 (salía 0.7) |
+| `pantorrilla-sentado` | 51 kg | 84 kg | 0.84 (2026-10-27: el entrenador quiere a Said Armando al final de Fuerte) |
 | `press-pecho-maquina` | 59 kg | 75 kg | 0.7 |
 | `remo-sentado-polea` | 68 kg | 79 kg | 1 (salía 0.8) |
 | `crunch-maquina` | 51 kg | 69 kg | 0.85 |

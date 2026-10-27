@@ -100,7 +100,8 @@ PESO = {
     "swing-kettlebell": ("muerto", 0.20, "una pesa rusa"),
     "hip-thrust": ("hipthrust", 1.00, ""),
     "pantorrilla-de-pie": ("pantorrilla", 1.00, "máquina"),
-    "pantorrilla-sentado": ("pantorrilla", 0.70, "máquina"),
+    # Said (73 kg, 40 kg × 8) al final de Intermedio (entrenador, 2026-10-27). Antes ×0.70.
+    "pantorrilla-sentado": ("pantorrilla", 0.441, "máquina de Focus"),
     "pantorrilla-prensa": ("pantorrilla", 1.10, "en prensa: varía por marca"),
     "pantorrilla-prensa-45": ("pantorrilla", 1.10, "en prensa: varía por marca"),
     "abductores-maquina": ("abductor", 1.00, "máquina"),

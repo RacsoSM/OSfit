@@ -190,8 +190,8 @@ Los porcentajes salen de un modelo: entre quienes entrenan, la fuerza se reparte
 |---|---|---|---|---|---|---|---|---|---|
 | Elevación de talones de pie | H · máquina | 37.5 kg | 55 kg | 75 kg | 97.5 kg | 120 kg | 137.5 kg | 152.5 kg | 222.5 kg |
 |  | M | 20 kg | 32.5 kg | 45 kg | 60 kg | 75 kg | 85 kg | 97.5 kg | 142.5 kg |
-| Elevación de talones sentado | H · máquina | 25 kg | 40 kg | 52.5 kg | 67.5 kg | 85 kg | 95 kg | 107.5 kg | 155 kg |
-|  | M | 15 kg | 22.5 kg | 32.5 kg | 42.5 kg | 52.5 kg | 60 kg | 67.5 kg | 100 kg |
+| Elevación de talones sentado | H · máquina de Focus | 17 kg | 25 kg | 32.5 kg | 42.5 kg | 52.5 kg | 60 kg | 67.5 kg | 97.5 kg |
+|  | M | 9 kg | 15 kg | 20 kg | 27.5 kg | 32.5 kg | 37.5 kg | 42.5 kg | 62.5 kg |
 | Pantorrilla en prensa | H · en prensa: varía por marca | 40 kg | 62.5 kg | 82.5 kg | 107.5 kg | 132.5 kg | 150 kg | 167.5 kg | 242.5 kg |
 |  | M | 22.5 kg | 37.5 kg | 50 kg | 65 kg | 82.5 kg | 95 kg | 107.5 kg | 157.5 kg |
 | Pantorrilla en prensa 45° | H · en prensa: varía por marca; H ×1.15, M ×1.4 | 47.5 kg | 70 kg | 95 kg | 122.5 kg | 152.5 kg | 172.5 kg | 192.5 kg | 280 kg |

@@ -13,7 +13,8 @@
       "crunch-maquina": 0.85,
       "curl-femoral-acostado": 0.9,
       "curl-femoral-sentado": 1.05,
-      "fondos-maquina": 0.93
+      "fondos-maquina": 0.93,
+      "pantorrilla-sentado": 0.84
     }
   }
 }
