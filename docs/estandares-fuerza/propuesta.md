@@ -194,8 +194,8 @@ Los porcentajes salen de un modelo: entre quienes entrenan, la fuerza se reparte
 |  | M | 15 kg | 22.5 kg | 32.5 kg | 42.5 kg | 52.5 kg | 60 kg | 67.5 kg | 100 kg |
 | Pantorrilla en prensa | H · en prensa: varía por marca | 40 kg | 62.5 kg | 82.5 kg | 107.5 kg | 132.5 kg | 150 kg | 167.5 kg | 242.5 kg |
 |  | M | 22.5 kg | 37.5 kg | 50 kg | 65 kg | 82.5 kg | 95 kg | 107.5 kg | 157.5 kg |
-| Pantorrilla en prensa 45° | H · en prensa: varía por marca | 40 kg | 62.5 kg | 82.5 kg | 107.5 kg | 132.5 kg | 150 kg | 167.5 kg | 242.5 kg |
-|  | M | 22.5 kg | 37.5 kg | 50 kg | 65 kg | 82.5 kg | 95 kg | 107.5 kg | 157.5 kg |
+| Pantorrilla en prensa 45° | H · en prensa: varía por marca; H ×1, M ×1.4 | 40 kg | 62.5 kg | 82.5 kg | 107.5 kg | 132.5 kg | 150 kg | 167.5 kg | 242.5 kg |
+|  | M | 32.5 kg | 50 kg | 70 kg | 92.5 kg | 115 kg | 132.5 kg | 150 kg | 220 kg |
 | Elevación de talones en escalón | H | 10 reps | 18 reps | 25 reps | 32 reps | 40 reps | 44 reps | 47 reps | 71 reps |
 |  | M | 8 reps | 14 reps | 20 reps | 28 reps | 35 reps | 38 reps | 42 reps | 65 reps |
 

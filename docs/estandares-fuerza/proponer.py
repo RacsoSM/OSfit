@@ -194,6 +194,9 @@ FACTOR_POR_SEXO = {
     # Press militar en máquina: con ×0.48 parejo las mujeres salían de más (Estela, 22.5 kg × 15,
     # en Élite). ×1.5 solo a ellas: Estela en Avanzada y las demás en En forma (2026-10-27).
     "press-militar-maquina": {"H": 1.0, "M": 1.5},
+    # Pantorrilla en prensa 45°, mujeres ×1.4: Estela (60 kg, 100 kg × 13) salía en Avanzada y el
+    # entrenador la quiere en Fuerte; Oscar (240 kg × 10) se queda en Élite (2026-10-27).
+    "pantorrilla-prensa-45": {"H": 1.0, "M": 1.4},
 }
 
 # Élite puesto a mano, por sexo, cuando el del modelo no cabe en la máquina. Prensa en máquina,

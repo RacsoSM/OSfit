@@ -12,5 +12,5 @@
   "gluteo": ["hip-thrust", "patada-gluteo-polea", "patada-gluteo-maquina", "sentadilla-sumo-mancuerna"],
   "cuadriceps": ["sentadilla", "sentadilla-smith", "sentadilla-hack", "sentadilla-hack-maquina", "prensa", "extension-cuadriceps"],
   "isquiotibiales": ["curl-femoral-acostado", "curl-femoral-sentado", "peso-muerto-rumano"],
-  "pantorrilla": ["pantorrilla-de-pie", "pantorrilla-sentado"]
+  "pantorrilla": ["pantorrilla-de-pie", "pantorrilla-sentado", "pantorrilla-prensa-45"]
 }
