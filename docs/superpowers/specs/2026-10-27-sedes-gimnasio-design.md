@@ -46,6 +46,7 @@ Armando 1.2 niveles debajo, salvo en las cuatro donde el entrenador cree que van
 | `jalon-agarre-abierto` | 87 kg | 83 kg | 1.0 |
 | `face-pull` | 54 kg | 44 kg | 1.0 |
 | `curl-femoral-sentado` | 53 kg | 57.5 kg | 1.05 |
+| `fondos-maquina` | — | 92 kg | 0.93 (2026-10-27: el entrenador lo quiere en Fuerte, salía en 7.0) |
 | `patada-gluteo-maquina` | 81 kg | 53 kg | 1 (salía 1.4) |
 | `pullover-polea` | 70 kg | 44 kg | 1 (salía 1.5) |
 | `extension-triceps-trasnuca-polea` | 48 kg | 27 kg | 1 (salía 1.55) |
