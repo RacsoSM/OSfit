@@ -227,7 +227,9 @@ CORPORAL = {
     "crunch":                  {"H": [10, 25, 45, 65, 90], "M": [8, 20, 38, 55, 80]},
     "abdominales-completos":   {"H": [5, 20, 35, 50, 70], "M": [3, 15, 28, 42, 60]},
     "elevacion-piernas-colgado": {"H": [1, 6, 12, 20, 30], "M": [1, 4, 9, 15, 22]},
-    "elevacion-piernas":       {"H": [5, 15, 25, 40, 55], "M": [4, 12, 22, 35, 48]},
+    # 40 seguidas a media banda de Intermedio (entrenador, 2026-10-27): antes eran Avanzado, y
+    # acostado sale mucho más fácil que colgado o en máquina. Antes H [5, 15, 25, 40, 55], M [4, 12, 22, 35, 48].
+    "elevacion-piernas":       {"H": [9, 28, 46, 74, 102], "M": [8, 25, 45, 72, 98]},
     "giros-rusos":             {"H": [10, 25, 40, 60, 80], "M": [10, 22, 35, 52, 70]},
     "bicho-muerto":            {"H": [10, 20, 35, 50, 70], "M": [10, 20, 35, 50, 70]},
     "burpees":                 {"H": [3, 10, 20, 30, 40], "M": [2, 7, 15, 24, 32]},

@@ -326,8 +326,8 @@ Los porcentajes salen de un modelo: entre quienes entrenan, la fuerza se reparte
 |  | M | 3 reps | 9 reps | 15 reps | 22 reps | 28 reps | 32 reps | 36 reps | 60 reps |
 | Elevación de piernas colgado | H | 1 rep | 4 reps | 6 reps | 9 reps | 12 reps | 14 reps | 17 reps | 30 reps |
 |  | M | 1 rep | 2 reps | 4 reps | 6 reps | 9 reps | 11 reps | 13 reps | 21 reps |
-| Elevación de piernas acostado | H | 5 reps | 10 reps | 15 reps | 20 reps | 25 reps | 30 reps | 34 reps | 52 reps |
-|  | M | 4 reps | 8 reps | 12 reps | 17 reps | 22 reps | 26 reps | 30 reps | 46 reps |
+| Elevación de piernas acostado | H | 9 reps | 18 reps | 28 reps | 37 reps | 46 reps | 54 reps | 63 reps | 96 reps |
+|  | M | 8 reps | 16 reps | 25 reps | 35 reps | 45 reps | 53 reps | 61 reps | 94 reps |
 | Giros rusos | H | 10 reps | 18 reps | 25 reps | 32 reps | 40 reps | 46 reps | 51 reps | 76 reps |
 |  | M | 10 reps | 16 reps | 22 reps | 28 reps | 35 reps | 40 reps | 44 reps | 65 reps |
 | Plancha | — | de tiempo: no pinta el mapa | | | | | | | |
