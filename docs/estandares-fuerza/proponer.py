@@ -81,7 +81,7 @@ PESO = {
     "prensa-horizontal-una-pierna": ("prensa", 0.40, "una pierna; máquina"),
     # La misma máquina de placas que la de una pierna, con las dos: el doble (2026-10-21). La de
     # 45° (×1.00) es de discos y en una pila sus números no se alcanzan.
-    "prensa-maquina": ("prensa", 0.235, "máquina de 16 barras: un H de hasta 90 kg llega a Élite con la pila completa × 12"),
+    "prensa-maquina": ("prensa", 0.235, "máquina de 16 barras"),
     "extension-cuadriceps": ("extension", 1.00, "máquina"),
     "curl-femoral-acostado": ("femoral", 1.00, "máquina"),
     "curl-femoral-sentado": ("femoral", 1.10, "máquina"),
@@ -179,10 +179,12 @@ POLEA_DOBLE = {
 # y con ×0.6 eso es Élite; las mujeres con ×0.8 (Brianda, 5 barras × 8, en Intermedio).
 # Decisión del entrenador, 2026-10-16.
 # Prensa en máquina, mujeres ×2: 50 kg × 12 de una clienta de 70 kg salía en Élite, y el
-# entrenador dice que en esa máquina es lo normal; con ×2 queda al inicio de Atlética (2026-10-27).
+# entrenador dice que en esa máquina es lo normal; con ×2 queda al inicio de Atlética. Hombres
+# ×1.3: un hombre normal hace 10 barras × 12, y el entrenador lo quiere a media banda de
+# Intermedio (2026-10-27). Con eso Élite ya no cabe en la pila de 16 barras × 12.
 FACTOR_POR_SEXO = {
     "curl-femoral-acostado": {"H": 0.6, "M": 0.8},
-    "prensa-maquina": {"H": 1.0, "M": 2.0},
+    "prensa-maquina": {"H": 1.3, "M": 2.0},
 }
 
 CORPORAL = {
