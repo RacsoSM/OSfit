@@ -23,6 +23,10 @@ from statistics import NormalDist
 AQUI = Path(__file__).parent
 BANCO = AQUI.parent.parent / "functions" / "semilla" / "ejercicios.json"
 
+# El hombre de los ejemplos de `propuesta.md`: también el peso de referencia de la página
+# (`PESO_REFERENCIA` en `web/src/fuerza.ts`), donde el factor por peso es 1.
+PESO_EJEMPLO_H = 75
+
 # Ejercicios de referencia (1RM / peso corporal), de tablas públicas de fuerza por peso
 # corporal (estilo Strength Level / ExRx), redondeados. H = hombre, M = mujer.
 FAMILIAS = {
@@ -187,6 +191,14 @@ FACTOR_POR_SEXO = {
     "prensa-maquina": {"H": 1.3, "M": 2.0},
 }
 
+# Élite puesto a mano, por sexo, cuando el del modelo no cabe en la máquina. Prensa en máquina,
+# hombres: con ×1.3 Élite pedía unas 18 barras × 12 y la pila tiene 16; el entrenador lo quiere
+# con la pila completa × 8 para un hombre de 75 kg (2026-10-27). 1RM con Epley, como la página.
+KG_PILA_PRENSA = 16 * 4.5
+ELITE_FIJO = {
+    "prensa-maquina": {"H": round(KG_PILA_PRENSA * (1 + 8 / 30) / PESO_EJEMPLO_H, 3)},
+}
+
 CORPORAL = {
     "lagartijas":              {"H": [3, 15, 30, 45, 65], "M": [1, 5, 15, 28, 40]},
     "fondos-pecho":            {"H": [1, 8, 18, 30, 42], "M": [1, 3, 8, 15, 25]},
@@ -310,7 +322,7 @@ def a_ocho(cinco: list, entero: bool = False) -> list:
         ocho[5] = round(min(atl + (eli - atl) / 3, original[5]), 3)
         ocho[6] = round(min(atl + 2 * (eli - atl) / 3, original[6]), 3)
     return ocho
-PESO_EJEMPLO = {"H": 75, "M": 60}
+PESO_EJEMPLO = {"H": PESO_EJEMPLO_H, "M": 60}
 
 
 def redondear_kg(kg: float) -> float:
@@ -345,6 +357,8 @@ def main() -> None:
                 nota = f"{nota}; {extra}" if nota else extra
             cinco = {s: [round(v * f * por_sexo[s], 3) for v in FAMILIAS[fam][s]] for s in ("H", "M")}
             est = {s: con_elite(cinco[s], a_ocho(cinco[s]), False) for s in ("H", "M")}
+            for s, elite in ELITE_FIJO.get(i, {}).items():
+                est[s][7] = round(max(elite, est[s][6] * (1 + SALTO_MIN)), 3)
             salida[i] = est
             for s in ("H", "M"):
                 modelos.append(percentiles(cinco[s], est[s]))
