@@ -195,8 +195,9 @@ FACTOR_POR_SEXO = {
     # en Élite). ×1.5 solo a ellas: Estela en Avanzada y las demás en En forma (2026-10-27).
     "press-militar-maquina": {"H": 1.0, "M": 1.5},
     # Pantorrilla en prensa 45°, mujeres ×1.4: Estela (60 kg, 100 kg × 13) salía en Avanzada y el
-    # entrenador la quiere en Fuerte; Oscar (240 kg × 10) se queda en Élite (2026-10-27).
-    "pantorrilla-prensa-45": {"H": 1.0, "M": 1.4},
+    # entrenador la quiere en Fuerte; Oscar (240 kg × 10) se queda en Élite (2026-10-27). Hombres
+    # ×1.15 para que sigan pidiendo más veces su peso que ellas en cada nivel.
+    "pantorrilla-prensa-45": {"H": 1.15, "M": 1.4},
 }
 
 # Élite puesto a mano, por sexo, cuando el del modelo no cabe en la máquina. Prensa en máquina,
