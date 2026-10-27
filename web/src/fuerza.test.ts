@@ -132,6 +132,22 @@ describe("fuerzaPorMusculo", () => {
   const sesion = (fecha: string, ejercicios: Sesion["ejercicios"]): Sesion =>
     ({ id: fecha, fecha, origen: "manual", ejercicios });
 
+  // La lista del entrenador (2026-10-27): las lagartijas no pintan pecho si hizo banca, aunque
+  // le den más nivel; sin banca en la ventana, sí, para no dejar el músculo en gris.
+  it("con lista, mandan los de la lista; los demás solo si no hizo ninguno", () => {
+    const conLista = [banca, { ...lagartijas, pinta: [] }, plancha];
+    const ambas = [sesion("2026-10-10", [
+      { ejercicioId: "press-banca", nombre: "", series: [{ reps: 1, peso: 50 }] },
+      { ejercicioId: "lagartijas", nombre: "", series: [{ reps: 40, peso: null }] },
+    ])];
+    const f = fuerzaPorMusculo(ambas, conLista, "H", 75, "2026-10-11");
+    expect(f.pecho.origen?.ejercicioId).toBe("press-banca");
+    const soloLagartijas = [sesion("2026-10-10", [{ ejercicioId: "lagartijas", nombre: "", series: [{ reps: 40, peso: null }] }])];
+    expect(fuerzaPorMusculo(soloLagartijas, conLista, "H", 75, "2026-10-11").pecho.origen?.ejercicioId).toBe("lagartijas");
+    // Sin `pinta` (banco viejo) pinta todo lo directo, y ganan las lagartijas.
+    expect(fuerzaPorMusculo(ambas, banco, "H", 75, "2026-10-11").pecho.origen?.ejercicioId).toBe("lagartijas");
+  });
+
   it("el mejor 1RM entre su peso, contra los estándares de su sexo", () => {
     // 60 kg × 1 = 60 kg de 1RM; ÷ 75 kg = 0.8 → entre 0.75 (nivel 3) y 0.9 (nivel 4).
     const f = fuerzaPorMusculo(

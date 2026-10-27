@@ -14,6 +14,8 @@ export interface EjercicioFuerza {
   tipo: "peso" | "corporal" | "tiempo" | "cardio";
   musculos: Record<string, number>;
   estandares?: Record<Sexo, readonly number[]> | null;
+  /** Los músculos que pinta en el mapa (ver `web/src/fuerza.ts`). Ausente = todos los × 1. */
+  pinta?: readonly string[] | null;
 }
 
 export interface SesionFuerza {
@@ -87,6 +89,11 @@ export function diasAntes(hoy: string, dias: number): string {
   return d.toISOString().slice(0, 10);
 }
 
+/** Si el ejercicio está en la lista de los que pintan ese músculo. Sin lista, todos los × 1. */
+export function pintaMusculo(b: { pinta?: readonly string[] | null }, musculo: string): boolean {
+  return !Array.isArray(b.pinta) || b.pinta.includes(musculo);
+}
+
 /** Músculo → nivel (0 a 8). Mismas reglas que la web: ver su comentario. */
 export function nivelesPorMusculo(
   sesiones: readonly SesionFuerza[],
@@ -117,15 +124,18 @@ export function nivelesPorMusculo(
     }
   }
 
-  const fuerza: Record<string, number> = {};
+  // Primero los de la lista del músculo (`pinta`); los demás directos solo si no hizo ninguno.
+  const deLista: Record<string, number> = {};
+  const respaldo: Record<string, number> = {};
   for (const [id, marca] of mejor) {
     const b = porId.get(id)!;
     const nivel = nivelDe(marca, b.estandares![sexo]);
     for (const [musculo, cuanto] of Object.entries(b.musculos)) {
       // Solo el trabajo directo pinta (× 1 en el banco); un secundario no cuenta de rebote.
       if (cuanto < 1) continue;
-      if (nivel > (fuerza[musculo] ?? -1)) fuerza[musculo] = nivel;
+      const destino = pintaMusculo(b, musculo) ? deLista : respaldo;
+      if (nivel > (destino[musculo] ?? -1)) destino[musculo] = nivel;
     }
   }
-  return fuerza;
+  return { ...respaldo, ...deLista };
 }

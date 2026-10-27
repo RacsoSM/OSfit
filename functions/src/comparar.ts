@@ -182,6 +182,7 @@ export const compararMusculos = onCall({ region: REGION }, async (request): Prom
     tipo: d.get("tipo"),
     musculos: (d.get("musculos") ?? {}) as Record<string, number>,
     estandares: d.get("estandares") ?? null,
+    pinta: d.get("pinta") ?? null,
   }));
   const sesiones = new Map<string, SesionFuerza[]>();
   await Promise.all(clientes.filter((c) => puedeSalir(c, yo, yoId)).map(async (c) => {

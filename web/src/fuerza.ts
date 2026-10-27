@@ -267,6 +267,8 @@ function diasAntes(hoy: string, dias: number): string {
  *   Los de tiempo no pintan el mapa, ni los que no tienen estándar.
  * - Por músculo, el **máximo** del nivel de los ejercicios que lo trabajan: un accesorio
  *   ligero no le baja el nivel.
+ * - **Solo los de su lista** (entrenador, 2026-10-27): de los directos, mandan los que el
+ *   entrenador eligió para ese músculo (`pinta`); los demás solo si no hizo ninguno de esos.
  * - **Solo trabajo directo** (decisión del entrenador, 2026-10-15): un ejercicio pinta
  *   únicamente los músculos que trabaja como principal (× 1 en el banco). Los secundarios
  *   (× 0.5) no pintan nada, ni siquiera cuando el músculo no tiene otro ejercicio: un press de
@@ -306,7 +308,10 @@ export function fuerzaPorMusculo(
     }
   }
 
+  // Los de la lista del músculo (`pinta`) mandan; los demás directos solo lo pintan si no hizo
+  // ninguno de la lista en la ventana, para que nadie se quede en gris de golpe.
   const fuerza: Record<string, FuerzaMusculo> = {};
+  const respaldo: Record<string, FuerzaMusculo> = {};
   for (const [id, { marca, serie }] of mejor) {
     const b = porId.get(id)!;
     const estandares = b.estandares![sexo];
@@ -314,9 +319,10 @@ export function fuerzaPorMusculo(
     for (const [musculo, cuanto] of Object.entries(b.musculos)) {
       // Solo el trabajo directo pinta: un secundario no le da nivel al músculo de rebote.
       if (cuanto < 1) continue;
-      const actual = fuerza[musculo];
+      const destino = pintaMusculo(b, musculo) ? fuerza : respaldo;
+      const actual = destino[musculo];
       if (!actual || nivel > actual.nivel) {
-        fuerza[musculo] = {
+        destino[musculo] = {
           nivel,
           origen: {
             ejercicioId: id, nombre: b.nombre, tipo: b.tipo as "peso" | "corporal", cuanto,
@@ -328,7 +334,16 @@ export function fuerzaPorMusculo(
       }
     }
   }
-  return fuerza;
+  return { ...respaldo, ...fuerza };
+}
+
+/**
+ * Si el ejercicio está en la lista de los que pintan ese músculo (entrenador, 2026-10-27): un
+ * pec deck o un cruce de poleas no deciden el color del pecho, el press sí. Sin lista, todos
+ * sus × 1, como antes. GEMELO de `pintaMusculo` en `functions/src/fuerza.ts`.
+ */
+export function pintaMusculo(b: { pinta?: readonly string[] | null }, musculo: string): boolean {
+  return !Array.isArray(b.pinta) || b.pinta.includes(musculo);
 }
 
 // ── Reparto y siguiente rango (el detalle del músculo) ────────────────────────

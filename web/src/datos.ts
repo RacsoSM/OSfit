@@ -62,6 +62,12 @@ export interface EjercicioBanco {
    */
   pesoPorMancuerna?: boolean;
   /**
+   * Los músculos que este ejercicio pinta en el mapa: los de la lista del entrenador
+   * (`docs/estandares-fuerza/pintan.json`, 2026-10-27), que solo deja a los básicos decidir el
+   * color. Lo carga `cargarEstandares.mjs`. Ausente = pinta todos sus × 1, como antes.
+   */
+  pinta?: string[] | null;
+  /**
    * Cómo se anota el peso cuando no es lo de siempre, por ejemplo "Ingresa el peso del disco."
    * en las elevaciones frontales, que en el gimnasio se hacen con disco. Registro lo muestra
    * debajo del peso. Opcional por la razón de siempre.

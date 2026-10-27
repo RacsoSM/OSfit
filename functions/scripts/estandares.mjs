@@ -29,3 +29,32 @@ export function erroresEstandares(archivo, semilla) {
   }
   return errores;
 }
+
+/**
+ * Los errores de la lista de ejercicios que pintan (`docs/estandares-fuerza/pintan.json`):
+ * músculo → ids. Cada id tiene que existir y trabajar ese músculo como principal (× 1): un
+ * secundario no pinta nunca, esté o no en la lista.
+ */
+export function erroresPintan(pintan, semilla) {
+  const porId = new Map(semilla.map((e) => [e.id, e]));
+  const errores = [];
+  for (const [musculo, ids] of Object.entries(pintan)) {
+    if (!Array.isArray(ids)) { errores.push(`${musculo}: tiene que ser una lista`); continue; }
+    for (const id of ids) {
+      const e = porId.get(id);
+      if (!e) errores.push(`${musculo} ${id}: no está en la semilla`);
+      else if (e.musculos?.[musculo] !== 1) errores.push(`${musculo} ${id}: no lo trabaja como principal`);
+    }
+  }
+  return errores;
+}
+
+/**
+ * Los músculos que pinta un ejercicio: sus × 1, menos aquellos con lista donde no está. Un
+ * músculo sin lista en `pintan` lo pintan todos sus directos, como antes.
+ */
+export function pintaDe(ejercicio, pintan) {
+  return Object.entries(ejercicio.musculos ?? {})
+    .filter(([m, cuanto]) => cuanto === 1 && (!Array.isArray(pintan[m]) || pintan[m].includes(ejercicio.id)))
+    .map(([m]) => m);
+}

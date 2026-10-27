@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { erroresEstandares } from "./estandares.mjs";
+import { erroresEstandares, erroresPintan, pintaDe } from "./estandares.mjs";
 
 const leer = (ruta) => JSON.parse(readFileSync(new URL(ruta, import.meta.url), "utf8"));
 const semilla = leer("../semilla/ejercicios.json");
@@ -29,5 +29,26 @@ describe("erroresEstandares", () => {
 
   it("por mancuerna solo en los de peso", () => {
     expect(erroresEstandares({ lagartijas: { ...bien, pesoPorMancuerna: true } }, semilla)).toHaveLength(1);
+  });
+});
+
+const pintan = leer("../../docs/estandares-fuerza/pintan.json");
+
+describe("pintan", () => {
+  it("la lista de docs/estandares-fuerza se puede cargar", () => {
+    expect(erroresPintan(pintan, semilla)).toEqual([]);
+  });
+
+  it("rechaza ids que no existen o que no trabajan el músculo como principal", () => {
+    expect(erroresPintan({ pecho: ["nada"] }, semilla)).toHaveLength(1);
+    expect(erroresPintan({ triceps: ["press-banca"] }, semilla)).toHaveLength(1);
+  });
+
+  it("un ejercicio pinta sus × 1 menos donde hay lista y no está", () => {
+    const pecDeck = semilla.find((e) => e.id === "pec-deck");
+    const banca = semilla.find((e) => e.id === "press-banca");
+    expect(pintaDe(pecDeck, { pecho: ["press-banca"] })).toEqual([]);
+    expect(pintaDe(banca, { pecho: ["press-banca"] })).toEqual(["pecho"]);
+    expect(pintaDe(pecDeck, {})).toEqual(["pecho"]);
   });
 });

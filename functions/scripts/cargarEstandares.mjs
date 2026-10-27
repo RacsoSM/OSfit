@@ -1,6 +1,7 @@
 /**
  * Carga los estándares de fuerza: `docs/estandares-fuerza/estandares.json` → los campos
- * `estandares` y `pesoPorMancuerna` de `ejercicios/{id}`. Nada más: no toca nombres, GIF,
+ * `estandares` y `pesoPorMancuerna` de `ejercicios/{id}`, y `pintan.json` → el campo `pinta`
+ * (qué músculos pinta cada ejercicio en el mapa). Nada más: no toca nombres, GIF,
  * videos ni los demás campos (escribe con `merge`). El archivo lo genera
  * `docs/estandares-fuerza/proponer.py`; con él se cambian los números, no a mano.
  *
@@ -12,7 +13,7 @@
  * Credencial: la misma que `cargarBancoEjercicios.mjs`.
  */
 import { readFileSync } from "node:fs";
-import { erroresEstandares } from "./estandares.mjs";
+import { erroresEstandares, erroresPintan, pintaDe } from "./estandares.mjs";
 
 const PROYECTO = "osfit-cccfe";
 const leer = (ruta) => JSON.parse(readFileSync(new URL(ruta, import.meta.url), "utf8"));
@@ -20,7 +21,8 @@ const leer = (ruta) => JSON.parse(readFileSync(new URL(ruta, import.meta.url), "
 async function main() {
   const semilla = leer("../semilla/ejercicios.json");
   const archivo = leer("../../docs/estandares-fuerza/estandares.json");
-  const errores = erroresEstandares(archivo, semilla);
+  const pintan = leer("../../docs/estandares-fuerza/pintan.json");
+  const errores = [...erroresEstandares(archivo, semilla), ...erroresPintan(pintan, semilla)];
   if (errores.length > 0) {
     console.error(errores.join("\n"));
     process.exit(1);
@@ -42,8 +44,15 @@ async function main() {
     const { estandares, pesoPorMancuerna } = archivo[id];
     lote.set(ref, { estandares, pesoPorMancuerna }, { merge: true });
   }
+  // Qué músculos pinta cada ejercicio (`pintan.json`): todos los de la semilla, tengan o no
+  // estándares, para que la lista quede completa si después se les ponen.
+  for (const e of semilla) {
+    const ref = db.collection("ejercicios").doc(e.id);
+    if (faltan.includes(e.id) || !(await ref.get()).exists) continue;
+    lote.set(ref, { pinta: pintaDe(e, pintan) }, { merge: true });
+  }
   await lote.commit();
-  console.log(`✓ ${ids.length - faltan.length} ejercicios actualizados.`);
+  console.log(`✓ ${ids.length - faltan.length} ejercicios actualizados (y la lista de qué pinta cada uno).`);
   if (faltan.length > 0) console.log(`Sin documento en Firestore (no se tocaron): ${faltan.join(", ")}`);
 }
 
