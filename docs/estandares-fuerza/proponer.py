@@ -119,7 +119,9 @@ PESO = {
     "encogimientos-mancuernas": ("encogimiento", 0.45, "por mancuerna"),
     "press-militar": ("militar", 1.00, ""),
     "press-militar-sentado": ("militar", 1.03, ""),
-    "press-militar-maquina": ("militar", 0.95, "máquina: varía por marca"),
+    # La máquina de Focus pide mucho menos que el press con barra: Said (73 kg) hace 27 kg × 8 y
+    # salía en Ascenso; el entrenador lo quiere en Avanzado, a media banda (2026-10-27). Antes ×0.95.
+    "press-militar-maquina": ("militar", 0.48, "máquina de Focus"),
     "press-hombro-mancuernas": ("militar", 0.40, "por mancuerna"),
     "press-arnold": ("militar", 0.36, "por mancuerna"),
     "remo-al-menton": ("militar", 0.80, ""),

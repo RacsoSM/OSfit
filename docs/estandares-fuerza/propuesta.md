@@ -216,8 +216,8 @@ Los porcentajes salen de un modelo: entre quienes entrenan, la fuerza se reparte
 |  | M | 12 kg | 16 kg | 20 kg | 25 kg | 30 kg | 35 kg | 37.5 kg | 52.5 kg |
 | Press militar sentado | H | 27.5 kg | 35 kg | 42.5 kg | 50 kg | 57.5 kg | 62.5 kg | 65 kg | 90 kg |
 |  | M | 12 kg | 17 kg | 22.5 kg | 27.5 kg | 30 kg | 35 kg | 40 kg | 55 kg |
-| Press militar en máquina | H · máquina: varía por marca | 25 kg | 32.5 kg | 40 kg | 47.5 kg | 52.5 kg | 57.5 kg | 60 kg | 85 kg |
-|  | M | 11 kg | 16 kg | 20 kg | 25 kg | 27.5 kg | 32.5 kg | 37.5 kg | 50 kg |
+| Press militar en máquina | H · máquina de Focus | 13 kg | 16 kg | 20 kg | 22.5 kg | 27.5 kg | 30 kg | 30 kg | 42.5 kg |
+|  | M | 6 kg | 8 kg | 10 kg | 12 kg | 14 kg | 16 kg | 18 kg | 25 kg |
 | Press de hombro con mancuernas | H · por mancuerna | 11 kg | 14 kg | 16 kg | 20 kg | 22.5 kg | 25 kg | 25 kg | 35 kg |
 |  | M | 5 kg | 7 kg | 8 kg | 10 kg | 12 kg | 14 kg | 15 kg | 22.5 kg |
 | Press Arnold | H · por mancuerna | 9 kg | 12 kg | 15 kg | 18 kg | 20 kg | 22.5 kg | 22.5 kg | 32.5 kg |
