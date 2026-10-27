@@ -37,16 +37,16 @@ Armando 1.2 niveles debajo, salvo en las cuatro donde el entrenador cree que van
 | `abductores-maquina` | 59 kg | 109 kg | 0.45 |
 | `aductores-maquina` | 64 kg | 109 kg | 0.5 |
 | `press-militar-maquina` | 34 kg | 49 kg | 0.6 |
-| `pantorrilla-sentado` | 51 kg | 84 kg | 0.7 |
+| `pantorrilla-sentado` | 51 kg | 84 kg | 1 (salía 0.7) |
 | `press-pecho-maquina` | 59 kg | 75 kg | 0.7 |
-| `remo-sentado-polea` | 68 kg | 79 kg | 0.8 |
+| `remo-sentado-polea` | 68 kg | 79 kg | 1 (salía 0.8) |
 | `crunch-maquina` | 51 kg | 69 kg | 0.85 |
 | `curl-femoral-acostado` | 42 kg | 57.5 kg | 0.9 |
 | `extension-cuadriceps` | 88 kg | 82 kg | 1.0 |
 | `jalon-agarre-abierto` | 87 kg | 83 kg | 1.0 |
 | `face-pull` | 54 kg | 44 kg | 1.0 |
 | `curl-femoral-sentado` | 53 kg | 57.5 kg | 1.05 |
-| `patada-gluteo-maquina` | 81 kg | 53 kg | 1.4 |
+| `patada-gluteo-maquina` | 81 kg | 53 kg | 1 (salía 1.4) |
 | `pullover-polea` | 70 kg | 44 kg | 1 (salía 1.5) |
 | `extension-triceps-trasnuca-polea` | 48 kg | 27 kg | 1 (salía 1.55) |
 | `extension-triceps-polea` | 76 kg | 40 kg | 1 (salía 1.85) |
@@ -57,6 +57,9 @@ de Said Armando, cuando en peso libre le saca 1.1–1.3 veces. Una explicación 
 Focus es de polea doble (marca de más) y la de Smart Fit carga directo, pero no está verificado y el
 face pull, también en polea, salió parejo. Quedan en 1 hasta que el entrenador lo compruebe en
 Smart Fit (si tiene polea doble, o haciendo su tríceps con cuerda allá).
+
+**También en 1 por ahora (entrenador, 2026-10-27):** pantorrilla sentado, remo sentado en polea y
+patada de glúteo en máquina; no le convencen los factores calculados.
 
 Lo que no está en la tabla va en 1 hasta tener datos de los dos gimnasios (pec deck, rear delt y
 fondos en máquina solo los ha hecho Said Armando). Son de una persona por gimnasio: se afinan
