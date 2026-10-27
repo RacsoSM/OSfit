@@ -146,7 +146,8 @@ PESO = {
     "curl-inverso-barra": ("curl", 0.75, ""),
     "curl-inverso-polea": ("curl", 0.75, ""),
     "curl-inverso-mancuernas": ("curl", 0.33, "por mancuerna"),
-    "curl-muneca-barra": ("muneca", 1.00, ""),
+    # Said (73 kg, 30 kg × 16) en Fuerte a media banda hacia Avanzado (entrenador, 2026-10-27).
+    "curl-muneca-barra": ("muneca", 0.887, ""),
     "curl-muneca-polea": ("muneca", 0.90, ""),
     "curl-muneca-inverso-barra": ("muneca", 0.60, ""),
     "curl-muneca-mancuernas": ("muneca", 0.45, "por mancuerna"),
