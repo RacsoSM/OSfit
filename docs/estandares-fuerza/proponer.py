@@ -65,7 +65,9 @@ PESO = {
     "aperturas-polea-media": ("banca", 0.36, "por lado; como el cruce de poleas"),
     "aperturas-polea-alta": ("banca", 0.36, "por lado; como el cruce de poleas"),
     "pec-deck": ("banca", 0.80, "máquina: varía por marca"),
-    "press-pecho-maquina": ("banca", 0.90, "máquina: varía por marca"),
+    # La máquina de Focus pide mucho menos que la banca: Said (73 kg, 49.5 kg × 6) salía en
+    # Intermedio y el entrenador lo quiere a media banda de Avanzado (2026-10-27). Antes ×0.90.
+    "press-pecho-maquina": ("banca", 0.537, "máquina de Focus"),
     "sentadilla": ("sentadilla", 1.00, ""),
     "sentadilla-frontal": ("sentadilla", 0.82, ""),
     "sentadilla-smith": ("sentadilla", 0.95, "máquina: varía por marca"),
