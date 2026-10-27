@@ -146,6 +146,14 @@ service cloud.firestore {
       allow write: if esEntrenador();
     }
 
+    // Los gimnasios y cuánto vale 1 kg de cada máquina suya en Focus (`docs/sedes/`). Como el
+    // banco: cualquiera con sesión los lee para calcular su nivel, y solo el entrenador (o el
+    // script con la cuenta de servicio, que se salta las reglas) los cambia.
+    match /sedes/{doc} {
+      allow read: if request.auth != null;
+      allow write: if esEntrenador();
+    }
+
     // Qué ejercicios salen en cada grupo del grid de Registro (`configEjercicios/grupos`). Una
     // sola configuración para todas las clientas, editada desde la app: catálogo como el banco.
     match /configEjercicios/{doc} {

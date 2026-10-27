@@ -208,6 +208,10 @@ class FakeClienteRepository : ClienteRepository {
         actualizarCliente(clienteId) { it.copy(entrenaADistancia = aDistancia) }
     }
 
+    override suspend fun actualizarSede(clienteId: String, sede: String?) {
+        actualizarCliente(clienteId) { it.copy(sede = sede) }
+    }
+
     override suspend fun actualizarSinAccesoAmigos(clienteId: String, sinAcceso: Boolean) {
         actualizarCliente(clienteId) { it.copy(sinAccesoAmigos = sinAcceso) }
     }

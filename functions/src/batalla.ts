@@ -1,7 +1,8 @@
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { REGION, clienteDeLaSesion, db, hoyEnMazatlan } from "./comun";
-import { clienteCompararDesdeDoc, puedeSalir, type ClienteComparar } from "./comparar";
+import { clienteCompararDesdeDoc, puedeSalir, sedesDesdeDocs, type ClienteComparar } from "./comparar";
 import { edadEn, factorEdad, factorPeso, pesoParaFuerza, unoRm, type Sexo } from "./fuerza";
+import { factorEn, type Factores } from "./sede";
 
 /**
  * Batalla, en Amigos (pedido del entrenador, 2026-10-21): dos personas comparan sus mejores
@@ -44,7 +45,13 @@ export interface MarcaBatalla {
    * el servidor, para que su peso ni siquiera viaje al navegador.
    */
   porPeso: number | null;
-  /** Con lo que se decide quién gana: más es mejor. */
+  /**
+   * El 1RM en kilos de Focus Novum: el de arriba por el factor de la máquina en su sede (ver
+   * `sede.ts`). Con él compara el modo real, para que 90 kg en unos abductores que pesan la
+   * mitad no le ganen a 60 kg de Focus. Igual a `unoRm` si su sede no ajusta esa máquina.
+   */
+  unoRmBase: number | null;
+  /** Con lo que se decide quién gana: más es mejor. Ya con el factor de su sede. */
   puntaje: number;
 }
 
@@ -119,21 +126,25 @@ export function eliteDeReferencia(e: EjercicioBatallaBanco, sexo: Sexo): number 
 export function mejoresPorEjercicio(
   sesiones: readonly SesionBatalla[],
   banco: ReadonlyMap<string, EjercicioBatallaBanco>,
-  p: Peleador
+  p: Peleador,
+  factores: Factores = {}
 ): Map<string, MarcaBatalla> {
   const mejor = new Map<string, MarcaBatalla>();
   for (const s of sesiones) {
     for (const x of s.ejercicios ?? []) {
       const e = banco.get(x.ejercicioId);
       if (!e || e.tipo === "cardio") continue;
+      // Sus kilos de máquina, en kilos de Focus: así se mide contra quien entrena en otra sede.
+      const f = factorEn(factores, e);
       for (const serie of x.series ?? []) {
-        const puntaje = puntajeDe(e, serie, p);
+        const puntaje = puntajeDe(e, f === 1 ? serie : { ...serie, peso: (serie.peso ?? 0) * f }, p);
         if (!(puntaje > 0) || puntaje <= (mejor.get(e.id)?.puntaje ?? 0)) continue;
         const rm = e.tipo === "peso" ? unoRm(serie.peso as number, serie.reps) : null;
         mejor.set(e.id, {
           reps: serie.reps,
           peso: e.tipo === "peso" ? serie.peso : null,
           unoRm: rm === null ? null : Math.round(rm * 10) / 10,
+          unoRmBase: rm === null ? null : Math.round(rm * f * 10) / 10,
           porPeso: rm === null ? null : Math.round((rm / p.peso) * 100),
           puntaje: Math.round(puntaje * 10000) / 10000,
         });
@@ -149,11 +160,13 @@ export function armarBatalla(
   b: { nombre: string } & Peleador,
   sesionesA: readonly SesionBatalla[],
   sesionesB: readonly SesionBatalla[],
-  banco: readonly EjercicioBatallaBanco[]
+  banco: readonly EjercicioBatallaBanco[],
+  factoresA: Factores = {},
+  factoresB: Factores = {}
 ): DatosBatalla {
   const porId = new Map(banco.map((e) => [e.id, e]));
-  const mejoresA = mejoresPorEjercicio(sesionesA, porId, a);
-  const mejoresB = mejoresPorEjercicio(sesionesB, porId, b);
+  const mejoresA = mejoresPorEjercicio(sesionesA, porId, a, factoresA);
+  const mejoresB = mejoresPorEjercicio(sesionesB, porId, b, factoresB);
   const conPorcentaje = a.sexo === "H" && b.sexo === "H";
   const marca = (m: MarcaBatalla): MarcaBatalla => (conPorcentaje ? m : { ...m, porPeso: null });
   const ejercicios: EjercicioBatalla[] = [];
@@ -197,11 +210,14 @@ export const batallaAmigos = onCall({ region: REGION }, async (request): Promise
   }
   const firestore = db();
   const hoy = hoyEnMazatlan();
-  const [clientesSnap, bancoSnap] = await Promise.all([
+  const [clientesSnap, bancoSnap, sedesSnap] = await Promise.all([
     firestore.collection("clientes").get(),
     firestore.collection("ejercicios").get(),
+    firestore.collection("sedes").get(),
   ]);
   const clientes = clientesSnap.docs.map((d) => clienteCompararDesdeDoc(d.id, d.data()));
+  const sedes = sedesDesdeDocs(sedesSnap.docs);
+  const factoresDe = (c: ClienteComparar) => (c.sede ? sedes.get(c.sede) ?? {} : {});
   const yo = clientes.find((c) => c.id === yoId);
   if (!yo || !puedeSalir(yo, yo, yoId)) throw new HttpsError("failed-precondition", "sin_perfil");
   const rival = clientes.find((c) => c.id !== yoId && c.nombre === nombre.trim() && puedeSalir(c, yo, yoId));
@@ -222,6 +238,6 @@ export const batallaAmigos = onCall({ region: REGION }, async (request): Promise
   return armarBatalla(
     { nombre: yo.nombre, ...peleadorDe(yo, hoy) },
     { nombre: rival.nombre, ...peleadorDe(rival, hoy) },
-    sesionesA, sesionesB, banco
+    sesionesA, sesionesB, banco, factoresDe(yo), factoresDe(rival)
   );
 });

@@ -13,7 +13,9 @@ import {
   observarSesiones,
   observarConfigGrupos,
   observarHistorial,
+  observarSede,
 } from "./datos";
+import { bancoEnSede } from "./sede";
 import type {
   Cliente,
   Asistencia,
@@ -238,6 +240,29 @@ async function arrancar(): Promise<void> {
   const mapas: Record<string, EstadoSvg> = {};
   /** El banco de ejercicios, y por nombre y alias normalizados; vacíos hasta que llega. */
   let banco: EjercicioBanco[] = [];
+  /**
+   * El banco como llega, y los factores de su sede (`sede.ts`). `banco` es este con los
+   * estándares de las máquinas ajustados a su gimnasio: todo lo que calcula niveles lo usa así.
+   */
+  let bancoCrudo: EjercicioBanco[] = [];
+  let factoresSede: Record<string, number> = {};
+  let sedeSeguida: string | null = null;
+  let dejarSede = () => {};
+
+  /** Escucha la sede del cliente; si el entrenador se la cambia, deja la anterior. */
+  function seguirSede(sede: string | null): void {
+    if (sede === sedeSeguida) return;
+    sedeSeguida = sede;
+    dejarSede();
+    dejarSede = () => {};
+    const aplicar = (f: Record<string, number>) => {
+      factoresSede = f;
+      banco = bancoEnSede(bancoCrudo, f);
+      pintar();
+    };
+    if (!sede) { aplicar({}); return; }
+    dejarSede = observarSede(sede, aplicar);
+  }
   let indice: IndiceBanco = new Map();
   /** Sus sesiones de Registro; null hasta que llegan. */
   let sesiones: Sesion[] | null = null;
@@ -901,6 +926,7 @@ async function arrancar(): Promise<void> {
   observarCliente(clienteId, (c) => {
     cliente = c;
     clienteLlego = true;
+    seguirSede(c?.sede ?? null);
     // Antes de pintar: así el primer repintado ya sale con los colores buenos y la página no
     // parpadea de morado al color de la clienta.
     aplicarPaleta(c?.paletaWeb, document.documentElement);
@@ -920,7 +946,8 @@ async function arrancar(): Promise<void> {
   observarLogrosPersonales(clienteId, (l) => { logros = l; pintar(); });
   observarVideos(clienteId, (v) => { resolverVideos(v); });
   observarBanco((b) => {
-    banco = b;
+    bancoCrudo = b;
+    banco = bancoEnSede(b, factoresSede);
     indice = indiceBanco(b);
     pintar();
   });

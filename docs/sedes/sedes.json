@@ -1,0 +1,18 @@
+{
+  "focus-novum": {
+    "nombre": "Focus Novum",
+    "factores": {}
+  },
+  "smart-fit-barrancos": {
+    "nombre": "Smart Fit Barrancos",
+    "factores": {
+      "abductores-maquina": 0.45,
+      "aductores-maquina": 0.5,
+      "press-militar-maquina": 0.6,
+      "press-pecho-maquina": 0.7,
+      "crunch-maquina": 0.85,
+      "curl-femoral-acostado": 0.9,
+      "curl-femoral-sentado": 1.05
+    }
+  }
+}

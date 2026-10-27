@@ -1,6 +1,7 @@
 package com.osfit.app.data.repository
 
 import com.google.firebase.Timestamp
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.osfit.app.data.model.AvisoAutomatico
 import com.osfit.app.data.model.Cliente
@@ -106,6 +107,11 @@ class FirestoreClienteRepository(
 
     override suspend fun actualizarEntrenaADistancia(clienteId: String, aDistancia: Boolean) {
         coleccion.document(clienteId).update("entrenaADistancia", aDistancia).await()
+    }
+
+    override suspend fun actualizarSede(clienteId: String, sede: String?) {
+        // Focus se guarda borrando el campo: así queda igual que quien nunca tuvo sede.
+        coleccion.document(clienteId).update("sede", sede ?: FieldValue.delete()).await()
     }
 
     override suspend fun actualizarSinAccesoAmigos(clienteId: String, sinAcceso: Boolean) {

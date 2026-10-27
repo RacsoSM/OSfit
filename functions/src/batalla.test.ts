@@ -50,6 +50,19 @@ describe("puntajeDe", () => {
 });
 
 describe("armarBatalla", () => {
+  // 100 kg en una máquina que pesa la mitad (Smart Fit) son 50 de Focus: pierde contra 60.
+  it("cada quien con el factor de su sede: puntaje y 1RM de Focus", () => {
+    const r = armarBatalla(said, { ...said, nombre: "Amigo" },
+      ses({ ejercicioId: "press-banca", series: [{ reps: 1, peso: 60 }] }),
+      ses({ ejercicioId: "press-banca", series: [{ reps: 1, peso: 100 }] }),
+      banco, {}, { "press-banca": 0.5 });
+    const e = r.ejercicios[0];
+    expect(e.b.unoRm).toBe(100);
+    expect(e.b.unoRmBase).toBe(50);
+    expect(e.a.unoRmBase).toBe(60);
+    expect(e.a.puntaje).toBeGreaterThan(e.b.puntaje);
+  });
+
   it("solo los ejercicios que las dos tienen, con su mejor serie, sin cardio", () => {
     const a = ses(
       { ejercicioId: "press-banca", series: [{ reps: 10, peso: 50 }, { reps: 5, peso: 70 }] },

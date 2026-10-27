@@ -22,6 +22,11 @@ export interface MarcaBatalla {
    * servidor lo manda en null. Opcional: una respuesta vieja del servidor no lo trae.
    */
   porPeso?: number | null;
+  /**
+   * El 1RM en kilos de Focus Novum (con el factor de su sede, `sede.ts`): con él compara el modo
+   * real. Opcional: una respuesta vieja del servidor no lo trae, y entonces se usa `unoRm`.
+   */
+  unoRmBase?: number | null;
   puntaje: number;
 }
 
@@ -68,14 +73,15 @@ export interface Resultado {
  * Cómo se decide cada ejercicio (interruptor de la batalla, entrenador, 2026-10-22):
  * - `justo`: el `puntaje`, lo que levanta para su peso con los ajustes (lo de siempre).
  * - `real`: la fuerza absoluta, sin ningún ajuste: el 1RM en kg en los de peso, y las reps o
- *   los segundos en los demás. No importa cuánto pesas, sino cuánto cargas.
+ *   los segundos en los demás. No importa cuánto pesas, sino cuánto cargas. Los kilos de
+ *   máquina, en kilos de Focus (`unoRmBase`): entre sedes una máquina no pesa lo mismo.
  */
 export type ModoComparacion = "justo" | "real";
 
 /** Con lo que se compara una marca en ese modo: más es mejor. */
 export function valorDe(e: EjercicioBatalla, m: MarcaBatalla, modo: ModoComparacion = "justo"): number {
   if (modo === "justo") return m.puntaje;
-  return e.tipo === "peso" ? m.unoRm ?? 0 : m.reps;
+  return e.tipo === "peso" ? m.unoRmBase ?? m.unoRm ?? 0 : m.reps;
 }
 
 /** Dos marcas a menos de 0.5 % una de la otra son empate: es menos que lo que mide Epley. */

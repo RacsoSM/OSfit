@@ -3,6 +3,7 @@ import type { FirestoreError, Timestamp } from "firebase/firestore";
 import { db, renovarCredencial } from "./firebase";
 import type { PaletaWeb } from "./paleta";
 import type { Tirada } from "./tirada";
+import { factoresDesdeDoc } from "./sede";
 
 export interface Ejercicio { nombre: string; series: number; repeticiones: string; pesoONota: string; }
 /**
@@ -133,6 +134,11 @@ export interface Cliente {
    * "no". Con él no ve "Hoy no voy a poder ir".
    */
   entrenaADistancia?: boolean;
+  /**
+   * Su gimnasio (`sedes/{id}`, ver `sede.ts`): sus kilos de máquina se miden con los factores de
+   * esa sede. Lo asigna el entrenador en la app; ausente es Focus Novum, sin factores.
+   */
+  sede?: string | null;
   /** El entrenador le quitó Amigos desde la app. Ausente es "tiene acceso". */
   sinAccesoAmigos?: boolean;
   /**
@@ -312,6 +318,23 @@ export function observarConfigGrupos(alCambiar: (c: ConfigGrupos | null) => void
       (snap) => {
         alLlegar();
         alCambiar(snap.exists() ? (snap.data() as ConfigGrupos) : null);
+      },
+      alFallar
+    )
+  );
+}
+
+/**
+ * Los factores de su sede (`sedes/{id}`, ver `sede.ts`): cuánto vale 1 kg de cada máquina de su
+ * gimnasio en Focus Novum. Vacío si la sede no existe.
+ */
+export function observarSede(sedeId: string, alCambiar: (factores: Record<string, number>) => void) {
+  return escuchar("sede", (alLlegar, alFallar) =>
+    onSnapshot(
+      doc(db, "sedes", sedeId),
+      (snap) => {
+        alLlegar();
+        alCambiar(factoresDesdeDoc(snap.data()));
       },
       alFallar
     )

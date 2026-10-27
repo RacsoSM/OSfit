@@ -4,6 +4,7 @@ import {
   SEMANAS_VENTANA, diasAntes, edadEn, nivelesPorMusculo, pesoParaFuerza,
   type EjercicioFuerza, type SesionFuerza, type Sexo,
 } from "./fuerza";
+import { bancoEnSede, factoresDesdeDoc, type Factores } from "./sede";
 
 /**
  * "Amigos" (antes "Compararme"), en Músculos de la web: todas las clientas con algún músculo con rango, con su
@@ -76,6 +77,8 @@ export interface ClienteComparar {
   modo: ModoAmigos | null;
   /** Con "algunos": los ids de clientes que sí la ven. */
   compartirCon: string[];
+  /** Su gimnasio (`sede`, ver `sede.ts`); null = Focus Novum, sin factores. */
+  sede: string | null;
 }
 
 export function clienteCompararDesdeDoc(id: string, d: Record<string, unknown>): ClienteComparar {
@@ -94,7 +97,13 @@ export function clienteCompararDesdeDoc(id: string, d: Record<string, unknown>):
     compartirCon: Array.isArray(d.compartirAmigosCon)
       ? d.compartirAmigosCon.filter((x): x is string => typeof x === "string")
       : [],
+    sede: typeof d.sede === "string" && d.sede !== "" ? d.sede : null,
   };
+}
+
+/** Id de sede → sus factores, de la colección `sedes`. */
+export function sedesDesdeDocs(docs: readonly { id: string; data: () => Record<string, unknown> }[]): Map<string, Factores> {
+  return new Map(docs.map((d) => [d.id, factoresDesdeDoc(d.data())]));
 }
 
 /** Si quien ve (`yo`) se puede comparar con los demás: eligió mostrarse a alguien. */
@@ -130,7 +139,8 @@ export function armarComparacion(
   sesiones: ReadonlyMap<string, readonly SesionFuerza[]>,
   banco: readonly EjercicioFuerza[],
   yoId: string,
-  hoy: string
+  hoy: string,
+  sedes: ReadonlyMap<string, Factores> = new Map()
 ): PersonaComparar[] {
   const personas: PersonaComparar[] = [];
   const yo = clientes.find((c) => c.id === yoId);
@@ -138,7 +148,9 @@ export function armarComparacion(
     if (!puedeSalir(c, yo, yoId)) continue;
     const sexo = c.sexo as Sexo;
     const peso = pesoParaFuerza(c.peso as number, sexo, c.grasa);
-    const niveles = nivelesPorMusculo(sesiones.get(c.id) ?? [], banco, sexo, peso, hoy, edadEn(c.anioNacimiento, hoy));
+    // Cada quien contra los estándares de su gimnasio: unos kilos de Smart Fit no pesan lo que en Focus.
+    const suBanco = c.sede ? bancoEnSede(banco, sedes.get(c.sede) ?? {}) : banco;
+    const niveles = nivelesPorMusculo(sesiones.get(c.id) ?? [], suBanco, sexo, peso, hoy, edadEn(c.anioNacimiento, hoy));
     if (Object.keys(niveles).length === 0) continue;
     for (const m of Object.keys(niveles)) niveles[m] = Math.round(niveles[m] * 1000) / 1000;
     personas.push({ nombre: c.nombre, sexo, esTuyo: c.id === yoId, niveles });
@@ -156,11 +168,13 @@ export const compararMusculos = onCall({ region: REGION }, async (request): Prom
   const firestore = db();
   const hoy = hoyEnMazatlan();
   const desde = diasAntes(hoy, SEMANAS_VENTANA * 7);
-  const [clientesSnap, bancoSnap] = await Promise.all([
+  const [clientesSnap, bancoSnap, sedesSnap] = await Promise.all([
     firestore.collection("clientes").get(),
     firestore.collection("ejercicios").get(),
+    firestore.collection("sedes").get(),
   ]);
   const clientes = clientesSnap.docs.map((d) => clienteCompararDesdeDoc(d.id, d.data()));
+  const sedes = sedesDesdeDocs(sedesSnap.docs);
   const yo = clientes.find((c) => c.id === yoId);
   if (yo?.sinAcceso && !yo.admin) throw new HttpsError("permission-denied", "sin_acceso");
   const banco: EjercicioFuerza[] = bancoSnap.docs.map((d) => ({
@@ -179,7 +193,7 @@ export const compararMusculos = onCall({ region: REGION }, async (request): Prom
     })));
   }));
   return {
-    personas: armarComparacion(clientes, sesiones, banco, yoId, hoy),
+    personas: armarComparacion(clientes, sesiones, banco, yoId, hoy, sedes),
     candidatos: candidatosAmigos(clientes, yoId),
   };
 });

@@ -6,7 +6,7 @@ import {
 const banco = [{ id: "curl", tipo: "peso" as const, musculos: { biceps: 1 },
   estandares: { H: [0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.5], M: [0.05, 0.08, 0.1, 0.13, 0.16, 0.2, 0.24, 0.3] } }];
 const con = (id: string, campos: Partial<ClienteComparar> = {}): ClienteComparar => ({
-  id, nombre: id, sexo: "M", peso: 60, grasa: null, anioNacimiento: null, sinAcceso: false, activo: true, admin: false, modo: "todos", compartirCon: [], ...campos,
+  id, nombre: id, sexo: "M", peso: 60, grasa: null, anioNacimiento: null, sinAcceso: false, activo: true, admin: false, modo: "todos", compartirCon: [], sede: null, ...campos,
 });
 const curl = [{ fecha: "2026-10-10", ejercicios: [{ ejercicioId: "curl", series: [{ reps: 10, peso: 8 }] }] }];
 const hoy = "2026-10-14";
@@ -28,6 +28,20 @@ describe("armarComparacion", () => {
   it("quien se escondió se sigue viendo a sí misma", () => {
     const r = armarComparacion([con("yo", { modo: "nadie" })], new Map([["yo", curl]]), banco, "yo", hoy);
     expect(r).toHaveLength(1);
+  });
+  // Los mismos kilos valen menos donde la máquina pesa la mitad (sede con factor 0.5).
+  it("cada quien contra los estándares de su sede", () => {
+    const clientes = [con("focus"), con("smart", { sede: "smart-fit" })];
+    const ses = new Map(clientes.map((c) => [c.id, curl]));
+    const r = armarComparacion(clientes, ses, banco, "focus", hoy, new Map([["smart-fit", { curl: 0.5 }]]));
+    const nivel = (n: string) => r.find((p) => p.nombre === n)!.niveles.biceps;
+    expect(nivel("smart")).toBeLessThan(nivel("focus"));
+  });
+  it("una sede que no existe cuenta como Focus", () => {
+    const clientes = [con("focus"), con("rara", { sede: "no-existe" })];
+    const ses = new Map(clientes.map((c) => [c.id, curl]));
+    const r = armarComparacion(clientes, ses, banco, "focus", hoy, new Map());
+    expect(r[0].niveles.biceps).toBe(r[1].niveles.biceps);
   });
   it("no manda pesos ni ids", () => {
     const r = armarComparacion([con("ok"), con("x")], new Map([["ok", curl]]), banco, "x", hoy);

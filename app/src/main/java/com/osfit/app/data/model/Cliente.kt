@@ -95,6 +95,9 @@ data class Cliente(
     // Entrena por su cuenta, sin venir al gimnasio. Apagado por defecto. Con él la web no le
     // muestra "Hoy no voy a poder ir" y la función `avisarFalta` lo rechaza.
     val entrenaADistancia: Boolean = false,
+    // Su gimnasio: id de `sedes/{id}` (ver `docs/sedes/`). Sus kilos de máquina se miden con los
+    // factores de esa sede. Null = Focus Novum, el gimnasio base, sin factores.
+    val sede: String? = null,
     // El entrenador le quitó "Amigos" en la web (comparar músculos con los demás). Apagado
     // por defecto: tiene acceso. Sin acceso ni ve la lista ni sale en ella.
     val sinAccesoAmigos: Boolean = false,

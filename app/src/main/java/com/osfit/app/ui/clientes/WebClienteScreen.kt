@@ -1,6 +1,7 @@
 package com.osfit.app.ui.clientes
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -13,12 +14,16 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.Store
 import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.VideoLibrary
 import androidx.compose.material3.Card
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -27,6 +32,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -41,6 +49,8 @@ import com.osfit.app.data.model.AvisoAutomatico
 import com.osfit.app.data.model.Cliente
 import com.osfit.app.data.repository.ClienteRepository
 import com.osfit.app.data.repository.DispositivoRepository
+import com.osfit.app.data.repository.Sede
+import com.osfit.app.data.repository.SedeRepository
 import com.osfit.app.ui.common.AccionCard
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -52,7 +62,8 @@ import kotlinx.coroutines.launch
 class WebClienteViewModel(
     private val clienteId: String,
     private val clienteRepository: ClienteRepository = AppContainer.clienteRepository,
-    dispositivoRepository: DispositivoRepository = AppContainer.dispositivoRepository
+    dispositivoRepository: DispositivoRepository = AppContainer.dispositivoRepository,
+    sedeRepository: SedeRepository = AppContainer.sedeRepository
 ) : ViewModel() {
 
     private val _cliente = MutableStateFlow<Cliente?>(null)
@@ -62,6 +73,11 @@ class WebClienteViewModel(
     val dispositivos: StateFlow<Int> = dispositivoRepository.contarDispositivos(clienteId)
         .catch { emit(0) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0)
+
+    /** Los gimnasios para escoger; vacía sin red, y entonces el selector solo enseña la actual. */
+    val sedes: StateFlow<List<Sede>> = sedeRepository.observarSedes()
+        .catch { emit(emptyList()) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     init {
         viewModelScope.launch {
@@ -94,6 +110,14 @@ class WebClienteViewModel(
         _cliente.value = _cliente.value?.copy(entrenaADistancia = aDistancia)
         viewModelScope.launch {
             runCatching { clienteRepository.actualizarEntrenaADistancia(clienteId, aDistancia) }
+        }
+    }
+
+    /** Null la regresa a Focus Novum, la sede base. */
+    fun cambiarSede(sede: String?) {
+        _cliente.value = _cliente.value?.copy(sede = sede)
+        viewModelScope.launch {
+            runCatching { clienteRepository.actualizarSede(clienteId, sede) }
         }
     }
 
@@ -136,6 +160,7 @@ fun WebClienteScreen(
     )
     val cliente by viewModel.cliente.collectAsState()
     val dispositivos by viewModel.dispositivos.collectAsState()
+    val sedes by viewModel.sedes.collectAsState()
     val secciones = seccionesWeb(
         onVerVideosWeb = onVerVideosWeb,
         onVerPaletaWeb = onVerPaletaWeb,
@@ -184,6 +209,14 @@ fun WebClienteScreen(
                     aDistancia = cliente?.entrenaADistancia == true,
                     habilitado = cliente != null,
                     onCambiar = viewModel::cambiarEntrenaADistancia
+                )
+            }
+            item {
+                FilaSede(
+                    sede = cliente?.sede,
+                    sedes = sedes,
+                    habilitado = cliente != null,
+                    onCambiar = viewModel::cambiarSede
                 )
             }
             item {
@@ -296,6 +329,59 @@ private fun FilaADistancia(
                 )
             }
             Switch(checked = aDistancia, onCheckedChange = onCambiar, enabled = habilitado)
+        }
+    }
+}
+
+/** La sede base: sin factores, y la que cuenta cuando el cliente no tiene ninguna. */
+private const val SEDE_BASE = "focus-novum"
+
+/**
+ * Su gimnasio (`docs/sedes/`): las máquinas de cada uno pesan distinto, y con su sede la web
+ * pasa sus kilos de máquina a kilos de Focus al calcular su nivel. Sus kilos no cambian.
+ */
+@Composable
+private fun FilaSede(
+    sede: String?,
+    sedes: List<Sede>,
+    habilitado: Boolean,
+    onCambiar: (String?) -> Unit
+) {
+    var abierto by remember { mutableStateOf(false) }
+    val actual = sede ?: SEDE_BASE
+    val nombre = sedes.firstOrNull { it.id == actual }?.nombre
+        ?: if (actual == SEDE_BASE) "Focus Novum" else actual
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Icon(Icons.Filled.Store, contentDescription = null)
+            Column(modifier = Modifier.weight(1f)) {
+                Text("Gimnasio", style = MaterialTheme.typography.titleMedium)
+                Text(
+                    "Sus kilos de máquina se miden con las máquinas de su gimnasio al calcular su nivel.",
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
+            Box {
+                TextButton(onClick = { abierto = true }, enabled = habilitado && sedes.isNotEmpty()) {
+                    Text(nombre)
+                }
+                DropdownMenu(expanded = abierto, onDismissRequest = { abierto = false }) {
+                    sedes.forEach { s ->
+                        DropdownMenuItem(
+                            text = { Text(s.nombre) },
+                            onClick = {
+                                abierto = false
+                                // La base se guarda como "sin sede", igual que quien nunca tuvo.
+                                onCambiar(if (s.id == SEDE_BASE) null else s.id)
+                            }
+                        )
+                    }
+                }
+            }
         }
     }
 }
