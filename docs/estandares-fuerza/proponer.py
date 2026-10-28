@@ -154,8 +154,8 @@ PESO = {
     "spider-curl": ("curl", 0.75, ""),
     "curl-mancuernas": ("curl", 0.45, "por mancuerna"),
     # Toda la tabla escalada para que un hombre como Said (73 kg, 22) llegue a Élite con
-    # 25 kg × 8 (entrenador, 2026-10-28). Antes ×0.50.
-    "curl-martillo": ("curl", 0.4586, "por mancuerna"),
+    # 25 kg × 4 (entrenador, 2026-10-28). Antes ×0.50.
+    "curl-martillo": ("curl", 0.4108, "por mancuerna"),
     "curl-inclinado": ("curl", 0.38, "por mancuerna"),
     "curl-concentrado": ("curl", 0.40, "una mancuerna"),
     # Élite con 35 kg × 8 para un hombre como Said (2026-10-28). Antes ×0.75.
