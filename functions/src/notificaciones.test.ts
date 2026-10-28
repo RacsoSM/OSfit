@@ -83,6 +83,16 @@ describe("lectura de documentos", () => {
       .toEqual({ titulo: "OSfit", texto: "Hola", destino: "todas", clientesElegidos: [] });
   });
 
+  it("abrir viaja solo si está bien formado", () => {
+    const base = { texto: "Listo", destino: "elegidas", clientesElegidos: ["a"] };
+    expect(avisoDesdeDoc({ ...base, abrir: { ventana: "resumenMensual", mes: "2026-10" } })?.abrir)
+      .toEqual({ ventana: "resumenMensual", mes: "2026-10" });
+    expect(avisoDesdeDoc({ ...base, abrir: { ventana: "ajustes" } })?.abrir).toEqual({ ventana: "ajustes" });
+    expect(avisoDesdeDoc({ ...base, abrir: { ventana: "resumenMensual", mes: "octubre" } })).not.toHaveProperty("abrir");
+    expect(avisoDesdeDoc({ ...base, abrir: { ventana: "<script>" } })).not.toHaveProperty("abrir");
+    expect(avisoDesdeDoc(base)).not.toHaveProperty("abrir");
+  });
+
   it("sin texto, o con texto demasiado largo, no hay aviso", () => {
     expect(avisoDesdeDoc({ texto: "   " })).toBeNull();
     expect(avisoDesdeDoc({})).toBeNull();

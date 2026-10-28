@@ -77,7 +77,10 @@ export const enviarNotificacion = onDocumentCreated(
       for (const tanda of enTandas(dispositivos)) {
         const respuesta = await getMessaging().sendEachForMulticast({
           tokens: tanda.map((d) => d.token),
-          data: { titulo: aviso.titulo, texto: aviso.texto },
+          // FCM solo acepta strings en `data`: `abrir` va como JSON y lo lee `sw.js`.
+          data: aviso.abrir
+            ? { titulo: aviso.titulo, texto: aviso.texto, abrir: JSON.stringify(aviso.abrir) }
+            : { titulo: aviso.titulo, texto: aviso.texto },
           webpush: { headers: { TTL: TTL_SEGUNDOS, Urgency: "high" } },
         });
         await Promise.all(

@@ -27,6 +27,20 @@ export interface Aviso {
   texto: string;
   destino: "todas" | "elegidas";
   clientesElegidos: string[];
+  /**
+   * Qué ventana abre al tocarla (y en qué mes). Opcional: solo lo traen los avisos automáticos
+   * que lo necesitan (`cerrarMes`); los del entrenador y los viejos no lo tienen, y tocarlos solo
+   * abre la página, como siempre.
+   */
+  abrir?: { ventana: string; mes?: string };
+}
+
+/** Un `abrir` bien formado o nada: un dato raro no debe llegar al service worker. */
+function abrirDesdeDoc(x: unknown): Aviso["abrir"] | undefined {
+  const a = x as { ventana?: unknown; mes?: unknown } | null | undefined;
+  if (!a || typeof a.ventana !== "string" || !/^[a-zA-Z]{1,40}$/.test(a.ventana)) return undefined;
+  if (a.mes === undefined) return { ventana: a.ventana };
+  return typeof a.mes === "string" && /^\d{4}-\d{2}$/.test(a.mes) ? { ventana: a.ventana, mes: a.mes } : undefined;
 }
 
 /** Campos ausentes o de tipo raro cuentan como `false`: ante la duda, no se manda. */
@@ -46,7 +60,8 @@ export function avisoDesdeDoc(data: Record<string, unknown>): Aviso | null {
   const clientesElegidos = Array.isArray(data.clientesElegidos)
     ? data.clientesElegidos.filter((x): x is string => typeof x === "string")
     : [];
-  return { titulo, texto, destino, clientesElegidos };
+  const abrir = abrirDesdeDoc(data.abrir);
+  return abrir ? { titulo, texto, destino, clientesElegidos, abrir } : { titulo, texto, destino, clientesElegidos };
 }
 
 /**
