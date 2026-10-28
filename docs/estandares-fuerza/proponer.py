@@ -113,8 +113,9 @@ PESO = {
     # Principiante o Ascenso con lo que se hace en el gym, aunque su patada les diera Avanzado.
     "hip-thrust": ("hipthrust", 0.4401, ""),
     "pantorrilla-de-pie": ("pantorrilla", 1.00, "máquina"),
-    # Said (73 kg, 40 kg × 8) al final de Intermedio (entrenador, 2026-10-27). Antes ×0.70.
-    "pantorrilla-sentado": ("pantorrilla", 0.441, "máquina de Focus"),
+    # Said (73 kg, 22, 40 kg × 8) en 6.2, a la quinta parte de Fuerte (entrenador, 2026-10-28).
+    # Antes ×0.441 lo dejaba al final de Intermedio (2026-10-27), y antes de eso ×0.70.
+    "pantorrilla-sentado": ("pantorrilla", 0.3718, "máquina de Focus"),
     "pantorrilla-prensa": ("pantorrilla", 1.10, "en prensa: varía por marca"),
     "pantorrilla-prensa-45": ("pantorrilla", 1.10, "en prensa: varía por marca"),
     "abductores-maquina": ("abductor", 1.00, "máquina"),
