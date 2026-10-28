@@ -133,10 +133,10 @@ Los porcentajes salen de un modelo: entre quienes entrenan, la fuerza se reparte
 
 | Ejercicio | Sexo | Principiante | Ascenso | En forma | Intermedio | Atlético / Atlética | Fuerte | Avanzado | Élite |
 |---|---|---|---|---|---|---|---|---|---|
-| Curl femoral acostado | H · máquina; H ×0.6, M ×0.8 | 16 kg | 20 kg | 25 kg | 30 kg | 35 kg | 40 kg | 42.5 kg | 60 kg |
-|  | M | 12 kg | 16 kg | 19 kg | 25 kg | 30 kg | 32.5 kg | 35 kg | 50 kg |
-| Curl femoral sentado | H · máquina | 30 kg | 37.5 kg | 45 kg | 55 kg | 65 kg | 72.5 kg | 77.5 kg | 107.5 kg |
-|  | M | 16 kg | 22.5 kg | 27.5 kg | 32.5 kg | 40 kg | 42.5 kg | 47.5 kg | 67.5 kg |
+| Curl femoral acostado | H · máquina; H ×0.6, M ×0.8 | 16 kg | 20 kg | 25 kg | 32.5 kg | 37.5 kg | 40 kg | 45 kg | 62.5 kg |
+|  | M | 13 kg | 16 kg | 20 kg | 25 kg | 30 kg | 32.5 kg | 37.5 kg | 52.5 kg |
+| Curl femoral sentado | H · máquina | 20 kg | 27.5 kg | 32.5 kg | 40 kg | 47.5 kg | 52.5 kg | 55 kg | 77.5 kg |
+|  | M | 12 kg | 16 kg | 19 kg | 25 kg | 27.5 kg | 32.5 kg | 35 kg | 50 kg |
 | Peso muerto rumano | H | 55 kg | 70 kg | 85 kg | 97.5 kg | 112.5 kg | 122.5 kg | 132.5 kg | 142.5 kg |
 |  | M | 22.5 kg | 32.5 kg | 45 kg | 50 kg | 57.5 kg | 62.5 kg | 67.5 kg | 90 kg |
 | Peso muerto rumano con mancuernas | H · por mancuerna | 25 kg | 30 kg | 37.5 kg | 42.5 kg | 50 kg | 55 kg | 57.5 kg | 62.5 kg |

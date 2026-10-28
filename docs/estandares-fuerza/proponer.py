@@ -95,8 +95,12 @@ PESO = {
     # 45° (×1.00) es de discos y en una pila sus números no se alcanzan.
     "prensa-maquina": ("prensa", 0.235, "máquina de 16 barras"),
     "extension-cuadriceps": ("extension", 1.00, "máquina"),
-    "curl-femoral-acostado": ("femoral", 1.00, "máquina"),
-    "curl-femoral-sentado": ("femoral", 1.10, "máquina"),
+    # Toda la tabla escalada (encima del ajuste por sexo) para que un hombre como Said (73 kg, 22)
+    # con 36 kg × 5 quede en 6.7 (entrenador, 2026-10-28). Antes ×1.00.
+    "curl-femoral-acostado": ("femoral", 1.0468, "máquina"),
+    # Toda la tabla escalada para que un hombre como Said (73 kg, 22) con 40.5 kg × 9 quede en 6.5
+    # (entrenador, 2026-10-28). Antes ×1.10 salía ~3 rangos debajo del acostado con el mismo peso.
+    "curl-femoral-sentado": ("femoral", 0.7986, "máquina"),
     "peso-muerto": ("muerto", 1.00, ""),
     "peso-muerto-sumo": ("muerto", 1.00, ""),
     "peso-muerto-rumano": ("muerto", 0.75, ""),
