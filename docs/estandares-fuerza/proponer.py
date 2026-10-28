@@ -238,10 +238,11 @@ FACTOR_POR_SEXO = {
     # proporción, un poco debajo de la de ellos en todos los niveles (en Élite, ~5 % abajo),
     # como en face pull.
     "crunch-maquina": {"H": 0.6845, "M": 0.9651},
-    # Extensión de cuádriceps, mujeres: les salía más fácil que a ellos (Caro, 45 kg × 12, en
-    # Avanzada). Escalada para que una mujer como Caro (58 kg, 20) con esa serie quede a media
-    # banda de Fuerte (entrenador, 2026-10-28); la de ellos, igual.
-    "extension-cuadriceps": {"H": 1, "M": 1.1205},
+    # Extensión de cuádriceps (entrenador, 2026-10-28). Mujeres: les salía más fácil que a ellos
+    # (Caro, 45 kg × 12, en Avanzada); escalada para que una mujer como Caro (58 kg, 20) con esa
+    # serie quede a media banda de Fuerte. Hombres: más fácil, para que uno como Said (73 kg, 22)
+    # con 67.5 kg × 9 quede al inicio de Avanzado. Ellas siguen un poco debajo de ellos.
+    "extension-cuadriceps": {"H": 0.8821, "M": 1.1205},
     # Remo en máquina: el ajuste del ×0.6825 es para ellos (Said); a ellas les deja la tabla de
     # antes (×0.95), porque con él Estela saltaba de Intermedio a Avanzada (2026-10-28).
     "remo-maquina": {"H": 1, "M": round(0.95 / 0.6825, 4)},
