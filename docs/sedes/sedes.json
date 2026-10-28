@@ -15,7 +15,22 @@
       "curl-femoral-sentado": 1.05,
       "fondos-maquina": 0.93,
       "pantorrilla-sentado": 0.84,
-      "remo-maquina": 0.7184
+      "remo-maquina": 0.7184,
+      "pullover-polea": 1.863,
+      "face-pull": 1.863,
+      "elevaciones-laterales-polea": 1.863,
+      "curl-polea": 1.863,
+      "curl-inverso-polea": 1.863,
+      "curl-muneca-polea": 1.863,
+      "extension-triceps-polea": 1.863,
+      "extension-triceps-cuerda": 1.863,
+      "extension-triceps-trasnuca-polea": 1.863,
+      "copa-polea-un-brazo": 1.863,
+      "crunch-polea": 1.863,
+      "cruce-poleas": 1.863,
+      "aperturas-polea-media": 1.863,
+      "aperturas-polea-alta": 1.863,
+      "giro-polea": 1.863
     }
   }
 }
