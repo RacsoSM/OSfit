@@ -204,8 +204,10 @@ describe("detalleMusculo", () => {
     const h = detalleMusculo("pecho", f, "H", 75);
     expect(h).toContain("Siguiente: <strong");
     expect(h).toContain(">Ascenso</strong>");
-    expect(h).toContain("Necesitas <strong>8 repeticiones</strong> con <strong>37.5 kg</strong> en <strong>Press de banca</strong> para subir de nivel.");
-    expect(h).toContain("Tu mejor serie: 30 kg × 8.");
+    expect(h).toContain("¿Cómo subir a");
+    expect(h).toContain('<div class="hoja-opcion-ej">Press de banca</div>');
+    expect(h).toContain("Necesitas <strong>8 repeticiones</strong> con <strong>37.5 kg</strong>");
+    expect(h).toContain("Tu mejor serie: 30 kg × 8");
   });
 
   // Said, a 0.004 de Élite: redondear decía "100 %" y el rango no subía.
@@ -244,7 +246,9 @@ describe("detalleMusculo", () => {
         serie: { reps: 14, peso: null }, estandares: [1, 3, 5, 10, 15, 18, 20, 34], pesoPorMancuerna: false,
       },
     };
-    expect(detalleMusculo("pecho", f, "M", 60)).toContain("Necesitas <strong>15 repeticiones</strong> en <strong>Lagartijas</strong> para subir de nivel.");
+    const h = detalleMusculo("pecho", f, "M", 60);
+    expect(h).toContain("Necesitas <strong>15 repeticiones</strong></div>");
+    expect(h).toContain('<div class="hoja-opcion-ej">Lagartijas</div>');
   });
 
   it("en mancuernas dice que es por mancuerna", () => {
@@ -272,11 +276,15 @@ describe("detalleMusculo", () => {
       pesoPorMancuerna: true,
     };
     const h = detalleMusculo("pecho", { nivel: 1.05, origen: banca, segundo: { nivel: 0.9, origen: mancuernas } }, "H", 75);
-    expect(h).toContain("en <strong>Press de banca</strong> para subir de nivel.");
-    expect(h).toMatch(/O también: necesitas <strong>10 repeticiones<\/strong> con <strong>[\d.]+ kg por mancuerna<\/strong> en <strong>Press con mancuernas<\/strong>/);
-    expect(h).toContain("Tu mejor serie ahí: 10 kg × 10.");
-    // Sin segundo ejercicio, solo una opción.
-    expect(detalleMusculo("pecho", { nivel: 1.05, origen: banca }, "H", 75)).not.toContain("O también");
+    expect(h).toContain("Opción 1 · tu mejor ejercicio");
+    expect(h).toContain("Opción 2");
+    expect(h).toContain('<div class="hoja-opcion-ej">Press con mancuernas</div>');
+    expect(h).toMatch(/Necesitas <strong>10 repeticiones<\/strong> con <strong>[\d.]+ kg por mancuerna<\/strong>/);
+    expect(h).toContain("Tu mejor serie: 10 kg × 10");
+    // Sin segundo ejercicio, una sola opción.
+    const sola = detalleMusculo("pecho", { nivel: 1.05, origen: banca }, "H", 75);
+    expect(sola).not.toContain("Opción 2");
+    expect(sola.match(/class="hoja-opcion"/g)).toHaveLength(1);
   });
 
   it("en Élite también dice su mejor serie y de qué ejercicio", () => {
