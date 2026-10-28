@@ -51,7 +51,8 @@ import {
 import { conectarAutollenado, conectarUnidadPeso } from "./ui/tarjetaUnidadPeso";
 import { conectarSinDatos } from "./ui/tarjetaSinDatos";
 import { conectarEstadisticas } from "./ui/estadisticas";
-import { conectarResumenMensual, reiniciarResumenMensual } from "./ui/resumenMensual";
+import { conectarResumenMensual, elegirMes, reiniciarResumenMensual } from "./ui/resumenMensual";
+import { abrirDelMensaje, abrirDeLaDireccion, direccionSinAbrir, type Abrir } from "./abrirDesdeAviso";
 import { mostrarAvisoSinDatos, quitarAvisoSinDatos } from "./ui/avisoSinDatos";
 import { almacenesDelNavegador, saludDeLosAlmacenes } from "./sesion";
 import type { MotivoSinAcceso, ResultadoSesion } from "./sesion";
@@ -942,6 +943,24 @@ async function arrancar(): Promise<void> {
       });
     }
   });
+
+  // Una notificación que dice qué abrir (hoy, Resumen mensual en el mes que cerró): por la
+  // dirección si la página estaba cerrada, por mensaje del service worker si estaba abierta.
+  // Ver `abrirDesdeAviso.ts`. Aquí y no antes: `pintar()` usa el estado declarado arriba.
+  const idsVentanas = VENTANAS.filter((v) => !v.oculta).map((v) => v.id);
+  const abrirDesdeAviso = (a: Abrir | null): void => {
+    if (!a) return;
+    if (a.ventana === "resumenMensual") elegirMes(a.mes);
+    if (ventanaActiva() === a.ventana) pintar();
+    else abrirVentana(a.ventana as IdVentana);
+  };
+  const deLaDireccion = abrirDeLaDireccion(location.search, idsVentanas);
+  if (location.search.includes("abrir=")) {
+    // Antes de abrir la ventana: su entrada nueva hereda la dirección, y no debe llevar el `?abrir`.
+    history.replaceState(history.state, "", direccionSinAbrir(location.pathname, location.search, location.hash));
+  }
+  abrirDesdeAviso(deLaDireccion);
+  navigator.serviceWorker?.addEventListener("message", (e) => abrirDesdeAviso(abrirDelMensaje(e.data, idsVentanas)));
 
   observarCliente(clienteId, (c) => {
     cliente = c;

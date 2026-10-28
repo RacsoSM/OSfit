@@ -269,26 +269,46 @@ self.addEventListener("push", (evento) => {
   const datos = carga.data || carga;
   const titulo = datos.titulo || "OSfit";
   const texto = datos.texto || "";
+  // Qué abrir al tocarla (hoy, Resumen mensual en el mes que cerró). Viene como JSON porque
+  // FCM solo manda strings; uno roto se ignora y la notificación abre la página como siempre.
+  let abrir = null;
+  try {
+    abrir = typeof datos.abrir === "string" ? JSON.parse(datos.abrir) : null;
+  } catch (e) {
+    abrir = null;
+  }
   evento.waitUntil(
     self.registration.showNotification(titulo, {
       body: texto,
       icon: "/icono-192.png",
       badge: "/icono-192.png",
+      data: { abrir },
     })
   );
 });
 
 self.addEventListener("notificationclick", (evento) => {
   evento.notification.close();
+  const abrir = (evento.notification.data && evento.notification.data.abrir) || null;
+  const ventana = abrir && typeof abrir.ventana === "string" ? abrir.ventana : null;
+  const mes = abrir && typeof abrir.mes === "string" ? abrir.mes : null;
   evento.waitUntil(
     (async () => {
       const ventanas = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
       for (const v of ventanas) {
-        if ("focus" in v) return v.focus();
+        if ("focus" in v) {
+          // La página ya abierta abre la ventana ella misma (`abrirDesdeAviso.ts` en `main.ts`).
+          if (ventana) v.postMessage({ tipo: "abrir", abrir: { ventana, mes } });
+          return v.focus();
+        }
       }
       // Sin ventana abierta se abre la raíz: la página instalada guarda su propia sesión y
-      // el token recordado, así que la escalera de `resolverSesion` la deja entrar.
-      return self.clients.openWindow("/");
+      // el token recordado, así que la escalera de `resolverSesion` la deja entrar. El `?abrir`
+      // no lo ve `resolverSesion` (lee la ruta y el `#`); lo usa `main.ts` y lo borra.
+      if (!ventana) return self.clients.openWindow("/");
+      const params = new URLSearchParams({ abrir: ventana });
+      if (mes) params.set("mes", mes);
+      return self.clients.openWindow(`/?${params.toString()}`);
     })()
   );
 });
