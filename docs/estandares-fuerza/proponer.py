@@ -229,16 +229,23 @@ KG_PILA_PRENSA = 16 * 4.5
 
 
 
+# Curl con mancuernas, hombres: Élite con 22.5 kg × 10 para un hombre como Said (73 kg, 22),
+# con su ajuste por edad (×1.007) y por peso (∛(73/75)), como la página; redondeado hacia
+# abajo para que esa serie sí llegue (entrenador, 2026-10-28). Un poco más que el −10 % de bíceps.
+MARCA_CURL_SAID = 1.007 * 22.5 * (1 + 10 / 30) / 73 * (73 / PESO_EJEMPLO_H) ** (1 / 3)
+
 ELITE_FIJO = {
     "prensa-maquina": {"H": round(KG_PILA_PRENSA * (1 + 8 / 30) / PESO_EJEMPLO_H, 3)},
+    "curl-mancuernas": {"H": math.floor(MARCA_CURL_SAID * 1000) / 1000},
 }
 
 # Élite más cerca para los ejercicios que trabajan ese músculo como principal (× 1): se
 # multiplica por (1 − esto), sin quedar pegado a Avanzado (`SALTO_MIN`). El salto de Avanzado
-# a Élite se sentía como un muro, para los dos sexos (entrenador, 2026-10-28): pecho −5 %, y
+# a Élite se sentía como un muro, para los dos sexos (entrenador, 2026-10-28): pecho −5 %,
 # dorsales −5 % (los remos, jalones, dominadas y el pullover; el peso muerto y las
-# hiperextensiones, que también son de espalda, no).
-BAJA_ELITE_MUSCULO = {"pecho": 0.05, "dorsal": 0.05}
+# hiperextensiones, que también son de espalda, no) y bíceps −10 %. Si un ejercicio trabaja
+# dos de estos músculos (jalón supino, dominadas supinas), manda el mayor.
+BAJA_ELITE_MUSCULO = {"pecho": 0.05, "dorsal": 0.05, "biceps": 0.10}
 
 
 def elite_bajado(ocho: list, musculos: dict, entero: bool) -> list:
@@ -410,9 +417,10 @@ def main() -> None:
                 nota = f"{nota}; {extra}" if nota else extra
             cinco = {s: [round(v * f * por_sexo[s], 3) for v in FAMILIAS[fam][s]] for s in ("H", "M")}
             est = {s: con_elite(cinco[s], a_ocho(cinco[s]), False) for s in ("H", "M")}
+            est = {s: elite_bajado(est[s], e["musculos"], False) for s in ("H", "M")}
+            # El puesto a mano manda: va después del recorte por músculo.
             for s, elite in ELITE_FIJO.get(i, {}).items():
                 est[s][7] = round(max(elite, est[s][6] * (1 + SALTO_MIN)), 3)
-            est = {s: elite_bajado(est[s], e["musculos"], False) for s in ("H", "M")}
             salida[i] = est
             for s in ("H", "M"):
                 modelos.append(percentiles(cinco[s], est[s]))
