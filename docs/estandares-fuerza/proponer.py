@@ -147,7 +147,10 @@ PESO = {
     "curl-barra-z": ("curl", 1.00, ""),
     "curl-polea": ("curl", 1.00, ""),
     "curl-predicador": ("curl", 0.85, ""),
-    "curl-predicador-maquina": ("curl", 0.85, "máquina"),
+    # Toda la tabla escalada para que un hombre como Oscar (89 kg, 44) con 27 kg × 6 quede al
+    # final de Fuerte (entrenador, 2026-10-28). Antes ×0.85, la misma que el de barra, lo dejaba
+    # en En forma.
+    "curl-predicador-maquina": ("curl", 0.557, "máquina"),
     "spider-curl": ("curl", 0.75, ""),
     "curl-mancuernas": ("curl", 0.45, "por mancuerna"),
     "curl-martillo": ("curl", 0.50, "por mancuerna"),
