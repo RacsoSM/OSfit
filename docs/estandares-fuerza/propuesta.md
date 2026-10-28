@@ -163,8 +163,8 @@ Los porcentajes salen de un modelo: entre quienes entrenan, la fuerza se reparte
 | Dominadas asistidas | — | sin estándar: el peso es la ayuda de la máquina: más peso = menos fuerza | | | | | | | |
 | Jalón al pecho | H | 37.5 kg | 47.5 kg | 55 kg | 65 kg | 75 kg | 82.5 kg | 90 kg | 115 kg |
 |  | M | 18 kg | 22.5 kg | 27.5 kg | 32.5 kg | 40 kg | 42.5 kg | 45 kg | 60 kg |
-| Jalón con agarre abierto | H | 35 kg | 45 kg | 52.5 kg | 62.5 kg | 70 kg | 77.5 kg | 85 kg | 107.5 kg |
-|  | M | 17 kg | 22.5 kg | 25 kg | 32.5 kg | 37.5 kg | 40 kg | 42.5 kg | 57.5 kg |
+| Jalón con agarre abierto | H | 35 kg | 42.5 kg | 52.5 kg | 60 kg | 70 kg | 77.5 kg | 82.5 kg | 105 kg |
+|  | M | 17 kg | 20 kg | 25 kg | 30 kg | 37.5 kg | 40 kg | 42.5 kg | 57.5 kg |
 | Jalón con triángulo | H | 37.5 kg | 47.5 kg | 55 kg | 65 kg | 75 kg | 82.5 kg | 90 kg | 115 kg |
 |  | M | 18 kg | 22.5 kg | 27.5 kg | 32.5 kg | 40 kg | 42.5 kg | 45 kg | 60 kg |
 | Jalón al pecho supino | H | 37.5 kg | 47.5 kg | 55 kg | 65 kg | 75 kg | 82.5 kg | 90 kg | 115 kg |

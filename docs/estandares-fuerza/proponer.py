@@ -109,7 +109,9 @@ PESO = {
     "patada-gluteo-polea": ("abductor", 0.805, "polea: el peso marcado no es el real, × 2.3 sobre 0.35 (decisión del entrenador, 2026-10-16; antes × 1.3)"),
     "patada-gluteo-maquina": ("abductor", 0.80, "máquina de palanca, una pierna: varía por marca"),
     "jalon-al-pecho": ("jalon", 1.00, ""),
-    "jalon-agarre-abierto": ("jalon", 0.95, ""),
+    # Toda la tabla escalada para que un hombre como Oscar (89 kg, 44) llegue a Élite justo con
+    # 98 kg × 5 (entrenador, 2026-10-28). Antes ×0.95.
+    "jalon-agarre-abierto": ("jalon", 0.9315, ""),
     "jalon-triangulo": ("jalon", 1.00, ""),
     "jalon-supino": ("jalon", 1.00, ""),
     "remo-sentado-polea": ("jalon", 1.05, ""),
