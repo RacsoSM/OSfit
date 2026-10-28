@@ -76,7 +76,9 @@ PESO = {
     # Solo el disco colgado del cinturón: sin barra y sin carga en la espalda (2026-10-23).
     "belt-squat": ("sentadilla", 0.50, "el peso del disco colgado"),
     "sentadilla-goblet": ("sentadilla", 0.35, "una mancuerna o pesa rusa"),
-    "sentadilla-sumo-mancuerna": ("sentadilla", 0.38, "una mancuerna"),
+    # Toda la tabla escalada para que un hombre como Oscar (89 kg, 44) con 32.5 kg × 12 quede al
+    # inicio de Fuerte (entrenador, 2026-10-28). Antes ×0.38 daba Intermedio a casi todos.
+    "sentadilla-sumo-mancuerna": ("sentadilla", 0.3296, "una mancuerna"),
     "sentadilla-bulgara": ("sentadilla", 0.25, "por mancuerna"),
     "zancadas": ("sentadilla", 0.25, "por mancuerna"),
     "zancadas-atras": ("sentadilla", 0.25, "por mancuerna"),

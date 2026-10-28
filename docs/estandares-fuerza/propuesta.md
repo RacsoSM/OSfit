@@ -108,8 +108,8 @@ Los porcentajes salen de un modelo: entre quienes entrenan, la fuerza se reparte
 
 | Ejercicio | Sexo | Principiante | Ascenso | En forma | Intermedio | Atlético / Atlética | Fuerte | Avanzado | Élite |
 |---|---|---|---|---|---|---|---|---|---|
-| Sentadilla sumo con mancuerna | H · una mancuerna | 22.5 kg | 27.5 kg | 35 kg | 40 kg | 42.5 kg | 47.5 kg | 55 kg | 65 kg |
-|  | M | 11 kg | 14 kg | 17 kg | 22.5 kg | 27.5 kg | 32.5 kg | 35 kg | 37.5 kg |
+| Sentadilla sumo con mancuerna | H · una mancuerna | 19 kg | 25 kg | 30 kg | 35 kg | 37.5 kg | 42.5 kg | 47.5 kg | 55 kg |
+|  | M | 10 kg | 12 kg | 15 kg | 20 kg | 25 kg | 27.5 kg | 30 kg | 32.5 kg |
 | Prensa con pies abiertos | H · máquina: varía por marca | 95 kg | 122.5 kg | 150 kg | 187.5 kg | 225 kg | 247.5 kg | 270 kg | 337.5 kg |
 |  | M | 45 kg | 67.5 kg | 90 kg | 112.5 kg | 135 kg | 150 kg | 165 kg | 212.5 kg |
 | Peso muerto sumo | H | 75 kg | 95 kg | 112.5 kg | 130 kg | 150 kg | 162.5 kg | 177.5 kg | 192.5 kg |
