@@ -144,13 +144,16 @@ PESO = {
     "curl-martillo": ("curl", 0.50, "por mancuerna"),
     "curl-inclinado": ("curl", 0.38, "por mancuerna"),
     "curl-concentrado": ("curl", 0.40, "una mancuerna"),
-    "curl-inverso-barra": ("curl", 0.75, ""),
+    # Élite con 35 kg × 8 para un hombre como Said (2026-10-28). Antes ×0.75.
+    "curl-inverso-barra": ("curl", 0.5776, ""),
     "curl-inverso-polea": ("curl", 0.75, ""),
     "curl-inverso-mancuernas": ("curl", 0.33, "por mancuerna"),
-    # Said (73 kg, 30 kg × 16) en Fuerte a media banda hacia Avanzado (entrenador, 2026-10-27).
-    "curl-muneca-barra": ("muneca", 0.887, ""),
+    # Antebrazo (entrenador, 2026-10-28): toda la tabla escalada para que un hombre como Said
+    # (73 kg, 22) llegue a Élite con 35 kg × 15. Antes ×0.887 (ese era Said, 30 kg × 16, en Fuerte).
+    "curl-muneca-barra": ("muneca", 0.6991, ""),
     "curl-muneca-polea": ("muneca", 0.90, ""),
-    "curl-muneca-inverso-barra": ("muneca", 0.60, ""),
+    # Élite con 30 kg × 10 para un hombre como Said (2026-10-28). Antes ×0.60.
+    "curl-muneca-inverso-barra": ("muneca", 0.5709, ""),
     "curl-muneca-mancuernas": ("muneca", 0.45, "por mancuerna"),
     "curl-muneca-inverso-mancuernas": ("muneca", 0.28, "por mancuerna"),
     "extension-triceps-polea": ("triceps", 1.00, ""),
@@ -210,20 +213,9 @@ FACTOR_POR_SEXO = {
 KG_PILA_PRENSA = 16 * 4.5
 
 
-def marca_said(kg: float, reps: int) -> float:
-    """La marca de un hombre como Said (73 kg, 22 años) con esa serie: 1RM Epley (hasta 12
-    reps) entre su peso, por el factor de peso (peso ÷ 75)^⅓ y el de edad de 22 (1.0067), como
-    lo calcula la página (`web/src/fuerza.ts`)."""
-    # Hacia abajo: redondeado hacia arriba, esa misma serie quedaba a milésimas de Élite.
-    return math.floor(kg * (1 + min(reps, 12) / 30) / 73 * (73 / 75) ** (1 / 3) * 1.0067 * 1000) / 1000
-
 
 ELITE_FIJO = {
     "prensa-maquina": {"H": round(KG_PILA_PRENSA * (1 + 8 / 30) / PESO_EJEMPLO_H, 3)},
-    # Antebrazo (entrenador, 2026-10-28): Élite para un hombre como Said con estas series.
-    "curl-muneca-barra": {"H": marca_said(35, 15)},
-    "curl-muneca-inverso-barra": {"H": marca_said(30, 10)},
-    "curl-inverso-barra": {"H": marca_said(35, 8)},
 }
 
 CORPORAL = {

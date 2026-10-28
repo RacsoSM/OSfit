@@ -266,16 +266,16 @@ Los porcentajes salen de un modelo: entre quienes entrenan, la fuerza se reparte
 
 | Ejercicio | Sexo | Principiante | Ascenso | En forma | Intermedio | Atlético / Atlética | Fuerte | Avanzado | Élite |
 |---|---|---|---|---|---|---|---|---|---|
-| Curl de muñeca con barra | H | 13 kg | 18 kg | 22.5 kg | 30 kg | 37.5 kg | 40 kg | 45 kg | 50 kg |
-|  | M | 5 kg | 8 kg | 11 kg | 15 kg | 19 kg | 20 kg | 22.5 kg | 32.5 kg |
-| Curl de muñeca inverso con barra | H | 9 kg | 12 kg | 16 kg | 20 kg | 25 kg | 27.5 kg | 30 kg | 40 kg |
-|  | M | 4 kg | 5 kg | 7 kg | 10 kg | 13 kg | 14 kg | 15 kg | 22.5 kg |
+| Curl de muñeca con barra | H | 11 kg | 14 kg | 18 kg | 22.5 kg | 30 kg | 32.5 kg | 35 kg | 50 kg |
+|  | M | 4 kg | 6 kg | 8 kg | 12 kg | 15 kg | 16 kg | 18 kg | 27.5 kg |
+| Curl de muñeca inverso con barra | H | 9 kg | 12 kg | 15 kg | 19 kg | 22.5 kg | 27.5 kg | 30 kg | 40 kg |
+|  | M | 3 kg | 5 kg | 7 kg | 9 kg | 12 kg | 13 kg | 15 kg | 22.5 kg |
 | Curl de muñeca con mancuernas | H · por mancuerna | 7 kg | 9 kg | 12 kg | 15 kg | 19 kg | 20 kg | 22.5 kg | 32.5 kg |
 |  | M | 3 kg | 4 kg | 5 kg | 7 kg | 9 kg | 10 kg | 11 kg | 17 kg |
 | Curl de muñeca inverso con mancuernas | H · por mancuerna | 4 kg | 6 kg | 7 kg | 9 kg | 12 kg | 13 kg | 14 kg | 20 kg |
 |  | M | 2 kg | 3 kg | 3 kg | 5 kg | 6 kg | 6 kg | 7 kg | 11 kg |
-| Curl inverso con barra | H | 11 kg | 17 kg | 22.5 kg | 27.5 kg | 35 kg | 37.5 kg | 40 kg | 45 kg |
-|  | M | 4 kg | 7 kg | 9 kg | 14 kg | 18 kg | 20 kg | 22.5 kg | 35 kg |
+| Curl inverso con barra | H | 9 kg | 13 kg | 17 kg | 22.5 kg | 25 kg | 27.5 kg | 32.5 kg | 45 kg |
+|  | M | 3 kg | 5 kg | 7 kg | 10 kg | 14 kg | 16 kg | 18 kg | 27.5 kg |
 | Curl inverso con mancuernas | H · por mancuerna | 5 kg | 7 kg | 10 kg | 12 kg | 15 kg | 16 kg | 18 kg | 25 kg |
 |  | M | 2 kg | 3 kg | 4 kg | 6 kg | 8 kg | 9 kg | 10 kg | 15 kg |
 | Curl inverso en polea | H · polea doble ×1.3 | 15 kg | 22.5 kg | 30 kg | 37.5 kg | 45 kg | 47.5 kg | 52.5 kg | 77.5 kg |
