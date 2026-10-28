@@ -1551,6 +1551,31 @@ button.registro-serie-num.abierto { border-style: solid; border-color: var(--pri
 .hoja-sig-texto { margin: 0; font-size: 13px; line-height: 1.4; color: var(--texto-tenue); }
 .hoja-sig-texto strong { color: var(--texto); }
 .hoja-otra { margin: 0; font-size: 11px; color: var(--texto-tenue); }
+/* "¿Cómo subir a …?": plegable, con una tarjeta por opción. */
+.hoja-como { margin-top: 4px; }
+.hoja-como summary {
+  cursor: pointer; list-style: none; display: flex; justify-content: space-between; align-items: center;
+  font-size: 14px; padding: 6px 0;
+}
+.hoja-como summary::-webkit-details-marker { display: none; }
+/* La flecha dibujada con bordes: no todas las fuentes traen "▾". */
+.hoja-como summary::after {
+  content: ""; width: 7px; height: 7px; margin: 0 4px 4px 8px; flex: none;
+  border-right: 2px solid var(--texto-tenue); border-bottom: 2px solid var(--texto-tenue);
+  transform: rotate(45deg); transition: transform 160ms ease;
+}
+.hoja-como[open] summary::after { transform: rotate(-135deg); margin-bottom: -2px; }
+.hoja-opciones { display: grid; gap: 8px; margin-top: 6px; }
+.hoja-opcion {
+  padding: 10px 12px; border-radius: 12px;
+  background: color-mix(in srgb, var(--texto) 6%, transparent);
+}
+.hoja-opcion-etq { font-size: 11px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--texto-tenue); }
+.hoja-opcion-ej { margin-top: 2px; font-size: 15px; font-weight: 700; color: var(--texto); }
+.hoja-opcion-meta { margin-top: 4px; font-size: 14px; color: var(--texto); }
+.hoja-opcion-meta strong { color: var(--texto); }
+.hoja-opcion-mejor { margin-top: 2px; font-size: 12px; color: var(--texto-tenue); }
+@media (prefers-reduced-motion: reduce) { .hoja-como summary::after { transition: none; } }
 @media (prefers-reduced-motion: reduce) { .hoja-detalle.entra { animation: none; } .h-barra { transition: none; } }
 
 /* Lo que pide su rutina para el ejercicio, en el entrenamiento guiado. */

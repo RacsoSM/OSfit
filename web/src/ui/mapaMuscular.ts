@@ -259,16 +259,35 @@ const serieTexto = (x: { reps: number; peso: number | null }) =>
   x.peso === null ? `${x.reps} reps` : `${kg(x.peso)} × ${x.reps}`;
 
 /**
- * "Necesitas 9 repeticiones con 33 kg en Press inclinado con mancuernas" (entrenador,
- * 2026-10-28): la serie entera que tendría que hacer, no lo que le falta, porque es lo que va a
- * intentar en su siguiente entrenamiento. En los de peso, a las mismas reps de su mejor serie.
+ * Una opción para subir (entrenador, 2026-10-28): el ejercicio, "Necesitas 9 repeticiones con
+ * 33 kg" y su mejor serie, en una tarjeta. Pide la serie entera, no lo que le falta: es lo que
+ * va a intentar en su siguiente entrenamiento. En los de peso, a las mismas reps de su mejor serie.
  */
-function textoMeta(m: Meta): string {
+function opcionMeta(m: Meta, etiqueta: string): string {
   const reps = `<strong>${m.objetivo.reps} ${m.objetivo.reps === 1 ? "repetición" : "repeticiones"}</strong>`;
   const con = m.objetivo.peso !== null
     ? ` con <strong>${kg(m.objetivo.peso)}${m.porMancuerna ? " por mancuerna" : ""}</strong>`
     : "";
-  return `Necesitas ${reps}${con} en <strong>${escapar(m.ejercicio)}</strong> para subir de nivel.`;
+  return `
+        <div class="hoja-opcion">
+          <div class="hoja-opcion-etq">${etiqueta}</div>
+          <div class="hoja-opcion-ej">${escapar(m.ejercicio)}</div>
+          <div class="hoja-opcion-meta">Necesitas ${reps}${con}</div>
+          <div class="hoja-opcion-mejor">Tu mejor serie: ${serieTexto(m.mejor)}</div>
+        </div>`;
+}
+
+/**
+ * Si "¿Cómo subir?" está abierto. Vive en el módulo porque cada repintado rehace el detalle
+ * (`innerHTML`), y sin esto el menú se cerraría solo al llegar cualquier dato.
+ */
+let comoSubirAbierto = false;
+
+/** Recuerda si abrió o cerró "¿Cómo subir?" (el evento `toggle` no sube: va en el `details`). */
+function conectarComoSubir(raiz: ParentNode | null): void {
+  raiz?.querySelector<HTMLDetailsElement>("details.hoja-como")?.addEventListener("toggle", (e) => {
+    comoSubirAbierto = (e.currentTarget as HTMLDetailsElement).open;
+  });
 }
 
 /** Lo que le falta para el siguiente rango, o que ya está en el más alto. */
@@ -298,12 +317,19 @@ export function bloqueSiguiente(f: FuerzaMusculo, sexo: Sexo, peso: number, musc
     const texto = `Para subir, registra un ejercicio que trabaje directo tu ${musculo.toLowerCase()}.`;
     return `<div class="hoja-sig">${barra}<p class="hoja-sig-texto">${texto}</p></div>`;
   }
-  // Su mejor ejercicio del músculo y, si hizo otro, el segundo: dos caminos para subir.
-  const primera = `${textoMeta(s)} Tu mejor serie: ${serieTexto(s.mejor)}.`;
-  const segunda = s.otra
-    ? `<p class="hoja-sig-texto">O también: ${textoMeta(s.otra).replace(/^Necesitas/, "necesitas")} Tu mejor serie ahí: ${serieTexto(s.otra.mejor)}.</p>`
-    : "";
-  return `<div class="hoja-sig">${barra}<p class="hoja-sig-texto">${primera}</p>${segunda}</div>`;
+  // Su mejor ejercicio del músculo y, si hizo otro, el segundo: dos caminos para subir, en un
+  // menú plegable para que el detalle no se llene de texto (entrenador, 2026-10-28).
+  const opciones = opcionMeta(s, s.otra ? "Opción 1 · tu mejor ejercicio" : "Tu mejor ejercicio")
+    + (s.otra ? opcionMeta(s.otra, "Opción 2") : "");
+  const rango = nombreRango(RANGOS[s.rango].desde, sexo);
+  return `
+    <div class="hoja-sig">${barra}
+      <details class="hoja-como"${comoSubirAbierto ? " open" : ""}>
+        <summary><span>¿Cómo subir a <strong style="color: ${COLORES_RANGO[s.rango]}">${rango}</strong>?</span></summary>
+        <div class="hoja-opciones">${opciones}
+        </div>
+      </details>
+    </div>`;
 }
 
 /** Las 8 barras: qué porcentaje de cada grupo está en cada rango; la suya, resaltada. */
@@ -633,6 +659,7 @@ export function conectarMapa(
     if (abriendo) caja.querySelector(".hoja-detalle")?.classList.add("entra");
     caja.querySelector("#cerrar-detalle")?.addEventListener("click", () => elegir(null));
     conectarHoja(caja.querySelector<HTMLElement>(".hoja-detalle"), () => elegir(null));
+    conectarComoSubir(caja);
   };
   const elegir = (grupo: string | null) => {
     const abriendo = seleccionado === null && grupo !== null;
@@ -645,6 +672,7 @@ export function conectarMapa(
   };
 
   marcarSeleccion(false);
+  conectarComoSubir(document.querySelector("#mapa-detalle"));
   document.querySelector("#cerrar-detalle")?.addEventListener("click", () => elegir(null));
   conectarHoja(document.querySelector<HTMLElement>("#mapa-detalle .hoja-detalle"), () => elegir(null));
   // "Todos / Quienes entrenan": delegado en la caja, que sobrevive a `pintarDetalle`.
