@@ -284,13 +284,15 @@ export function bloqueSiguiente(f: FuerzaMusculo, sexo: Sexo, peso: number, musc
     return `<div class="hoja-sig"><p class="hoja-sig-texto">Estás en el rango más alto. ¡Sigue así!${mejor}</p></div>`;
   }
   const actual = indiceRango(f.nivel);
+  // Hacia abajo: a 99.6 % redondear decía "100 %" sin haber subido (Said, a 0.004 de Élite).
+  const porcentaje = Math.floor(s.avance * 100);
   const barra = `
       <div class="hoja-sig-fila">
         <span>Siguiente: <strong style="color: ${COLORES_RANGO[s.rango]}">${nombreRango(RANGOS[s.rango].desde, sexo)}</strong></span>
-        <span>${pct(Math.round(s.avance * 100))}</span>
+        <span>${pct(porcentaje)}</span>
       </div>
       <div class="hoja-sig-barra" aria-hidden="true">
-        <span style="width: ${Math.round(s.avance * 100)}%; background: linear-gradient(90deg, ${COLORES_RANGO[actual]}, ${COLORES_RANGO[s.rango]})"></span>
+        <span style="width: ${porcentaje}%; background: linear-gradient(90deg, ${COLORES_RANGO[actual]}, ${COLORES_RANGO[s.rango]})"></span>
       </div>`;
   const texto = s.tipo === "otroEjercicio"
     ? `Para subir, registra un ejercicio que trabaje directo tu ${musculo.toLowerCase()}.`

@@ -208,6 +208,22 @@ describe("detalleMusculo", () => {
     expect(h).toContain("Tu mejor serie: 30 kg × 8.");
   });
 
+  // Said, a 0.004 de Élite: redondear decía "100 %" y el rango no subía.
+  it("no dice 100 % hasta llegar: el avance se redondea hacia abajo", () => {
+    const f = {
+      nivel: 7.996,
+      origen: {
+        ejercicioId: "press-banca", nombre: "Press de banca", tipo: "peso" as const, cuanto: 1,
+        serie: { reps: 8, peso: 100 }, estandares: [0.5, 0.625, 0.75, 0.875, 1, 1.137, 1.275, 1.7],
+        pesoPorMancuerna: false,
+      },
+    };
+    const h = detalleMusculo("pecho", f, "H", 75);
+    expect(h).toContain("99&nbsp;%");
+    expect(h).not.toContain("100&nbsp;%");
+    expect(h).toContain("width: 99%");
+  });
+
   it("el ajuste por edad no se menciona en la página (decisión del entrenador, 2026-10-14)", () => {
     const origen = {
       ejercicioId: "press-banca", nombre: "Press de banca", tipo: "peso" as const, cuanto: 1,
