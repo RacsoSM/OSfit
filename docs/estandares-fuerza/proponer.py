@@ -229,9 +229,10 @@ FACTOR_POR_SEXO = {
     "face-pull": {"H": 0.6316, "M": 0.92},
     # Crunch en máquina, hombres: con el ×1.13 que puso a Dulce en Fuerte, ellos salían en En
     # forma moviendo más peso. Escalada para que un hombre como Said (73 kg, 22) con 45 kg × 4
-    # quede al inicio de Fuerte (entrenador, 2026-10-28). La de ellas ×0.93 para que quede un
-    # poco debajo de la de ellos en todos los niveles (en Élite, ~5 % abajo), como en face pull.
-    "crunch-maquina": {"H": 0.6596, "M": 0.93},
+    # quede en 5.6, a la mitad de Atlético (entrenador, 2026-10-28). La de ellas, en la misma
+    # proporción, un poco debajo de la de ellos en todos los niveles (en Élite, ~5 % abajo),
+    # como en face pull.
+    "crunch-maquina": {"H": 0.6845, "M": 0.9651},
     # Remo en máquina: el ajuste del ×0.6825 es para ellos (Said); a ellas les deja la tabla de
     # antes (×0.95), porque con él Estela saltaba de Intermedio a Avanzada (2026-10-28).
     "remo-maquina": {"H": 1, "M": round(0.95 / 0.6825, 4)},
