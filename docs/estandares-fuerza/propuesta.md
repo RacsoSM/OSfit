@@ -203,10 +203,10 @@ Los porcentajes salen de un modelo: entre quienes entrenan, la fuerza se reparte
 
 | Ejercicio | Sexo | Principiante | Ascenso | En forma | Intermedio | Atlético / Atlética | Fuerte | Avanzado | Élite |
 |---|---|---|---|---|---|---|---|---|---|
-| Encogimientos con barra | H | 45 kg | 60 kg | 75 kg | 95 kg | 112.5 kg | 122.5 kg | 135 kg | 187.5 kg |
-|  | M | 20 kg | 27.5 kg | 35 kg | 47.5 kg | 57.5 kg | 65 kg | 72.5 kg | 100 kg |
-| Encogimientos con mancuernas | H · por mancuerna | 20 kg | 27.5 kg | 35 kg | 42.5 kg | 50 kg | 55 kg | 60 kg | 85 kg |
-|  | M | 9 kg | 13 kg | 16 kg | 20 kg | 25 kg | 30 kg | 32.5 kg | 45 kg |
+| Encogimientos con barra | H | 45 kg | 60 kg | 75 kg | 95 kg | 112.5 kg | 122.5 kg | 135 kg | 170 kg |
+|  | M | 20 kg | 27.5 kg | 35 kg | 47.5 kg | 57.5 kg | 65 kg | 72.5 kg | 90 kg |
+| Encogimientos con mancuernas | H · por mancuerna | 14 kg | 18 kg | 22.5 kg | 30 kg | 35 kg | 37.5 kg | 40 kg | 52.5 kg |
+|  | M | 6 kg | 9 kg | 11 kg | 14 kg | 18 kg | 20 kg | 22.5 kg | 27.5 kg |
 
 ### Hombro
 
@@ -234,8 +234,8 @@ Los porcentajes salen de un modelo: entre quienes entrenan, la fuerza se reparte
 |  | M | 9 kg | 12 kg | 16 kg | 19 kg | 22.5 kg | 25 kg | 27.5 kg | 40 kg |
 | Face pull | H · polea; base ×1.3 sobre 0.90 (decisión del entrenador, 2026-10-16); polea doble ×1.3 | 27.5 kg | 40 kg | 52.5 kg | 62.5 kg | 75 kg | 82.5 kg | 92.5 kg | 130 kg |
 |  | M | 14 kg | 18 kg | 22.5 kg | 30 kg | 37.5 kg | 42.5 kg | 47.5 kg | 67.5 kg |
-| Remo al mentón | H | 20 kg | 27.5 kg | 32.5 kg | 40 kg | 45 kg | 47.5 kg | 50 kg | 70 kg |
-|  | M | 10 kg | 13 kg | 17 kg | 20 kg | 25 kg | 27.5 kg | 30 kg | 42.5 kg |
+| Remo al mentón | H | 20 kg | 27.5 kg | 32.5 kg | 40 kg | 45 kg | 47.5 kg | 50 kg | 62.5 kg |
+|  | M | 10 kg | 13 kg | 17 kg | 20 kg | 25 kg | 27.5 kg | 30 kg | 37.5 kg |
 
 ### Bíceps
 

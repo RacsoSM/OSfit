@@ -126,7 +126,10 @@ PESO = {
     "remo-en-t": ("remo", 0.7723, "solo los discos"),
     "remo-mancuerna": ("remo", 0.45, "una mancuerna"),
     "encogimientos-barra": ("encogimiento", 1.00, ""),
-    "encogimientos-mancuernas": ("encogimiento", 0.45, "por mancuerna"),
+    # Toda la tabla escalada para que un hombre como Oscar (89 kg, 44) con 37.5 kg × 10 quede en
+    # 7.5, igual que con 130 kg × 10 en barra: el agarre limita más que la barra (entrenador,
+    # 2026-10-28). Antes ×0.45.
+    "encogimientos-mancuernas": ("encogimiento", 0.3069, "por mancuerna"),
     "press-militar": ("militar", 1.00, ""),
     "press-militar-sentado": ("militar", 1.03, ""),
     # La máquina de Focus pide mucho menos que el press con barra: Said (73 kg) hace 27 kg × 8 y
@@ -245,10 +248,10 @@ ELITE_FIJO = {
 # multiplica por (1 − esto), sin quedar pegado a Avanzado (`SALTO_MIN`). El salto de Avanzado
 # a Élite se sentía como un muro, para los dos sexos (entrenador, 2026-10-28): pecho −5 %,
 # dorsales −5 % (los remos, jalones, dominadas y el pullover; el peso muerto y las
-# hiperextensiones, que también son de espalda, no), bíceps −10 % y tríceps −10 % (−15 % lo
-# dejaba más cerca de Avanzado que los demás). Si un ejercicio trabaja dos de estos músculos
-# (jalón supino, dominadas supinas), manda el mayor.
-BAJA_ELITE_MUSCULO = {"pecho": 0.05, "dorsal": 0.05, "biceps": 0.10, "triceps": 0.10}
+# hiperextensiones, que también son de espalda, no), bíceps −10 %, tríceps −10 % (−15 % lo
+# dejaba más cerca de Avanzado que los demás) y trapecio −10 %. Si un ejercicio trabaja dos de
+# estos músculos (jalón supino, dominadas supinas), manda el mayor.
+BAJA_ELITE_MUSCULO = {"pecho": 0.05, "dorsal": 0.05, "biceps": 0.10, "triceps": 0.10, "trapecio": 0.10}
 
 
 def elite_bajado(ocho: list, musculos: dict, entero: bool) -> list:
