@@ -220,15 +220,17 @@ ELITE_FIJO = {
     "prensa-maquina": {"H": round(KG_PILA_PRENSA * (1 + 8 / 30) / PESO_EJEMPLO_H, 3)},
 }
 
-# Élite más cerca, por grupo: se multiplica por (1 − esto), sin quedar pegado a Avanzado
-# (`SALTO_MIN`). Pecho −5 %: el salto de Avanzado a Élite se sentía como un muro, para los
-# dos sexos (entrenador, 2026-10-28).
-BAJA_ELITE_GRUPO = {"pecho": 0.05}
+# Élite más cerca para los ejercicios que trabajan ese músculo como principal (× 1): se
+# multiplica por (1 − esto), sin quedar pegado a Avanzado (`SALTO_MIN`). El salto de Avanzado
+# a Élite se sentía como un muro, para los dos sexos (entrenador, 2026-10-28): pecho −5 %, y
+# dorsales −5 % (los remos, jalones, dominadas y el pullover; el peso muerto y las
+# hiperextensiones, que también son de espalda, no).
+BAJA_ELITE_MUSCULO = {"pecho": 0.05, "dorsal": 0.05}
 
 
-def elite_bajado(ocho: list, grupo: str, entero: bool) -> list:
-    """`ocho` con Élite bajado según `BAJA_ELITE_GRUPO`; los demás niveles, igual."""
-    baja = BAJA_ELITE_GRUPO.get(grupo, 0)
+def elite_bajado(ocho: list, musculos: dict, entero: bool) -> list:
+    """`ocho` con Élite bajado según `BAJA_ELITE_MUSCULO`; los demás niveles, igual."""
+    baja = max((b for m, b in BAJA_ELITE_MUSCULO.items() if musculos.get(m, 0) >= 1), default=0)
     if not baja:
         return ocho
     v = max(ocho[7] * (1 - baja), ocho[6] * (1 + SALTO_MIN))
@@ -397,7 +399,7 @@ def main() -> None:
             est = {s: con_elite(cinco[s], a_ocho(cinco[s]), False) for s in ("H", "M")}
             for s, elite in ELITE_FIJO.get(i, {}).items():
                 est[s][7] = round(max(elite, est[s][6] * (1 + SALTO_MIN)), 3)
-            est = {s: elite_bajado(est[s], grupo, False) for s in ("H", "M")}
+            est = {s: elite_bajado(est[s], e["musculos"], False) for s in ("H", "M")}
             salida[i] = est
             for s in ("H", "M"):
                 modelos.append(percentiles(cinco[s], est[s]))
@@ -408,7 +410,7 @@ def main() -> None:
                 n = f" · {nota}" if nota else ""
                 filas[grupo].append(f"| {e['nombre'] if s == 'H' else ''} | {'H' if s == 'H' else 'M'}{n if s == 'H' else ''} | " + " | ".join(celdas) + " |")
         elif tipo == "corporal" and i in CORPORAL:
-            est = {s: elite_bajado(con_elite(CORPORAL[i][s], a_ocho(CORPORAL[i][s], entero=True), True), grupo, True)
+            est = {s: elite_bajado(con_elite(CORPORAL[i][s], a_ocho(CORPORAL[i][s], entero=True), True), e["musculos"], True)
                    for s in ("H", "M")}
             salida[i] = est
             for s in ("H", "M"):

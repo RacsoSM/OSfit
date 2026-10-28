@@ -156,31 +156,31 @@ Los porcentajes salen de un modelo: entre quienes entrenan, la fuerza se reparte
 |---|---|---|---|---|---|---|---|---|---|
 | Peso muerto | H | 75 kg | 95 kg | 112.5 kg | 130 kg | 150 kg | 162.5 kg | 177.5 kg | 212.5 kg |
 |  | M | 30 kg | 45 kg | 60 kg | 67.5 kg | 75 kg | 82.5 kg | 90 kg | 132.5 kg |
-| Dominadas | H | 1 rep | 4 reps | 6 reps | 9 reps | 12 reps | 14 reps | 17 reps | 30 reps |
+| Dominadas | H | 1 rep | 4 reps | 6 reps | 9 reps | 12 reps | 14 reps | 17 reps | 29 reps |
 |  | M | 1 rep | 2 reps | 3 reps | 4 reps | 6 reps | 8 reps | 10 reps | 16 reps |
-| Dominadas supinas | H | 1 rep | 4 reps | 7 reps | 10 reps | 13 reps | 16 reps | 18 reps | 31 reps |
+| Dominadas supinas | H | 1 rep | 4 reps | 7 reps | 10 reps | 13 reps | 16 reps | 18 reps | 30 reps |
 |  | M | 1 rep | 2 reps | 3 reps | 5 reps | 7 reps | 9 reps | 11 reps | 18 reps |
 | Dominadas asistidas | — | sin estándar: el peso es la ayuda de la máquina: más peso = menos fuerza | | | | | | | |
-| Jalón al pecho | H | 37.5 kg | 47.5 kg | 55 kg | 65 kg | 75 kg | 82.5 kg | 90 kg | 120 kg |
-|  | M | 18 kg | 22.5 kg | 27.5 kg | 32.5 kg | 40 kg | 42.5 kg | 45 kg | 65 kg |
-| Jalón con agarre abierto | H | 35 kg | 45 kg | 52.5 kg | 62.5 kg | 70 kg | 77.5 kg | 85 kg | 115 kg |
-|  | M | 17 kg | 22.5 kg | 25 kg | 32.5 kg | 37.5 kg | 40 kg | 42.5 kg | 60 kg |
-| Jalón con triángulo | H | 37.5 kg | 47.5 kg | 55 kg | 65 kg | 75 kg | 82.5 kg | 90 kg | 120 kg |
-|  | M | 18 kg | 22.5 kg | 27.5 kg | 32.5 kg | 40 kg | 42.5 kg | 45 kg | 65 kg |
-| Jalón al pecho supino | H | 37.5 kg | 47.5 kg | 55 kg | 65 kg | 75 kg | 82.5 kg | 90 kg | 120 kg |
-|  | M | 18 kg | 22.5 kg | 27.5 kg | 32.5 kg | 40 kg | 42.5 kg | 45 kg | 65 kg |
-| Pullover en polea | H · polea doble ×1.3 | 22.5 kg | 30 kg | 40 kg | 47.5 kg | 57.5 kg | 65 kg | 70 kg | 100 kg |
-|  | M | 11 kg | 14 kg | 18 kg | 22.5 kg | 27.5 kg | 32.5 kg | 35 kg | 52.5 kg |
-| Remo con barra | H | 37.5 kg | 47.5 kg | 55 kg | 65 kg | 75 kg | 85 kg | 95 kg | 122.5 kg |
-|  | M | 15 kg | 20 kg | 25 kg | 32.5 kg | 40 kg | 42.5 kg | 45 kg | 65 kg |
-| Remo con mancuerna | H · una mancuerna | 17 kg | 20 kg | 25 kg | 30 kg | 35 kg | 37.5 kg | 42.5 kg | 55 kg |
-|  | M | 7 kg | 9 kg | 11 kg | 14 kg | 18 kg | 19 kg | 20 kg | 30 kg |
-| Remo sentado en polea | H | 40 kg | 50 kg | 60 kg | 70 kg | 80 kg | 85 kg | 95 kg | 125 kg |
-|  | M | 19 kg | 22.5 kg | 27.5 kg | 35 kg | 40 kg | 45 kg | 47.5 kg | 67.5 kg |
-| Remo en máquina | H · máquina: varía por marca | 35 kg | 45 kg | 52.5 kg | 62.5 kg | 70 kg | 80 kg | 90 kg | 117.5 kg |
-|  | M | 14 kg | 18 kg | 22.5 kg | 30 kg | 37.5 kg | 40 kg | 42.5 kg | 62.5 kg |
-| Remo en T con apoyo de pecho | H · solo los discos | 32.5 kg | 40 kg | 47.5 kg | 55 kg | 65 kg | 72.5 kg | 82.5 kg | 105 kg |
-|  | M | 13 kg | 17 kg | 20 kg | 27.5 kg | 32.5 kg | 35 kg | 40 kg | 55 kg |
+| Jalón al pecho | H | 37.5 kg | 47.5 kg | 55 kg | 65 kg | 75 kg | 82.5 kg | 90 kg | 115 kg |
+|  | M | 18 kg | 22.5 kg | 27.5 kg | 32.5 kg | 40 kg | 42.5 kg | 45 kg | 60 kg |
+| Jalón con agarre abierto | H | 35 kg | 45 kg | 52.5 kg | 62.5 kg | 70 kg | 77.5 kg | 85 kg | 107.5 kg |
+|  | M | 17 kg | 22.5 kg | 25 kg | 32.5 kg | 37.5 kg | 40 kg | 42.5 kg | 57.5 kg |
+| Jalón con triángulo | H | 37.5 kg | 47.5 kg | 55 kg | 65 kg | 75 kg | 82.5 kg | 90 kg | 115 kg |
+|  | M | 18 kg | 22.5 kg | 27.5 kg | 32.5 kg | 40 kg | 42.5 kg | 45 kg | 60 kg |
+| Jalón al pecho supino | H | 37.5 kg | 47.5 kg | 55 kg | 65 kg | 75 kg | 82.5 kg | 90 kg | 115 kg |
+|  | M | 18 kg | 22.5 kg | 27.5 kg | 32.5 kg | 40 kg | 42.5 kg | 45 kg | 60 kg |
+| Pullover en polea | H · polea doble ×1.3 | 22.5 kg | 30 kg | 40 kg | 47.5 kg | 57.5 kg | 65 kg | 70 kg | 95 kg |
+|  | M | 11 kg | 14 kg | 18 kg | 22.5 kg | 27.5 kg | 32.5 kg | 35 kg | 50 kg |
+| Remo con barra | H | 37.5 kg | 47.5 kg | 55 kg | 65 kg | 75 kg | 85 kg | 95 kg | 117.5 kg |
+|  | M | 15 kg | 20 kg | 25 kg | 32.5 kg | 40 kg | 42.5 kg | 45 kg | 62.5 kg |
+| Remo con mancuerna | H · una mancuerna | 17 kg | 20 kg | 25 kg | 30 kg | 35 kg | 37.5 kg | 42.5 kg | 52.5 kg |
+|  | M | 7 kg | 9 kg | 11 kg | 14 kg | 18 kg | 19 kg | 20 kg | 27.5 kg |
+| Remo sentado en polea | H | 40 kg | 50 kg | 60 kg | 70 kg | 80 kg | 85 kg | 95 kg | 120 kg |
+|  | M | 19 kg | 22.5 kg | 27.5 kg | 35 kg | 40 kg | 45 kg | 47.5 kg | 65 kg |
+| Remo en máquina | H · máquina: varía por marca | 35 kg | 45 kg | 52.5 kg | 62.5 kg | 70 kg | 80 kg | 90 kg | 110 kg |
+|  | M | 14 kg | 18 kg | 22.5 kg | 30 kg | 37.5 kg | 40 kg | 42.5 kg | 57.5 kg |
+| Remo en T con apoyo de pecho | H · solo los discos | 32.5 kg | 40 kg | 47.5 kg | 55 kg | 65 kg | 72.5 kg | 82.5 kg | 100 kg |
+|  | M | 13 kg | 17 kg | 20 kg | 27.5 kg | 32.5 kg | 35 kg | 40 kg | 52.5 kg |
 | Hiperextensiones | H | 5 reps | 10 reps | 15 reps | 22 reps | 30 reps | 34 reps | 38 reps | 59 reps |
 |  | M | 5 reps | 8 reps | 12 reps | 18 reps | 25 reps | 30 reps | 34 reps | 52 reps |
 
