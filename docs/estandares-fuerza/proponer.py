@@ -70,9 +70,13 @@ PESO = {
     "press-pecho-maquina": ("banca", 0.537, "máquina de Focus"),
     "sentadilla": ("sentadilla", 1.00, ""),
     "sentadilla-frontal": ("sentadilla", 0.82, ""),
-    "sentadilla-smith": ("sentadilla", 0.95, "máquina: varía por marca"),
+    # Toda la tabla escalada para que un hombre como Oscar (89 kg, 44) con 130 kg × 2 quede en
+    # 7.7 (entrenador, 2026-10-28). Antes ×0.95.
+    "sentadilla-smith": ("sentadilla", 0.7922, "máquina: varía por marca"),
     "sentadilla-hack": ("sentadilla", 1.10, "máquina: varía por marca"),
-    "sentadilla-hack-maquina": ("sentadilla", 1.10, "máquina: varía por marca"),
+    # Toda la tabla escalada para que un hombre como Oscar (89 kg, 44) con 90 kg × 7 quede en
+    # 7.3 (entrenador, 2026-10-28). Antes ×1.10, la misma que la hack con barra: daba 3.
+    "sentadilla-hack-maquina": ("sentadilla", 0.6548, "máquina: varía por marca"),
     # Solo el disco colgado del cinturón: sin barra y sin carga en la espalda (2026-10-23).
     "belt-squat": ("sentadilla", 0.50, "el peso del disco colgado"),
     "sentadilla-goblet": ("sentadilla", 0.35, "una mancuerna o pesa rusa"),

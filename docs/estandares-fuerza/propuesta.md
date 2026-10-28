@@ -72,12 +72,12 @@ Los porcentajes salen de un modelo: entre quienes entrenan, la fuerza se reparte
 |  | M | 30 kg | 37.5 kg | 45 kg | 60 kg | 75 kg | 82.5 kg | 90 kg | 100 kg |
 | Sentadilla frontal | H | 45 kg | 62.5 kg | 77.5 kg | 85 kg | 92.5 kg | 105 kg | 117.5 kg | 155 kg |
 |  | M | 25 kg | 30 kg | 37.5 kg | 50 kg | 62.5 kg | 67.5 kg | 75 kg | 90 kg |
-| Sentadilla en Smith | H · máquina: varía por marca | 52.5 kg | 70 kg | 90 kg | 97.5 kg | 107.5 kg | 122.5 kg | 135 kg | 162.5 kg |
-|  | M | 27.5 kg | 35 kg | 42.5 kg | 57.5 kg | 72.5 kg | 77.5 kg | 85 kg | 95 kg |
+| Sentadilla en Smith | H · máquina: varía por marca | 45 kg | 60 kg | 75 kg | 82.5 kg | 90 kg | 102.5 kg | 112.5 kg | 135 kg |
+|  | M | 25 kg | 30 kg | 35 kg | 47.5 kg | 60 kg | 65 kg | 72.5 kg | 77.5 kg |
 | Sentadilla hack | H · máquina: varía por marca | 62.5 kg | 82.5 kg | 102.5 kg | 112.5 kg | 125 kg | 140 kg | 157.5 kg | 207.5 kg |
 |  | M | 32.5 kg | 42.5 kg | 50 kg | 65 kg | 82.5 kg | 90 kg | 100 kg | 120 kg |
-| Sentadilla hack en máquina | H · máquina: varía por marca | 62.5 kg | 82.5 kg | 102.5 kg | 112.5 kg | 125 kg | 140 kg | 157.5 kg | 207.5 kg |
-|  | M | 32.5 kg | 42.5 kg | 50 kg | 65 kg | 82.5 kg | 90 kg | 100 kg | 120 kg |
+| Sentadilla hack en máquina | H · máquina: varía por marca | 37.5 kg | 50 kg | 62.5 kg | 67.5 kg | 72.5 kg | 85 kg | 95 kg | 125 kg |
+|  | M | 20 kg | 25 kg | 30 kg | 40 kg | 50 kg | 55 kg | 60 kg | 72.5 kg |
 | Belt squat | H · el peso del disco colgado | 27.5 kg | 37.5 kg | 47.5 kg | 52.5 kg | 55 kg | 65 kg | 72.5 kg | 95 kg |
 |  | M | 15 kg | 19 kg | 22.5 kg | 30 kg | 37.5 kg | 42.5 kg | 45 kg | 55 kg |
 | Sentadilla isométrica en pared | — | de tiempo: no pinta el mapa | | | | | | | |
