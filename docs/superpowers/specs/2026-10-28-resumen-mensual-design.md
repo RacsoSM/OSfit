@@ -214,9 +214,10 @@ Hoy tocar una notificación solo enfoca o abre la página. Para que abra el resu
 
 ```
 match /resumenesMensuales/{doc} {
-  // Los escribe solo cerrarMes (Admin SDK). La clienta lee los suyos; el entrenador, todos.
+  // Los escribe solo cerrarMes (Admin SDK). La clienta lee los suyos; el entrenador, todos, y
+  // puede borrar uno para que se regenere (como las demás subcolecciones).
   allow read: if esEntrenador() || esCliente(cid);
-  allow write: if false;
+  allow write: if esEntrenador();
 }
 ```
 

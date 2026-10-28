@@ -72,6 +72,14 @@ service cloud.firestore {
       match /personal_records/{doc} {
         allow read, write: if esEntrenador();
       }
+      // Sus meses cerrados, uno por documento (`AAAA-MM`). Los escribe solo la función
+      // `cerrarMes` con el Admin SDK, una vez, y un mes cerrado no cambia: la clienta los lee y
+      // nada más. El entrenador puede borrar uno para que la siguiente corrida lo regenere.
+      // Ver docs/superpowers/specs/2026-10-28-resumen-mensual-design.md.
+      match /resumenesMensuales/{doc} {
+        allow read: if esEntrenador() || esCliente(cid);
+        allow write: if esEntrenador();
+      }
       // Los tokens de notificaciones de sus teléfonos. Solo el entrenador: la clienta no
       // necesita leerlos, y el token es lo único que permite mandarle avisos a su teléfono.
       // Los escribe la función `registrarDispositivo` con el Admin SDK.
