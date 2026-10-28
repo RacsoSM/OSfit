@@ -204,7 +204,7 @@ describe("detalleMusculo", () => {
     const h = detalleMusculo("pecho", f, "H", 75);
     expect(h).toContain("Siguiente: <strong");
     expect(h).toContain(">Ascenso</strong>");
-    expect(h).toContain("Te faltan <strong>7.5 kg</strong> en <strong>Press de banca</strong> para llegar al siguiente rango.");
+    expect(h).toContain("Necesitas <strong>8 repeticiones</strong> con <strong>37.5 kg</strong> en <strong>Press de banca</strong> para subir de nivel.");
     expect(h).toContain("Tu mejor serie: 30 kg × 8.");
   });
 
@@ -236,7 +236,7 @@ describe("detalleMusculo", () => {
       .not.toMatch(/edad|años/);
   });
 
-  it("en los corporales cuenta repeticiones, y en singular si falta una", () => {
+  it("en los corporales pide repeticiones, sin peso", () => {
     const f = {
       nivel: 4.4,
       origen: {
@@ -244,7 +244,7 @@ describe("detalleMusculo", () => {
         serie: { reps: 14, peso: null }, estandares: [1, 3, 5, 10, 15, 18, 20, 34], pesoPorMancuerna: false,
       },
     };
-    expect(detalleMusculo("pecho", f, "M", 60)).toContain("Te falta <strong>1 repetición</strong> en <strong>Lagartijas</strong>");
+    expect(detalleMusculo("pecho", f, "M", 60)).toContain("Necesitas <strong>15 repeticiones</strong> en <strong>Lagartijas</strong> para subir de nivel.");
   });
 
   it("en mancuernas dice que es por mancuerna", () => {
@@ -256,7 +256,27 @@ describe("detalleMusculo", () => {
         pesoPorMancuerna: true,
       },
     };
-    expect(detalleMusculo("pecho", f, "H", 75)).toMatch(/Te faltan <strong>[\d.]+ kg por mancuerna<\/strong>/);
+    expect(detalleMusculo("pecho", f, "H", 75)).toMatch(/Necesitas <strong>8 repeticiones<\/strong> con <strong>[\d.]+ kg por mancuerna<\/strong>/);
+  });
+
+  // Entrenador, 2026-10-28: además de su mejor ejercicio, el segundo, con lo que pediría.
+  it("da una segunda opción con su otro mejor ejercicio del músculo", () => {
+    const banca = {
+      ejercicioId: "press-banca", nombre: "Press de banca", tipo: "peso" as const, cuanto: 1,
+      serie: { reps: 8, peso: 30 }, estandares: [0.5, 0.625, 0.75, 0.875, 1, 1.137, 1.275, 1.7],
+      pesoPorMancuerna: false,
+    };
+    const mancuernas = {
+      ejercicioId: "press-mancuernas", nombre: "Press con mancuernas", tipo: "peso" as const, cuanto: 1,
+      serie: { reps: 10, peso: 10 }, estandares: [0.19, 0.24, 0.29, 0.33, 0.38, 0.43, 0.48, 0.65],
+      pesoPorMancuerna: true,
+    };
+    const h = detalleMusculo("pecho", { nivel: 1.05, origen: banca, segundo: { nivel: 0.9, origen: mancuernas } }, "H", 75);
+    expect(h).toContain("en <strong>Press de banca</strong> para subir de nivel.");
+    expect(h).toMatch(/O también: necesitas <strong>10 repeticiones<\/strong> con <strong>[\d.]+ kg por mancuerna<\/strong> en <strong>Press con mancuernas<\/strong>/);
+    expect(h).toContain("Tu mejor serie ahí: 10 kg × 10.");
+    // Sin segundo ejercicio, solo una opción.
+    expect(detalleMusculo("pecho", { nivel: 1.05, origen: banca }, "H", 75)).not.toContain("O también");
   });
 
   it("en Élite también dice su mejor serie y de qué ejercicio", () => {

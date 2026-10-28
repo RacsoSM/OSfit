@@ -1,7 +1,7 @@
 import type { Sexo } from "../datos";
 import {
   RANGOS, indiceRango, nombreMusculo, nombreRango, percentilDe, percentilEntrenanDe,
-  rangoGeneral, repartoRangos, siguienteRango, type Comparacion, type FuerzaMusculo,
+  rangoGeneral, repartoRangos, siguienteRango, type Comparacion, type FuerzaMusculo, type Meta,
 } from "../fuerza";
 import { COLORES_RANGO, insigniaRango } from "./insigniaRango";
 import { conectarHoja } from "./deslizarHoja";
@@ -259,16 +259,16 @@ const serieTexto = (x: { reps: number; peso: number | null }) =>
   x.peso === null ? `${x.reps} reps` : `${kg(x.peso)} × ${x.reps}`;
 
 /**
- * "Te faltan 2.5 kg" (a las mismas reps de su mejor serie) o "Te faltan 3 repeticiones". Los
- * kilos salen de restar su mejor peso al que pide el siguiente rango.
+ * "Necesitas 9 repeticiones con 33 kg en Press inclinado con mancuernas" (entrenador,
+ * 2026-10-28): la serie entera que tendría que hacer, no lo que le falta, porque es lo que va a
+ * intentar en su siguiente entrenamiento. En los de peso, a las mismas reps de su mejor serie.
  */
-function textoFalta(s: Extract<ReturnType<typeof siguienteRango>, { tipo: "falta" }>): string {
-  if (s.objetivo.peso !== null && s.mejor.peso !== null) {
-    const kilos = Math.round((s.objetivo.peso - s.mejor.peso) * 10) / 10;
-    return `Te ${kilos === 1 ? "falta" : "faltan"} <strong>${kg(kilos)}${s.porMancuerna ? " por mancuerna" : ""}</strong>`;
-  }
-  const reps = s.objetivo.reps - s.mejor.reps;
-  return `Te ${reps === 1 ? "falta" : "faltan"} <strong>${reps} ${reps === 1 ? "repetición" : "repeticiones"}</strong>`;
+function textoMeta(m: Meta): string {
+  const reps = `<strong>${m.objetivo.reps} ${m.objetivo.reps === 1 ? "repetición" : "repeticiones"}</strong>`;
+  const con = m.objetivo.peso !== null
+    ? ` con <strong>${kg(m.objetivo.peso)}${m.porMancuerna ? " por mancuerna" : ""}</strong>`
+    : "";
+  return `Necesitas ${reps}${con} en <strong>${escapar(m.ejercicio)}</strong> para subir de nivel.`;
 }
 
 /** Lo que le falta para el siguiente rango, o que ya está en el más alto. */
@@ -294,11 +294,16 @@ export function bloqueSiguiente(f: FuerzaMusculo, sexo: Sexo, peso: number, musc
       <div class="hoja-sig-barra" aria-hidden="true">
         <span style="width: ${porcentaje}%; background: linear-gradient(90deg, ${COLORES_RANGO[actual]}, ${COLORES_RANGO[s.rango]})"></span>
       </div>`;
-  const texto = s.tipo === "otroEjercicio"
-    ? `Para subir, registra un ejercicio que trabaje directo tu ${musculo.toLowerCase()}.`
-    : `${textoFalta(s)} en <strong>${escapar(s.ejercicio)}</strong> para llegar al siguiente rango.`
-      + ` Tu mejor serie: ${serieTexto(s.mejor)}.`;
-  return `<div class="hoja-sig">${barra}<p class="hoja-sig-texto">${texto}</p></div>`;
+  if (s.tipo === "otroEjercicio") {
+    const texto = `Para subir, registra un ejercicio que trabaje directo tu ${musculo.toLowerCase()}.`;
+    return `<div class="hoja-sig">${barra}<p class="hoja-sig-texto">${texto}</p></div>`;
+  }
+  // Su mejor ejercicio del músculo y, si hizo otro, el segundo: dos caminos para subir.
+  const primera = `${textoMeta(s)} Tu mejor serie: ${serieTexto(s.mejor)}.`;
+  const segunda = s.otra
+    ? `<p class="hoja-sig-texto">O también: ${textoMeta(s.otra).replace(/^Necesitas/, "necesitas")} Tu mejor serie ahí: ${serieTexto(s.otra.mejor)}.</p>`
+    : "";
+  return `<div class="hoja-sig">${barra}<p class="hoja-sig-texto">${primera}</p>${segunda}</div>`;
 }
 
 /** Las 8 barras: qué porcentaje de cada grupo está en cada rango; la suya, resaltada. */

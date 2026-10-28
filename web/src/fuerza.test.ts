@@ -134,6 +134,16 @@ describe("fuerzaPorMusculo", () => {
 
   // La lista del entrenador (2026-10-27): las lagartijas no pintan pecho si hizo banca, aunque
   // le den más nivel; sin banca en la ventana, sí, para no dejar el músculo en gris.
+  it("guarda también el segundo mejor ejercicio del músculo", () => {
+    const f = fuerzaPorMusculo([sesion("2026-10-10", [
+      { ejercicioId: "press-banca", nombre: "", series: [{ reps: 1, peso: 60 }] },
+      { ejercicioId: "lagartijas", nombre: "", series: [{ reps: 5, peso: null }] },
+    ])], banco, "H", 75, "2026-10-11");
+    expect(f.pecho.origen?.ejercicioId).toBe("press-banca");
+    expect(f.pecho.segundo?.origen.ejercicioId).toBe("lagartijas");
+    expect(f.pecho.segundo!.nivel).toBeLessThan(f.pecho.nivel);
+  });
+
   it("con lista, mandan los de la lista; los demás solo si no hizo ninguno", () => {
     const conLista = [banca, { ...lagartijas, pinta: [] }, plancha];
     const ambas = [sesion("2026-10-10", [

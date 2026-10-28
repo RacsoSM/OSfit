@@ -99,6 +99,11 @@ export interface FuerzaMusculo {
   nivel: number;
   /** De qué ejercicio y serie sale el nivel: lo que usa "te faltan X para el siguiente rango". */
   origen?: OrigenFuerza;
+  /**
+   * El segundo mejor ejercicio que pinta el músculo, con su nivel: la otra opción para subir
+   * que enseña el detalle (entrenador, 2026-10-28). Solo si hizo más de uno.
+   */
+  segundo?: { nivel: number; origen: OrigenFuerza };
 }
 
 /** El ejercicio que le da su nivel a un músculo, con su mejor serie de la ventana. */
@@ -321,16 +326,19 @@ export function fuerzaPorMusculo(
       if (cuanto < 1) continue;
       const destino = pintaMusculo(b, musculo) ? fuerza : respaldo;
       const actual = destino[musculo];
-      if (!actual || nivel > actual.nivel) {
-        destino[musculo] = {
-          nivel,
-          origen: {
-            ejercicioId: id, nombre: b.nombre, tipo: b.tipo as "peso" | "corporal", cuanto,
-            serie: { reps: serie.reps, peso: serie.peso }, estandares,
-            pesoPorMancuerna: b.pesoPorMancuerna === true,
-            edad, factorEdad: factor, factorPeso: b.tipo === "peso" ? porPeso : 1, pesoUsado: pesoCorporal,
-          },
-        };
+      const origen: OrigenFuerza = {
+        ejercicioId: id, nombre: b.nombre, tipo: b.tipo as "peso" | "corporal", cuanto,
+        serie: { reps: serie.reps, peso: serie.peso }, estandares,
+        pesoPorMancuerna: b.pesoPorMancuerna === true,
+        edad, factorEdad: factor, factorPeso: b.tipo === "peso" ? porPeso : 1, pesoUsado: pesoCorporal,
+      };
+      // El mejor y el segundo mejor: el que baja de primero pasa a segundo.
+      if (!actual) {
+        destino[musculo] = { nivel, origen };
+      } else if (nivel > actual.nivel) {
+        destino[musculo] = { nivel, origen, segundo: actual.origen ? { nivel: actual.nivel, origen: actual.origen } : undefined };
+      } else if (!actual.segundo || nivel > actual.segundo.nivel) {
+        actual.segundo = { nivel, origen };
       }
     }
   }
@@ -374,15 +382,19 @@ export function marcaPara(nivel: number, estandares: readonly number[]): number 
   return e[k - 1] + (nivel - k) * (e[k] - e[k - 1]);
 }
 
+/** Qué serie tendría que hacer en un ejercicio para llegar al siguiente rango. */
+export interface Meta {
+  ejercicio: string;
+  porMancuerna: boolean;
+  mejor: { reps: number; peso: number | null };
+  objetivo: { reps: number; peso: number | null };
+}
+
 export type Siguiente =
   /** Ya está en Élite. */
   | { tipo: "maximo" }
   /** Con su mismo ejercicio: cuánto le falta, en kg (a sus mismas reps) o en reps. */
-  | {
-      tipo: "falta"; rango: number; avance: number; ejercicio: string; porMancuerna: boolean;
-      mejor: { reps: number; peso: number | null };
-      objetivo: { reps: number; peso: number | null };
-    }
+  | ({ tipo: "falta"; rango: number; avance: number; otra?: Meta } & Meta)
   /** Su nivel sale de un ejercicio que trabaja el músculo de lado: con ese no llega. */
   | { tipo: "otroEjercicio"; rango: number; avance: number };
 
@@ -402,8 +414,19 @@ export function siguienteRango(f: FuerzaMusculo, pesoCorporal: number): Siguient
   const nivelEjercicio = o ? meta / o.cuanto : Infinity;
   if (!o || nivelEjercicio > NIVEL_MAX) return { tipo: "otroEjercicio", rango: i + 1, avance };
 
+  // La segunda opción: su otro mejor ejercicio del músculo, si con él se puede llegar.
+  const s2 = f.segundo?.origen;
+  const otra = s2 && meta / s2.cuanto <= NIVEL_MAX ? metaCon(s2, meta / s2.cuanto, pesoCorporal) : undefined;
+  return { tipo: "falta", rango: i + 1, avance, ...metaCon(o, nivelEjercicio, pesoCorporal), ...(otra ? { otra } : {}) };
+}
+
+/**
+ * La serie que lleva al nivel `nivel` en ese ejercicio. En los de peso, a las mismas reps de su
+ * mejor serie, redondeado hacia arriba a 0.5 kg; en los corporales, las reps.
+ */
+function metaCon(o: OrigenFuerza, nivel: number, pesoCorporal: number): Meta {
   // La marca que pide el estándar ya viene ajustada por edad: lo que tiene que mover es menos.
-  const marca = marcaPara(nivelEjercicio, o.estandares) / ((o.factorEdad ?? 1) * (o.factorPeso ?? 1));
+  const marca = marcaPara(nivel, o.estandares) / ((o.factorEdad ?? 1) * (o.factorPeso ?? 1));
   let objetivo: { reps: number; peso: number | null };
   if (o.tipo === "peso") {
     const reps = o.serie.reps;
@@ -414,10 +437,7 @@ export function siguienteRango(f: FuerzaMusculo, pesoCorporal: number): Siguient
   } else {
     objetivo = { reps: Math.max(Math.ceil(marca), o.serie.reps + 1), peso: null };
   }
-  return {
-    tipo: "falta", rango: i + 1, avance, ejercicio: o.nombre, porMancuerna: o.pesoPorMancuerna,
-    mejor: o.serie, objetivo,
-  };
+  return { ejercicio: o.nombre, porMancuerna: o.pesoPorMancuerna, mejor: o.serie, objetivo };
 }
 
 /**
