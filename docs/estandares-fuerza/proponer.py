@@ -112,7 +112,10 @@ PESO = {
     # inicio de Avanzado (entrenador, 2026-10-28). Con la tabla de barra (×1.00) todos salían en
     # Principiante o Ascenso con lo que se hace en el gym, aunque su patada les diera Avanzado.
     "hip-thrust": ("hipthrust", 0.4401, ""),
-    "pantorrilla-de-pie": ("pantorrilla", 1.00, "máquina"),
+    # En el gym se hace con una mancuerna en cada mano y se anota el peso de una. Toda la tabla
+    # escalada para que una mujer como Estela (60 kg, 38) con 30 kg × 30 quede al inicio de
+    # Fuerte (entrenador, 2026-10-28). Antes ×1.00 era la de máquina: todos salían en Principiante.
+    "pantorrilla-de-pie": ("pantorrilla", 0.4886, "por mancuerna"),
     # Said (73 kg, 22, 40 kg × 8) en 6.2, a la quinta parte de Fuerte (entrenador, 2026-10-28).
     # Antes ×0.441 lo dejaba al final de Intermedio (2026-10-27), y antes de eso ×0.70.
     "pantorrilla-sentado": ("pantorrilla", 0.3718, "máquina de Focus"),
