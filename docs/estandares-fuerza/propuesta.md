@@ -177,8 +177,8 @@ Los porcentajes salen de un modelo: entre quienes entrenan, la fuerza se reparte
 |  | M | 7 kg | 9 kg | 11 kg | 14 kg | 18 kg | 19 kg | 20 kg | 27.5 kg |
 | Remo sentado en polea | H | 40 kg | 50 kg | 60 kg | 70 kg | 80 kg | 85 kg | 95 kg | 120 kg |
 |  | M | 19 kg | 22.5 kg | 27.5 kg | 35 kg | 40 kg | 45 kg | 47.5 kg | 65 kg |
-| Remo en máquina | H · máquina: varía por marca | 20 kg | 27.5 kg | 32.5 kg | 37.5 kg | 42.5 kg | 47.5 kg | 55 kg | 65 kg |
-|  | M | 8 kg | 11 kg | 14 kg | 18 kg | 22.5 kg | 25 kg | 25 kg | 35 kg |
+| Remo en máquina | H · máquina: varía por marca | 25 kg | 32.5 kg | 37.5 kg | 45 kg | 50 kg | 57.5 kg | 65 kg | 80 kg |
+|  | M | 10 kg | 13 kg | 16 kg | 22.5 kg | 27.5 kg | 30 kg | 32.5 kg | 42.5 kg |
 | Remo en T con apoyo de pecho | H · solo los discos | 30 kg | 35 kg | 42.5 kg | 50 kg | 57.5 kg | 65 kg | 75 kg | 90 kg |
 |  | M | 12 kg | 15 kg | 19 kg | 25 kg | 30 kg | 32.5 kg | 35 kg | 47.5 kg |
 | Hiperextensiones | H | 5 reps | 10 reps | 15 reps | 22 reps | 30 reps | 34 reps | 38 reps | 59 reps |

@@ -117,9 +117,10 @@ PESO = {
     "remo-sentado-polea": ("jalon", 1.05, ""),
     "pullover-polea": ("triceps", 0.90, ""),
     "remo-con-barra": ("remo", 1.00, ""),
-    # Toda la tabla escalada para que un hombre como Said (73 kg, 22) con 40.5 kg × 7 quede a
-    # media banda de Fuerte (entrenador, 2026-10-28). Antes ×0.95 lo dejaba en Ascenso.
-    "remo-maquina": ("remo", 0.5656, "máquina: varía por marca"),
+    # Toda la tabla escalada para que un hombre como Said (73 kg, 22) con 40.5 kg × 7 quede al
+    # inicio de Atlético (entrenador, 2026-10-28). Antes ×0.95 lo dejaba en Ascenso. En Smart Fit
+    # Barrancos no aplica: su factor de sede (0.7184 = 0.6825 / 0.95) le deja la tabla de antes.
+    "remo-maquina": ("remo", 0.6825, "máquina: varía por marca"),
     # Toda la tabla escalada para que un hombre como Said (73 kg, 22) con 60 kg × 6 quede al
     # inicio de Avanzado (entrenador, 2026-10-28). Antes ×0.85 lo dejaba en Fuerte.
     "remo-en-t": ("remo", 0.7723, "solo los discos"),
