@@ -287,28 +287,28 @@ Los porcentajes salen de un modelo: entre quienes entrenan, la fuerza se reparte
 
 | Ejercicio | Sexo | Principiante | Ascenso | En forma | Intermedio | Atlético / Atlética | Fuerte | Avanzado | Élite |
 |---|---|---|---|---|---|---|---|---|---|
-| Extensión de tríceps en polea | H · polea doble ×1.3 | 25 kg | 35 kg | 45 kg | 52.5 kg | 62.5 kg | 70 kg | 80 kg | 110 kg |
-|  | M | 12 kg | 16 kg | 20 kg | 25 kg | 30 kg | 35 kg | 40 kg | 57.5 kg |
-| Extensión de tríceps con cuerda | H · polea doble ×1.3 | 22.5 kg | 30 kg | 40 kg | 47.5 kg | 57.5 kg | 65 kg | 70 kg | 100 kg |
-|  | M | 11 kg | 14 kg | 18 kg | 22.5 kg | 27.5 kg | 32.5 kg | 35 kg | 52.5 kg |
-| Extensión de tríceps trasnuca en polea | H · polea doble ×1.3 | 20 kg | 30 kg | 37.5 kg | 45 kg | 55 kg | 60 kg | 67.5 kg | 95 kg |
-|  | M | 10 kg | 13 kg | 17 kg | 22.5 kg | 27.5 kg | 30 kg | 35 kg | 50 kg |
-| Copa en polea a un brazo | H · un brazo; polea; polea doble ×1.3 | 10 kg | 14 kg | 18 kg | 22.5 kg | 25 kg | 27.5 kg | 32.5 kg | 45 kg |
-|  | M | 5 kg | 6 kg | 8 kg | 10 kg | 12 kg | 14 kg | 16 kg | 22.5 kg |
-| Press francés | H | 15 kg | 20 kg | 27.5 kg | 32.5 kg | 40 kg | 42.5 kg | 47.5 kg | 67.5 kg |
-|  | M | 7 kg | 10 kg | 12 kg | 16 kg | 19 kg | 22.5 kg | 25 kg | 35 kg |
-| Extensión de tríceps con mancuerna | H · copa a dos manos: el peso de la pesa completa, no por brazo | 8 kg | 12 kg | 15 kg | 19 kg | 22.5 kg | 25 kg | 27.5 kg | 37.5 kg |
-|  | M | 4 kg | 5 kg | 7 kg | 9 kg | 11 kg | 12 kg | 14 kg | 20 kg |
-| Patada de tríceps | H · por mancuerna | 4 kg | 5 kg | 7 kg | 8 kg | 10 kg | 11 kg | 12 kg | 17 kg |
-|  | M | 2 kg | 2 kg | 3 kg | 4 kg | 5 kg | 5 kg | 6 kg | 9 kg |
-| Fondos en banco | H | 5 reps | 10 reps | 15 reps | 22 reps | 30 reps | 34 reps | 38 reps | 59 reps |
-|  | M | 3 reps | 6 reps | 10 reps | 16 reps | 22 reps | 26 reps | 30 reps | 48 reps |
-| Fondos de tríceps en paralelas | H | 1 rep | 4 reps | 8 reps | 13 reps | 18 reps | 22 reps | 26 reps | 42 reps |
-|  | M | 1 rep | 2 reps | 3 reps | 6 reps | 8 reps | 10 reps | 13 reps | 22 reps |
-| Fondos en máquina | H · máquina: varía por marca | 35 kg | 42.5 kg | 50 kg | 60 kg | 67.5 kg | 77.5 kg | 85 kg | 117.5 kg |
-|  | M | 14 kg | 20 kg | 27.5 kg | 32.5 kg | 40 kg | 42.5 kg | 45 kg | 70 kg |
-| Press cerrado | H | 32.5 kg | 40 kg | 47.5 kg | 55 kg | 65 kg | 72.5 kg | 82.5 kg | 112.5 kg |
-|  | M | 13 kg | 19 kg | 25 kg | 32.5 kg | 37.5 kg | 40 kg | 42.5 kg | 67.5 kg |
+| Extensión de tríceps en polea | H · polea doble ×1.3 | 25 kg | 35 kg | 45 kg | 52.5 kg | 62.5 kg | 70 kg | 80 kg | 100 kg |
+|  | M | 12 kg | 16 kg | 20 kg | 25 kg | 30 kg | 35 kg | 40 kg | 52.5 kg |
+| Extensión de tríceps con cuerda | H · polea doble ×1.3 | 22.5 kg | 30 kg | 40 kg | 47.5 kg | 57.5 kg | 65 kg | 70 kg | 90 kg |
+|  | M | 11 kg | 14 kg | 18 kg | 22.5 kg | 27.5 kg | 32.5 kg | 35 kg | 47.5 kg |
+| Extensión de tríceps trasnuca en polea | H · polea doble ×1.3 | 20 kg | 30 kg | 37.5 kg | 45 kg | 55 kg | 60 kg | 67.5 kg | 85 kg |
+|  | M | 10 kg | 13 kg | 17 kg | 22.5 kg | 27.5 kg | 30 kg | 35 kg | 45 kg |
+| Copa en polea a un brazo | H · un brazo; polea; polea doble ×1.3 | 10 kg | 14 kg | 18 kg | 22.5 kg | 25 kg | 27.5 kg | 32.5 kg | 40 kg |
+|  | M | 5 kg | 6 kg | 8 kg | 10 kg | 12 kg | 14 kg | 16 kg | 20 kg |
+| Press francés | H | 15 kg | 20 kg | 27.5 kg | 32.5 kg | 40 kg | 42.5 kg | 47.5 kg | 62.5 kg |
+|  | M | 7 kg | 10 kg | 12 kg | 16 kg | 19 kg | 22.5 kg | 25 kg | 32.5 kg |
+| Extensión de tríceps con mancuerna | H · copa a dos manos: el peso de la pesa completa, no por brazo | 8 kg | 12 kg | 15 kg | 19 kg | 22.5 kg | 25 kg | 27.5 kg | 35 kg |
+|  | M | 4 kg | 5 kg | 7 kg | 9 kg | 11 kg | 12 kg | 14 kg | 18 kg |
+| Patada de tríceps | H · por mancuerna | 4 kg | 5 kg | 7 kg | 8 kg | 10 kg | 11 kg | 12 kg | 15 kg |
+|  | M | 2 kg | 2 kg | 3 kg | 4 kg | 5 kg | 5 kg | 6 kg | 8 kg |
+| Fondos en banco | H | 5 reps | 10 reps | 15 reps | 22 reps | 30 reps | 34 reps | 38 reps | 54 reps |
+|  | M | 3 reps | 6 reps | 10 reps | 16 reps | 22 reps | 26 reps | 30 reps | 44 reps |
+| Fondos de tríceps en paralelas | H | 1 rep | 4 reps | 8 reps | 13 reps | 18 reps | 22 reps | 26 reps | 38 reps |
+|  | M | 1 rep | 2 reps | 3 reps | 6 reps | 8 reps | 10 reps | 13 reps | 20 reps |
+| Fondos en máquina | H · máquina: varía por marca | 35 kg | 42.5 kg | 50 kg | 60 kg | 67.5 kg | 77.5 kg | 85 kg | 107.5 kg |
+|  | M | 14 kg | 20 kg | 27.5 kg | 32.5 kg | 40 kg | 42.5 kg | 45 kg | 62.5 kg |
+| Press cerrado | H | 32.5 kg | 40 kg | 47.5 kg | 55 kg | 65 kg | 72.5 kg | 82.5 kg | 100 kg |
+|  | M | 13 kg | 19 kg | 25 kg | 32.5 kg | 37.5 kg | 40 kg | 42.5 kg | 60 kg |
 
 ### Abdomen
 

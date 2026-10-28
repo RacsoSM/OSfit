@@ -245,9 +245,10 @@ ELITE_FIJO = {
 # multiplica por (1 − esto), sin quedar pegado a Avanzado (`SALTO_MIN`). El salto de Avanzado
 # a Élite se sentía como un muro, para los dos sexos (entrenador, 2026-10-28): pecho −5 %,
 # dorsales −5 % (los remos, jalones, dominadas y el pullover; el peso muerto y las
-# hiperextensiones, que también son de espalda, no) y bíceps −10 %. Si un ejercicio trabaja
-# dos de estos músculos (jalón supino, dominadas supinas), manda el mayor.
-BAJA_ELITE_MUSCULO = {"pecho": 0.05, "dorsal": 0.05, "biceps": 0.10}
+# hiperextensiones, que también son de espalda, no), bíceps −10 % y tríceps −10 % (−15 % lo
+# dejaba más cerca de Avanzado que los demás). Si un ejercicio trabaja dos de estos músculos
+# (jalón supino, dominadas supinas), manda el mayor.
+BAJA_ELITE_MUSCULO = {"pecho": 0.05, "dorsal": 0.05, "biceps": 0.10, "triceps": 0.10}
 
 
 def elite_bajado(ocho: list, musculos: dict, entero: bool) -> list:
