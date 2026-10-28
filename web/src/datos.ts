@@ -4,6 +4,7 @@ import { db, renovarCredencial } from "./firebase";
 import type { PaletaWeb } from "./paleta";
 import type { Tirada } from "./tirada";
 import { factoresDesdeDoc } from "./sede";
+import type { ResumenMensual } from "./resumenMensual";
 
 export interface Ejercicio { nombre: string; series: number; repeticiones: string; pesoONota: string; }
 /**
@@ -418,6 +419,30 @@ export function observarHistorial(clienteId: string, alCambiar: (s: Sesion[]) =>
       (snap) => {
         alLlegar();
         alCambiar(snap.docs.map((d) => ({ ...(d.data() as Omit<Sesion, "id">), id: d.id })));
+      },
+      alFallar
+    )
+  );
+}
+
+/**
+ * Un mes cerrado tal como lo guardó `cerrarMes`. `generado` es la hora del servidor al
+ * congelarlo; solo informativo.
+ */
+export type ResumenMensualGuardado = ResumenMensual & { generado?: Timestamp | null };
+
+/**
+ * Sus meses cerrados (`clientes/{cid}/resumenesMensuales`), para Resumen mensual. Solo al abrir
+ * esa ventana, como el historial: son documentos chicos, uno por mes con actividad, y después
+ * de la primera carga solo cuestan los cambios.
+ */
+export function observarResumenesMensuales(clienteId: string, alCambiar: (r: ResumenMensualGuardado[]) => void) {
+  return escuchar("resumenesMensuales", (alLlegar, alFallar) =>
+    onSnapshot(
+      collection(db, "clientes", clienteId, "resumenesMensuales"),
+      (snap) => {
+        alLlegar();
+        alCambiar(snap.docs.map((d) => ({ ...(d.data() as ResumenMensualGuardado), mes: d.id })));
       },
       alFallar
     )

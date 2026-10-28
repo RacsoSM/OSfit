@@ -14,28 +14,37 @@ function columnaDe(fecha: Date): number {
  * Un mes por vez, y abre en el actual. La app deja recorrer meses porque el entrenador
  * audita historial; el cliente solo quiere saber si faltó esta semana.
  */
-export function calendario(asistencias: Asistencia[], mes: string, hoy: string): string {
+/**
+ * Las celdas de un mes (lunes primero, con huecos antes del día 1), cada una con las clases que
+ * diga `clasesDe`. La comparten el calendario de Inicio y el de Resumen mensual.
+ */
+export function celdasMes(mes: string, clasesDe: (fecha: string) => readonly string[]): string {
   const [anio, numeroMes] = mes.split("-").map(Number);
   const primero = new Date(Date.UTC(anio, numeroMes - 1, 1));
   const diasEnMes = new Date(Date.UTC(anio, numeroMes, 0)).getUTCDate();
-
-  const porFecha = new Map(asistencias.map((a) => [a.fecha, a]));
-
   const celdas: string[] = [];
   for (let i = 0; i < columnaDe(primero); i++) {
     celdas.push(`<span class="vacia"></span>`);
   }
-
   for (let dia = 1; dia <= diasEnMes; dia++) {
     const fecha = `${mes}-${String(dia).padStart(2, "0")}`;
+    celdas.push(`<span class="${clasesDe(fecha).join(" ")}">${dia}</span>`);
+  }
+  return celdas.join("");
+}
+
+export function calendario(asistencias: Asistencia[], mes: string, hoy: string): string {
+  const [anio, numeroMes] = mes.split("-").map(Number);
+  const porFecha = new Map(asistencias.map((a) => [a.fecha, a]));
+  const celdas = celdasMes(mes, (fecha) => {
     const registro = porFecha.get(fecha);
     const clases: string[] = [];
     if (registro?.asistio) clases.push("ok");
     else if (registro?.justificada) clases.push("just");
     else if (registro) clases.push("no");
     if (fecha === hoy) clases.push("hoy-celda");
-    celdas.push(`<span class="${clases.join(" ")}">${dia}</span>`);
-  }
+    return clases;
+  });
 
   const esMesActual = mes >= hoy.slice(0, 7);
 
@@ -47,7 +56,7 @@ export function calendario(asistencias: Asistencia[], mes: string, hoy: string):
         <button id="mes-siguiente" ${esMesActual ? "disabled" : ""}>›</button>
       </div>
       <div class="cal-dias"><span>L</span><span>M</span><span>M</span><span>J</span><span>V</span><span>S</span><span>D</span></div>
-      <div class="cal">${celdas.join("")}</div>
+      <div class="cal">${celdas}</div>
       <div class="leyenda">
         <span><i class="punto" style="background: var(--verde)"></i>Viniste</span>
         <span><i class="punto" style="background: var(--rojo)"></i>Faltaste</span>
