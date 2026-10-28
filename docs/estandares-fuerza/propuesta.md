@@ -35,34 +35,34 @@ Los porcentajes salen de un modelo: entre quienes entrenan, la fuerza se reparte
 
 | Ejercicio | Sexo | Principiante | Ascenso | En forma | Intermedio | Atlético / Atlética | Fuerte | Avanzado | Élite |
 |---|---|---|---|---|---|---|---|---|---|
-| Press de banca | H | 37.5 kg | 47.5 kg | 55 kg | 65 kg | 75 kg | 85 kg | 95 kg | 132.5 kg |
-|  | M | 15 kg | 22.5 kg | 30 kg | 37.5 kg | 45 kg | 47.5 kg | 50 kg | 77.5 kg |
-| Press inclinado con barra | H | 30 kg | 37.5 kg | 45 kg | 55 kg | 62.5 kg | 70 kg | 77.5 kg | 107.5 kg |
-|  | M | 12 kg | 18 kg | 25 kg | 30 kg | 37.5 kg | 40 kg | 42.5 kg | 65 kg |
-| Press declinado con barra | H | 40 kg | 50 kg | 60 kg | 70 kg | 80 kg | 90 kg | 100 kg | 137.5 kg |
-|  | M | 16 kg | 22.5 kg | 32.5 kg | 40 kg | 47.5 kg | 50 kg | 52.5 kg | 82.5 kg |
-| Press con mancuernas | H · por mancuerna | 14 kg | 18 kg | 22.5 kg | 25 kg | 27.5 kg | 32.5 kg | 37.5 kg | 50 kg |
-|  | M | 6 kg | 9 kg | 11 kg | 14 kg | 17 kg | 18 kg | 19 kg | 30 kg |
-| Press inclinado con mancuernas | H · por mancuerna | 12 kg | 15 kg | 19 kg | 22.5 kg | 25 kg | 27.5 kg | 32.5 kg | 42.5 kg |
+| Press de banca | H | 37.5 kg | 47.5 kg | 55 kg | 65 kg | 75 kg | 85 kg | 95 kg | 125 kg |
+|  | M | 15 kg | 22.5 kg | 30 kg | 37.5 kg | 45 kg | 47.5 kg | 50 kg | 75 kg |
+| Press inclinado con barra | H | 30 kg | 37.5 kg | 45 kg | 55 kg | 62.5 kg | 70 kg | 77.5 kg | 102.5 kg |
+|  | M | 12 kg | 18 kg | 25 kg | 30 kg | 37.5 kg | 40 kg | 42.5 kg | 62.5 kg |
+| Press declinado con barra | H | 40 kg | 50 kg | 60 kg | 70 kg | 80 kg | 90 kg | 100 kg | 130 kg |
+|  | M | 16 kg | 22.5 kg | 32.5 kg | 40 kg | 47.5 kg | 50 kg | 52.5 kg | 77.5 kg |
+| Press con mancuernas | H · por mancuerna | 14 kg | 18 kg | 22.5 kg | 25 kg | 27.5 kg | 32.5 kg | 37.5 kg | 47.5 kg |
+|  | M | 6 kg | 9 kg | 11 kg | 14 kg | 17 kg | 18 kg | 19 kg | 27.5 kg |
+| Press inclinado con mancuernas | H · por mancuerna | 12 kg | 15 kg | 19 kg | 22.5 kg | 25 kg | 27.5 kg | 32.5 kg | 40 kg |
 |  | M | 5 kg | 7 kg | 10 kg | 12 kg | 15 kg | 16 kg | 17 kg | 25 kg |
-| Aperturas con mancuernas | H · por mancuerna | 8 kg | 9 kg | 11 kg | 13 kg | 15 kg | 17 kg | 19 kg | 27.5 kg |
-|  | M | 3 kg | 4 kg | 6 kg | 8 kg | 9 kg | 10 kg | 10 kg | 16 kg |
+| Aperturas con mancuernas | H · por mancuerna | 8 kg | 9 kg | 11 kg | 13 kg | 15 kg | 17 kg | 19 kg | 25 kg |
+|  | M | 3 kg | 4 kg | 6 kg | 8 kg | 9 kg | 10 kg | 10 kg | 15 kg |
 | Aperturas inclinadas con mancuernas | H · por mancuerna | 7 kg | 8 kg | 10 kg | 12 kg | 14 kg | 15 kg | 17 kg | 22.5 kg |
-|  | M | 3 kg | 4 kg | 5 kg | 7 kg | 8 kg | 9 kg | 9 kg | 14 kg |
-| Cruce de poleas | H · por lado; base ×2 sobre 0.18 y polea doble ×1.3 = ×2.6 (decisión del entrenador, 2026-10-16); polea doble ×1.3 | 18 kg | 22.5 kg | 27.5 kg | 30 kg | 35 kg | 40 kg | 45 kg | 62.5 kg |
-|  | M | 7 kg | 11 kg | 14 kg | 18 kg | 20 kg | 22.5 kg | 25 kg | 37.5 kg |
-| Aperturas en polea media | H · por lado; como el cruce de poleas; polea doble ×1.3 | 18 kg | 22.5 kg | 27.5 kg | 30 kg | 35 kg | 40 kg | 45 kg | 62.5 kg |
-|  | M | 7 kg | 11 kg | 14 kg | 18 kg | 20 kg | 22.5 kg | 25 kg | 37.5 kg |
-| Aperturas en polea alta | H · por lado; como el cruce de poleas; polea doble ×1.3 | 18 kg | 22.5 kg | 27.5 kg | 30 kg | 35 kg | 40 kg | 45 kg | 62.5 kg |
-|  | M | 7 kg | 11 kg | 14 kg | 18 kg | 20 kg | 22.5 kg | 25 kg | 37.5 kg |
-| Pec deck | H · máquina: varía por marca | 30 kg | 37.5 kg | 45 kg | 52.5 kg | 60 kg | 67.5 kg | 77.5 kg | 105 kg |
-|  | M | 12 kg | 18 kg | 25 kg | 30 kg | 35 kg | 37.5 kg | 40 kg | 62.5 kg |
-| Press de pecho en máquina | H · máquina de Focus | 20 kg | 25 kg | 30 kg | 35 kg | 40 kg | 45 kg | 52.5 kg | 70 kg |
-|  | M | 8 kg | 12 kg | 16 kg | 20 kg | 25 kg | 25 kg | 27.5 kg | 42.5 kg |
-| Lagartijas | H | 3 reps | 9 reps | 15 reps | 22 reps | 30 reps | 34 reps | 38 reps | 65 reps |
-|  | M | 1 rep | 3 reps | 5 reps | 10 reps | 15 reps | 20 reps | 24 reps | 40 reps |
-| Fondos para pecho | H | 1 rep | 4 reps | 8 reps | 13 reps | 18 reps | 22 reps | 26 reps | 42 reps |
-|  | M | 1 rep | 2 reps | 3 reps | 6 reps | 8 reps | 10 reps | 13 reps | 22 reps |
+|  | M | 3 kg | 4 kg | 5 kg | 7 kg | 8 kg | 9 kg | 9 kg | 13 kg |
+| Cruce de poleas | H · por lado; base ×2 sobre 0.18 y polea doble ×1.3 = ×2.6 (decisión del entrenador, 2026-10-16); polea doble ×1.3 | 18 kg | 22.5 kg | 27.5 kg | 30 kg | 35 kg | 40 kg | 45 kg | 57.5 kg |
+|  | M | 7 kg | 11 kg | 14 kg | 18 kg | 20 kg | 22.5 kg | 25 kg | 35 kg |
+| Aperturas en polea media | H · por lado; como el cruce de poleas; polea doble ×1.3 | 18 kg | 22.5 kg | 27.5 kg | 30 kg | 35 kg | 40 kg | 45 kg | 57.5 kg |
+|  | M | 7 kg | 11 kg | 14 kg | 18 kg | 20 kg | 22.5 kg | 25 kg | 35 kg |
+| Aperturas en polea alta | H · por lado; como el cruce de poleas; polea doble ×1.3 | 18 kg | 22.5 kg | 27.5 kg | 30 kg | 35 kg | 40 kg | 45 kg | 57.5 kg |
+|  | M | 7 kg | 11 kg | 14 kg | 18 kg | 20 kg | 22.5 kg | 25 kg | 35 kg |
+| Pec deck | H · máquina: varía por marca | 30 kg | 37.5 kg | 45 kg | 52.5 kg | 60 kg | 67.5 kg | 77.5 kg | 100 kg |
+|  | M | 12 kg | 18 kg | 25 kg | 30 kg | 35 kg | 37.5 kg | 40 kg | 60 kg |
+| Press de pecho en máquina | H · máquina de Focus | 20 kg | 25 kg | 30 kg | 35 kg | 40 kg | 45 kg | 52.5 kg | 67.5 kg |
+|  | M | 8 kg | 12 kg | 16 kg | 20 kg | 25 kg | 25 kg | 27.5 kg | 40 kg |
+| Lagartijas | H | 3 reps | 9 reps | 15 reps | 22 reps | 30 reps | 34 reps | 38 reps | 62 reps |
+|  | M | 1 rep | 3 reps | 5 reps | 10 reps | 15 reps | 20 reps | 24 reps | 38 reps |
+| Fondos para pecho | H | 1 rep | 4 reps | 8 reps | 13 reps | 18 reps | 22 reps | 26 reps | 40 reps |
+|  | M | 1 rep | 2 reps | 3 reps | 6 reps | 8 reps | 10 reps | 13 reps | 21 reps |
 
 ### Cuádriceps
 
