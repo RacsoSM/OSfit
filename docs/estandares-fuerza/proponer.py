@@ -214,6 +214,9 @@ FACTOR_POR_SEXO = {
     # entrenador la quiere en Fuerte; Oscar (240 kg × 10) se queda en Élite (2026-10-27). Hombres
     # ×1.15 para que sigan pidiendo más veces su peso que ellas en cada nivel.
     "pantorrilla-prensa-45": {"H": 1.15, "M": 1.4},
+    # Remo en máquina: el ajuste del ×0.6825 es para ellos (Said); a ellas les deja la tabla de
+    # antes (×0.95), porque con él Estela saltaba de Intermedio a Avanzada (2026-10-28).
+    "remo-maquina": {"H": 1, "M": round(0.95 / 0.6825, 4)},
 }
 
 # Élite puesto a mano, por sexo, cuando el del modelo no cabe en la máquina. Prensa en máquina,
