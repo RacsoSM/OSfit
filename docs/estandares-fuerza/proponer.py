@@ -208,8 +208,22 @@ FACTOR_POR_SEXO = {
 # hombres: con ×1.3 Élite pedía unas 18 barras × 12 y la pila tiene 16; el entrenador lo quiere
 # con la pila completa × 8 para un hombre de 75 kg (2026-10-27). 1RM con Epley, como la página.
 KG_PILA_PRENSA = 16 * 4.5
+
+
+def marca_said(kg: float, reps: int) -> float:
+    """La marca de un hombre como Said (73 kg, 22 años) con esa serie: 1RM Epley (hasta 12
+    reps) entre su peso, por el factor de peso (peso ÷ 75)^⅓ y el de edad de 22 (1.0067), como
+    lo calcula la página (`web/src/fuerza.ts`)."""
+    # Hacia abajo: redondeado hacia arriba, esa misma serie quedaba a milésimas de Élite.
+    return math.floor(kg * (1 + min(reps, 12) / 30) / 73 * (73 / 75) ** (1 / 3) * 1.0067 * 1000) / 1000
+
+
 ELITE_FIJO = {
     "prensa-maquina": {"H": round(KG_PILA_PRENSA * (1 + 8 / 30) / PESO_EJEMPLO_H, 3)},
+    # Antebrazo (entrenador, 2026-10-28): Élite para un hombre como Said con estas series.
+    "curl-muneca-barra": {"H": marca_said(35, 15)},
+    "curl-muneca-inverso-barra": {"H": marca_said(30, 10)},
+    "curl-inverso-barra": {"H": marca_said(35, 8)},
 }
 
 CORPORAL = {
