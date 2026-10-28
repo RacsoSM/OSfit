@@ -251,6 +251,10 @@ FACTOR_POR_SEXO = {
     # serie quede a media banda de Fuerte. Hombres: más fácil, para que uno como Said (73 kg, 22)
     # con 67.5 kg × 9 quede al inicio de Avanzado. Ellas siguen un poco debajo de ellos.
     "extension-cuadriceps": {"H": 0.8821, "M": 1.1205},
+    # Curl femoral sentado, mujeres: con la tabla escalada por Said les quedaba 22-29 % debajo de
+    # la de ellos y salían en Avanzada con 27 kg. Escalada para que queden al menos 10 % debajo
+    # en todos los niveles (en Élite, justo 10 %) (entrenador, 2026-10-28).
+    "curl-femoral-sentado": {"H": 1, "M": 1.1483},
     # Remo en máquina: el ajuste del ×0.6825 es para ellos (Said); a ellas les deja la tabla de
     # antes (×0.95), porque con él Estela saltaba de Intermedio a Avanzada (2026-10-28).
     "remo-maquina": {"H": 1, "M": round(0.95 / 0.6825, 4)},
