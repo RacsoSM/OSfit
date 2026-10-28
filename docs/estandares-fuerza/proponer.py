@@ -244,9 +244,15 @@ KG_PILA_PRENSA = 16 * 4.5
 # abajo para que esa serie sí llegue (entrenador, 2026-10-28). Un poco más que el −10 % de bíceps.
 MARCA_CURL_SAID = 1.007 * 22.5 * (1 + 10 / 30) / 73 * (73 / PESO_EJEMPLO_H) ** (1 / 3)
 
+# Face pull, hombres: Élite donde Oscar (89 kg, 44: ×1.04 por edad, ∛(89/75) por peso) con su
+# mejor serie, 76.5 kg × 15 (Epley hasta 12 reps), lo rebasa por 5 %. Con la tabla escalada
+# llegaba a Élite hasta con 68 kg × 10 (entrenador, 2026-10-28).
+MARCA_FACE_PULL_OSCAR = 1.04 * 76.5 * (1 + 12 / 30) / 89 * (89 / PESO_EJEMPLO_H) ** (1 / 3)
+
 ELITE_FIJO = {
     "prensa-maquina": {"H": round(KG_PILA_PRENSA * (1 + 8 / 30) / PESO_EJEMPLO_H, 3)},
     "curl-mancuernas": {"H": math.floor(MARCA_CURL_SAID * 1000) / 1000},
+    "face-pull": {"H": round(MARCA_FACE_PULL_OSCAR / 1.05, 3)},
 }
 
 # Élite más cerca para los ejercicios que trabajan ese músculo como principal (× 1): se
