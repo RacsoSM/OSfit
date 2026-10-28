@@ -232,8 +232,8 @@ Los porcentajes salen de un modelo: entre quienes entrenan, la fuerza se reparte
 |  | M | 2 kg | 2 kg | 3 kg | 5 kg | 6 kg | 7 kg | 8 kg | 12 kg |
 | Rear delt en máquina | H · máquina: varía por marca | 20 kg | 25 kg | 30 kg | 37.5 kg | 42.5 kg | 45 kg | 47.5 kg | 67.5 kg |
 |  | M | 9 kg | 12 kg | 16 kg | 19 kg | 22.5 kg | 25 kg | 27.5 kg | 40 kg |
-| Face pull | H · polea; base ×1.3 sobre 0.90 (decisión del entrenador, 2026-10-16); polea doble ×1.3; H ×0.6316, M ×1 | 18 kg | 25 kg | 32.5 kg | 40 kg | 47.5 kg | 52.5 kg | 57.5 kg | 82.5 kg |
-|  | M | 14 kg | 18 kg | 22.5 kg | 30 kg | 37.5 kg | 42.5 kg | 47.5 kg | 67.5 kg |
+| Face pull | H · polea; base ×1.3 sobre 0.90 (decisión del entrenador, 2026-10-16); polea doble ×1.3; H ×0.6316, M ×0.92 | 18 kg | 25 kg | 32.5 kg | 40 kg | 47.5 kg | 52.5 kg | 57.5 kg | 82.5 kg |
+|  | M | 13 kg | 17 kg | 20 kg | 27.5 kg | 32.5 kg | 37.5 kg | 42.5 kg | 62.5 kg |
 | Remo al mentón | H | 20 kg | 27.5 kg | 32.5 kg | 40 kg | 45 kg | 47.5 kg | 50 kg | 62.5 kg |
 |  | M | 10 kg | 13 kg | 17 kg | 20 kg | 25 kg | 27.5 kg | 30 kg | 37.5 kg |
 

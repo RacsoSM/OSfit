@@ -224,8 +224,9 @@ FACTOR_POR_SEXO = {
     "pantorrilla-prensa-45": {"H": 1.15, "M": 1.4},
     # Face pull, hombres: en este ejercicio ellos y ellas mueven pesos parecidos, y la tabla de
     # ellos salía mucho más dura. Escalada para que un hombre como Said (73 kg, 22) con 45 kg × 6
-    # quede a media banda de Fuerte (entrenador, 2026-10-28); la de ellas, igual.
-    "face-pull": {"H": 0.6316, "M": 1},
+    # quede a media banda de Fuerte (entrenador, 2026-10-28). La de ellas ×0.92 para que quede
+    # un poco debajo de la de ellos en todos los niveles (en Élite, ~5 % abajo).
+    "face-pull": {"H": 0.6316, "M": 0.92},
     # Remo en máquina: el ajuste del ×0.6825 es para ellos (Said); a ellas les deja la tabla de
     # antes (×0.95), porque con él Estela saltaba de Intermedio a Avanzada (2026-10-28).
     "remo-maquina": {"H": 1, "M": round(0.95 / 0.6825, 4)},
