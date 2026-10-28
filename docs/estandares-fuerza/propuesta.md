@@ -247,8 +247,8 @@ Los porcentajes salen de un modelo: entre quienes entrenan, la fuerza se reparte
 |  | M | 6 kg | 9 kg | 12 kg | 18 kg | 25 kg | 27.5 kg | 30 kg | 42.5 kg |
 | Curl con mancuernas | H · por mancuerna | 7 kg | 10 kg | 14 kg | 17 kg | 20 kg | 22.5 kg | 25 kg | 30 kg |
 |  | M | 3 kg | 4 kg | 5 kg | 8 kg | 11 kg | 12 kg | 14 kg | 19 kg |
-| Curl martillo | H · por mancuerna | 8 kg | 11 kg | 15 kg | 19 kg | 22.5 kg | 25 kg | 27.5 kg | 35 kg |
-|  | M | 3 kg | 4 kg | 6 kg | 9 kg | 12 kg | 14 kg | 15 kg | 20 kg |
+| Curl martillo | H · por mancuerna | 7 kg | 10 kg | 14 kg | 17 kg | 20 kg | 22.5 kg | 25 kg | 32.5 kg |
+|  | M | 3 kg | 4 kg | 6 kg | 8 kg | 11 kg | 13 kg | 14 kg | 19 kg |
 | Curl predicador | H | 13 kg | 19 kg | 25 kg | 32.5 kg | 37.5 kg | 42.5 kg | 45 kg | 60 kg |
 |  | M | 5 kg | 8 kg | 10 kg | 15 kg | 20 kg | 22.5 kg | 25 kg | 35 kg |
 | Curl predicador en máquina | H · máquina | 8 kg | 13 kg | 17 kg | 20 kg | 25 kg | 27.5 kg | 30 kg | 40 kg |
