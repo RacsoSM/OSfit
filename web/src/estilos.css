@@ -2135,3 +2135,68 @@ body:has(.batalla) :is(.fondo, .fondo-pixel, .fondo-sakura, .fondo-halloween, .p
 @media (prefers-reduced-motion: reduce) {
   .bat-cartel.entrando, .bat-cartel.entrando .bat-corona, .bat-celda.destapando, .batalla .bat-cargando { animation: none !important; }
 }
+
+/* Resumen mensual (`ui/resumenMensual.ts`): el diseño "Final · B + A" del 2026-10-28. Solo
+   tokens del tema: la portada toma el oscuro de su paleta, y se revisa en los 6 estilos. */
+.rm-selector { display: flex; gap: 8px; align-items: center; margin-bottom: 6px; }
+.rm-flecha {
+  flex: none; width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center;
+  border: 1px solid var(--superficie-alta); background: var(--superficie); color: var(--texto); cursor: pointer;
+}
+.rm-flecha:disabled { opacity: 0.35; cursor: default; }
+.rm-select {
+  flex: 1 1 auto; min-width: 0; height: 44px; border-radius: 12px; padding: 0 12px;
+  border: 1px solid var(--superficie-alta); background: var(--superficie); color: var(--texto);
+  font-family: inherit; font-size: 15px; font-weight: 700;
+}
+.rm-cierre { margin: 0 2px 10px; font-size: 13px; color: var(--texto-tenue); }
+.rm-portada {
+  background: var(--primario-oscuro); color: #fff; border-radius: 20px; padding: 18px 18px 16px; margin-bottom: 12px;
+}
+.rm-portada p { margin: 0; }
+.rm-estado { font-size: 13px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--primario-claro); }
+.rm-mes { margin: 2px 0 14px !important; font-size: 40px; font-weight: 900; line-height: 1.05; }
+.rm-datos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.rm-num { font-size: 24px; font-weight: 800; line-height: 1.15; }
+.rm-num small, .rm-caja-num small { font-size: 14px; font-weight: 700; }
+.rm-etq { margin-top: 2px !important; font-size: 12px; color: var(--primario-claro); }
+.rm-seccion { padding: 14px 16px; }
+.rm-titulo { margin: 0 0 10px; font-size: 16px; font-weight: 800; }
+.rm-titulo-chico { margin: 0 0 10px; font-size: 13px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--texto-tenue); }
+.rm-subtitulo { margin: 10px 0 6px; font-size: 14px; font-weight: 700; }
+.rm-cajas { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; text-align: center; }
+.rm-caja { background: var(--superficie-alta); border-radius: 12px; padding: 10px 4px; }
+.rm-caja p { margin: 0; }
+.rm-caja-num { font-size: 20px; font-weight: 800; }
+.rm-caja-etq { font-size: 12px; color: var(--texto-tenue); }
+.rm-nota { margin: 12px 0 6px; font-size: 13px; color: var(--texto-tenue); }
+.rm-nota strong { color: var(--texto); }
+.rm-lista, .rm-musculos, .rm-marcas { margin: 0; padding: 0; list-style: none; }
+.rm-lista { display: flex; flex-direction: column; gap: 6px; }
+.rm-lista li, .rm-fila, .rm-marcas li { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; font-size: 14px; }
+.rm-tenue { color: var(--texto-tenue); flex: none; }
+/* El calendario lleva las clases del de Inicio (`ok`, `just`, `no`): cada estilo lo pinta como su
+   calendario de Inicio. Solo el clásico (sin `data-estilo`) usa el morado del diseño. */
+.rm-punto { width: 12px; height: 12px; border-radius: 4px; display: inline-block; }
+.rm-punto.rm-e { background: var(--verde); }
+.rm-punto.rm-j { background: var(--ambar); }
+.rm-punto.rm-f { background: var(--rojo); }
+:root:not([data-estilo]) .rm-cal span.rm-e { background: var(--primario); color: var(--sobre-primario); font-weight: 700; }
+:root:not([data-estilo]) .rm-cal span.rm-j { background: transparent; box-shadow: inset 0 0 0 2px var(--primario); color: var(--texto); }
+:root:not([data-estilo]) .rm-cal span.rm-f { background: color-mix(in srgb, var(--rojo) 40%, var(--superficie)); color: var(--texto); }
+:root:not([data-estilo]) .rm-punto.rm-e { background: var(--primario); }
+:root:not([data-estilo]) .rm-punto.rm-j { background: transparent; box-shadow: inset 0 0 0 2px var(--primario); }
+:root:not([data-estilo]) .rm-punto.rm-f { background: color-mix(in srgb, var(--rojo) 40%, var(--superficie)); }
+.rm-leyenda { font-size: 12px; gap: 6px 14px; }
+.rm-pastilla { font-size: 12px; font-weight: 700; color: var(--sobre-primario); background: var(--primario); border-radius: 999px; padding: 2px 9px; }
+.rm-general { margin: 6px 0 12px; font-size: 14px; }
+.rm-musculos { display: flex; flex-direction: column; gap: 9px; }
+.rm-rango { color: var(--texto-tenue); text-align: right; }
+.rm-cambio { margin-left: 4px; font-weight: 700; }
+.rm-sube { color: var(--primario); }
+.rm-baja { color: var(--rojo); }
+.rm-barra { height: 6px; border-radius: 3px; background: var(--superficie-alta); margin-top: 4px; overflow: hidden; }
+.rm-barra div { height: 100%; border-radius: 3px; background: var(--primario); }
+.rm-marcas li { padding: 8px 0; border-top: 1px solid var(--superficie-alta); }
+.rm-marcas strong { flex: none; }
+.rm-vacio { margin: 0; text-align: center; color: var(--texto-tenue); }

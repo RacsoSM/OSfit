@@ -383,3 +383,7 @@
   :root[data-estilo="pixel"] .menu-opcion.activa::before { animation: none; }
   :root[data-estilo="pixel"] .px-fugaz { display: none; }
 }
+
+/* Resumen mensual: la letra de pixel es más ancha, y los tres datos de la portada no caben a 24 px. */
+:root[data-estilo="pixel"] .rm-num { font-size: 16px; }
+:root[data-estilo="pixel"] .rm-num small { font-size: 11px; }

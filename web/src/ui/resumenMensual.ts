@@ -131,7 +131,11 @@ function entrenamiento(r: ResumenMensual): string {
     </section>`;
 }
 
-const MARCA_CLASE = { e: "rm-e", j: "rm-j", f: "rm-f" } as const;
+/**
+ * Las clases del calendario de Inicio (`ok`, `just`, `no`) más las propias: así cada estilo pinta
+ * este mes igual que su calendario de Inicio, y el clásico usa el morado del diseño.
+ */
+const MARCA_CLASE = { e: "ok rm-e", j: "just rm-j", f: "no rm-f" } as const;
 
 function calendarioDelMes(r: ResumenMensual, enCurso: boolean, hoy: string): string {
   if (Object.keys(r.asistencia.dias).length === 0) return "";
