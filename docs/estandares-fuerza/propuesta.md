@@ -25,7 +25,7 @@ Cada corte se compara contra **toda la población** (incluye a la gente que no e
 | Atlético / Atlética | 88 % | 57 % |
 | Fuerte | 90 % | 65 % |
 | Avanzado | 93 % | 72 % |
-| Élite | 97 % | 89 % |
+| Élite | 97 % | 88 % |
 
 Los porcentajes salen de un modelo: entre quienes entrenan, la fuerza se reparte como una curva (mucha gente en el medio, poca en los extremos) ajustada a las tablas públicas; quien no entrena levanta en promedio lo de Principiante, y 1 de cada 4 adultos entrena fuerza. Son el promedio de todos los ejercicios: una estimación, no un censo.
 
@@ -68,12 +68,12 @@ Los porcentajes salen de un modelo: entre quienes entrenan, la fuerza se reparte
 
 | Ejercicio | Sexo | Principiante | Ascenso | En forma | Intermedio | Atlético / Atlética | Fuerte | Avanzado | Élite |
 |---|---|---|---|---|---|---|---|---|---|
-| Sentadilla con barra | H | 55 kg | 75 kg | 95 kg | 102.5 kg | 112.5 kg | 127.5 kg | 142.5 kg | 190 kg |
-|  | M | 30 kg | 37.5 kg | 45 kg | 60 kg | 75 kg | 82.5 kg | 90 kg | 110 kg |
+| Sentadilla con barra | H | 55 kg | 75 kg | 95 kg | 102.5 kg | 112.5 kg | 127.5 kg | 142.5 kg | 170 kg |
+|  | M | 30 kg | 37.5 kg | 45 kg | 60 kg | 75 kg | 82.5 kg | 90 kg | 100 kg |
 | Sentadilla frontal | H | 45 kg | 62.5 kg | 77.5 kg | 85 kg | 92.5 kg | 105 kg | 117.5 kg | 155 kg |
 |  | M | 25 kg | 30 kg | 37.5 kg | 50 kg | 62.5 kg | 67.5 kg | 75 kg | 90 kg |
-| Sentadilla en Smith | H · máquina: varía por marca | 52.5 kg | 70 kg | 90 kg | 97.5 kg | 107.5 kg | 122.5 kg | 135 kg | 180 kg |
-|  | M | 27.5 kg | 35 kg | 42.5 kg | 57.5 kg | 72.5 kg | 77.5 kg | 85 kg | 105 kg |
+| Sentadilla en Smith | H · máquina: varía por marca | 52.5 kg | 70 kg | 90 kg | 97.5 kg | 107.5 kg | 122.5 kg | 135 kg | 162.5 kg |
+|  | M | 27.5 kg | 35 kg | 42.5 kg | 57.5 kg | 72.5 kg | 77.5 kg | 85 kg | 95 kg |
 | Sentadilla hack | H · máquina: varía por marca | 62.5 kg | 82.5 kg | 102.5 kg | 112.5 kg | 125 kg | 140 kg | 157.5 kg | 207.5 kg |
 |  | M | 32.5 kg | 42.5 kg | 50 kg | 65 kg | 82.5 kg | 90 kg | 100 kg | 120 kg |
 | Sentadilla hack en máquina | H · máquina: varía por marca | 62.5 kg | 82.5 kg | 102.5 kg | 112.5 kg | 125 kg | 140 kg | 157.5 kg | 207.5 kg |
@@ -81,12 +81,12 @@ Los porcentajes salen de un modelo: entre quienes entrenan, la fuerza se reparte
 | Belt squat | H · el peso del disco colgado | 27.5 kg | 37.5 kg | 47.5 kg | 52.5 kg | 55 kg | 65 kg | 72.5 kg | 95 kg |
 |  | M | 15 kg | 19 kg | 22.5 kg | 30 kg | 37.5 kg | 42.5 kg | 45 kg | 55 kg |
 | Sentadilla isométrica en pared | — | de tiempo: no pinta el mapa | | | | | | | |
-| Sentadilla goblet | H · una mancuerna o pesa rusa | 20 kg | 25 kg | 32.5 kg | 35 kg | 40 kg | 45 kg | 50 kg | 67.5 kg |
-|  | M | 10 kg | 13 kg | 16 kg | 20 kg | 27.5 kg | 30 kg | 32.5 kg | 37.5 kg |
-| Sentadilla búlgara | H · por mancuerna | 14 kg | 19 kg | 22.5 kg | 25 kg | 27.5 kg | 32.5 kg | 35 kg | 47.5 kg |
-|  | M | 8 kg | 9 kg | 11 kg | 15 kg | 19 kg | 20 kg | 22.5 kg | 27.5 kg |
-| Sentadilla con salto | H | 5 reps | 10 reps | 15 reps | 22 reps | 30 reps | 34 reps | 38 reps | 59 reps |
-|  | M | 3 reps | 6 reps | 10 reps | 16 reps | 22 reps | 26 reps | 30 reps | 48 reps |
+| Sentadilla goblet | H · una mancuerna o pesa rusa | 20 kg | 25 kg | 32.5 kg | 35 kg | 40 kg | 45 kg | 50 kg | 60 kg |
+|  | M | 10 kg | 13 kg | 16 kg | 20 kg | 27.5 kg | 30 kg | 32.5 kg | 35 kg |
+| Sentadilla búlgara | H · por mancuerna | 14 kg | 19 kg | 22.5 kg | 25 kg | 27.5 kg | 32.5 kg | 35 kg | 42.5 kg |
+|  | M | 8 kg | 9 kg | 11 kg | 15 kg | 19 kg | 20 kg | 22.5 kg | 25 kg |
+| Sentadilla con salto | H | 5 reps | 10 reps | 15 reps | 22 reps | 30 reps | 34 reps | 38 reps | 54 reps |
+|  | M | 3 reps | 6 reps | 10 reps | 16 reps | 22 reps | 26 reps | 30 reps | 44 reps |
 | Prensa de piernas | H · máquina: varía por marca | 95 kg | 122.5 kg | 150 kg | 187.5 kg | 225 kg | 247.5 kg | 270 kg | 375 kg |
 |  | M | 45 kg | 67.5 kg | 90 kg | 112.5 kg | 135 kg | 150 kg | 165 kg | 235 kg |
 | Prensa horizontal a una pierna | H · una pierna; máquina | 37.5 kg | 50 kg | 60 kg | 75 kg | 90 kg | 100 kg | 107.5 kg | 150 kg |
@@ -95,12 +95,12 @@ Los porcentajes salen de un modelo: entre quienes entrenan, la fuerza se reparte
 |  | M | 20 kg | 32.5 kg | 42.5 kg | 52.5 kg | 62.5 kg | 70 kg | 77.5 kg | 110 kg |
 | Extensión de cuádriceps | H · máquina | 37.5 kg | 47.5 kg | 55 kg | 70 kg | 85 kg | 95 kg | 102.5 kg | 142.5 kg |
 |  | M | 20 kg | 27.5 kg | 32.5 kg | 42.5 kg | 50 kg | 55 kg | 60 kg | 85 kg |
-| Zancadas con mancuernas | H · por mancuerna | 14 kg | 19 kg | 22.5 kg | 25 kg | 27.5 kg | 32.5 kg | 35 kg | 47.5 kg |
-|  | M | 8 kg | 9 kg | 11 kg | 15 kg | 19 kg | 20 kg | 22.5 kg | 27.5 kg |
-| Zancadas caminando | H · pasos por pierna | 8 reps | 14 reps | 20 reps | 28 reps | 35 reps | 38 reps | 42 reps | 65 reps |
-|  | M | 6 reps | 10 reps | 15 reps | 22 reps | 28 reps | 32 reps | 36 reps | 55 reps |
-| Subidas al cajón | H · por mancuerna | 12 kg | 16 kg | 20 kg | 22.5 kg | 25 kg | 27.5 kg | 32.5 kg | 42.5 kg |
-|  | M | 7 kg | 8 kg | 10 kg | 13 kg | 16 kg | 18 kg | 20 kg | 25 kg |
+| Zancadas con mancuernas | H · por mancuerna | 14 kg | 19 kg | 22.5 kg | 25 kg | 27.5 kg | 32.5 kg | 35 kg | 42.5 kg |
+|  | M | 8 kg | 9 kg | 11 kg | 15 kg | 19 kg | 20 kg | 22.5 kg | 25 kg |
+| Zancadas caminando | H · pasos por pierna | 8 reps | 14 reps | 20 reps | 28 reps | 35 reps | 38 reps | 42 reps | 59 reps |
+|  | M | 6 reps | 10 reps | 15 reps | 22 reps | 28 reps | 32 reps | 36 reps | 50 reps |
+| Subidas al cajón | H · por mancuerna | 12 kg | 16 kg | 20 kg | 22.5 kg | 25 kg | 27.5 kg | 32.5 kg | 37.5 kg |
+|  | M | 7 kg | 8 kg | 10 kg | 13 kg | 16 kg | 18 kg | 20 kg | 22.5 kg |
 | Aductores en máquina | H · máquina | 30 kg | 40 kg | 52.5 kg | 65 kg | 80 kg | 87.5 kg | 95 kg | 135 kg |
 |  | M | 20 kg | 30 kg | 40 kg | 50 kg | 60 kg | 67.5 kg | 75 kg | 105 kg |
 
@@ -108,26 +108,26 @@ Los porcentajes salen de un modelo: entre quienes entrenan, la fuerza se reparte
 
 | Ejercicio | Sexo | Principiante | Ascenso | En forma | Intermedio | Atlético / Atlética | Fuerte | Avanzado | Élite |
 |---|---|---|---|---|---|---|---|---|---|
-| Sentadilla sumo con mancuerna | H · una mancuerna | 22.5 kg | 27.5 kg | 35 kg | 40 kg | 42.5 kg | 47.5 kg | 55 kg | 72.5 kg |
-|  | M | 11 kg | 14 kg | 17 kg | 22.5 kg | 27.5 kg | 32.5 kg | 35 kg | 42.5 kg |
-| Prensa con pies abiertos | H · máquina: varía por marca | 95 kg | 122.5 kg | 150 kg | 187.5 kg | 225 kg | 247.5 kg | 270 kg | 375 kg |
-|  | M | 45 kg | 67.5 kg | 90 kg | 112.5 kg | 135 kg | 150 kg | 165 kg | 235 kg |
-| Peso muerto sumo | H | 75 kg | 95 kg | 112.5 kg | 130 kg | 150 kg | 162.5 kg | 177.5 kg | 212.5 kg |
-|  | M | 30 kg | 45 kg | 60 kg | 67.5 kg | 75 kg | 82.5 kg | 90 kg | 132.5 kg |
-| Hip thrust | H | 55 kg | 75 kg | 95 kg | 112.5 kg | 130 kg | 145 kg | 160 kg | 220 kg |
-|  | M | 30 kg | 45 kg | 60 kg | 75 kg | 90 kg | 102.5 kg | 115 kg | 165 kg |
-| Zancadas hacia atrás | H · por mancuerna | 14 kg | 19 kg | 22.5 kg | 25 kg | 27.5 kg | 32.5 kg | 35 kg | 47.5 kg |
-|  | M | 8 kg | 9 kg | 11 kg | 15 kg | 19 kg | 20 kg | 22.5 kg | 27.5 kg |
-| Abductores en máquina | H · máquina | 30 kg | 40 kg | 52.5 kg | 65 kg | 80 kg | 87.5 kg | 95 kg | 135 kg |
-|  | M | 20 kg | 30 kg | 40 kg | 50 kg | 60 kg | 67.5 kg | 75 kg | 105 kg |
-| Patada de glúteo en polea | H · polea: el peso marcado no es el real, × 2.3 sobre 0.35 (decisión del entrenador, 2026-10-16; antes × 1.3) | 25 kg | 32.5 kg | 42.5 kg | 52.5 kg | 62.5 kg | 70 kg | 77.5 kg | 110 kg |
-|  | M | 17 kg | 25 kg | 32.5 kg | 40 kg | 47.5 kg | 55 kg | 60 kg | 85 kg |
-| Patada de glúteo con liga | H · con liga: depende de la liga, poco confiable | 10 reps | 15 reps | 20 reps | 28 reps | 35 reps | 38 reps | 42 reps | 64 reps |
-|  | M | 10 reps | 15 reps | 20 reps | 28 reps | 35 reps | 38 reps | 42 reps | 64 reps |
-| Patada de glúteo en máquina | H · máquina de palanca, una pierna: varía por marca | 25 kg | 32.5 kg | 42.5 kg | 52.5 kg | 62.5 kg | 70 kg | 77.5 kg | 107.5 kg |
-|  | M | 17 kg | 25 kg | 30 kg | 40 kg | 47.5 kg | 52.5 kg | 60 kg | 85 kg |
-| Swing con kettlebell | H · una pesa rusa | 15 kg | 19 kg | 22.5 kg | 25 kg | 30 kg | 32.5 kg | 35 kg | 42.5 kg |
-|  | M | 6 kg | 9 kg | 12 kg | 14 kg | 15 kg | 16 kg | 18 kg | 27.5 kg |
+| Sentadilla sumo con mancuerna | H · una mancuerna | 22.5 kg | 27.5 kg | 35 kg | 40 kg | 42.5 kg | 47.5 kg | 55 kg | 65 kg |
+|  | M | 11 kg | 14 kg | 17 kg | 22.5 kg | 27.5 kg | 32.5 kg | 35 kg | 37.5 kg |
+| Prensa con pies abiertos | H · máquina: varía por marca | 95 kg | 122.5 kg | 150 kg | 187.5 kg | 225 kg | 247.5 kg | 270 kg | 337.5 kg |
+|  | M | 45 kg | 67.5 kg | 90 kg | 112.5 kg | 135 kg | 150 kg | 165 kg | 212.5 kg |
+| Peso muerto sumo | H | 75 kg | 95 kg | 112.5 kg | 130 kg | 150 kg | 162.5 kg | 177.5 kg | 192.5 kg |
+|  | M | 30 kg | 45 kg | 60 kg | 67.5 kg | 75 kg | 82.5 kg | 90 kg | 117.5 kg |
+| Hip thrust | H | 25 kg | 32.5 kg | 40 kg | 50 kg | 57.5 kg | 65 kg | 70 kg | 87.5 kg |
+|  | M | 13 kg | 20 kg | 27.5 kg | 32.5 kg | 40 kg | 45 kg | 50 kg | 65 kg |
+| Zancadas hacia atrás | H · por mancuerna | 14 kg | 19 kg | 22.5 kg | 25 kg | 27.5 kg | 32.5 kg | 35 kg | 42.5 kg |
+|  | M | 8 kg | 9 kg | 11 kg | 15 kg | 19 kg | 20 kg | 22.5 kg | 25 kg |
+| Abductores en máquina | H · máquina | 30 kg | 40 kg | 52.5 kg | 65 kg | 80 kg | 87.5 kg | 95 kg | 122.5 kg |
+|  | M | 20 kg | 30 kg | 40 kg | 50 kg | 60 kg | 67.5 kg | 75 kg | 95 kg |
+| Patada de glúteo en polea | H · polea: el peso marcado no es el real, × 2.3 sobre 0.35 (decisión del entrenador, 2026-10-16; antes × 1.3) | 25 kg | 32.5 kg | 42.5 kg | 52.5 kg | 62.5 kg | 70 kg | 77.5 kg | 97.5 kg |
+|  | M | 17 kg | 25 kg | 32.5 kg | 40 kg | 47.5 kg | 55 kg | 60 kg | 77.5 kg |
+| Patada de glúteo con liga | H · con liga: depende de la liga, poco confiable | 10 reps | 15 reps | 20 reps | 28 reps | 35 reps | 38 reps | 42 reps | 58 reps |
+|  | M | 10 reps | 15 reps | 20 reps | 28 reps | 35 reps | 38 reps | 42 reps | 58 reps |
+| Patada de glúteo en máquina | H · máquina de palanca, una pierna: varía por marca | 25 kg | 32.5 kg | 42.5 kg | 52.5 kg | 62.5 kg | 70 kg | 77.5 kg | 97.5 kg |
+|  | M | 17 kg | 25 kg | 30 kg | 40 kg | 47.5 kg | 52.5 kg | 60 kg | 77.5 kg |
+| Swing con kettlebell | H · una pesa rusa | 15 kg | 19 kg | 22.5 kg | 25 kg | 30 kg | 32.5 kg | 35 kg | 37.5 kg |
+|  | M | 6 kg | 9 kg | 12 kg | 14 kg | 15 kg | 16 kg | 18 kg | 22.5 kg |
 
 ### Femoral
 
@@ -137,10 +137,10 @@ Los porcentajes salen de un modelo: entre quienes entrenan, la fuerza se reparte
 |  | M | 12 kg | 16 kg | 19 kg | 25 kg | 30 kg | 32.5 kg | 35 kg | 50 kg |
 | Curl femoral sentado | H · máquina | 30 kg | 37.5 kg | 45 kg | 55 kg | 65 kg | 72.5 kg | 77.5 kg | 107.5 kg |
 |  | M | 16 kg | 22.5 kg | 27.5 kg | 32.5 kg | 40 kg | 42.5 kg | 47.5 kg | 67.5 kg |
-| Peso muerto rumano | H | 55 kg | 70 kg | 85 kg | 97.5 kg | 112.5 kg | 122.5 kg | 132.5 kg | 160 kg |
-|  | M | 22.5 kg | 32.5 kg | 45 kg | 50 kg | 57.5 kg | 62.5 kg | 67.5 kg | 100 kg |
-| Peso muerto rumano con mancuernas | H · por mancuerna | 25 kg | 30 kg | 37.5 kg | 42.5 kg | 50 kg | 55 kg | 57.5 kg | 70 kg |
-|  | M | 10 kg | 15 kg | 20 kg | 22.5 kg | 25 kg | 27.5 kg | 30 kg | 42.5 kg |
+| Peso muerto rumano | H | 55 kg | 70 kg | 85 kg | 97.5 kg | 112.5 kg | 122.5 kg | 132.5 kg | 142.5 kg |
+|  | M | 22.5 kg | 32.5 kg | 45 kg | 50 kg | 57.5 kg | 62.5 kg | 67.5 kg | 90 kg |
+| Peso muerto rumano con mancuernas | H · por mancuerna | 25 kg | 30 kg | 37.5 kg | 42.5 kg | 50 kg | 55 kg | 57.5 kg | 62.5 kg |
+|  | M | 10 kg | 15 kg | 20 kg | 22.5 kg | 25 kg | 27.5 kg | 30 kg | 40 kg |
 | Peso muerto con piernas rígidas | H | 55 kg | 67.5 kg | 80 kg | 95 kg | 107.5 kg | 117.5 kg | 127.5 kg | 152.5 kg |
 |  | M | 22.5 kg | 32.5 kg | 42.5 kg | 47.5 kg | 55 kg | 60 kg | 65 kg | 95 kg |
 | Peso muerto con piernas rígidas con mancuernas | H · por mancuerna | 25 kg | 30 kg | 35 kg | 42.5 kg | 47.5 kg | 52.5 kg | 57.5 kg | 67.5 kg |
@@ -154,8 +154,8 @@ Los porcentajes salen de un modelo: entre quienes entrenan, la fuerza se reparte
 
 | Ejercicio | Sexo | Principiante | Ascenso | En forma | Intermedio | Atlético / Atlética | Fuerte | Avanzado | Élite |
 |---|---|---|---|---|---|---|---|---|---|
-| Peso muerto | H | 75 kg | 95 kg | 112.5 kg | 130 kg | 150 kg | 162.5 kg | 177.5 kg | 212.5 kg |
-|  | M | 30 kg | 45 kg | 60 kg | 67.5 kg | 75 kg | 82.5 kg | 90 kg | 132.5 kg |
+| Peso muerto | H | 75 kg | 95 kg | 112.5 kg | 130 kg | 150 kg | 162.5 kg | 177.5 kg | 192.5 kg |
+|  | M | 30 kg | 45 kg | 60 kg | 67.5 kg | 75 kg | 82.5 kg | 90 kg | 117.5 kg |
 | Dominadas | H | 1 rep | 4 reps | 6 reps | 9 reps | 12 reps | 14 reps | 17 reps | 29 reps |
 |  | M | 1 rep | 2 reps | 3 reps | 4 reps | 6 reps | 8 reps | 10 reps | 16 reps |
 | Dominadas supinas | H | 1 rep | 4 reps | 7 reps | 10 reps | 13 reps | 16 reps | 18 reps | 28 reps |

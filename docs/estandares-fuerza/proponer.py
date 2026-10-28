@@ -98,7 +98,10 @@ PESO = {
     "peso-muerto-rumano-mancuernas": ("muerto", 0.33, "por mancuerna"),
     "peso-muerto-piernas-rigidas-mancuernas": ("muerto", 0.32, "por mancuerna"),
     "swing-kettlebell": ("muerto", 0.20, "una pesa rusa"),
-    "hip-thrust": ("hipthrust", 1.00, ""),
+    # Toda la tabla escalada para que un hombre como Said (73 kg, 22) con 54 kg × 8 quede al
+    # inicio de Avanzado (entrenador, 2026-10-28). Con la tabla de barra (×1.00) todos salían en
+    # Principiante o Ascenso con lo que se hace en el gym, aunque su patada les diera Avanzado.
+    "hip-thrust": ("hipthrust", 0.4401, ""),
     "pantorrilla-de-pie": ("pantorrilla", 1.00, "máquina"),
     # Said (73 kg, 40 kg × 8) al final de Intermedio (entrenador, 2026-10-27). Antes ×0.70.
     "pantorrilla-sentado": ("pantorrilla", 0.441, "máquina de Focus"),
@@ -266,9 +269,11 @@ ELITE_FIJO = {
 # a Élite se sentía como un muro, para los dos sexos (entrenador, 2026-10-28): pecho −5 %,
 # dorsales −5 % (los remos, jalones, dominadas y el pullover; el peso muerto y las
 # hiperextensiones, que también son de espalda, no), bíceps −10 %, tríceps −10 % (−15 % lo
-# dejaba más cerca de Avanzado que los demás) y trapecio −10 %. Si un ejercicio trabaja dos de
-# estos músculos (jalón supino, dominadas supinas), manda el mayor.
-BAJA_ELITE_MUSCULO = {"pecho": 0.05, "dorsal": 0.05, "biceps": 0.10, "triceps": 0.10, "trapecio": 0.10}
+# dejaba más cerca de Avanzado que los demás), trapecio −10 % y glúteo −10 %. Si un ejercicio
+# trabaja dos de estos músculos (jalón supino, dominadas supinas), manda el mayor.
+BAJA_ELITE_MUSCULO = {
+    "pecho": 0.05, "dorsal": 0.05, "biceps": 0.10, "triceps": 0.10, "trapecio": 0.10, "gluteo": 0.10,
+}
 
 
 def elite_bajado(ocho: list, musculos: dict, entero: bool) -> list:
