@@ -6,7 +6,7 @@
   "infraespinoso": ["face-pull"],
   "biceps": ["curl-barra", "curl-barra-z", "curl-mancuernas", "curl-predicador", "curl-predicador-maquina", "curl-martillo"],
   "triceps": ["press-cerrado", "fondos-triceps", "press-frances", "extension-triceps-polea", "extension-triceps-cuerda", "fondos-maquina"],
-  "antebrazo": ["curl-muneca-barra", "curl-inverso-barra"],
+  "antebrazo": ["curl-muneca-barra", "curl-inverso-barra", "curl-martillo"],
   "abdomen": ["crunch-polea", "crunch-maquina", "elevacion-piernas-colgado", "plancha"],
   "lumbar": ["peso-muerto", "hiperextensiones", "buenos-dias"],
   "gluteo": ["hip-thrust", "patada-gluteo-polea", "patada-gluteo-maquina", "sentadilla-sumo-mancuerna"],
