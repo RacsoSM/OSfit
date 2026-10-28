@@ -73,7 +73,7 @@ describe("percentilDe (contra toda la población)", () => {
 
 describe("percentilEntrenanDe (contra quienes entrenan)", () => {
   it("en cada estándar da su porcentaje", () => {
-    expect([0, 1, 2, 3, 4, 5, 6, 7, 8].map(percentilEntrenanDe)).toEqual([1, 3, 12, 25, 42, 57, 65, 72, 90]);
+    expect([0, 1, 2, 3, 4, 5, 6, 7, 8].map(percentilEntrenanDe)).toEqual([1, 3, 12, 25, 42, 57, 65, 72, 88]);
   });
 
   it("siempre por debajo del de toda la población", () => {
@@ -257,7 +257,7 @@ describe("repartoRangos", () => {
   });
 
   it("contra quienes entrenan, con la forma de la curva del modelo", () => {
-    expect(repartoRangos("entrenan")).toEqual([12, 13, 17, 15, 8, 7, 18, 10]);
+    expect(repartoRangos("entrenan")).toEqual([12, 13, 17, 15, 8, 7, 16, 12]);
   });
 
   it("los dos suman 100", () => {

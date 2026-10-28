@@ -16,7 +16,8 @@ import type { EjercicioBanco, Sesion, Sexo } from "./datos";
  * levanta en promedio lo de Principiante; y 1 de cada 4 adultos entrena fuerza. Es el
  * promedio de todos los ejercicios y los dos sexos. Antes cada tramo se partía a la mitad y la
  * gráfica salía pareja, y al bajar la parte de arriba los porcentajes quedaban inflados.
- * Élite es el 10 % más fuerte de quienes entrenan (decisión del entrenador).
+ * Élite era el 10 % más fuerte de quienes entrenan (decisión del entrenador); con el Élite más
+ * cerca en pecho, espalda, bíceps, tríceps, trapecio y glúteo (2026-10-28), en promedio es el 12 %.
  */
 
 export interface Rango { nombre: string; desde: number; }
@@ -48,7 +49,7 @@ const PERCENTILES_POBLACION: readonly (readonly [number, number])[] = [
   [0, 1], [1, 38], [2, 60], [3, 73], [4, 82], [5, 88], [6, 90], [7, 93], [8, 97],
 ];
 const PERCENTILES_ENTRENAN: readonly (readonly [number, number])[] = [
-  [0, 1], [1, 3], [2, 12], [3, 25], [4, 42], [5, 57], [6, 65], [7, 72], [8, 90],
+  [0, 1], [1, 3], [2, 12], [3, 25], [4, 42], [5, 57], [6, 65], [7, 72], [8, 88],
 ];
 
 const acotar = (n: number) => Math.min(NIVEL_MAX, Math.max(0, n));
@@ -89,7 +90,7 @@ export function percentilDe(nivel: number): number {
   return interpolar(PERCENTILES_POBLACION, nivel);
 }
 
-/** Entero de 1 a 90 contra la gente que entrena. */
+/** Entero de 1 a 88 contra la gente que entrena. */
 export function percentilEntrenanDe(nivel: number): number {
   return interpolar(PERCENTILES_ENTRENAN, nivel);
 }
