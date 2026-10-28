@@ -117,8 +117,12 @@ PESO = {
     "remo-sentado-polea": ("jalon", 1.05, ""),
     "pullover-polea": ("triceps", 0.90, ""),
     "remo-con-barra": ("remo", 1.00, ""),
-    "remo-maquina": ("remo", 0.95, "máquina: varía por marca"),
-    "remo-en-t": ("remo", 0.85, "solo los discos"),
+    # Toda la tabla escalada para que un hombre como Said (73 kg, 22) con 40.5 kg × 7 quede a
+    # media banda de Fuerte (entrenador, 2026-10-28). Antes ×0.95 lo dejaba en Ascenso.
+    "remo-maquina": ("remo", 0.5656, "máquina: varía por marca"),
+    # Toda la tabla escalada para que un hombre como Said (73 kg, 22) con 60 kg × 6 quede al
+    # inicio de Avanzado (entrenador, 2026-10-28). Antes ×0.85 lo dejaba en Fuerte.
+    "remo-en-t": ("remo", 0.7723, "solo los discos"),
     "remo-mancuerna": ("remo", 0.45, "una mancuerna"),
     "encogimientos-barra": ("encogimiento", 1.00, ""),
     "encogimientos-mancuernas": ("encogimiento", 0.45, "por mancuerna"),
