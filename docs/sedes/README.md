@@ -18,7 +18,7 @@ Los 15 ejercicios de la estación de poleas (los de `POLEA_DOBLE` en
 `docs/estandares-fuerza/proponer.py`: extensiones de tríceps, face pull, curl en polea, cruce y
 aperturas en polea, pullover, crunch y giro en polea, etc.) llevan ×1.958: 1 kg de esa polea vale
 1.958 kg de la de Focus, que es doble. Se tomó de Said Armando (82 kg, 22): con 31.2 kg × 8 en la
-extensión de tríceps agarre V queda en 6.3. El face pull va aparte, con ×1.384, para que Said
-Armando con 35 kg × 8 quede justo al inicio de Avanzado (entrenador, 2026-10-28; antes toda la
-estación iba a ×1.863 y luego a ×1.384). Los jalones y el remo sentado en polea no cuentan como esa
+extensión de tríceps agarre V queda en 6.3. El face pull va aparte, con ×1.731, para que Said
+Armando con 35 kg × 8 quede en 7.4 (entrenador, 2026-10-28; antes toda la estación iba a ×1.863,
+luego a ×1.384, y el face pull estuvo en ×1.384 con él en 7.0). Los jalones y el remo sentado en polea no cuentan como esa
 estación.
