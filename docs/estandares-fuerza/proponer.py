@@ -128,7 +128,9 @@ PESO = {
     "press-hombro-mancuernas": ("militar", 0.40, "por mancuerna"),
     "press-arnold": ("militar", 0.36, "por mancuerna"),
     "remo-al-menton": ("militar", 0.80, ""),
-    "elevaciones-laterales": ("lateral", 1.00, "por mancuerna"),
+    # Toda la tabla escalada para que un hombre como Said (73 kg, 22) llegue a Élite con
+    # 15 kg × 12 (entrenador, 2026-10-28). Antes ×1.00 pedía ~20.5 kg × 10.
+    "elevaciones-laterales": ("lateral", 0.7715, "por mancuerna"),
     "elevaciones-laterales-polea": ("lateral", 0.80, "por lado"),
     "elevaciones-frontales": ("lateral", 2.20, "con disco, a dos manos: el peso del disco, ×2 sobre el de una sola mano (decisión del entrenador, 2026-10-16)"),
     "pajaros": ("lateral", 0.90, "por mancuerna"),

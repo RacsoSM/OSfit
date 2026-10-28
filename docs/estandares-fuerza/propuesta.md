@@ -222,8 +222,8 @@ Los porcentajes salen de un modelo: entre quienes entrenan, la fuerza se reparte
 |  | M | 5 kg | 7 kg | 8 kg | 10 kg | 12 kg | 14 kg | 15 kg | 22.5 kg |
 | Press Arnold | H · por mancuerna | 9 kg | 12 kg | 15 kg | 18 kg | 20 kg | 22.5 kg | 22.5 kg | 32.5 kg |
 |  | M | 4 kg | 6 kg | 8 kg | 9 kg | 11 kg | 12 kg | 14 kg | 19 kg |
-| Elevaciones laterales | H · por mancuerna | 4 kg | 6 kg | 8 kg | 11 kg | 15 kg | 17 kg | 19 kg | 27.5 kg |
-|  | M | 2 kg | 3 kg | 4 kg | 5 kg | 7 kg | 8 kg | 9 kg | 14 kg |
+| Elevaciones laterales | H · por mancuerna | 3 kg | 4 kg | 6 kg | 9 kg | 12 kg | 13 kg | 15 kg | 22.5 kg |
+|  | M | 1 kg | 2 kg | 3 kg | 4 kg | 6 kg | 6 kg | 7 kg | 11 kg |
 | Elevaciones laterales en polea | H · por lado; polea doble ×1.3 | 4 kg | 6 kg | 8 kg | 12 kg | 16 kg | 18 kg | 20 kg | 30 kg |
 |  | M | 2 kg | 3 kg | 4 kg | 6 kg | 8 kg | 9 kg | 10 kg | 14 kg |
 | Elevaciones frontales con disco | H · con disco, a dos manos: el peso del disco, ×2 sobre el de una sola mano (decisión del entrenador, 2026-10-16) | 8 kg | 12 kg | 16 kg | 25 kg | 32.5 kg | 37.5 kg | 42.5 kg | 62.5 kg |
