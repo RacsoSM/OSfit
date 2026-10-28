@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import type { Timestamp } from "firebase/firestore";
 import type { Asistencia, Cliente } from "./datos";
-import { BARRA, VENTANAS, contenidoDe, tituloCabecera, ventana, type DatosCliente, type IdVentana } from "./ventanas";
+import { BARRA, VENTANAS, contenidoDe, datosResumenMensual, tituloCabecera, ventana, type DatosCliente, type IdVentana } from "./ventanas";
+import type { ResumenMensualGuardado } from "./datos";
+import { resumenDelMes } from "./resumenMensual";
 
 const HOY = "2026-09-18"; // viernes
 
@@ -33,9 +35,9 @@ describe("el registro de ventanas", () => {
     expect(new Set(ids).size).toBe(ids.length);
   });
 
-  it("va Inicio, Músculos, Registro, Amigos, Estadísticas, Ranking, Medallas, Logros, Videos y Ajustes al final", () => {
+  it("va Inicio, Músculos, Registro, Amigos, Estadísticas, Resumen mensual, Ranking, Medallas, Logros, Videos y Ajustes al final", () => {
     expect(VENTANAS.map((v) => v.id)).toEqual(
-      ["inicio", "musculos", "registro", "comparar", "estadisticas", "ranking", "medallas", "logros", "videos", "ajustes"]
+      ["inicio", "musculos", "registro", "comparar", "estadisticas", "resumenMensual", "ranking", "medallas", "logros", "videos", "ajustes"]
     );
   });
 
@@ -182,5 +184,42 @@ describe("tituloCabecera", () => {
     expect(tituloCabecera(ventana("musculos"))).toBe("");
     expect(tituloCabecera(ventana("registro"))).toBe("");
     expect(tituloCabecera(ventana("ranking"))).toBe("Ranking");
+  });
+});
+
+describe("datosResumenMensual", () => {
+  const asistencias: Asistencia[] = [
+    { fecha: "2026-07-03", asistio: true, justificada: false },
+    { fecha: "2026-08-04", asistio: true, justificada: false },
+    { fecha: "2026-09-01", asistio: true, justificada: false },
+    { fecha: "2026-09-17", asistio: false, justificada: false },
+  ];
+  const guardado = (mes: string): ResumenMensualGuardado => resumenDelMes({
+    mes, corte: `${mes}-28`, asistencias, sesiones: [], banco: [],
+    perfil: { sexo: null, peso: null, porcentajeGrasa: null, anioNacimiento: null, nombresDias: [] },
+  });
+
+  it("el mes en curso arriba (en vivo, cortado en hoy) y luego los guardados, del más nuevo al más viejo", () => {
+    const d = datosResumenMensual(datos({ asistencias, resumenes: [guardado("2026-07"), guardado("2026-08")] }), null);
+    expect(d.meses).toEqual([
+      { mes: "2026-09", enCurso: true }, { mes: "2026-08", enCurso: false }, { mes: "2026-07", enCurso: false },
+    ]);
+    expect([d.mes, d.enCurso, d.cargando]).toEqual(["2026-09", true, false]);
+    expect(d.resumen?.asistencia).toMatchObject({ entreno: 1, faltas: 1 });
+  });
+
+  it("el mes que acaba de cerrar se calcula aquí mientras cerrarMes no lo congela; más atrás, no", () => {
+    const d = datosResumenMensual(datos({ asistencias, resumenes: [] }), null);
+    expect(d.meses.map((m) => m.mes)).toEqual(["2026-09", "2026-08"]);
+  });
+
+  it("abre en el mes elegido si sigue en la lista; si no, en el primero", () => {
+    const resumenes = [guardado("2026-08")];
+    expect(datosResumenMensual(datos({ asistencias, resumenes }), "2026-08")).toMatchObject({ mes: "2026-08", enCurso: false });
+    expect(datosResumenMensual(datos({ asistencias, resumenes }), "2025-01").mes).toBe("2026-09");
+  });
+
+  it("mientras llegan los meses cerrados dice que carga", () => {
+    expect(datosResumenMensual(datos({ asistencias }), null).cargando).toBe(true);
   });
 });

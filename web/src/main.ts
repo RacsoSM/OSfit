@@ -14,6 +14,7 @@ import {
   observarConfigGrupos,
   observarHistorial,
   observarSede,
+  observarResumenesMensuales,
 } from "./datos";
 import { bancoEnSede } from "./sede";
 import type {
@@ -25,6 +26,7 @@ import type {
   EjercicioBanco,
   Sesion,
   ConfigGrupos,
+  ResumenMensualGuardado,
 } from "./datos";
 import { hoyEnMazatlan } from "./fecha";
 import { mesAnterior, type Tirada } from "./tirada";
@@ -49,6 +51,7 @@ import {
 import { conectarAutollenado, conectarUnidadPeso } from "./ui/tarjetaUnidadPeso";
 import { conectarSinDatos } from "./ui/tarjetaSinDatos";
 import { conectarEstadisticas } from "./ui/estadisticas";
+import { conectarResumenMensual, reiniciarResumenMensual } from "./ui/resumenMensual";
 import { mostrarAvisoSinDatos, quitarAvisoSinDatos } from "./ui/avisoSinDatos";
 import { almacenesDelNavegador, saludDeLosAlmacenes } from "./sesion";
 import type { MotivoSinAcceso, ResultadoSesion } from "./sesion";
@@ -272,6 +275,12 @@ async function arrancar(): Promise<void> {
    */
   let historial: Sesion[] | null = null;
   let historialPedido = false;
+  /**
+   * Sus meses cerrados, para Resumen mensual. Igual que el historial: se piden la primera vez que
+   * entra a esa ventana y siguen escuchando.
+   */
+  let resumenes: ResumenMensualGuardado[] | null = null;
+  let resumenesPedidos = false;
   /** Los ejercicios por grupo del grid de Registro; null si el entrenador no configura ninguno. */
   let configGrupos: ConfigGrupos | null = null;
   /** Los entrenamientos que se terminaron sin internet, en el teléfono (`cola.ts`). */
@@ -687,6 +696,12 @@ async function arrancar(): Promise<void> {
       historialPedido = true;
       observarHistorial(clienteId, (s) => { historial = s; pintar(); });
     }
+    if (activa.id === "resumenMensual" && !resumenesPedidos) {
+      resumenesPedidos = true;
+      observarResumenesMensuales(clienteId, (r) => { resumenes = r; pintar(); });
+    }
+    // Al salir de Resumen mensual se olvida el mes: la próxima vez abre en el mes en curso.
+    if (ventanaPintada === "resumenMensual" && activa.id !== "resumenMensual") reiniciarResumenMensual();
     actualizarCabecera(tituloCabecera(activa));
     const datos = {
       cliente, hoy, asistencias, mesVisible, yaAviso, medallas, logros,
@@ -707,6 +722,7 @@ async function arrancar(): Promise<void> {
       guardandoGifs,
       avisoGifs,
       historial,
+      resumenes,
     };
     contenido.innerHTML = contenidoDe(activa, datos);
     marcarBotonAtras(contenido);
@@ -767,6 +783,10 @@ async function arrancar(): Promise<void> {
     }
     if (activa.id === "estadisticas") {
       conectarEstadisticas(pintar, () => abrirVentana("registro"));
+      return;
+    }
+    if (activa.id === "resumenMensual") {
+      conectarResumenMensual(pintar);
       return;
     }
     if (activa.id === "ranking") {

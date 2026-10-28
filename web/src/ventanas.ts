@@ -1,4 +1,6 @@
-import type { Asistencia, Cliente, ConfigGrupos, EjercicioBanco, LogroPersonalOtorgado, MedallaOtorgada, Sesion } from "./datos";
+import type {
+  Asistencia, Cliente, ConfigGrupos, EjercicioBanco, LogroPersonalOtorgado, MedallaOtorgada, ResumenMensualGuardado, Sesion,
+} from "./datos";
 import type { IdEstilo } from "./estilo";
 import type { Tirada } from "./tirada";
 import { recordatorioPago } from "./pago";
@@ -18,6 +20,8 @@ import { tarjetaRanking, type EstadoRanking } from "./ui/tarjetaRanking";
 import { tarjetaAjustes } from "./ui/tarjetaAjustes";
 import { tarjetaSinDatos } from "./ui/tarjetaSinDatos";
 import { ventanaEstadisticas, type DatosEstadisticas } from "./ui/estadisticas";
+import { mesElegidoResumen, ventanaResumenMensual, type DatosResumenMensual, type MesDeLista } from "./ui/resumenMensual";
+import { compararFuerza, mesAnterior, mesesConActividad, resumenDelMes, ultimoDiaDe, type ResumenMensual } from "./resumenMensual";
 import { invitacionNotificaciones, seccionNotificaciones } from "./ui/tarjetaNotificaciones";
 import type { EstadoNotificaciones } from "./notificaciones";
 import { tarjetaMusculos, type EstadoSvg } from "./ui/mapaMuscular";
@@ -39,7 +43,7 @@ import { edadEn, fuerzaPorMusculo, pesoParaFuerza, type FuerzaMusculo } from "./
 
 export type IdVentana =
   | "inicio" | "musculos" | "registro" | "comparar" | "estadisticas"
-  | "ranking" | "medallas" | "logros" | "videos" | "ajustes";
+  | "ranking" | "medallas" | "logros" | "videos" | "ajustes" | "resumenMensual";
 
 /** Todo lo que los listeners de Firestore tienen a mano en cada repintado. */
 export interface DatosCliente {
@@ -87,6 +91,8 @@ export interface DatosCliente {
   avisoGifs?: string | null;
   /** Todo su historial, para Estadísticas; null mientras no llega (se pide al abrir esa ventana). */
   historial?: Sesion[] | null;
+  /** Sus meses cerrados, para Resumen mensual; null mientras no llegan (se piden al abrir esa ventana). */
+  resumenes?: ResumenMensualGuardado[] | null;
 }
 
 /** Lo que necesita Estadísticas. Mientras llega el historial completo, usa las últimas que ya hay. */
@@ -105,6 +111,61 @@ export function datosEstadisticas(d: DatosCliente): DatosEstadisticas {
     perfil,
     fuerza: fuerzaDelCliente(d),
     peso: peso ?? null,
+  };
+}
+
+/**
+ * Lo que necesita Resumen mensual. Los meses cerrados salen de lo que guardó `cerrarMes`; el mes
+ * en curso se calcula aquí con el mismo módulo, con corte en hoy. El mes que acaba de cerrar
+ * también se calcula aquí mientras `cerrarMes` no lo congela (de 00:00 a 00:30 del día 1, o si
+ * la corrida falló): con las sesiones que hay alcanza para un mes. Más atrás no, porque la página
+ * no tiene todo su historial y saldría incompleto.
+ */
+export function datosResumenMensual(d: DatosCliente, elegido: string | null): DatosResumenMensual {
+  const mesDeHoy = d.hoy.slice(0, 7);
+  const recienCerrado = mesAnterior(mesDeHoy);
+  const sesiones = d.historial ?? d.sesiones ?? [];
+  const guardados = new Map((d.resumenes ?? []).map((r) => [r.mes, r]));
+  const conActividad = new Set(mesesConActividad(d.asistencias, sesiones));
+
+  const cerrados = new Set([...guardados.keys()].filter((m) => m < mesDeHoy));
+  if (conActividad.has(recienCerrado)) cerrados.add(recienCerrado);
+  const meses: MesDeLista[] = [
+    ...(conActividad.has(mesDeHoy) ? [{ mes: mesDeHoy, enCurso: true }] : []),
+    ...[...cerrados].sort().reverse().map((mes) => ({ mes, enCurso: false })),
+  ];
+
+  const { sexo, peso, porcentajeGrasa, anioNacimiento, rutinaAsignada } = d.cliente;
+  const perfil = {
+    sexo: sexo === "H" || sexo === "M" ? sexo : null,
+    peso: peso ?? null,
+    porcentajeGrasa: porcentajeGrasa ?? null,
+    anioNacimiento: anioNacimiento ?? null,
+    nombresDias: (rutinaAsignada?.dias ?? []).map((dia, i) => dia.nombreDia?.trim() || `Día ${i + 1}`),
+  };
+  const resumenDe = (mes: string): ResumenMensual | null => {
+    const guardado = guardados.get(mes);
+    if (guardado) return guardado;
+    if (mes !== mesDeHoy && mes !== recienCerrado) return null;
+    return resumenDelMes({
+      mes, corte: mes === mesDeHoy ? d.hoy : ultimoDiaDe(mes),
+      asistencias: d.asistencias, sesiones, banco: d.banco, perfil,
+    });
+  };
+
+  const i = Math.max(0, meses.findIndex((m) => m.mes === elegido));
+  const actual = meses[i] ?? null;
+  const resumen = actual ? resumenDe(actual.mes) : null;
+  const previo = meses[i + 1] ? resumenDe(meses[i + 1].mes) : null;
+  return {
+    cargando: d.resumenes == null,
+    meses,
+    mes: actual?.mes ?? null,
+    resumen,
+    enCurso: actual?.enCurso ?? false,
+    hoy: d.hoy,
+    sexo: perfil.sexo,
+    cambios: compararFuerza(resumen?.fuerza ?? null, previo?.fuerza ?? null),
   };
 }
 
@@ -210,6 +271,12 @@ export const VENTANAS: readonly Ventana[] = [
   {
     id: "estadisticas", titulo: "Estadísticas", icono: "📈", grupo: "principal",
     pintar: (d) => ventanaEstadisticas(datosEstadisticas(d)),
+  },
+  // Sin emoji (entrenador, 2026-10-28): el menú pinta solo el título, e `icono` va vacío porque
+  // el tipo lo pide y solo se usa en "Muy pronto".
+  {
+    id: "resumenMensual", titulo: "Resumen mensual", icono: "", grupo: "principal",
+    pintar: (d) => ventanaResumenMensual(datosResumenMensual(d, mesElegidoResumen())),
   },
   {
     id: "ranking", titulo: "Ranking", icono: "🏆", grupo: "principal",
