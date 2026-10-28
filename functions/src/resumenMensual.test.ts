@@ -34,6 +34,7 @@ describe("gemelo de web/src/resumenMensual.ts", () => {
     { fecha: "2026-10-01", asistio: true, justificada: false, duracionMinutos: 90, diaRutinaRealizado: 0 },
     { fecha: "2026-10-02", asistio: false, justificada: true },
     { fecha: "2026-10-05", asistio: false, justificada: false },
+    { fecha: "2026-10-10", asistio: true, justificada: false, duracionMinutos: 60 }, // sábado
     { fecha: "2026-10-13", asistio: true, justificada: false, duracionMinutos: 120, diaRutinaRealizado: 1 },
     { fecha: "2026-10-20", asistio: true, justificada: false, diaRutinaRealizado: 1 },
   ];
@@ -62,7 +63,8 @@ describe("gemelo de web/src/resumenMensual.ts", () => {
 
   it("el caso completo tiene de todo (para que la igualdad pruebe algo)", () => {
     const r = resumenDelMes(casos[0]);
-    expect(r.asistencia.entreno).toBe(3);
+    expect(r.asistencia.entreno).toBe(4);
+    expect(r.asistencia.porcentaje).toBe(60); // el sábado no cuenta: 3 de 5 hábiles
     expect(r.entrenamiento.kg).toBeGreaterThan(0);
     expect(r.fuerza?.musculos.pecho).toBeGreaterThan(0);
     expect(r.marcas.length).toBeGreaterThan(1);

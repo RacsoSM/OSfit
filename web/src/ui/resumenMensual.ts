@@ -111,9 +111,6 @@ function entrenamiento(r: ResumenMensual): string {
   if (t.sesiones === 0) return "";
   const caja = (valor: string, etiqueta: string) =>
     `<div class="rm-caja"><p class="rm-caja-num">${valor}</p><p class="rm-caja-etq">${etiqueta}</p></div>`;
-  const favorito = t.diaFavorito
-    ? ` · Día favorito: <strong>${escapar(t.diaFavorito.nombre)}</strong> (${t.diaFavorito.veces} ${t.diaFavorito.veces === 1 ? "vez" : "veces"})`
-    : "";
   return `
     <section class="tarjeta rm-seccion">
       <h2 class="rm-titulo">Entrenamiento</h2>
@@ -122,7 +119,6 @@ function entrenamiento(r: ResumenMensual): string {
         ${caja(formatoKg(t.series), "series")}
         ${caja(formatoKg(t.reps), "reps")}
       </div>
-      <p class="rm-nota">${t.sesiones} ${t.sesiones === 1 ? "entrenamiento registrado" : "entrenamientos registrados"}${favorito}</p>
       ${t.top.length ? `
         <h3 class="rm-subtitulo">Lo que más hiciste</h3>
         <ol class="rm-lista">
@@ -132,10 +128,11 @@ function entrenamiento(r: ResumenMensual): string {
 }
 
 /**
- * Las clases del calendario de Inicio (`ok`, `just`, `no`) más las propias: así cada estilo pinta
- * este mes igual que su calendario de Inicio, y el clásico usa el morado del diseño.
+ * Verde, ámbar y rojo fijos (entrenador, 2026-10-28): ni la paleta de la clienta ni su estilo
+ * cambian los colores de este calendario. Por eso no lleva las clases del de Inicio (`ok`, `just`,
+ * `no`), que cada estilo repinta. Los colores, en `estilos.css`.
  */
-const MARCA_CLASE = { e: "ok rm-e", j: "just rm-j", f: "no rm-f" } as const;
+const MARCA_CLASE = { e: "rm-e", j: "rm-j", f: "rm-f" } as const;
 
 function calendarioDelMes(r: ResumenMensual, enCurso: boolean, hoy: string): string {
   if (Object.keys(r.asistencia.dias).length === 0) return "";

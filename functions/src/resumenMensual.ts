@@ -99,6 +99,12 @@ export function mesAnterior(mes: string): string {
 
 const enMes = (fecha: string, mes: string, corte: string) => fecha.startsWith(mes) && fecha <= corte;
 
+/** Lunes a viernes. Al mediodía UTC, como `racha.ts`, para que la zona no mueva el día. */
+function esDiaHabil(fecha: string): boolean {
+  const dia = new Date(`${fecha}T12:00:00Z`).getUTCDay();
+  return dia !== 0 && dia !== 6;
+}
+
 /** Meses en que entrenó o registró, del más nuevo al más viejo (faltas solas no cuentan). */
 export function mesesConActividad(asistencias: readonly AsistenciaResumen[], sesiones: readonly SesionResumen[]): string[] {
   const meses = new Set<string>();
@@ -128,10 +134,14 @@ function asistenciaDelMes(e: EntradaResumen): ResumenMensual["asistencia"] {
       dias[dia] = "f";
     }
   }
-  const registros = entreno + justificadas + faltas;
+  // El porcentaje es de los días hábiles: el fin de semana es opcional, como en la racha
+  // (entrenador, 2026-10-28). Entrenar un sábado suma al calendario y a los días entrenados, pero
+  // no infla el porcentaje (antes contaba arriba y abajo: un 1 de 1).
+  const habiles = delMes.filter((a) => esDiaHabil(a.fecha));
+  const entrenoHabil = habiles.filter((a) => a.asistio).length;
   return {
     entreno, justificadas, faltas,
-    porcentaje: registros === 0 ? 0 : Math.round((entreno / registros) * 100),
+    porcentaje: habiles.length === 0 ? 0 : Math.round((entrenoHabil / habiles.length) * 100),
     minutos, visitasConMinutos,
     rachaMasLarga: rachaMasLarga(fechasQueCuentan([...delMes])),
     dias,

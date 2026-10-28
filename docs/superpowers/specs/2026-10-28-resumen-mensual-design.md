@@ -33,10 +33,12 @@ con una notificación. El mes en curso se calcula en vivo y se congela cuando te
   2. **Portada** (de la B): tarjeta con el color oscuro de su paleta, el nombre del mes grande y
      tres datos: **% de asistencia**, **kg levantados** (en kg, no en toneladas) y **tiempo en el
      gym**.
-  3. **Entrenamiento** (de la A): kg levantados (en kg), series y reps; entrenamientos
-     registrados y día favorito; los 5 ejercicios que más hizo.
+  3. **Entrenamiento** (de la A): kg levantados (en kg), series y reps, y los 5 ejercicios que
+     más hizo. La línea "N entrenamientos registrados · Día favorito" se quitó (entrenador,
+     2026-10-28); `diaFavorito` se sigue guardando por si vuelve.
   4. **Calendario** (de la A): el mes completo con entrenó / justificada / falta, y hoy marcado
-     en el mes en curso.
+     en el mes en curso. **Siempre verde, ámbar y rojo** (los del estilo clásico), fijos: ni la
+     paleta ni el estilo de la clienta los cambian (entrenador, 2026-10-28).
   5. **Fuerza** (de la A): rango general y cada músculo con su rango y una barra; contra el mes
      anterior cuando lo hay.
   6. **Mejores marcas** (de la B): lista con divisiones, la serie a la derecha.
@@ -60,7 +62,7 @@ interface ResumenMensual {
     entreno: number;        // días con asistio
     justificadas: number;   // justificada y sin asistio (incluye las ganadas en la ruleta)
     faltas: number;         // con registro, sin asistio ni justificada
-    porcentaje: number;     // entreno / (entreno + justificadas + faltas), 0–100 entero
+    porcentaje: number;     // días hábiles con entreno / días hábiles con registro, 0–100 entero
     minutos: number;        // suma de duracionMinutos de los días que entrenó
     visitasConMinutos: number; // cuántas de esas tenían cronómetro (para el promedio)
     rachaMasLarga: number;  // dentro del mes, misma regla que rachaMasLarga (hábiles cortan)
@@ -105,8 +107,10 @@ banco ya ajustado a la sede (`bancoEnSede`), perfil (sexo, peso, % de grasa, añ
 rutina). Sale: un `ResumenMensual` sin `generado`.
 
 - **Asistencia:** solo los registros con `fecha` dentro del mes y hasta el corte.
-  - `porcentaje` cuenta los días con registro, que son los que el gimnasio esperaba. Los fines de
-    semana sin registro no cuentan, igual que en la racha.
+  - `porcentaje` cuenta solo los **días hábiles** con registro, que son los que el gimnasio
+    esperaba. El fin de semana es opcional, como en la racha: entrenar un sábado suma a los días
+    entrenados y al calendario, pero no al porcentaje (entrenador, 2026-10-28). Antes contaba
+    arriba y abajo, y lo inflaba.
   - El "con justificadas" que mostraba la opción A no va en la portada. Si se quiere después, se
     calcula de los mismos números.
   - `rachaMasLarga` aplica la regla de `rachaMasLarga` (`racha.ts`) solo sobre los días del mes:
@@ -199,13 +203,14 @@ Hoy tocar una notificación solo enfoca o abre la página. Para que abra el resu
     gym). Un dato sin base (sin registros, sin sesiones, sin cronómetro) se muestra como "—".
 - **Entrenamiento, Calendario, Fuerza, Mejores marcas:**
   - Como en el tablero "Final · B + A".
-  - El calendario reusa la cuadrícula de `ui/calendario.ts` con las tres marcas (entrenó lleno,
-    justificada con borde, falta en rojo tenue).
+  - El calendario reusa la cuadrícula de `ui/calendario.ts` (`celdasMes`) con las tres marcas en
+    verde, ámbar y rojo fijos. No lleva las clases del calendario de Inicio, que cada estilo
+    repinta.
   - Las barras de fuerza van de 0 a 8, como el nivel.
   - Una sección sin datos no se pinta: un mes sin sesiones no tiene Entrenamiento, Fuerza ni
     Mejores marcas.
-- **Colores:** solo los tokens de cada tema (`var(--primario)`, `var(--superficie)`, etc.). Se
-  revisa en los 6 estilos de paleta.
+- **Colores:** los tokens de cada tema (`var(--primario)`, `var(--superficie)`, etc.), salvo el
+  calendario, que va con colores fijos. Se revisa en los 7 estilos.
 - **Sin meses:** una clienta sin ninguna actividad ve un estado vacío: "Todavía no hay meses que
   resumir".
 - **Modo sin datos:** sale de lo que haya en el caché, como Estadísticas.

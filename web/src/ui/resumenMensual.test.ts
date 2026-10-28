@@ -78,7 +78,18 @@ describe("ventanaResumenMensual", () => {
   it("escapa los nombres que vienen de Firestore", () => {
     const html = ventanaResumenMensual(datos());
     expect(html).toContain("Extensión &lt;con&gt; cuerda");
-    expect(html).toContain("Hombro &amp; bíceps");
+  });
+
+  it("no dice cuántos entrenamientos registró ni su día favorito (entrenador, 2026-10-28)", () => {
+    const html = ventanaResumenMensual(datos());
+    expect(html).not.toContain("entrenamientos registrados");
+    expect(html).not.toContain("Día favorito");
+  });
+
+  it("el calendario no lleva las clases del de Inicio, que cada estilo repinta", () => {
+    const html = ventanaResumenMensual(datos());
+    expect(html).toMatch(/class="rm-e"/);
+    expect(html).not.toMatch(/class="ok /);
   });
 
   it("una sección sin datos no se pinta", () => {

@@ -73,6 +73,17 @@ describe("asistencia del mes", () => {
     expect([a.minutos, a.visitasConMinutos]).toEqual([241, 2]);
   });
 
+  it("el fin de semana no cuenta para el porcentaje, pero sí en días entrenados y en el calendario", () => {
+    const asistencias = [
+      asis("2026-10-01", { asistio: true }), asis("2026-10-02"), // jueves y viernes: 1 de 2
+      asis("2026-10-03", { asistio: true }), asis("2026-10-04", { asistio: true }), // sábado y domingo
+    ];
+    const a = resumenDelMes(entrada({ asistencias })).asistencia;
+    expect(a.porcentaje).toBe(50);
+    expect(a.entreno).toBe(3);
+    expect(a.dias["03"]).toBe("e");
+  });
+
   it("sin registros, el porcentaje es 0", () => {
     expect(resumenDelMes(entrada()).asistencia.porcentaje).toBe(0);
   });
