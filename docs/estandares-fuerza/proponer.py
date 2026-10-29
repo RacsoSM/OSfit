@@ -281,6 +281,7 @@ FACTOR_POR_SEXO = {
 # 1RM con Epley, como la página. La pila completa son 17 barras, 330 lb (2026-10-29; antes se
 # contaban 16 barras de 4.5 kg, 72 kg).
 KG_PILA_PRENSA = KG_PILA_PRENSA_LB * KG_POR_LB
+ELITE_PRENSA_H = KG_PILA_PRENSA * (1 + 8 / 30) / PESO_EJEMPLO_H
 
 
 
@@ -295,7 +296,12 @@ MARCA_CURL_SAID = 1.007 * 22.5 * (1 + 10 / 30) / 73 * (73 / PESO_EJEMPLO_H) ** (
 MARCA_FACE_PULL_OSCAR = 1.04 * 76.5 * (1 + 12 / 30) / 89 * (89 / PESO_EJEMPLO_H) ** (1 / 3)
 
 ELITE_FIJO = {
-    "prensa-maquina": {"H": round(KG_PILA_PRENSA * (1 + 8 / 30) / PESO_EJEMPLO_H, 3)},
+    # Mujeres: 10 % debajo del de los hombres en 1RM ÷ peso (entrenador, 2026-10-29). Con su tabla
+    # escalada a 15 barras × 6 su Élite les pedía más que a ellos.
+    "prensa-maquina": {
+        "H": round(ELITE_PRENSA_H, 3),
+        "M": round(ELITE_PRENSA_H * 0.9, 3),
+    },
     "curl-mancuernas": {"H": math.floor(MARCA_CURL_SAID * 1000) / 1000},
     "face-pull": {"H": round(MARCA_FACE_PULL_OSCAR / 1.05, 3)},
 }
