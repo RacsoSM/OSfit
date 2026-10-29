@@ -91,7 +91,7 @@ Los porcentajes salen de un modelo: entre quienes entrenan, la fuerza se reparte
 |  | M | 45 kg | 67.5 kg | 90 kg | 112.5 kg | 135 kg | 150 kg | 165 kg | 235 kg |
 | Prensa horizontal a una pierna | H · una pierna; máquina; H ×1, M ×1.2407 | 30 kg | 40 kg | 47.5 kg | 60 kg | 72.5 kg | 80 kg | 87.5 kg | 120 kg |
 |  | M | 18 kg | 27.5 kg | 35 kg | 45 kg | 55 kg | 60 kg | 67.5 kg | 95 kg |
-| Prensa en máquina | H · máquina de 17 barras: 10 lb + 20 lb por barra; H ×1.3, M ×1.4871 | 55 kg | 70 kg | 87.5 kg | 110 kg | 132.5 kg | 145 kg | 157.5 kg | 190 kg |
+| Prensa en máquina | H · máquina de 17 barras: 10 lb + 20 lb por barra; H ×1.4765, M ×1.4871 | 62.5 kg | 80 kg | 100 kg | 125 kg | 150 kg | 165 kg | 180 kg | 210 kg |
 |  | M | 30 kg | 45 kg | 60 kg | 75 kg | 90 kg | 100 kg | 110 kg | 137.5 kg |
 | Extensión de cuádriceps | H · máquina; H ×0.8821, M ×1.1205 | 32.5 kg | 42.5 kg | 50 kg | 62.5 kg | 75 kg | 82.5 kg | 90 kg | 125 kg |
 |  | M | 22.5 kg | 30 kg | 37.5 kg | 47.5 kg | 57.5 kg | 62.5 kg | 67.5 kg | 97.5 kg |

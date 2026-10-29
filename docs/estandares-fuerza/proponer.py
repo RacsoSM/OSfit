@@ -32,6 +32,11 @@ PESO_EJEMPLO_H = 75
 KG_POR_LB = 0.45359237
 KG_PILA_PRENSA_LB = 10 + 16 * 20
 KG_10_BARRAS_PRENSA = (10 + 9 * 20) * KG_POR_LB
+# Prensa en máquina, hombres, de nuevo (2026-10-29): Said (73 kg, 22) hizo la pila completa × 8,
+# que era justo Élite, y él se ve en 7.5, parecido a su prensa de discos. Su Élite pasa a la pila
+# completa × 12 para un hombre de 75 kg (más arriba ya no cabría en la máquina), y los demás niveles
+# de ellos se multiplican por esto para que esa serie quede en 7.5. Las mujeres no se mueven.
+ESCALA_PRENSA_H = 1.1358
 
 # Ejercicios de referencia (1RM / peso corporal), de tablas públicas de fuerza por peso
 # corporal (estilo Strength Level / ExRx), redondeados. H = hombre, M = mujer.
@@ -246,7 +251,7 @@ POLEA_DOBLE = {
 # Élite justo con 15 barras × 6 (290 lb, la pila de `PILAS`).
 FACTOR_POR_SEXO = {
     "curl-femoral-acostado": {"H": 0.6, "M": 0.8},
-    "prensa-maquina": {"H": 1.3, "M": 1.4871},
+    "prensa-maquina": {"H": round(1.3 * ESCALA_PRENSA_H, 4), "M": 1.4871},
     # Prensa horizontal a una pierna: el ×0.3224 es para ellos (Said, 8 barras × 6 a media banda
     # de Fuerte). A ellas les deja la tabla de antes (×0.40), que el entrenador ve bien calibrada
     # (2026-10-29).
@@ -288,7 +293,8 @@ FACTOR_POR_SEXO = {
 # 1RM con Epley, como la página. La pila completa son 17 barras, 330 lb (2026-10-29; antes se
 # contaban 16 barras de 4.5 kg, 72 kg).
 KG_PILA_PRENSA = KG_PILA_PRENSA_LB * KG_POR_LB
-ELITE_PRENSA_H = KG_PILA_PRENSA * (1 + 8 / 30) / PESO_EJEMPLO_H
+ELITE_PRENSA_PILA_X8 = KG_PILA_PRENSA * (1 + 8 / 30) / PESO_EJEMPLO_H
+ELITE_PRENSA_H = KG_PILA_PRENSA * (1 + 12 / 30) / PESO_EJEMPLO_H
 
 
 
@@ -307,7 +313,7 @@ ELITE_FIJO = {
     # escalada a 15 barras × 6 su Élite les pedía más que a ellos.
     "prensa-maquina": {
         "H": round(ELITE_PRENSA_H, 3),
-        "M": round(ELITE_PRENSA_H * 0.9, 3),
+        "M": round(ELITE_PRENSA_PILA_X8 * 0.9, 3),
     },
     "curl-mancuernas": {"H": math.floor(MARCA_CURL_SAID * 1000) / 1000},
     "face-pull": {"H": round(MARCA_FACE_PULL_OSCAR / 1.05, 3)},
