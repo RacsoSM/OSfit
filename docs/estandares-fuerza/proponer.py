@@ -27,6 +27,12 @@ BANCO = AQUI.parent.parent / "functions" / "semilla" / "ejercicios.json"
 # (`PESO_REFERENCIA` en `web/src/fuerza.ts`), donde el factor por peso es 1.
 PESO_EJEMPLO_H = 75
 
+# La pila de la prensa en máquina de Focus, en libras: 10 la primera barra y 20 cada una más,
+# hasta 17 barras (GEMELO de `PILAS` en `web/src/barras.ts`).
+KG_POR_LB = 0.45359237
+KG_PILA_PRENSA_LB = 10 + 16 * 20
+KG_10_BARRAS_PRENSA = (10 + 9 * 20) * KG_POR_LB
+
 # Ejercicios de referencia (1RM / peso corporal), de tablas públicas de fuerza por peso
 # corporal (estilo Strength Level / ExRx), redondeados. H = hombre, M = mujer.
 FAMILIAS = {
@@ -93,7 +99,11 @@ PESO = {
     "prensa-horizontal-una-pierna": ("prensa", 0.40, "una pierna; máquina"),
     # La misma máquina de placas que la de una pierna, con las dos: el doble (2026-10-21). La de
     # 45° (×1.00) es de discos y en una pila sus números no se alcanzan.
-    "prensa-maquina": ("prensa", 0.235, "máquina de 16 barras"),
+    # La pila de esta prensa no es de 4.5 kg por barra: empieza en 10 lb y sube de 20 en 20 hasta
+    # 330 lb con 17 barras (`PILAS` en `web/src/barras.ts`; entrenador, 2026-10-29). Los niveles
+    # se calibraron con 4.5 kg por barra, así que la tabla se escala para que las mismas barras den
+    # el mismo nivel en la referencia del entrenador, 10 barras × 12: 45 kg antes, 190 lb ahora.
+    "prensa-maquina": ("prensa", round(0.235 * KG_10_BARRAS_PRENSA / (10 * 4.5), 4), "máquina de 17 barras: 10 lb + 20 lb por barra"),
     "extension-cuadriceps": ("extension", 1.00, "máquina"),
     # Toda la tabla escalada (encima del ajuste por sexo) para que un hombre como Said (73 kg, 22)
     # con 36 kg × 5 quede en 6.7 (entrenador, 2026-10-28). Antes ×1.00.
@@ -265,9 +275,10 @@ FACTOR_POR_SEXO = {
 }
 
 # Élite puesto a mano, por sexo, cuando el del modelo no cabe en la máquina. Prensa en máquina,
-# hombres: con ×1.3 Élite pedía unas 18 barras × 12 y la pila tiene 16; el entrenador lo quiere
-# con la pila completa × 8 para un hombre de 75 kg (2026-10-27). 1RM con Epley, como la página.
-KG_PILA_PRENSA = 16 * 4.5
+# hombres: el entrenador lo quiere con la pila completa × 8 para un hombre de 75 kg (2026-10-27).
+# 1RM con Epley, como la página. La pila completa son 17 barras, 330 lb (2026-10-29; antes se
+# contaban 16 barras de 4.5 kg, 72 kg).
+KG_PILA_PRENSA = KG_PILA_PRENSA_LB * KG_POR_LB
 
 
 

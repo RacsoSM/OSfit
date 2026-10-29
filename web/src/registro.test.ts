@@ -310,6 +310,18 @@ describe("unidad: barras o kg", () => {
     expect(r.ok && r.datos.ejercicios[0].series[0]).toEqual({ reps: 12, peso: barrasAKg(5) });
   });
 
+  it("la prensa en máquina guarda con su pila: 6 barras son 110 lb, no 6 × 4.5 kg", () => {
+    const prensa = ej({ id: "prensa-maquina", nombre: "Prensa en máquina" });
+    let b = agregarEjercicio(nuevoBorrador("b1", "2026-10-29"), prensa, null, null);
+    expect(b.ejercicios[0].unidad).toBe("barras");
+    b = cambiarSerie(b, 0, 0, "peso", "6");
+    b = cambiarSerie(b, 0, 0, "reps", "12");
+    const r = paraEnviar(b);
+    if (!r.ok) throw new Error(r.error);
+    expect(r.datos.ejercicios[0].series[0]).toEqual({ reps: 12, peso: 49.9 });
+    expect(cambiarUnidad(b, 0, "kg").ejercicios[0].series[0].peso).toBe("49.9");
+  });
+
   it("cambiar de unidad convierte lo que ya escribió", () => {
     let b = agregarEjercicio(nuevoBorrador("b1", "2026-10-13"), jalon, null, null);
     b = cambiarSerie(b, 0, 0, "peso", "6");

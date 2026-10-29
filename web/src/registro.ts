@@ -150,7 +150,7 @@ export function agregarEjercicio(
   const unidad: Unidad = e.tipo === "peso" ? unidadPorDefecto(e.id, libre) : libre;
   const hay = previas !== null && previas.length > 0;
   // Lo de la última vez está guardado en kg; se muestra en la unidad en que abre.
-  const pesoPrevio = (kg: number | null) => (kg === null ? "" : String(deKg(kg, unidad)));
+  const pesoPrevio = (kg: number | null) => (kg === null ? "" : String(deKg(kg, unidad, e.id)));
   const texto = (n: number | undefined) => (n === undefined ? "" : String(n));
   const series: SerieBorrador[] = e.tipo === "cardio"
     ? [hay && autollenar
@@ -404,7 +404,7 @@ export function cambiarUnidad(b: Borrador, iEj: number, unidad: Unidad): Borrado
   const convertir = (texto: string): string => {
     const n = numero(texto);
     if (n === null || Number.isNaN(n)) return texto;
-    return String(deKg(aKg(n, antes), unidad));
+    return String(deKg(aKg(n, antes, e.ejercicioId), unidad, e.ejercicioId));
   };
   return {
     ...b,
@@ -475,7 +475,7 @@ export function paraEnviar(b: Borrador): { ok: true; datos: Envio } | { ok: fals
       // hacía creer que ya estaba puesto.
       if (e.tipo === "peso" && escrito === null) return { reps, peso: 0 };
       // Se guarda siempre en kg: las barras y las libras se convierten aquí y en ningún otro lado.
-      return { reps, peso: escrito !== null ? aKg(escrito, e.unidad ?? "kg") : escrito };
+      return { reps, peso: escrito !== null ? aKg(escrito, e.unidad ?? "kg", e.ejercicioId) : escrito };
     };
     if (e.tipo === "cardio") {
       const s = e.series[0];

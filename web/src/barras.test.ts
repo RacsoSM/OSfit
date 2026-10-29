@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { aKg, barrasAKg, deKg, etiquetaUnidad, kgABarras, kgALb, KG_POR_BARRA, lbAKg, unidadPorDefecto } from "./barras";
+import { aKg, barrasAKg, deKg, etiquetaUnidad, kgABarras, kgALb, KG_POR_BARRA, lbAKg, PILAS, unidadPorDefecto } from "./barras";
 
 describe("barras", () => {
   it("las máquinas de placas abren en barras; lo demás en kg", () => {
@@ -38,5 +38,32 @@ describe("libras (Registrar en libras, 2026-10-22)", () => {
     expect(unidadPorDefecto("jalon-al-pecho", "lb")).toBe("barras");
     expect(etiquetaUnidad("lb")).toBe("lb");
     expect(etiquetaUnidad("barras", "1")).toBe("barra");
+  });
+});
+
+describe("la pila de la prensa (10 lb la primera, de 20 en 20 hasta 330 lb)", () => {
+  it("barras → kg en las dos prensas que la usan", () => {
+    for (const id of ["prensa-maquina", "prensa-horizontal-una-pierna"]) {
+      expect(barrasAKg(1, id)).toBe(lbAKg(10));
+      expect(barrasAKg(2, id)).toBe(lbAKg(30));
+      expect(barrasAKg(6, id)).toBe(49.9);
+      expect(barrasAKg(17, id)).toBe(lbAKg(330));
+      expect(barrasAKg(0, id)).toBe(0);
+    }
+  });
+
+  it("kg → barras, la más cercana y dentro de la pila", () => {
+    for (let n = 1; n <= PILAS["prensa-maquina"].barras; n++) {
+      expect(kgABarras(barrasAKg(n, "prensa-maquina"), "prensa-maquina")).toBe(n);
+    }
+    expect(kgABarras(500, "prensa-maquina")).toBe(17);
+    expect(kgABarras(1, "prensa-maquina")).toBe(1);
+  });
+
+  it("aKg y deKg usan la pila de la máquina; las demás siguen con 4.5 kg por barra", () => {
+    expect(aKg(6, "barras", "prensa-maquina")).toBe(49.9);
+    expect(deKg(49.9, "barras", "prensa-maquina")).toBe(6);
+    expect(aKg(6, "barras", "jalon-al-pecho")).toBe(27);
+    expect(aKg(6, "barras")).toBe(27);
   });
 });

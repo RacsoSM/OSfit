@@ -74,13 +74,33 @@ export function unidadPorDefecto(ejercicioId: string, libre: UnidadLibre = "kg")
   return MAQUINAS_DE_BARRAS.has(ejercicioId) ? "barras" : libre;
 }
 
+/**
+ * Las máquinas cuya pila no es de barras iguales de 4.5 kg, en libras: la primera barra pesa
+ * `primeraLb` y cada una de las siguientes suma `pasoLb`. La prensa de Focus (y la prensa
+ * horizontal a una pierna, que se hace en ella) empieza en 10 lb y sube de 20 en 20 hasta 330 lb
+ * con 17 barras (entrenador, 2026-10-29). Con 4.5 kg por barra, 6 barras se guardaban como 27 kg
+ * cuando son 110 lb (49.9 kg).
+ */
+export const PILAS: Readonly<Record<string, { primeraLb: number; pasoLb: number; barras: number }>> = {
+  "prensa-maquina": { primeraLb: 10, pasoLb: 20, barras: 17 },
+  "prensa-horizontal-una-pierna": { primeraLb: 10, pasoLb: 20, barras: 17 },
+};
+
 /** Barras → kg, redondeado a décimas para no guardar 22.500000000000004. */
-export function barrasAKg(barras: number): number {
+export function barrasAKg(barras: number, ejercicioId?: string): number {
+  const pila = ejercicioId ? PILAS[ejercicioId] : undefined;
+  if (pila) return barras <= 0 ? 0 : lbAKg(pila.primeraLb + (barras - 1) * pila.pasoLb);
   return Math.round(barras * KG_POR_BARRA * 10) / 10;
 }
 
 /** Kg → barras, a la barra más cercana (lo que se puede poner en la máquina). */
-export function kgABarras(kg: number): number {
+export function kgABarras(kg: number, ejercicioId?: string): number {
+  const pila = ejercicioId ? PILAS[ejercicioId] : undefined;
+  if (pila) {
+    if (kg <= 0) return 0;
+    const n = Math.round((kg / KG_POR_LB - pila.primeraLb) / pila.pasoLb) + 1;
+    return Math.min(pila.barras, Math.max(1, n));
+  }
   return Math.round(kg / KG_POR_BARRA);
 }
 
@@ -94,14 +114,14 @@ export function kgALb(kg: number): number {
   return Math.round((kg / KG_POR_LB) * 2) / 2;
 }
 
-/** Lo anotado en esa unidad, en kg: lo que se guarda. */
-export function aKg(n: number, unidad: Unidad): number {
-  return unidad === "barras" ? barrasAKg(n) : unidad === "lb" ? lbAKg(n) : n;
+/** Lo anotado en esa unidad, en kg: lo que se guarda. Las barras dependen de la máquina (`PILAS`). */
+export function aKg(n: number, unidad: Unidad, ejercicioId?: string): number {
+  return unidad === "barras" ? barrasAKg(n, ejercicioId) : unidad === "lb" ? lbAKg(n) : n;
 }
 
 /** Kg a lo que se ve en esa unidad (al cambiar el selector). */
-export function deKg(kg: number, unidad: Unidad): number {
-  return unidad === "barras" ? kgABarras(kg) : unidad === "lb" ? kgALb(kg) : kg;
+export function deKg(kg: number, unidad: Unidad, ejercicioId?: string): number {
+  return unidad === "barras" ? kgABarras(kg, ejercicioId) : unidad === "lb" ? kgALb(kg) : kg;
 }
 
 /** El nombre corto de la unidad junto al número: "kg", "lb", "barras" (o "barra"). */
