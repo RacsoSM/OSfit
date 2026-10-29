@@ -96,7 +96,10 @@ PESO = {
     "buenos-dias": ("muerto", 0.45, ""),
     "prensa": ("prensa", 1.00, "máquina: varía por marca"),
     "prensa-pies-abiertos": ("prensa", 1.00, "máquina: varía por marca"),
-    "prensa-horizontal-una-pierna": ("prensa", 0.40, "una pierna; máquina"),
+    # En la misma pila que la prensa en máquina (`PILAS`). Toda la tabla escalada para que un
+    # hombre como Said (73 kg, 22) con 8 barras × 6 (150 lb, 68 kg) quede a media banda de Fuerte
+    # (entrenador, 2026-10-29). Antes ×0.40.
+    "prensa-horizontal-una-pierna": ("prensa", 0.3224, "una pierna; máquina"),
     # La misma máquina de placas que la de una pierna, con las dos: el doble (2026-10-21). La de
     # 45° (×1.00) es de discos y en una pila sus números no se alcanzan.
     # La pila de esta prensa no es de 4.5 kg por barra: empieza en 10 lb y sube de 20 en 20 hasta
