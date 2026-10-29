@@ -98,7 +98,7 @@ PESO = {
     "prensa-pies-abiertos": ("prensa", 1.00, "máquina: varía por marca"),
     # En la misma pila que la prensa en máquina (`PILAS`). Toda la tabla escalada para que un
     # hombre como Said (73 kg, 22) con 8 barras × 6 (150 lb, 68 kg) quede a media banda de Fuerte
-    # (entrenador, 2026-10-29). Antes ×0.40.
+    # (entrenador, 2026-10-29). Antes ×0.40; las mujeres siguen con esa (`FACTOR_POR_SEXO`).
     "prensa-horizontal-una-pierna": ("prensa", 0.3224, "una pierna; máquina"),
     # La misma máquina de placas que la de una pierna, con las dos: el doble (2026-10-21). La de
     # 45° (×1.00) es de discos y en una pila sus números no se alcanzan.
@@ -247,6 +247,10 @@ POLEA_DOBLE = {
 FACTOR_POR_SEXO = {
     "curl-femoral-acostado": {"H": 0.6, "M": 0.8},
     "prensa-maquina": {"H": 1.3, "M": 1.4871},
+    # Prensa horizontal a una pierna: el ×0.3224 es para ellos (Said, 8 barras × 6 a media banda
+    # de Fuerte). A ellas les deja la tabla de antes (×0.40), que el entrenador ve bien calibrada
+    # (2026-10-29).
+    "prensa-horizontal-una-pierna": {"H": 1, "M": round(0.40 / 0.3224, 4)},
     # Press militar en máquina: con ×0.48 parejo las mujeres salían de más (Estela, 22.5 kg × 15,
     # en Élite). ×1.5 solo a ellas: Estela en Avanzada y las demás en En forma (2026-10-27).
     "press-militar-maquina": {"H": 1.0, "M": 1.5},
