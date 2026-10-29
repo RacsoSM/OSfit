@@ -238,10 +238,12 @@ POLEA_DOBLE = {
 # Prensa en máquina, mujeres ×2: 50 kg × 12 de una clienta de 70 kg salía en Élite, y el
 # entrenador dice que en esa máquina es lo normal; con ×2 queda al inicio de Atlética. Hombres
 # ×1.3: un hombre normal hace 10 barras × 12, y el entrenador lo quiere a media banda de
-# Intermedio (2026-10-27). Con eso Élite ya no cabe en la pila de 16 barras × 12.
+# Intermedio (2026-10-27). Mujeres, de nuevo (2026-10-29): con ×2 su Élite pedía más que la pila
+# completa; ahora toda su tabla está escalada para que una mujer como Estela (60 kg, 38) llegue a
+# Élite justo con 15 barras × 6 (290 lb, la pila de `PILAS`).
 FACTOR_POR_SEXO = {
     "curl-femoral-acostado": {"H": 0.6, "M": 0.8},
-    "prensa-maquina": {"H": 1.3, "M": 2.0},
+    "prensa-maquina": {"H": 1.3, "M": 1.4871},
     # Press militar en máquina: con ×0.48 parejo las mujeres salían de más (Estela, 22.5 kg × 15,
     # en Élite). ×1.5 solo a ellas: Estela en Avanzada y las demás en En forma (2026-10-27).
     "press-militar-maquina": {"H": 1.0, "M": 1.5},
