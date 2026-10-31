@@ -5,6 +5,7 @@ import { insigniaRango } from "./insigniaRango";
 import { claveBanco, urlGif, urlVideo, type IndiceBanco } from "../banco";
 import { modoSinDatos } from "../sinDatos";
 import { seccionesRegistro } from "../grupos";
+import { coincide, textoBusqueda } from "../buscarEjercicio";
 import {
   MAX_CAIDAS,
   agregarBiserie,
@@ -157,6 +158,20 @@ const LLAVE_BORRADOR = "osfit:registro-borrador";
  */
 let posicionElegir = 0;
 
+/**
+ * Lo que escribió en la barra de búsqueda de "elegir" (entrenador, 2026-10-31). Vive aquí y no
+ * en el HTML, como `posicionElegir`: un snapshot que llega mientras escribe repinta la pantalla y
+ * no debe borrarlo. `buscando` dice si tenía el cursor en la barra, para devolvérselo después de
+ * ese repintado. Vuelve a vacío cada vez que abre "elegir" con "+ Agregar ejercicio".
+ */
+let busqueda = "";
+let buscando = false;
+
+/** Solo para tests: lo que lleva escrito en la barra de "elegir". */
+export function ponerBusquedaRegistro(texto: string): void {
+  busqueda = texto;
+}
+
 /** Se llama justo antes de salir de "elegir", por donde sea. */
 function recordarPosicionElegir(): void {
   if (estado.vista === "elegir") posicionElegir = window.scrollY;
@@ -299,6 +314,33 @@ function gif(ruta: string | null | undefined, clase: string, lado: number): stri
 
 /** Los términos del dataset piden el crédito junto a las animaciones, donde se muestren. */
 export const CREDITO = `<p class="registro-credito">Animaciones © Gym visual</p>`;
+
+const ICONO_BUSCAR = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>`;
+
+/**
+ * Filtra "elegir" en el lugar, sin repintar: con cada letra repintar tiraría el foco del teclado y
+ * volvería a cargar todos los GIF. Esconde las opciones que no coinciden, los grupos que quedan
+ * vacíos y los rótulos; si no queda nada, avisa.
+ */
+function aplicarBusqueda(raiz: HTMLElement): void {
+  let algo = false;
+  for (const seccion of raiz.querySelectorAll<HTMLElement>(".registro-seccion")) {
+    let hay = false;
+    for (const op of seccion.querySelectorAll<HTMLElement>("[data-buscar]")) {
+      const si = coincide(op.dataset.buscar ?? "", busqueda);
+      op.hidden = !si;
+      hay ||= si;
+    }
+    seccion.hidden = !hay;
+    algo ||= hay;
+  }
+  const sin = raiz.querySelector<HTMLElement>("#registro-sin-resultados");
+  if (sin) sin.hidden = algo;
+  // Mientras busca, "Más ejercicios" y "Hoy te toca…" ya no dicen nada: los grupos están revueltos.
+  for (const rotulo of raiz.querySelectorAll<HTMLElement>(".registro-separador, .registro-hoy")) {
+    rotulo.hidden = busqueda.trim() !== "";
+  }
+}
 
 /**
  * El aviso cuando escribe muchas reps (backlog 2, punto 15.4), con las palabras del
@@ -527,9 +569,11 @@ function opcion(e: EjercicioBanco): string {
   const k = biserie ? estado.seleccion.indexOf(e.id) : -1;
   const letra = k === 0 ? "A" : k === 1 ? "B" : null;
   const accion = biserie ? `data-biserie-elegir="${escapar(e.id)}" aria-pressed="${letra !== null}"` : `data-agregar="${escapar(e.id)}"`;
+  const texto = textoBusqueda(e);
   return `
     <button class="registro-opcion${ya ? " agregado" : ""}${letra ? " marcada" : ""}" ${accion}
-            ${ya ? `disabled aria-label="${escapar(e.nombre)}, ya está en tu entrenamiento"` : ""}>
+            ${ya ? `disabled aria-label="${escapar(e.nombre)}, ya está en tu entrenamiento"` : ""}
+            data-buscar="${escapar(texto)}"${coincide(texto, busqueda) ? "" : " hidden"}>
       ${letra ? `<span class="registro-marca" aria-label="Ejercicio ${letra}">${letra}</span>` : ""}
       ${gif(e.gifRuta, "registro-opcion-gif", 160)}
       <span class="registro-opcion-nombre">${escapar(e.nombre)}</span>
@@ -618,17 +662,31 @@ function vistaElegir(d: DatosRegistro): string {
     let antes = "";
     if (hayDelDia && !x.delDia && !separado) {
       separado = true;
-      antes = `<p class="registro-separador">Más ejercicios</p>`;
+      antes = `<p class="registro-separador"${busqueda.trim() ? " hidden" : ""}>Más ejercicios</p>`;
     }
     // El primer grupo no lleva su banda: la barra de arriba ocupa su lugar y ya lo nombra.
     const banda = i === 0 ? barraElegir(x.titulo, x.delDia)
       : `<p class="registro-grupo${x.delDia ? " del-dia" : ""}">${escapar(x.titulo)}</p>`;
+    // Cada grupo va envuelto para esconderlo entero cuando la búsqueda no deja nada en él.
+    const hay = x.ejercicios.some((e) => coincide(textoBusqueda(e), busqueda));
     return `${antes}
-      ${banda}
-      <div class="registro-grid">${x.ejercicios.map(opcion).join("")}</div>`;
+      <div class="registro-seccion"${hay ? "" : " hidden"}>
+        ${banda}
+        <div class="registro-grid">${x.ejercicios.map(opcion).join("")}</div>
+      </div>`;
   }).join("");
+  const algo = secciones.some((x) => x.ejercicios.some((e) => coincide(textoBusqueda(e), busqueda)));
+  const buscador = `
+    <label class="registro-buscar">
+      <span class="registro-buscar-icono" aria-hidden="true">${ICONO_BUSCAR}</span>
+      <input type="search" id="registro-buscar" value="${escapar(busqueda)}" placeholder="Buscar ejercicio"
+             aria-label="Buscar ejercicio" autocomplete="off" enterkeyhint="search">
+    </label>
+    <p class="accion-nota registro-sin-resultados" id="registro-sin-resultados"${algo ? " hidden" : ""}>
+      No encontramos ese ejercicio. Prueba con otra palabra.
+    </p>`;
   const hoy = d.dia && hayDelDia
-    ? `<p class="accion-nota" style="margin:2px 2px 0">Hoy te toca ${escapar(d.dia.nombreDia.trim())}</p>`
+    ? `<p class="accion-nota registro-hoy" style="margin:2px 2px 0"${busqueda.trim() ? " hidden" : ""}>Hoy te toca ${escapar(d.dia.nombreDia.trim())}</p>`
     : "";
   const biserie = estado.modoElegir === "biserie";
   const modo = `
@@ -639,6 +697,7 @@ function vistaElegir(d: DatosRegistro): string {
   return `
     ${botonAtras(`data-accion="volver"`)}
     <p class="confirmar-titulo">¿Qué ejercicio hiciste?</p>
+    ${buscador}
     ${modo}
     ${biserie ? `<p class="accion-nota registro-modo-nota">Elige los dos ejercicios, en el orden en que los haces.</p>` : hoy}
     ${cuerpo}
@@ -1139,6 +1198,24 @@ export function conectarRegistro(
   // Cada repintado vuelve a poner el primer grupo: se corrige con lo que ya se bajó.
   seguirGrupo();
 
+  const buscar = raiz.querySelector<HTMLInputElement>("#registro-buscar");
+  if (buscar) {
+    buscar.addEventListener("input", () => {
+      busqueda = buscar.value;
+      aplicarBusqueda(raiz);
+      seguirGrupo();
+    });
+    buscar.addEventListener("focus", () => { buscando = true; });
+    // Si el repintado la quita mientras tiene el foco, algunos navegadores mandan `blur`: ese no
+    // cuenta, la clienta no se salió de la barra.
+    buscar.addEventListener("blur", () => { if (buscar.isConnected) buscando = false; });
+    // Un snapshot repintó mientras escribía: le devuelve el cursor al final de lo que llevaba.
+    if (buscando) {
+      buscar.focus({ preventScroll: true });
+      buscar.setSelectionRange(buscar.value.length, buscar.value.length);
+    }
+  }
+
   const ir = (vista: Vista, modo: "adelante" | "volver" | "reemplazar" = "volver") => {
     recordarPosicionElegir();
     estado.vista = vista;
@@ -1206,6 +1283,8 @@ export function conectarRegistro(
       estado.modoElegir = "uno";
       estado.seleccion = [];
       estado.menuSerie = null;
+      busqueda = "";
+      buscando = false;
       ir("elegir", "adelante");
       return;
     }

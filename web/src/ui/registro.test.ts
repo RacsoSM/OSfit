@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import type { EjercicioBanco, Sesion } from "../datos";
 import { indiceBanco } from "../banco";
 import { agregarBiserie, agregarCaida, agregarEjercicio, borradorDeSesion, nuevoBorrador } from "../registro";
-import { avisoReps, avisoTerminadoSinDatos, cerrarSiVencido, cabeceraRegistro, empezarGuiado, entrenamientoAbierto, ponerEstadoRegistro, ventanaRegistro, type DatosRegistro } from "./registro";
+import { avisoReps, avisoTerminadoSinDatos, cerrarSiVencido, cabeceraRegistro, empezarGuiado, entrenamientoAbierto, ponerBusquedaRegistro, ponerEstadoRegistro, ventanaRegistro, type DatosRegistro } from "./registro";
 
 const press: EjercicioBanco = {
   id: "press-banca", nombre: "Press de banca", alias: ["press banca"], tipo: "peso", grupo: "pecho",
@@ -127,7 +127,31 @@ describe("elegir", () => {
     expect(html).toContain('data-agregar="plancha"');
     expect(html).toContain("registro-sin-gif");
     expect(html).toContain("© Gym visual");
-    expect(html).not.toContain("registro-buscar");
+    // La barra de búsqueda volvió (entrenador, 2026-10-31; se había quitado el 2026-10-10).
+    expect(html).toContain('id="registro-buscar"');
+    expect(html).toContain('placeholder="Buscar ejercicio"');
+  });
+
+  it("la búsqueda deja solo lo que coincide y esconde los grupos que quedan vacíos", () => {
+    ponerEstadoRegistro({ vista: "elegir", borrador: nuevoBorrador("b1234567", "2026-10-12") });
+    ponerBusquedaRegistro("PLANCH");
+    const html = ventanaRegistro(datos());
+    ponerBusquedaRegistro("");
+    expect(html).toContain('value="PLANCH"');
+    expect(html).toMatch(/data-agregar="plancha"[^>]*data-buscar="plancha[^"]*">/);
+    expect(html).toMatch(/data-agregar="press-banca"[^>]*data-buscar="[^"]*" hidden>/);
+    expect(html).toMatch(/registro-separador" hidden/);
+    expect(html).toMatch(/registro-hoy"[^>]*hidden>Hoy te toca/);
+    expect(html).toMatch(/id="registro-sin-resultados" hidden/);
+  });
+
+  it("si no coincide nada, lo dice", () => {
+    ponerEstadoRegistro({ vista: "elegir", borrador: nuevoBorrador("b1234567", "2026-10-12") });
+    ponerBusquedaRegistro("zzz");
+    const html = ventanaRegistro(datos());
+    ponerBusquedaRegistro("");
+    expect(html).not.toMatch(/id="registro-sin-resultados" hidden/);
+    expect(html).toContain("No encontramos ese ejercicio");
   });
 
   it("respeta la lista que configuró el entrenador para cada grupo", () => {
