@@ -29,6 +29,13 @@ export interface SerieBorrador {
   /** Solo en cardio, donde `reps` son los minutos (ver la spec de cardio). */
   inclinacion?: string;
   velocidad?: string;
+  /**
+   * El cronómetro de descanso (Ajustes, entrenador, 2026-10-31): cuándo quedó completa (ms), para
+   * contarla una sola vez, y cuánto descansó antes de ella (ms, ver `descanso.ts`). Viven solo en
+   * el borrador: `paraEnviar` no los manda y al terminar se borran con él.
+   */
+  hecha?: number;
+  descanso?: number;
 }
 
 export interface EjercicioBorrador {
@@ -81,6 +88,8 @@ export interface Borrador {
    * abierto (`cierreAutomatico`). Opcional: los borradores de antes no la traen.
    */
   anotado?: number;
+  /** Cuándo quedó completa la última serie (ms): desde ahí cuenta el descanso en curso. */
+  ultimaSerie?: number;
   ejercicios: EjercicioBorrador[];
 }
 
@@ -533,13 +542,17 @@ export function paraEnviar(b: Borrador): { ok: true; datos: Envio } | { ok: fals
  */
 export const HORAS_CIERRE = 4;
 
+/** La serie (o bajada) se guardaría tal cual: ni en blanco ni a medio llenar. */
+export function serieCompleta(b: Borrador, e: EjercicioBorrador, s: CaidaBorrador): boolean {
+  return paraEnviar({ ...b, ejercicios: [{ ...e, biserie: undefined, series: [{ ...s, caidas: undefined }] }] }).ok;
+}
+
 /**
  * El borrador sin las series ni las bajadas a medio llenar: las que `paraEnviar` reclamaría.
  * Al cerrarse solo no hay a quién preguntarle qué le faltó, así que se manda lo completo.
  */
 export function soloCompletas(b: Borrador): Borrador {
-  const completa = (e: EjercicioBorrador, s: SerieBorrador) =>
-    paraEnviar({ ...b, ejercicios: [{ ...e, biserie: undefined, series: [{ ...s, caidas: undefined }] }] }).ok;
+  const completa = (e: EjercicioBorrador, s: SerieBorrador) => serieCompleta(b, e, s);
   return {
     ...b,
     ejercicios: b.ejercicios.map((e) => ({

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { tarjetaAutollenado, tarjetaUnidadPeso } from "./tarjetaUnidadPeso";
+import { tarjetaAutollenado, tarjetaDescanso, tarjetaUnidadPeso } from "./tarjetaUnidadPeso";
 
 describe("tarjetaUnidadPeso", () => {
   it("el interruptor dice si está prendido y explica qué hace", () => {
@@ -20,5 +20,15 @@ describe("tarjetaAutollenado", () => {
     expect(apagado).toContain('aria-checked="false"');
     expect(apagado).toContain("aparece sin series");
     expect(tarjetaAutollenado(true)).toContain("tus series de la última vez");
+  });
+});
+
+describe("tarjetaDescanso", () => {
+  it("interruptor apagado de entrada, sin duración fija, y avisa que se borra al terminar", () => {
+    const apagado = tarjetaDescanso(false);
+    expect(apagado).toContain("Cronómetro de descanso");
+    expect(apagado).toContain('aria-checked="false"');
+    expect(apagado).toContain("sin tiempo fijo");
+    expect(tarjetaDescanso(true)).toContain("se borran");
   });
 });

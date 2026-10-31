@@ -1607,6 +1607,18 @@ button.registro-serie-num.abierto { border-style: solid; border-color: var(--pri
   font-size: 18px; font-weight: 800; box-shadow: 0 3px 10px rgba(0, 0, 0, 0.18);
 }
 .cronometro-tiempo { font-variant-numeric: tabular-nums; }
+/* El descanso desde la última serie (Ajustes › Cronómetro de descanso), en la misma píldora. */
+.cronometro-descanso {
+  display: inline-flex; align-items: center; gap: 4px;
+  margin-left: 4px; padding-left: 10px; border-left: 1px solid currentColor;
+  font-weight: 700; opacity: 0.9;
+}
+.cronometro-descanso[hidden] { display: none; }
+/* Lo que descansó antes de una serie: chiquito, entre fila y fila, para no robarle espacio. */
+.registro-descanso {
+  margin: 2px 0 2px 2px; font-size: 12px; color: var(--texto-tenue);
+  font-variant-numeric: tabular-nums;
+}
 
 /* El resumen al terminar un entrenamiento (Registro y guiado). */
 .resumen { text-align: center; margin: 8px 0 14px; }

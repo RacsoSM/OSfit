@@ -17,6 +17,7 @@ import {
   borradorGuiado,
   cambiarCaida,
   cambiarSerie,
+  companero,
   cambiarUnidad,
   idNuevo,
   leerBorrador,
@@ -49,7 +50,8 @@ import { autollenarActivo } from "../autollenado";
 import type { Unidad } from "../barras";
 import { aterrizar, despegar } from "./vueloRegistro";
 import { conectarDeslizar } from "./deslizarRegistro";
-import { cronometro } from "./cronometro";
+import { cronometro, mostrarDescanso, tiempoTranscurrido } from "./cronometro";
+import { descansoActivo, marcarDescanso } from "../descanso";
 import { botonAtras } from "./botonAtras";
 
 /**
@@ -587,7 +589,21 @@ function opcion(e: EjercicioBanco): string {
  */
 function cronometroDelBorrador(): string {
   const b = estado.borrador;
-  return b && !b.edicion && typeof b.iniciado === "number" ? cronometro(b.iniciado) : "";
+  if (!b || b.edicion || typeof b.iniciado !== "number") return "";
+  return cronometro(b.iniciado, Date.now(), descansoActivo() ? b.ultimaSerie ?? null : undefined);
+}
+
+/** "😮‍💨 1:24 de descanso", arriba de la serie, con el cronómetro de descanso prendido. */
+function etiquetaDescanso(ms: number): string {
+  return `<p class="registro-descanso">😮‍💨 ${tiempoTranscurrido(ms)} de descanso</p>`;
+}
+
+/**
+ * Tras escribir o agregar la serie j del ejercicio i: si acaba de quedar completa, el descanso
+ * vuelve a 0:00 (ver `descanso.ts`). Devuelve el borrador, marcado o tal cual.
+ */
+function conDescanso(b: Borrador, i: number, j: number): Borrador {
+  return marcarDescanso(b, i, j, Date.now());
 }
 
 /**
@@ -757,7 +773,8 @@ function filaSerie(e: EjercicioBorrador, i: number, s: SerieBorrador, j: number,
         : `<button class="registro-menu-opcion" data-agregar-caida="${i}:${j}">↓ Agregar bajada (drop)</button>`}
       <button class="registro-menu-opcion tenue" data-menu-serie="">Cancelar</button>
     </div>`;
-  return `
+  const descanso = s.descanso !== undefined && descansoActivo() ? etiquetaDescanso(s.descanso) : "";
+  return `${descanso}
     <div class="registro-serie">
       ${num}
       ${camposSerie(e, i, j, s, donde)}
@@ -1521,7 +1538,10 @@ export function conectarRegistro(
       return;
     }
     if (el.dataset.agregarSerie !== undefined) {
-      guardarBorrador(agregarSerie(b, Number(el.dataset.agregarSerie)));
+      const i = Number(el.dataset.agregarSerie);
+      const nuevo = agregarSerie(b, i);
+      // "+ Serie" copia la anterior: si ya entra completa, es la serie que acaba de hacer.
+      guardarBorrador(conDescanso(nuevo, i, (nuevo.ejercicios[i]?.series.length ?? 1) - 1));
       repintar();
       return;
     }
@@ -1537,7 +1557,12 @@ export function conectarRegistro(
       return;
     }
     if (el.dataset.agregarRonda !== undefined) {
-      guardarBorrador(agregarRonda(b, Number(el.dataset.agregarRonda)));
+      const i = Number(el.dataset.agregarRonda);
+      const otro = companero(b, i);
+      // La ronda nueva copia la anterior: si entra completa, se cuenta la A y luego la B.
+      const nuevo = [i, otro ?? i].sort((x, y) => x - y).reduce(
+        (acc, k) => conDescanso(acc, k, (acc.ejercicios[k]?.series.length ?? 1) - 1), agregarRonda(b, i));
+      guardarBorrador(nuevo);
       repintar();
       return;
     }
@@ -1594,8 +1619,16 @@ export function conectarRegistro(
       : campo === "reps" || campo === "peso"
         ? cambiarCaida(estado.borrador, Number(ej), Number(serie), Number(caida), campo, input.value)
         : estado.borrador;
+    const i = Number(ej), j = Number(serie);
+    const marcado = caida === undefined ? conDescanso(cambiado, i, j) : cambiado;
     // La hora de su última anotación: con la que se cierra si se olvida de terminarlo.
-    guardarBorrador({ ...cambiado, anotado: Date.now() });
+    guardarBorrador({ ...marcado, anotado: Date.now() });
+    // Aquí no se repinta (cerraría el teclado): el descanso se actualiza a mano.
+    if (marcado !== cambiado && descansoActivo() && marcado.ultimaSerie !== undefined) {
+      mostrarDescanso(marcado.ultimaSerie);
+      const ms = marcado.ejercicios[i]?.series[j]?.descanso;
+      if (ms !== undefined) input.closest(".registro-serie")?.insertAdjacentHTML("beforebegin", etiquetaDescanso(ms));
+    }
   });
 
   /**

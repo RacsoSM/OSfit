@@ -48,7 +48,7 @@ import {
   alBloquear, almacenDelNavegador, conexionDelNavegador, esWifi, guardarFaltantes, guardarModoSinDatos, modoSinDatos,
   sugerirApagar,
 } from "./sinDatos";
-import { conectarAutollenado, conectarUnidadPeso } from "./ui/tarjetaUnidadPeso";
+import { conectarAutollenado, conectarDescanso, conectarUnidadPeso } from "./ui/tarjetaUnidadPeso";
 import { conectarSinDatos } from "./ui/tarjetaSinDatos";
 import { conectarEstadisticas } from "./ui/estadisticas";
 import { conectarResumenMensual, elegirMes, reiniciarResumenMensual } from "./ui/resumenMensual";
@@ -805,6 +805,7 @@ async function arrancar(): Promise<void> {
       conectarSinDatos((activo) => { cambiarSinDatos(activo); });
       conectarUnidadPeso(pintar);
       conectarAutollenado(pintar);
+      conectarDescanso(pintar);
       conectarNotificaciones(alActivarNotificaciones, alDescartarInvitacion);
       return;
     }

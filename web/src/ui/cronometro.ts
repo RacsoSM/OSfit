@@ -18,12 +18,36 @@ export function tiempoTranscurrido(ms: number): string {
   return h > 0 ? `${h}:${String(m).padStart(2, "0")}:${s}` : `${m}:${s}`;
 }
 
-export function cronometro(desde: number, ahora = Date.now()): string {
+/**
+ * `descanso`: con el cronómetro de descanso prendido (Ajustes), desde cuándo cuenta (ms), o null
+ * si todavía no completa ninguna serie: va escondido y `mostrarDescanso` lo destapa sin repintar.
+ * Sin él (undefined), solo el tiempo entrenando.
+ */
+export function cronometro(desde: number, ahora = Date.now(), descanso?: number | null): string {
+  const extra = descanso === undefined ? "" : `
+      <span class="cronometro-descanso"${descanso === null ? " hidden" : ""} role="timer" aria-label="Tiempo descansando">
+        <span aria-hidden="true">😮‍💨</span>
+        <span class="cronometro-tiempo" data-desde="${descanso ?? ahora}">${tiempoTranscurrido(ahora - (descanso ?? ahora))}</span>
+      </span>`;
   return `
     <div class="cronometro" role="timer" aria-label="Tiempo entrenando">
       <span aria-hidden="true">⏱</span>
-      <span class="cronometro-tiempo" data-desde="${desde}">${tiempoTranscurrido(ahora - desde)}</span>
+      <span class="cronometro-tiempo" data-desde="${desde}">${tiempoTranscurrido(ahora - desde)}</span>${extra}
     </div>`;
+}
+
+/**
+ * El descanso vuelve a 0:00 desde `desde`, sin repintar la página (cerraría el teclado mientras
+ * escribe su serie). Si va escondido porque no había ninguna serie completa, se destapa.
+ */
+export function mostrarDescanso(desde: number): void {
+  document.querySelectorAll<HTMLElement>(".cronometro-descanso").forEach((caja) => {
+    caja.hidden = false;
+    const tiempo = caja.querySelector<HTMLElement>("[data-desde]");
+    if (!tiempo) return;
+    tiempo.dataset.desde = String(desde);
+    tiempo.textContent = tiempoTranscurrido(Date.now() - desde);
+  });
 }
 
 let intervalo: ReturnType<typeof setInterval> | null = null;

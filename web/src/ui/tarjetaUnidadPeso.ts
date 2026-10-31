@@ -1,5 +1,6 @@
 import { guardarRegistroEnLibras } from "../unidadPeso";
 import { guardarAutollenar } from "../autollenado";
+import { guardarDescansoActivo } from "../descanso";
 
 /**
  * Ajustes › "Registrar en libras" (entrenador, 2026-10-22). Con el interruptor prendido, en
@@ -60,6 +61,38 @@ export function conectarAutollenado(repintar: () => void): void {
   const boton = document.querySelector<HTMLButtonElement>("#interruptor-autollenar");
   boton?.addEventListener("click", () => {
     guardarAutollenar(boton.getAttribute("aria-checked") !== "true");
+    repintar();
+  });
+}
+
+/**
+ * Ajustes › "Cronómetro de descanso" (entrenador, 2026-10-31): en Registro cuenta cuánto lleva
+ * descansando desde la última serie y anota en cada serie lo que descansó antes. Sin duración
+ * fija ni alarma. Mismo interruptor que los demás.
+ */
+export function tarjetaDescanso(activo: boolean): string {
+  return `
+    <div class="tarjeta">
+      <p class="tarjeta-titulo">Descanso entre series</p>
+      <div class="ajuste-interruptor">
+        <span class="ajuste-etiqueta" id="descanso-etiqueta">Cronómetro de descanso</span>
+        <button type="button" class="interruptor" id="interruptor-descanso" role="switch"
+                aria-checked="${activo}" aria-labelledby="descanso-etiqueta" aria-describedby="descanso-nota">
+          <span class="interruptor-bolita" aria-hidden="true"></span>
+        </button>
+      </div>
+      <p class="ajuste-nota" id="descanso-nota">${activo
+        ? "En Registro, junto al tiempo del entrenamiento, ves cuánto llevas descansando desde tu última serie, y en cada serie cuánto descansaste antes. Arranca solo al anotar cada serie. Al terminar el entrenamiento esos tiempos se borran."
+        : "Actívalo para ver en Registro cuánto llevas descansando entre series. Arranca solo al anotar cada serie, sin tiempo fijo."}</p>
+      <p class="ajuste-nota ajuste-tenue">Se guarda en este teléfono.</p>
+    </div>`;
+}
+
+/** Cuelga el interruptor. Como el resto de `conectar*`, se vuelve a llamar en cada repintado. */
+export function conectarDescanso(repintar: () => void): void {
+  const boton = document.querySelector<HTMLButtonElement>("#interruptor-descanso");
+  boton?.addEventListener("click", () => {
+    guardarDescansoActivo(boton.getAttribute("aria-checked") !== "true");
     repintar();
   });
 }
