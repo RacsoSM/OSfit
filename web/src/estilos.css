@@ -1614,6 +1614,7 @@ button.registro-serie-num.abierto { border-style: solid; border-color: var(--pri
   font-weight: 700; opacity: 0.9;
 }
 .cronometro-descanso[hidden] { display: none; }
+.cronometro-descanso-rotulo { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; }
 /* Lo que descansó antes de una serie: chiquito, entre fila y fila, para no robarle espacio. */
 .registro-descanso {
   margin: 2px 0 2px 2px; font-size: 12px; color: var(--texto-tenue);

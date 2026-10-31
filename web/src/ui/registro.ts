@@ -593,9 +593,9 @@ function cronometroDelBorrador(): string {
   return cronometro(b.iniciado, Date.now(), descansoActivo() ? b.ultimaSerie ?? null : undefined);
 }
 
-/** "😮‍💨 1:24 de descanso", arriba de la serie, con el cronómetro de descanso prendido. */
+/** "1:24 de descanso", arriba de la serie, con el cronómetro de descanso prendido. */
 function etiquetaDescanso(ms: number): string {
-  return `<p class="registro-descanso">😮‍💨 ${tiempoTranscurrido(ms)} de descanso</p>`;
+  return `<p class="registro-descanso">${tiempoTranscurrido(ms)} de descanso</p>`;
 }
 
 /**

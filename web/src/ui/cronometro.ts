@@ -26,7 +26,7 @@ export function tiempoTranscurrido(ms: number): string {
 export function cronometro(desde: number, ahora = Date.now(), descanso?: number | null): string {
   const extra = descanso === undefined ? "" : `
       <span class="cronometro-descanso"${descanso === null ? " hidden" : ""} role="timer" aria-label="Tiempo descansando">
-        <span aria-hidden="true">😮‍💨</span>
+        <span class="cronometro-descanso-rotulo" aria-hidden="true">Descanso</span>
         <span class="cronometro-tiempo" data-desde="${descanso ?? ahora}">${tiempoTranscurrido(ahora - (descanso ?? ahora))}</span>
       </span>`;
   return `
