@@ -75,7 +75,8 @@ async function cerrarCliente(
   data: Record<string, unknown>,
   banco: readonly EjercicioResumen[],
   hoy: string,
-  recienCerrado: string | null
+  recienCerrado: string | null,
+  avisar: boolean
 ): Promise<{ escritos: number; avisos: number }> {
   const firestore = db();
   const ref = firestore.collection("clientes").doc(clienteId);
@@ -98,7 +99,7 @@ async function cerrarCliente(
 
   const meses = mesesPorGenerar(
     mesesConActividad(asistencias, sesiones), new Set(guardadosSnap.docs.map((d) => d.id)), hoy);
-  if (meses.length === 0) return { escritos: 0, avisos: 0 };
+  const guardados = new Map(guardadosSnap.docs.map((d) => [d.id, d.data() as ResumenMensual]));
 
   const sexo = data.sexo === "H" || data.sexo === "M" ? (data.sexo as Sexo) : null;
   const perfil = {
@@ -116,77 +117,98 @@ async function cerrarCliente(
     try {
       await ref.collection("resumenesMensuales").doc(mes).create({ ...r, generado: FieldValue.serverTimestamp() });
       escritos++;
+      guardados.set(mes, r);
     } catch (error) {
-      // Otra corrida lo escribió entre la lectura y aquí: ya está, y su aviso también.
-      if ((error as { code?: unknown }).code === YA_EXISTE) continue;
-      throw error;
+      // Otra corrida lo escribió entre la lectura y aquí: ya está.
+      if ((error as { code?: unknown }).code !== YA_EXISTE) throw error;
     }
-    if (mes === recienCerrado && data.notificacionesWeb === true) {
-      const a = avisoResumen(clienteId, r);
-      try {
-        await firestore.collection("notificaciones").doc(a.id).create({
-          id: a.id,
-          titulo: a.titulo,
-          texto: a.texto,
-          destino: "elegidas",
-          clientesElegidos: [clienteId],
-          creada: FieldValue.serverTimestamp(),
-          estado: "pendiente",
-          enviadas: 0,
-          fallidas: 0,
-          automatico: "resumenMensual",
-          abrir: a.abrir,
-        });
-        avisos++;
-      } catch (error) {
-        if ((error as { code?: unknown }).code !== YA_EXISTE) throw error;
-      }
+  }
+
+  // El aviso, solo en la corrida de la mañana y del mes que acaba de cerrar, lo haya guardado
+  // esta corrida o la de las 00:30. El id fijo evita mandarlo dos veces.
+  const r = recienCerrado ? guardados.get(recienCerrado) : undefined;
+  if (avisar && r && data.notificacionesWeb === true) {
+    const a = avisoResumen(clienteId, r);
+    try {
+      await firestore.collection("notificaciones").doc(a.id).create({
+        id: a.id,
+        titulo: a.titulo,
+        texto: a.texto,
+        destino: "elegidas",
+        clientesElegidos: [clienteId],
+        creada: FieldValue.serverTimestamp(),
+        estado: "pendiente",
+        enviadas: 0,
+        fallidas: 0,
+        automatico: "resumenMensual",
+        abrir: a.abrir,
+      });
+      avisos++;
+    } catch (error) {
+      if ((error as { code?: unknown }).code !== YA_EXISTE) throw error;
     }
   }
   return { escritos, avisos };
 }
 
 /**
- * El día 1 a las 00:30 de Mazatlán. Lee el banco y las sedes una vez; por clienta, sus
- * asistencias, sesiones y los meses ya guardados. Todas las clientas, activas o no: una que se
- * fue también tiene su historial. Una que falla no detiene a las demás y se reintenta sola en
- * la próxima corrida, porque su mes sigue sin documento.
+ * Lee el banco y las sedes una vez; por clienta, sus asistencias, sesiones y los meses ya
+ * guardados. Todas las clientas, activas o no: una que se fue también tiene su historial. Una
+ * que falla no detiene a las demás y se reintenta sola en la próxima corrida, porque su mes
+ * sigue sin documento. Con `avisar`, además manda el push del mes que acaba de cerrar.
+ */
+async function cerrarTodo(avisar: boolean): Promise<void> {
+  const hoy = hoyEnMazatlan();
+  const recienCerrado = mesRecienCerrado(hoy);
+  const firestore = db();
+  const [clientesSnap, bancoSnap, sedesSnap] = await Promise.all([
+    firestore.collection("clientes").get(),
+    firestore.collection("ejercicios").get(),
+    firestore.collection("sedes").get(),
+  ]);
+  const banco: EjercicioResumen[] = bancoSnap.docs.map((d) => ({
+    id: d.id,
+    nombre: typeof d.get("nombre") === "string" ? d.get("nombre") : d.id,
+    tipo: d.get("tipo"),
+    musculos: (d.get("musculos") ?? {}) as Record<string, number>,
+    estandares: d.get("estandares") ?? null,
+    pinta: d.get("pinta") ?? null,
+  }));
+  const sedes = sedesDesdeDocs(sedesSnap.docs);
+
+  let escritos = 0;
+  let avisos = 0;
+  for (const c of clientesSnap.docs) {
+    try {
+      const sede = typeof c.get("sede") === "string" ? (c.get("sede") as string) : null;
+      // Cada quien contra los estándares de su gimnasio, como el mapa.
+      const suBanco = sede ? bancoEnSede(banco, sedes.get(sede) ?? {}) : banco;
+      const r = await cerrarCliente(c.id, c.data(), suBanco, hoy, recienCerrado, avisar);
+      escritos += r.escritos;
+      avisos += r.avisos;
+    } catch (error) {
+      logger.error("Resumen mensual: falló una clienta", { clienteId: c.id, error });
+    }
+  }
+  logger.info("Resumen mensual", { hoy, recienCerrado, avisar, clientes: clientesSnap.size, escritos, avisos });
+}
+
+/**
+ * El día 1 a las 00:30 de Mazatlán: congela el mes que acaba de cerrar, callado. El push sale
+ * hasta las 9:00 (`avisarResumenMes`): el 2026-11-01 salió a las 00:30 y despertó a las clientas
+ * (entrenador). Así el resumen ya está listo en la página desde la medianoche.
  */
 export const cerrarMes = onSchedule(
   { schedule: "30 0 1 * *", timeZone: "America/Mazatlan", region: REGION, timeoutSeconds: 540 },
-  async () => {
-    const hoy = hoyEnMazatlan();
-    const recienCerrado = mesRecienCerrado(hoy);
-    const firestore = db();
-    const [clientesSnap, bancoSnap, sedesSnap] = await Promise.all([
-      firestore.collection("clientes").get(),
-      firestore.collection("ejercicios").get(),
-      firestore.collection("sedes").get(),
-    ]);
-    const banco: EjercicioResumen[] = bancoSnap.docs.map((d) => ({
-      id: d.id,
-      nombre: typeof d.get("nombre") === "string" ? d.get("nombre") : d.id,
-      tipo: d.get("tipo"),
-      musculos: (d.get("musculos") ?? {}) as Record<string, number>,
-      estandares: d.get("estandares") ?? null,
-      pinta: d.get("pinta") ?? null,
-    }));
-    const sedes = sedesDesdeDocs(sedesSnap.docs);
+  () => cerrarTodo(false)
+);
 
-    let escritos = 0;
-    let avisos = 0;
-    for (const c of clientesSnap.docs) {
-      try {
-        const sede = typeof c.get("sede") === "string" ? (c.get("sede") as string) : null;
-        // Cada quien contra los estándares de su gimnasio, como el mapa.
-        const suBanco = sede ? bancoEnSede(banco, sedes.get(sede) ?? {}) : banco;
-        const r = await cerrarCliente(c.id, c.data(), suBanco, hoy, recienCerrado);
-        escritos += r.escritos;
-        avisos += r.avisos;
-      } catch (error) {
-        logger.error("Resumen mensual: falló una clienta", { clienteId: c.id, error });
-      }
-    }
-    logger.info("Resumen mensual", { hoy, recienCerrado, clientes: clientesSnap.size, escritos, avisos });
-  }
+/**
+ * El día 1 a las 9:00 de Mazatlán, la hora de los demás avisos: "Tu resumen de octubre ya está
+ * listo". Pasa otra vez por el cierre (si a alguna le falló el de las 00:30, se completa aquí;
+ * lo ya guardado no se toca) y avisa a quien tenga su mes recién cerrado.
+ */
+export const avisarResumenMes = onSchedule(
+  { schedule: "0 9 1 * *", timeZone: "America/Mazatlan", region: REGION, timeoutSeconds: 540 },
+  () => cerrarTodo(true)
 );

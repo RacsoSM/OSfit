@@ -27,6 +27,8 @@ con una notificación. El mes en curso se calcula en vivo y se congela cuando te
   deshabilita en su orilla de la lista.
 - **Push al cerrar el mes:** "Tu resumen de octubre ya está listo", que abre la ventana en ese
   mes. Solo a quien tiene prendidas las notificaciones y tuvo actividad ese mes.
+  **Sale el día 1 a las 9:00** (`avisarResumenMes`), no a las 00:30 en que se congela el mes
+  (`cerrarMes`): el 2026-11-01 salió a las 00:30 y despertó a las clientas (entrenador).
 - **El diseño elegido** es el tablero "Final · B + A" del canvas de diseños (2026-10-28), en este
   orden:
   1. Cabecera con el selector de mes (← select →).
