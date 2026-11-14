@@ -13,10 +13,10 @@ import type { Asistencia } from "./datos";
  * Ventana de reparación: los 2 días **hábiles** anteriores a hoy. Una rotura más vieja ya no
  * se puede revivir.
  *
- * Hábiles y no 48 horas de reloj, y la diferencia importa justo en el caso más común. La
- * página no dibuja acciones en fin de semana, así que con horas de reloj una falta del viernes
- * vencería el domingo — sin que el cliente hubiera tenido nunca un botón que tocar. Contando
- * hábiles, el lunes el viernes sigue siendo "el día hábil anterior" y todavía se repara.
+ * Hábiles y no 48 horas de reloj, y la diferencia importa justo en el caso más común: con
+ * horas de reloj una falta del viernes vencería el domingo. Contando hábiles se puede revivir
+ * el sábado, el domingo (la tarjeta se muestra en fin de semana desde el 2026-11-14) y todavía
+ * el lunes, porque el viernes sigue siendo "el día hábil anterior".
  */
 const DIAS_HABILES_REPARABLES = 2;
 

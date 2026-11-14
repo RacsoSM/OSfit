@@ -149,8 +149,8 @@ export function tarjetaRevivir(
   tiradaEsteMes: Tirada | null,
   tiradaMesAnterior: Tirada | null
 ): string {
-  if (esFinDeSemana(hoy)) return "";
-
+  // También en fin de semana (entrenador, 2026-11-14): una falta del viernes se puede revivir
+  // desde el sábado, sin esperar al lunes. "Hoy no voy a poder ir" sí se esconde.
   const rota = faltaQueRompioLaRacha(asistencias, hoy);
   if (rota === null && estado.exito !== "revivir") return "";
 

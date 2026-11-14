@@ -24,6 +24,16 @@ const tirada = (campos: Partial<Tirada> = {}): Tirada =>
   ({ mes: "2026-08", color: "rojo", gano: false, fecha: "2026-08-20", ...campos });
 
 describe("tarjetaRevivir", () => {
+  it("en fin de semana también ofrece revivir la falta del viernes", () => {
+    const viernesRoto: Asistencia[] = [
+      { fecha: "2026-11-12", asistio: true, justificada: false },
+      { fecha: "2026-11-13", asistio: false, justificada: false },
+    ];
+    for (const hoy of ["2026-11-14", "2026-11-15"]) {
+      expect(tarjetaRevivir(cliente(), hoy, viernesRoto, null, null)).toContain("Revivir mi racha");
+    }
+  });
+
   // REGRESIÓN: este es el camino que usan TODOS los clientes hoy, no solo los que juegan.
   it("con cupo disponible sigue ofreciendo el revive normal", () => {
     const html = tarjetaRevivir(cliente(), HOY, conFaltaRota(0), null, null);
