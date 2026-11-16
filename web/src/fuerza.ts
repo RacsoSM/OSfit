@@ -157,8 +157,8 @@ export function nombreMusculo(grupo: string): string {
 /** Las 8 marcas de un ejercicio por sexo: 1RM ÷ peso corporal ("peso") o reps ("corporal"). */
 export type Estandares = Record<Sexo, readonly number[]>;
 
-/** Sesiones que cuentan para el mapa: las de las últimas 8 semanas. */
-export const SEMANAS_VENTANA = 8;
+/** Sesiones que cuentan para el mapa: las de las últimas 20 semanas (entrenador, 2026-11-16; antes 8). */
+export const SEMANAS_VENTANA = 20;
 /** Más arriba Epley se infla: 30 reps no dicen que pueda con el doble de peso. */
 const REPS_TOPE_EPLEY = 12;
 
@@ -265,7 +265,7 @@ function diasAntes(hoy: string, dias: number): string {
 }
 
 /**
- * El nivel de cada músculo con lo que registró en las últimas 8 semanas. Ver la spec,
+ * El nivel de cada músculo con lo que registró en las últimas 20 semanas. Ver la spec,
  * "Cálculo de fuerza":
  *
  * - Por ejercicio, su mejor marca: el mejor 1RM estimado entre su peso corporal en los de
@@ -275,6 +275,8 @@ function diasAntes(hoy: string, dias: number): string {
  *   ligero no le baja el nivel.
  * - **Solo los de su lista** (entrenador, 2026-10-27): de los directos, mandan los que el
  *   entrenador eligió para ese músculo (`pinta`); los demás solo si no hizo ninguno de esos.
+ * - **Los que nunca pintan** (entrenador, 2026-11-16): `nuncaPinta` saca a un ejercicio de un
+ *   músculo del todo, ni de respaldo. El press de pecho en máquina no pinta el pecho.
  * - **Solo trabajo directo** (decisión del entrenador, 2026-10-15): un ejercicio pinta
  *   únicamente los músculos que trabaja como principal (× 1 en el banco). Los secundarios
  *   (× 0.5) no pintan nada, ni siquiera cuando el músculo no tiene otro ejercicio: un press de
@@ -324,7 +326,7 @@ export function fuerzaPorMusculo(
     const nivel = nivelDe(marca, estandares);
     for (const [musculo, cuanto] of Object.entries(b.musculos)) {
       // Solo el trabajo directo pinta: un secundario no le da nivel al músculo de rebote.
-      if (cuanto < 1) continue;
+      if (cuanto < 1 || nuncaPintaMusculo(b, musculo)) continue;
       const destino = pintaMusculo(b, musculo) ? fuerza : respaldo;
       const actual = destino[musculo];
       const origen: OrigenFuerza = {
@@ -353,6 +355,16 @@ export function fuerzaPorMusculo(
  */
 export function pintaMusculo(b: { pinta?: readonly string[] | null }, musculo: string): boolean {
   return !Array.isArray(b.pinta) || b.pinta.includes(musculo);
+}
+
+/**
+ * Si el ejercicio tiene prohibido pintar ese músculo, ni siquiera de respaldo (entrenador,
+ * 2026-11-16): el press de pecho en máquina no da color al pecho aunque sea lo único que hizo.
+ * Sale de `docs/estandares-fuerza/nuncaPintan.json`. GEMELO de `nuncaPintaMusculo` en
+ * `functions/src/fuerza.ts`.
+ */
+export function nuncaPintaMusculo(b: { nuncaPinta?: readonly string[] | null }, musculo: string): boolean {
+  return Array.isArray(b.nuncaPinta) && b.nuncaPinta.includes(musculo);
 }
 
 // ── Reparto y siguiente rango (el detalle del músculo) ────────────────────────

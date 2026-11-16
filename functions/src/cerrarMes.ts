@@ -173,6 +173,7 @@ async function cerrarTodo(avisar: boolean): Promise<void> {
     musculos: (d.get("musculos") ?? {}) as Record<string, number>,
     estandares: d.get("estandares") ?? null,
     pinta: d.get("pinta") ?? null,
+    nuncaPinta: d.get("nuncaPinta") ?? null,
   }));
   const sedes = sedesDesdeDocs(sedesSnap.docs);
 

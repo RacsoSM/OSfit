@@ -160,7 +160,7 @@ export function armarComparacion(
 }
 
 /**
- * Solo lectura. Lee las clientas, el banco y las sesiones de las últimas 8 semanas de quienes
+ * Solo lectura. Lee las clientas, el banco y las sesiones de las últimas 20 semanas de quienes
  * pueden salir: con un gimnasio son unos cientos de lecturas por vez.
  */
 export const compararMusculos = onCall({ region: REGION }, async (request): Promise<{ personas: PersonaComparar[]; candidatos: Candidato[] }> => {
@@ -183,6 +183,7 @@ export const compararMusculos = onCall({ region: REGION }, async (request): Prom
     musculos: (d.get("musculos") ?? {}) as Record<string, number>,
     estandares: d.get("estandares") ?? null,
     pinta: d.get("pinta") ?? null,
+    nuncaPinta: d.get("nuncaPinta") ?? null,
   }));
   const sesiones = new Map<string, SesionFuerza[]>();
   await Promise.all(clientes.filter((c) => puedeSalir(c, yo, yoId)).map(async (c) => {

@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { erroresEstandares, erroresPintan, pintaDe } from "./estandares.mjs";
+import { erroresEstandares, erroresPintan, nuncaPintaDe, pintaDe } from "./estandares.mjs";
 
 const leer = (ruta) => JSON.parse(readFileSync(new URL(ruta, import.meta.url), "utf8"));
 const semilla = leer("../semilla/ejercicios.json");
@@ -33,6 +33,7 @@ describe("erroresEstandares", () => {
 });
 
 const pintan = leer("../../docs/estandares-fuerza/pintan.json");
+const nuncaPintan = leer("../../docs/estandares-fuerza/nuncaPintan.json");
 
 describe("pintan", () => {
   it("la lista de docs/estandares-fuerza se puede cargar", () => {
@@ -50,5 +51,13 @@ describe("pintan", () => {
     expect(pintaDe(pecDeck, { pecho: ["press-banca"] })).toEqual([]);
     expect(pintaDe(banca, { pecho: ["press-banca"] })).toEqual(["pecho"]);
     expect(pintaDe(pecDeck, {})).toEqual(["pecho"]);
+  });
+
+  it("la lista de los que nunca pintan es válida y saca al press de pecho en máquina del pecho", () => {
+    expect(erroresPintan(nuncaPintan, semilla)).toEqual([]);
+    const maquina = semilla.find((e) => e.id === "press-pecho-maquina");
+    const banca = semilla.find((e) => e.id === "press-banca");
+    expect(nuncaPintaDe(maquina, nuncaPintan)).toEqual(["pecho"]);
+    expect(nuncaPintaDe(banca, nuncaPintan)).toEqual([]);
   });
 });

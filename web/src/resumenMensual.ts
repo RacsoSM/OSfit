@@ -205,7 +205,7 @@ function medidor(e: EntradaResumen) {
 function fuerzaDelMes(e: EntradaResumen): ResumenMensual["fuerza"] {
   const m = medidor(e);
   if (!m) return null;
-  // La misma ventana de 8 semanas del mapa, terminando en el corte: es el mapa de ese día.
+  // La misma ventana de 20 semanas del mapa, terminando en el corte: es el mapa de ese día.
   const sesiones = e.sesiones.filter((s) => s.fecha <= e.corte);
   const fuerza = fuerzaPorMusculo(sesiones, e.banco, m.sexo, m.pesoFuerza, e.corte, m.edad);
   const grupos = Object.keys(fuerza).sort();

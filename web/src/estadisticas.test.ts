@@ -105,7 +105,7 @@ describe("historialEjercicio", () => {
 });
 
 describe("nivelesMusculo", () => {
-  it("da el nivel de cada fecha en que trabajó el músculo, con la ventana de 8 semanas hasta ese día", () => {
+  it("da el nivel de cada fecha en que trabajó el músculo, con la ventana de 20 semanas hasta ese día", () => {
     const n = nivelesMusculo(sesiones, banco, "pecho", { sexo: "M", peso: 60, edad: null });
     expect(n.map((p) => p.fecha)).toEqual(["2026-09-01", "2026-10-16"]);
     expect(n[1].valor).toBeGreaterThan(n[0].valor);

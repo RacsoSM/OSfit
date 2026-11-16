@@ -69,6 +69,11 @@ export interface EjercicioBanco {
    */
   pinta?: string[] | null;
   /**
+   * Los músculos que este ejercicio no pinta nunca, ni de respaldo
+   * (`docs/estandares-fuerza/nuncaPintan.json`, 2026-11-16). Lo carga `cargarEstandares.mjs`.
+   */
+  nuncaPinta?: string[] | null;
+  /**
    * Cómo se anota el peso cuando no es lo de siempre, por ejemplo "Ingresa el peso del disco."
    * en las elevaciones frontales, que en el gimnasio se hacen con disco. Registro lo muestra
    * debajo del peso. Opcional por la razón de siempre.
@@ -383,16 +388,16 @@ export interface Sesion {
 }
 
 /**
- * Sus últimas sesiones, de la más nueva a la más vieja. Con 60 (unos tres meses entrenando
- * cinco días) alcanza para el historial, para prellenar lo que hizo la última vez y para las 8
- * semanas del mapa de fuerza (`fuerzaPorMusculo`): solo quien entrene más de 7 veces por semana
- * se quedaría sin sus primeras semanas.
+ * Sus últimas sesiones, de la más nueva a la más vieja. Con 140 (20 semanas a diario) alcanza
+ * para el historial, para prellenar lo que hizo la última vez y para las 20 semanas del mapa de
+ * fuerza (`fuerzaPorMusculo`): solo quien entrene más de una vez al día se quedaría sin sus
+ * primeras semanas.
  */
 export function observarSesiones(clienteId: string, alCambiar: (s: Sesion[]) => void) {
   const consulta = query(
     collection(db, "clientes", clienteId, "sesiones"),
     orderBy("creada", "desc"),
-    limit(60)
+    limit(140)
   );
   return escuchar("sesiones", (alLlegar, alFallar) =>
     onSnapshot(

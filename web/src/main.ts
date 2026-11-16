@@ -272,7 +272,7 @@ async function arrancar(): Promise<void> {
   let sesiones: Sesion[] | null = null;
   /**
    * Todo su historial, para Estadísticas. Se pide la primera vez que entra a esa ventana y
-   * sigue escuchando: las demás pantallas abren con las últimas 60 (`sesiones`).
+   * sigue escuchando: las demás pantallas abren con las últimas 140 (`sesiones`).
    */
   let historial: Sesion[] | null = null;
   let historialPedido = false;

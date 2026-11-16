@@ -53,6 +53,16 @@ export function erroresPintan(pintan, semilla) {
  * Los músculos que pinta un ejercicio: sus × 1, menos aquellos con lista donde no está. Un
  * músculo sin lista en `pintan` lo pintan todos sus directos, como antes.
  */
+/**
+ * Los músculos que un ejercicio no pinta nunca, ni de respaldo (`nuncaPintan.json`, mismo
+ * formato que `pintan.json`: músculo → ids). Se valida con `erroresPintan`.
+ */
+export function nuncaPintaDe(ejercicio, nuncaPintan) {
+  return Object.entries(nuncaPintan)
+    .filter(([, ids]) => Array.isArray(ids) && ids.includes(ejercicio.id))
+    .map(([m]) => m);
+}
+
 export function pintaDe(ejercicio, pintan) {
   return Object.entries(ejercicio.musculos ?? {})
     .filter(([m, cuanto]) => cuanto === 1 && (!Array.isArray(pintan[m]) || pintan[m].includes(ejercicio.id)))

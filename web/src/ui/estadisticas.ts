@@ -221,7 +221,7 @@ function vistaMusculo(d: DatosEstadisticas, grupo: string, ejercicios: readonly 
        ${d.peso ? bloqueSiguiente(f, d.sexo, d.peso, nombre) : ""}`
     : `<p class="tarjeta-titulo">${escapar(nombre)}</p>
        <p class="estad-nota">${d.perfil
-         ? "Todavía sin rango: sus ejercicios de las últimas 8 semanas no tienen estándares de fuerza."
+         ? "Todavía sin rango: sus ejercicios de las últimas 20 semanas no tienen estándares de fuerza."
          : "Para ver su rango, pon tu peso en Músculos."}</p>`;
   const puntos = d.perfil ? nivelesMusculo(sesiones, d.banco, grupo, d.perfil) : [];
   const formato = (p: Punto) => numero(Math.round(p.valor * 10) / 10);
@@ -230,7 +230,7 @@ function vistaMusculo(d: DatosEstadisticas, grupo: string, ejercicios: readonly 
         <p class="tarjeta-titulo">Tu nivel con el tiempo</p>
         ${lecturaGrafica(puntos, formato)}
         ${graficaLinea(puntos, { formato, bandas: bandas(d.sexo), unidad: "nivel de 0 a 8" })}
-        <p class="estad-nota">Cada punto es su nivel ese día, con tu mejor marca de las 8 semanas anteriores y tu peso de hoy.</p>
+        <p class="estad-nota">Cada punto es su nivel ese día, con tu mejor marca de las 20 semanas anteriores y tu peso de hoy.</p>
       </div>`
     : "";
   const lista = ejercicios.map((h) => `

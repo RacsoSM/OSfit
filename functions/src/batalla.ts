@@ -200,7 +200,7 @@ function peleadorDe(c: ClienteComparar, hoy: string): Peleador {
 /**
  * Recibe el nombre de la retada, como lo muestra la lista de Amigos (que nunca manda ids). Si
  * hay dos con el mismo nombre se toma la primera que se le pueda mostrar. Lee todas las
- * sesiones de las dos: es su historial completo, no las 8 semanas del mapa.
+ * sesiones de las dos: es su historial completo, no las 20 semanas del mapa.
  */
 export const batallaAmigos = onCall({ region: REGION }, async (request): Promise<DatosBatalla> => {
   const yoId = await clienteDeLaSesion(request);

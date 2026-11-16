@@ -129,8 +129,8 @@ describe("entrenamiento del mes", () => {
 });
 
 describe("fuerza y marcas", () => {
-  it("la fuerza de cierre usa las 8 semanas que terminan el último día del mes", () => {
-    const vieja = sesion("2026-08-01", [{ ejercicioId: "curl", nombre: "Curl", series: [{ reps: 6, peso: 40 }] }]);
+  it("la fuerza de cierre usa las 20 semanas que terminan el último día del mes", () => {
+    const vieja = sesion("2026-05-01", [{ ejercicioId: "curl", nombre: "Curl", series: [{ reps: 6, peso: 40 }] }]);
     const delMes = sesion("2026-10-13", [{ ejercicioId: "banca", nombre: "Banca", series: [{ reps: 4, peso: 100 }] }]);
     const despues = sesion("2026-11-02", [{ ejercicioId: "curl", nombre: "Curl", series: [{ reps: 6, peso: 40 }] }]);
     const f = resumenDelMes(entrada({ sesiones: [vieja, delMes, despues] })).fuerza!;

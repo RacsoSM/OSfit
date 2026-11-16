@@ -16,6 +16,8 @@ export interface EjercicioFuerza {
   estandares?: Record<Sexo, readonly number[]> | null;
   /** Los músculos que pinta en el mapa (ver `web/src/fuerza.ts`). Ausente = todos los × 1. */
   pinta?: readonly string[] | null;
+  /** Los músculos que no pinta nunca, ni de respaldo (ver `web/src/fuerza.ts`). */
+  nuncaPinta?: readonly string[] | null;
 }
 
 export interface SesionFuerza {
@@ -23,7 +25,7 @@ export interface SesionFuerza {
   ejercicios: { ejercicioId: string; series: { reps: number; peso: number | null }[] }[];
 }
 
-export const SEMANAS_VENTANA = 8;
+export const SEMANAS_VENTANA = 20;
 const REPS_TOPE_EPLEY = 12;
 
 export function unoRm(peso: number, reps: number): number {
@@ -94,6 +96,11 @@ export function pintaMusculo(b: { pinta?: readonly string[] | null }, musculo: s
   return !Array.isArray(b.pinta) || b.pinta.includes(musculo);
 }
 
+/** Si tiene prohibido pintar ese músculo, ni de respaldo. GEMELO de la web. */
+export function nuncaPintaMusculo(b: { nuncaPinta?: readonly string[] | null }, musculo: string): boolean {
+  return Array.isArray(b.nuncaPinta) && b.nuncaPinta.includes(musculo);
+}
+
 /** Músculo → nivel (0 a 8). Mismas reglas que la web: ver su comentario. */
 export function nivelesPorMusculo(
   sesiones: readonly SesionFuerza[],
@@ -132,7 +139,7 @@ export function nivelesPorMusculo(
     const nivel = nivelDe(marca, b.estandares![sexo]);
     for (const [musculo, cuanto] of Object.entries(b.musculos)) {
       // Solo el trabajo directo pinta (× 1 en el banco); un secundario no cuenta de rebote.
-      if (cuanto < 1) continue;
+      if (cuanto < 1 || nuncaPintaMusculo(b, musculo)) continue;
       const destino = pintaMusculo(b, musculo) ? deLista : respaldo;
       if (nivel > (destino[musculo] ?? -1)) destino[musculo] = nivel;
     }

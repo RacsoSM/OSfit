@@ -215,8 +215,17 @@ describe("fuerzaPorMusculo", () => {
     expect(soloJalon.dorsal.nivel).toBe(8);
   });
 
-  it("solo cuentan las últimas 8 semanas", () => {
-    const vieja = sesion("2026-08-01", [{ ejercicioId: "press-banca", nombre: "", series: [{ reps: 1, peso: 100 }] }]);
+  it("con nuncaPinta no pinta ese músculo ni de respaldo", () => {
+    const maquina = { ...banca, id: "press-maquina", pinta: [], nuncaPinta: ["pecho"] };
+    const solo = [sesion("2026-10-10", [{ ejercicioId: "press-maquina", nombre: "", series: [{ reps: 1, peso: 80 }] }])];
+    expect(fuerzaPorMusculo(solo, [maquina], "H", 75, "2026-10-11").pecho).toBeUndefined();
+    expect(fuerzaPorMusculo(solo, [{ ...maquina, nuncaPinta: [] }], "H", 75, "2026-10-11").pecho).toBeDefined();
+  });
+
+  it("solo cuentan las últimas 20 semanas", () => {
+    const dentro = sesion("2026-06-01", [{ ejercicioId: "press-banca", nombre: "", series: [{ reps: 1, peso: 100 }] }]);
+    expect(fuerzaPorMusculo([dentro], banco, "H", 75, "2026-10-11").pecho).toBeDefined();
+    const vieja = sesion("2026-05-01", [{ ejercicioId: "press-banca", nombre: "", series: [{ reps: 1, peso: 100 }] }]);
     expect(fuerzaPorMusculo([vieja], banco, "H", 75, "2026-10-11")).toEqual({});
   });
 

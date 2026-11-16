@@ -15,6 +15,9 @@ describe("gemelo de web/src/fuerza.ts", () => {
     { id: "curl", nombre: "Curl", tipo: "peso" as const, musculos: { biceps: 1 },
       estandares: { H: [0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.5], M: [0.05, 0.08, 0.1, 0.13, 0.16, 0.2, 0.24, 0.3] } },
     { id: "plancha", nombre: "Plancha", tipo: "tiempo" as const, musculos: { abdomen: 1 }, estandares: null },
+    // Nunca pinta el pecho, ni de respaldo.
+    { id: "press-maquina", nombre: "Press máquina", tipo: "peso" as const, musculos: { pecho: 1, hombro: 1 }, pinta: [] as string[],
+      nuncaPinta: ["pecho"], estandares: { H: [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.25], M: [0.25, 0.4, 0.55, 0.7, 0.85, 1, 1.15, 1.3] } },
   ];
   const sesiones = [
     { id: "a", fecha: "2026-10-10", origen: "manual" as const, ejercicios: [
@@ -26,7 +29,10 @@ describe("gemelo de web/src/fuerza.ts", () => {
     { id: "b", fecha: "2026-09-01", origen: "manual" as const, ejercicios: [
       { ejercicioId: "curl", nombre: "x", series: [{ reps: 10, peso: 12 }] },
     ] },
-    { id: "viejo", fecha: "2026-06-01", origen: "manual" as const, ejercicios: [
+    { id: "maquina", fecha: "2026-10-01", origen: "manual" as const, ejercicios: [
+      { ejercicioId: "press-maquina", nombre: "x", series: [{ reps: 5, peso: 200 }] },
+    ] },
+    { id: "viejo", fecha: "2026-04-01", origen: "manual" as const, ejercicios: [
       { ejercicioId: "curl", nombre: "x", series: [{ reps: 10, peso: 40 }] },
     ] },
   ];

@@ -425,7 +425,7 @@ export function ayudaMapa(sexo: Sexo): string {
         <p class="ayuda-titulo" id="ayuda-titulo">¿Cómo funciona?</p>
         <p class="ayuda-texto">
           Tu mapa se pinta con lo que anotas en <strong>Registro</strong>. Por cada músculo
-          tomamos tu mejor marca de las últimas 8 semanas y la comparamos con tu peso corporal:
+          tomamos tu mejor marca de las últimas 20 semanas y la comparamos con tu peso corporal:
           así, alguien más ligero no queda en desventaja.
         </p>
         <p class="ayuda-texto">

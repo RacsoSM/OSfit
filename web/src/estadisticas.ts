@@ -219,7 +219,7 @@ export interface PerfilFuerza { sexo: Sexo; peso: number; edad: number | null; }
 
 /**
  * El nivel del músculo en cada fecha en que lo trabajó, con la cuenta del mapa como si "hoy"
- * fuera esa fecha (mejor marca de las 8 semanas anteriores). Usa su peso y edad de hoy: no hay
+ * fuera esa fecha (mejor marca de las 20 semanas anteriores). Usa su peso y edad de hoy: no hay
  * registro de los de antes. Las fechas sin nivel (ejercicios sin estándares) no salen.
  */
 export function nivelesMusculo(
