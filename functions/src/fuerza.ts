@@ -131,18 +131,16 @@ export function nivelesPorMusculo(
     }
   }
 
-  // Primero los de la lista del músculo (`pinta`); los demás directos solo si no hizo ninguno.
+  // Solo los de la lista del músculo (`pinta`): ya no hay respaldo (entrenador, 2026-11-16).
   const deLista: Record<string, number> = {};
-  const respaldo: Record<string, number> = {};
   for (const [id, marca] of mejor) {
     const b = porId.get(id)!;
     const nivel = nivelDe(marca, b.estandares![sexo]);
     for (const [musculo, cuanto] of Object.entries(b.musculos)) {
       // Solo el trabajo directo pinta (× 1 en el banco); un secundario no cuenta de rebote.
-      if (cuanto < 1 || nuncaPintaMusculo(b, musculo)) continue;
-      const destino = pintaMusculo(b, musculo) ? deLista : respaldo;
-      if (nivel > (destino[musculo] ?? -1)) destino[musculo] = nivel;
+      if (cuanto < 1 || nuncaPintaMusculo(b, musculo) || !pintaMusculo(b, musculo)) continue;
+      if (nivel > (deLista[musculo] ?? -1)) deLista[musculo] = nivel;
     }
   }
-  return { ...respaldo, ...deLista };
+  return deLista;
 }

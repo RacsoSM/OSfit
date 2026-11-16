@@ -7,7 +7,7 @@ describe("gemelo de web/src/resumenMensual.ts", () => {
   const banco = [
     { id: "banca", nombre: "Press de banca", tipo: "peso" as const, musculos: { pecho: 1, triceps: 0.5 },
       estandares: { H: [0.5, 0.625, 0.75, 0.875, 1, 1.137, 1.275, 1.665], M: [0.25, 0.375, 0.5, 0.625, 0.75, 0.8, 0.85, 1.244] } },
-    // Con lista: el cruce no pinta pecho mientras haya banca (va de respaldo).
+    // Con lista: el cruce no pinta pecho (no está en la lista).
     { id: "cruce", nombre: "Cruce de poleas", tipo: "peso" as const, musculos: { pecho: 1 }, pinta: [] as string[],
       estandares: { H: [0.234, 0.292, 0.351, 0.409, 0.468, 0.532, 0.597, 0.779], M: [0.117, 0.176, 0.234, 0.292, 0.351, 0.374, 0.398, 0.582] } },
     { id: "curl", nombre: "Curl con mancuernas", tipo: "peso" as const, musculos: { biceps: 1 },

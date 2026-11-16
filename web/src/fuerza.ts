@@ -273,8 +273,9 @@ function diasAntes(hoy: string, dias: number): string {
  *   Los de tiempo no pintan el mapa, ni los que no tienen estándar.
  * - Por músculo, el **máximo** del nivel de los ejercicios que lo trabajan: un accesorio
  *   ligero no le baja el nivel.
- * - **Solo los de su lista** (entrenador, 2026-10-27): de los directos, mandan los que el
- *   entrenador eligió para ese músculo (`pinta`); los demás solo si no hizo ninguno de esos.
+ * - **Solo los de su lista** (entrenador, 2026-11-16): de los directos, únicamente pintan los que
+ *   el entrenador eligió para ese músculo (`pinta`). Antes (desde 2026-10-27) los demás pintaban
+ *   de respaldo si no había hecho ninguno de la lista; ya no.
  * - **Los que nunca pintan** (entrenador, 2026-11-16): `nuncaPinta` saca a un ejercicio de un
  *   músculo del todo, ni de respaldo. El press de pecho en máquina no pinta el pecho.
  * - **Solo trabajo directo** (decisión del entrenador, 2026-10-15): un ejercicio pinta
@@ -316,18 +317,17 @@ export function fuerzaPorMusculo(
     }
   }
 
-  // Los de la lista del músculo (`pinta`) mandan; los demás directos solo lo pintan si no hizo
-  // ninguno de la lista en la ventana, para que nadie se quede en gris de golpe.
+  // Solo los de la lista del músculo (`pinta`) lo pintan (entrenador, 2026-11-16): ya no hay
+  // respaldo, así que quien no hizo ninguno de la lista ve el músculo "sin datos".
   const fuerza: Record<string, FuerzaMusculo> = {};
-  const respaldo: Record<string, FuerzaMusculo> = {};
   for (const [id, { marca, serie }] of mejor) {
     const b = porId.get(id)!;
     const estandares = b.estandares![sexo];
     const nivel = nivelDe(marca, estandares);
     for (const [musculo, cuanto] of Object.entries(b.musculos)) {
       // Solo el trabajo directo pinta: un secundario no le da nivel al músculo de rebote.
-      if (cuanto < 1 || nuncaPintaMusculo(b, musculo)) continue;
-      const destino = pintaMusculo(b, musculo) ? fuerza : respaldo;
+      if (cuanto < 1 || nuncaPintaMusculo(b, musculo) || !pintaMusculo(b, musculo)) continue;
+      const destino = fuerza;
       const actual = destino[musculo];
       const origen: OrigenFuerza = {
         ejercicioId: id, nombre: b.nombre, tipo: b.tipo as "peso" | "corporal", cuanto,
@@ -345,7 +345,7 @@ export function fuerzaPorMusculo(
       }
     }
   }
-  return { ...respaldo, ...fuerza };
+  return fuerza;
 }
 
 /**

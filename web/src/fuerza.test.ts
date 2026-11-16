@@ -144,7 +144,7 @@ describe("fuerzaPorMusculo", () => {
     expect(f.pecho.segundo!.nivel).toBeLessThan(f.pecho.nivel);
   });
 
-  it("con lista, mandan los de la lista; los demás solo si no hizo ninguno", () => {
+  it("con lista, solo pintan los de la lista: los demás ni de respaldo", () => {
     const conLista = [banca, { ...lagartijas, pinta: [] }, plancha];
     const ambas = [sesion("2026-10-10", [
       { ejercicioId: "press-banca", nombre: "", series: [{ reps: 1, peso: 50 }] },
@@ -153,7 +153,7 @@ describe("fuerzaPorMusculo", () => {
     const f = fuerzaPorMusculo(ambas, conLista, "H", 75, "2026-10-11");
     expect(f.pecho.origen?.ejercicioId).toBe("press-banca");
     const soloLagartijas = [sesion("2026-10-10", [{ ejercicioId: "lagartijas", nombre: "", series: [{ reps: 40, peso: null }] }])];
-    expect(fuerzaPorMusculo(soloLagartijas, conLista, "H", 75, "2026-10-11").pecho.origen?.ejercicioId).toBe("lagartijas");
+    expect(fuerzaPorMusculo(soloLagartijas, conLista, "H", 75, "2026-10-11").pecho).toBeUndefined();
     // Sin `pinta` (banco viejo) pinta todo lo directo, y ganan las lagartijas.
     expect(fuerzaPorMusculo(ambas, banco, "H", 75, "2026-10-11").pecho.origen?.ejercicioId).toBe("lagartijas");
   });
@@ -219,7 +219,7 @@ describe("fuerzaPorMusculo", () => {
     const maquina = { ...banca, id: "press-maquina", pinta: [], nuncaPinta: ["pecho"] };
     const solo = [sesion("2026-10-10", [{ ejercicioId: "press-maquina", nombre: "", series: [{ reps: 1, peso: 80 }] }])];
     expect(fuerzaPorMusculo(solo, [maquina], "H", 75, "2026-10-11").pecho).toBeUndefined();
-    expect(fuerzaPorMusculo(solo, [{ ...maquina, nuncaPinta: [] }], "H", 75, "2026-10-11").pecho).toBeDefined();
+    expect(fuerzaPorMusculo(solo, [{ ...maquina, pinta: ["pecho"], nuncaPinta: [] }], "H", 75, "2026-10-11").pecho).toBeDefined();
   });
 
   it("solo cuentan las últimas 20 semanas", () => {
