@@ -86,6 +86,13 @@ service cloud.firestore {
       match /dispositivos/{doc} {
         allow read, write: if esEntrenador();
       }
+
+      // El buzón: las notificaciones que se le mandaron, para el apartado Notificaciones de la
+      // web. Ella solo lo lee; lo escribe la función `enviarNotificacion` con el Admin SDK.
+      match /buzon/{doc} {
+        allow read: if esEntrenador() || esCliente(cid);
+        allow write: if esEntrenador();
+      }
     }
 
     match /asistencias/{doc} {

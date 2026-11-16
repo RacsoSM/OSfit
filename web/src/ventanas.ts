@@ -1,6 +1,7 @@
 import type {
-  Asistencia, Cliente, ConfigGrupos, EjercicioBanco, LogroPersonalOtorgado, MedallaOtorgada, ResumenMensualGuardado, Sesion,
+  Asistencia, Cliente, ConfigGrupos, EjercicioBanco, EntradaBuzon, LogroPersonalOtorgado, MedallaOtorgada, ResumenMensualGuardado, Sesion,
 } from "./datos";
+import { ventanaBuzon } from "./ui/buzon";
 import type { IdEstilo } from "./estilo";
 import type { Tirada } from "./tirada";
 import { recordatorioPago } from "./pago";
@@ -44,7 +45,7 @@ import { edadEn, fuerzaPorMusculo, pesoParaFuerza, type FuerzaMusculo } from "./
 
 export type IdVentana =
   | "inicio" | "musculos" | "registro" | "comparar" | "estadisticas"
-  | "ranking" | "medallas" | "logros" | "videos" | "ajustes" | "resumenMensual";
+  | "ranking" | "medallas" | "logros" | "videos" | "ajustes" | "resumenMensual" | "notificaciones";
 
 /** Todo lo que los listeners de Firestore tienen a mano en cada repintado. */
 export interface DatosCliente {
@@ -94,6 +95,8 @@ export interface DatosCliente {
   historial?: Sesion[] | null;
   /** Sus meses cerrados, para Resumen mensual; null mientras no llegan (se piden al abrir esa ventana). */
   resumenes?: ResumenMensualGuardado[] | null;
+  /** Las notificaciones que se le mandaron; null mientras llegan (se piden al abrir esa ventana). */
+  buzon?: EntradaBuzon[] | null;
 }
 
 /** Lo que necesita Estadísticas. Mientras llega el historial completo, usa las últimas que ya hay. */
@@ -254,6 +257,11 @@ export function fuerzaDelCliente(
 
 export const VENTANAS: readonly Ventana[] = [
   { id: "inicio", titulo: "Inicio", icono: "🏠", grupo: "principal", pintar: inicio },
+  // Los avisos de los coaches, con su fecha. Tocar una notificación del teléfono abre aquí.
+  {
+    id: "notificaciones", titulo: "Notificaciones", icono: "🔔", grupo: "principal",
+    pintar: (d) => ventanaBuzon(d.buzon ?? null, d.hoy),
+  },
   {
     id: "musculos", titulo: "Músculos", icono: "💪", grupo: "barra",
     // Sin sexo el mapa ya avisa que falta su perfil; con él, sin peso no deja pasar.

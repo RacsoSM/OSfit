@@ -434,6 +434,37 @@ export function observarHistorial(clienteId: string, alCambiar: (s: Sesion[]) =>
  * Un mes cerrado tal como lo guardó `cerrarMes`. `generado` es la hora del servidor al
  * congelarlo; solo informativo.
  */
+/**
+ * Una notificación que se le mandó, del buzón (`clientes/{id}/buzon/{idAviso}`). La escribe
+ * `enviarNotificacion` al mandar el aviso; `fecha` es la de creación del aviso (null un
+ * instante, mientras el servidor la pone).
+ */
+export interface EntradaBuzon {
+  id: string;
+  titulo: string;
+  texto: string;
+  fecha: Timestamp | null;
+  abrir?: { ventana: string; mes?: string };
+}
+
+/** Su buzón, del aviso más nuevo al más viejo. Cien de sobra: es un aviso de vez en cuando. */
+export function observarBuzon(clienteId: string, alCambiar: (b: EntradaBuzon[]) => void) {
+  const consulta = query(collection(db, "clientes", clienteId, "buzon"), orderBy("fecha", "desc"), limit(100));
+  return escuchar("buzon", (alLlegar, alFallar) =>
+    onSnapshot(
+      consulta,
+      (snap) => {
+        alLlegar();
+        alCambiar(snap.docs.map((d) => {
+          const x = d.data({ serverTimestamps: "estimate" }) as Omit<EntradaBuzon, "id">;
+          return { ...x, id: d.id, titulo: x.titulo ?? "OSfit", texto: x.texto ?? "", fecha: x.fecha ?? null };
+        }));
+      },
+      alFallar
+    )
+  );
+}
+
 export type ResumenMensualGuardado = ResumenMensual & { generado?: Timestamp | null };
 
 /**

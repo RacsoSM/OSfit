@@ -2221,3 +2221,11 @@ body:has(.batalla) :is(.fondo, .fondo-pixel, .fondo-sakura, .fondo-halloween, .p
 .rm-marcas li { padding: 8px 0; border-top: 1px solid var(--superficie-alta); }
 .rm-marcas strong { flex: none; }
 .rm-vacio { margin: 0; text-align: center; color: var(--texto-tenue); }
+
+/* Notificaciones: los avisos de los coaches con su fecha (`ui/buzon.ts`). */
+.aviso .aviso-fecha { font-size: 12px; color: var(--texto-tenue); margin: 0 0 6px; }
+.aviso .aviso-fecha::first-letter { text-transform: uppercase; }
+.aviso .aviso-titulo { font-weight: 700; font-size: 16px; margin: 0 0 4px; }
+.aviso .aviso-texto { margin: 0; white-space: pre-line; line-height: 1.45; overflow-wrap: anywhere; }
+.aviso .aviso-ir { margin-top: 12px; }
+.tarjeta.aviso.marcado { box-shadow: 0 0 0 2px var(--primario); }

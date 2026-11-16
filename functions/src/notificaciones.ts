@@ -72,6 +72,17 @@ export function avisoDesdeDoc(data: Record<string, unknown>): Aviso | null {
  * GEMELO: `Avisos.destinatarias` en `app/.../domain/Avisos.kt` (la app lo usa para decir
  * cuantas lo van a recibir antes de enviar).
  */
+/**
+ * Lo que se guarda en el buzón de cada destinataria (`clientes/{id}/buzon/{idAviso}`): el
+ * apartado Notificaciones de la web. Se guarda aunque su teléfono no tenga token o el push
+ * falle: el registro es de lo que se le mandó, no de lo que entregó FCM.
+ */
+export function entradaBuzon<F>(aviso: Aviso, fecha: F): { titulo: string; texto: string; fecha: F; abrir?: Aviso["abrir"] } {
+  return aviso.abrir
+    ? { titulo: aviso.titulo, texto: aviso.texto, fecha, abrir: aviso.abrir }
+    : { titulo: aviso.titulo, texto: aviso.texto, fecha };
+}
+
 export function destinatarias(clientes: ClienteParaAviso[], aviso: Aviso): string[] {
   const habilitadas = clientes.filter((c) => c.activo && c.notificacionesWeb);
   if (aviso.destino === "todas") return habilitadas.map((c) => c.id);

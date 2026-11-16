@@ -4,7 +4,8 @@
  * 1. Guarda la página en el teléfono para que abra sin internet (backlog 2, punto 11): el HTML,
  *    el JS y el CSS del build, los SVG del mapa y los íconos. Sin señal, Registro sigue
  *    funcionando y lo que se termine se manda después (`src/cola.ts`).
- * 2. Muestra los avisos del entrenador y abre la página al tocarlos.
+ * 2. Muestra los avisos del entrenador y, al tocarlos, abre la página en Notificaciones con ese
+ *    aviso marcado.
  * 3. El modo sin datos de Ajustes (`src/sinDatos.ts`): con él puesto no deja salir ningún
  *    pedido a internet y contesta solo con lo guardado. Para que con el modo se vean los GIF
  *    de los ejercicios, las imágenes y las fuentes del estilo, esos se guardan al verlos con
@@ -269,8 +270,10 @@ self.addEventListener("push", (evento) => {
   const datos = carga.data || carga;
   const titulo = datos.titulo || "OSfit";
   const texto = datos.texto || "";
-  // Qué abrir al tocarla (hoy, Resumen mensual en el mes que cerró). Viene como JSON porque
-  // FCM solo manda strings; uno roto se ignora y la notificación abre la página como siempre.
+  // El id del aviso: al tocarla, Notificaciones lo marca.
+  const id = typeof datos.id === "string" ? datos.id : null;
+  // Adónde llevaba el aviso (Resumen mensual en el mes que cerró). Viene como JSON porque FCM
+  // solo manda strings; uno roto se ignora. Hoy solo viaja: el botón sale de lo guardado.
   let abrir = null;
   try {
     abrir = typeof datos.abrir === "string" ? JSON.parse(datos.abrir) : null;
@@ -282,32 +285,34 @@ self.addEventListener("push", (evento) => {
       body: texto,
       icon: "/icono-192.png",
       badge: "/icono-192.png",
-      data: { abrir },
+      data: { abrir, id },
     })
   );
 });
 
+/**
+ * Tocar un aviso abre siempre Notificaciones, con ese aviso marcado (`id`). Adónde llevaba el
+ * aviso (`abrir`, por ejemplo el resumen del mes) queda como botón en su tarjeta.
+ */
 self.addEventListener("notificationclick", (evento) => {
   evento.notification.close();
-  const abrir = (evento.notification.data && evento.notification.data.abrir) || null;
-  const ventana = abrir && typeof abrir.ventana === "string" ? abrir.ventana : null;
-  const mes = abrir && typeof abrir.mes === "string" ? abrir.mes : null;
+  const datos = evento.notification.data || {};
+  const aviso = typeof datos.id === "string" ? datos.id : null;
   evento.waitUntil(
     (async () => {
       const ventanas = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
       for (const v of ventanas) {
         if ("focus" in v) {
           // La página ya abierta abre la ventana ella misma (`abrirDesdeAviso.ts` en `main.ts`).
-          if (ventana) v.postMessage({ tipo: "abrir", abrir: { ventana, mes } });
+          v.postMessage({ tipo: "abrir", abrir: { ventana: "notificaciones", aviso } });
           return v.focus();
         }
       }
       // Sin ventana abierta se abre la raíz: la página instalada guarda su propia sesión y
       // el token recordado, así que la escalera de `resolverSesion` la deja entrar. El `?abrir`
       // no lo ve `resolverSesion` (lee la ruta y el `#`); lo usa `main.ts` y lo borra.
-      if (!ventana) return self.clients.openWindow("/");
-      const params = new URLSearchParams({ abrir: ventana });
-      if (mes) params.set("mes", mes);
+      const params = new URLSearchParams({ abrir: "notificaciones" });
+      if (aviso) params.set("aviso", aviso);
       return self.clients.openWindow(`/?${params.toString()}`);
     })()
   );

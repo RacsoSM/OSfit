@@ -4,6 +4,7 @@ import {
   avisoDesdeDoc,
   clienteParaAvisoDesdeDoc,
   destinatarias,
+  entradaBuzon,
   enTandas,
   esTokenMuerto,
   type Aviso,
@@ -97,5 +98,15 @@ describe("lectura de documentos", () => {
     expect(avisoDesdeDoc({ texto: "   " })).toBeNull();
     expect(avisoDesdeDoc({})).toBeNull();
     expect(avisoDesdeDoc({ texto: "x".repeat(LARGO_MAXIMO_TEXTO + 1) })).toBeNull();
+  });
+});
+
+describe("entradaBuzon", () => {
+  it("guarda título, texto y fecha; y adónde abre, si lo dice", () => {
+    expect(entradaBuzon(aviso(), "F")).toEqual({ titulo: "OSfit", texto: "Ya llegamos", fecha: "F" });
+    const conAbrir = aviso({ abrir: { ventana: "resumenMensual", mes: "2026-10" } });
+    expect(entradaBuzon(conAbrir, "F")).toEqual({
+      titulo: "OSfit", texto: "Ya llegamos", fecha: "F", abrir: { ventana: "resumenMensual", mes: "2026-10" },
+    });
   });
 });

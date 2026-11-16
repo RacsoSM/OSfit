@@ -15,6 +15,7 @@ import {
   observarHistorial,
   observarSede,
   observarResumenesMensuales,
+  observarBuzon,
 } from "./datos";
 import { bancoEnSede } from "./sede";
 import type {
@@ -27,6 +28,7 @@ import type {
   Sesion,
   ConfigGrupos,
   ResumenMensualGuardado,
+  EntradaBuzon,
 } from "./datos";
 import { hoyEnMazatlan } from "./fecha";
 import { mesAnterior, type Tirada } from "./tirada";
@@ -92,6 +94,7 @@ import {
 } from "./ui/menuLateral";
 import type { VideoConUrl } from "./ui/tarjetaVideos";
 import { iniciarCronometros } from "./ui/cronometro";
+import { conectarBuzon, resaltarAviso } from "./ui/buzon";
 
 const app = document.querySelector<HTMLElement>("#app")!;
 
@@ -282,6 +285,9 @@ async function arrancar(): Promise<void> {
    */
   let resumenes: ResumenMensualGuardado[] | null = null;
   let resumenesPedidos = false;
+  /** Su buzón, para Notificaciones. Igual: se pide la primera vez que entra a esa ventana. */
+  let buzon: EntradaBuzon[] | null = null;
+  let buzonPedido = false;
   /** Los ejercicios por grupo del grid de Registro; null si el entrenador no configura ninguno. */
   let configGrupos: ConfigGrupos | null = null;
   /** Los entrenamientos que se terminaron sin internet, en el teléfono (`cola.ts`). */
@@ -701,6 +707,12 @@ async function arrancar(): Promise<void> {
       resumenesPedidos = true;
       observarResumenesMensuales(clienteId, (r) => { resumenes = r; pintar(); });
     }
+    if (activa.id === "notificaciones" && !buzonPedido) {
+      buzonPedido = true;
+      observarBuzon(clienteId, (b) => { buzon = b; pintar(); });
+    }
+    // Al salir de Notificaciones se olvida el aviso marcado.
+    if (ventanaPintada === "notificaciones" && activa.id !== "notificaciones") resaltarAviso(null);
     // Al salir de Resumen mensual se olvida el mes: la próxima vez abre en el mes en curso.
     if (ventanaPintada === "resumenMensual" && activa.id !== "resumenMensual") reiniciarResumenMensual();
     actualizarCabecera(tituloCabecera(activa));
@@ -724,6 +736,7 @@ async function arrancar(): Promise<void> {
       avisoGifs,
       historial,
       resumenes,
+      buzon,
     };
     contenido.innerHTML = contenidoDe(activa, datos);
     marcarBotonAtras(contenido);
@@ -788,6 +801,15 @@ async function arrancar(): Promise<void> {
     }
     if (activa.id === "resumenMensual") {
       conectarResumenMensual(pintar);
+      return;
+    }
+    if (activa.id === "notificaciones") {
+      // El botón de un aviso que lleva a otra ventana (el resumen del mes que cerró).
+      conectarBuzon((v, mes) => {
+        if (!VENTANAS.some((x) => x.id === v && !x.oculta)) return;
+        if (v === "resumenMensual") elegirMes(mes);
+        abrirVentana(v as IdVentana);
+      });
       return;
     }
     if (activa.id === "ranking") {
@@ -945,13 +967,14 @@ async function arrancar(): Promise<void> {
     }
   });
 
-  // Una notificación que dice qué abrir (hoy, Resumen mensual en el mes que cerró): por la
+  // Al tocar una notificación se abre Notificaciones con ese aviso marcado (`sw.js`): por la
   // dirección si la página estaba cerrada, por mensaje del service worker si estaba abierta.
   // Ver `abrirDesdeAviso.ts`. Aquí y no antes: `pintar()` usa el estado declarado arriba.
   const idsVentanas = VENTANAS.filter((v) => !v.oculta).map((v) => v.id);
   const abrirDesdeAviso = (a: Abrir | null): void => {
     if (!a) return;
     if (a.ventana === "resumenMensual") elegirMes(a.mes);
+    if (a.ventana === "notificaciones") resaltarAviso(a.aviso);
     if (ventanaActiva() === a.ventana) pintar();
     else abrirVentana(a.ventana as IdVentana);
   };

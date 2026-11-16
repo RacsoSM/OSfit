@@ -1,4 +1,4 @@
-import type { DocumentReference } from "firebase-admin/firestore";
+import { FieldValue, type DocumentReference } from "firebase-admin/firestore";
 import { getMessaging } from "firebase-admin/messaging";
 import { logger } from "firebase-functions";
 import { onDocumentCreated } from "firebase-functions/v2/firestore";
@@ -7,6 +7,7 @@ import {
   avisoDesdeDoc,
   clienteParaAvisoDesdeDoc,
   destinatarias,
+  entradaBuzon,
   enTandas,
   esTokenMuerto,
 } from "./notificaciones";
@@ -63,6 +64,18 @@ export const enviarNotificacion = onDocumentCreated(
       const clientes = clientesSnap.docs.map((d) => clienteParaAvisoDesdeDoc(d.id, d.data()));
       const ids = destinatarias(clientes, aviso);
 
+      // El buzón de cada destinataria (apartado Notificaciones de la web), antes del push: así,
+      // al tocar la notificación, ya está ahí. El id es el del aviso, así que reintentar no lo
+      // duplica. La fecha es la de creación del aviso; sin ella, la del servidor.
+      const fecha = snap.get("creada") ?? FieldValue.serverTimestamp();
+      for (const tanda of enTandas(ids)) {
+        const lote = db().batch();
+        for (const id of tanda) {
+          lote.set(db().collection("clientes").doc(id).collection("buzon").doc(ref.id), entradaBuzon(aviso, fecha));
+        }
+        await lote.commit();
+      }
+
       const dispositivos = (
         await Promise.all(
           ids.map((id) => db().collection("clientes").doc(id).collection("dispositivos").get())
@@ -77,10 +90,11 @@ export const enviarNotificacion = onDocumentCreated(
       for (const tanda of enTandas(dispositivos)) {
         const respuesta = await getMessaging().sendEachForMulticast({
           tokens: tanda.map((d) => d.token),
-          // FCM solo acepta strings en `data`: `abrir` va como JSON y lo lee `sw.js`.
+          // FCM solo acepta strings en `data`: `abrir` va como JSON y lo lee `sw.js`. `id` es el
+          // del aviso: al tocarla, la web abre Notificaciones con ese aviso marcado.
           data: aviso.abrir
-            ? { titulo: aviso.titulo, texto: aviso.texto, abrir: JSON.stringify(aviso.abrir) }
-            : { titulo: aviso.titulo, texto: aviso.texto },
+            ? { id: ref.id, titulo: aviso.titulo, texto: aviso.texto, abrir: JSON.stringify(aviso.abrir) }
+            : { id: ref.id, titulo: aviso.titulo, texto: aviso.texto },
           webpush: { headers: { TTL: TTL_SEGUNDOS, Urgency: "high" } },
         });
         await Promise.all(
