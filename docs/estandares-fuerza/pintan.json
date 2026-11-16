@@ -1,5 +1,5 @@
 {
-  "pecho": ["press-banca", "press-banca-inclinado", "press-mancuernas", "press-inclinado-mancuernas", "press-pecho-maquina"],
+  "pecho": ["press-banca", "press-banca-inclinado", "press-mancuernas", "press-inclinado-mancuernas"],
   "dorsal": ["jalon-al-pecho", "jalon-agarre-abierto", "remo-con-barra", "remo-mancuerna", "remo-sentado-polea", "remo-en-t", "remo-maquina"],
   "hombro": ["press-militar", "press-militar-sentado", "press-hombro-mancuernas", "press-militar-maquina", "elevaciones-laterales"],
   "trapecio": ["encogimientos-barra", "encogimientos-mancuernas"],
