@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { VENTANAS } from "../ventanas";
-import { cabecera, marcarVentanaActiva, panelMenu } from "./menuLateral";
+import { cabecera, marcarVentanaActiva, numeroCampana, panelMenu } from "./menuLateral";
 
 /** Los textos de las opciones, en el orden en que se pintaron. */
 function opciones(html: string): string[] {
@@ -12,7 +12,7 @@ describe("panelMenu", () => {
 
   it("lista las ventanas del registro en orden, sin las ocultas (Videos, 2026-10-17; Medallas y Logros, 2026-10-21)", () => {
     expect(opciones(html)).toEqual(
-      ["Inicio", "Notificaciones", "Estadísticas", "Resumen mensual", "Ranking", "Ajustes"]
+      ["Inicio", "Estadísticas", "Resumen mensual", "Ranking", "Ajustes"]
     );
   });
 
@@ -89,5 +89,11 @@ describe("marcarVentanaActiva", () => {
 
   it("el HTML del panel no cambia con la ventana activa, así no se repinta al navegar", () => {
     expect(panelMenu(VENTANAS, "Ana")).not.toContain("aria-current");
+  });
+});
+
+describe("numeroCampana", () => {
+  it("nada con cero, el número, y 9+ de ahí para arriba", () => {
+    expect([numeroCampana(0), numeroCampana(3), numeroCampana(9), numeroCampana(12)]).toEqual(["", "3", "9", "9+"]);
   });
 });

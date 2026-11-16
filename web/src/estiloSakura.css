@@ -235,3 +235,6 @@
   :root[data-estilo="sakura"] .sk-rama,
   :root[data-estilo="sakura"] .hoy::before { animation: none; }
 }
+
+/* Con la campana de Notificaciones (Inicio), el sello se corre un botón a la izquierda. */
+:root[data-estilo="sakura"] body.con-campana::after { right: max(112px, calc(50% - 240px + 104px)); }

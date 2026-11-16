@@ -25,14 +25,46 @@ export function cabecera(saludoHtml: string): string {
       </div>
       <button type="button" class="pastilla-sin-datos" id="pastilla-sin-datos" hidden
               aria-label="Modo sin datos puesto. Abrir Ajustes">✈️ Sin datos</button>
+      <button type="button" class="cabecera-menu cabecera-campana" id="abrir-avisos" hidden
+              aria-label="Notificaciones">
+        <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" fill="none" stroke="currentColor"
+             stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M6 9a6 6 0 0 1 12 0c0 6.2 2.5 8 2.5 8h-17S6 15.2 6 9"/>
+          <path d="M10.3 20.5a1.9 1.9 0 0 0 3.4 0"/>
+        </svg>
+        <span class="campana-numero" id="campana-numero" hidden></span>
+      </button>
       <button type="button" class="cabecera-menu" id="abrir-menu"
               aria-label="Abrir menú" aria-controls="menu-panel" aria-expanded="false">☰</button>
     </header>`;
 }
 
-export function conectarCabecera(abrirMenu: () => void, abrirAjustes: () => void): void {
+export function conectarCabecera(abrirMenu: () => void, abrirAjustes: () => void, abrirAvisos: () => void): void {
   document.querySelector("#abrir-menu")?.addEventListener("click", abrirMenu);
+  document.querySelector("#abrir-avisos")?.addEventListener("click", abrirAvisos);
   document.querySelector("#pastilla-sin-datos")?.addEventListener("click", abrirAjustes);
+}
+
+/** El texto del numerito rojo: nada con 0, y "9+" de ahí para arriba. */
+export function numeroCampana(n: number): string {
+  return n <= 0 ? "" : n > 9 ? "9+" : String(n);
+}
+
+/**
+ * La campana de Notificaciones junto al ☰, solo en Inicio, con el numerito rojo de las que no ha
+ * visto. Se pinta una vez con la cabecera; aquí solo se muestra, se oculta y se cambia el número.
+ */
+export function marcarCampana(visible: boolean, noLeidas: number): void {
+  const boton = document.querySelector<HTMLElement>("#abrir-avisos");
+  const numero = document.querySelector<HTMLElement>("#campana-numero");
+  if (!boton || !numero) return;
+  boton.hidden = !visible;
+  // El cómic y sakura ponen su adorno junto al ☰: con la campana, se corre un botón a la izquierda.
+  document.body.classList.toggle("con-campana", visible);
+  const texto = numeroCampana(noLeidas);
+  numero.hidden = texto === "";
+  if (numero.textContent !== texto) numero.textContent = texto;
+  boton.setAttribute("aria-label", noLeidas > 0 ? `Notificaciones, ${noLeidas} sin leer` : "Notificaciones");
 }
 
 /**

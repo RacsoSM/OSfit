@@ -257,9 +257,10 @@ export function fuerzaDelCliente(
 
 export const VENTANAS: readonly Ventana[] = [
   { id: "inicio", titulo: "Inicio", icono: "🏠", grupo: "principal", pintar: inicio },
-  // Los avisos de los coaches, con su fecha. Tocar una notificación del teléfono abre aquí.
+  // Los avisos de los coaches, con su fecha. Se entra por la campana de la cabecera de Inicio
+  // (no por el menú, 2026-11-16) o tocando una notificación del teléfono.
   {
-    id: "notificaciones", titulo: "Notificaciones", icono: "🔔", grupo: "principal",
+    id: "notificaciones", titulo: "Notificaciones", icono: "🔔", grupo: "principal", oculta: true,
     pintar: (d) => ventanaBuzon(d.buzon ?? null, d.hoy),
   },
   {

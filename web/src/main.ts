@@ -89,12 +89,12 @@ import { marcarBotonAtras } from "./ui/botonAtras";
 import { mostrarAvisoVersion } from "./ui/avisoVersion";
 import { vigilarVersion } from "./version";
 import {
-  actualizarCabecera, aplicarMenuAbierto, cabecera, conectarCabecera, conectarMenu,
+  actualizarCabecera, aplicarMenuAbierto, cabecera, conectarCabecera, conectarMenu, marcarCampana,
   marcarSinDatos, marcarVentanaActiva, panelMenu,
 } from "./ui/menuLateral";
 import type { VideoConUrl } from "./ui/tarjetaVideos";
 import { iniciarCronometros } from "./ui/cronometro";
-import { conectarBuzon, resaltarAviso } from "./ui/buzon";
+import { conectarBuzon, leerVisto, marcarVistas, resaltarAviso, sinLeer } from "./ui/buzon";
 
 const app = document.querySelector<HTMLElement>("#app")!;
 
@@ -285,9 +285,15 @@ async function arrancar(): Promise<void> {
    */
   let resumenes: ResumenMensualGuardado[] | null = null;
   let resumenesPedidos = false;
-  /** Su buzón, para Notificaciones. Igual: se pide la primera vez que entra a esa ventana. */
+  /**
+   * Su buzón, para Notificaciones y el numerito de la campana: se escucha desde el arranque.
+   * `buzonVisto` es hasta qué aviso ya vio (lo guarda el teléfono, `leerVisto`).
+   */
   let buzon: EntradaBuzon[] | null = null;
-  let buzonPedido = false;
+  const almacenBuzon = (() => { try { return localStorage; } catch { return null; } })();
+  let buzonVisto = leerVisto(almacenBuzon);
+  /** El último número que se puso en el ícono de la app, para no repetirlo en cada repintado. */
+  let numeroIcono = -1;
   /** Los ejercicios por grupo del grid de Registro; null si el entrenador no configura ninguno. */
   let configGrupos: ConfigGrupos | null = null;
   /** Los entrenamientos que se terminaron sin internet, en el teléfono (`cola.ts`). */
@@ -552,7 +558,7 @@ async function arrancar(): Promise<void> {
       `<div id="videos" hidden></div><div id="barra">${barra}</div>` +
       `<div id="menu"></div><div id="ruleta"></div>`;
     conectarSaludo();
-    conectarCabecera(abrirMenu, () => abrirVentana("ajustes"));
+    conectarCabecera(abrirMenu, () => abrirVentana("ajustes"), () => abrirVentana("notificaciones"));
     conectarBarra(abrirVentana);
     // Jalar desde la orilla derecha abre el menú, solo en las pestañas de la barra.
     conectarDeslizarMenu(() => !menuAbierto() && BARRA.includes(ventanaActiva()), abrirMenu);
@@ -707,9 +713,15 @@ async function arrancar(): Promise<void> {
       resumenesPedidos = true;
       observarResumenesMensuales(clienteId, (r) => { resumenes = r; pintar(); });
     }
-    if (activa.id === "notificaciones" && !buzonPedido) {
-      buzonPedido = true;
-      observarBuzon(clienteId, (b) => { buzon = b; pintar(); });
+    // Con Notificaciones abierta, todo lo que hay (y lo que llegue mientras) queda leído.
+    if (activa.id === "notificaciones" && buzon) buzonVisto = marcarVistas(buzon, almacenBuzon, buzonVisto);
+    const noLeidas = sinLeer(buzon, buzonVisto);
+    marcarCampana(activa.id === "inicio", noLeidas);
+    if (noLeidas !== numeroIcono) {
+      // El número también en el ícono de la app instalada, donde el teléfono lo permite.
+      numeroIcono = noLeidas;
+      const nav = navigator as Navigator & { setAppBadge?: (n: number) => Promise<void>; clearAppBadge?: () => Promise<void> };
+      (noLeidas > 0 ? nav.setAppBadge?.(noLeidas) : nav.clearAppBadge?.())?.catch(() => {});
     }
     // Al salir de Notificaciones se olvida el aviso marcado.
     if (ventanaPintada === "notificaciones" && activa.id !== "notificaciones") resaltarAviso(null);
@@ -970,7 +982,8 @@ async function arrancar(): Promise<void> {
   // Al tocar una notificación se abre Notificaciones con ese aviso marcado (`sw.js`): por la
   // dirección si la página estaba cerrada, por mensaje del service worker si estaba abierta.
   // Ver `abrirDesdeAviso.ts`. Aquí y no antes: `pintar()` usa el estado declarado arriba.
-  const idsVentanas = VENTANAS.filter((v) => !v.oculta).map((v) => v.id);
+  // Notificaciones va oculta del menú (se entra por la campana), pero un aviso sí la abre.
+  const idsVentanas = VENTANAS.filter((v) => !v.oculta || v.id === "notificaciones").map((v) => v.id);
   const abrirDesdeAviso = (a: Abrir | null): void => {
     if (!a) return;
     if (a.ventana === "resumenMensual") elegirMes(a.mes);
@@ -1015,6 +1028,7 @@ async function arrancar(): Promise<void> {
     pintar();
   });
   observarSesiones(clienteId, (s) => { sesiones = s; pintar(); });
+  observarBuzon(clienteId, (b) => { buzon = b; pintar(); });
   observarConfigGrupos((c) => { configGrupos = c; pintar(); });
   observarTirada(clienteId, hoy.slice(0, 7), (t) => { tiradaEsteMes = t; pintar(); });
   observarTirada(clienteId, mesAnterior(hoy.slice(0, 7)), (t) => {

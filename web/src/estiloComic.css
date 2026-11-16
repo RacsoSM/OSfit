@@ -240,3 +240,7 @@
 :root[data-estilo="comic"] .menu-opcion.activa {
   background: var(--amarillo); color: var(--tinta); border-color: var(--tinta); box-shadow: 3px 3px 0 var(--tinta);
 }
+
+/* Con la campana de Notificaciones (Inicio), el ¡POW! se corre un botón a la izquierda. */
+:root[data-estilo="comic"] body.con-campana::before,
+:root[data-estilo="comic"] body.con-campana::after { right: max(104px, calc(50% - 240px + 96px)); }

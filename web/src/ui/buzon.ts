@@ -20,6 +20,40 @@ export function resaltarAviso(id: string | null): void {
   yaSeMostro = false;
 }
 
+// ── Sin leer ────────────────────────────────────────────────────────────────────
+
+/**
+ * Hasta qué aviso ya vio (la fecha del más nuevo, en ms), guardado en el teléfono: abrir
+ * Notificaciones las marca todas como leídas. Por teléfono y no en Firestore: la clienta no
+ * escribe en su documento, y para el numerito de la campana basta.
+ */
+const LLAVE_VISTO = "osfit:buzon-visto";
+
+const ms = (e: EntradaBuzon) => (e.fecha ? e.fecha.toDate().getTime() : Date.now());
+
+export function leerVisto(almacen: Pick<Storage, "getItem"> | null): number {
+  try {
+    const n = Number(almacen?.getItem(LLAVE_VISTO));
+    return Number.isFinite(n) ? n : 0;
+  } catch {
+    return 0;
+  }
+}
+
+/** Marca como vistas las que hay ahora; devuelve hasta cuándo quedó. */
+export function marcarVistas(entradas: readonly EntradaBuzon[], almacen: Pick<Storage, "setItem"> | null, visto: number): number {
+  const ultima = entradas.reduce((m, e) => Math.max(m, ms(e)), visto);
+  if (ultima > visto) {
+    try { almacen?.setItem(LLAVE_VISTO, String(ultima)); } catch { /* sin almacenamiento, el número vuelve al recargar */ }
+  }
+  return ultima;
+}
+
+/** Cuántas llegaron después de la última vez que abrió Notificaciones. */
+export function sinLeer(entradas: readonly EntradaBuzon[] | null, visto: number): number {
+  return entradas ? entradas.filter((e) => ms(e) > visto).length : 0;
+}
+
 /** Qué dice el botón según adónde lleva. Una ventana sin texto propio usa "Abrir". */
 const ACCION: Readonly<Record<string, string>> = {
   resumenMensual: "Ver mi resumen",
