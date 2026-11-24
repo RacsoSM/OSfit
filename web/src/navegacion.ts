@@ -37,7 +37,7 @@ export interface Historial {
 }
 
 /** Las subventanas y la ventana sobre la que se abren. */
-const PADRE: Partial<Record<IdVentana, IdVentana>> = { comparar: "musculos" };
+const PADRE: Partial<Record<IdVentana, IdVentana>> = { comparar: "musculos", juego: "arcade", kettlebell: "arcade" };
 
 /** La ventana de la barra que va marcada: la propia, o la del padre en una subventana. */
 export function ventanaDeBarra(id: IdVentana): IdVentana {

@@ -667,7 +667,6 @@ export function mostrarJuego(contenedor: HTMLElement, visible: boolean, conexion
   const estaba = !contenedor.hidden;
   if (estaba === visible && caja) return;
   contenedor.hidden = !visible;
-  document.body.classList.toggle("con-juego", visible);
   if (!visible) {
     if (estado === "jugando") { estado = "pausa"; duracion = performance.now() - inicio; }
     cancelAnimationFrame(cuadro);

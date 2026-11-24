@@ -190,5 +190,7 @@ service cloud.firestore {
     // Torre de discos (minijuego de la web): solo las funciones guardarPartidaDiscos y
     // tablaDiscos lo leen y escriben, para que nadie se ponga una puntuación a mano.
     match /juegoDiscos/{doc} { allow read, write: if esEntrenador(); }
+    // Kettlebell Bird (Arcade): igual, solo guardarPartidaKettlebell y tablaKettlebell.
+    match /juegoKettlebell/{doc} { allow read, write: if esEntrenador(); }
   }
 }

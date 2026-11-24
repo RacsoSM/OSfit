@@ -302,11 +302,11 @@ self.addEventListener("notificationclick", (evento) => {
   const aviso = typeof datos.id === "string" ? datos.id : null;
   const abrir = datos.abrir || null;
   const mesResumen = abrir && abrir.ventana === "resumenMensual" && typeof abrir.mes === "string" ? abrir.mes : null;
-  // "Te superaron en Torre de discos" abre el juego directo, para intentar recuperar el lugar.
+  // "Te superaron en <juego>" abre ese juego directo, para intentar recuperar el lugar.
   const destino = mesResumen
     ? { ventana: "inicio", mes: mesResumen, aviso }
-    : abrir && abrir.ventana === "juego"
-      ? { ventana: "juego", aviso }
+    : abrir && (abrir.ventana === "juego" || abrir.ventana === "kettlebell")
+      ? { ventana: abrir.ventana, aviso }
       : { ventana: "notificaciones", aviso };
   evento.waitUntil(
     (async () => {

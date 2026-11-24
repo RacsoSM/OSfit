@@ -128,5 +128,11 @@ export const guardarEsfuerzo = llamable<{ sesionId: string; esfuerzo: number }, 
 /** Torre de discos: guarda la partida (el servidor revisa que sea posible) y devuelve la tabla. */
 export const guardarPartidaDiscos = llamable<EnvioPartida, RespuestaPartida>("guardarPartidaDiscos");
 
+/** Kettlebell Bird: guarda la partida y devuelve su tabla (`functions/src/juegoDiscos.ts`). */
+export const guardarPartidaKettlebell = llamable<EnvioPartida, RespuestaPartida>("guardarPartidaKettlebell");
+
+/** La tabla de puntuaciones de Kettlebell Bird. */
+export const tablaKettlebell = llamable<Record<string, never>, TablaDiscos>("tablaKettlebell");
+
 /** La tabla de puntuaciones de Torre de discos: este mes y la histórica. */
 export const tablaDiscos = llamable<Record<string, never>, TablaDiscos>("tablaDiscos");

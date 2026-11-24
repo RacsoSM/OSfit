@@ -17,5 +17,5 @@ export { guardarPeso } from "./guardarPeso";
 export { despertarFunciones } from "./despertador";
 export { avisarResumenMes, cerrarMes } from "./cerrarMes";
 export { enviarSugerencia } from "./sugerencias";
-export { guardarPartidaDiscos, tablaDiscos } from "./juegoDiscos";
+export { guardarPartidaDiscos, guardarPartidaKettlebell, tablaDiscos, tablaKettlebell } from "./juegoDiscos";
 export { guardarEsfuerzo } from "./esfuerzo";

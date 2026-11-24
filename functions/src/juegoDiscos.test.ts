@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { armarTabla, avisoSuperada, nombreVisible, partidaValida, superadas, type Registro } from "./juegoDiscos";
+import { KETTLEBELL_BIRD, armarTabla, avisoSuperada, nombreVisible, partidaValida, superadas, type Registro } from "./juegoDiscos";
 
 describe("partidaValida", () => {
   it("acepta una partida posible", () => {
@@ -64,5 +64,20 @@ describe("avisoSuperada", () => {
     expect(a.abrir).toEqual({ ventana: "juego" });
     expect(a.id).toBe("auto_torreDiscos_said_bogue_31");
     expect(a.id).toMatch(/^[A-Za-z0-9_:.-]{1,200}$/);
+  });
+});
+
+describe("Kettlebell Bird", () => {
+  it("cada barra es un punto y tarda al menos medio segundo", () => {
+    expect(partidaValida({ puntos: 20, apilados: 20, duracionMs: 15_000 }, KETTLEBELL_BIRD)).toEqual({ puntos: 20, apilados: 20, duracionMs: 15_000 });
+    expect(partidaValida({ puntos: 40, apilados: 20, duracionMs: 15_000 }, KETTLEBELL_BIRD)).toBeNull();
+    expect(partidaValida({ puntos: 20, apilados: 20, duracionMs: 5_000 }, KETTLEBELL_BIRD)).toBeNull();
+  });
+  it("su aviso dice el juego y abre su ventana; no choca con los de Torre de discos", () => {
+    const a = avisoSuperada("said", "bogue", "Bogue", 31, KETTLEBELL_BIRD);
+    expect(a.titulo).toBe("Bogue te ha superado en Kettlebell Bird");
+    expect(a.abrir).toEqual({ ventana: "kettlebell" });
+    expect(a.id).toBe("auto_kettlebellBird_said_bogue_31");
+    expect(avisoSuperada("said", "bogue", "Bogue", 31).id).toBe("auto_torreDiscos_said_bogue_31");
   });
 });

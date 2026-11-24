@@ -33,7 +33,7 @@ import type {
 import { horaEnMazatlan, hoyEnMazatlan } from "./fecha";
 import { mesAnterior, type Tirada } from "./tirada";
 import {
-  batallaAmigos, borrarSesion, enviarSugerencia, guardarEsfuerzo, guardarPartidaDiscos, tablaDiscos, compararMusculos, editarSesion, elegirMostrarEnAmigos, guardarPeso, marcarAsistencia, obtenerRanking, registrarEntrada, registrarSesion,
+  batallaAmigos, borrarSesion, enviarSugerencia, guardarEsfuerzo, guardarPartidaDiscos, guardarPartidaKettlebell, tablaDiscos, tablaKettlebell, compararMusculos, editarSesion, elegirMostrarEnAmigos, guardarPeso, marcarAsistencia, obtenerRanking, registrarEntrada, registrarSesion,
 } from "./acciones";
 import { modalRuleta, conectarRuleta } from "./ui/ruleta";
 import { conectarRanking, type EstadoRanking } from "./ui/tarjetaRanking";
@@ -98,6 +98,8 @@ import type { VideoConUrl } from "./ui/tarjetaVideos";
 import { iniciarCronometros } from "./ui/cronometro";
 import { conectarSugerencias, reiniciarSugerencias } from "./ui/sugerencias";
 import { mostrarJuego } from "./ui/juegoDiscos";
+import { mostrarKettlebell } from "./ui/kettlebellBird";
+import { cargarArcade, conectarArcade } from "./ui/arcade";
 import { calificarEsfuerzo, reenviarEsfuerzos } from "./esfuerzo";
 import { conectarBuzon, leerVisto, marcarVistas, resaltarAviso, sinLeer } from "./ui/buzon";
 
@@ -599,7 +601,7 @@ async function arrancar(): Promise<void> {
     // repintado destruiría.
     const barra = barraInferior(BARRA.map(ventana));
     app.innerHTML = `${cabecera(saludo(nombre))}<div id="contenido"></div>` +
-      `<div id="videos" hidden></div><div id="juego" hidden></div><div id="barra">${barra}</div>` +
+      `<div id="videos" hidden></div><div id="juego" hidden></div><div id="kettlebell" hidden></div><div id="barra">${barra}</div>` +
       `<div id="menu"></div><div id="ruleta"></div>`;
     conectarSaludo();
     conectarCabecera(abrirMenu, () => abrirVentana("ajustes"), () => abrirVentana("notificaciones"));
@@ -741,6 +743,13 @@ async function arrancar(): Promise<void> {
     const activa = ventana(ventanaActiva());
     // Al entrar a Ranking se pide antes de pintar, así un error viejo ya sale como "cargando".
     if (activa.id === "ranking" && activa.id !== ventanaPintada) cargarRanking();
+    // Al entrar al Arcade se piden las tablas de los juegos (para sus campeones).
+    if (activa.id === "arcade" && activa.id !== ventanaPintada) {
+      void cargarArcade({
+        "osfit:torre-tabla": async () => (await tablaDiscos({})).data,
+        "osfit:kettlebell-tabla": async () => (await tablaKettlebell({})).data,
+      }, () => { if (ventanaActiva() === "arcade") pintar(); });
+    }
     // Cada vez y no solo al entrar: si el entrenador le pone el sexo con la ventana abierta,
     // el snapshot del cliente llega aquí y el mapa aparece sin salir y volver.
     if (activa.id === "musculos") cargarMapas(activa.id !== ventanaPintada);
@@ -807,6 +816,10 @@ async function arrancar(): Promise<void> {
     pintarVideos(activa.contenedorPropio === "videos");
     const cajaJuego = document.querySelector<HTMLElement>("#juego");
     if (cajaJuego) mostrarJuego(cajaJuego, activa.contenedorPropio === "juego", { guardar: async (p) => (await guardarPartidaDiscos(p)).data, tabla: async () => (await tablaDiscos({})).data, nombre: cliente.nombre ?? "" });
+    const cajaKettlebell = document.querySelector<HTMLElement>("#kettlebell");
+    if (cajaKettlebell) mostrarKettlebell(cajaKettlebell, activa.contenedorPropio === "kettlebell", { guardar: async (p) => (await guardarPartidaKettlebell(p)).data, tabla: async () => (await tablaKettlebell({})).data, nombre: cliente.nombre ?? "" });
+    // Con un juego abierto la página no se mueve (el juego es toda la pestaña).
+    document.body.classList.toggle("con-juego", activa.contenedorPropio === "juego" || activa.contenedorPropio === "kettlebell");
     pintarMenu(activa.id, cliente.nombre);
     marcarVentanaActiva(document.querySelectorAll<HTMLElement>("#barra [data-ventana]"), ventanaDeBarra(activa.id));
     pintarRuleta();
@@ -884,6 +897,10 @@ async function arrancar(): Promise<void> {
     }
     if (activa.id === "sugerencias") {
       conectarSugerencias(pintar, (texto) => enviarSugerencia({ texto }));
+      return;
+    }
+    if (activa.id === "arcade") {
+      conectarArcade((v) => abrirVentana(v));
       return;
     }
     if (activa.id === "ranking") {
