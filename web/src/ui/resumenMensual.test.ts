@@ -111,12 +111,15 @@ describe("las historias", () => {
     expect(html).not.toContain("Hombro &amp; bíceps");
   });
 
-  it("la portada la saluda por su primer nombre: «Hola, Valeria. Así fue tu» Octubre", () => {
+  it("la portada la saluda por su primer nombre, con el mes y el año", () => {
     const portada = (nombre?: string) => historiasDelMes(datos({ nombre })).find((h) => h.id === "portada")!.html;
-    expect(portada("Valeria <b> Ruiz")).toContain("Hola, Valeria. Así fue tu");
-    expect(portada("<b>")).toContain("Hola, &lt;b&gt;. Así fue tu");
-    expect(portada("")).toContain("Hola. Así fue tu");
-    expect(portada("Valeria")).toMatch(/Así fue tu<\/p>\s*<p class="rh-mes">Octubre<\/p>\s*<i class="rh-linea-acento"[^>]*><\/i>\s*<p class="rh-anio">2026<\/p>/);
+    expect(portada("Valeria <b> Ruiz")).toContain(">Hola, Valeria<");
+    expect(portada("<b>")).toContain("Hola, &lt;b&gt;");
+    expect(portada("")).toContain(">Hola<");
+    expect(portada("Valeria")).toMatch(/OSFIT<\/p>\s*<p class="rh-hola">Hola, Valeria<\/p>\s*<p class="rh-mes">Octubre<\/p>\s*<p class="rh-anio">2026<\/p>/);
+    const sub = (enCurso: boolean) => historiasDelMes(datos({ enCurso, hoy: "2026-10-16" })).find((h) => h.id === "portada")!.html;
+    expect(sub(false)).toContain("Este es tu resumen del mes");
+    expect(sub(true)).toContain("En curso · al 16 de octubre");
   });
 
   it("el final es el póster: mes, nombre, rango, 4 números, ejercicios y músculos; Compartir y Cerrar", () => {

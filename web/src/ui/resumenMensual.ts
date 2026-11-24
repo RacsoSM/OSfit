@@ -218,18 +218,18 @@ function historia(id: string, etiqueta: string, cuerpo: string): Historia {
   return { id, html: `<p class="rh-etiqueta">${etiqueta}</p>${cuerpo}` };
 }
 
-/** La portada: un saludo con su nombre, el mes grande, una línea de acento y el año. */
+/** La portada, al centro: la marca, un saludo con su nombre, el mes grande y el año. */
 function portada(r: ResumenMensual, enCurso: boolean, hoy: string, nombre = ""): Historia {
   const quien = nombre.trim() ? escapar(nombre.trim().split(/\s+/)[0]!) : "";
   return {
     id: "portada",
     html: `
       <div class="rh-portada-c">
-        <p class="rh-etiqueta">${enCurso ? `En curso · al ${Number(hoy.slice(8, 10))} de ${nombreMes(r.mes)}` : "Tu resumen del mes"}</p>
-        <p class="rh-hola">${quien ? `Hola, ${quien}.` : "Hola."} Así fue tu</p>
+        <p class="rh-portada-marca">OSFIT</p>
+        <p class="rh-hola">${quien ? `Hola, ${quien}` : "Hola"}</p>
         <p class="rh-mes">${capital(nombreMes(r.mes))}</p>
-        <i class="rh-linea-acento" aria-hidden="true"></i>
         <p class="rh-anio">${r.mes.slice(0, 4)}</p>
+        <p class="rh-portada-sub">${enCurso ? `En curso · al ${Number(hoy.slice(8, 10))} de ${nombreMes(r.mes)}` : "Este es tu resumen del mes"}</p>
         <p class="rh-pista">Desliza para ver tu mes <span aria-hidden="true">→</span></p>
       </div>`,
   };

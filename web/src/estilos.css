@@ -2345,10 +2345,12 @@ body.historia-abierta { overflow: hidden; }
 .rh-etiqueta { margin: 0 0 14px; font-size: 12px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; color: var(--rh-acento-claro); }
 .rh-portada .rh-etiqueta { color: var(--rh-texto); opacity: 0.85; }
 .rh-mes { margin: 0; font-size: 66px; font-weight: 900; line-height: 1; letter-spacing: -1.5px; }
-.rh-anio { margin: 0; font-size: 28px; font-weight: 300; color: var(--rh-texto-2); }
-/* Portada: "Hola, Valeria. Así fue tu" sobre el mes y una línea de acento antes del año. */
+.rh-anio { margin: 6px 0 0; font-size: 28px; font-weight: 300; color: var(--rh-texto-2); }
+/* Portada: la marca pequeña arriba, el saludo y, bajo el año, qué es esto. */
+.rh-portada-marca { margin: 0 0 26px; font-size: 13px; font-weight: 900; letter-spacing: 6px; color: var(--rh-acento-claro); }
 .rh-hola { margin: 0 0 6px; font-size: 20px; font-weight: 600; color: var(--rh-texto-2); }
-.rh-linea-acento { display: block; width: 56px; height: 4px; margin: 14px auto 10px; border-radius: 2px; background: var(--rh-acento); }
+.rh-portada-sub { margin: 22px 0 0; font-size: 15px; color: var(--rh-texto-2); }
+.rh-portada .rh-pista { margin-top: 40px; }
 .rh-pista { margin: 48px 0 0; font-size: 15px; color: var(--rh-texto-2); }
 .rh-grande { margin: 0; font-size: 54px; font-weight: 900; line-height: 1.05; letter-spacing: -1px; font-variant-numeric: tabular-nums; }
 .rh-grande small { font-size: 0.42em; font-weight: 700; letter-spacing: 0; color: var(--rh-texto-2); }
