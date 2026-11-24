@@ -206,3 +206,28 @@ describe("kgPorSemana", () => {
     expect(kgPorSemana("2026-10", "2026-10-08", [], banco).map((w) => w.hasta)).toEqual([4, 8]);
   });
 });
+
+describe("récords personales", () => {
+  it("mejoresAntes: la mejor serie de antes del mes, por 1RM o por reps", async () => {
+    const { mejoresAntes } = await import("./resumenMensual");
+    const banco = [{ id: "banca", nombre: "Banca", tipo: "peso" as const, musculos: {} }, { id: "lag", nombre: "Lag", tipo: "corporal" as const, musculos: {} }];
+    const ses = (fecha: string, ejercicios: { ejercicioId: string; series: { reps: number; peso: number | null }[] }[]) =>
+      ({ id: fecha, fecha, origen: "manual" as const, ejercicios: ejercicios.map((e) => ({ ...e, nombre: "" })) });
+    const m = mejoresAntes("2026-10", [
+      ses("2026-09-10", [{ ejercicioId: "banca", series: [{ reps: 10, peso: 60 }, { reps: 3, peso: 70 }] }, { ejercicioId: "lag", series: [{ reps: 25, peso: null }] }]),
+      ses("2026-10-05", [{ ejercicioId: "banca", series: [{ reps: 5, peso: 100 }] }]),
+    ], banco, ["banca", "lag", "otro"]);
+    // 60×10 → 80 de 1RM; 70×3 → 77: gana la de 60 kg.
+    expect(m).toEqual({ banca: { peso: 60, reps: 10 }, lag: { peso: null, reps: 25 } });
+  });
+
+  it("comparaMarca: récord, igual, debajo o primera vez", async () => {
+    const { comparaMarca } = await import("./resumenMensual");
+    const marca = { tipo: "peso" as const, peso: 100, reps: 5 };
+    expect(comparaMarca(marca, undefined)).toBe("primera");
+    expect(comparaMarca(marca, { peso: 90, reps: 5 })).toBe("record");
+    expect(comparaMarca(marca, { peso: 100, reps: 5 })).toBe("igual");
+    expect(comparaMarca(marca, { peso: 105, reps: 5 })).toBe("debajo");
+    expect(comparaMarca({ tipo: "corporal", peso: null, reps: 30 }, { peso: null, reps: 25 })).toBe("record");
+  });
+});

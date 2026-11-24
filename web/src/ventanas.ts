@@ -23,10 +23,10 @@ import { tarjetaAjustes } from "./ui/tarjetaAjustes";
 import { tarjetaSinDatos } from "./ui/tarjetaSinDatos";
 import { ventanaEstadisticas, type DatosEstadisticas } from "./ui/estadisticas";
 import { mesElegidoResumen, ventanaResumenMensual, type DatosResumenMensual, type MesDeLista } from "./ui/resumenMensual";
-import { compararFuerza, kgPorSemana, mesAnterior, mesesConActividad, resumenDelMes, ultimoDiaDe, type ResumenMensual } from "./resumenMensual";
+import { compararFuerza, kgPorSemana, mejoresAntes, mesAnterior, mesesConActividad, resumenDelMes, ultimoDiaDe, type ResumenMensual } from "./resumenMensual";
 import { invitacionNotificaciones, seccionNotificaciones } from "./ui/tarjetaNotificaciones";
 import type { EstadoNotificaciones } from "./notificaciones";
-import { tarjetaMusculos, type EstadoSvg } from "./ui/mapaMuscular";
+import { archivosMapa, tarjetaMusculos, type EstadoSvg } from "./ui/mapaMuscular";
 import { bloquePeso } from "./ui/pesoCorporal";
 import { ventanaComparar, type EstadoComparar } from "./ui/comparar";
 import { promedioMinutos } from "./racha";
@@ -128,6 +128,14 @@ export function datosEstadisticas(d: DatosCliente): DatosEstadisticas {
  * la corrida falló): con las sesiones que hay alcanza para un mes. Más atrás no, porque la página
  * no tiene todo su historial y saldría incompleto.
  */
+/** Los SVG del mapa del cuerpo (frente y espalda) de su sexo, si ya llegaron. */
+function mapaDe(d: DatosCliente, sexo: "H" | "M"): { frente: string; espalda: string } | null {
+  const { frente, espalda } = archivosMapa(sexo);
+  const f = d.mapas[frente];
+  const e = d.mapas[espalda];
+  return f?.estado === "listo" && e?.estado === "listo" ? { frente: f.svg, espalda: e.svg } : null;
+}
+
 export function datosResumenMensual(d: DatosCliente, elegido: string | null): DatosResumenMensual {
   const mesDeHoy = d.hoy.slice(0, 7);
   const recienCerrado = mesAnterior(mesDeHoy);
@@ -173,6 +181,10 @@ export function datosResumenMensual(d: DatosCliente, elegido: string | null): Da
     hoy: d.hoy,
     sexo: perfil.sexo,
     cambios: compararFuerza(resumen?.fuerza ?? null, previo?.fuerza ?? null),
+    // Récords: contra todo su historial anterior, así que solo con el historial completo.
+    previas: resumen && d.historial ? mejoresAntes(actual!.mes, d.historial, d.banco, resumen.marcas.map((m) => m.ejercicioId)) : null,
+    // El mapa del cuerpo para la historia de Fuerza: los SVG que ya carga Músculos.
+    mapa: perfil.sexo ? mapaDe(d, perfil.sexo) : null,
     // La gráfica de kilos por semana sale de las sesiones crudas: con el historial completo
     // (se pide al abrir la ventana) o, mientras llega, con las últimas que ya hay.
     semanas: actual && resumen && resumen.entrenamiento.sesiones > 0

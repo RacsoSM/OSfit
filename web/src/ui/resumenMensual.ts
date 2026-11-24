@@ -1,5 +1,6 @@
-import { NIVEL_MAX, nombreMusculo, nombreRango } from "../fuerza";
-import { formatoKg, nombreMes, type ResumenMensual } from "../resumenMensual";
+import { NIVEL_MAX, nombreMusculo, nombreRango, percentilEntrenanDe } from "../fuerza";
+import { comparaMarca, formatoKg, nombreMes, type ResumenMensual, type SerieMarca } from "../resumenMensual";
+import { prepararSvg } from "./mapaMuscular";
 import { escapar } from "./tarjetaDia";
 import { lluviaDeConfeti } from "./confeti";
 
@@ -40,6 +41,10 @@ export interface DatosResumenMensual {
   cambios: Record<string, number> | null;
   /** Kilos de cada semana del mes (`kgPorSemana`); null sin entrenamientos. */
   semanas?: readonly { desde: number; hasta: number; kg: number }[] | null;
+  /** Su mejor serie de cada ejercicio antes del mes (`mejoresAntes`); null mientras llega el historial. */
+  previas?: Readonly<Record<string, SerieMarca>> | null;
+  /** Los SVG del mapa del cuerpo de su sexo; null mientras llegan o sin sexo. */
+  mapa?: { frente: string; espalda: string } | null;
 }
 
 /**
@@ -254,41 +259,84 @@ function constancia(r: ResumenMensual, enCurso: boolean, hoy: string): Historia 
     </div>`);
 }
 
-function cambio(n: number | undefined): string {
-  if (n === undefined) return "";
-  if (Math.abs(n) < 0.005) return ` <span class="rh-cambio">=</span>`;
-  return n > 0
-    ? ` <span class="rh-cambio sube" aria-label="subió ${n.toFixed(2)}">↑ ${n.toFixed(2)}</span>`
-    : ` <span class="rh-cambio baja" aria-label="bajó ${Math.abs(n).toFixed(2)}">↓ ${Math.abs(n).toFixed(2)}</span>`;
+/**
+ * La rampa azul del nivel, de oscuro (poco) a claro (mucho): sobre el fondo oscuro, lo más
+ * fuerte es lo que más resalta. Un tono por nivel entero, 0 a 8. Pasos de la rampa secuencial
+ * de la guía de visualización.
+ */
+const RAMPA_NIVEL = ["#184f95", "#1c5cab", "#256abf", "#2a78d6", "#3987e5", "#5598e7", "#6da7ec", "#86b6ef", "#9ec5f4"];
+export const colorNivel = (nivel: number) => RAMPA_NIVEL[Math.max(0, Math.min(NIVEL_MAX, Math.round(nivel)))];
+
+/** El mapa de frente o espalda con cada músculo de su tono; sin datos, gris (lo pone el CSS). */
+function cuerpoPintado(svg: string, prefijo: string, musculos: Readonly<Record<string, number>>): string {
+  return prepararSvg(svg, prefijo).replace(/class="musculo" data-musculo="([^"]+)"/g, (todo, g: string) =>
+    musculos[g] === undefined ? todo : `${todo} style="fill: ${colorNivel(musculos[g])}"`);
 }
 
-function fuerza(r: ResumenMensual, sexo: "H" | "M" | null, cambios: Record<string, number> | null): Historia | null {
+/**
+ * Fuerza (propuesta "A · Tu cuerpo pintado", entrenador 2026-11-24): el rango general, contra
+ * quiénes entrenan, su cuerpo de frente y de espalda pintado por nivel y su músculo más fuerte.
+ */
+function fuerza(r: ResumenMensual, sexo: "H" | "M" | null, mapa: DatosResumenMensual["mapa"]): Historia | null {
   if (!r.fuerza) return null;
   const s = sexo ?? "H";
   const musculos = Object.entries(r.fuerza.musculos).sort(([, a], [, b]) => b - a);
+  const [fuerte, nivelFuerte] = musculos[0] ?? [null, 0];
+  const resumen = musculos.map(([g, n]) => `${nombreMusculo(g)}: ${nombreRango(n, s)}`).join("; ");
   return historia("fuerza", "Fuerza", `
     <p class="rh-sub rh-arriba">Tu rango general</p>
     <p class="rh-grande rh-rango">${nombreRango(r.fuerza.general, s)}</p>
-    <p class="rh-sub">nivel ${r.fuerza.general.toFixed(2)} de ${NIVEL_MAX}${cambios ? "" : " · primer mes con datos"}</p>
-    ${barrasHorizontales("Por músculo",
-      musculos.map(([g, nivel]) => ({
-        nombre: nombreMusculo(g), valor: nivel, texto: nombreRango(nivel, s), nota: cambio(cambios?.[g]),
-      })),
-      NIVEL_MAX,
-      [2, 4, 6, 8].map((n) => ({ en: n, texto: String(n) })))}`);
+    <p class="rh-sub">Más fuerte que el ${percentilEntrenanDe(r.fuerza.general)} % de quienes entrenan</p>
+    ${mapa ? `
+      <figure class="rh-mapa" role="img" aria-label="Tu cuerpo por nivel de fuerza. ${escapar(resumen)}">
+        ${cuerpoPintado(mapa.frente, "rh-frente", r.fuerza.musculos)}
+        ${cuerpoPintado(mapa.espalda, "rh-espalda", r.fuerza.musculos)}
+      </figure>
+      <div class="rh-escala" aria-hidden="true"><span>Principiante</span><i></i><span>Élite</span></div>` : `
+      <div class="rh-mapa-cargando">Cargando tu cuerpo…</div>`}
+    ${fuerte ? `
+      <div class="rh-destacado">
+        <p class="rh-etq">Tu músculo más fuerte</p>
+        <p class="rh-destacado-texto">${escapar(nombreMusculo(fuerte))} · ${nombreRango(nivelFuerte, s)}</p>
+      </div>` : ""}`);
 }
 
-function marcas(r: ResumenMensual): Historia | null {
+/**
+ * Mejores marcas (propuesta "B · Récords personales", entrenador 2026-11-24): cuántos récords
+ * personales rompió y cada marca contra su mejor serie de antes de este mes, en todo su
+ * historial. Mientras llega el historial (`previas` null) se ven las marcas sin comparar.
+ */
+function marcas(r: ResumenMensual, previas: DatosResumenMensual["previas"]): Historia | null {
   if (r.marcas.length === 0) return null;
-  const serie = (m: ResumenMensual["marcas"][number]) =>
-    m.tipo === "peso" && m.peso !== null ? `${m.peso} kg × ${m.reps}` : `${m.reps} ${m.reps === 1 ? "rep" : "reps"}`;
+  const serie = (m: { peso: number | null; reps: number }, tipo: "peso" | "corporal") =>
+    tipo === "peso" && m.peso !== null ? `${m.peso} <small>kg × ${m.reps}</small>` : `${m.reps} <small>${m.reps === 1 ? "rep" : "reps"}</small>`;
+  const plano = (m: { peso: number | null; reps: number }, tipo: "peso" | "corporal") => serie(m, tipo).replace(/<\/?small>/g, "");
+  const estados = r.marcas.map((m) => (previas ? comparaMarca(m, previas[m.ejercicioId]) : null));
+  const records = estados.filter((e) => e === "record").length;
+  const tarjeta = (m: ResumenMensual["marcas"][number], i: number) => {
+    const e = estados[i];
+    const antes = previas?.[m.ejercicioId];
+    const insignia = e === "record" ? `<span class="rh-insignia">Récord</span>`
+      : e === "igual" ? `<span class="rh-insignia borde">Igualaste</span>`
+      : e === "primera" ? `<span class="rh-insignia borde">Primera vez</span>` : "";
+    const linea = e === "record" && antes ? `Antes: ${plano(antes, m.tipo)}`
+      : e === "igual" ? "Igual que tu mejor marca"
+      : e === "debajo" && antes ? `Tu mejor: ${plano(antes, m.tipo)}`
+      : e === "primera" ? "Tu primera marca en este ejercicio" : "";
+    return `
+      <li class="rh-marca${e === "record" ? " record" : ""}">
+        <div class="rh-marca-cabeza"><span class="rh-marca-nombre">${escapar(m.nombre)}</span>${insignia}</div>
+        <p class="rh-marca-num">${serie(m, m.tipo)}</p>
+        ${linea ? `<p class="rh-marca-antes">${linea}</p>` : ""}
+      </li>`;
+  };
+  const encabezado = records > 0
+    ? `<p class="rh-sub rh-arriba">Este mes rompiste</p>
+       <p class="rh-grande">${records} <small>${records === 1 ? "récord personal" : "récords personales"}</small></p>`
+    : `<p class="rh-sub rh-arriba">Tus mejores series del mes</p>`;
   return historia("marcas", "Mejores marcas", `
-    <p class="rh-sub rh-arriba">Tus mejores series del mes, y qué tan fuerte es cada una</p>
-    ${barrasHorizontales("",
-      r.marcas.map((m) => ({ nombre: m.nombre, valor: m.nivel, texto: serie(m) })),
-      NIVEL_MAX,
-      [2, 4, 6, 8].map((n) => ({ en: n, texto: String(n) })))}
-    <p class="rh-nota">La barra es el nivel de esa serie, de 0 a ${NIVEL_MAX}.</p>`);
+    ${encabezado}
+    <ol class="rh-marcas-lista">${r.marcas.map(tarjeta).join("")}</ol>`);
 }
 
 function final(r: ResumenMensual, sexo: "H" | "M" | null): Historia {
@@ -319,7 +367,7 @@ function final(r: ResumenMensual, sexo: "H" | "M" | null): Historia {
 
 /** Las historias del mes, en orden, sin las secciones vacías. */
 export function historiasDelMes(
-  d: Pick<DatosResumenMensual, "resumen" | "enCurso" | "hoy" | "sexo" | "cambios" | "semanas">
+  d: Pick<DatosResumenMensual, "resumen" | "enCurso" | "hoy" | "sexo" | "cambios" | "semanas" | "previas" | "mapa">
 ): Historia[] {
   const r = d.resumen;
   if (!r) return [];
@@ -327,8 +375,8 @@ export function historiasDelMes(
     portada(r, d.enCurso, d.hoy),
     entrenamiento(r, d.semanas ?? null),
     constancia(r, d.enCurso, d.hoy),
-    fuerza(r, d.sexo, d.cambios),
-    marcas(r),
+    fuerza(r, d.sexo, d.mapa ?? null),
+    marcas(r, d.previas ?? null),
     final(r, d.sexo),
   ].filter((h): h is Historia => h !== null);
 }

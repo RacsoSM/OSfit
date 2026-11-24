@@ -732,6 +732,8 @@ async function arrancar(): Promise<void> {
     // Cada vez y no solo al entrar: si el entrenador le pone el sexo con la ventana abierta,
     // el snapshot del cliente llega aquí y el mapa aparece sin salir y volver.
     if (activa.id === "musculos") cargarMapas(activa.id !== ventanaPintada);
+    // La historia de Fuerza del resumen pinta el mismo mapa del cuerpo.
+    if (activa.id === "resumenMensual") cargarMapas(false);
     if (activa.id === "comparar") {
       // Sin acceso no se pide: la función lo rechazaría, y la ventana ya lo dice.
       if (activa.id !== ventanaPintada) { reiniciarComparar(); if (cliente.sinAccesoAmigos !== true || cliente.adminAmigos === true) cargarComparacion(); }

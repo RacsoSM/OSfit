@@ -102,21 +102,7 @@ describe("las historias", () => {
     expect(cerrado).not.toContain(" hoy\"");
   });
 
-  it("fuerza: rango general, primer mes sin anterior y flechas con él", () => {
-    expect(todo(datos())).toContain("primer mes con datos");
-    const conCambios = todo(datos({ cambios: { pecho: 0.4, abdomen: -0.25 } }));
-    expect(conCambios).not.toContain("primer mes con datos");
-    expect(conCambios).toContain("↑ 0.40");
-    expect(conCambios).toContain("↓ 0.25");
-    expect(conCambios).toContain(">Avanzado<");
-    expect(conCambios).toContain(">Élite");
-  });
 
-  it("marcas: kg × reps en los de peso y reps en los corporales", () => {
-    const html = todo(datos());
-    expect(html).toContain("100 kg × 4");
-    expect(html).toContain("30 reps");
-  });
 
   it("no dice cuántos entrenamientos registró ni su día favorito (entrenador, 2026-10-28)", () => {
     const html = todo(datos());
@@ -157,11 +143,6 @@ describe("gráficas y estilo fijo", () => {
     expect(sinFaltas.match(/class="rh-tramo /g)).toHaveLength(2);
   });
 
-  it("fuerza y marcas: barras sobre la escala de 0 a 8, con guías", () => {
-    const html = todo(datos());
-    expect(html).toContain('rh-barras-relleno" style="width: 100.0%"');
-    expect(html).toContain("rh-guia");
-  });
 
   it("todo con clases propias: nada que los estilos de la clienta repinten", () => {
     abrirHistoria("2026-10");
@@ -169,6 +150,54 @@ describe("gráficas y estilo fijo", () => {
     cerrarHistoria();
     expect(html).toContain("rh-fijo");
     expect(html).not.toMatch(/class="(?:[^"]*\s)?(tarjeta|boton|cal)(?:\s[^"]*)?"/);
+  });
+});
+
+describe("fuerza: tu cuerpo pintado", () => {
+  const svg = `<svg viewBox="0 0 10 10"><style>.contorno { fill: #fff; }\n[data-musculo="pecho"] { fill: red; }</style>` +
+    `<path class="musculo" data-musculo="pecho" d="M0 0"/><path class="musculo" data-musculo="biceps" d="M1 1"/></svg>`;
+  it("rango general, contra quienes entrenan, y su músculo más fuerte", () => {
+    const html = todo(datos({ mapa: { frente: svg, espalda: svg } }));
+    expect(html).toContain(">Avanzado<");
+    expect(html).toMatch(/Más fuerte que el \d+ % de quienes entrenan/);
+    expect(html).toContain("Tu músculo más fuerte");
+    expect(html).toContain("Pecho · Élite");
+  });
+  it("cada músculo con datos lleva su tono; los demás quedan para el gris del CSS", () => {
+    const html = todo(datos({ mapa: { frente: svg, espalda: svg } }));
+    expect(html).toContain('data-musculo="pecho" style="fill: #9ec5f4"');
+    expect(html).not.toMatch(/data-musculo="biceps" style=/);
+    expect(html).toContain('id="rh-frente"');
+    expect(html).toContain('id="rh-espalda"');
+    // El color del SVG original no se cuela: prepararSvg quita sus reglas de músculos.
+    expect(html).not.toContain("fill: red");
+  });
+  it("sin el mapa todavía, avisa que carga", () => {
+    expect(todo(datos({ mapa: null }))).toContain("Cargando tu cuerpo");
+  });
+});
+
+describe("mejores marcas: récords personales", () => {
+  it("cuenta los récords y marca cada uno contra su mejor anterior", () => {
+    const html = todo(datos({ previas: { banca: { peso: 90, reps: 4 }, lag: { peso: null, reps: 30 } } }));
+    expect(html).toContain("Este mes rompiste");
+    expect(html).toContain("1 <small>récord personal</small>");
+    expect(html).toContain("100 <small>kg × 4</small>");
+    expect(html).toContain("Antes: 90 kg × 4");
+    expect(html).toContain("Igualaste");
+    expect(html).toContain("30 <small>reps</small>");
+  });
+  it("primera vez, y por debajo de su mejor sin insignia", () => {
+    const html = todo(datos({ previas: { lag: { peso: null, reps: 40 } } }));
+    expect(html).toContain("Primera vez");
+    expect(html).toContain("Tu mejor: 40 reps");
+    expect(html).toContain("Tus mejores series del mes");
+  });
+  it("mientras llega el historial, las marcas sin comparar", () => {
+    const html = todo(datos({ previas: null }));
+    expect(html).toContain("100 <small>kg × 4</small>");
+    expect(html).not.toContain("Récord");
+    expect(html).not.toContain("Primera vez");
   });
 });
 

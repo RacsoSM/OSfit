@@ -318,6 +318,48 @@ export function kgPorSemana(
   return semanas.map((w) => ({ ...w, kg: Math.round(w.kg) }));
 }
 
+/** La mejor serie de un ejercicio: peso y reps. */
+export interface SerieMarca { peso: number | null; reps: number }
+
+/**
+ * La mejor serie de cada ejercicio ANTES de que empezara el mes (todo su historial), para saber
+ * si una marca del mes es récord personal. "Mejor" como en las marcas: el 1RM estimado en los de
+ * peso y las reps en los corporales. Un ejercicio sin series antes no aparece.
+ */
+export function mejoresAntes(
+  mes: string, sesiones: readonly Sesion[], banco: readonly EjercicioBanco[], ids: readonly string[]
+): Record<string, SerieMarca> {
+  const tipos = new Map(banco.map((b) => [b.id, b.tipo]));
+  const buscados = new Set(ids);
+  const mejor: Record<string, SerieMarca & { valor: number }> = {};
+  for (const s of sesiones) {
+    if (s.fecha >= `${mes}-01`) continue;
+    for (const ej of s.ejercicios) {
+      if (!buscados.has(ej.ejercicioId)) continue;
+      const corporal = tipos.get(ej.ejercicioId) === "corporal";
+      for (const serie of ej.series) {
+        const valor = corporal ? serie.reps : (serie.peso ?? 0) > 0 ? unoRm(serie.peso as number, serie.reps) : 0;
+        if (valor > 0 && valor > (mejor[ej.ejercicioId]?.valor ?? 0)) {
+          mejor[ej.ejercicioId] = { peso: corporal ? null : serie.peso, reps: serie.reps, valor };
+        }
+      }
+    }
+  }
+  return Object.fromEntries(Object.entries(mejor).map(([id, { peso, reps }]) => [id, { peso, reps }]));
+}
+
+/** Cómo quedó una marca del mes contra su mejor anterior. */
+export function comparaMarca(
+  marca: { tipo: "peso" | "corporal"; peso: number | null; reps: number }, antes: SerieMarca | undefined
+): "primera" | "record" | "igual" | "debajo" {
+  if (!antes) return "primera";
+  const valor = (s: SerieMarca) => (marca.tipo === "peso" ? unoRm(s.peso ?? 0, s.reps) : s.reps);
+  const ahora = valor(marca);
+  const previo = valor(antes);
+  if (ahora > previo + 0.01) return "record";
+  return Math.abs(ahora - previo) <= 0.01 ? "igual" : "debajo";
+}
+
 export function formatoKg(kg: number): string {
   return String(Math.round(kg)).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }

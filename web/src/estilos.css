@@ -2403,6 +2403,33 @@ body.historia-abierta { overflow: hidden; }
 .rh-dia.rh-e, .rh-dia.rh-f { color: #fff; }
 .rh-dia.rh-j { color: #1a1a19; }
 .rh-dia.hoy { box-shadow: inset 0 0 0 2px var(--rh-texto); }
+/* Fuerza: su cuerpo pintado por nivel (rampa azul de `colorNivel`); sin datos, gris. */
+.rh-mapa { display: flex; justify-content: center; gap: 10px; margin: 14px 0 8px; }
+.rh-mapa svg { height: min(42vh, 330px); width: auto; }
+.rh-mapa .contorno { fill: #2c2c2a !important; }
+.rh-mapa .sin-color { fill: #2c2c2a !important; }
+.rh-mapa .musculo { fill: var(--rh-superficie-alta); }
+.rh-mapa .linea { stroke: var(--rh-fondo) !important; }
+.rh-mapa .destello-elite, .rh-mapa .chispa { display: none; }
+.rh-mapa-cargando { height: 200px; display: grid; place-items: center; color: var(--rh-texto-3); font-size: 13px; }
+.rh-escala { display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--rh-texto-3); margin-bottom: 14px; }
+.rh-escala i { flex: 1; height: 8px; border-radius: 4px; background: linear-gradient(90deg, #184f95, #3987e5, #9ec5f4); }
+.rh-destacado { background: var(--rh-superficie); border-radius: 12px; padding: 12px 14px; }
+.rh-destacado .rh-etq { margin: 0; }
+.rh-destacado-texto { margin: 4px 0 0; font-size: 18px; font-weight: 800; }
+/* Mejores marcas: récords personales. */
+.rh-marcas-lista { list-style: none; margin: 16px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.rh-marca { background: var(--rh-superficie); border-radius: 12px; padding: 12px 14px; }
+.rh-marca.record { box-shadow: inset 3px 0 0 var(--rh-acento); }
+.rh-marca-cabeza { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.rh-marca-nombre { font-size: 14px; font-weight: 700; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rh-insignia { flex: none; font-size: 11px; font-weight: 800; padding: 3px 9px; border-radius: 99px; background: var(--rh-acento); color: #fff; }
+.rh-insignia.borde { background: transparent; box-shadow: inset 0 0 0 1.5px var(--rh-acento-claro); color: var(--rh-acento-claro); }
+.rh-marca-num { margin: 4px 0 0; font-size: 24px; font-weight: 900; font-variant-numeric: tabular-nums; }
+.rh-marca-num small { font-size: 0.55em; font-weight: 700; color: var(--rh-texto-2); }
+.rh-marca-antes { margin: 2px 0 0; font-size: 12px; font-weight: 700; color: var(--rh-acento-claro); }
+.rh-marca:not(.record) .rh-marca-antes { color: var(--rh-texto-3); }
+
 /* Final y botones. */
 .rh-final-datos { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .rh-botones { display: flex; flex-direction: column; gap: 10px; margin-top: 24px; }
