@@ -284,6 +284,40 @@ export function formatoMinutos(minutos: number): string {
 }
 
 /** 59123 → "59,123". Sin `toLocaleString`: cada teléfono lo formatea distinto. */
+/**
+ * Los kilos de cada semana del mes (lunes a domingo, recortadas al mes y al corte), para la
+ * gráfica de la historia de Entrenamiento. Misma cuenta que `entrenamientoDelMes`: sin tiempo,
+ * cardio ni corporales, y las bajadas de un dropset suman. `desde`/`hasta` son días del mes.
+ */
+export function kgPorSemana(
+  mes: string, corte: string, sesiones: readonly Sesion[], banco: readonly EjercicioBanco[]
+): { desde: number; hasta: number; kg: number }[] {
+  const porId = new Map(banco.map((b) => [b.id, b]));
+  const ultimo = Number((corte < ultimoDiaDe(mes) ? corte : ultimoDiaDe(mes)).slice(8, 10));
+  const semanas: { desde: number; hasta: number; kg: number }[] = [];
+  for (let dia = 1; dia <= ultimo;) {
+    // 0 = lunes. La semana termina el domingo o el último día que cuenta.
+    const dow = (new Date(`${mes}-${String(dia).padStart(2, "0")}T12:00:00Z`).getUTCDay() + 6) % 7;
+    const hasta = Math.min(ultimo, dia + (6 - dow));
+    semanas.push({ desde: dia, hasta, kg: 0 });
+    dia = hasta + 1;
+  }
+  for (const s of sesiones) {
+    if (s.fecha.slice(0, 7) !== mes || s.fecha > corte) continue;
+    const d = Number(s.fecha.slice(8, 10));
+    const semana = semanas.find((w) => d >= w.desde && d <= w.hasta);
+    if (!semana) continue;
+    for (const ej of s.ejercicios) {
+      const b = porId.get(ej.ejercicioId);
+      if (b && (b.tipo === "tiempo" || b.tipo === "cardio" || b.tipo === "corporal")) continue;
+      for (const serie of ej.series) {
+        for (const parte of [serie, ...(serie.caidas ?? [])]) semana.kg += (parte.peso ?? 0) * parte.reps;
+      }
+    }
+  }
+  return semanas.map((w) => ({ ...w, kg: Math.round(w.kg) }));
+}
+
 export function formatoKg(kg: number): string {
   return String(Math.round(kg)).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }

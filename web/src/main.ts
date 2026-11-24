@@ -737,7 +737,8 @@ async function arrancar(): Promise<void> {
       if (activa.id !== ventanaPintada) { reiniciarComparar(); if (cliente.sinAccesoAmigos !== true || cliente.adminAmigos === true) cargarComparacion(); }
       cargarMapas(false, sexosAComparar(comparacion, cliente.sexo));
     }
-    if (activa.id === "estadisticas" && !historialPedido) {
+    // Resumen mensual también lo usa: la gráfica de kilos por semana de los meses viejos.
+    if ((activa.id === "estadisticas" || activa.id === "resumenMensual") && !historialPedido) {
       historialPedido = true;
       observarHistorial(clienteId, (s) => { historial = s; pintar(); });
     }

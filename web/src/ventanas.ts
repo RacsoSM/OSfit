@@ -23,7 +23,7 @@ import { tarjetaAjustes } from "./ui/tarjetaAjustes";
 import { tarjetaSinDatos } from "./ui/tarjetaSinDatos";
 import { ventanaEstadisticas, type DatosEstadisticas } from "./ui/estadisticas";
 import { mesElegidoResumen, ventanaResumenMensual, type DatosResumenMensual, type MesDeLista } from "./ui/resumenMensual";
-import { compararFuerza, mesAnterior, mesesConActividad, resumenDelMes, ultimoDiaDe, type ResumenMensual } from "./resumenMensual";
+import { compararFuerza, kgPorSemana, mesAnterior, mesesConActividad, resumenDelMes, ultimoDiaDe, type ResumenMensual } from "./resumenMensual";
 import { invitacionNotificaciones, seccionNotificaciones } from "./ui/tarjetaNotificaciones";
 import type { EstadoNotificaciones } from "./notificaciones";
 import { tarjetaMusculos, type EstadoSvg } from "./ui/mapaMuscular";
@@ -173,6 +173,11 @@ export function datosResumenMensual(d: DatosCliente, elegido: string | null): Da
     hoy: d.hoy,
     sexo: perfil.sexo,
     cambios: compararFuerza(resumen?.fuerza ?? null, previo?.fuerza ?? null),
+    // La gráfica de kilos por semana sale de las sesiones crudas: con el historial completo
+    // (se pide al abrir la ventana) o, mientras llega, con las últimas que ya hay.
+    semanas: actual && resumen && resumen.entrenamiento.sesiones > 0
+      ? kgPorSemana(actual.mes, actual.enCurso ? d.hoy : ultimoDiaDe(actual.mes), sesiones, d.banco)
+      : null,
   };
 }
 

@@ -1,18 +1,25 @@
-import { nombreMusculo, nombreRango } from "../fuerza";
+import { NIVEL_MAX, nombreMusculo, nombreRango } from "../fuerza";
 import { formatoKg, nombreMes, type ResumenMensual } from "../resumenMensual";
-import { celdasMes } from "./calendario";
 import { escapar } from "./tarjetaDia";
 
 /**
  * La ventana Resumen mensual, estilo "historias" (entrenador, 2026-11-24, inspirado en el
  * Wrapped de Spotify): primero pregunta qué mes quiere ver y, al elegirlo, se abre a pantalla
  * completa una historia por sección, que se pasan deslizando de lado o tocando los bordes:
- * portada, Entrenamiento, Constancia (calendario y números), Fuerza, Mejores marcas y un
- * resumen final. Una sección sin datos no tiene historia. Como antes, no dice cuántos
- * entrenamientos registró ni su día favorito (entrenador, 2026-10-28).
+ * portada, Entrenamiento, Constancia, Fuerza, Mejores marcas y un resumen final. Una sección
+ * sin datos no tiene historia. Como antes, no dice cuántos entrenamientos registró ni su día
+ * favorito (entrenador, 2026-10-28).
  *
- * Antes (2026-10-28) era una sola página con todo y un selector arriba; los cálculos no
- * cambiaron. Ver `docs/superpowers/specs/2026-10-28-resumen-mensual-design.md`.
+ * **Paleta y estilo fijos** (entrenador, 2026-11-24): el resumen se ve igual con cualquier
+ * estilo o paleta de la clienta. Por eso todo lleva clases propias (`rh-`), nunca `.tarjeta`,
+ * `.boton` ni `.cal`, que cada estilo repinta; los colores viven en `.rh-fijo` (`estilos.css`).
+ * La paleta es la de referencia de la guía de visualización (validada para daltonismo sobre
+ * la superficie oscura): azul para las cantidades y verde/ámbar/rojo de estado para
+ * entrenó/justificada/falta, siempre con su texto al lado.
+ *
+ * Las gráficas son HTML (barras con `div`): cada una lleva sus números escritos y un
+ * `aria-label` con los datos, porque tocar la pantalla cambia de historia y no hay "pasar el
+ * dedo" para ver un valor.
  */
 
 export interface MesDeLista { mes: string; enCurso: boolean }
@@ -30,6 +37,8 @@ export interface DatosResumenMensual {
   sexo: "H" | "M" | null;
   /** Cambio de nivel por músculo contra el mes anterior; null si no hay con qué comparar. */
   cambios: Record<string, number> | null;
+  /** Kilos de cada semana del mes (`kgPorSemana`); null sin entrenamientos. */
+  semanas?: readonly { desde: number; hasta: number; kg: number }[] | null;
 }
 
 /**
@@ -75,6 +84,7 @@ export function reiniciarResumenMensual(): void {
 }
 
 const capital = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
+const corto = (mes: string) => nombreMes(mes).slice(0, 3);
 
 /** El número grande con su unidad chica: "17 h 24 min". */
 function tiempo(minutos: number): string {
@@ -84,20 +94,77 @@ function tiempo(minutos: number): string {
   return min === 0 ? `${h} <small>h</small>` : `${h} h <small>${min} min</small>`;
 }
 
+/** "12.4k" para las etiquetas de las barras; abajo de mil, el número. */
+function kgCorto(kg: number): string {
+  return kg >= 1000 ? `${(kg / 1000).toFixed(kg >= 10000 ? 0 : 1)}k` : String(Math.round(kg));
+}
+
+const pct = (v: number, max: number) => (max > 0 ? Math.max(0, Math.min(100, (v / max) * 100)) : 0).toFixed(1);
+
 // ── La lista de meses ─────────────────────────────────────────────────────────
 
 function lista(d: DatosResumenMensual): string {
   if (d.meses.length === 0) {
-    return `<div class="tarjeta"><p class="rm-vacio">${d.cargando ? "Cargando tus meses…" : "Todavía no hay meses que resumir."}</p></div>`;
+    return `<div class="rh-fijo rh-lista-meses"><p class="rh-vacio-lista">${d.cargando ? "Cargando tus meses…" : "Todavía no hay meses que resumir."}</p></div>`;
   }
   const fila = (m: MesDeLista) => `
       <button type="button" class="rm-mes-opcion${m.enCurso ? " en-curso" : ""}" data-rm-mes="${m.mes}">
         <span class="rm-mes-nombre">${capital(nombreMes(m.mes))} <span class="rm-mes-anio">${m.mes.slice(0, 4)}</span></span>
         <span class="rm-mes-estado">${m.enCurso ? `En curso · al ${Number(d.hoy.slice(8, 10))}` : "Cerrado"}</span>
+        <span class="rm-mes-ir" aria-hidden="true">›</span>
       </button>`;
   return `
-    <p class="rm-pregunta">¿Qué mes quieres ver?</p>
-    <div class="rm-meses">${d.meses.map(fila).join("")}</div>`;
+    <div class="rh-fijo rh-lista-meses">
+      <p class="rm-pregunta">¿Qué mes quieres ver?</p>
+      <div class="rm-meses">${d.meses.map(fila).join("")}</div>
+    </div>`;
+}
+
+// ── Gráficas ──────────────────────────────────────────────────────────────────
+
+/** Barras verticales: kilos por semana. La más alta lleva el acento; todas, su número. */
+function graficaSemanas(mes: string, semanas: readonly { desde: number; hasta: number; kg: number }[]): string {
+  if (semanas.length === 0 || semanas.every((s) => s.kg === 0)) return "";
+  const max = Math.max(...semanas.map((s) => s.kg));
+  const etiqueta = (s: { desde: number; hasta: number }) => (s.desde === s.hasta ? `${s.desde}` : `${s.desde}–${s.hasta}`);
+  const resumen = semanas.map((s) => `del ${s.desde} al ${s.hasta}: ${formatoKg(s.kg)} kg`).join("; ");
+  return `
+    <figure class="rh-grafica" role="img" aria-label="Kilos por semana de ${nombreMes(mes)}: ${resumen}">
+      <figcaption class="rh-grafica-titulo">Kilos por semana</figcaption>
+      <div class="rh-columnas">
+        ${semanas.map((s) => `
+          <div class="rh-columna">
+            <span class="rh-columna-valor">${s.kg > 0 ? kgCorto(s.kg) : ""}</span>
+            <div class="rh-columna-barra${s.kg === max ? " max" : ""}" style="height: ${pct(s.kg, max)}%"></div>
+            <span class="rh-columna-eje">${etiqueta(s)} ${corto(mes)}</span>
+          </div>`).join("")}
+      </div>
+    </figure>`;
+}
+
+/** Barras horizontales con el nombre arriba y el número a la derecha. */
+function barrasHorizontales(
+  titulo: string,
+  filas: readonly { nombre: string; valor: number; texto: string; nota?: string }[],
+  max: number,
+  marcasEje: readonly { en: number; texto: string }[] = []
+): string {
+  const resumen = filas.map((f) => `${f.nombre}: ${f.texto}`).join("; ");
+  return `
+    <figure class="rh-grafica" role="img" aria-label="${titulo ? `${escapar(titulo)}: ` : ""}${escapar(resumen)}">
+      ${titulo ? `<figcaption class="rh-grafica-titulo">${escapar(titulo)}</figcaption>` : ""}
+      ${marcasEje.length ? `<div class="rh-eje">${marcasEje.map((m) => `<span style="left: ${pct(m.en, max)}%">${m.texto}</span>`).join("")}</div>` : ""}
+      <ul class="rh-barras">
+        ${filas.map((f) => `
+          <li>
+            <div class="rh-barras-texto"><span class="rh-barras-nombre">${escapar(f.nombre)}</span><span class="rh-barras-valor">${f.texto}${f.nota ?? ""}</span></div>
+            <div class="rh-barras-pista">
+              ${marcasEje.map((m) => `<i class="rh-guia" style="left: ${pct(m.en, max)}%"></i>`).join("")}
+              <div class="rh-barras-relleno" style="width: ${pct(f.valor, max)}%"></div>
+            </div>
+          </li>`).join("")}
+      </ul>
+    </figure>`;
 }
 
 // ── Las historias ─────────────────────────────────────────────────────────────
@@ -121,45 +188,65 @@ function portada(r: ResumenMensual, enCurso: boolean, hoy: string): Historia {
   };
 }
 
-function entrenamiento(r: ResumenMensual): Historia | null {
+function entrenamiento(r: ResumenMensual, semanas: DatosResumenMensual["semanas"]): Historia | null {
   const t = r.entrenamiento;
   if (t.sesiones === 0) return null;
+  const maxVeces = Math.max(1, ...t.top.map((e) => e.veces));
   return historia("entrenamiento", "Entrenamiento", `
     <p class="rh-grande">${formatoKg(t.kg)} <small>kg</small></p>
     <p class="rh-sub">levantaste este mes</p>
+    ${semanas ? graficaSemanas(r.mes, semanas) : ""}
     <div class="rh-pares">
       <div><p class="rh-num">${formatoKg(t.series)}</p><p class="rh-etq">series</p></div>
       <div><p class="rh-num">${formatoKg(t.reps)}</p><p class="rh-etq">repeticiones</p></div>
     </div>
-    ${t.top.length ? `
-      <p class="rh-titulo">Lo que más hiciste</p>
-      <ol class="rh-lista">
-        ${t.top.map((e, i) => `<li><span class="rh-pos">${i + 1}</span><span class="rh-nombre">${escapar(e.nombre)}</span><span class="rh-tenue">${e.veces} ${e.veces === 1 ? "vez" : "veces"}</span></li>`).join("")}
-      </ol>` : ""}`);
+    ${t.top.length ? barrasHorizontales("Lo que más hiciste",
+      t.top.map((e) => ({ nombre: e.nombre, valor: e.veces, texto: `${e.veces} ${e.veces === 1 ? "vez" : "veces"}` })), maxVeces) : ""}`);
 }
 
-/** Verde, ámbar y rojo fijos, como siempre en el resumen (entrenador, 2026-10-28). */
-const MARCA_CLASE = { e: "rm-e", j: "rm-j", f: "rm-f" } as const;
+/** Entrenó, justificada y falta: los tres colores de estado, siempre con su nombre. */
+const ESTADOS = [
+  { clave: "e", clase: "rh-e", nombre: "Entrenó" },
+  { clave: "j", clase: "rh-j", nombre: "Justificada" },
+  { clave: "f", clase: "rh-f", nombre: "Falta" },
+] as const;
 
 function constancia(r: ResumenMensual, enCurso: boolean, hoy: string): Historia | null {
   const a = r.asistencia;
-  if (a.entreno + a.justificadas + a.faltas === 0) return null;
-  const celdas = celdasMes(r.mes, (fecha) => {
-    const marca = a.dias[fecha.slice(8, 10)];
-    const clases: string[] = marca ? [MARCA_CLASE[marca]] : [];
-    if (enCurso && fecha === hoy) clases.push("hoy-celda");
-    return clases;
-  });
+  const total = a.entreno + a.justificadas + a.faltas;
+  if (total === 0) return null;
+  const cuenta = { e: a.entreno, j: a.justificadas, f: a.faltas };
+  // Barra de proporción con hueco de 2 px entre tramos; solo los tramos con algo.
+  const tramos = ESTADOS.filter((s) => cuenta[s.clave] > 0)
+    .map((s) => `<div class="rh-tramo ${s.clase}" style="flex: ${cuenta[s.clave]}"></div>`).join("");
+  const leyenda = ESTADOS.map((s) =>
+    `<li><i class="rh-punto ${s.clase}"></i><span>${s.nombre}</span><strong>${cuenta[s.clave]}</strong></li>`).join("");
+
+  // El calendario, armado aquí (no con `.cal`, que cada estilo repinta). Lunes primero.
+  const [anio, m] = r.mes.split("-").map(Number);
+  const dias = new Date(Date.UTC(anio, m, 0)).getUTCDate();
+  const hueco = (new Date(Date.UTC(anio, m - 1, 1)).getUTCDay() + 6) % 7;
+  const celdas = [
+    ...Array.from({ length: hueco }, () => `<span class="rh-dia vacio"></span>`),
+    ...Array.from({ length: dias }, (_, i) => {
+      const dd = String(i + 1).padStart(2, "0");
+      const marca = a.dias[dd];
+      const clase = marca ? ESTADOS.find((s) => s.clave === marca)!.clase : "";
+      const esHoy = enCurso && `${r.mes}-${dd}` === hoy;
+      return `<span class="rh-dia ${clase}${esHoy ? " hoy" : ""}">${i + 1}</span>`;
+    }),
+  ].join("");
+
   return historia("constancia", "Constancia", `
     <p class="rh-grande">${a.porcentaje} <small>%</small></p>
     <p class="rh-sub">de asistencia</p>
-    <div class="cal-dias rh-cal-dias"><span>L</span><span>M</span><span>M</span><span>J</span><span>V</span><span>S</span><span>D</span></div>
-    <div class="cal rm-cal rh-cal">${celdas}</div>
-    <div class="rh-pares rh-tres">
-      <div><p class="rh-num"><i class="rm-punto rm-e"></i>${a.entreno}</p><p class="rh-etq">entrenaste</p></div>
-      <div><p class="rh-num"><i class="rm-punto rm-j"></i>${a.justificadas}</p><p class="rh-etq">justificadas</p></div>
-      <div><p class="rh-num"><i class="rm-punto rm-f"></i>${a.faltas}</p><p class="rh-etq">faltas</p></div>
-    </div>
+    <figure class="rh-grafica" role="img"
+            aria-label="Entrenó ${a.entreno}, justificadas ${a.justificadas}, faltas ${a.faltas}">
+      <div class="rh-proporcion">${tramos}</div>
+      <ul class="rh-leyenda">${leyenda}</ul>
+    </figure>
+    <div class="rh-semana" aria-hidden="true"><span>L</span><span>M</span><span>M</span><span>J</span><span>V</span><span>S</span><span>D</span></div>
+    <div class="rh-calendario" aria-label="Calendario de ${nombreMes(r.mes)}">${celdas}</div>
     <div class="rh-pares">
       <div><p class="rh-num">${a.rachaMasLarga}</p><p class="rh-etq">tu racha más larga</p></div>
       <div><p class="rh-num">${a.visitasConMinutos > 0 ? tiempo(a.minutos) : "—"}</p><p class="rh-etq">en el gym</p></div>
@@ -168,10 +255,10 @@ function constancia(r: ResumenMensual, enCurso: boolean, hoy: string): Historia 
 
 function cambio(n: number | undefined): string {
   if (n === undefined) return "";
-  if (Math.abs(n) < 0.005) return `<span class="rm-cambio">=</span>`;
+  if (Math.abs(n) < 0.005) return ` <span class="rh-cambio">=</span>`;
   return n > 0
-    ? `<span class="rm-cambio rm-sube" aria-label="subió ${n.toFixed(2)}">↑ ${n.toFixed(2)}</span>`
-    : `<span class="rm-cambio rm-baja" aria-label="bajó ${Math.abs(n).toFixed(2)}">↓ ${Math.abs(n).toFixed(2)}</span>`;
+    ? ` <span class="rh-cambio sube" aria-label="subió ${n.toFixed(2)}">↑ ${n.toFixed(2)}</span>`
+    : ` <span class="rh-cambio baja" aria-label="bajó ${Math.abs(n).toFixed(2)}">↓ ${Math.abs(n).toFixed(2)}</span>`;
 }
 
 function fuerza(r: ResumenMensual, sexo: "H" | "M" | null, cambios: Record<string, number> | null): Historia | null {
@@ -181,14 +268,13 @@ function fuerza(r: ResumenMensual, sexo: "H" | "M" | null, cambios: Record<strin
   return historia("fuerza", "Fuerza", `
     <p class="rh-sub rh-arriba">Tu rango general</p>
     <p class="rh-grande rh-rango">${nombreRango(r.fuerza.general, s)}</p>
-    <p class="rh-sub">nivel ${r.fuerza.general.toFixed(2)} de 8${cambios ? "" : " · primer mes con datos"}</p>
-    <ul class="rh-musculos">
-      ${musculos.map(([g, nivel]) => `
-        <li>
-          <div class="rh-fila"><span>${escapar(nombreMusculo(g))}</span><span class="rh-tenue">${nombreRango(nivel, s)} ${cambio(cambios?.[g])}</span></div>
-          <div class="rm-barra rh-barra"><div style="width: ${Math.min(100, (nivel / 8) * 100).toFixed(1)}%"></div></div>
-        </li>`).join("")}
-    </ul>`);
+    <p class="rh-sub">nivel ${r.fuerza.general.toFixed(2)} de ${NIVEL_MAX}${cambios ? "" : " · primer mes con datos"}</p>
+    ${barrasHorizontales("Por músculo",
+      musculos.map(([g, nivel]) => ({
+        nombre: nombreMusculo(g), valor: nivel, texto: nombreRango(nivel, s), nota: cambio(cambios?.[g]),
+      })),
+      NIVEL_MAX,
+      [2, 4, 6, 8].map((n) => ({ en: n, texto: String(n) })))}`);
 }
 
 function marcas(r: ResumenMensual): Historia | null {
@@ -196,10 +282,12 @@ function marcas(r: ResumenMensual): Historia | null {
   const serie = (m: ResumenMensual["marcas"][number]) =>
     m.tipo === "peso" && m.peso !== null ? `${m.peso} kg × ${m.reps}` : `${m.reps} ${m.reps === 1 ? "rep" : "reps"}`;
   return historia("marcas", "Mejores marcas", `
-    <p class="rh-sub rh-arriba">Lo más pesado que moviste este mes</p>
-    <ol class="rh-marcas">
-      ${r.marcas.map((m) => `<li><span class="rh-nombre">${escapar(m.nombre)}</span><strong>${serie(m)}</strong></li>`).join("")}
-    </ol>`);
+    <p class="rh-sub rh-arriba">Tus mejores series del mes, y qué tan fuerte es cada una</p>
+    ${barrasHorizontales("",
+      r.marcas.map((m) => ({ nombre: m.nombre, valor: m.nivel, texto: serie(m) })),
+      NIVEL_MAX,
+      [2, 4, 6, 8].map((n) => ({ en: n, texto: String(n) })))}
+    <p class="rh-nota">La barra es el nivel de esa serie, de 0 a ${NIVEL_MAX}.</p>`);
 }
 
 function final(r: ResumenMensual, sexo: "H" | "M" | null): Historia {
@@ -222,19 +310,21 @@ function final(r: ResumenMensual, sexo: "H" | "M" | null): Historia {
       </div>
       ${t.top[0] ? `<p class="rh-nota">Tu ejercicio del mes: <strong>${escapar(t.top[0].nombre)}</strong></p>` : ""}
       <div class="rh-botones">
-        <button type="button" class="boton" data-rh="otra-vez">Ver otra vez</button>
-        <button type="button" class="boton secundario" data-rh="cerrar">Cerrar</button>
+        <button type="button" class="rh-boton" data-rh="otra-vez">Ver otra vez</button>
+        <button type="button" class="rh-boton secundario" data-rh="cerrar">Cerrar</button>
       </div>`,
   };
 }
 
 /** Las historias del mes, en orden, sin las secciones vacías. */
-export function historiasDelMes(d: Pick<DatosResumenMensual, "resumen" | "enCurso" | "hoy" | "sexo" | "cambios">): Historia[] {
+export function historiasDelMes(
+  d: Pick<DatosResumenMensual, "resumen" | "enCurso" | "hoy" | "sexo" | "cambios" | "semanas">
+): Historia[] {
   const r = d.resumen;
   if (!r) return [];
   return [
     portada(r, d.enCurso, d.hoy),
-    entrenamiento(r),
+    entrenamiento(r, d.semanas ?? null),
     constancia(r, d.enCurso, d.hoy),
     fuerza(r, d.sexo, d.cambios),
     marcas(r),
@@ -247,7 +337,7 @@ const CERRAR = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stro
 function visor(d: DatosResumenMensual): string {
   const historias = historiasDelMes(d);
   if (historias.length === 0) {
-    return `<div class="rh-visor" role="dialog" aria-modal="true" aria-label="Resumen del mes">
+    return `<div class="rh-fijo rh-visor" role="dialog" aria-modal="true" aria-label="Resumen del mes">
       <button type="button" class="rh-cerrar" data-rh="cerrar" aria-label="Cerrar">${CERRAR}</button>
       <div class="rh-vacia"><p>Cargando…</p></div></div>`;
   }
@@ -257,7 +347,7 @@ function visor(d: DatosResumenMensual): string {
   const barras = historias.map((_, i) =>
     `<span class="${i < pagina ? "vista" : i === pagina ? "actual" : ""}"></span>`).join("");
   return `
-    <div class="rh-visor${entrada}" role="dialog" aria-modal="true"
+    <div class="rh-fijo rh-visor${entrada}" role="dialog" aria-modal="true"
          aria-label="Resumen de ${nombreMes(d.mes ?? "")} ${(d.mes ?? "").slice(0, 4)}, ${pagina + 1} de ${historias.length}">
       <div class="rh-progreso" aria-hidden="true">${barras}</div>
       <div class="rh-cabeza">

@@ -192,3 +192,17 @@ describe("meses y formatos", () => {
     expect(formatoKg(1234567)).toBe("1,234,567");
   });
 });
+
+describe("kgPorSemana", () => {
+  it("parte el mes en semanas de lunes a domingo y suma los kilos de cada una", async () => {
+    const { kgPorSemana } = await import("./resumenMensual");
+    const banco = [{ id: "banca", nombre: "Banca", tipo: "peso" as const, musculos: {} }, { id: "lag", nombre: "Lag", tipo: "corporal" as const, musculos: {} }];
+    const ses = (fecha: string, peso: number) => ({ id: fecha, fecha, origen: "manual" as const,
+      ejercicios: [{ ejercicioId: "banca", nombre: "Banca", series: [{ reps: 10, peso }] }, { ejercicioId: "lag", nombre: "Lag", series: [{ reps: 20, peso: null }] }] });
+    // Octubre 2026 empieza en jueves: semanas 1–4, 5–11, 12–18, 19–25, 26–31.
+    const s = kgPorSemana("2026-10", "2026-10-31", [ses("2026-10-02", 50), ses("2026-10-06", 60), ses("2026-10-09", 40), ses("2026-11-02", 99)], banco);
+    expect(s.map((w) => [w.desde, w.hasta])).toEqual([[1, 4], [5, 11], [12, 18], [19, 25], [26, 31]]);
+    expect(s.map((w) => w.kg)).toEqual([500, 1000, 0, 0, 0]);
+    expect(kgPorSemana("2026-10", "2026-10-08", [], banco).map((w) => w.hasta)).toEqual([4, 8]);
+  });
+});

@@ -93,13 +93,13 @@ describe("las historias", () => {
   it("constancia: % de asistencia, el calendario con hoy marcado, conteos, racha y tiempo", () => {
     const html = todo(datos());
     expect(html).toContain("53 <small>%</small>");
-    expect(html).toContain("rm-e hoy-celda");
+    expect(html).toContain("rh-e hoy");
     expect(html).toContain("tu racha más larga");
     expect(html).toContain("17 h <small>24 min</small>");
-    expect(html).toMatch(/class="rm-e"/);
-    expect(html).not.toMatch(/class="ok /);
+    expect(html).toMatch(/class="rh-dia rh-e"/);
+    expect(html).not.toMatch(/class="(ok|cal|rm-cal) /);
     const cerrado = todo(datos({ mes: "2026-09", enCurso: false, resumen: resumen({ mes: "2026-09" }) }));
-    expect(cerrado).not.toContain("hoy-celda");
+    expect(cerrado).not.toContain(" hoy\"");
   });
 
   it("fuerza: rango general, primer mes sin anterior y flechas con él", () => {
@@ -109,6 +109,7 @@ describe("las historias", () => {
     expect(conCambios).toContain("↑ 0.40");
     expect(conCambios).toContain("↓ 0.25");
     expect(conCambios).toContain(">Avanzado<");
+    expect(conCambios).toContain(">Élite");
   });
 
   it("marcas: kg × reps en los de peso y reps en los corporales", () => {
@@ -129,6 +130,45 @@ describe("las historias", () => {
     expect(html).toContain("Tu octubre en resumen");
     expect(html).toContain('data-rh="otra-vez"');
     expect(html).toContain('data-rh="cerrar"');
+  });
+});
+
+describe("gráficas y estilo fijo", () => {
+  it("kilos por semana: una columna por semana, la más alta marcada, con su número", () => {
+    const html = todo(datos({ semanas: [{ desde: 1, hasta: 5, kg: 12000 }, { desde: 6, hasta: 12, kg: 18500 }, { desde: 13, hasta: 19, kg: 0 }] }));
+    expect(html).toContain("Kilos por semana");
+    expect(html.match(/rh-columna-barra/g)).toHaveLength(3);
+    expect(html).toContain('rh-columna-barra max" style="height: 100.0%"');
+    expect(html).toContain("12k");
+    expect(html).toContain("1–5 oct");
+    expect(html).toContain("del 6 al 12: 18,500 kg");
+  });
+
+  it("sin kilos no hay gráfica de semanas", () => {
+    expect(todo(datos({ semanas: [{ desde: 1, hasta: 7, kg: 0 }] }))).not.toContain("Kilos por semana");
+    expect(todo(datos({ semanas: null }))).not.toContain("Kilos por semana");
+  });
+
+  it("constancia: barra de proporción con un tramo por estado presente y su leyenda con números", () => {
+    const html = todo(datos());
+    expect(html.match(/class="rh-tramo /g)).toHaveLength(3);
+    expect(html).toContain('aria-label="Entrenó 10, justificadas 7, faltas 2"');
+    const sinFaltas = todo(datos({ resumen: resumen({ asistencia: { ...resumen().asistencia, faltas: 0 } }) }));
+    expect(sinFaltas.match(/class="rh-tramo /g)).toHaveLength(2);
+  });
+
+  it("fuerza y marcas: barras sobre la escala de 0 a 8, con guías", () => {
+    const html = todo(datos());
+    expect(html).toContain('rh-barras-relleno" style="width: 100.0%"');
+    expect(html).toContain("rh-guia");
+  });
+
+  it("todo con clases propias: nada que los estilos de la clienta repinten", () => {
+    abrirHistoria("2026-10");
+    const html = ventanaResumenMensual(datos());
+    cerrarHistoria();
+    expect(html).toContain("rh-fijo");
+    expect(html).not.toMatch(/class="(?:[^"]*\s)?(tarjeta|boton|cal)(?:\s[^"]*)?"/);
   });
 });
 
