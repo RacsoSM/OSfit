@@ -229,73 +229,46 @@ function portada(r: ResumenMensual, enCurso: boolean, hoy: string, nombre = "", 
   const etiqueta = enCurso ? `En curso · al ${Number(hoy.slice(8, 10))} de ${nombreMes(r.mes)}` : "Tu resumen del mes";
   const pista = `<p class="rh-pista">Desliza para ver tu mes <span aria-hidden="true">→</span></p>`;
   const quien = nombre ? escapar(nombre.split(" ")[0]!) : "";
-  const rango = r.fuerza ? { nombre: nombreRango(r.fuerza.general, sexo ?? "M"), i: indiceRango(r.fuerza.general) } : null;
   const n = r.asistencia.entreno;
   const v = variantePortada();
-  if (v === "revista") {
+  if (v === "s1") {
     return {
-      id: "portada rh-portada-revista",
+      id: "portada rh-portada-s1",
       html: `
       <div class="rh-portada-c">
-        <p class="rh-rev-cab">OSFIT</p>
-        <p class="rh-rev-ed"><span>Edición ${mes} ${anio}</span><span>${enCurso ? "En curso" : "Nº " + Number(r.mes.slice(5))}</span></p>
-        <div class="rh-rev-lineas">
-          <p><b>${n}</b> ${n === 1 ? "día" : "días"} en el gym</p>
-          <p><b>${formatoKg(r.entrenamiento.kg)}</b> kg levantados</p>
-          ${rango ? `<p class="rh-rev-rango">${insigniaRango(rango.i, 30, "rh-rev-ins")}<span>El rango<br><b>${rango.nombre}</b></span></p>` : ""}
-          <p>Y tus <b>mejores marcas</b> del mes</p>
-        </div>
-        <p class="rh-rev-pre">La protagonista del mes</p>
-        <p class="rh-rev-nombre">${quien || "Tú"}</p>
+        <p class="rh-s-marca">OSFIT</p>
+        <p class="rh-s-hola">${quien ? `Hola, ${quien}` : "Hola"}</p>
+        <p class="rh-mes">${mes}</p>
+        <p class="rh-anio">${anio}</p>
+        <p class="rh-s-sub">${enCurso ? etiqueta : "Este es tu resumen del mes"}</p>
         ${pista}
       </div>`,
     };
   }
-  if (v === "sobre") {
+  if (v === "s2") {
     return {
-      id: "portada rh-portada-sobre",
+      id: "portada rh-portada-s2",
       html: `
       <div class="rh-portada-c">
-        <div class="rh-sobre">
-          <div class="rh-sobre-carta"><span>${mes}</span><small>${anio}</small></div>
-          <i class="rh-sobre-frente"></i><i class="rh-sobre-solapa"></i>
-          <div class="rh-sobre-sello">${rango ? insigniaRango(rango.i, 64, "rh-sobre-ins") : `<b>O</b>`}</div>
-        </div>
-        <p class="rh-sobre-para">Para ${quien || "ti"}</p>
-        <p class="rh-sobre-sub">${enCurso ? etiqueta : `Tu mes de ${nombreMes(r.mes)}, listo para abrir.`}</p>
+        <p class="rh-etiqueta">${etiqueta}</p>
+        <p class="rh-s-hola">${quien ? `Hola, ${quien}.` : "Hola."} Así fue tu</p>
+        <p class="rh-mes">${mes}</p>
+        <i class="rh-s-linea" aria-hidden="true"></i>
+        <p class="rh-anio">${anio}</p>
         ${pista}
       </div>`,
     };
   }
-  if (v === "pase") {
+  if (v === "s3") {
+    const h = Math.round(r.asistencia.minutos / 60);
     return {
-      id: "portada rh-portada-pase",
+      id: "portada rh-portada-s3",
       html: `
       <div class="rh-portada-c">
-        <div class="rh-pase-cinta" aria-hidden="true"></div>
-        <div class="rh-pase">
-          <i class="rh-pase-ojal"></i>
-          <p class="rh-pase-tipo">Acceso total</p>
-          <p class="rh-pase-gira">${mes} ${anio}</p>
-          <div class="rh-pase-foto">${(quien || "O").slice(0, 1).toUpperCase()}</div>
-          <p class="rh-pase-nombre">${quien || "Tú"}</p>
-          ${rango ? `<p class="rh-pase-rango">${insigniaRango(rango.i, 20, "rh-pase-ins")} ${rango.nombre}</p>` : ""}
-          <div class="rh-pase-cod"></div>
-          <p class="rh-pase-pie">OSFIT · Tu resumen del mes</p>
-        </div>
-        ${pista}
-      </div>`,
-    };
-  }
-  if (v === "aurora") {
-    return {
-      id: "portada rh-portada-aurora",
-      html: `
-      <i class="rh-aurora a1" aria-hidden="true"></i><i class="rh-aurora a2" aria-hidden="true"></i><i class="rh-aurora a3" aria-hidden="true"></i>
-      <div class="rh-portada-c">
-        <p class="rh-aur-arriba">OSFIT · ${anio}</p>
-        <p class="rh-aur-mes">${mes}</p>
-        <p class="rh-aur-de">${quien ? `El mes de ${quien}` : "Tu mes"}</p>
+        <p class="rh-etiqueta">${etiqueta}</p>
+        <p class="rh-mes">${mes}</p>
+        <p class="rh-anio">${anio}${quien ? ` · ${quien}` : ""}</p>
+        <p class="rh-s-chips"><span><b>${n}</b> ${n === 1 ? "día" : "días"}</span><span><b>${h}</b> h</span><span><b>${formatoKg(r.entrenamiento.kg)}</b> kg</span></p>
         ${pista}
       </div>`,
     };
