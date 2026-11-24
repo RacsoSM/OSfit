@@ -395,14 +395,15 @@ function marcas(r: ResumenMensual, previas: DatosResumenMensual["previas"]): His
 /**
  * Los tiempos del espectáculo, en segundos (entrenador, 2026-11-24: "un espectáculo de luces
  * destapando cada card"; luego: "que la luz se enfoque en cada card y unos dos segundos después
- * la siguiente"). Escenario a oscuras; en cada turno los dos reflectores giran hasta cruzarse
+ * la siguiente"; después: "que cada card dure 1 segundo más con el foco", así que van cada tres
+ * segundos). Escenario a oscuras; en cada turno los dos reflectores giran hasta cruzarse
  * sobre la tarjeta, la sala se oscurece alrededor y deja un círculo de luz sobre ella, que se
  * voltea, su número corre desde cero, suelta chispas y muestra su comparación; las demás quedan
  * en penumbra. Al final: destello, se encienden las luces, un brillo cruza todas las
  * tarjetas, ráfaga de confeti y aparecen el ejercicio del mes y los botones. Los mismos números
  * están en `estilos.css` (`--rh-intro`, `--rh-paso`, `--rh-remate`): si cambian aquí, allá.
  */
-export const ESCENA = { intro: 1.0, paso: 2.0, voltear: 0.35, contar: 0.9, apuntar: 0.7, remate: 12.6, total: 14.0 } as const;
+export const ESCENA = { intro: 1.0, paso: 3.0, voltear: 0.35, contar: 1.4, apuntar: 0.7, remate: 18.6, total: 20.0 } as const;
 
 /** Cuándo se voltea la tarjeta `i`. */
 const turno = (i: number) => ESCENA.intro + i * ESCENA.paso;
