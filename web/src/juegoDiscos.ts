@@ -124,3 +124,22 @@ export function soltar(p: Partida): Resultado {
 
 /** Lo mínimo que tarda un disco en apilarse; lo usa el servidor para descartar trampas. */
 export const MS_MINIMOS_POR_DISCO = 250;
+
+export interface Peso { kg: string; color: string; texto: string }
+
+/**
+ * Qué disco es según su ancho, con los colores de los discos olímpicos: entre más se corta, más
+ * ligero (y más chico) es el que sigue. La base es el disco negro del gym.
+ */
+export const PESOS: readonly (Peso & { desde: number })[] = [
+  { desde: 52, kg: "25", color: "#d6372c", texto: "#fff" },
+  { desde: 42, kg: "20", color: "#2a6fd6", texto: "#fff" },
+  { desde: 32, kg: "15", color: "#f0b400", texto: "#2a1d00" },
+  { desde: 22, kg: "10", color: "#24964a", texto: "#fff" },
+  { desde: 12, kg: "5", color: "#ecebe6", texto: "#1d1d1f" },
+  { desde: 0, kg: "2.5", color: "#c9cdd3", texto: "#1d1d1f" },
+];
+
+export function pesoDe(ancho: number): Peso {
+  return PESOS.find((p) => ancho >= p.desde) ?? PESOS[PESOS.length - 1]!;
+}

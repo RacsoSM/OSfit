@@ -2671,41 +2671,71 @@ body.historia-abierta { overflow: hidden; }
 .sugerencias-gracias { margin: 4px 0 6px; font-size: 22px; font-weight: 800; }
 .sugerencias .sugerencias-nota + .boton { margin-top: 14px; }
 
-/* ---------- Torre de discos (minijuego, `ui/juegoDiscos.ts`) ---------- */
-.jd { padding: 12px; }
-.jd-marcador { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 0 0 10px; }
-.jd-marcador div { background: var(--superficie-alta); border-radius: 12px; padding: 8px 10px; text-align: center; }
-.jd-marcador span { display: block; font-size: 11px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; color: var(--texto-tenue); }
-.jd-marcador b { display: block; font-size: 24px; font-weight: 900; font-variant-numeric: tabular-nums; line-height: 1.2; }
-/* Sin gestos del navegador: un toque es soltar el disco, no hacer zoom ni mover la página. */
-.jd-lienzo { position: relative; height: min(60vh, 560px); min-height: 320px; border-radius: 14px; overflow: hidden;
-  touch-action: none; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; cursor: pointer; }
-.jd-lienzo canvas { display: block; width: 100%; height: 100%; }
-.jd-capa { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 20px;
-  background: rgba(10, 10, 14, 0.62); backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px); }
+/* ---------- Torre de discos (minijuego, `ui/juegoDiscos.ts`) ----------
+   Toda la pestaña es el juego: fijo entre la cabecera y la barra de abajo (`ajustarMarco` pone
+   `top` y `bottom`). Sin scroll mientras está abierto. */
+body.con-juego { overflow: hidden; overscroll-behavior: none; }
+.jd-pantalla {
+  position: fixed; left: 50%; transform: translateX(-50%); width: min(100vw, 480px); top: 0; bottom: 0; z-index: 1;
+  overflow: hidden; background: #0d0e13; border-radius: 18px 18px 0 0;
+  /* Un toque es soltar el disco: sin zoom, sin mover la página, sin resaltar. */
+  touch-action: none; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent;
+}
+.jd-pantalla canvas { position: absolute; inset: 0; display: block; width: 100%; height: 100%; }
+.jd-hud { position: absolute; top: 14px; left: 0; right: 0; text-align: center; pointer-events: none; }
+.jd-hud-puntos { margin: 0; font-size: 64px; font-weight: 900; line-height: 1; color: #fff; font-variant-numeric: tabular-nums;
+  text-shadow: 0 4px 18px rgba(0, 0, 0, 0.6); }
+.jd-hud-puntos.pop { animation: jd-pop 0.28s cubic-bezier(0.2, 1.6, 0.4, 1); }
+@keyframes jd-pop { from { transform: scale(1.35); } to { transform: none; } }
+.jd-hud-record { margin: 4px 0 0; font-size: 13px; font-weight: 700; letter-spacing: 0.5px; color: rgba(255, 255, 255, 0.6); }
+.jd-hud-record b { color: #ffd45c; }
+.jd-pantalla:not(.en-juego) .jd-hud { opacity: 0; }
+.jd-capa { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 24px;
+  background: radial-gradient(120% 80% at 50% 40%, rgba(8, 8, 12, 0.35), rgba(8, 8, 12, 0.8)); animation: jd-aparece 0.35s ease-out; }
 .jd-capa[hidden] { display: none; }
-.jd-capa-caja { text-align: center; max-width: 290px; }
-.jd-capa-titulo { margin: 0 0 8px; font-size: 26px; font-weight: 900; }
-.jd-capa-texto { margin: 0 0 16px; font-size: 15px; line-height: 1.45; color: var(--texto); }
-.jd-capa-puntos { margin: 0; font-size: 64px; font-weight: 900; line-height: 1; font-variant-numeric: tabular-nums; }
-.jd-capa-record { display: inline-block; margin: 0 0 8px; padding: 4px 12px; border-radius: 99px; font-size: 14px; font-weight: 800;
-  color: #1a1300; background: linear-gradient(120deg, #ffb703, #ffd45c); animation: jd-record 0.6s cubic-bezier(0.2, 1.6, 0.4, 1) both; }
-@keyframes jd-record { from { transform: scale(0.4); opacity: 0; } to { transform: none; opacity: 1; } }
-.jd-capa-nota { margin: -6px 0 14px; font-size: 13px; color: var(--texto-tenue); }
+@keyframes jd-aparece { from { opacity: 0; } to { opacity: 1; } }
+.jd-capa-caja { width: 100%; max-width: 300px; text-align: center; display: flex; flex-direction: column; align-items: center; }
+.jd-capa-caja.fin { animation: jd-sube 0.5s 0.35s cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+@keyframes jd-sube { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: none; } }
+.jd-capa-marca { margin: 0 0 6px; font-size: 12px; font-weight: 900; letter-spacing: 5px; text-transform: uppercase; color: #ffd45c; }
+.jd-capa-titulo { margin: 0 0 10px; font-size: 38px; font-weight: 900; line-height: 1; letter-spacing: -0.5px; color: #fff;
+  text-shadow: 0 6px 24px rgba(0, 0, 0, 0.6); }
+.jd-capa-texto { margin: 0 0 22px; font-size: 15px; line-height: 1.45; color: rgba(255, 255, 255, 0.82); }
+.jd-capa-puntos { margin: 0; font-size: 92px; font-weight: 900; line-height: 1; color: #fff; font-variant-numeric: tabular-nums;
+  text-shadow: 0 6px 30px rgba(0, 0, 0, 0.6); }
+.jd-capa-record { margin: 0 0 10px; padding: 6px 16px; border-radius: 99px; font-size: 15px; font-weight: 900;
+  color: #1a1300; background: linear-gradient(120deg, #ffb703, #ffe08a); box-shadow: 0 0 30px rgba(255, 183, 3, 0.5);
+  animation: jd-record 0.7s 0.5s cubic-bezier(0.2, 1.6, 0.4, 1) both; }
+@keyframes jd-record { from { transform: scale(0.3); opacity: 0; } to { transform: none; opacity: 1; } }
+.jd-capa-nota { margin: -10px 0 16px; font-size: 13px; color: rgba(255, 255, 255, 0.6); }
 .jd-capa-nota.error { color: #ff8a80; }
 .jd-enlace { background: none; border: 0; padding: 0; color: inherit; font: inherit; text-decoration: underline; cursor: pointer; }
-.jd-tabla-titulo { margin: 0 0 10px; font-size: 18px; font-weight: 800; }
-.jd-lista { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
-.jd-lista li { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 12px; background: var(--superficie-alta); font-size: 15px; }
+.jd-boton { width: 100%; min-height: 50px; margin: 0 0 10px; border: 0; border-radius: 14px; cursor: pointer;
+  font: inherit; font-size: 17px; font-weight: 800; color: #1a1300; background: linear-gradient(180deg, #ffd45c, #ffb703);
+  box-shadow: 0 6px 20px rgba(255, 183, 3, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.5); }
+.jd-boton:active { transform: translateY(1px) scale(0.99); }
+.jd-boton.secundario { color: #fff; background: rgba(255, 255, 255, 0.12); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18); }
+/* El marcador: una hoja que sube sobre el juego. */
+.jd-hoja { position: absolute; left: 0; right: 0; bottom: 0; max-height: 88%; display: flex; flex-direction: column; padding: 16px 16px 12px;
+  border-radius: 22px 22px 0 0; background: #17171d; box-shadow: 0 -20px 50px rgba(0, 0, 0, 0.6); animation: jd-hoja 0.35s cubic-bezier(0.2, 0.9, 0.3, 1); }
+.jd-hoja[hidden] { display: none; }
+@keyframes jd-hoja { from { transform: translateY(100%); } to { transform: none; } }
+.jd-hoja-cabeza { display: flex; align-items: center; justify-content: space-between; }
+.jd-hoja-titulo { margin: 0; font-size: 24px; font-weight: 900; color: #fff; }
+.jd-cerrar { width: 40px; height: 40px; border: 0; border-radius: 12px; background: rgba(255, 255, 255, 0.08); color: #fff; font-size: 18px; cursor: pointer; }
+.jd-hoja-tuyo { margin: 4px 0 12px; font-size: 14px; color: rgba(255, 255, 255, 0.65); }
+.jd-lista { flex: 1 1 auto; min-height: 0; list-style: none; margin: 0 0 12px; padding: 0; display: flex; flex-direction: column; gap: 6px; overflow-y: auto; touch-action: pan-y; }
+.jd-hoja .jd-boton { flex: none; margin: 0; }
+.jd-lista li { display: flex; align-items: center; gap: 10px; padding: 11px 12px; border-radius: 12px; background: rgba(255, 255, 255, 0.05); font-size: 15px; color: #fff; }
 .jd-lista li b { margin-left: auto; font-size: 17px; font-weight: 900; font-variant-numeric: tabular-nums; }
 .jd-nombre { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.jd-puesto { flex: none; width: 26px; height: 26px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;
-  font-size: 13px; font-weight: 900; background: rgba(255, 255, 255, 0.08); color: var(--texto-tenue); }
-.jd-lista li.p1 .jd-puesto { background: #ffb703; color: #1a1300; }
-.jd-lista li.p2 .jd-puesto { background: #c9ccd3; color: #16171a; }
-.jd-lista li.p3 .jd-puesto { background: #cd7f45; color: #1d0f04; }
-.jd-lista li.tuyo { box-shadow: inset 0 0 0 2px var(--primario); }
-.jd-lista li.jd-vacio { justify-content: center; color: var(--texto-tenue); font-size: 14px; }
+.jd-puesto { flex: none; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 900; background: rgba(255, 255, 255, 0.08); color: rgba(255, 255, 255, 0.6); }
+.jd-lista li.p1 .jd-puesto { background: linear-gradient(145deg, #ffe08a, #e6a100); color: #1a1300; }
+.jd-lista li.p2 .jd-puesto { background: linear-gradient(145deg, #f2f4f7, #a9adb5); color: #16171a; }
+.jd-lista li.p3 .jd-puesto { background: linear-gradient(145deg, #f0b07a, #b8692e); color: #1d0f04; }
+.jd-lista li.tuyo { background: rgba(255, 183, 3, 0.12); box-shadow: inset 0 0 0 1.5px rgba(255, 183, 3, 0.7); }
+.jd-lista li.jd-vacio { justify-content: center; color: rgba(255, 255, 255, 0.55); font-size: 14px; }
 
 /* ---------- El póster del mes (historia final; diseño "A1 · S1" del entrenador, 2026-11-24) ----------
    A toda la pantalla, con el marco de los colores de los rangos. Semitransparente para que el

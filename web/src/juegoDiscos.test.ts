@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  ANCHO_INICIAL, DESDE_LADOS, DESDE_ONDULADO, TOLERANCIA_PERFECTO, avanzar, nuevaPartida, soltar, velocidad, type Partida,
+  ANCHO_INICIAL, DESDE_LADOS, DESDE_ONDULADO, TOLERANCIA_PERFECTO, avanzar, nuevaPartida, pesoDe, soltar, velocidad, type Partida,
 } from "./juegoDiscos";
 
 /** Pone el disco móvil en `x` (relativo a la torre) y lo suelta. */
@@ -75,5 +75,12 @@ describe("Torre de discos", () => {
       expect(p.movil.x).toBeGreaterThanOrEqual(-15);
       expect(p.movil.x + p.movil.ancho).toBeLessThanOrEqual(115);
     }
+  });
+});
+
+describe("pesoDe", () => {
+  it("entre más angosto, más ligero: 25, 20, 15, 10, 5 y 2.5 kg", () => {
+    expect([60, 45, 35, 25, 15, 5].map((a) => pesoDe(a).kg)).toEqual(["25", "20", "15", "10", "5", "2.5"]);
+    expect(pesoDe(60).color).toBe("#d6372c");
   });
 });
