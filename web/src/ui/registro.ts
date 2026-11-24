@@ -1125,10 +1125,10 @@ export function listaEjerciciosResumen(filas: readonly FilaEjercicio[]): string 
   return `
     <div class="tarjeta resumen-ejercicios">
       <p class="tarjeta-titulo">Tus ejercicios</p>
-      <ul class="resumen-lista">
+      <ul class="resumen-lista${filas.length > 3 ? " desliza" : ""}">
         ${filas.map((f) => `
           <li class="resumen-ej">
-            ${gif(f.gifRuta, "resumen-ej-gif", 52)}
+            ${gif(f.gifRuta, "resumen-ej-gif", 46)}
             <span class="resumen-ej-texto">
               <span class="resumen-ej-nombre">${escapar(f.nombre)}</span>
               <span class="resumen-ej-series">${escapar(f.series)}</span>
@@ -1161,30 +1161,23 @@ function vistaResumen(r: ResumenFinal, sexo: "H" | "M"): string {
           </span>
         </div>`).join("")}
     </div>`;
-  const musculos = r.musculos.length === 0 ? "" : `
-    <div class="tarjeta">
-      <p class="tarjeta-titulo">Músculos que trabajaste</p>
-      <div class="resumen-musculos">
-        ${r.musculos.map((m) => `<span class="resumen-musculo${m.principal ? " principal" : ""}">${escapar(m.nombre)}</span>`).join("")}
-      </div>
-    </div>`;
   const nota = r.enTelefono
     ? `<p class="registro-pendientes">📱 Se guardó en tu teléfono y se enviará ${cuandoSeEnvia()}.</p>`
     : "";
   return `
     ${r.sesionId ? escalaEsfuerzo(r.esfuerzo) : ""}
     <div class="resumen">
-      <p class="resumen-emoji" aria-hidden="true">${r.subidas.length > 0 ? "🏆" : "🎉"}</p>
-      <p class="resumen-titulo">¡Entrenamiento terminado!</p>
+      <p class="resumen-titulo"><span class="resumen-emoji" aria-hidden="true">${r.subidas.length > 0 ? "🏆" : "🎉"}</span> ¡Entrenamiento terminado!</p>
       ${r.dia ? `<p class="resumen-dia">${escapar(r.dia)}</p>` : ""}
     </div>
     ${nota}
     ${datos}
     ${listaEjerciciosResumen(r.filas ?? [])}
     ${subidas}
-    ${musculos}
-    <button class="boton" data-accion="listo">Listo</button>
-    <button class="boton secundario resumen-musculos-boton" data-accion="ver-musculos">💪 Ver mis músculos</button>`;
+    <div class="resumen-botones">
+      <button class="boton" data-accion="listo">Listo</button>
+      <button class="boton secundario" data-accion="ver-musculos">💪 Mis músculos</button>
+    </div>`;
 }
 
 /**

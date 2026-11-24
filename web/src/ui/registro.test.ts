@@ -353,7 +353,7 @@ describe("resumen al terminar", () => {
     subidas: [{ musculo: "pecho", nombre: "Pecho", antes: 2, despues: 3, nivel: 4.1 }],
     enTelefono: false, guiado: true, dia: "Pecho y hombro",
   };
-  it("muestra duración, lo que hizo, lo que subió de rango y los músculos", () => {
+  it("muestra duración, lo que hizo y lo que subió de rango, sin «Músculos que trabajaste»", () => {
     ponerEstadoRegistro({ vista: "resumen", borrador: null, resumen });
     const html = ventanaRegistro(datos({ sexo: "M" }));
     expect(html).toContain("¡Entrenamiento terminado!");
@@ -362,7 +362,7 @@ describe("resumen al terminar", () => {
     expect(html).toContain("1,240 kg");
     expect(html).toContain("¡Subiste de rango!");
     expect(html).toContain("En forma → Intermedio");
-    expect(html).toContain('resumen-musculo principal">Pecho');
+    expect(html).not.toContain("Músculos que trabajaste");
     expect(html).toContain('data-accion="listo"');
     expect(html).not.toContain("se enviará solo");
   });
