@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { armarTabla, nombreCorto, partidaValida, type Registro } from "./juegoDiscos";
+import { armarTabla, nombreVisible, partidaValida, type Registro } from "./juegoDiscos";
 
 describe("partidaValida", () => {
   it("acepta una partida posible", () => {
@@ -16,34 +16,26 @@ describe("partidaValida", () => {
   });
 });
 
-describe("nombreCorto", () => {
-  it("primer nombre e inicial del apellido", () => {
-    expect(nombreCorto("Valeria Ruiz Pérez")).toBe("Valeria R.");
-    expect(nombreCorto("  jessica   lópez ")).toBe("jessica L.");
-    expect(nombreCorto("Ana")).toBe("Ana");
-    expect(nombreCorto(" ")).toBe("Sin nombre");
+describe("nombreVisible", () => {
+  it("el nombre completo, sin espacios de sobra", () => {
+    expect(nombreVisible("  Valeria   Ruiz Pérez ")).toBe("Valeria Ruiz Pérez");
+    expect(nombreVisible(" ")).toBe("Sin nombre");
   });
 });
 
 describe("armarTabla", () => {
-  const r = (clienteId: string, nombre: string, mejor: number, mes: string | null, mejorMes: number): Registro =>
-    ({ clienteId, nombre, mejor, mes, mejorMes });
-  const regs = [
-    r("a", "Ana Soto", 40, "2026-11", 25),
-    r("b", "Bety Cruz", 60, "2026-10", 60),
-    r("c", "Caro Díaz", 40, "2026-11", 40),
-    r("d", "Dani Paz", 0, null, 0),
-  ];
-  it("este mes solo cuenta lo jugado en el mes; el histórico, el mejor de siempre", () => {
-    const t = armarTabla(regs, "a", "2026-11");
-    expect(t.esteMes.map((f) => [f.puesto, f.nombre, f.puntos])).toEqual([[1, "Caro D.", 40], [2, "Ana S.", 25]]);
-    expect(t.historico.map((f) => [f.puesto, f.nombre, f.puntos])).toEqual([[1, "Bety C.", 60], [2, "Ana S.", 40], [2, "Caro D.", 40]]);
-    expect(t.historico.find((f) => f.esTuyo)?.nombre).toBe("Ana S.");
-    expect([t.tuMejor, t.tuMejorMes]).toEqual([40, 25]);
+  const r = (clienteId: string, nombre: string, mejor: number): Registro => ({ clienteId, nombre, mejor });
+  it("la mejor de cada quien, de mayor a menor; los empates comparten lugar; quien no ha puntuado no sale", () => {
+    const t = armarTabla([r("a", "Ana Soto", 40), r("b", "Bety Cruz", 60), r("c", "Caro Díaz", 40), r("d", "Dani Paz", 0), r("e", "Eva Luna", 12)], "a");
+    expect(t.filas.map((f) => [f.puesto, f.nombre, f.puntos])).toEqual([
+      [1, "Bety Cruz", 60], [2, "Ana Soto", 40], [2, "Caro Díaz", 40], [4, "Eva Luna", 12],
+    ]);
+    expect(t.filas.filter((f) => f.esTuyo).map((f) => f.nombre)).toEqual(["Ana Soto"]);
+    expect(t.tuMejor).toBe(40);
   });
-  it("el récord del mes de alguien que no ha jugado este mes es 0", () => {
-    const t = armarTabla(regs, "b", "2026-11");
-    expect([t.tuMejor, t.tuMejorMes]).toEqual([60, 0]);
-    expect(t.esteMes.some((f) => f.esTuyo)).toBe(false);
+  it("quien no ha jugado: récord 0 y no sale en la tabla", () => {
+    const t = armarTabla([r("a", "Ana Soto", 40)], "z");
+    expect(t.tuMejor).toBe(0);
+    expect(t.filas.some((f) => f.esTuyo)).toBe(false);
   });
 });

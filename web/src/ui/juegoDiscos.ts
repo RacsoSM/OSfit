@@ -13,9 +13,10 @@ import { escapar } from "./tarjetaDia";
  */
 
 export interface FilaTabla { puesto: number; nombre: string; puntos: number; esTuyo: boolean }
-export interface TablaDiscos { mes: string; esteMes: FilaTabla[]; historico: FilaTabla[]; tuMejor: number; tuMejorMes: number }
+/** Los records: la mejor partida de cada quien, de siempre, con su nombre completo. */
+export interface TablaDiscos { filas: FilaTabla[]; tuMejor: number }
 export interface EnvioPartida { puntos: number; apilados: number; duracionMs: number }
-export interface RespuestaPartida { recordHistorico: boolean; recordMes: boolean; tabla: TablaDiscos }
+export interface RespuestaPartida { record: boolean; tabla: TablaDiscos }
 
 export interface ApiJuego {
   guardar: (p: EnvioPartida) => Promise<RespuestaPartida>;
@@ -49,15 +50,17 @@ let cuadro = 0;
 let ultimo = 0;
 let tabla: TablaDiscos | null = null;
 let errorTabla = false;
-let pestana: "mes" | "historico" = "mes";
 let guardado: "nada" | "guardando" | "guardado" | "error" = "nada";
-let record: { historico: boolean; mes: boolean } = { historico: false, mes: false };
+let record = false;
+
+// Solo en desarrollo (Vite lo quita del build): deja leer la partida para grabar demos.
+if (import.meta.env?.DEV) (globalThis as { __torreDiscos?: () => { partida: Partida; estado: Estado } }).__torreDiscos = () => ({ partida, estado });
 
 /** Para los tests. */
 export function reiniciarJuego(): void {
   cancelAnimationFrame(cuadro);
   caja = null; api = null; estado = "inicio"; partida = nuevaPartida(); piezas = []; destellos = [];
-  tabla = null; errorTabla = false; pestana = "mes"; guardado = "nada"; record = { historico: false, mes: false };
+  tabla = null; errorTabla = false; guardado = "nada"; record = false;
 }
 
 /** Lo de fuera del canvas. Se arma una vez; `actualizar()` cambia solo los textos. */
@@ -67,7 +70,7 @@ export function htmlJuego(): string {
       <div class="jd-marcador">
         <div><span>Puntos</span><b id="jd-puntos">0</b></div>
         <div><span>Tu récord</span><b id="jd-record">—</b></div>
-        <div><span>Este mes</span><b id="jd-lugar">—</b></div>
+        <div><span>Tu lugar</span><b id="jd-lugar">—</b></div>
       </div>
       <div class="jd-lienzo" id="jd-lienzo">
         <canvas id="jd-canvas" aria-label="Torre de discos"></canvas>
@@ -75,17 +78,13 @@ export function htmlJuego(): string {
       </div>
     </div>
     <div class="tarjeta jd-tabla">
-      <p class="jd-tabla-titulo">Tabla de puntuaciones</p>
-      <div class="jd-pestanas" role="tablist">
-        <button type="button" role="tab" data-jd-pestana="mes">Este mes</button>
-        <button type="button" role="tab" data-jd-pestana="historico">Histórico</button>
-      </div>
+      <p class="jd-tabla-titulo">Records</p>
       <ol class="jd-lista" id="jd-lista"></ol>
     </div>`;
 }
 
 /** La capa sobre el canvas: instrucciones, pausa o el resultado. */
-export function htmlCapa(e: Estado, puntos: number, apilados: number, g: typeof guardado, r: typeof record): string {
+export function htmlCapa(e: Estado, puntos: number, apilados: number, g: typeof guardado, nuevoRecord: boolean): string {
   if (e === "jugando") return "";
   if (e === "pausa") {
     return `<div class="jd-capa-caja"><p class="jd-capa-titulo">Pausa</p><button type="button" class="boton" data-jd="seguir">Seguir</button></div>`;
@@ -98,7 +97,7 @@ export function htmlCapa(e: Estado, puntos: number, apilados: number, g: typeof 
         <button type="button" class="boton" data-jd="jugar">Jugar</button>
       </div>`;
   }
-  const etiqueta = r.historico ? "¡Nuevo récord!" : r.mes ? "¡Tu mejor del mes!" : "";
+  const etiqueta = nuevoRecord ? "¡Nuevo récord!" : "";
   const estadoGuardado = g === "guardando" ? `<p class="jd-capa-nota">Guardando tu puntuación…</p>`
     : g === "error" ? `<p class="jd-capa-nota error">No se pudo guardar tu puntuación. <button type="button" class="jd-enlace" data-jd="reintentar">Reintentar</button></p>`
     : "";
@@ -112,12 +111,11 @@ export function htmlCapa(e: Estado, puntos: number, apilados: number, g: typeof 
     </div>`;
 }
 
-export function htmlLista(t: TablaDiscos | null, cual: "mes" | "historico", error: boolean): string {
+export function htmlLista(t: TablaDiscos | null, error: boolean): string {
   if (error && !t) return `<li class="jd-vacio">No se pudo cargar la tabla.</li>`;
   if (!t) return `<li class="jd-vacio">Cargando…</li>`;
-  const filas = cual === "mes" ? t.esteMes : t.historico;
-  if (filas.length === 0) return `<li class="jd-vacio">${cual === "mes" ? "Nadie ha jugado este mes. ¡Sé la primera!" : "Todavía nadie ha jugado."}</li>`;
-  return filas.map((f) => `
+  if (t.filas.length === 0) return `<li class="jd-vacio">Todavía nadie ha jugado. ¡Pon el primer récord!</li>`;
+  return t.filas.map((f) => `
     <li class="${f.esTuyo ? "tuyo" : ""}${f.puesto <= 3 ? ` podio p${f.puesto}` : ""}">
       <span class="jd-puesto">${f.puesto}</span><span class="jd-nombre">${escapar(f.nombre)}${f.esTuyo ? " (tú)" : ""}</span><b>${f.puntos}</b>
     </li>`).join("");
@@ -129,19 +127,14 @@ function actualizar(): void {
   const puntos = q("#jd-puntos"); if (puntos) puntos.textContent = String(partida.puntos);
   const rec = q("#jd-record"); if (rec) rec.textContent = tabla && tabla.tuMejor > 0 ? String(tabla.tuMejor) : "—";
   const lugar = q("#jd-lugar");
-  const mio = tabla?.esteMes.find((f) => f.esTuyo);
+  const mio = tabla?.filas.find((f) => f.esTuyo);
   if (lugar) lugar.textContent = mio ? `#${mio.puesto}` : "—";
   const capa = q("#jd-capa");
   if (capa) {
     capa.innerHTML = htmlCapa(estado, partida.puntos, partida.apilados, guardado, record);
     capa.hidden = estado === "jugando";
   }
-  caja.querySelectorAll<HTMLElement>("[data-jd-pestana]").forEach((b) => {
-    const activa = b.dataset.jdPestana === pestana;
-    b.classList.toggle("activa", activa);
-    b.setAttribute("aria-selected", String(activa));
-  });
-  const lista = q("#jd-lista"); if (lista) lista.innerHTML = htmlLista(tabla, pestana, errorTabla);
+  const lista = q("#jd-lista"); if (lista) lista.innerHTML = htmlLista(tabla, errorTabla);
 }
 
 async function cargarTabla(): Promise<void> {
@@ -156,7 +149,7 @@ async function guardarPartida(): Promise<void> {
   actualizar();
   try {
     const r = await api.guardar({ puntos: partida.puntos, apilados: partida.apilados, duracionMs: Math.round(duracion) });
-    record = { historico: r.recordHistorico, mes: r.recordMes };
+    record = r.record;
     tabla = r.tabla;
     guardado = "guardado";
   } catch {
@@ -168,7 +161,7 @@ async function guardarPartida(): Promise<void> {
 function jugar(): void {
   partida = nuevaPartida();
   piezas = []; destellos = []; brillo = 0; camara = 0;
-  guardado = "nada"; record = { historico: false, mes: false };
+  guardado = "nada"; record = false;
   estado = "jugando";
   inicio = performance.now();
   duracion = 0;
@@ -349,9 +342,8 @@ function conectar(c: HTMLElement): void {
     tocar();
   });
   c.addEventListener("click", (e) => {
-    const b = (e.target as HTMLElement).closest<HTMLElement>("[data-jd], [data-jd-pestana]");
+    const b = (e.target as HTMLElement).closest<HTMLElement>("[data-jd]");
     if (!b) return;
-    if (b.dataset.jdPestana) { pestana = b.dataset.jdPestana as typeof pestana; actualizar(); return; }
     if (b.dataset.jd === "jugar") jugar();
     if (b.dataset.jd === "seguir") { estado = "jugando"; inicio = performance.now() - duracion; actualizar(); arrancarCiclo(); }
     if (b.dataset.jd === "reintentar") void guardarPartida();

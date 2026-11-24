@@ -6,7 +6,7 @@ import { REGION, clienteDeLaSesion, db, hoyEnMazatlan } from "./comun";
  * Torre de discos, el minijuego de la web (entrenador, 2026-11-24), y su tabla de puntuaciones.
  *
  * Cada clienta tiene un documento `juegoDiscos/{clienteId}` con su mejor puntuación de siempre
- * y la del mes en curso. Solo estas funciones lo escriben y lo leen (las reglas lo cierran a las
+ * (la tabla "Records"). Solo estas funciones lo escriben y lo leen (las reglas lo cierran a las
  * clientas), así nadie se pone una puntuación a mano: `guardarPartidaDiscos` revisa que la
  * partida sea posible antes de guardarla.
  */
@@ -30,67 +30,42 @@ export function partidaValida(x: unknown): Partida | null {
   return { puntos, apilados, duracionMs };
 }
 
-/** "Valeria Ruiz Pérez" → "Valeria R."; un solo nombre queda igual. */
-export function nombreCorto(nombre: string): string {
-  const partes = nombre.trim().split(/\s+/).filter(Boolean);
-  if (partes.length === 0) return "Sin nombre";
-  return partes.length === 1 ? partes[0]! : `${partes[0]} ${partes[1]!.charAt(0).toUpperCase()}.`;
+/** Su nombre completo, con los espacios en orden (entrenador, 2026-11-24: "nombre completo"). */
+export function nombreVisible(nombre: string): string {
+  const limpio = nombre.trim().replace(/\s+/g, " ");
+  return limpio === "" ? "Sin nombre" : limpio;
 }
 
-export interface Registro {
-  clienteId: string;
-  nombre: string;
-  mejor: number;
-  mes: string | null;
-  mejorMes: number;
-}
+export interface Registro { clienteId: string; nombre: string; mejor: number }
 
 export interface FilaTabla { puesto: number; nombre: string; puntos: number; esTuyo: boolean }
-export interface TablaDiscos {
-  mes: string;
-  esteMes: FilaTabla[];
-  historico: FilaTabla[];
-  /** Lo suyo, aunque no haya jugado (0). */
-  tuMejor: number;
-  tuMejorMes: number;
-}
+/** Los records: la mejor partida de cada quien, de siempre. Cuentan todas, activas o no. */
+export interface TablaDiscos { filas: FilaTabla[]; tuMejor: number }
 
-function ordenar(filas: { nombre: string; puntos: number; esTuyo: boolean }[]): FilaTabla[] {
-  const o = filas.filter((f) => f.puntos > 0).sort((a, b) => b.puntos - a.puntos || a.nombre.localeCompare(b.nombre, "es"));
+export function armarTabla(registros: readonly Registro[], clienteId: string): TablaDiscos {
+  const o = registros.filter((r) => r.mejor > 0)
+    .map((r) => ({ nombre: nombreVisible(r.nombre), puntos: r.mejor, esTuyo: r.clienteId === clienteId }))
+    .sort((a, b) => b.puntos - a.puntos || a.nombre.localeCompare(b.nombre, "es"));
   // Empates: mismo puesto ("1, 1, 3").
   let puesto = 0;
-  return o.map((f, i) => {
+  const filas = o.map((f, i) => {
     if (i === 0 || o[i - 1]!.puntos !== f.puntos) puesto = i + 1;
     return { puesto, ...f };
   });
-}
-
-export function armarTabla(registros: readonly Registro[], clienteId: string, mes: string): TablaDiscos {
-  const mio = registros.find((r) => r.clienteId === clienteId);
-  return {
-    mes,
-    esteMes: ordenar(registros.filter((r) => r.mes === mes)
-      .map((r) => ({ nombre: nombreCorto(r.nombre), puntos: r.mejorMes, esTuyo: r.clienteId === clienteId }))),
-    historico: ordenar(registros.map((r) => ({ nombre: nombreCorto(r.nombre), puntos: r.mejor, esTuyo: r.clienteId === clienteId }))),
-    tuMejor: mio?.mejor ?? 0,
-    tuMejorMes: mio && mio.mes === mes ? mio.mejorMes : 0,
-  };
+  return { filas, tuMejor: registros.find((r) => r.clienteId === clienteId)?.mejor ?? 0 };
 }
 
 function registroDesdeDoc(id: string, d: Record<string, unknown>): Registro {
-  const num = (n: unknown) => (typeof n === "number" && Number.isFinite(n) ? n : 0);
   return {
     clienteId: id,
     nombre: typeof d.nombre === "string" ? d.nombre : "",
-    mejor: num(d.mejor),
-    mes: typeof d.mes === "string" ? d.mes : null,
-    mejorMes: num(d.mejorMes),
+    mejor: typeof d.mejor === "number" && Number.isFinite(d.mejor) ? d.mejor : 0,
   };
 }
 
 async function leerTabla(clienteId: string): Promise<TablaDiscos> {
   const snap = await db().collection("juegoDiscos").get();
-  return armarTabla(snap.docs.map((d) => registroDesdeDoc(d.id, d.data())), clienteId, hoyEnMazatlan().slice(0, 7));
+  return armarTabla(snap.docs.map((d) => registroDesdeDoc(d.id, d.data())), clienteId);
 }
 
 /** Guarda la partida (si mejora algo) y devuelve la tabla al día, con si fue récord. */
@@ -100,25 +75,21 @@ export const guardarPartidaDiscos = onCall({ region: REGION }, async (request) =
   if (!partida) throw new HttpsError("invalid-argument", "partida_invalida");
 
   const firestore = db();
-  const mes = hoyEnMazatlan().slice(0, 7);
+  // El nombre de hoy: si el entrenador lo corrige, la tabla se pone al día en su próxima partida.
   const nombre = ((await firestore.collection("clientes").doc(clienteId).get()).get("nombre") as string | undefined)?.trim() || "";
   const ref = firestore.collection("juegoDiscos").doc(clienteId);
-  const { recordHistorico, recordMes } = await firestore.runTransaction(async (tx) => {
+  const record = await firestore.runTransaction(async (tx) => {
     const antes = registroDesdeDoc(clienteId, (await tx.get(ref)).data() ?? {});
-    const mejorMesAntes = antes.mes === mes ? antes.mejorMes : 0;
-    const recordHistorico = partida.puntos > antes.mejor;
-    const recordMes = partida.puntos > mejorMesAntes;
     tx.set(ref, {
       nombre,
       mejor: Math.max(antes.mejor, partida.puntos),
-      mes,
-      mejorMes: Math.max(mejorMesAntes, partida.puntos),
       partidas: FieldValue.increment(1),
       ultima: FieldValue.serverTimestamp(),
+      ...(partida.puntos > antes.mejor ? { mejorEn: hoyEnMazatlan() } : {}),
     }, { merge: true });
-    return { recordHistorico, recordMes };
+    return partida.puntos > antes.mejor;
   });
-  return { recordHistorico, recordMes, tabla: await leerTabla(clienteId) };
+  return { record, tabla: await leerTabla(clienteId) };
 });
 
 export const tablaDiscos = onCall({ region: REGION }, async (request) => {
