@@ -18,3 +18,4 @@ export { despertarFunciones } from "./despertador";
 export { avisarResumenMes, cerrarMes } from "./cerrarMes";
 export { enviarSugerencia } from "./sugerencias";
 export { guardarPartidaDiscos, tablaDiscos } from "./juegoDiscos";
+export { guardarEsfuerzo } from "./esfuerzo";

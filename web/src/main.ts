@@ -33,7 +33,7 @@ import type {
 import { horaEnMazatlan, hoyEnMazatlan } from "./fecha";
 import { mesAnterior, type Tirada } from "./tirada";
 import {
-  batallaAmigos, borrarSesion, enviarSugerencia, guardarPartidaDiscos, tablaDiscos, compararMusculos, editarSesion, elegirMostrarEnAmigos, guardarPeso, marcarAsistencia, obtenerRanking, registrarEntrada, registrarSesion,
+  batallaAmigos, borrarSesion, enviarSugerencia, guardarEsfuerzo, guardarPartidaDiscos, tablaDiscos, compararMusculos, editarSesion, elegirMostrarEnAmigos, guardarPeso, marcarAsistencia, obtenerRanking, registrarEntrada, registrarSesion,
 } from "./acciones";
 import { modalRuleta, conectarRuleta } from "./ui/ruleta";
 import { conectarRanking, type EstadoRanking } from "./ui/tarjetaRanking";
@@ -98,6 +98,7 @@ import type { VideoConUrl } from "./ui/tarjetaVideos";
 import { iniciarCronometros } from "./ui/cronometro";
 import { conectarSugerencias, reiniciarSugerencias } from "./ui/sugerencias";
 import { mostrarJuego } from "./ui/juegoDiscos";
+import { calificarEsfuerzo, reenviarEsfuerzos } from "./esfuerzo";
 import { conectarBuzon, leerVisto, marcarVistas, resaltarAviso, sinLeer } from "./ui/buzon";
 
 const app = document.querySelector<HTMLElement>("#app")!;
@@ -857,6 +858,7 @@ async function arrancar(): Promise<void> {
         },
         verMusculos: () => abrirVentana("musculos"),
         apagarSinDatos: () => { cambiarSinDatos(false); },
+        calificar: (sesionId, esfuerzo) => { void calificarEsfuerzo(sesionId, esfuerzo, (d) => guardarEsfuerzo(d)); },
       });
       return;
     }
@@ -1079,6 +1081,11 @@ async function arrancar(): Promise<void> {
   }
   abrirDesdeAviso(deLaDireccion);
   navigator.serviceWorker?.addEventListener("message", (e) => abrirDesdeAviso(abrirDelMensaje(e.data, idsVentanas)));
+
+  // "¿Qué tan pesado estuvo?" que se calificó sin internet: se manda ahora y al volver la señal.
+  const reenviar = () => { void reenviarEsfuerzos((d) => guardarEsfuerzo(d)); };
+  reenviar();
+  window.addEventListener("online", reenviar);
 
   observarCliente(clienteId, (c) => {
     cliente = c;

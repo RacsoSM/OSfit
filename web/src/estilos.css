@@ -2671,6 +2671,38 @@ body.historia-abierta { overflow: hidden; }
 .sugerencias-gracias { margin: 4px 0 6px; font-size: 22px; font-weight: 800; }
 .sugerencias .sugerencias-nota + .boton { margin-top: 14px; }
 
+/* ---------- Resumen al terminar: esfuerzo y ejercicios (entrenador, 2026-11-24) ---------- */
+.esfuerzo-titulo { margin: 0 0 10px; font-size: 16px; font-weight: 800; text-align: center; }
+.esfuerzo-escala { display: grid; grid-template-columns: repeat(10, 1fr); gap: 5px; }
+.esfuerzo-num {
+  aspect-ratio: 1 / 1.15; min-width: 0; padding: 0; border: 0; border-radius: 9px; cursor: pointer;
+  font: inherit; font-size: 16px; font-weight: 800; color: var(--c);
+  background: var(--superficie-alta); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+  transition: transform 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+.esfuerzo-num:active { transform: scale(0.92); }
+.esfuerzo-num.elegido { color: #fff; background: var(--c); box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.85), 0 4px 14px rgba(0, 0, 0, 0.35); transform: scale(1.08); }
+.esfuerzo-extremos { display: flex; justify-content: space-between; margin: 6px 2px 0; font-size: 12px; color: var(--texto-tenue); }
+.esfuerzo-gracias { margin: 10px 0 0; font-size: 13px; text-align: center; color: var(--texto-tenue); }
+.resumen-lista { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.resumen-ej { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid rgba(255, 255, 255, 0.07); }
+.resumen-ej:first-child { border-top: 0; padding-top: 4px; }
+.resumen-ej-gif { flex: none; width: 52px; height: 52px; border-radius: 12px; object-fit: cover; background: #fff; }
+.resumen-ej-gif.registro-sin-gif { display: inline-flex; align-items: center; justify-content: center; font-size: 24px; background: var(--superficie-alta); }
+.resumen-ej-texto { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.resumen-ej-nombre { font-size: 15px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.resumen-ej-series { font-size: 13px; color: var(--texto-tenue); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.resumen-pastilla {
+  flex: none; display: inline-flex; align-items: center; gap: 4px; padding: 5px 10px; border-radius: 99px;
+  font-size: 13px; font-weight: 800; white-space: nowrap; font-variant-numeric: tabular-nums;
+}
+.resumen-pastilla.record { color: #3a2a00; background: #f6e7b8; box-shadow: 0 0 0 1px #e2c56c; }
+.resumen-pastilla.record svg { color: #c79200; }
+.resumen-pastilla.sube { color: #3fc46a; box-shadow: inset 0 0 0 1.5px rgba(63, 196, 106, 0.6); }
+.resumen-pastilla.baja { color: #ef6b62; box-shadow: inset 0 0 0 1.5px rgba(239, 107, 98, 0.55); }
+.resumen-pastilla.igual { color: var(--texto-tenue); box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, 0.15); }
+.resumen-pastilla.nuevo { color: #7fb3ff; box-shadow: inset 0 0 0 1.5px rgba(127, 179, 255, 0.5); }
+
 /* ---------- Torre de discos (minijuego, `ui/juegoDiscos.ts`) ----------
    Toda la pestaña es el juego: fijo entre la cabecera y la barra de abajo (`ajustarMarco` pone
    `top` y `bottom`). Sin scroll mientras está abierto. */

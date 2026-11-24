@@ -329,11 +329,20 @@ export interface SerieMarca { peso: number | null; reps: number }
 export function mejoresAntes(
   mes: string, sesiones: readonly Sesion[], banco: readonly EjercicioBanco[], ids: readonly string[]
 ): Record<string, SerieMarca> {
+  return mejoresDe(sesiones.filter((s) => s.fecha < `${mes}-01`), banco, ids);
+}
+
+/**
+ * La mejor serie de cada ejercicio en esas sesiones, con la misma regla que las marcas. La usa
+ * también el resumen al terminar un entrenamiento (`filasDelResumen`), con todo su historial.
+ */
+export function mejoresDe(
+  sesiones: readonly Sesion[], banco: readonly EjercicioBanco[], ids: readonly string[]
+): Record<string, SerieMarca> {
   const tipos = new Map(banco.map((b) => [b.id, b.tipo]));
   const buscados = new Set(ids);
   const mejor: Record<string, SerieMarca & { valor: number }> = {};
   for (const s of sesiones) {
-    if (s.fecha >= `${mes}-01`) continue;
     for (const ej of s.ejercicios) {
       if (!buscados.has(ej.ejercicioId)) continue;
       const corporal = tipos.get(ej.ejercicioId) === "corporal";

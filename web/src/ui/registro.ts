@@ -1,6 +1,6 @@
 import type { ConfigGrupos, Ejercicio, EjercicioBanco, SerieSesion, Sesion } from "../datos";
 import { RANGOS, nombreRango, type FuerzaMusculo } from "../fuerza";
-import { armarResumen, sesionDeEnvio, type Resumen } from "../resumen";
+import { armarResumen, filasDelResumen, sesionDeEnvio, type FilaEjercicio, type Resumen } from "../resumen";
 import { insigniaRango } from "./insigniaRango";
 import { claveBanco, urlGif, urlVideo, type IndiceBanco } from "../banco";
 import { modoSinDatos } from "../sinDatos";
@@ -139,7 +139,7 @@ interface Estado {
   /** El último cambio fue deslizando de lado: la tarjeta nueva entra de lado y no de abajo. */
   lateral: boolean;
   /** El entrenamiento recién terminado, para su pantalla de resumen; null fuera de ella. */
-  resumen: (Resumen & { dia: string | null }) | null;
+  resumen: ResumenFinal | null;
   /**
    * "¿Qué ejercicio hiciste?": uno suelto (lo normal, y como abre siempre) o los dos de una
    * biserie (decisión del entrenador, 2026-10-15).
@@ -1085,7 +1085,61 @@ function vistaCapturar(d: DatosRegistro): string {
  * Al terminar un entrenamiento, de Registro o guiado: cuánto duró y cuánto hizo, si algún
  * músculo subió de rango, y los músculos que trabajó. Ver `resumen.ts`.
  */
-function vistaResumen(r: Resumen & { dia: string | null }, sexo: "H" | "M"): string {
+/**
+ * El resumen al terminar, con lo que se arma en la pantalla: el día de la rutina, los ejercicios
+ * con su pastilla (`filasDelResumen`) y "¿Qué tan pesado estuvo?" (entrenador, 2026-11-24).
+ */
+export type ResumenFinal = Resumen & {
+  dia: string | null;
+  sesionId?: string;
+  filas?: FilaEjercicio[];
+  /** Lo que eligió en la escala del 1 al 10; null mientras no toca ninguno. */
+  esfuerzo?: number | null;
+};
+
+/** Verde → amarillo → rojo, como la escala de esfuerzo de los gimnasios. */
+const COLORES_ESFUERZO = ["#2ea44f", "#46ad3f", "#6db534", "#94b92c", "#b9b628", "#d6a626", "#e48d27", "#e56e2a", "#df4f2d", "#d1312c"];
+
+/** La escala del 1 al 10, con el número elegido relleno de su color. */
+export function escalaEsfuerzo(elegido: number | null | undefined): string {
+  const botones = COLORES_ESFUERZO.map((c, i) => {
+    const n = i + 1;
+    const activo = elegido === n;
+    return `<button type="button" class="esfuerzo-num${activo ? " elegido" : ""}" data-esfuerzo="${n}" style="--c:${c}"
+      aria-pressed="${activo}" aria-label="${n} de 10">${n}</button>`;
+  }).join("");
+  return `
+    <div class="tarjeta esfuerzo">
+      <p class="esfuerzo-titulo">¿Qué tan pesado estuvo tu entrenamiento?</p>
+      <div class="esfuerzo-escala" role="group" aria-label="Del 1, muy ligero, al 10, al máximo">${botones}</div>
+      <div class="esfuerzo-extremos" aria-hidden="true"><span>Muy ligero</span><span>Al máximo</span></div>
+      ${elegido ? `<p class="esfuerzo-gracias">¡Gracias! Quedó guardado.</p>` : ""}
+    </div>`;
+}
+
+const ESTRELLA = `<svg width="13" height="13" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6L2.5 9.4l6.6-.8z"/></svg>`;
+
+/** Los ejercicios del entrenamiento: su GIF chiquito, sus series y su pastilla. */
+export function listaEjerciciosResumen(filas: readonly FilaEjercicio[]): string {
+  if (filas.length === 0) return "";
+  return `
+    <div class="tarjeta resumen-ejercicios">
+      <p class="tarjeta-titulo">Tus ejercicios</p>
+      <ul class="resumen-lista">
+        ${filas.map((f) => `
+          <li class="resumen-ej">
+            ${gif(f.gifRuta, "resumen-ej-gif", 52)}
+            <span class="resumen-ej-texto">
+              <span class="resumen-ej-nombre">${escapar(f.nombre)}</span>
+              <span class="resumen-ej-series">${escapar(f.series)}</span>
+            </span>
+            ${f.etiqueta ? `<span class="resumen-pastilla ${f.etiqueta.tipo}">${f.etiqueta.tipo === "record" ? ESTRELLA : ""}${escapar(f.etiqueta.texto)}</span>` : ""}
+          </li>`).join("")}
+      </ul>
+    </div>`;
+}
+
+function vistaResumen(r: ResumenFinal, sexo: "H" | "M"): string {
   const dato = (valor: string, texto: string) =>
     `<div class="registro-dato"><strong>${escapar(valor)}</strong><span>${texto}</span></div>`;
   const datos = `
@@ -1118,6 +1172,7 @@ function vistaResumen(r: Resumen & { dia: string | null }, sexo: "H" | "M"): str
     ? `<p class="registro-pendientes">📱 Se guardó en tu teléfono y se enviará ${cuandoSeEnvia()}.</p>`
     : "";
   return `
+    ${r.sesionId ? escalaEsfuerzo(r.esfuerzo) : ""}
     <div class="resumen">
       <p class="resumen-emoji" aria-hidden="true">${r.subidas.length > 0 ? "🏆" : "🎉"}</p>
       <p class="resumen-titulo">¡Entrenamiento terminado!</p>
@@ -1125,6 +1180,7 @@ function vistaResumen(r: Resumen & { dia: string | null }, sexo: "H" | "M"): str
     </div>
     ${nota}
     ${datos}
+    ${listaEjerciciosResumen(r.filas ?? [])}
     ${subidas}
     ${musculos}
     <button class="boton" data-accion="listo">Listo</button>
@@ -1190,6 +1246,8 @@ export interface AccionesRegistro {
   navegar?: (vista: Vista, modo: "adelante" | "volver" | "reemplazar" | "marcar") => void;
   /** "Ver mis músculos" del resumen: abre la ventana Músculos. */
   verMusculos?: () => void;
+  /** "¿Qué tan pesado estuvo?": guarda el número que tocó (`esfuerzo.ts`). */
+  calificar?: (sesionId: string, esfuerzo: number) => void;
   /** Quita el modo sin datos (`sinDatos.ts`), desde el aviso al terminar con el modo puesto. */
   apagarSinDatos?: () => void;
 }
@@ -1279,6 +1337,15 @@ export function conectarRegistro(
     if (!el || el.hasAttribute("disabled")) return;
     const b = estado.borrador;
 
+    if (el.dataset.esfuerzo && estado.resumen?.sesionId) {
+      const n = Number(el.dataset.esfuerzo);
+      if (Number.isInteger(n) && n >= 1 && n <= 10) {
+        estado.resumen.esfuerzo = n;
+        acciones.calificar?.(estado.resumen.sesionId, n);
+        repintar();
+      }
+      return;
+    }
     const accion = el.dataset.accion;
     if (accion === "cardio" && b && !b.edicion) {
       ir("cardio", "adelante");
@@ -1353,6 +1420,10 @@ export function conectarRegistro(
             guiado: b.guiado !== undefined,
           }),
           dia: b.guiado?.nombreDia || null,
+          sesionId: datos.id,
+          // Contra las de antes, sin esta misma (al corregir una ya guardada viene en `previas`).
+          filas: filasDelResumen(b.ejercicios, datos, previas.filter((x) => x.id !== datos.id), d.banco),
+          esfuerzo: null,
         };
       };
       /** Sin internet: se queda en el teléfono y se manda solo cuando vuelva la señal. */

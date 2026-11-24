@@ -122,6 +122,9 @@ export const guardarPeso = llamable<{ peso: number }, { ok: true; peso: number }
 /** Quejas y sugerencias: le llega al entrenador como notificación (`functions/src/sugerencias.ts`). */
 export const enviarSugerencia = llamable<{ texto: string }, { ok: true }>("enviarSugerencia");
 
+/** "¿Qué tan pesado estuvo tu entrenamiento?" (1 a 10) de una sesión (`functions/src/esfuerzo.ts`). */
+export const guardarEsfuerzo = llamable<{ sesionId: string; esfuerzo: number }, { ok: true }>("guardarEsfuerzo");
+
 /** Torre de discos: guarda la partida (el servidor revisa que sea posible) y devuelve la tabla. */
 export const guardarPartidaDiscos = llamable<EnvioPartida, RespuestaPartida>("guardarPartidaDiscos");
 
