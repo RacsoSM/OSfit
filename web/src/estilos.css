@@ -2415,12 +2415,18 @@ body.historia-abierta { overflow: hidden; }
 .rh-mapa .linea { stroke: var(--rh-fondo) !important; }
 .rh-mapa .destello-elite, .rh-mapa .chispa { display: none; }
 .rh-mapa-cargando { height: 200px; display: grid; place-items: center; color: var(--rh-texto-3); font-size: 13px; }
-.rh-escala { display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--rh-texto-3); margin-bottom: 14px; }
-/* La escala con los colores de los rangos, de Principiante a Élite (`COLORES_RANGO`). */
-.rh-escala i {
-  flex: 1; height: 8px; border-radius: 4px;
-  background: linear-gradient(90deg, #bfe3ff, #7cc4ff, #3b8fff, #5b5bd6, #9d4edd, #e0457b, #ff6b2c, #ffb703);
-}
+/* Los 8 rangos con su color, como leyenda del cuerpo (entrenador, 2026-11-24: en vez de la barra). */
+.rh-rangos { list-style: none; margin: 0 0 14px; padding: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px 8px; }
+.rh-rangos li { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--rh-texto-2); white-space: nowrap; }
+.rh-rangos i { width: 10px; height: 10px; border-radius: 3px; flex: none; }
+/* Tus músculos más fuertes: los 3 de nivel más alto. */
+.rh-fuertes { list-style: none; margin: 8px 0 0; padding: 0; }
+.rh-fuertes li { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-top: 1px solid var(--rh-superficie-alta); }
+.rh-fuertes li:first-child { border-top: 0; }
+.rh-fuertes-pos { width: 20px; font-weight: 900; color: var(--rh-texto-3); }
+.rh-fuertes i { width: 12px; height: 12px; border-radius: 4px; flex: none; }
+.rh-fuertes-nombre { flex: 1; font-size: 16px; font-weight: 800; }
+.rh-fuertes-rango { font-size: 13px; font-weight: 700; color: var(--rh-texto-2); }
 .rh-destacado { background: var(--rh-superficie); border-radius: 12px; padding: 12px 14px; }
 .rh-destacado .rh-etq { margin: 0; }
 .rh-destacado-texto { margin: 4px 0 0; font-size: 18px; font-weight: 800; }

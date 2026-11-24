@@ -1,4 +1,4 @@
-import { indiceRango, nombreMusculo, nombreRango, percentilEntrenanDe } from "../fuerza";
+import { RANGOS, indiceRango, nombreMusculo, nombreRango, percentilEntrenanDe } from "../fuerza";
 import { COLORES_RANGO } from "./insigniaRango";
 import { comparaMarca, formatoKg, nombreMes, type ResumenMensual, type SerieMarca } from "../resumenMensual";
 import { prepararSvg } from "./mapaMuscular";
@@ -115,10 +115,6 @@ function tiempo(minutos: number): string {
   return min === 0 ? `${h} <small>h</small>` : `${h} h <small>${min} min</small>`;
 }
 
-/** "12.4k" para las etiquetas de las barras; abajo de mil, el número. */
-function kgCorto(kg: number): string {
-  return kg >= 1000 ? `${(kg / 1000).toFixed(kg >= 10000 ? 0 : 1)}k` : String(Math.round(kg));
-}
 
 const pct = (v: number, max: number) => (max > 0 ? Math.max(0, Math.min(100, (v / max) * 100)) : 0).toFixed(1);
 
@@ -178,7 +174,7 @@ function graficaSemanas(mes: string, semanas: readonly { desde: number; hasta: n
       <div class="rh-columnas">
         ${semanas.map((s) => `
           <div class="rh-columna">
-            <span class="rh-columna-valor">${s.kg > 0 ? kgCorto(s.kg) : ""}</span>
+            <span class="rh-columna-valor">${s.kg > 0 ? formatoKg(s.kg) : ""}</span>
             <div class="rh-columna-barra${s.kg === max ? " max" : ""}" style="height: ${pct(s.kg, max)}%"></div>
             <span class="rh-columna-eje">${etiqueta(s)} ${corto(mes)}</span>
           </div>`).join("")}
@@ -323,7 +319,7 @@ function fuerza(r: ResumenMensual, sexo: "H" | "M" | null, mapa: DatosResumenMen
   if (!r.fuerza) return null;
   const s = sexo ?? "H";
   const musculos = Object.entries(r.fuerza.musculos).sort(([, a], [, b]) => b - a);
-  const [fuerte, nivelFuerte] = musculos[0] ?? [null, 0];
+  const fuertes = musculos.slice(0, 3);
   const resumen = musculos.map(([g, n]) => `${nombreMusculo(g)}: ${nombreRango(n, s)}`).join("; ");
   return historia("fuerza", "Fuerza", `
     <p class="rh-sub rh-arriba">Tu rango general</p>
@@ -335,12 +331,18 @@ function fuerza(r: ResumenMensual, sexo: "H" | "M" | null, mapa: DatosResumenMen
         ${cuerpoPintado(mapa.frente, "rh-frente", r.fuerza.musculos)}
         ${cuerpoPintado(mapa.espalda, "rh-espalda", r.fuerza.musculos)}
       </figure>
-      <div class="rh-escala" aria-hidden="true"><span>Principiante</span><i></i><span>Élite</span></div>` : `
+      <ul class="rh-rangos" aria-label="Los rangos, de menor a mayor">
+        ${RANGOS.map((rg, k) => `<li><i style="background: ${COLORES_RANGO[k]}"></i>${nombreRango(rg.desde, s)}</li>`).join("")}
+      </ul>` : `
       <div class="rh-mapa-cargando">Cargando tu cuerpo…</div>`}
-    ${fuerte ? `
+    ${fuertes.length ? `
       <div class="rh-destacado">
-        <p class="rh-etq">Tu músculo más fuerte</p>
-        <p class="rh-destacado-texto">${escapar(nombreMusculo(fuerte))} · ${nombreRango(nivelFuerte, s)}</p>
+        <p class="rh-etq">${fuertes.length === 1 ? "Tu músculo más fuerte" : "Tus músculos más fuertes"}</p>
+        <ol class="rh-fuertes">
+          ${fuertes.map(([g, n], k) => `
+            <li><span class="rh-fuertes-pos">${k + 1}</span><i style="background: ${colorNivel(n)}"></i>
+              <span class="rh-fuertes-nombre">${escapar(nombreMusculo(g))}</span><span class="rh-fuertes-rango">${nombreRango(n, s)}</span></li>`).join("")}
+        </ol>
       </div>` : ""}`);
 }
 

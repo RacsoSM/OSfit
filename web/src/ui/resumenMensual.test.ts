@@ -125,7 +125,8 @@ describe("gráficas y estilo fijo", () => {
     expect(html).toContain("Kilos por semana");
     expect(html.match(/rh-columna-barra/g)).toHaveLength(3);
     expect(html).toContain('rh-columna-barra max" style="height: 100.0%"');
-    expect(html).toContain("12k");
+    expect(html).toContain("12,000");
+    expect(html).not.toContain("12k");
     expect(html).toContain("1–5 oct");
     expect(html).toContain("del 6 al 12: 18,500 kg");
   });
@@ -160,8 +161,10 @@ describe("fuerza: tu cuerpo pintado", () => {
     const html = todo(datos({ mapa: { frente: svg, espalda: svg } }));
     expect(html).toContain(">Avanzado<");
     expect(html).toMatch(/Más fuerte que el \d+ % de quienes entrenan/);
-    expect(html).toContain("Tu músculo más fuerte");
-    expect(html).toContain("Pecho · Élite");
+    expect(html).toContain("Tus músculos más fuertes");
+    expect(html).toMatch(/rh-fuertes-nombre">Pecho<\/span><span class="rh-fuertes-rango">Élite/);
+    // Los 8 rangos de leyenda, cada uno con su color.
+    expect(html.match(/<li><i style="background: #/g)).toHaveLength(8);
   });
   it("cada músculo con datos lleva su tono; los demás quedan para el gris del CSS", () => {
     const html = todo(datos({ mapa: { frente: svg, espalda: svg } }));
