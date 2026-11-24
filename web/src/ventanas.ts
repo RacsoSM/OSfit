@@ -10,7 +10,7 @@ import { entrenamientoAbierto, ventanaRegistro, type DatosRegistro } from "./ui/
 import type { IndiceBanco } from "./banco";
 import { tarjetaRecordatorioPago } from "./ui/tarjetaRecordatorioPago";
 import { tarjetasStats } from "./ui/tarjetasStats";
-import { accionDia, hojaDeMotivosAbierta } from "./ui/accionDia";
+import { accionDia, diaCambiable, hojaDeMotivosAbierta } from "./ui/accionDia";
 import { accionHoyNoPuedo, tarjetaRevivir } from "./ui/accionFalta";
 import { calendario } from "./ui/calendario";
 import { tarjetaAutollenado, tarjetaDescanso, tarjetaUnidadPeso } from "./ui/tarjetaUnidadPeso";
@@ -222,9 +222,10 @@ export interface Ventana {
  * día; revivir la racha va debajo de la racha.
  */
 function inicio(d: DatosCliente): string {
-  const yaAsistioHoy = d.asistencias.some((a) => a.fecha === d.hoy && a.asistio);
+  // Empezar un entrenamiento marca la asistencia, pero el día se puede cambiar hasta guardarlo
+  // (`diaCambiable`).
   const acciones = `
-      ${accionDia(d.cliente, d.hoy, yaAsistioHoy)}
+      ${accionDia(d.cliente, d.hoy, !diaCambiable(d.asistencias, d.sesiones, d.hoy))}
       ${hojaDeMotivosAbierta() || d.cliente.entrenaADistancia === true ? "" : accionHoyNoPuedo(d.cliente, d.hoy, d.yaAviso)}`;
   return `
       ${tarjetaRecordatorioPago(recordatorioPago(d.cliente, d.hoy))}

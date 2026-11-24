@@ -184,6 +184,8 @@ export interface Asistencia {
   fecha: string;
   asistio: boolean;
   justificada: boolean;
+  /** "registro": la marcó la web al empezar un entrenamiento. Ausente: el entrenador. */
+  marcadaDesde?: string;
   /**
    * La justificó el cliente desde la web. Solo estas gastan su cupo mensual.
    *

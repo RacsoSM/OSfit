@@ -111,6 +111,29 @@ function hoja(cliente: Cliente): string {
 }
 
 /**
+ * Si todavía puede cambiar el día de hoy. GEMELO de `planCambioDia` en
+ * `functions/src/cambiarDia.ts`: la asistencia que marcó la web al EMPEZAR un entrenamiento no
+ * cuenta como día hecho mientras no haya guardado ninguno hoy; la del entrenador, sí.
+ */
+export function diaCambiable(
+  asistencias: readonly { fecha: string; asistio: boolean; marcadaDesde?: string }[],
+  sesiones: readonly { fecha: string }[] | null,
+  hoy: string
+): boolean {
+  const deHoy = asistencias.find((a) => a.fecha === hoy && a.asistio);
+  if (!deHoy) return true;
+  return deHoy.marcadaDesde === "registro" && !(sesiones ?? []).some((s) => s.fecha === hoy);
+}
+
+/** Lo que dice la hoja cuando la función lo rechaza, según el motivo que manda. */
+export function mensajeDeError(error: unknown): string {
+  const motivo = (error as { message?: unknown } | null)?.message;
+  if (motivo === "ya_asistio_hoy") return "Ya entrenaste hoy, así que tu día ya quedó registrado. Mañana podrás elegir otro.";
+  if (motivo === "sin_rutina") return "Todavía no tienes rutina asignada. Habla con tu entrenador.";
+  return "No pudimos cambiar tu día. Inténtalo otra vez en un momento.";
+}
+
+/**
  * "Quiero cambiar el día que me toca" (spec, "Tarjeta del día"), con su hoja de motivos.
  *
  * No se muestra sin rutina asignada. El fin de semana sí: se entrena como cualquier día
@@ -118,10 +141,9 @@ function hoja(cliente: Cliente): string {
  * cliente inactivo la acción queda deshabilitada: su historial es suyo, cambiar una rutina
  * que no está haciendo no.
  *
- * `yaAsistioHoy` la deshabilita también: con la asistencia de hoy ya marcada el día está
- * hecho, y cambiarlo entonces no movería el entrenamiento que acaba de hacer, solo
- * desordenaría el ciclo. El servidor rechaza el caso igual, por si alguien llama a la
- * función a mano.
+ * `yaAsistioHoy` la deshabilita también (ver `diaCambiable`): con el día ya hecho, cambiarlo no
+ * movería el entrenamiento que acaba de hacer, solo desordenaría el ciclo. El servidor
+ * rechaza el caso igual, por si alguien llama a la función a mano.
  */
 export function accionDia(cliente: Cliente, hoy: string, yaAsistioHoy: boolean): string {
   const dias = cliente.rutinaAsignada?.dias ?? [];
@@ -138,7 +160,7 @@ export function accionDia(cliente: Cliente, hoy: string, yaAsistioHoy: boolean):
   if (yaAsistioHoy) {
     return `
       <button class="boton" disabled>Quiero cambiar el día que me toca</button>
-      <p class="accion-nota">Ya registraste tu asistencia de hoy.</p>`;
+      <p class="accion-nota">Ya entrenaste hoy: tu día quedó registrado.</p>`;
   }
 
   // Sin esta línea el cliente no sabe si el toque funcionó y vuelve a tocar (spec, "Tarjeta
@@ -213,8 +235,8 @@ export function conectarAccionDia(repintar: () => void): void {
       estado.motivoId = null;
       estado.motivoTexto = "";
       estado.textoLibre = "";
-    } catch {
-      estado.error = "No pudimos cambiar tu día. Inténtalo otra vez en un momento.";
+    } catch (error) {
+      estado.error = mensajeDeError(error);
     } finally {
       estado.enVuelo = false;
       repintar();
