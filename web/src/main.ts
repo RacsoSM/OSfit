@@ -805,7 +805,7 @@ async function arrancar(): Promise<void> {
     marcarBotonAtras(contenido);
     pintarVideos(activa.contenedorPropio === "videos");
     const cajaJuego = document.querySelector<HTMLElement>("#juego");
-    if (cajaJuego) mostrarJuego(cajaJuego, activa.contenedorPropio === "juego", { guardar: async (p) => (await guardarPartidaDiscos(p)).data, tabla: async () => (await tablaDiscos({})).data });
+    if (cajaJuego) mostrarJuego(cajaJuego, activa.contenedorPropio === "juego", { guardar: async (p) => (await guardarPartidaDiscos(p)).data, tabla: async () => (await tablaDiscos({})).data, nombre: cliente.nombre ?? "" });
     pintarMenu(activa.id, cliente.nombre);
     marcarVentanaActiva(document.querySelectorAll<HTMLElement>("#barra [data-ventana]"), ventanaDeBarra(activa.id));
     pintarRuleta();

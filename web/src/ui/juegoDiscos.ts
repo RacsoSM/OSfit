@@ -28,10 +28,13 @@ export interface RespuestaPartida { record: boolean; tabla: TablaDiscos }
 export interface ApiJuego {
   guardar: (p: EnvioPartida) => Promise<RespuestaPartida>;
   tabla: () => Promise<TablaDiscos>;
+  /** Su nombre, para ponerla en el marcador local antes de que conteste el servidor. */
+  nombre: string;
 }
 
 type Estado = "inicio" | "jugando" | "pausa" | "fin";
-type Guardado = "nada" | "guardando" | "guardado" | "error";
+/** Solo se avisa si falla: guardar va por detrás y la clienta no lo espera. */
+type Guardado = "nada" | "error";
 
 // ── Geometría (unidades del tablero) ─────────────────────────────────────────
 
@@ -76,6 +79,12 @@ let errorTabla = false;
 let guardado: Guardado = "nada";
 let record = false;
 let hoja = false;
+/** Cuál partida se ve en pantalla: un guardado que termina tarde no toca la siguiente. */
+let idPartida = 0;
+/** Las que no se pudieron guardar ni al segundo intento; se reintentan con la siguiente. */
+let pendientes: { envio: EnvioPartida; id: number }[] = [];
+/** Su mejor partida que el servidor aún no confirma: un marcador que llegue antes no la borra. */
+let porConfirmar = 0;
 
 // Solo en desarrollo (Vite lo quita del build): deja leer la partida para grabar demos.
 if (import.meta.env?.DEV) (globalThis as { __torreDiscos?: () => { partida: Partida; estado: Estado } }).__torreDiscos = () => ({ partida, estado });
@@ -86,6 +95,38 @@ export function reiniciarJuego(): void {
   caja = null; api = null; estado = "inicio"; partida = nuevaPartida();
   pedazos = []; ondas = []; chispas = []; letreros = [];
   tabla = null; errorTabla = false; guardado = "nada"; record = false; hoja = false;
+  idPartida = 0; pendientes = []; porConfirmar = 0;
+}
+
+/**
+ * El marcador con su partida ya puesta, sin esperar al servidor: si mejoró su récord, su fila
+ * sube (o entra, con su nombre) y se reacomodan los lugares. El servidor después manda la buena.
+ */
+export function conPartida(t: TablaDiscos, apilados: number, nombre: string): { tabla: TablaDiscos; record: boolean } {
+  if (apilados <= t.tuMejor) return { tabla: t, record: false };
+  const otras = t.filas.filter((f) => !f.esTuyo);
+  const mia = t.filas.find((f) => f.esTuyo);
+  const visible = mia?.nombre ?? (nombre.trim().replace(/\s+/g, " ") || "Tú");
+  const o = [...otras, { puesto: 0, nombre: visible, puntos: apilados, esTuyo: true }]
+    .sort((a, b) => b.puntos - a.puntos || a.nombre.localeCompare(b.nombre, "es"));
+  let puesto = 0;
+  const filas = o.map((f, i) => {
+    if (i === 0 || o[i - 1]!.puntos !== f.puntos) puesto = i + 1;
+    return { ...f, puesto };
+  });
+  return { tabla: { filas, tuMejor: apilados }, record: true };
+}
+
+/** El último marcador, guardado en el teléfono: al abrir el juego sale al instante. */
+const LLAVE_TABLA = "osfit:torre-tabla";
+function tablaGuardada(): TablaDiscos | null {
+  try {
+    const t = JSON.parse(globalThis.localStorage?.getItem(LLAVE_TABLA) ?? "null") as TablaDiscos | null;
+    return t && Array.isArray(t.filas) && typeof t.tuMejor === "number" ? t : null;
+  } catch { return null; }
+}
+function recordarTabla(t: TablaDiscos): void {
+  try { globalThis.localStorage?.setItem(LLAVE_TABLA, JSON.stringify(t)); } catch { /* sin almacenamiento: no pasa nada */ }
 }
 
 // ── HTML ─────────────────────────────────────────────────────────────────────
@@ -128,8 +169,8 @@ export function htmlCapa(e: Estado, puntos: number, apilados: number, g: Guardad
         <button type="button" class="jd-boton secundario" data-jd="marcador">Ver marcador</button>
       </div>`;
   }
-  const nota = g === "guardando" ? `<p class="jd-capa-nota">Guardando tu puntuación…</p>`
-    : g === "error" ? `<p class="jd-capa-nota error">No se pudo guardar tu puntuación. <button type="button" class="jd-enlace" data-jd="reintentar-guardar">Intentar de nuevo</button></p>`
+  const nota = g === "error"
+    ? `<p class="jd-capa-nota error">No se pudo guardar tu puntuación. <button type="button" class="jd-enlace" data-jd="reintentar-guardar">Intentar de nuevo</button></p>`
     : "";
   return `
     <div class="jd-capa-caja fin">
@@ -180,22 +221,55 @@ function actualizar(): void {
 
 async function cargarTabla(): Promise<void> {
   if (!api) return;
-  try { tabla = await api.tabla(); errorTabla = false; } catch { errorTabla = true; }
+  try {
+    const t = await api.tabla();
+    tabla = porConfirmar > t.tuMejor ? conPartida(t, porConfirmar, api.nombre).tabla : t;
+    recordarTabla(tabla);
+    errorTabla = false;
+  } catch { errorTabla = true; }
   actualizar();
 }
 
-async function guardarPartida(): Promise<void> {
-  if (!api || partida.apilados === 0) { guardado = "nada"; actualizar(); return; }
-  guardado = "guardando";
-  actualizar();
-  try {
-    const r = await api.guardar({ puntos: partida.puntos, apilados: partida.apilados, duracionMs: Math.round(duracion) });
-    record = r.record;
-    tabla = r.tabla;
-    guardado = "guardado";
-  } catch {
-    guardado = "error";
+/** Termina la partida: el resultado y el récord salen ya; guardar va por detrás. */
+function terminarPartida(): void {
+  idPartida++;
+  if (partida.apilados === 0 || !api) return;
+  const envio: EnvioPartida = { puntos: partida.puntos, apilados: partida.apilados, duracionMs: Math.round(duracion) };
+  porConfirmar = Math.max(porConfirmar, partida.apilados);
+  if (tabla) {
+    const local = conPartida(tabla, partida.apilados, api.nombre);
+    tabla = local.tabla;
+    record = local.record;
+    recordarTabla(tabla);
   }
+  actualizar();
+  void enviar(envio, idPartida, 1);
+}
+
+async function enviar(envio: EnvioPartida, id: number, intento: number): Promise<void> {
+  if (!api) return;
+  try {
+    const r = await api.guardar(envio);
+    if (r.tabla.tuMejor >= porConfirmar) porConfirmar = 0;
+    tabla = porConfirmar > r.tabla.tuMejor ? conPartida(r.tabla, porConfirmar, api.nombre).tabla : r.tabla;
+    recordarTabla(tabla);
+    errorTabla = false;
+    if (id === idPartida) { record = record || r.record; guardado = "nada"; }
+    // Si alguna anterior se había quedado sin guardar, ahora que hay conexión va también.
+    if (pendientes.length > 0) reenviarPendientes();
+  } catch {
+    if (intento < 2) { setTimeout(() => void enviar(envio, id, intento + 1), 2500); return; }
+    pendientes.push({ envio, id });
+    if (id === idPartida) guardado = "error";
+  }
+  actualizar();
+}
+
+function reenviarPendientes(): void {
+  const todas = pendientes;
+  pendientes = [];
+  if (todas.some((p) => p.id === idPartida)) guardado = "nada";
+  for (const p of todas) void enviar(p.envio, p.id, 2);
   actualizar();
 }
 
@@ -232,7 +306,7 @@ function tocar(): void {
     sacudida = 1;
     navigator.vibrate?.([40, 30, 60]);
     actualizar();
-    void guardarPartida();
+    terminarPartida();
     return;
   }
   const tope = partida.torre[n - 1]!;
@@ -605,6 +679,7 @@ export function mostrarJuego(contenedor: HTMLElement, visible: boolean, conexion
     api = conexion;
     contenedor.innerHTML = htmlJuego();
     conectar(contenedor);
+    tabla = tabla ?? tablaGuardada();
   }
   window.scrollTo(0, 0);
   ajustarMarco();
@@ -629,7 +704,7 @@ function conectar(c: HTMLElement): void {
     const que = b.dataset.jd;
     if (que === "jugar") jugar();
     if (que === "seguir") { estado = "jugando"; inicio = performance.now() - duracion; actualizar(); }
-    if (que === "reintentar-guardar") void guardarPartida();
+    if (que === "reintentar-guardar") reenviarPendientes();
     if (que === "marcador") { hoja = true; actualizar(); void cargarTabla(); }
     if (que === "cerrar-hoja") { hoja = false; actualizar(); }
   });
