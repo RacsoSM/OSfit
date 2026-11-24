@@ -35,8 +35,7 @@ export function avisoResumen(mes: string | null): string {
   yaEntro = true;
   return `
     <div class="logro-velo${entrada}">
-      <div class="logro-aviso tarjeta${entrada}" role="dialog" aria-modal="true" aria-labelledby="resumen-aviso-titulo">
-        <div class="logro-llama" aria-hidden="true">📊</div>
+      <div class="logro-aviso aviso-resumen tarjeta${entrada}" role="dialog" aria-modal="true" aria-labelledby="resumen-aviso-titulo">
         <p class="logro-titulo" id="resumen-aviso-titulo">Tu resumen de ${nombreMes(mes)} ya está listo</p>
         <p class="logro-texto">¿Deseas verlo ahora?</p>
         <button class="boton" id="resumen-aviso-ver">Ver ahora</button>

@@ -54,7 +54,7 @@ import {
 import { conectarAutollenado, conectarDescanso, conectarUnidadPeso } from "./ui/tarjetaUnidadPeso";
 import { conectarSinDatos } from "./ui/tarjetaSinDatos";
 import { conectarEstadisticas } from "./ui/estadisticas";
-import { conectarResumenMensual, elegirMes, reiniciarResumenMensual } from "./ui/resumenMensual";
+import { abrirHistoria, cerrarHistoria, conectarResumenMensual, reiniciarResumenMensual } from "./ui/resumenMensual";
 import { abrirDelMensaje, abrirDeLaDireccion, direccionSinAbrir, type Abrir } from "./abrirDesdeAviso";
 import { mostrarAvisoSinDatos, quitarAvisoSinDatos } from "./ui/avisoSinDatos";
 import { almacenesDelNavegador, saludDeLosAlmacenes } from "./sesion";
@@ -226,7 +226,11 @@ async function arrancar(): Promise<void> {
   // para su diagnóstico.
   iniciarNavegacion(historialDelNavegador(), () => pintar());
   // "Atrás" también recorre las pantallas de Registro: al llegar a una, Registro se pone en ella.
-  alRetrocederSub((v, s) => { if (v === "registro") vistaDesdeHistorial(s); });
+  alRetrocederSub((v, s) => {
+    if (v === "registro") vistaDesdeHistorial(s);
+    // "Atrás" con la historia del resumen abierta la cierra y deja la lista de meses.
+    if (v === "resumenMensual" && s === null) cerrarHistoria();
+  });
   const hoy = hoyEnMazatlan();
 
   let cliente: Cliente | null = null;
@@ -440,6 +444,22 @@ async function arrancar(): Promise<void> {
   function alCerrarReviveExtra(): void {
     reviveExtraVisto = true;
     try { localStorage.setItem(LLAVE_REVIVE_EXTRA, "1"); } catch { /* se pierde el recuerdo, no la página */ }
+    pintar();
+  }
+
+  /**
+   * El mes que pidió una notificación del resumen al tocarla: la ventana emergente sale con él
+   * aunque ya la hubiera visto (entrenador, 2026-11-24: la notificación lleva al aviso, no
+   * directo al resumen).
+   */
+  let resumenPedido: string | null = null;
+  const resumenDelAviso = (): string | null => resumenPedido ?? resumenPorAvisar(resumenes, hoy, resumenVisto);
+
+  /** Abre Resumen mensual con la historia de ese mes ya abierta. */
+  function verHistoria(mes: string): void {
+    abrirHistoria(mes);
+    abrirVentana("resumenMensual");
+    irSub("historia", "adelante");
     pintar();
   }
 
@@ -737,7 +757,10 @@ async function arrancar(): Promise<void> {
     // Al salir de Notificaciones se olvida el aviso marcado.
     if (ventanaPintada === "notificaciones" && activa.id !== "notificaciones") resaltarAviso(null);
     // Al salir de Resumen mensual se olvida el mes: la próxima vez abre en el mes en curso.
-    if (ventanaPintada === "resumenMensual" && activa.id !== "resumenMensual") reiniciarResumenMensual();
+    if (ventanaPintada === "resumenMensual" && activa.id !== "resumenMensual") {
+      reiniciarResumenMensual();
+      document.body.classList.remove("historia-abierta");
+    }
     actualizarCabecera(tituloCabecera(activa));
     const datos = {
       cliente, hoy, asistencias, mesVisible, yaAviso, medallas, logros,
@@ -745,7 +768,7 @@ async function arrancar(): Promise<void> {
       notificaciones: estadoNotificaciones(cliente.notificacionesWeb === true, entornoDelNavegador()),
       invitacionDescartada,
       reviveExtraVisto,
-      resumenPorAvisar: resumenPorAvisar(resumenes, hoy, resumenVisto),
+      resumenPorAvisar: resumenDelAviso(),
       activandoNotificaciones,
       mapas,
       banco,
@@ -824,15 +847,18 @@ async function arrancar(): Promise<void> {
       return;
     }
     if (activa.id === "resumenMensual") {
-      conectarResumenMensual(pintar);
+      conectarResumenMensual(pintar, {
+        alAbrir: () => irSub("historia", "adelante"),
+        alCerrar: () => irSub(null, "volver"),
+      });
       return;
     }
     if (activa.id === "notificaciones") {
       // El botón de un aviso que lleva a otra ventana (el resumen del mes que cerró).
       conectarBuzon((v, mes) => {
         if (!VENTANAS.some((x) => x.id === v && !x.oculta)) return;
-        if (v === "resumenMensual") elegirMes(mes);
-        abrirVentana(v as IdVentana);
+        if (v === "resumenMensual" && mes) verHistoria(mes);
+        else abrirVentana(v as IdVentana);
       });
       return;
     }
@@ -879,14 +905,15 @@ async function arrancar(): Promise<void> {
     conectarAvisoReviveExtra(alCerrarReviveExtra);
     conectarAvisoResumen(
       () => {
-        const mes = resumenPorAvisar(resumenes, hoy, resumenVisto);
+        const mes = resumenDelAviso();
         if (!mes) return;
+        resumenPedido = null;
         marcarResumenVisto(mes);
-        elegirMes(mes);
-        abrirVentana("resumenMensual");
+        verHistoria(mes);
       },
       () => {
-        const mes = resumenPorAvisar(resumenes, hoy, resumenVisto);
+        const mes = resumenDelAviso();
+        resumenPedido = null;
         if (mes) marcarResumenVisto(mes);
         pintar();
       }
@@ -1012,7 +1039,9 @@ async function arrancar(): Promise<void> {
   const idsVentanas = VENTANAS.filter((v) => !v.oculta || v.id === "notificaciones").map((v) => v.id);
   const abrirDesdeAviso = (a: Abrir | null): void => {
     if (!a) return;
-    if (a.ventana === "resumenMensual") elegirMes(a.mes);
+    // La notificación del resumen abre Inicio con la ventana emergente de ese mes (`sw.js`).
+    if (a.ventana === "inicio" && a.mes) resumenPedido = a.mes;
+    if (a.ventana === "resumenMensual" && a.mes) { verHistoria(a.mes); return; }
     if (a.ventana === "notificaciones") resaltarAviso(a.aviso);
     if (ventanaActiva() === a.ventana) pintar();
     else abrirVentana(a.ventana as IdVentana);

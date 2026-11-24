@@ -2245,3 +2245,101 @@ body:has(.batalla) :is(.fondo, .fondo-pixel, .fondo-sakura, .fondo-halloween, .p
 
 /* La ventana emergente del resumen del mes (`ui/avisoResumen.ts`): "Ver ahora" y "Cancelar". */
 #resumen-aviso-cancelar { margin-top: 8px; }
+
+/* ---------- Resumen mensual en historias (`ui/resumenMensual.ts`, entrenador 2026-11-24) ---------- */
+
+/* La lista: "¿Qué mes quieres ver?" y un botón grande por mes. */
+.rm-pregunta { font-size: 20px; font-weight: 800; margin: 2px 2px 14px; }
+.rm-meses { display: flex; flex-direction: column; gap: 10px; }
+.rm-mes-opcion {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%;
+  padding: 18px 18px; border: 0; border-radius: 16px; cursor: pointer; text-align: left; font: inherit;
+  background: var(--superficie); color: var(--texto);
+}
+.rm-mes-opcion.en-curso { box-shadow: inset 0 0 0 2px var(--primario); }
+.rm-mes-nombre { font-size: 20px; font-weight: 800; }
+.rm-mes-anio { font-weight: 500; color: var(--texto-tenue); }
+.rm-mes-estado { font-size: 13px; color: var(--texto-tenue); white-space: nowrap; }
+
+/* El visor: a pantalla completa, sobre la barra de abajo y el menú. */
+body.historia-abierta { overflow: hidden; }
+.rh-visor {
+  position: fixed; inset: 0; z-index: 40; overflow: hidden; outline: none;
+  background: #0c0a10; color: #fff; touch-action: pan-y; user-select: none; -webkit-user-select: none;
+}
+.rh-visor.entrando { animation: rh-entrar 0.3s ease-out both; }
+@keyframes rh-entrar { from { opacity: 0; transform: scale(0.97); } to { opacity: 1; transform: none; } }
+.rh-progreso {
+  position: absolute; z-index: 2; left: 12px; right: 12px; top: calc(10px + env(safe-area-inset-top));
+  display: flex; gap: 4px;
+}
+.rh-progreso span { flex: 1; height: 3px; border-radius: 2px; background: rgba(255, 255, 255, 0.28); transition: background 0.2s; }
+.rh-progreso span.vista, .rh-progreso span.actual { background: #fff; }
+.rh-cabeza {
+  position: absolute; z-index: 2; left: 16px; right: 6px; top: calc(20px + env(safe-area-inset-top));
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 13px; font-weight: 700; letter-spacing: 0.5px; color: rgba(255, 255, 255, 0.8);
+}
+.rh-cerrar {
+  width: 44px; height: 44px; border: 0; background: transparent; color: #fff; cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.rh-carril { display: flex; height: 100%; transition: transform 0.35s cubic-bezier(0.25, 0.8, 0.25, 1); }
+.rh-carril.arrastrando { transition: none; }
+.rh-pagina { flex: 0 0 100%; height: 100%; overflow-y: auto; overscroll-behavior: contain; }
+.rh-contenido {
+  min-height: 100%; max-width: 480px; margin: 0 auto; display: flex; flex-direction: column; justify-content: center;
+  padding: calc(76px + env(safe-area-inset-top)) 24px calc(32px + env(safe-area-inset-bottom));
+}
+/* Cada historia con su fondo, de la paleta de la clienta. */
+.rh-portada { background: radial-gradient(120% 80% at 80% 0%, var(--primario) 0%, var(--primario-oscuro) 45%, #0c0a10 100%); }
+.rh-entrenamiento { background: linear-gradient(160deg, var(--primario-oscuro) 0%, #0c0a10 70%); }
+.rh-constancia { background: linear-gradient(200deg, #12301d 0%, #0c0a10 65%); }
+.rh-fuerza { background: radial-gradient(110% 70% at 10% 0%, var(--primario-oscuro) 0%, #0c0a10 70%); }
+.rh-marcas { background: linear-gradient(180deg, #3a2208 0%, #0c0a10 65%); }
+.rh-final { background: radial-gradient(120% 80% at 50% 100%, var(--primario-oscuro) 0%, #0c0a10 70%); }
+
+.rh-etiqueta { margin: 0 0 18px; font-size: 13px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; color: rgba(255, 255, 255, 0.7); }
+.rh-mes { margin: 0; font-size: 64px; font-weight: 900; line-height: 1; letter-spacing: -1px; }
+.rh-anio { margin: 6px 0 0; font-size: 28px; font-weight: 300; color: rgba(255, 255, 255, 0.75); }
+.rh-pista { margin: 48px 0 0; font-size: 15px; color: rgba(255, 255, 255, 0.7); }
+.rh-grande { margin: 0; font-size: 56px; font-weight: 900; line-height: 1.05; letter-spacing: -1px; }
+.rh-grande small { font-size: 0.45em; font-weight: 700; letter-spacing: 0; }
+.rh-rango { font-size: 44px; }
+.rh-sub { margin: 4px 0 22px; font-size: 16px; color: rgba(255, 255, 255, 0.75); }
+.rh-sub.rh-arriba { margin: 0 0 6px; }
+.rh-pares { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+.rh-pares.rh-tres { grid-template-columns: 1fr 1fr 1fr; }
+.rh-pares > div, .rh-dato { background: rgba(255, 255, 255, 0.08); border-radius: 14px; padding: 12px 14px; }
+.rh-num { margin: 0; font-size: 26px; font-weight: 800; line-height: 1.1; display: flex; align-items: center; gap: 7px; }
+.rh-num small { font-size: 0.55em; font-weight: 700; }
+.rh-etq { margin: 3px 0 0; font-size: 12px; color: rgba(255, 255, 255, 0.65); }
+.rh-titulo { margin: 6px 0 10px; font-size: 15px; font-weight: 800; }
+.rh-lista, .rh-marcas, .rh-musculos { list-style: none; margin: 0; padding: 0; }
+.rh-lista li { display: flex; align-items: center; gap: 12px; padding: 9px 0; border-top: 1px solid rgba(255, 255, 255, 0.1); font-size: 16px; }
+.rh-pos { width: 26px; height: 26px; border-radius: 50%; flex: none; display: grid; place-items: center; background: #fff; color: #0c0a10; font-weight: 900; font-size: 13px; }
+.rh-nombre { flex: 1; min-width: 0; }
+.rh-tenue { color: rgba(255, 255, 255, 0.65); font-size: 14px; white-space: nowrap; }
+.rh-nota { margin: 14px 0 0; font-size: 15px; color: rgba(255, 255, 255, 0.8); }
+.rh-nota strong { color: #fff; }
+.rh-cal-dias { color: rgba(255, 255, 255, 0.6); margin-bottom: 4px; }
+.rh-cal { margin-bottom: 18px; }
+:root .rh-cal span { background: rgba(255, 255, 255, 0.07); color: rgba(255, 255, 255, 0.85); }
+.rh-musculos li { margin-bottom: 10px; }
+.rh-fila { display: flex; justify-content: space-between; gap: 10px; font-size: 15px; margin-bottom: 4px; }
+.rh-barra { background: rgba(255, 255, 255, 0.14); }
+.rh-barra div { background: #fff; }
+.rh-marcas li { display: flex; justify-content: space-between; gap: 12px; padding: 14px 0; border-top: 1px solid rgba(255, 255, 255, 0.12); font-size: 17px; }
+.rh-marcas strong { font-size: 18px; white-space: nowrap; }
+.rh-final-datos { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.rh-botones { display: flex; flex-direction: column; gap: 10px; margin-top: 26px; }
+.rh-botones .boton.secundario { background: rgba(255, 255, 255, 0.12); color: #fff; }
+.rh-vacia { height: 100%; display: grid; place-items: center; color: rgba(255, 255, 255, 0.7); }
+@media (prefers-reduced-motion: reduce) {
+  .rh-visor.entrando { animation: none; }
+  .rh-carril { transition: none; }
+}
+
+/* La ventana emergente del resumen, sobria: sin ícono, texto a la izquierda. */
+.aviso-resumen { text-align: left; }
+.aviso-resumen .logro-titulo { margin-top: 0; }

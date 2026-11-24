@@ -273,7 +273,7 @@ self.addEventListener("push", (evento) => {
   // El id del aviso: al tocarla, Notificaciones lo marca.
   const id = typeof datos.id === "string" ? datos.id : null;
   // Adónde llevaba el aviso (Resumen mensual en el mes que cerró). Viene como JSON porque FCM
-  // solo manda strings; uno roto se ignora. Hoy solo viaja: el botón sale de lo guardado.
+  // solo manda strings; uno roto se ignora. Al tocarla, el del resumen abre su ventana emergente.
   let abrir = null;
   try {
     abrir = typeof datos.abrir === "string" ? JSON.parse(datos.abrir) : null;
@@ -291,27 +291,34 @@ self.addEventListener("push", (evento) => {
 });
 
 /**
- * Tocar un aviso abre siempre Notificaciones, con ese aviso marcado (`id`). Adónde llevaba el
- * aviso (`abrir`, por ejemplo el resumen del mes) queda como botón en su tarjeta.
+ * Tocar un aviso abre Notificaciones, con ese aviso marcado (`id`). Adónde llevaba el aviso
+ * (`abrir`) queda como botón en su tarjeta. La excepción es el del resumen del mes: abre Inicio
+ * con la ventana emergente "Tu resumen de <mes> ya está listo" (entrenador, 2026-11-24).
  */
 self.addEventListener("notificationclick", (evento) => {
   evento.notification.close();
   const datos = evento.notification.data || {};
   const aviso = typeof datos.id === "string" ? datos.id : null;
+  const abrir = datos.abrir || null;
+  const mesResumen = abrir && abrir.ventana === "resumenMensual" && typeof abrir.mes === "string" ? abrir.mes : null;
+  const destino = mesResumen
+    ? { ventana: "inicio", mes: mesResumen, aviso }
+    : { ventana: "notificaciones", aviso };
   evento.waitUntil(
     (async () => {
       const ventanas = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
       for (const v of ventanas) {
         if ("focus" in v) {
           // La página ya abierta abre la ventana ella misma (`abrirDesdeAviso.ts` en `main.ts`).
-          v.postMessage({ tipo: "abrir", abrir: { ventana: "notificaciones", aviso } });
+          v.postMessage({ tipo: "abrir", abrir: destino });
           return v.focus();
         }
       }
       // Sin ventana abierta se abre la raíz: la página instalada guarda su propia sesión y
       // el token recordado, así que la escalera de `resolverSesion` la deja entrar. El `?abrir`
       // no lo ve `resolverSesion` (lee la ruta y el `#`); lo usa `main.ts` y lo borra.
-      const params = new URLSearchParams({ abrir: "notificaciones" });
+      const params = new URLSearchParams({ abrir: destino.ventana });
+      if (destino.mes) params.set("mes", destino.mes);
       if (aviso) params.set("aviso", aviso);
       return self.clients.openWindow(`/?${params.toString()}`);
     })()
