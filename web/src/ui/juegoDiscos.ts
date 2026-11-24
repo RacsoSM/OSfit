@@ -14,8 +14,8 @@ import { escapar } from "./tarjetaDia";
  *
  * El dibujo es en 3/4: cada disco es un cilindro plano visto un poco desde arriba, de caucho del
  * color de su peso, con el peso impreso, el aro de acero y el hoyo al centro; la torre se para
- * sobre una plataforma de madera bajo un reflector. Los discos caen al soltarlos, lo cortado se
- * desprende girando, un perfecto lanza una onda y chispas, y al perder la cámara se aleja para
+ * sobre una plataforma de madera bajo un reflector. El disco se desliza pegado a la torre y se
+ * queda donde se suelta; lo cortado se desprende girando, un perfecto lanza una onda y chispas, y al perder la cámara se aleja para
  * mostrar la torre completa.
  */
 
@@ -41,8 +41,11 @@ const VISTA_ANCHO = ANCHO_TABLERO + 36;
 const GRUESO = 5.2;
 /** Qué tan desde arriba se ven: alto de la elipse ÷ ancho. */
 const INCLINACION = 0.3;
-/** A qué altura flota el disco que se mueve sobre la torre. */
-const FLOTA = 9;
+/**
+ * A qué altura va el disco que se mueve sobre la torre: pegado, deslizándose sobre ella, y al
+ * tocar se queda ahí sin caer (entrenador, 2026-11-24: "ese espacio … siento que es raro").
+ */
+const FLOTA = 0;
 /** El piso: la plataforma mide esto de alto bajo la base. */
 const PLATAFORMA = 7;
 
@@ -62,8 +65,6 @@ let ondas: Onda[] = [];
 let chispas: Chispa[] = [];
 let letreros: Letrero[] = [];
 const motas: { x: number; y: number; v: number; r: number }[] = [];
-/** El último disco soltado cae desde donde flotaba: 0 → 1 mientras cae. */
-let caida = 1;
 let sacudida = 0;
 let camY = -60;
 let zoom = 1;
@@ -203,13 +204,16 @@ async function guardarPartida(): Promise<void> {
 function jugar(): void {
   partida = nuevaPartida();
   pedazos = []; ondas = []; chispas = []; letreros = [];
-  caida = 1; sacudida = 0;
+  sacudida = 0;
   guardado = "nada"; record = false; hoja = false;
   estado = "jugando";
   inicio = performance.now();
   duracion = 0;
   actualizar();
 }
+
+/** Un letrero a la vez: el nuevo reemplaza al anterior para que no se encimen. */
+function avisar(l: Letrero): void { letreros = [l]; }
 
 /** Lo alto (unidades) de la cara de arriba del disco `i` de la torre (0 = la base). */
 const alturaDe = (i: number) => (i + 1) * GRUESO;
@@ -231,12 +235,11 @@ function tocar(): void {
     void guardarPartida();
     return;
   }
-  caida = 0;
   const tope = partida.torre[n - 1]!;
   if (r.tipo === "corte") {
     pedazos.push({ x: movil.x, ancho: movil.ancho, corteX0: r.cortado.x, corteX1: r.cortado.x + r.cortado.ancho, y: alturaDe(n - 1),
       vy: 4, vx: (r.cortado.x < tope.x ? -1 : 1) * 14, giro: 0, vg: (r.cortado.x < tope.x ? -1 : 1) * 3, kg: pesoDe(movil.ancho).kg });
-    if (pesoDe(movil.ancho).kg !== pesoDe(tope.ancho).kg) letreros.push({ texto: `${pesoDe(tope.ancho).kg} kg`, y: alturaDe(n - 1), vida: 1 });
+    if (pesoDe(movil.ancho).kg !== pesoDe(tope.ancho).kg) avisar({ texto: `${pesoDe(tope.ancho).kg} kg`, y: alturaDe(n - 1), vida: 1 });
   } else {
     const cx = tope.x + tope.ancho / 2;
     ondas.push({ x: cx, y: alturaDe(n - 1), r: tope.ancho / 2, vida: 1 });
@@ -246,7 +249,7 @@ function tocar(): void {
         vy: 10 + Math.random() * 26, vida: 0.6 + Math.random() * 0.5, color: Math.random() < 0.5 ? "#ffffff" : "#ffd45c" });
     }
     const racha = partida.perfectosSeguidos;
-    letreros.push({ texto: r.crecio ? "¡Perfecto! +ancho" : racha > 1 ? `¡Perfecto! ×${racha}` : "¡Perfecto!", y: alturaDe(n - 1), vida: 1 });
+    avisar({ texto: r.crecio ? "¡Perfecto! +ancho" : racha > 1 ? `¡Perfecto! ×${racha}` : "¡Perfecto!", y: alturaDe(n - 1), vida: 1 });
     navigator.vibrate?.(12);
   }
   actualizar();
@@ -258,7 +261,6 @@ function ciclo(ahora: number): void {
   reloj += dt;
   // En la portada el disco también se pasea, más despacio, para que la escena esté viva.
   if (estado === "jugando" || estado === "inicio") avanzar(partida, estado === "inicio" ? dt * 0.6 : dt);
-  caida = Math.min(1, caida + dt / 0.14);
   for (const p of pedazos) { p.vy -= 160 * dt; p.y += p.vy * dt; p.x += p.vx * dt; p.corteX0 += p.vx * dt; p.corteX1 += p.vx * dt; p.giro += p.vg * dt; }
   pedazos = pedazos.filter((p) => p.y > camY - 60);
   for (const o of ondas) { o.vida -= dt * 1.6; o.r += dt * 40; }
@@ -503,11 +505,8 @@ function dibujar(dt: number): void {
   }
 
   // La torre, de abajo hacia arriba (los de arriba tapan a los de abajo).
-  const ease = 1 - Math.pow(1 - caida, 3);
   partida.torre.forEach((d, i) => {
-    let y = alturaDe(i);
-    if (i === n - 1 && i > 0 && caida < 1) y += FLOTA * (1 - ease);
-    const cy = sy(y);
+    const cy = sy(alturaDe(i));
     if (cy > H + 80 || cy < -80) return;
     pintarDisco(c, sx(d.x + d.ancho / 2), cy, (d.ancho / 2) * e, GRUESO * e, d.ancho, i === 0);
   });
@@ -520,7 +519,7 @@ function dibujar(dt: number): void {
     c.beginPath(); c.ellipse(sx(t.x + t.ancho / 2), sy(tope), (t.ancho / 2) * e, (t.ancho / 2) * e * INCLINACION, 0, 0, Math.PI * 2); c.clip();
     pintarSombra(c, sx(m.x + m.ancho / 2), sy(tope) + 2, (m.ancho / 2) * e, (m.ancho / 2) * e * INCLINACION, 0.5);
     c.restore();
-    pintarDisco(c, sx(m.x + m.ancho / 2), sy(tope + GRUESO + FLOTA + Math.sin(reloj * 4) * 0.6), (m.ancho / 2) * e, GRUESO * e, m.ancho);
+    pintarDisco(c, sx(m.x + m.ancho / 2), sy(tope + GRUESO + FLOTA), (m.ancho / 2) * e, GRUESO * e, m.ancho);
   }
 
   // Lo cortado: el mismo disco recortado a su pedazo, cayendo y girando.
