@@ -243,7 +243,7 @@ describe("contra el mes anterior", () => {
 });
 
 describe("datosPoster", () => {
-  it("los mismos datos para la pantalla y la imagen: rango, 4 números con cambio y top 3 músculos", async () => {
+  it("los mismos datos para la pantalla y la imagen: rango, 4 números con cambio y top 5 músculos", async () => {
     const { datosPoster } = await import("./resumenMensual");
     const ant = resumen({ mes: "2026-09", fuerza: { general: 6.5, musculos: { pecho: 7 } } });
     const p = datosPoster(resumen(), "H", ant, "Ana");
@@ -253,6 +253,8 @@ describe("datosPoster", () => {
     expect(p.numeros[0].cambio).toEqual({ n: 0, mes: "2026-09" });
     expect(p.musculos.map((m) => m.nombre)).toEqual(["Pecho", "Abdomen"]);
     expect(p.ejercicios[0]).toBe("Extensión <con> cuerda");
+    const siete = resumen({ fuerza: { general: 6, musculos: { a: 1, b: 2, c: 3, d: 4, e: 5, f: 6, g: 7 } } });
+    expect(datosPoster(siete, "H", null, "Ana").musculos).toHaveLength(5);
   });
 });
 

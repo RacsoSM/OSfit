@@ -449,7 +449,8 @@ export function datosPoster(r: ResumenMensual, sexo: "H" | "M" | null, ant: Resu
     ].map((n, i) => ({ ...n, color: COLOR_NUMERO[i] })),
     ejercicios: t.top.map((e) => e.nombre),
     musculos: r.fuerza
-      ? Object.entries(r.fuerza.musculos).sort(([, x], [, y]) => y - x).slice(0, 3)
+      // Top 5 en el póster (entrenador, 2026-11-24); la historia de Fuerza sigue con su top 3.
+      ? Object.entries(r.fuerza.musculos).sort(([, x], [, y]) => y - x).slice(0, 5)
         .map(([g, n]) => ({ nombre: nombreMusculo(g), color: colorNivel(n) }))
       : [],
   };
