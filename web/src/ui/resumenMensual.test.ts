@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { ResumenMensual } from "../resumenMensual";
 import {
   abrirHistoria, cerrarHistoria, elegirMes, historiaAbierta, historiasDelMes, mesElegidoResumen, reiniciarResumenMensual,
-  ventanaResumenMensual, type DatosResumenMensual,
+  variacion, ventanaResumenMensual, type DatosResumenMensual,
 } from "./resumenMensual";
 
 const resumen = (x: Partial<ResumenMensual> = {}): ResumenMensual => ({
@@ -198,6 +198,36 @@ describe("mejores marcas: récords personales", () => {
     expect(html).toContain("100 <small>kg × 4</small>");
     expect(html).not.toContain("Récord");
     expect(html).not.toContain("Primera vez");
+  });
+});
+
+describe("contra el mes anterior", () => {
+  it("variacion: % del anterior, o puntos para la asistencia; nada sin anterior", () => {
+    expect(variacion(110, 100, "relativo")).toBe(10);
+    expect(variacion(92, 100, "relativo")).toBe(-8);
+    expect(variacion(86, 80, "puntos")).toBe(6);
+    expect(variacion(5, 0, "relativo")).toBeNull();
+    expect(variacion(5, null, "relativo")).toBeNull();
+  });
+
+  const septiembre = resumen({
+    mes: "2026-09",
+    asistencia: { ...resumen().asistencia, porcentaje: 60, minutos: 1200, rachaMasLarga: 12 },
+    entrenamiento: { ...resumen().entrenamiento, kg: 50000, series: 176, reps: 1000 },
+    fuerza: { general: 6.5, musculos: { pecho: 7 } },
+  });
+
+  it("sube en azul, baja e igual en gris, con el nombre del mes", () => {
+    const html = todo(datos({ mes: "2026-10", enCurso: false, anterior: septiembre }));
+    expect(html).toContain('rh-vs sube">↑ +18 % vs septiembre');   // kg 59,123 vs 50,000
+    expect(html).toContain('rh-vs sube">↑ +36 % vs septiembre');   // reps 1,360 vs 1,000
+    expect(html).toContain('rh-vs igual">= igual que septiembre'); // series
+    expect(html).toContain('rh-vs baja">↓ −7 % vs septiembre');    // asistencia 53 vs 60 (puntos)
+    expect(html).toContain("Tu nivel general");
+  });
+
+  it("sin anterior no hay comparación", () => {
+    expect(todo(datos({ anterior: null }))).not.toContain("rh-vs");
   });
 });
 

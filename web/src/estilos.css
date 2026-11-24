@@ -2430,6 +2430,15 @@ body.historia-abierta { overflow: hidden; }
 .rh-marca-antes { margin: 2px 0 0; font-size: 12px; font-weight: 700; color: var(--rh-acento-claro); }
 .rh-marca:not(.record) .rh-marca-antes { color: var(--rh-texto-3); }
 
+/* Contra el mes anterior: "↑ +12 % vs septiembre". Sube en el azul claro del acento; baja e
+   igual en gris, sin rojo: es información, no un regaño. */
+.rh-vs { display: inline-block; margin-top: 4px; font-size: 12px; font-weight: 700; white-space: nowrap; }
+.rh-sub .rh-vs { margin: 0 0 0 6px; }
+.rh-vs.sube { color: var(--rh-acento-claro); }
+.rh-vs.baja, .rh-vs.igual { color: var(--rh-texto-3); }
+.rh-sub.rh-vs-linea { margin-top: -14px; }
+.rh-sub.rh-vs-linea .rh-vs { margin-left: 4px; }
+
 /* Final y botones. */
 .rh-final-datos { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .rh-botones { display: flex; flex-direction: column; gap: 10px; margin-top: 24px; }

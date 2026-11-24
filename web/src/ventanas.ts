@@ -181,6 +181,10 @@ export function datosResumenMensual(d: DatosCliente, elegido: string | null): Da
     hoy: d.hoy,
     sexo: perfil.sexo,
     cambios: compararFuerza(resumen?.fuerza ?? null, previo?.fuerza ?? null),
+    // El "+X % vs <mes>": solo contra el mes de justo antes y con el elegido ya cerrado.
+    anterior: actual && !actual.enCurso
+      ? (meses[i + 1]?.mes === mesAnterior(actual.mes) ? previo : null)
+      : null,
     // Récords: contra todo su historial anterior, así que solo con el historial completo.
     previas: resumen && d.historial ? mejoresAntes(actual!.mes, d.historial, d.banco, resumen.marcas.map((m) => m.ejercicioId)) : null,
     // El mapa del cuerpo para la historia de Fuerza: los SVG que ya carga Músculos.

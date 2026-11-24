@@ -219,6 +219,15 @@ describe("datosResumenMensual", () => {
     expect(datosResumenMensual(datos({ asistencias, resumenes }), "2025-01").mes).toBe("2026-09");
   });
 
+  it("compara contra el mes de justo antes, solo con el elegido ya cerrado", () => {
+    const resumenes = [guardado("2026-07"), guardado("2026-08")];
+    expect(datosResumenMensual(datos({ asistencias, resumenes }), "2026-08").anterior?.mes).toBe("2026-07");
+    // El mes en curso no se compara: medio mes contra uno completo engaña.
+    expect(datosResumenMensual(datos({ asistencias, resumenes }), "2026-09").anterior).toBeNull();
+    // Si el anterior de la lista no es el mes de justo antes (hubo un mes sin nada), tampoco.
+    expect(datosResumenMensual(datos({ asistencias, resumenes: [guardado("2026-06"), guardado("2026-08")] }), "2026-08").anterior).toBeNull();
+  });
+
   it("mientras llegan los meses cerrados dice que carga", () => {
     expect(datosResumenMensual(datos({ asistencias }), null).cargando).toBe(true);
   });
