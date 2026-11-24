@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { armarTabla, nombreVisible, partidaValida, type Registro } from "./juegoDiscos";
+import { armarTabla, avisoSuperada, nombreVisible, partidaValida, superadas, type Registro } from "./juegoDiscos";
 
 describe("partidaValida", () => {
   it("acepta una partida posible", () => {
@@ -37,5 +37,32 @@ describe("armarTabla", () => {
     const t = armarTabla([r("a", "Ana Soto", 40)], "z");
     expect(t.tuMejor).toBe(0);
     expect(t.filas.some((f) => f.esTuyo)).toBe(false);
+  });
+});
+
+describe("superadas: a quién avisar que la rebasaron", () => {
+  const r = (clienteId: string, mejor: number): Registro => ({ clienteId, nombre: clienteId, mejor });
+  const regs = [r("yo", 30), r("said", 25), r("ana", 20), r("eva", 12), r("lia", 30), r("nueva", 0)];
+  it("quienes estaban arriba o empatadas y quedaron abajo del nuevo récord", () => {
+    // Iba en 18 y hace 30: rebasa a Said (25) y a Ana (20); Eva ya iba abajo; Lía empata (30), no la rebasa.
+    expect(superadas(regs, "yo", 18, 30).sort()).toEqual(["ana", "said"]);
+  });
+  it("un empate previo que ahora rompe sí cuenta", () => {
+    expect(superadas(regs, "yo", 25, 26)).toEqual(["said"]);
+  });
+  it("sin récord nuevo, nadie; quien no ha jugado tampoco", () => {
+    expect(superadas(regs, "yo", 30, 30)).toEqual([]);
+    expect(superadas(regs, "yo", 0, 5)).toEqual([]);
+  });
+});
+
+describe("avisoSuperada", () => {
+  it("con su nombre, el texto pedido, abre el juego y su id no se repite", () => {
+    const a = avisoSuperada("said", "bogue", "  Bogue   López ", 31);
+    expect(a.titulo).toBe("Bogue López te ha superado en Torre de discos");
+    expect(a.texto).toBe("¡Juega para intentar quitarle su lugar en el marcador!");
+    expect(a.abrir).toEqual({ ventana: "juego" });
+    expect(a.id).toBe("auto_torreDiscos_said_bogue_31");
+    expect(a.id).toMatch(/^[A-Za-z0-9_:.-]{1,200}$/);
   });
 });

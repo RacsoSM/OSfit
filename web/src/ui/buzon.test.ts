@@ -37,6 +37,11 @@ describe("ventanaBuzon", () => {
     expect(html).toContain(`data-abrir-mes="2026-10"`);
     expect(html).toContain("Ver mi resumen");
   });
+  it("el de Torre de discos lleva al juego", () => {
+    const html = ventanaBuzon([e("t", "2026-11-24T16:00:00Z", { titulo: "Bogue te ha superado en Torre de discos", abrir: { ventana: "juego" } })], "2026-11-24");
+    expect(html).toContain(`data-abrir-ventana="juego"`);
+    expect(html).toContain("Jugar Torre de discos");
+  });
 });
 
 describe("sin leer", () => {

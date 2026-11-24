@@ -1,4 +1,5 @@
 import { FieldValue } from "firebase-admin/firestore";
+import { logger } from "firebase-functions";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { REGION, clienteDeLaSesion, db, hoyEnMazatlan } from "./comun";
 
@@ -72,6 +73,30 @@ async function leerTabla(clienteId: string): Promise<TablaDiscos> {
   return armarTabla(snap.docs.map((d) => registroDesdeDoc(d.id, d.data())), clienteId);
 }
 
+/**
+ * A quiénes acaba de rebasar: quienes estaban arriba o empatadas con su récord anterior y ahora
+ * quedaron abajo del nuevo (entrenador, 2026-11-24: "si alguien más juega y me supera, que me
+ * llegue una notificación"). A quien ya iba ganando no se le avisa otra vez.
+ */
+export function superadas(registros: readonly Registro[], jugadoraId: string, antes: number, nuevo: number): string[] {
+  if (nuevo <= antes) return [];
+  return registros
+    .filter((r) => r.clienteId !== jugadoraId && r.mejor > 0 && r.mejor >= antes && r.mejor < nuevo)
+    .map((r) => r.clienteId);
+}
+
+export interface AvisoSuperada { id: string; titulo: string; texto: string; abrir: { ventana: "juego" } }
+
+/** El aviso para quien fue rebasada. El id fijo evita mandarlo dos veces si se reintenta. */
+export function avisoSuperada(superadaId: string, jugadoraId: string, nombre: string, nuevo: number): AvisoSuperada {
+  return {
+    id: `auto_torreDiscos_${superadaId}_${jugadoraId}_${nuevo}`,
+    titulo: `${nombreVisible(nombre)} te ha superado en Torre de discos`,
+    texto: "¡Juega para intentar quitarle su lugar en el marcador!",
+    abrir: { ventana: "juego" },
+  };
+}
+
 /** Guarda la partida (si mejora algo) y devuelve la tabla al día, con si fue récord. */
 export const guardarPartidaDiscos = onCall({ region: REGION }, async (request) => {
   const clienteId = await clienteDeLaSesion(request);
@@ -82,7 +107,7 @@ export const guardarPartidaDiscos = onCall({ region: REGION }, async (request) =
   // El nombre de hoy: si el entrenador lo corrige, la tabla se pone al día en su próxima partida.
   const nombre = ((await firestore.collection("clientes").doc(clienteId).get()).get("nombre") as string | undefined)?.trim() || "";
   const ref = firestore.collection("juegoDiscos").doc(clienteId);
-  const record = await firestore.runTransaction(async (tx) => {
+  const { record, mejorAntes } = await firestore.runTransaction(async (tx) => {
     const antes = registroDesdeDoc(clienteId, (await tx.get(ref)).data() ?? {});
     tx.set(ref, {
       nombre,
@@ -91,10 +116,38 @@ export const guardarPartidaDiscos = onCall({ region: REGION }, async (request) =
       ultima: FieldValue.serverTimestamp(),
       ...(partida.apilados > antes.mejor ? { mejorEn: hoyEnMazatlan() } : {}),
     }, { merge: true });
-    return partida.apilados > antes.mejor;
+    return { record: partida.apilados > antes.mejor, mejorAntes: antes.mejor };
   });
-  return { record, tabla: await leerTabla(clienteId) };
+  const snap = await firestore.collection("juegoDiscos").get();
+  const registros = snap.docs.map((d) => registroDesdeDoc(d.id, d.data()));
+  if (record) await avisarSuperadas(registros, clienteId, nombre, mejorAntes, partida.apilados);
+  return { record, tabla: armarTabla(registros, clienteId) };
 });
+
+/**
+ * Les deja el aviso en `notificaciones/`: el trigger `enviarNotificacion` lo pone en su buzón y
+ * lo manda a sus teléfonos (solo a las activas con notificaciones encendidas). Si falla, la
+ * partida ya quedó guardada: no se le avisa, pero no se pierde nada.
+ */
+async function avisarSuperadas(registros: readonly Registro[], jugadoraId: string, nombre: string, antes: number, nuevo: number): Promise<void> {
+  const ids = superadas(registros, jugadoraId, antes, nuevo);
+  if (ids.length === 0) return;
+  try {
+    const lote = db().batch();
+    for (const id of ids) {
+      const a = avisoSuperada(id, jugadoraId, nombre, nuevo);
+      lote.set(db().collection("notificaciones").doc(a.id), {
+        id: a.id, titulo: a.titulo, texto: a.texto,
+        destino: "elegidas", clientesElegidos: [id],
+        creada: FieldValue.serverTimestamp(), estado: "pendiente", enviadas: 0, fallidas: 0,
+        automatico: "torreDiscos", abrir: a.abrir,
+      });
+    }
+    await lote.commit();
+  } catch (error) {
+    logger.error("No se pudo avisar a las superadas en Torre de discos", { jugadoraId, error });
+  }
+}
 
 export const tablaDiscos = onCall({ region: REGION }, async (request) => {
   const clienteId = await clienteDeLaSesion(request);

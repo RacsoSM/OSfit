@@ -293,7 +293,8 @@ self.addEventListener("push", (evento) => {
 /**
  * Tocar un aviso abre Notificaciones, con ese aviso marcado (`id`). Adónde llevaba el aviso
  * (`abrir`) queda como botón en su tarjeta. La excepción es el del resumen del mes: abre Inicio
- * con la ventana emergente "Tu resumen de <mes> ya está listo" (entrenador, 2026-11-24).
+ * con la ventana emergente "Tu resumen de <mes> ya está listo" (entrenador, 2026-11-24), y el de
+ * Torre de discos ("<nombre> te ha superado"), que abre el juego.
  */
 self.addEventListener("notificationclick", (evento) => {
   evento.notification.close();
@@ -301,9 +302,12 @@ self.addEventListener("notificationclick", (evento) => {
   const aviso = typeof datos.id === "string" ? datos.id : null;
   const abrir = datos.abrir || null;
   const mesResumen = abrir && abrir.ventana === "resumenMensual" && typeof abrir.mes === "string" ? abrir.mes : null;
+  // "Te superaron en Torre de discos" abre el juego directo, para intentar recuperar el lugar.
   const destino = mesResumen
     ? { ventana: "inicio", mes: mesResumen, aviso }
-    : { ventana: "notificaciones", aviso };
+    : abrir && abrir.ventana === "juego"
+      ? { ventana: "juego", aviso }
+      : { ventana: "notificaciones", aviso };
   evento.waitUntil(
     (async () => {
       const ventanas = await self.clients.matchAll({ type: "window", includeUncontrolled: true });

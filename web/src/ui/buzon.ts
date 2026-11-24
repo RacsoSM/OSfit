@@ -57,6 +57,7 @@ export function sinLeer(entradas: readonly EntradaBuzon[] | null, visto: number)
 /** Qué dice el botón según adónde lleva. Una ventana sin texto propio usa "Abrir". */
 const ACCION: Readonly<Record<string, string>> = {
   resumenMensual: "Ver mi resumen",
+  juego: "Jugar Torre de discos",
   inicio: "Ir a Inicio",
   musculos: "Ver mis músculos",
   registro: "Ir a Registro",
