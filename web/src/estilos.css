@@ -2459,7 +2459,7 @@ body.historia-abierta { overflow: hidden; }
    Línea de tiempo (s), igual que `ESCENA` en `ui/resumenMensual.ts`:
      0     escenario a oscuras; el título se enfoca; se prenden los reflectores
      0.3   los reflectores giran a la primera tarjeta y el círculo de luz se pone sobre ella
-     1     se voltea: cono de luz, su número corre, chispas, su comparación
+     1     se voltea: su número corre, chispas, su comparación
      +2    la siguiente, igual (6 tarjetas); las demás, en penumbra
      12.6  remate: destello, se encienden las luces, los reflectores barren libres, brillo que
            cruza todas, ráfaga de confeti
@@ -2526,7 +2526,7 @@ body.historia-abierta { overflow: hidden; }
   background: radial-gradient(circle, rgba(255, 255, 255, 0.95) 0%, rgba(158, 197, 244, 0.5) 12%, rgba(57, 135, 229, 0) 35%);
 }
 
-/* Cada tarjeta: dos caras en 3D, un cono de luz encima y chispas. */
+/* Cada tarjeta: dos caras en 3D y chispas. La única luz es la de los reflectores de abajo. */
 .rh-final .rh-dato { position: relative; perspective: 700px; padding: 0; background: none; min-height: 92px; }
 .rh-dato-dorso, .rh-dato-frente { border-radius: 12px; backface-visibility: hidden; -webkit-backface-visibility: hidden; }
 .rh-dato-frente { position: relative; height: 100%; padding: 12px 14px; background: var(--rh-superficie); transform: rotateY(-90deg); opacity: 0; }
@@ -2543,12 +2543,6 @@ body.historia-abierta { overflow: hidden; }
 }
 .rh-dorso-signo { font-size: 30px; font-weight: 900; color: rgba(158, 197, 244, 0.55); line-height: 1; }
 .rh-dorso-etq { font-size: 11px; font-weight: 700; color: rgba(195, 194, 183, 0.6); text-transform: uppercase; letter-spacing: 1px; }
-.rh-final .rh-dato::before {
-  content: ""; position: absolute; left: 50%; bottom: 40%; width: 210%; height: 340%; z-index: -1;
-  transform: translateX(-50%); opacity: 0; pointer-events: none;
-  clip-path: polygon(44% 0, 56% 0, 100% 100%, 0 100%);
-  background: linear-gradient(to bottom, rgba(255, 255, 255, 0), rgba(158, 197, 244, 0.42));
-}
 .rh-chispas { position: absolute; left: 50%; top: 50%; width: 0; height: 0; z-index: 2; pointer-events: none; }
 .rh-chispas span {
   position: absolute; left: -3px; top: -3px; width: 6px; height: 6px; border-radius: 50%; opacity: 0;
@@ -2590,7 +2584,6 @@ body.historia-abierta { overflow: hidden; }
 .rh-final.en-escena:not(.libre) .rh-dato.foco .rh-dato-dorso { box-shadow: 0 0 34px 4px rgba(158, 197, 244, 0.38); }
 .rh-final.en-escena .rh-flash { animation: rh-destello 1.3s ease-out both; animation-delay: calc(var(--desfase) + var(--rh-remate)); }
 .rh-final.en-escena .rh-dato { --t: calc(var(--desfase) + var(--rh-intro) + var(--i) * var(--rh-paso)); }
-.rh-final.en-escena .rh-dato::before { animation: rh-cono 1.7s ease-out both; animation-delay: calc(var(--t) - 0.25s); }
 .rh-final.en-escena .rh-dato-dorso { animation: rh-voltear-fuera 0.35s ease-in both; animation-delay: var(--t); }
 .rh-final.en-escena .rh-dato-frente {
   animation: rh-voltear-dentro 0.55s cubic-bezier(0.2, 1.5, 0.4, 1) both, rh-pulso 1.1s ease-out both;
@@ -2604,7 +2597,7 @@ body.historia-abierta { overflow: hidden; }
 
 /* Terminado (o sin movimiento): todo en su lugar, sin animar. Los reflectores se quedan barriendo. */
 .rh-final.terminado .rh-etiqueta, .rh-final.terminado .rh-oscuro, .rh-final.terminado .rh-flash,
-.rh-final.terminado .rh-dato::before, .rh-final.terminado .rh-dato-dorso, .rh-final.terminado .rh-dato-frente,
+.rh-final.terminado .rh-dato-dorso, .rh-final.terminado .rh-dato-frente,
 .rh-final.terminado .rh-chispas span, .rh-final.terminado .rh-vs, .rh-final.terminado .rh-final-datos::after,
 .rh-final.terminado .rh-final-nota, .rh-final.terminado .rh-botones { animation: none; }
 .rh-final.terminado .rh-oscuro, .rh-final.terminado .rh-dato-dorso, .rh-final.terminado .rh-flash { opacity: 0; }
@@ -2625,7 +2618,6 @@ body.historia-abierta { overflow: hidden; }
 @keyframes rh-barrer-der { from { transform: rotate(28deg); } to { transform: rotate(-30deg); } }
 @keyframes rh-luces { to { opacity: 0; } }
 @keyframes rh-destello { 0% { opacity: 0; transform: scale(0.1); } 18% { opacity: 1; } 100% { opacity: 0; transform: scale(1.4); } }
-@keyframes rh-cono { 0% { opacity: 0; } 25% { opacity: 1; } 100% { opacity: 0; } }
 @keyframes rh-voltear-fuera { from { transform: rotateY(0); opacity: 1; } to { transform: rotateY(90deg); opacity: 0; } }
 @keyframes rh-voltear-dentro { from { transform: rotateY(-90deg); opacity: 0; } to { transform: rotateY(0); opacity: 1; } }
 @keyframes rh-pulso {
