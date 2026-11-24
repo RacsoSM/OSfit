@@ -1,8 +1,10 @@
-import { NIVEL_MAX, nombreMusculo, nombreRango, percentilEntrenanDe } from "../fuerza";
+import { indiceRango, nombreMusculo, nombreRango, percentilEntrenanDe } from "../fuerza";
+import { COLORES_RANGO } from "./insigniaRango";
 import { comparaMarca, formatoKg, nombreMes, type ResumenMensual, type SerieMarca } from "../resumenMensual";
 import { prepararSvg } from "./mapaMuscular";
 import { escapar } from "./tarjetaDia";
 import { lluviaDeConfeti, rafagaDeConfeti } from "./confeti";
+import { decidirDeslizamiento } from "./deslizarRegistro";
 
 /**
  * La ventana Resumen mensual, estilo "historias" (entrenador, 2026-11-24, inspirado en el
@@ -301,12 +303,11 @@ function constancia(r: ResumenMensual, enCurso: boolean, hoy: string, ant: Resum
 }
 
 /**
- * La rampa azul del nivel, de oscuro (poco) a claro (mucho): sobre el fondo oscuro, lo más
- * fuerte es lo que más resalta. Un tono por nivel entero, 0 a 8. Pasos de la rampa secuencial
- * de la guía de visualización.
+ * El color de cada músculo: el de su rango, el mismo del apartado Músculos (`COLORES_RANGO`,
+ * "hielo → fuego"), no un tono de la paleta del resumen (entrenador, 2026-11-24). Son colores
+ * fijos: no cambian con el estilo de la clienta.
  */
-const RAMPA_NIVEL = ["#184f95", "#1c5cab", "#256abf", "#2a78d6", "#3987e5", "#5598e7", "#6da7ec", "#86b6ef", "#9ec5f4"];
-export const colorNivel = (nivel: number) => RAMPA_NIVEL[Math.max(0, Math.min(NIVEL_MAX, Math.round(nivel)))];
+export const colorNivel = (nivel: number) => COLORES_RANGO[indiceRango(nivel)];
 
 /** El mapa de frente o espalda con cada músculo de su tono; sin datos, gris (lo pone el CSS). */
 function cuerpoPintado(svg: string, prefijo: string, musculos: Readonly<Record<string, number>>): string {
@@ -697,10 +698,14 @@ export function conectarResumenMensual(repintar: () => void, nav: NavegacionHist
   // Deslizar de lado para cambiar de historia; un toque en el tercio izquierdo regresa y en el
   // resto avanza, como en las historias de Instagram. El scroll vertical (una historia larga
   // en un teléfono chico) no se toca.
-  let x0 = 0, y0 = 0, arrastrando = false, horizontal: boolean | null = null;
+  let x0 = 0, y0 = 0, t0 = 0, arrastrando = false, horizontal: boolean | null = null;
+  // Que el navegador no arrastre el SVG del cuerpo ni texto: cancelaría el gesto.
+  visorEl.addEventListener("dragstart", (e) => e.preventDefault());
   visorEl.addEventListener("pointerdown", (e) => {
+    if (e.pointerType === "mouse" && e.button !== 0) return;
     if ((e.target as HTMLElement).closest("button")) return;
-    x0 = e.clientX; y0 = e.clientY; arrastrando = true; horizontal = null;
+    x0 = e.clientX; y0 = e.clientY; t0 = performance.now(); arrastrando = true; horizontal = null;
+    try { visorEl.setPointerCapture(e.pointerId); } catch { /* sin captura también funciona */ }
   });
   visorEl.addEventListener("pointermove", (e) => {
     if (!arrastrando || !carril) return;
@@ -717,9 +722,9 @@ export function conectarResumenMensual(repintar: () => void, nav: NavegacionHist
     carril?.classList.remove("arrastrando");
     const dx = e.clientX - x0;
     if (horizontal) {
-      if (dx < -50) ir(pagina + 1);
-      else if (dx > 50) ir(pagina - 1);
-      else ir(pagina);
+      // La misma regla que Registro: lo bastante largo, o un movimiento rápido.
+      const hacia = decidirDeslizamiento(dx, e.clientY - y0, performance.now() - t0);
+      ir(hacia === "siguiente" ? pagina + 1 : hacia === "anterior" ? pagina - 1 : pagina);
       return;
     }
     if (horizontal === null) {

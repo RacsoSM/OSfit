@@ -2322,7 +2322,10 @@ body.historia-abierta { overflow: hidden; }
    número. Sin toques. */
 .rh-confeti { position: absolute; inset: 0; z-index: 0; width: 100%; height: 100%; pointer-events: none; }
 .rh-carril.arrastrando { transition: none; }
-.rh-pagina { flex: 0 0 100%; height: 100%; overflow-y: auto; overscroll-behavior: contain; }
+/* `pan-y` también en cada página: son contenedores con scroll propio y, sin esto, en un teléfono el
+   navegador se queda con el gesto horizontal y cancela el deslizar (solo funcionaba tocando). */
+.rh-pagina { flex: 0 0 100%; height: 100%; overflow-y: auto; overscroll-behavior: contain; touch-action: pan-y; }
+.rh-visor * { touch-action: pan-y; }
 .rh-contenido {
   /* Arriba y no centrado (entrenador, 2026-11-24): el título de cada historia cae a la misma
      altura en todas. */
@@ -2413,7 +2416,11 @@ body.historia-abierta { overflow: hidden; }
 .rh-mapa .destello-elite, .rh-mapa .chispa { display: none; }
 .rh-mapa-cargando { height: 200px; display: grid; place-items: center; color: var(--rh-texto-3); font-size: 13px; }
 .rh-escala { display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--rh-texto-3); margin-bottom: 14px; }
-.rh-escala i { flex: 1; height: 8px; border-radius: 4px; background: linear-gradient(90deg, #184f95, #3987e5, #9ec5f4); }
+/* La escala con los colores de los rangos, de Principiante a Élite (`COLORES_RANGO`). */
+.rh-escala i {
+  flex: 1; height: 8px; border-radius: 4px;
+  background: linear-gradient(90deg, #bfe3ff, #7cc4ff, #3b8fff, #5b5bd6, #9d4edd, #e0457b, #ff6b2c, #ffb703);
+}
 .rh-destacado { background: var(--rh-superficie); border-radius: 12px; padding: 12px 14px; }
 .rh-destacado .rh-etq { margin: 0; }
 .rh-destacado-texto { margin: 4px 0 0; font-size: 18px; font-weight: 800; }

@@ -165,7 +165,8 @@ describe("fuerza: tu cuerpo pintado", () => {
   });
   it("cada músculo con datos lleva su tono; los demás quedan para el gris del CSS", () => {
     const html = todo(datos({ mapa: { frente: svg, espalda: svg } }));
-    expect(html).toContain('data-musculo="pecho" style="fill: #9ec5f4"');
+    // El color de su rango, como en Músculos: pecho nivel 8 = Élite, oro.
+    expect(html).toContain('data-musculo="pecho" style="fill: #ffb703"');
     expect(html).not.toMatch(/data-musculo="biceps" style=/);
     expect(html).toContain('id="rh-frente"');
     expect(html).toContain('id="rh-espalda"');
