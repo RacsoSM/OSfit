@@ -2582,6 +2582,8 @@ body.historia-abierta { overflow: hidden; }
 .rh-final.libre .rh-haz.extra, .rh-final.terminado .rh-haz.extra { opacity: 0; animation: none; }
 /* En penumbra las que no tienen el foco; la de turno, iluminada y un poco al frente. */
 .rh-final.en-escena .rh-dato { transition: filter 0.6s ease, transform 0.6s ease; }
+/* La primera vez que apuntan, en su lugar de golpe (`apuntarReflectores`). */
+.rh-final.al-instante, .rh-final.al-instante .rh-haz, .rh-final.al-instante .rh-dato { transition: none !important; }
 .rh-final.en-escena:not(.libre) .rh-dato:not(.foco) { filter: brightness(0.5) saturate(0.7); }
 .rh-final.en-escena:not(.libre) .rh-dato.foco {
   transform: scale(1.04); z-index: 4;

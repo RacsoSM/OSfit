@@ -644,13 +644,23 @@ function apuntarReflectores(seccion: HTMLElement, transcurrido: number, terminad
     datos.forEach((dd, k) => dd.classList.toggle("foco", k === i));
   };
 
-  // La tarjeta que ya estaba en foco (si se retoma a media función) y las que siguen.
+  // Al arrancar (o al retomar a media función) las luces ya están sobre la tarjeta de turno, o
+  // sobre la primera si aún no le toca: se colocan de golpe, sin transición, para que no se vea
+  // cómo se acomodan (entrenador, 2026-11-24). Las siguientes sí giran de una a otra.
+  let primera = true;
   datos.forEach((_, i) => {
     const cuando = turno(i) - ESCENA.apuntar - transcurrido;
     const siguiente = i + 1 < datos.length ? turno(i + 1) - ESCENA.apuntar - transcurrido : ESCENA.remate - transcurrido;
     if (siguiente <= 0) return;
-    if (cuando <= 0) apuntar(i);
-    else relojes.push(window.setTimeout(() => apuntar(i), cuando * 1000));
+    if (primera) {
+      primera = false;
+      seccion.classList.add("al-instante");
+      apuntar(i);
+      void seccion.offsetWidth;
+      seccion.classList.remove("al-instante");
+      return;
+    }
+    relojes.push(window.setTimeout(() => apuntar(i), cuando * 1000));
   });
   relojes.push(window.setTimeout(soltar, (ESCENA.remate - transcurrido) * 1000));
 }
