@@ -1,6 +1,7 @@
 import { NIVEL_MAX, nombreMusculo, nombreRango } from "../fuerza";
 import { formatoKg, nombreMes, type ResumenMensual } from "../resumenMensual";
 import { escapar } from "./tarjetaDia";
+import { lluviaDeConfeti } from "./confeti";
 
 /**
  * La ventana Resumen mensual, estilo "historias" (entrenador, 2026-11-24, inspirado en el
@@ -349,6 +350,7 @@ function visor(d: DatosResumenMensual): string {
   return `
     <div class="rh-fijo rh-visor${entrada}" role="dialog" aria-modal="true"
          aria-label="Resumen de ${nombreMes(d.mes ?? "")} ${(d.mes ?? "").slice(0, 4)}, ${pagina + 1} de ${historias.length}">
+      <canvas class="rh-confeti" aria-hidden="true"></canvas>
       <div class="rh-progreso" aria-hidden="true">${barras}</div>
       <div class="rh-cabeza">
         <span>${capital(nombreMes(d.mes ?? ""))} ${(d.mes ?? "").slice(0, 4)}</span>
@@ -394,6 +396,7 @@ export function conectarResumenMensual(repintar: () => void, nav: NavegacionHist
   );
 
   const visorEl = document.querySelector<HTMLElement>(".rh-visor");
+  lluviaDeConfeti(visorEl?.querySelector<HTMLCanvasElement>(".rh-confeti") ?? null);
   if (!visorEl) return;
   const carril = visorEl.querySelector<HTMLElement>(".rh-carril");
   const total = visorEl.querySelectorAll(".rh-pagina").length;
