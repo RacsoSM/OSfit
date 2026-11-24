@@ -5,6 +5,7 @@ import { prepararSvg } from "./mapaMuscular";
 import { escapar } from "./tarjetaDia";
 import { lluviaDeConfeti, rafagaDeConfeti } from "./confeti";
 import { decidirDeslizamiento } from "./deslizarRegistro";
+import { compartirPoster, posterComoArchivo, sinEtiquetas, type Cambio, type DatosPoster } from "./posterImagen";
 
 /**
  * La ventana Resumen mensual, estilo "historias" (entrenador, 2026-11-24, inspirado en el
@@ -51,6 +52,8 @@ export interface DatosResumenMensual {
    * anterior en la lista no es el mes de justo antes.
    */
   anterior?: ResumenMensual | null;
+  /** Su nombre, para el póster de la historia final. */
+  nombre?: string;
   /** Los SVG del mapa del cuerpo de su sexo; null mientras llegan o sin sexo. */
   mapa?: { frente: string; espalda: string } | null;
 }
@@ -409,56 +412,117 @@ function formatear(n: number, f: Formato): string {
   return formatoKg(n);
 }
 
-function final(r: ResumenMensual, sexo: "H" | "M" | null, ant: ResumenMensual | null): Historia {
+/** Los colores de las rayitas de los 4 números del póster (los de los rangos). */
+const COLOR_NUMERO = ["#3b8fff", "#9d4edd", "#e0457b", "#ffb703"];
+
+/**
+ * Lo que dice el póster, para la pantalla y para la imagen que se comparte (`posterImagen.ts`).
+ * Los cambios solo contra el mes de justo antes y si ese mes tiene el dato, como en las demás
+ * historias.
+ */
+export function datosPoster(r: ResumenMensual, sexo: "H" | "M" | null, ant: ResumenMensual | null, nombre: string): DatosPoster {
+  const a = r.asistencia;
+  const t = r.entrenamiento;
+  const s = sexo ?? "H";
+  const pa = ant && ant.asistencia.entreno + ant.asistencia.justificadas + ant.asistencia.faltas > 0 ? ant.asistencia : null;
+  const pt = ant && ant.entrenamiento.sesiones > 0 ? ant.entrenamiento : null;
+  const cambio = (n: number | null): Cambio | null => (n === null || !ant ? null : { n, mes: ant.mes });
+  const conRegistros = a.entreno + a.justificadas + a.faltas > 0;
+  return {
+    mes: r.mes,
+    nombre,
+    rango: r.fuerza ? {
+      nombre: nombreRango(r.fuerza.general, s),
+      color: colorNivel(r.fuerza.general),
+      percentil: percentilEntrenanDe(r.fuerza.general),
+      cambio: ant?.fuerza ? cambio(variacion(r.fuerza.general, ant.fuerza.general, "relativo")) : null,
+    } : null,
+    numeros: [
+      { valor: conRegistros ? `${a.porcentaje} %` : "—", etiqueta: "asistencia",
+        cambio: conRegistros && pa ? cambio(variacion(a.porcentaje, pa.porcentaje, "puntos")) : null },
+      { valor: t.sesiones > 0 ? `${formatoKg(t.kg)} kg` : "—", etiqueta: "levantados",
+        cambio: t.sesiones > 0 && pt ? cambio(variacion(t.kg, pt.kg, "relativo")) : null },
+      { valor: a.visitasConMinutos > 0 ? sinEtiquetas(tiempo(a.minutos)) : "—", etiqueta: "en el gym",
+        cambio: a.visitasConMinutos > 0 && pa && pa.visitasConMinutos > 0 ? cambio(variacion(a.minutos, pa.minutos, "relativo")) : null },
+      { valor: `${a.rachaMasLarga} ${a.rachaMasLarga === 1 ? "día" : "días"}`, etiqueta: "racha más larga",
+        cambio: pa ? cambio(variacion(a.rachaMasLarga, pa.rachaMasLarga, "relativo")) : null },
+    ].map((n, i) => ({ ...n, color: COLOR_NUMERO[i] })),
+    ejercicios: t.top.map((e) => e.nombre),
+    musculos: r.fuerza
+      ? Object.entries(r.fuerza.musculos).sort(([, x], [, y]) => y - x).slice(0, 3)
+        .map(([g, n]) => ({ nombre: nombreMusculo(g), color: colorNivel(n) }))
+      : [],
+  };
+}
+
+/** El póster que está en pantalla, para que "Compartir" lo dibuje como imagen. */
+let posterEnPantalla: DatosPoster | null = null;
+
+/**
+ * La historia final: el póster del mes a toda la pantalla (diseño "A1 · S1", entrenador
+ * 2026-11-24), con el marco de los colores de los rangos. Arriba el mes y su nombre; luego su
+ * rango, los 4 números en una cuadrícula con aire, sus ejercicios y músculos, y "Compartir" (la
+ * imagen del póster) y "Cerrar". El espectáculo de luces destapa sus 6 partes una por una: el
+ * rango, los 4 números y las listas (`rh-dato`, con `--i`).
+ */
+function final(r: ResumenMensual, sexo: "H" | "M" | null, ant: ResumenMensual | null, nombre: string): Historia {
+  const p = datosPoster(r, sexo, ant, nombre);
+  posterEnPantalla = p;
   const a = r.asistencia;
   const t = r.entrenamiento;
   const chispas = Array.from({ length: 10 }, (_, k) => `<span style="--a: ${k * 36}deg"></span>`).join("");
-  let i = 0;
-  // Cada tarjeta tiene dos caras: el dorso con "?" y su nombre, y el frente con el número. Un
-  // número que se puede contar lleva `data-contar` y `data-formato`; el rango, no.
-  const dato = (valor: string, etiqueta: string, cambio = "", contar?: { n: number; f: Formato }) => `
-    <div class="rh-dato" style="--i: ${i++}">
-      <div class="rh-dato-dorso" aria-hidden="true"><span class="rh-dorso-signo">?</span><span class="rh-dorso-etq">${etiqueta}</span></div>
-      <div class="rh-dato-frente">
-        <p class="rh-num"${contar ? ` data-contar="${contar.n}" data-formato="${contar.f}"` : ""}>${valor}</p>
-        <p class="rh-etq">${etiqueta}</p>${cambio}
-      </div>
+  const pastilla = (c: Cambio | null) => (c ? vs(c.n, c.mes) : "");
+  // Cada parte tiene dos caras: el dorso con "?" y su nombre, y el frente. Un número que se puede
+  // contar lleva `data-contar` y `data-formato`.
+  const parte = (i: number, clase: string, dorso: string, frente: string) => `
+    <div class="rh-dato ${clase}" style="--i: ${i}">
+      <div class="rh-dato-dorso" aria-hidden="true"><span class="rh-dorso-signo">?</span><span class="rh-dorso-etq">${dorso}</span></div>
+      <div class="rh-dato-frente">${frente}</div>
       <i class="rh-chispas" aria-hidden="true">${chispas}</i>
     </div>`;
-  const conRegistros = a.entreno + a.justificadas + a.faltas > 0;
-  const pa = ant && ant.asistencia.entreno + ant.asistencia.justificadas + ant.asistencia.faltas > 0 ? ant.asistencia : null;
-  const pt = ant && ant.entrenamiento.sesiones > 0 ? ant.entrenamiento : null;
-  const mp = ant?.mes ?? null;
+  const contar: ({ n: number; f: Formato } | null)[] = [
+    a.entreno + a.justificadas + a.faltas > 0 ? { n: a.porcentaje, f: "pct" } : null,
+    t.sesiones > 0 ? { n: t.kg, f: "kg" } : null,
+    a.visitasConMinutos > 0 ? { n: a.minutos, f: "tiempo" } : null,
+    null,
+  ];
+  const valorHtml = [
+    p.numeros[0].valor,
+    t.sesiones > 0 ? formatear(t.kg, "kg") : "—",
+    a.visitasConMinutos > 0 ? tiempo(a.minutos) : "—",
+    p.numeros[3].valor.replace(/ (días?)$/, " <small>$1</small>"),
+  ];
   return {
     id: "final",
     html: `
       <div class="rh-escenario" aria-hidden="true">
         <i class="rh-oscuro"></i><i class="rh-haz izq"></i><i class="rh-haz der"></i><i class="rh-flash"></i>
       </div>
-      <p class="rh-etiqueta">Tu ${nombreMes(r.mes)} en resumen</p>
-      <div class="rh-final-datos">
-        ${dato(conRegistros ? `${a.porcentaje} %` : "—", "asistencia",
-          conRegistros && pa ? vs(variacion(a.porcentaje, pa.porcentaje, "puntos"), mp) : "",
-          conRegistros ? { n: a.porcentaje, f: "pct" } : undefined)}
-        ${dato(t.sesiones > 0 ? formatear(t.kg, "kg") : "—", "levantados",
-          t.sesiones > 0 && pt ? vs(variacion(t.kg, pt.kg, "relativo"), mp) : "",
-          t.sesiones > 0 ? { n: t.kg, f: "kg" } : undefined)}
-        ${dato(a.visitasConMinutos > 0 ? tiempo(a.minutos) : "—", "en el gym",
-          a.visitasConMinutos > 0 && pa && pa.visitasConMinutos > 0 ? vs(variacion(a.minutos, pa.minutos, "relativo"), mp) : "",
-          a.visitasConMinutos > 0 ? { n: a.minutos, f: "tiempo" } : undefined)}
-        ${dato(t.sesiones > 0 ? formatoKg(t.series) : "—", "series",
-          t.sesiones > 0 && pt ? vs(variacion(t.series, pt.series, "relativo"), mp) : "",
-          t.sesiones > 0 ? { n: t.series, f: "entero" } : undefined)}
-        ${dato(r.fuerza ? nombreRango(r.fuerza.general, sexo ?? "H") : "—", "rango general",
-          r.fuerza && ant?.fuerza ? vs(variacion(r.fuerza.general, ant.fuerza.general, "relativo"), mp) : "")}
-        ${dato(String(a.rachaMasLarga), "racha más larga",
-          pa ? vs(variacion(a.rachaMasLarga, pa.rachaMasLarga, "relativo"), mp) : "",
-          { n: a.rachaMasLarga, f: "entero" })}
-      </div>
-      ${t.top[0] ? `<p class="rh-nota rh-final-nota">Tu ejercicio del mes: <strong>${escapar(t.top[0].nombre)}</strong></p>` : ""}
-      <div class="rh-botones">
-        <button type="button" class="rh-boton" data-rh="otra-vez">Ver otra vez</button>
-        <button type="button" class="rh-boton secundario" data-rh="cerrar">Cerrar</button>
+      <div class="rh-poster">
+        <p class="rh-poster-mes">${nombreMes(r.mes).toUpperCase()} ${r.mes.slice(0, 4)} · OSFIT</p>
+        <p class="rh-poster-nombre">${escapar(nombre)}</p>
+        ${parte(0, "rh-poster-rango", "tu rango", p.rango ? `
+          <i class="rh-medalla" style="--color: ${p.rango.color}"></i>
+          <div>
+            <p class="rh-poster-rango-nombre">${p.rango.nombre}</p>
+            <p class="rh-poster-rango-texto">Más fuerte que el ${p.rango.percentil} % de quienes entrenan ${pastilla(p.rango.cambio)}</p>
+          </div>` : `<div><p class="rh-poster-rango-nombre">—</p><p class="rh-poster-rango-texto">Registra tus entrenamientos para tener rango</p></div>`)}
+        <div class="rh-final-datos">
+          ${p.numeros.map((n, i) => parte(i + 1, "rh-poster-numero", n.etiqueta, `
+            <i class="rh-raya" style="background: ${n.color}"></i>
+            <p class="rh-num"${contar[i] ? ` data-contar="${contar[i]!.n}" data-formato="${contar[i]!.f}"` : ""}>${valorHtml[i]}</p>
+            <p class="rh-etq">${n.etiqueta}</p>${pastilla(n.cambio)}`)).join("")}
+        </div>
+        ${parte(5, "rh-poster-listas", "tus favoritos", `
+          ${p.ejercicios.length ? `<div><p class="rh-poster-tt">Tus ejercicios</p>
+            <ol class="rh-poster-lista">${p.ejercicios.map((e, i) => `<li><b>${i + 1}</b>${escapar(e)}</li>`).join("")}</ol></div>` : ""}
+          ${p.musculos.length ? `<div><p class="rh-poster-tt">Tus músculos</p>
+            <ol class="rh-poster-lista">${p.musculos.map((m) => `<li><i style="background: ${m.color}"></i>${escapar(m.nombre)}</li>`).join("")}</ol></div>` : ""}`)}
+        <p class="rh-compartir-aviso" id="rh-compartir-aviso" role="status"></p>
+        <div class="rh-botones">
+          <button type="button" class="rh-boton" data-rh="compartir">Compartir</button>
+          <button type="button" class="rh-boton secundario" data-rh="cerrar">Cerrar</button>
+        </div>
       </div>`,
   };
 }
@@ -520,7 +584,7 @@ function ponerEnEscena(seccion: HTMLElement, transcurrido: number): void {
  * sueltan (`.libre`) y vuelven a barrer el escenario.
  */
 function apuntarReflectores(seccion: HTMLElement, transcurrido: number, terminado: boolean): void {
-  const datos = [...seccion.querySelectorAll<HTMLElement>(".rh-final-datos .rh-dato")];
+  const datos = [...seccion.querySelectorAll<HTMLElement>(".rh-dato")];
   const hazes = [...seccion.querySelectorAll<HTMLElement>(".rh-haz")];
   const soltar = () => {
     seccion.classList.add("libre");
@@ -572,6 +636,19 @@ function escenaFinal(visorEl: HTMLElement, total: number): void {
   ponerEnEscena(seccion, (performance.now() - escenaInicio) / 1000);
 }
 
+/** La imagen del póster de cada mes, dibujada una vez. */
+const imagenes = new Map<string, Promise<File>>();
+function imagenDe(p: DatosPoster): Promise<File> | null {
+  if (typeof document === "undefined" || typeof HTMLCanvasElement === "undefined") return null;
+  const llave = JSON.stringify(p);
+  if (!imagenes.has(llave)) {
+    const promesa = posterComoArchivo(p);
+    promesa.catch(() => imagenes.delete(llave));
+    imagenes.set(llave, promesa);
+  }
+  return imagenes.get(llave)!;
+}
+
 /** Tocar a media función la salta al final. */
 function saltarEscena(visorEl: HTMLElement): boolean {
   const seccion = visorEl.querySelector<HTMLElement>(".rh-pagina.rh-final.en-escena:not(.terminado)");
@@ -583,7 +660,7 @@ function saltarEscena(visorEl: HTMLElement): boolean {
 
 /** Las historias del mes, en orden, sin las secciones vacías. */
 export function historiasDelMes(
-  d: Pick<DatosResumenMensual, "resumen" | "enCurso" | "hoy" | "sexo" | "cambios" | "semanas" | "previas" | "mapa" | "anterior">
+  d: Pick<DatosResumenMensual, "resumen" | "enCurso" | "hoy" | "sexo" | "cambios" | "semanas" | "previas" | "mapa" | "anterior" | "nombre">
 ): Historia[] {
   const r = d.resumen;
   if (!r) return [];
@@ -594,7 +671,7 @@ export function historiasDelMes(
     constancia(r, d.enCurso, d.hoy, ant),
     fuerza(r, d.sexo, d.mapa ?? null, ant),
     marcas(r, d.previas ?? null),
-    final(r, d.sexo, ant),
+    final(r, d.sexo, ant, d.nombre ?? ""),
   ].filter((h): h is Historia => h !== null);
 }
 
@@ -675,7 +752,26 @@ export function conectarResumenMensual(repintar: () => void, nav: NavegacionHist
       b.className = i < pagina ? "vista" : i === pagina ? "actual" : "";
     });
     visorEl.querySelectorAll<HTMLElement>(".rh-pagina").forEach((p, i) => p.setAttribute("aria-hidden", String(i !== pagina)));
+    visorEl.classList.toggle("en-final", pagina === total - 1);
     escenaFinal(visorEl, total);
+  };
+  // "Compartir": la imagen del póster por el menú del teléfono, o descargada. Se prepara en cuanto
+  // se ve el póster: en iPhone, compartir tiene que salir del toque mismo y no después de esperar
+  // a que se dibuje.
+  const poster = posterEnPantalla;
+  const imagen = poster ? imagenDe(poster) : null;
+  const compartir = async (boton: HTMLButtonElement) => {
+    if (!poster || !imagen) return;
+    const aviso = visorEl.querySelector<HTMLElement>("#rh-compartir-aviso");
+    boton.disabled = true;
+    try {
+      const resultado = await compartirPoster(await imagen, poster.mes);
+      if (aviso) aviso.textContent = resultado === "descargado" ? "Listo: la imagen se guardó en tu teléfono." : "";
+    } catch {
+      if (aviso) aviso.textContent = "No se pudo crear la imagen. Inténtalo otra vez.";
+    } finally {
+      boton.disabled = false;
+    }
   };
   const cerrar = () => {
     cerrarHistoria();
@@ -688,12 +784,7 @@ export function conectarResumenMensual(repintar: () => void, nav: NavegacionHist
     b.addEventListener("click", (e) => {
       e.stopPropagation();
       if (b.dataset.rh === "cerrar") cerrar();
-      if (b.dataset.rh === "otra-vez") {
-        // Que el espectáculo se vuelva a hacer al llegar otra vez al final.
-        escenaInicio = null;
-        visorEl.querySelector(".rh-pagina.rh-final")?.classList.remove("en-escena", "terminado", "libre");
-        ir(0);
-      }
+      if (b.dataset.rh === "compartir") void compartir(b as HTMLButtonElement);
     })
   );
 
@@ -743,6 +834,7 @@ export function conectarResumenMensual(repintar: () => void, nav: NavegacionHist
     if (e.key === "Escape") cerrar();
   };
   // Un repintado a media función (un snapshot) la retoma donde iba.
+  visorEl.classList.toggle("en-final", pagina === total - 1);
   escenaFinal(visorEl, total);
   visorEl.tabIndex = -1;
   if (document.activeElement === document.body) visorEl.focus({ preventScroll: true });

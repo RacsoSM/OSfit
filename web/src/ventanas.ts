@@ -188,6 +188,7 @@ export function datosResumenMensual(d: DatosCliente, elegido: string | null): Da
       : null,
     // Récords: contra todo su historial anterior, así que solo con el historial completo.
     previas: resumen && d.historial ? mejoresAntes(actual!.mes, d.historial, d.banco, resumen.marcas.map((m) => m.ejercicioId)) : null,
+    nombre: d.cliente.nombre,
     // El mapa del cuerpo para la historia de Fuerza: los SVG que ya carga Músculos.
     mapa: perfil.sexo ? mapaDe(d, perfil.sexo) : null,
     // La gráfica de kilos por semana sale de las sesiones crudas: con el historial completo

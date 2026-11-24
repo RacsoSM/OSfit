@@ -2635,3 +2635,61 @@ body.historia-abierta { overflow: hidden; }
 .sugerencias-contador { font-size: 12px; color: var(--texto-tenue); font-variant-numeric: tabular-nums; }
 .sugerencias-gracias { margin: 4px 0 6px; font-size: 22px; font-weight: 800; }
 .sugerencias .sugerencias-nota + .boton { margin-top: 14px; }
+
+/* ---------- El póster del mes (historia final; diseño "A1 · S1" del entrenador, 2026-11-24) ----------
+   A toda la pantalla, con el marco de los colores de los rangos. Semitransparente para que el
+   espectáculo de luces (reflectores, círculo de luz) se vea a través. */
+.rh-final .rh-contenido {
+  max-width: 480px; justify-content: stretch;
+  padding: calc(8px + env(safe-area-inset-top)) 8px calc(8px + env(safe-area-inset-bottom));
+}
+.rh-poster {
+  position: relative; flex: 1; display: flex; flex-direction: column;
+  padding: 56px 16px 16px; border-radius: 26px; background: rgba(18, 18, 22, 0.35);
+}
+/* El marco: solo el borde lleva el degradado (una máscara recorta el centro), para que el fondo
+   siga dejando ver las luces sin teñirse. */
+.rh-poster::before {
+  content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 3px; pointer-events: none;
+  background: linear-gradient(160deg, #ffb703, #e0457b 30%, #9d4edd 55%, #5b5bd6 75%, #3b8fff);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude;
+}
+/* En el póster el mes ya está arriba: la cabecera del visor solo deja la X. */
+.rh-visor.en-final .rh-cabeza span { visibility: hidden; }
+.rh-poster-mes { margin: 0; font-size: 12px; font-weight: 900; letter-spacing: 3px; color: var(--rh-acento-claro); }
+.rh-poster-nombre { margin: 2px 0 12px; font-size: 40px; font-weight: 900; letter-spacing: -1px; line-height: 1.05; overflow-wrap: anywhere; }
+/* El rango, con su medalla del color de su rango. */
+.rh-final .rh-poster-rango { min-height: 0; margin-bottom: 14px; }
+.rh-poster-rango .rh-dato-frente {
+  display: flex; align-items: center; gap: 12px; padding: 12px;
+  background: rgba(224, 69, 123, 0.13); box-shadow: inset 0 0 0 1px rgba(224, 69, 123, 0.45); border-radius: 16px;
+}
+.rh-medalla {
+  width: 46px; height: 46px; border-radius: 50%; flex: none;
+  background: radial-gradient(circle at 35% 30%, #fff 0%, var(--color) 38%, #3a1530 100%);
+  box-shadow: 0 0 22px color-mix(in srgb, var(--color) 60%, transparent);
+}
+.rh-poster-rango-nombre { margin: 0; font-size: 26px; font-weight: 900; line-height: 1.05; }
+.rh-poster-rango-texto { margin: 3px 0 0; font-size: 12px; color: var(--rh-texto-2); line-height: 1.35; }
+.rh-poster-rango-texto .rh-vs { margin: 0 0 0 4px; }
+/* Los 4 números: cuadrícula de 2 × 2 con aire, cada uno en su recuadro con su rayita de color. */
+.rh-poster .rh-final-datos { gap: 10px; margin-bottom: 16px; }
+.rh-final .rh-poster-numero { min-height: 0; }
+.rh-poster-numero .rh-dato-frente { padding: 12px; background: rgba(255, 255, 255, 0.05); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.07); border-radius: 14px; }
+.rh-raya { display: block; width: 22px; height: 3px; border-radius: 2px; margin-bottom: 8px; }
+.rh-poster-numero .rh-num { font-size: 21px; white-space: nowrap; }
+.rh-poster-numero .rh-vs { display: block; margin-top: 4px; font-size: 11px; white-space: normal; }
+/* Sus ejercicios y músculos. */
+.rh-final .rh-poster-listas { min-height: 0; }
+.rh-poster-listas .rh-dato-frente {
+  display: grid; grid-template-columns: 1.3fr 1fr; gap: 12px; padding: 12px; background: transparent;
+}
+.rh-poster-tt { margin: 0 0 6px; font-size: 10px; font-weight: 900; letter-spacing: 1.6px; color: var(--rh-texto-3); text-transform: uppercase; }
+.rh-poster-lista { list-style: none; margin: 0; padding: 0; font-size: 13px; }
+.rh-poster-lista li { display: flex; align-items: center; gap: 7px; padding: 3.5px 0; min-width: 0; }
+.rh-poster-lista b { width: 12px; color: var(--rh-acento-claro); font-weight: 900; }
+.rh-poster-lista i { width: 10px; height: 10px; border-radius: 3px; flex: none; }
+.rh-poster .rh-botones { flex-direction: row; margin-top: auto; padding-top: 14px; }
+.rh-poster .rh-boton { flex: 1; }
+.rh-compartir-aviso { margin: 8px 0 0; min-height: 1em; font-size: 12px; text-align: center; color: var(--rh-texto-2); }

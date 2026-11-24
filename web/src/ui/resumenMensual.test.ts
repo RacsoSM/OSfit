@@ -111,11 +111,17 @@ describe("las historias", () => {
     expect(html).not.toContain("Hombro &amp; bíceps");
   });
 
-  it("el final resume y deja ver otra vez o cerrar", () => {
-    const html = todo(datos());
-    expect(html).toContain("Tu octubre en resumen");
-    expect(html).toContain('data-rh="otra-vez"');
+  it("el final es el póster: mes, nombre, rango, 4 números, ejercicios y músculos; Compartir y Cerrar", () => {
+    const html = historiasDelMes(datos({ nombre: "Valeria <3" })).find((h) => h.id === "final")!.html;
+    expect(html).toContain("OCTUBRE 2026 · OSFIT");
+    expect(html).toContain("Valeria &lt;3");
+    expect(html).toContain("rh-poster-rango");
+    expect(html.match(/rh-poster-numero/g)).toHaveLength(4);
+    expect(html).toContain("Tus ejercicios");
+    expect(html).toContain("Tus músculos");
+    expect(html).toContain('data-rh="compartir">Compartir');
     expect(html).toContain('data-rh="cerrar"');
+    expect(html).not.toContain("Ver otra vez");
   });
 });
 
@@ -164,7 +170,8 @@ describe("fuerza: tu cuerpo pintado", () => {
     expect(html).toContain("Tus músculos más fuertes");
     expect(html).toMatch(/rh-fuertes-nombre">Pecho<\/span><span class="rh-fuertes-rango">Élite/);
     // Los 8 rangos de leyenda, cada uno con su color.
-    expect(html.match(/<li><i style="background: #/g)).toHaveLength(8);
+    const leyenda = html.slice(html.indexOf('class="rh-rangos"'), html.indexOf("</ul>", html.indexOf('class="rh-rangos"')));
+    expect(leyenda.match(/<li><i style="background: #/g)).toHaveLength(8);
   });
   it("cada músculo con datos lleva su tono; los demás quedan para el gris del CSS", () => {
     const html = todo(datos({ mapa: { frente: svg, espalda: svg } }));
@@ -232,6 +239,20 @@ describe("contra el mes anterior", () => {
 
   it("sin anterior no hay comparación", () => {
     expect(todo(datos({ anterior: null }))).not.toContain("rh-vs");
+  });
+});
+
+describe("datosPoster", () => {
+  it("los mismos datos para la pantalla y la imagen: rango, 4 números con cambio y top 3 músculos", async () => {
+    const { datosPoster } = await import("./resumenMensual");
+    const ant = resumen({ mes: "2026-09", fuerza: { general: 6.5, musculos: { pecho: 7 } } });
+    const p = datosPoster(resumen(), "H", ant, "Ana");
+    expect(p.nombre).toBe("Ana");
+    expect(p.rango?.nombre).toBe("Avanzado");
+    expect(p.numeros.map((n) => n.valor)).toEqual(["53 %", "59,123 kg", "17 h 24 min", "12 días"]);
+    expect(p.numeros[0].cambio).toEqual({ n: 0, mes: "2026-09" });
+    expect(p.musculos.map((m) => m.nombre)).toEqual(["Pecho", "Abdomen"]);
+    expect(p.ejercicios[0]).toBe("Extensión <con> cuerda");
   });
 });
 
