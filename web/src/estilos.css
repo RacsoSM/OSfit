@@ -2409,10 +2409,8 @@ body.historia-abierta { overflow: hidden; }
 /* Fuerza: su cuerpo pintado por nivel (rampa azul de `colorNivel`); sin datos, gris. */
 .rh-mapa { display: flex; justify-content: center; gap: 10px; margin: 14px 0 8px; }
 .rh-mapa svg { height: min(42vh, 330px); width: auto; }
-.rh-mapa .contorno { fill: #2c2c2a !important; }
-.rh-mapa .sin-color { fill: #2c2c2a !important; }
-.rh-mapa .musculo { fill: var(--rh-superficie-alta); }
-.rh-mapa .linea { stroke: var(--rh-fondo) !important; }
+/* El cuerpo como en el apartado Músculos: silueta blanca y los músculos sin datos en gris. */
+.rh-mapa .musculo { fill: #8f90a6; }
 .rh-mapa .destello-elite, .rh-mapa .chispa { display: none; }
 .rh-mapa-cargando { height: 200px; display: grid; place-items: center; color: var(--rh-texto-3); font-size: 13px; }
 /* Los 8 rangos con su color, como leyenda del cuerpo (entrenador, 2026-11-24: en vez de la barra). */
@@ -2478,12 +2476,20 @@ body.historia-abierta { overflow: hidden; }
   transition: --fx 0.7s cubic-bezier(0.5, 0, 0.2, 1), --fy 0.7s cubic-bezier(0.5, 0, 0.2, 1),
     --fw 0.7s cubic-bezier(0.5, 0, 0.2, 1), --fh 0.7s cubic-bezier(0.5, 0, 0.2, 1);
 }
-.rh-final .rh-contenido { position: relative; z-index: 1; }
+/* Sin z-index propio: así la tarjeta de turno puede subir por encima de la cortina y los haces. */
+.rh-final .rh-contenido { position: relative; }
 .rh-escenario { position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
 .rh-escenario i, .rh-luces i { position: absolute; display: block; }
 /* Los reflectores van ENCIMA del póster, como en un escenario: cruzan por delante de las demás
    tarjetas (que están en penumbra) y se detienen en la orilla de la de turno, sin taparla. */
-.rh-luces { position: absolute; inset: 0; z-index: 2; overflow: hidden; pointer-events: none; }
+/* Las capas de cada turno: el póster, encima la cortina que lo oscurece todo, encima los haces y
+   hasta arriba la tarjeta de turno (`.foco`, z 4): la luz cae DEBAJO de ella. */
+.rh-cortina {
+  position: absolute; inset: 0; z-index: 2; display: block; pointer-events: none;
+  background: rgba(0, 0, 0, 0.74); opacity: 0; transition: opacity 0.6s ease;
+}
+.rh-final.en-escena:not(.libre) .rh-cortina { opacity: 1; }
+.rh-luces { position: absolute; inset: 0; z-index: 3; overflow: hidden; pointer-events: none; }
 /* Ya destapado todo, siguen barriendo pero tenues, para no estorbar la lectura. */
 .rh-final.libre .rh-luces { opacity: 0.35; transition: opacity 1s ease; }
 /* La sala a oscuras, que se ilumina en el remate. */
@@ -2574,12 +2580,12 @@ body.historia-abierta { overflow: hidden; }
 /* En penumbra las que no tienen el foco; la de turno, iluminada y un poco al frente. */
 .rh-final.en-escena .rh-dato { transition: filter 0.6s ease, transform 0.6s ease; }
 .rh-final.en-escena:not(.libre) .rh-dato:not(.foco) { filter: brightness(0.5) saturate(0.7); }
-.rh-final.en-escena:not(.libre) .rh-dato.foco { transform: scale(1.04); z-index: 2; }
-/* Donde pega la luz: un brillo que baja desde el borde de arriba de la tarjeta en foco. */
-.rh-final.en-escena:not(.libre) .rh-dato.foco::after {
-  content: ""; position: absolute; inset: 0; border-radius: 14px; pointer-events: none; z-index: 3;
-  background: radial-gradient(120% 90% at 50% 0%, rgba(230, 240, 255, 0.16), rgba(230, 240, 255, 0) 70%);
+.rh-final.en-escena:not(.libre) .rh-dato.foco {
+  transform: scale(1.04); z-index: 4;
+  /* Fondo sólido debajo de su cara (que es semitransparente): la punta del haz no se transparenta. */
+  background: #18171c; border-radius: 14px;
 }
+.rh-final.en-escena:not(.libre) .rh-poster-rango.foco, .rh-final.en-escena:not(.libre) .rh-poster-listas.foco { border-radius: 16px; }
 .rh-final.en-escena:not(.libre) .rh-dato.foco .rh-dato-frente,
 .rh-final.en-escena:not(.libre) .rh-dato.foco .rh-dato-dorso { box-shadow: 0 0 34px 4px rgba(158, 197, 244, 0.38); }
 .rh-final.en-escena .rh-flash { animation: rh-destello 1.3s ease-out both; animation-delay: calc(var(--desfase) + var(--rh-remate)); }

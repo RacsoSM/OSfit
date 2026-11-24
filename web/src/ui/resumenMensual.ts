@@ -325,7 +325,6 @@ function fuerza(r: ResumenMensual, sexo: "H" | "M" | null, mapa: DatosResumenMen
   const fuertes = musculos.slice(0, 3);
   const resumen = musculos.map(([g, n]) => `${nombreMusculo(g)}: ${nombreRango(n, s)}`).join("; ");
   return historia("fuerza", "Fuerza", `
-    <p class="rh-sub rh-arriba">Tu rango general</p>
     <p class="rh-grande rh-rango">${nombreRango(r.fuerza.general, s)}</p>
     <p class="rh-sub">Más fuerte que el ${percentilEntrenanDe(r.fuerza.general)} % de quienes entrenan</p>
     ${ant?.fuerza ? `<p class="rh-sub rh-vs-linea">Tu nivel general ${vs(variacion(r.fuerza.general, ant.fuerza.general, "relativo"), ant.mes)}</p>` : ""}
@@ -498,6 +497,7 @@ function final(r: ResumenMensual, sexo: "H" | "M" | null, ant: ResumenMensual | 
     id: "final",
     html: `
       <div class="rh-escenario" aria-hidden="true"><i class="rh-oscuro"></i><i class="rh-flash"></i></div>
+      <i class="rh-cortina" aria-hidden="true"></i>
       <div class="rh-luces" aria-hidden="true"><i class="rh-haz izq"></i><i class="rh-haz der"></i></div>
       <div class="rh-poster">
         <p class="rh-poster-mes">${nombreMes(r.mes).toUpperCase()} ${r.mes.slice(0, 4)} · OSFIT</p>
@@ -598,8 +598,8 @@ function apuntarReflectores(seccion: HTMLElement, transcurrido: number, terminad
 
   /**
    * Cada reflector sale de un punto fijo abajo (uno a cada lado) y se vuelve un cono que apunta
-   * EXACTO al centro de la tarjeta y se detiene en su orilla, casi tan ancho como ella: así se ve
-   * que la apunta y la luz le pega sin tapar el texto. El largo, el
+   * EXACTO al centro de la tarjeta, casi tan ancho como ella, y queda debajo de ella: la tarjeta
+   * de turno va encima de los haces y de la cortina que oscurece todo lo demás. El largo, el
    * ancho, la posición y el giro se calculan aquí con la tarjeta sin escalar (`offset*`, no la
    * caja en pantalla, que con el foco va al 104 %); el círculo de luz es una elipse de su tamaño.
    */
@@ -612,13 +612,8 @@ function apuntarReflectores(seccion: HTMLElement, transcurrido: number, terminad
     hazes.forEach((h, k) => {
       const px = k === 0 ? W * 0.1 : W * 0.9;
       const py = H + 16;
-      const hasta = Math.hypot(x - px, py - y);
-      // Apunta al centro pero se detiene en la orilla de la tarjeta: la luz le pega y la ilumina
-      // sin que el cono quede encima del texto. `borde` es lo que hay del centro a la orilla en
-      // esa dirección.
-      const ux = Math.abs((x - px) / hasta), uy = Math.abs((py - y) / hasta);
-      const borde = Math.min(ux > 0.001 ? ancho / 2 / ux : Infinity, uy > 0.001 ? alto / 2 / uy : Infinity);
-      const largo = hasta - borde + 2;
+      // Hasta el centro exacto: la tarjeta va encima del haz, así que la luz "cae" debajo de ella.
+      const largo = Math.hypot(x - px, py - y);
       const ancho2 = Math.min(ancho * 0.92, W * 0.9);
       const grados = (Math.atan2(x - px, py - y) * 180) / Math.PI;
       h.style.left = `${(px - ancho2 / 2).toFixed(1)}px`;
