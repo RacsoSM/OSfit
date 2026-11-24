@@ -2500,7 +2500,7 @@ body.historia-abierta { overflow: hidden; }
   background: radial-gradient(var(--fw) var(--fh) at var(--fx) var(--fy),
     rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0) 62%, rgba(0, 0, 0, 0.55) 86%, rgba(0, 0, 0, 0.84) 100%);
 }
-/* Dos reflectores desde abajo que barren el escenario cruzándose. */
+/* Reflectores (cuatro, desde las esquinas); al final solo los dos de abajo barren el escenario. */
 .rh-haz {
   bottom: -8%; width: 60%; height: 125%; transform-origin: 50% 100%; opacity: 0;
   /* Más intensa arriba, donde pega en las tarjetas, que en la base. */

@@ -498,7 +498,7 @@ function final(r: ResumenMensual, sexo: "H" | "M" | null, ant: ResumenMensual | 
     html: `
       <div class="rh-escenario" aria-hidden="true"><i class="rh-oscuro"></i><i class="rh-flash"></i></div>
       <i class="rh-cortina" aria-hidden="true"></i>
-      <div class="rh-luces" aria-hidden="true">${lucesDe(varianteLuces()).map((l, k) => `<i class="rh-haz ${k === 0 ? "izq" : k === 1 ? "der" : "extra"}" style="--c:${l.c}"></i>`).join("")}</div>
+      <div class="rh-luces" aria-hidden="true">${LUCES.map((l, k) => `<i class="rh-haz ${k === 0 ? "izq" : k === 1 ? "der" : "extra"}" style="--c:${l.c}"></i>`).join("")}</div>
       <div class="rh-poster">
         <p class="rh-poster-mes">${nombreMes(r.mes).toUpperCase()} ${r.mes.slice(0, 4)} · OSFIT</p>
         <p class="rh-poster-nombre">${escapar(nombre)}</p>
@@ -586,36 +586,15 @@ function ponerEnEscena(seccion: HTMLElement, transcurrido: number): void {
  */
 /** De dónde sale cada reflector: `x`, `y` en fracción del escenario (y > 1: debajo del borde). */
 interface Luz { x: number; y: number; c: string; w?: number }
-const AZUL = "158, 197, 244";
-const LUCES: Record<string, Luz[]> = {
-  dos: [{ x: 0.1, y: 1.02, c: AZUL }, { x: 0.9, y: 1.02, c: AZUL }],
-  // Dos de abajo y dos de arriba, desde las cuatro esquinas.
-  esquinas: [
-    { x: 0.06, y: 1.02, c: AZUL, w: 0.8 }, { x: 0.94, y: 1.02, c: AZUL, w: 0.8 },
-    { x: 0.02, y: -0.02, c: "200, 222, 255", w: 0.8 }, { x: 0.98, y: -0.02, c: "200, 222, 255", w: 0.8 },
-  ],
-  // Un seguidor blanco cálido desde arriba y dos de color a media altura, a los lados.
-  concierto: [
-    { x: -0.04, y: 0.5, c: "59, 143, 255", w: 0.75 }, { x: 1.04, y: 0.5, c: "224, 69, 123", w: 0.75 },
-    { x: 0.5, y: -0.03, c: "255, 236, 204", w: 1.05 },
-  ],
-  // Cinco candilejas en abanico desde abajo, una del color de cada rango.
-  candilejas: [
-    { x: 0.06, y: 1.02, c: "59, 143, 255", w: 0.6 }, { x: 0.94, y: 1.02, c: "255, 183, 3", w: 0.6 },
-    { x: 0.28, y: 1.02, c: "157, 78, 221", w: 0.6 }, { x: 0.5, y: 1.02, c: "224, 69, 123", w: 0.6 },
-    { x: 0.72, y: 1.02, c: "255, 107, 44", w: 0.6 },
-  ],
-};
-// TEMPORAL: selector para grabar las propuestas de luces.
-function varianteLuces(): string {
-  try { return globalThis.localStorage?.getItem("osfit:luces") ?? "dos"; } catch { return "dos"; }
-}
-function lucesDe(v: string): Luz[] { return LUCES[v] ?? LUCES.dos; }
+/** Cuatro reflectores, dos de abajo y dos de arriba, que se cruzan desde las esquinas. */
+const LUCES: Luz[] = [
+  { x: 0.06, y: 1.02, c: "158, 197, 244", w: 0.8 }, { x: 0.94, y: 1.02, c: "158, 197, 244", w: 0.8 },
+  { x: 0.02, y: -0.02, c: "200, 222, 255", w: 0.8 }, { x: 0.98, y: -0.02, c: "200, 222, 255", w: 0.8 },
+];
 
 function apuntarReflectores(seccion: HTMLElement, transcurrido: number, terminado: boolean): void {
   const datos = [...seccion.querySelectorAll<HTMLElement>(".rh-dato")];
   const hazes = [...seccion.querySelectorAll<HTMLElement>(".rh-haz")];
-  const luces = lucesDe(varianteLuces());
   const soltar = () => {
     seccion.classList.add("libre");
     // De vuelta a su forma de barrer (la del CSS).
@@ -626,7 +605,7 @@ function apuntarReflectores(seccion: HTMLElement, transcurrido: number, terminad
   seccion.classList.remove("libre");
 
   /**
-   * Cada reflector sale de un punto fijo abajo (uno a cada lado) y se vuelve un cono que apunta
+   * Cada reflector sale de su esquina (`LUCES`) y se vuelve un cono que apunta
    * EXACTO al centro de la tarjeta, casi tan ancho como ella, y queda debajo de ella: la tarjeta
    * de turno va encima de los haces y de la cortina que oscurece todo lo demás. El largo, el
    * ancho, la posición y el giro se calculan aquí con la tarjeta sin escalar (`offset*`, no la
@@ -639,7 +618,7 @@ function apuntarReflectores(seccion: HTMLElement, transcurrido: number, terminad
     const W = seccion.clientWidth;
     const H = Math.max(seccion.clientHeight, seccion.scrollHeight);
     hazes.forEach((h, k) => {
-      const o = luces[k] ?? luces[0];
+      const o = LUCES[k] ?? LUCES[0];
       const px = W * o.x;
       const py = o.y > 1 ? H + 16 : H * o.y;
       // Hasta el centro exacto: la tarjeta va encima del haz, así que la luz "cae" debajo de ella.
