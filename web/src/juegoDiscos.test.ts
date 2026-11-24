@@ -29,11 +29,18 @@ describe("Torre de discos", () => {
     expect(p.puntos).toBe(1);
   });
 
-  it("casi exacto es perfecto: no corta y vale doble", () => {
+  it("casi exacto es perfecto: no corta, pero vale lo mismo que cualquier disco", () => {
     const p = nuevaPartida();
     expect(soltarEn(p, TOLERANCIA_PERFECTO - 0.1).tipo).toBe("perfecto");
     expect(p.torre[1]!.ancho).toBe(ANCHO_INICIAL);
-    expect(p.puntos).toBe(2);
+    expect(p.puntos).toBe(1);
+  });
+
+  it("los puntos son los discos apilados", () => {
+    const p = nuevaPartida();
+    [0, 3, 0, 0, 5, 1].forEach((d) => soltarEn(p, d));
+    expect(p.puntos).toBe(p.apilados);
+    expect(p.puntos).toBe(6);
   });
 
   it("cuatro perfectos seguidos devuelven ancho, sin pasar del inicial", () => {

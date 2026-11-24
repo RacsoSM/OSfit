@@ -123,7 +123,7 @@ export function htmlCapa(e: Estado, puntos: number, apilados: number, g: Guardad
       <div class="jd-capa-caja">
         <p class="jd-capa-marca">OSFIT</p>
         <p class="jd-capa-titulo">Torre de discos</p>
-        <p class="jd-capa-texto">Toca para soltar cada disco sobre la torre. Lo que sobresale se corta y el siguiente sale más ligero. Si lo sueltas justo encima es <b>perfecto</b> y vale doble.</p>
+        <p class="jd-capa-texto">Toca para soltar cada disco sobre la torre. Lo que sobresale se corta y el siguiente sale más ligero. Cada disco que queda en la torre es un punto. Si lo sueltas justo encima es <b>perfecto</b>: no se corta.</p>
         <button type="button" class="jd-boton" data-jd="jugar">Jugar</button>
         <button type="button" class="jd-boton secundario" data-jd="marcador">Ver marcador</button>
       </div>`;
@@ -135,7 +135,7 @@ export function htmlCapa(e: Estado, puntos: number, apilados: number, g: Guardad
     <div class="jd-capa-caja fin">
       ${nuevoRecord ? `<p class="jd-capa-record">¡Nuevo récord!</p>` : `<p class="jd-capa-marca">Se cayó</p>`}
       <p class="jd-capa-puntos">${puntos}</p>
-      <p class="jd-capa-texto">${puntos === 1 ? "punto" : "puntos"} · ${apilados} ${apilados === 1 ? "disco" : "discos"}</p>
+      <p class="jd-capa-texto">${puntos === 1 ? "disco apilado" : "discos apilados"}</p>
       ${nota}
       <button type="button" class="jd-boton" data-jd="jugar">Reintentar</button>
       <button type="button" class="jd-boton secundario" data-jd="marcador">Ver marcador</button>
@@ -174,7 +174,7 @@ function actualizar(): void {
   const tuyo = q("#jd-tuyo");
   if (tuyo) {
     const mio = tabla?.filas.find((f) => f.esTuyo);
-    tuyo.textContent = mio ? `Vas en el lugar #${mio.puesto} con ${mio.puntos} puntos.` : tabla ? "Juega una partida para entrar al marcador." : "";
+    tuyo.textContent = mio ? `Vas en el lugar #${mio.puesto} con ${mio.puntos} ${mio.puntos === 1 ? "disco" : "discos"}.` : tabla ? "Juega una partida para entrar al marcador." : "";
   }
 }
 

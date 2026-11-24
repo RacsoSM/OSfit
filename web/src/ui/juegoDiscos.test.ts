@@ -36,7 +36,7 @@ describe("Torre de discos: la ventana", () => {
     const fin = htmlCapa("fin", 23, 15, "guardado", true);
     expect(fin).toContain("¡Nuevo récord!");
     expect(fin).toContain("23");
-    expect(fin).toContain("15 discos");
+    expect(fin).toContain("discos apilados");
     expect(fin).toMatch(/data-jd="jugar">Reintentar</);
     expect(fin).toMatch(/data-jd="marcador">Ver marcador</);
     expect(htmlCapa("fin", 1, 1, "error", false)).toContain('data-jd="reintentar-guardar"');

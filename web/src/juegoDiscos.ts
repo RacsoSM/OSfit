@@ -7,8 +7,9 @@
  *  - cada disco apilado sube la velocidad;
  *  - desde el disco `DESDE_LADOS`, cada disco entra por un lado distinto;
  *  - desde `DESDE_ONDULADO`, el disco ya no va a velocidad pareja: acelera y frena.
- * Soltarlo casi exacto encima ("perfecto") no corta nada y vale doble; cuatro perfectos
- * seguidos devuelven un poco de ancho.
+ * Cada disco que queda en la torre es un punto (entrenador, 2026-11-24: "gana el que ponga más
+ * discos"). Soltarlo casi exacto encima ("perfecto") no corta nada, y cuatro perfectos seguidos
+ * devuelven un poco de ancho: no da más puntos, pero ayuda a llegar más alto.
  *
  * Aquí solo la lógica, sin pantalla (la pinta `ui/juegoDiscos.ts`). Las unidades son de un
  * tablero de `ANCHO_TABLERO` de ancho; la pantalla las escala.
@@ -97,7 +98,7 @@ export function soltar(p: Partida): Resultado {
   let nuevo: Disco;
   if (Math.abs(m.x - tope.x) <= TOLERANCIA_PERFECTO) {
     p.perfectosSeguidos++;
-    p.puntos += 2;
+    p.puntos += 1;
     let ancho = tope.ancho, x = tope.x;
     const crece = p.perfectosSeguidos % PERFECTOS_PARA_CRECER === 0 && ancho < ANCHO_INICIAL;
     if (crece) {

@@ -18,7 +18,11 @@ const MAXIMA_DURACION_MS = 3 * 60 * 60 * 1000;
 
 export interface Partida { puntos: number; apilados: number; duracionMs: number }
 
-/** La partida si es posible, o null. Cada disco vale 1 o 2 (perfecto) y tarda un mínimo. */
+/**
+ * La partida si es posible, o null. Cada disco tarda un mínimo en apilarse. La puntuación es el
+ * número de discos (entrenador, 2026-11-24); se aceptan aún los `puntos` hasta el doble que
+ * mandaban las páginas abiertas antes del cambio, pero lo que cuenta es `apilados`.
+ */
 export function partidaValida(x: unknown): Partida | null {
   if (!x || typeof x !== "object") return null;
   const { puntos, apilados, duracionMs } = x as Record<string, unknown>;
@@ -82,12 +86,12 @@ export const guardarPartidaDiscos = onCall({ region: REGION }, async (request) =
     const antes = registroDesdeDoc(clienteId, (await tx.get(ref)).data() ?? {});
     tx.set(ref, {
       nombre,
-      mejor: Math.max(antes.mejor, partida.puntos),
+      mejor: Math.max(antes.mejor, partida.apilados),
       partidas: FieldValue.increment(1),
       ultima: FieldValue.serverTimestamp(),
-      ...(partida.puntos > antes.mejor ? { mejorEn: hoyEnMazatlan() } : {}),
+      ...(partida.apilados > antes.mejor ? { mejorEn: hoyEnMazatlan() } : {}),
     }, { merge: true });
-    return partida.puntos > antes.mejor;
+    return partida.apilados > antes.mejor;
   });
   return { record, tabla: await leerTabla(clienteId) };
 });
