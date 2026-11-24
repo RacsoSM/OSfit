@@ -1125,7 +1125,7 @@ export function listaEjerciciosResumen(filas: readonly FilaEjercicio[]): string 
   return `
     <div class="tarjeta resumen-ejercicios">
       <p class="tarjeta-titulo">Tus ejercicios</p>
-      <ul class="resumen-lista${filas.length > 3 ? " desliza" : ""}">
+      <ul class="resumen-lista">
         ${filas.map((f) => `
           <li class="resumen-ej">
             ${gif(f.gifRuta, "resumen-ej-gif", 46)}
@@ -1137,6 +1137,28 @@ export function listaEjerciciosResumen(filas: readonly FilaEjercicio[]): string 
           </li>`).join("")}
       </ul>
     </div>`;
+}
+
+/**
+ * La lista de ejercicios del resumen ocupa todo el espacio libre hasta la barra de abajo: en cada
+ * teléfono caben los que quepan (mínimo dos) y el resumen sigue en una sola pantalla. Si hay
+ * más, se desliza dentro de su tarjeta y el siguiente asoma desvanecido.
+ */
+function ajustarListaResumen(): void {
+  const lista = document.querySelector<HTMLElement>(".resumen-lista");
+  const botones = document.querySelector<HTMLElement>(".resumen-botones");
+  const fila = lista?.querySelector<HTMLElement>("li");
+  if (!lista || !botones || !fila) return;
+  const barra = [...document.querySelectorAll<HTMLElement>("#barra, #barra > *")].find((b) => b.offsetHeight > 0);
+  const limite = (barra ? barra.getBoundingClientRect().top : window.innerHeight) - 14;
+  lista.style.maxHeight = "none";
+  lista.classList.remove("desliza");
+  const libre = limite - botones.getBoundingClientRect().bottom;
+  if (libre >= 0) return; // Caben todas.
+  const alto = fila.offsetHeight;
+  const cabe = Math.max(alto * 2 + 18, lista.offsetHeight + libre);
+  lista.style.maxHeight = `${Math.floor(cabe)}px`;
+  lista.classList.add("desliza");
 }
 
 function vistaResumen(r: ResumenFinal, sexo: "H" | "M"): string {
@@ -1745,6 +1767,11 @@ export function conectarRegistro(
     });
   });
 
+  if (estado.vista === "resumen") {
+    requestAnimationFrame(ajustarListaResumen);
+    window.removeEventListener("resize", ajustarListaResumen);
+    window.addEventListener("resize", ajustarListaResumen);
+  }
   if (estado.vista === "capturar" && estado.enfocar !== null) {
     const tarjeta = raiz.querySelector<HTMLElement>(`.registro-ejercicio[data-indice="${estado.enfocar}"]`);
     const clon = estado.vuelo;

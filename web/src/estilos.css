@@ -2691,10 +2691,10 @@ body.historia-abierta { overflow: hidden; }
 .esfuerzo-extremos { display: flex; justify-content: space-between; margin: 6px 2px 0; font-size: 12px; color: var(--texto-tenue); }
 .esfuerzo-gracias { margin: 10px 0 0; font-size: 13px; text-align: center; color: var(--texto-tenue); }
 .resumen-lista { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
-/* Con más de tres, la lista se desliza dentro de su tarjeta: se ven unos tres y un desvanecido
-   abajo avisa que hay más. */
+/* Si no caben todos, la lista se desliza dentro de su tarjeta (su alto lo pone
+   `ajustarListaResumen`) y un desvanecido abajo avisa que hay más. */
 .resumen-ejercicios { padding-bottom: 6px; }
-.resumen-lista.desliza { max-height: 210px; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
+.resumen-lista.desliza { overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
   -webkit-mask-image: linear-gradient(#000 calc(100% - 28px), transparent); mask-image: linear-gradient(#000 calc(100% - 28px), transparent); padding-bottom: 18px; }
 .resumen-ej { display: flex; align-items: center; gap: 12px; padding: 8px 0; border-top: 1px solid rgba(255, 255, 255, 0.07); }
 .resumen-ej:first-child { border-top: 0; padding-top: 4px; }
@@ -2735,7 +2735,6 @@ body.historia-abierta { overflow: hidden; }
   .resumen-ej-gif { width: 40px; height: 40px; border-radius: 10px; }
   .resumen-ej-nombre { font-size: 14px; }
   .resumen-ej-series { font-size: 12px; }
-  .resumen-lista.desliza { max-height: 128px; }
   .resumen-botones .boton { min-height: 44px; padding: 10px 8px; font-size: 15px; }
 }
 
