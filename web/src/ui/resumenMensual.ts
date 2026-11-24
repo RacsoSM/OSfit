@@ -223,68 +223,79 @@ function variantePortada(): string {
   try { return globalThis.localStorage?.getItem("osfit:portada") ?? "actual"; } catch { return "actual"; }
 }
 
-/** Los días del mes en una cuadrícula de lunes a domingo, encendidos los que entrenó. */
-function calendario(r: ResumenMensual): string {
-  const [a, m] = r.mes.split("-").map(Number) as [number, number];
-  const dias = new Date(Date.UTC(a, m, 0)).getUTCDate();
-  const primero = (new Date(Date.UTC(a, m - 1, 1)).getUTCDay() + 6) % 7;
-  const celdas: string[] = ["L", "M", "M", "J", "V", "S", "D"].map((l) => `<b>${l}</b>`);
-  for (let i = 0; i < primero; i++) celdas.push("<i></i>");
-  let orden = 0;
-  for (let d = 1; d <= dias; d++) {
-    const marca = r.asistencia.dias[String(d).padStart(2, "0")];
-    const clase = marca === "e" ? "si" : marca === "j" ? "just" : marca === "f" ? "no" : "";
-    const retraso = marca === "e" ? ` style="--k:${orden++}"` : "";
-    celdas.push(`<span class="${clase}"${retraso}>${d}</span>`);
-  }
-  return `<div class="rh-cal">${celdas.join("")}</div>`;
-}
-
-function portada(r: ResumenMensual, enCurso: boolean, hoy: string, nombre = ""): Historia {
+function portada(r: ResumenMensual, enCurso: boolean, hoy: string, nombre = "", sexo: "H" | "M" | null = null): Historia {
   const mes = capital(nombreMes(r.mes));
   const anio = r.mes.slice(0, 4);
   const etiqueta = enCurso ? `En curso · al ${Number(hoy.slice(8, 10))} de ${nombreMes(r.mes)}` : "Tu resumen del mes";
   const pista = `<p class="rh-pista">Desliza para ver tu mes <span aria-hidden="true">→</span></p>`;
   const quien = nombre ? escapar(nombre.split(" ")[0]!) : "";
+  const rango = r.fuerza ? { nombre: nombreRango(r.fuerza.general, sexo ?? "M"), i: indiceRango(r.fuerza.general) } : null;
+  const n = r.asistencia.entreno;
   const v = variantePortada();
-  if (v === "escenario") {
+  if (v === "revista") {
     return {
-      id: "portada rh-portada-escenario",
+      id: "portada rh-portada-revista",
       html: `
       <div class="rh-portada-c">
-        <i class="rh-pz izq" aria-hidden="true"></i><i class="rh-pz der" aria-hidden="true"></i>
-        <p class="rh-etiqueta">OSFIT presenta</p>
-        <p class="rh-mes">${mes}</p>
-        <p class="rh-anio">${quien ? `${quien} · ` : ""}${anio}</p>
-        <p class="rh-sub-esc">${enCurso ? etiqueta : "Tu mes, en escena"}</p>
+        <p class="rh-rev-cab">OSFIT</p>
+        <p class="rh-rev-ed"><span>Edición ${mes} ${anio}</span><span>${enCurso ? "En curso" : "Nº " + Number(r.mes.slice(5))}</span></p>
+        <div class="rh-rev-lineas">
+          <p><b>${n}</b> ${n === 1 ? "día" : "días"} en el gym</p>
+          <p><b>${formatoKg(r.entrenamiento.kg)}</b> kg levantados</p>
+          ${rango ? `<p class="rh-rev-rango">${insigniaRango(rango.i, 30, "rh-rev-ins")}<span>El rango<br><b>${rango.nombre}</b></span></p>` : ""}
+          <p>Y tus <b>mejores marcas</b> del mes</p>
+        </div>
+        <p class="rh-rev-pre">La protagonista del mes</p>
+        <p class="rh-rev-nombre">${quien || "Tú"}</p>
         ${pista}
       </div>`,
     };
   }
-  if (v === "calendario") {
-    const n = r.asistencia.entreno;
+  if (v === "sobre") {
     return {
-      id: "portada rh-portada-calendario",
+      id: "portada rh-portada-sobre",
       html: `
       <div class="rh-portada-c">
-        <p class="rh-etiqueta">${etiqueta}</p>
-        <p class="rh-hola">${quien ? `Hola, ${quien}` : "Hola"}</p>
-        <p class="rh-mes">${mes} <span>${anio}</span></p>
-        ${calendario(r)}
-        <p class="rh-cal-pie"><strong>${n} ${n === 1 ? "día" : "días"}</strong> en el gym. Veamos qué hiciste con ellos.</p>
+        <div class="rh-sobre">
+          <div class="rh-sobre-carta"><span>${mes}</span><small>${anio}</small></div>
+          <i class="rh-sobre-frente"></i><i class="rh-sobre-solapa"></i>
+          <div class="rh-sobre-sello">${rango ? insigniaRango(rango.i, 64, "rh-sobre-ins") : `<b>O</b>`}</div>
+        </div>
+        <p class="rh-sobre-para">Para ${quien || "ti"}</p>
+        <p class="rh-sobre-sub">${enCurso ? etiqueta : `Tu mes de ${nombreMes(r.mes)}, listo para abrir.`}</p>
         ${pista}
       </div>`,
     };
   }
-  if (v === "tipografico") {
+  if (v === "pase") {
     return {
-      id: "portada rh-portada-tipo",
+      id: "portada rh-portada-pase",
       html: `
       <div class="rh-portada-c">
-        <p class="rh-etiqueta">${etiqueta}</p>
-        <p class="rh-tipo-mes" aria-label="${mes}" style="--n:${mes.length}">${[...mes.toUpperCase()].map((l, i) => `<span style="--k:${i}">${l}</span>`).join("")}</p>
-        <p class="rh-tipo-anio">${anio}</p>
-        <p class="rh-tipo-nombre">${quien ? `Para ${quien}` : ""}</p>
+        <div class="rh-pase-cinta" aria-hidden="true"></div>
+        <div class="rh-pase">
+          <i class="rh-pase-ojal"></i>
+          <p class="rh-pase-tipo">Acceso total</p>
+          <p class="rh-pase-gira">${mes} ${anio}</p>
+          <div class="rh-pase-foto">${(quien || "O").slice(0, 1).toUpperCase()}</div>
+          <p class="rh-pase-nombre">${quien || "Tú"}</p>
+          ${rango ? `<p class="rh-pase-rango">${insigniaRango(rango.i, 20, "rh-pase-ins")} ${rango.nombre}</p>` : ""}
+          <div class="rh-pase-cod"></div>
+          <p class="rh-pase-pie">OSFIT · Tu resumen del mes</p>
+        </div>
+        ${pista}
+      </div>`,
+    };
+  }
+  if (v === "aurora") {
+    return {
+      id: "portada rh-portada-aurora",
+      html: `
+      <i class="rh-aurora a1" aria-hidden="true"></i><i class="rh-aurora a2" aria-hidden="true"></i><i class="rh-aurora a3" aria-hidden="true"></i>
+      <div class="rh-portada-c">
+        <p class="rh-aur-arriba">OSFIT · ${anio}</p>
+        <p class="rh-aur-mes">${mes}</p>
+        <p class="rh-aur-de">${quien ? `El mes de ${quien}` : "Tu mes"}</p>
         ${pista}
       </div>`,
     };
@@ -777,7 +788,7 @@ export function historiasDelMes(
   if (!r) return [];
   const ant = d.anterior ?? null;
   return [
-    portada(r, d.enCurso, d.hoy, d.nombre ?? ""),
+    portada(r, d.enCurso, d.hoy, d.nombre ?? "", d.sexo),
     entrenamiento(r, d.semanas ?? null, ant),
     constancia(r, d.enCurso, d.hoy, ant),
     fuerza(r, d.sexo, d.mapa ?? null, ant),
