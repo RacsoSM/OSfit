@@ -2334,7 +2334,9 @@ body.historia-abierta { overflow: hidden; }
 }
 /* Un solo acento, el azul: la portada lo usa de fondo; las demás, un brillo leve arriba. */
 /* Fondos con transparencia: el fondo opaco es el del visor, y el confeti pasa por en medio. */
-.rh-portada { background: radial-gradient(130% 75% at 85% 0%, rgba(57, 135, 229, 0.85) 0%, rgba(28, 92, 171, 0.6) 38%, rgba(15, 15, 14, 0) 85%); }
+/* La portada va al centro de la pantalla, a lo alto y a lo ancho (entrenador, 2026-11-24). */
+.rh-portada .rh-contenido { justify-content: center; text-align: center; }
+.rh-portada { background: radial-gradient(110% 60% at 50% 42%, rgba(57, 135, 229, 0.7) 0%, rgba(28, 92, 171, 0.35) 40%, rgba(15, 15, 14, 0) 80%); }
 .rh-entrenamiento, .rh-constancia, .rh-fuerza, .rh-marcas, .rh-final {
   background: radial-gradient(120% 45% at 50% 0%, rgba(57, 135, 229, 0.16) 0%, rgba(57, 135, 229, 0) 70%);
 }
@@ -2346,7 +2348,7 @@ body.historia-abierta { overflow: hidden; }
 .rh-anio { margin: 0; font-size: 28px; font-weight: 300; color: var(--rh-texto-2); }
 /* Portada: "Hola, Valeria. Así fue tu" sobre el mes y una línea de acento antes del año. */
 .rh-hola { margin: 0 0 6px; font-size: 20px; font-weight: 600; color: var(--rh-texto-2); }
-.rh-linea-acento { display: block; width: 56px; height: 4px; margin: 14px 0 10px; border-radius: 2px; background: var(--rh-acento); }
+.rh-linea-acento { display: block; width: 56px; height: 4px; margin: 14px auto 10px; border-radius: 2px; background: var(--rh-acento); }
 .rh-pista { margin: 48px 0 0; font-size: 15px; color: var(--rh-texto-2); }
 .rh-grande { margin: 0; font-size: 54px; font-weight: 900; line-height: 1.05; letter-spacing: -1px; font-variant-numeric: tabular-nums; }
 .rh-grande small { font-size: 0.42em; font-weight: 700; letter-spacing: 0; color: var(--rh-texto-2); }
