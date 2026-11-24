@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { LANZAMIENTO_RESUMEN, resumenNuevoActivo } from "./lanzamiento";
+import { LANZAMIENTO_AVISO_RESUMEN, avisoResumenActivo } from "./lanzamiento";
 
-describe("lanzamiento del resumen nuevo", () => {
+describe("lanzamiento de la ventana emergente del resumen", () => {
   it("se enciende el 1 de diciembre y no antes", () => {
-    expect(LANZAMIENTO_RESUMEN).toBe("2026-12-01");
-    expect(resumenNuevoActivo("2026-11-30")).toBe(false);
-    expect(resumenNuevoActivo("2026-12-01")).toBe(true);
-    expect(resumenNuevoActivo("2027-01-15")).toBe(true);
+    expect(LANZAMIENTO_AVISO_RESUMEN).toBe("2026-12-01");
+    expect(avisoResumenActivo("2026-11-30")).toBe(false);
+    expect(avisoResumenActivo("2026-12-01")).toBe(true);
+    expect(avisoResumenActivo("2027-01-15")).toBe(true);
   });
 });

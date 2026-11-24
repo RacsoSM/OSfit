@@ -22,9 +22,7 @@ import { tarjetaRanking, type EstadoRanking } from "./ui/tarjetaRanking";
 import { tarjetaAjustes } from "./ui/tarjetaAjustes";
 import { tarjetaSinDatos } from "./ui/tarjetaSinDatos";
 import { ventanaEstadisticas, type DatosEstadisticas } from "./ui/estadisticas";
-import { resumenNuevoActivo } from "./lanzamiento";
 import { ventanaSugerencias } from "./ui/sugerencias";
-import * as anterior from "./ui/resumenMensualAnterior";
 import { mesElegidoResumen, ventanaResumenMensual, type DatosResumenMensual, type MesDeLista } from "./ui/resumenMensual";
 import { compararFuerza, kgPorSemana, mejoresAntes, mesAnterior, mesesConActividad, resumenDelMes, ultimoDiaDe, type ResumenMensual } from "./resumenMensual";
 import { invitacionNotificaciones, seccionNotificaciones } from "./ui/tarjetaNotificaciones";
@@ -323,10 +321,7 @@ export const VENTANAS: readonly Ventana[] = [
   // el tipo lo pide y solo se usa en "Muy pronto".
   {
     id: "resumenMensual", titulo: "Resumen mensual", icono: "", grupo: "principal",
-    // Hasta el lanzamiento (`lanzamiento.ts`), el diseño anterior; desde ese día, las historias.
-    pintar: (d) => resumenNuevoActivo(d.hoy)
-      ? ventanaResumenMensual(datosResumenMensual(d, mesElegidoResumen()))
-      : anterior.ventanaResumenMensual(datosResumenMensual(d, anterior.mesElegidoResumen())),
+    pintar: (d) => ventanaResumenMensual(datosResumenMensual(d, mesElegidoResumen())),
   },
   {
     id: "ranking", titulo: "Ranking", icono: "🏆", grupo: "principal",

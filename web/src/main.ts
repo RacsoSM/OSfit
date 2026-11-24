@@ -55,8 +55,7 @@ import { conectarAutollenado, conectarDescanso, conectarUnidadPeso } from "./ui/
 import { conectarSinDatos } from "./ui/tarjetaSinDatos";
 import { conectarEstadisticas } from "./ui/estadisticas";
 import { abrirHistoria, cerrarHistoria, conectarResumenMensual, reiniciarResumenMensual } from "./ui/resumenMensual";
-import * as resumenAnterior from "./ui/resumenMensualAnterior";
-import { resumenNuevoActivo } from "./lanzamiento";
+import { avisoResumenActivo } from "./lanzamiento";
 import { abrirDelMensaje, abrirDeLaDireccion, direccionSinAbrir, type Abrir } from "./abrirDesdeAviso";
 import { mostrarAvisoSinDatos, quitarAvisoSinDatos } from "./ui/avisoSinDatos";
 import { almacenesDelNavegador, saludDeLosAlmacenes } from "./sesion";
@@ -456,19 +455,12 @@ async function arrancar(): Promise<void> {
    * directo al resumen).
    */
   let resumenPedido: string | null = null;
-  // Antes del lanzamiento del resumen nuevo no hay ventana emergente (`lanzamiento.ts`).
+  // La ventana emergente se enciende hasta el 1 de diciembre (`lanzamiento.ts`); el diseño ya está.
   const resumenDelAviso = (): string | null =>
-    resumenNuevoActivo(hoy) ? resumenPedido ?? resumenPorAvisar(resumenes, hoy, resumenVisto) : null;
+    avisoResumenActivo(hoy) ? resumenPedido ?? resumenPorAvisar(resumenes, hoy, resumenVisto) : null;
 
   /** Abre Resumen mensual con la historia de ese mes ya abierta. */
   function verHistoria(mes: string): void {
-    if (!resumenNuevoActivo(hoy)) {
-      // El diseño anterior: Resumen mensual abierto en ese mes.
-      resumenAnterior.elegirMes(mes);
-      abrirVentana("resumenMensual");
-      pintar();
-      return;
-    }
     abrirHistoria(mes);
     abrirVentana("resumenMensual");
     irSub("historia", "adelante");
@@ -776,7 +768,6 @@ async function arrancar(): Promise<void> {
     // Al salir de Resumen mensual se olvida el mes: la próxima vez abre en el mes en curso.
     if (ventanaPintada === "resumenMensual" && activa.id !== "resumenMensual") {
       reiniciarResumenMensual();
-      resumenAnterior.reiniciarResumenMensual();
       document.body.classList.remove("historia-abierta");
     }
     actualizarCabecera(tituloCabecera(activa));
@@ -862,10 +853,6 @@ async function arrancar(): Promise<void> {
     }
     if (activa.id === "estadisticas") {
       conectarEstadisticas(pintar, () => abrirVentana("registro"));
-      return;
-    }
-    if (activa.id === "resumenMensual" && !resumenNuevoActivo(hoy)) {
-      resumenAnterior.conectarResumenMensual(pintar);
       return;
     }
     if (activa.id === "resumenMensual") {
@@ -1067,8 +1054,8 @@ async function arrancar(): Promise<void> {
     if (!a) return;
     // La notificación del resumen abre Inicio con la ventana emergente de ese mes (`sw.js`).
     if (a.ventana === "inicio" && a.mes) {
-      // Antes del lanzamiento no hay ventana emergente: la notificación abre el resumen de ese mes.
-      if (!resumenNuevoActivo(hoy)) { verHistoria(a.mes); return; }
+      // Antes del 1 de diciembre no hay ventana emergente: la notificación abre ese mes directo.
+      if (!avisoResumenActivo(hoy)) { verHistoria(a.mes); return; }
       resumenPedido = a.mes;
     }
     if (a.ventana === "resumenMensual" && a.mes) { verHistoria(a.mes); return; }
