@@ -385,13 +385,15 @@ function marcas(r: ResumenMensual, previas: DatosResumenMensual["previas"]): His
 
 /**
  * Los tiempos del espectáculo, en segundos (entrenador, 2026-11-24: "un espectáculo de luces
- * destapando cada card"). Escenario a oscuras con dos reflectores barriendo; cada tarjeta, en su
- * turno, recibe un cono de luz, se voltea, su número corre desde cero, suelta chispas y muestra
- * su comparación. Al final: destello, se encienden las luces, un brillo cruza todas las
+ * destapando cada card"; luego: "que la luz se enfoque en cada card y unos dos segundos después
+ * la siguiente"). Escenario a oscuras; en cada turno los dos reflectores giran hasta cruzarse
+ * sobre la tarjeta, la sala se oscurece alrededor y deja un círculo de luz sobre ella, que se
+ * voltea, su número corre desde cero, suelta chispas y muestra su comparación; las demás quedan
+ * en penumbra. Al final: destello, se encienden las luces, un brillo cruza todas las
  * tarjetas, ráfaga de confeti y aparecen el ejercicio del mes y los botones. Los mismos números
  * están en `estilos.css` (`--rh-intro`, `--rh-paso`, `--rh-remate`): si cambian aquí, allá.
  */
-export const ESCENA = { intro: 0.9, paso: 1.15, voltear: 0.35, contar: 0.9, remate: 8.1, total: 9.6 } as const;
+export const ESCENA = { intro: 1.0, paso: 2.0, voltear: 0.35, contar: 0.9, apuntar: 0.7, remate: 12.6, total: 14.0 } as const;
 
 /** Cuándo se voltea la tarjeta `i`. */
 const turno = (i: number) => ESCENA.intro + i * ESCENA.paso;
@@ -501,10 +503,62 @@ function ponerEnEscena(seccion: HTMLElement, transcurrido: number): void {
     }, Math.max(0, desde) * 1000));
   });
 
+  apuntarReflectores(seccion, transcurrido, terminado);
+
   const remate = ESCENA.remate - transcurrido;
   if (!terminado && remate > 0) relojes.push(window.setTimeout(() => rafagaDeConfeti(110, 0.5, 0.45), remate * 1000));
   // Al acabar queda "terminado": los botones (invisibles hasta el remate) ya reciben toques.
   if (!terminado) relojes.push(window.setTimeout(() => seccion.classList.add("terminado"), (ESCENA.total - transcurrido) * 1000));
+}
+
+/**
+ * Los reflectores y el círculo de luz siguen a la tarjeta de turno: un poco antes de que se
+ * voltee (`apuntar`) giran hasta cruzarse sobre ella y el foco se mueve ahí. En el remate se
+ * sueltan (`.libre`) y vuelven a barrer el escenario.
+ */
+function apuntarReflectores(seccion: HTMLElement, transcurrido: number, terminado: boolean): void {
+  const datos = [...seccion.querySelectorAll<HTMLElement>(".rh-final-datos .rh-dato")];
+  const hazes = [...seccion.querySelectorAll<HTMLElement>(".rh-haz")];
+  const soltar = () => {
+    seccion.classList.add("libre");
+    hazes.forEach((h) => { h.style.height = ""; });
+    datos.forEach((d) => d.classList.remove("foco"));
+  };
+  if (terminado || transcurrido >= ESCENA.remate) { soltar(); return; }
+  seccion.classList.remove("libre");
+
+  // El ángulo con que un reflector, girando sobre el centro de su base, apunta al centro de la
+  // tarjeta. Con la posición sin transformar (`offset*`), que no cambia al girarlo.
+  const apuntar = (i: number) => {
+    const d = datos[i];
+    if (!d) return;
+    // Las dos cajas en el mismo instante: el carril puede ir deslizándose, y así se cancela.
+    const caja = seccion.getBoundingClientRect();
+    const r = d.getBoundingClientRect();
+    const x = r.left + r.width / 2 - caja.left;
+    const y = r.top + r.height / 2 - caja.top + seccion.scrollTop;
+    for (const h of hazes) {
+      const px = h.offsetLeft + h.offsetWidth / 2;
+      const py = h.offsetTop + h.offsetHeight;
+      const grados = (Math.atan2(x - px, py - y) * 180) / Math.PI;
+      h.style.transform = `rotate(${grados.toFixed(1)}deg)`;
+      // Que el haz termine justo pasando la tarjeta: la luz "cae" ahí y no sigue de largo.
+      h.style.height = `${Math.round(Math.hypot(x - px, py - y) + 70)}px`;
+    }
+    seccion.style.setProperty("--fx", `${x.toFixed(0)}px`);
+    seccion.style.setProperty("--fy", `${y.toFixed(0)}px`);
+    datos.forEach((dd, k) => dd.classList.toggle("foco", k === i));
+  };
+
+  // La tarjeta que ya estaba en foco (si se retoma a media función) y las que siguen.
+  datos.forEach((_, i) => {
+    const cuando = turno(i) - ESCENA.apuntar - transcurrido;
+    const siguiente = i + 1 < datos.length ? turno(i + 1) - ESCENA.apuntar - transcurrido : ESCENA.remate - transcurrido;
+    if (siguiente <= 0) return;
+    if (cuando <= 0) apuntar(i);
+    else relojes.push(window.setTimeout(() => apuntar(i), cuando * 1000));
+  });
+  relojes.push(window.setTimeout(soltar, (ESCENA.remate - transcurrido) * 1000));
 }
 
 /** Llega (o vuelve) a la historia final: arranca el espectáculo o lo retoma donde iba. */
@@ -634,7 +688,7 @@ export function conectarResumenMensual(repintar: () => void, nav: NavegacionHist
       if (b.dataset.rh === "otra-vez") {
         // Que el espectáculo se vuelva a hacer al llegar otra vez al final.
         escenaInicio = null;
-        visorEl.querySelector(".rh-pagina.rh-final")?.classList.remove("en-escena", "terminado");
+        visorEl.querySelector(".rh-pagina.rh-final")?.classList.remove("en-escena", "terminado", "libre");
         ir(0);
       }
     })
