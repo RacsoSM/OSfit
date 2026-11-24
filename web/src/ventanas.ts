@@ -31,6 +31,7 @@ import { bloquePeso } from "./ui/pesoCorporal";
 import { ventanaComparar, type EstadoComparar } from "./ui/comparar";
 import { promedioMinutos } from "./racha";
 import { avisoReviveExtra } from "./ui/avisoReviveExtra";
+import { avisoResumen } from "./ui/avisoResumen";
 import { resumenSemana } from "./registro";
 import { edadEn, fuerzaPorMusculo, pesoParaFuerza, type FuerzaMusculo } from "./fuerza";
 
@@ -68,6 +69,8 @@ export interface DatosCliente {
   invitacionDescartada: boolean;
   /** Si ya cerró el aviso del revive extra por racha de 30. Lo guarda el navegador. */
   reviveExtraVisto: boolean;
+  /** El mes cuyo resumen hay que anunciar con la ventana emergente de Inicio; null si ninguno. */
+  resumenPorAvisar?: string | null;
   /** Mientras el permiso y el registro están en curso: el botón se deshabilita. */
   activandoNotificaciones: boolean;
   /** Los SVG del mapa muscular por archivo; los pide `main.ts` al entrar a Músculos. */
@@ -236,10 +239,19 @@ function inicio(d: DatosCliente): string {
       ${invitacionNotificaciones(d.notificaciones, d.invitacionDescartada)}
       ${tarjetasStats(d.asistencias, d.hoy, d.sesiones ? resumenSemana(d.sesiones, d.hoy).entrenamientos : null,
         d.cliente.reviveExtraOtorgado === true)}
-      ${avisoReviveExtra(d.asistencias, d.reviveExtraVisto, d.cliente.reviveExtraOtorgado === true)}
+      ${avisoEmergente(d)}
       ${tarjetaRevivir(d.cliente, d.hoy, d.asistencias, d.tiradaEsteMes, d.tiradaMesAnterior)}
       ${calendario(d.asistencias, d.mesVisible, d.hoy)}
     `;
+}
+
+/**
+ * Una sola ventana emergente a la vez en Inicio: primero la del revive extra, que es un premio
+ * de una vez en la vida; la del resumen espera a que la cierre.
+ */
+function avisoEmergente(d: DatosCliente): string {
+  const revive = avisoReviveExtra(d.asistencias, d.reviveExtraVisto, d.cliente.reviveExtraOtorgado === true);
+  return revive || avisoResumen(d.resumenPorAvisar ?? null);
 }
 
 /**

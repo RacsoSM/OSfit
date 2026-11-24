@@ -2242,3 +2242,6 @@ body:has(.batalla) :is(.fondo, .fondo-pixel, .fondo-sakura, .fondo-halloween, .p
   font-size: 11px; font-weight: 800; line-height: 18px; text-align: center; font-family: inherit;
 }
 .campana-numero[hidden] { display: none; }
+
+/* La ventana emergente del resumen del mes (`ui/avisoResumen.ts`): "Ver ahora" y "Cancelar". */
+#resumen-aviso-cancelar { margin-top: 8px; }

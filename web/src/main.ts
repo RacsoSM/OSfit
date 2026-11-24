@@ -42,6 +42,7 @@ import { estadoNotificaciones, plataforma } from "./notificaciones";
 import { activarNotificaciones, entornoDelNavegador, sincronizarToken } from "./notificacionesNavegador";
 import { conectarNotificaciones } from "./ui/tarjetaNotificaciones";
 import { conectarAvisoReviveExtra } from "./ui/avisoReviveExtra";
+import { conectarAvisoResumen, resumenPorAvisar } from "./ui/avisoResumen";
 import { almacenDeEstilo, ponerEstilo } from "./ui/cambioDeEstilo";
 import { estiloGuardado, type IdEstilo } from "./estilo";
 import { cerrarSesion, credencialLista, huellaDeLaSesion, iniciarSesion, redDeFirestore, urlDeDescarga } from "./firebase";
@@ -280,11 +281,10 @@ async function arrancar(): Promise<void> {
   let historial: Sesion[] | null = null;
   let historialPedido = false;
   /**
-   * Sus meses cerrados, para Resumen mensual. Igual que el historial: se piden la primera vez que
-   * entra a esa ventana y siguen escuchando.
+   * Sus meses cerrados, para Resumen mensual y la ventana emergente de Inicio que avisa del
+   * último. Se escuchan desde el arranque.
    */
   let resumenes: ResumenMensualGuardado[] | null = null;
-  let resumenesPedidos = false;
   /**
    * Su buzón, para Notificaciones y el numerito de la campana: se escucha desde el arranque.
    * `buzonVisto` es hasta qué aviso ya vio (lo guarda el teléfono, `leerVisto`).
@@ -441,6 +441,18 @@ async function arrancar(): Promise<void> {
     reviveExtraVisto = true;
     try { localStorage.setItem(LLAVE_REVIVE_EXTRA, "1"); } catch { /* se pierde el recuerdo, no la página */ }
     pintar();
+  }
+
+  /** El último mes cuyo resumen ya vio (o descartó): la ventana emergente sale una vez por mes. */
+  const LLAVE_RESUMEN_VISTO = "osfit:resumen-visto";
+  let resumenVisto = (() => {
+    try { return localStorage.getItem(LLAVE_RESUMEN_VISTO); } catch { return null; }
+  })();
+
+  function marcarResumenVisto(mes: string): void {
+    if (resumenVisto === mes) return;
+    resumenVisto = mes;
+    try { localStorage.setItem(LLAVE_RESUMEN_VISTO, mes); } catch { /* sale otra vez, no es grave */ }
   }
 
   function alDescartarInvitacion(): void {
@@ -709,10 +721,9 @@ async function arrancar(): Promise<void> {
       historialPedido = true;
       observarHistorial(clienteId, (s) => { historial = s; pintar(); });
     }
-    if (activa.id === "resumenMensual" && !resumenesPedidos) {
-      resumenesPedidos = true;
-      observarResumenesMensuales(clienteId, (r) => { resumenes = r; pintar(); });
-    }
+    // Entrar a Resumen mensual, por donde sea, cuenta como haber visto el del mes que terminó.
+    const porAvisar = resumenPorAvisar(resumenes, hoy, resumenVisto);
+    if (activa.id === "resumenMensual" && porAvisar) marcarResumenVisto(porAvisar);
     // Con Notificaciones abierta, todo lo que hay (y lo que llegue mientras) queda leído.
     if (activa.id === "notificaciones" && buzon) buzonVisto = marcarVistas(buzon, almacenBuzon, buzonVisto);
     const noLeidas = sinLeer(buzon, buzonVisto);
@@ -734,6 +745,7 @@ async function arrancar(): Promise<void> {
       notificaciones: estadoNotificaciones(cliente.notificacionesWeb === true, entornoDelNavegador()),
       invitacionDescartada,
       reviveExtraVisto,
+      resumenPorAvisar: resumenPorAvisar(resumenes, hoy, resumenVisto),
       activandoNotificaciones,
       mapas,
       banco,
@@ -865,6 +877,20 @@ async function arrancar(): Promise<void> {
     conectarAccionFalta(hoy, asistencias, pintar);
     conectarNotificaciones(alActivarNotificaciones, alDescartarInvitacion);
     conectarAvisoReviveExtra(alCerrarReviveExtra);
+    conectarAvisoResumen(
+      () => {
+        const mes = resumenPorAvisar(resumenes, hoy, resumenVisto);
+        if (!mes) return;
+        marcarResumenVisto(mes);
+        elegirMes(mes);
+        abrirVentana("resumenMensual");
+      },
+      () => {
+        const mes = resumenPorAvisar(resumenes, hoy, resumenVisto);
+        if (mes) marcarResumenVisto(mes);
+        pintar();
+      }
+    );
     document.querySelector("#mes-anterior")?.addEventListener("click", () => {
       mesVisible = moverMes(mesVisible, -1);
       pintar();
@@ -1029,6 +1055,9 @@ async function arrancar(): Promise<void> {
   });
   observarSesiones(clienteId, (s) => { sesiones = s; pintar(); });
   observarBuzon(clienteId, (b) => { buzon = b; pintar(); });
+  // Desde el arranque y no al abrir la ventana: la ventana emergente de Inicio necesita saber
+  // si ya cerró el mes. Son pocos documentos (uno por mes).
+  observarResumenesMensuales(clienteId, (r) => { resumenes = r; pintar(); });
   observarConfigGrupos((c) => { configGrupos = c; pintar(); });
   observarTirada(clienteId, hoy.slice(0, 7), (t) => { tiradaEsteMes = t; pintar(); });
   observarTirada(clienteId, mesAnterior(hoy.slice(0, 7)), (t) => {
