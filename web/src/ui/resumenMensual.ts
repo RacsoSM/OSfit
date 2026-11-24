@@ -218,69 +218,19 @@ function historia(id: string, etiqueta: string, cuerpo: string): Historia {
   return { id, html: `<p class="rh-etiqueta">${etiqueta}</p>${cuerpo}` };
 }
 
-// TEMPORAL: selector para mostrar las propuestas de portada.
-function variantePortada(): string {
-  try { return globalThis.localStorage?.getItem("osfit:portada") ?? "actual"; } catch { return "actual"; }
-}
-
-function portada(r: ResumenMensual, enCurso: boolean, hoy: string, nombre = "", sexo: "H" | "M" | null = null): Historia {
-  const mes = capital(nombreMes(r.mes));
-  const anio = r.mes.slice(0, 4);
-  const etiqueta = enCurso ? `En curso · al ${Number(hoy.slice(8, 10))} de ${nombreMes(r.mes)}` : "Tu resumen del mes";
-  const pista = `<p class="rh-pista">Desliza para ver tu mes <span aria-hidden="true">→</span></p>`;
-  const quien = nombre ? escapar(nombre.split(" ")[0]!) : "";
-  const n = r.asistencia.entreno;
-  const v = variantePortada();
-  if (v === "s1") {
-    return {
-      id: "portada rh-portada-s1",
-      html: `
-      <div class="rh-portada-c">
-        <p class="rh-s-marca">OSFIT</p>
-        <p class="rh-s-hola">${quien ? `Hola, ${quien}` : "Hola"}</p>
-        <p class="rh-mes">${mes}</p>
-        <p class="rh-anio">${anio}</p>
-        <p class="rh-s-sub">${enCurso ? etiqueta : "Este es tu resumen del mes"}</p>
-        ${pista}
-      </div>`,
-    };
-  }
-  if (v === "s2") {
-    return {
-      id: "portada rh-portada-s2",
-      html: `
-      <div class="rh-portada-c">
-        <p class="rh-etiqueta">${etiqueta}</p>
-        <p class="rh-s-hola">${quien ? `Hola, ${quien}.` : "Hola."} Así fue tu</p>
-        <p class="rh-mes">${mes}</p>
-        <i class="rh-s-linea" aria-hidden="true"></i>
-        <p class="rh-anio">${anio}</p>
-        ${pista}
-      </div>`,
-    };
-  }
-  if (v === "s3") {
-    const h = Math.round(r.asistencia.minutos / 60);
-    return {
-      id: "portada rh-portada-s3",
-      html: `
-      <div class="rh-portada-c">
-        <p class="rh-etiqueta">${etiqueta}</p>
-        <p class="rh-mes">${mes}</p>
-        <p class="rh-anio">${anio}${quien ? ` · ${quien}` : ""}</p>
-        <p class="rh-s-chips"><span><b>${n}</b> ${n === 1 ? "día" : "días"}</span><span><b>${h}</b> h</span><span><b>${formatoKg(r.entrenamiento.kg)}</b> kg</span></p>
-        ${pista}
-      </div>`,
-    };
-  }
+/** La portada: un saludo con su nombre, el mes grande, una línea de acento y el año. */
+function portada(r: ResumenMensual, enCurso: boolean, hoy: string, nombre = ""): Historia {
+  const quien = nombre.trim() ? escapar(nombre.trim().split(/\s+/)[0]!) : "";
   return {
     id: "portada",
     html: `
       <div class="rh-portada-c">
-        <p class="rh-etiqueta">${etiqueta}</p>
-        <p class="rh-mes">${mes}</p>
-        <p class="rh-anio">${anio}</p>
-        ${pista}
+        <p class="rh-etiqueta">${enCurso ? `En curso · al ${Number(hoy.slice(8, 10))} de ${nombreMes(r.mes)}` : "Tu resumen del mes"}</p>
+        <p class="rh-hola">${quien ? `Hola, ${quien}.` : "Hola."} Así fue tu</p>
+        <p class="rh-mes">${capital(nombreMes(r.mes))}</p>
+        <i class="rh-linea-acento" aria-hidden="true"></i>
+        <p class="rh-anio">${r.mes.slice(0, 4)}</p>
+        <p class="rh-pista">Desliza para ver tu mes <span aria-hidden="true">→</span></p>
       </div>`,
   };
 }
@@ -761,7 +711,7 @@ export function historiasDelMes(
   if (!r) return [];
   const ant = d.anterior ?? null;
   return [
-    portada(r, d.enCurso, d.hoy, d.nombre ?? "", d.sexo),
+    portada(r, d.enCurso, d.hoy, d.nombre ?? ""),
     entrenamiento(r, d.semanas ?? null, ant),
     constancia(r, d.enCurso, d.hoy, ant),
     fuerza(r, d.sexo, d.mapa ?? null, ant),

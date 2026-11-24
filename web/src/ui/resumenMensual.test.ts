@@ -111,6 +111,14 @@ describe("las historias", () => {
     expect(html).not.toContain("Hombro &amp; bíceps");
   });
 
+  it("la portada la saluda por su primer nombre: «Hola, Valeria. Así fue tu» Octubre", () => {
+    const portada = (nombre?: string) => historiasDelMes(datos({ nombre })).find((h) => h.id === "portada")!.html;
+    expect(portada("Valeria <b> Ruiz")).toContain("Hola, Valeria. Así fue tu");
+    expect(portada("<b>")).toContain("Hola, &lt;b&gt;. Así fue tu");
+    expect(portada("")).toContain("Hola. Así fue tu");
+    expect(portada("Valeria")).toMatch(/Así fue tu<\/p>\s*<p class="rh-mes">Octubre<\/p>\s*<i class="rh-linea-acento"[^>]*><\/i>\s*<p class="rh-anio">2026<\/p>/);
+  });
+
   it("el final es el póster: mes, nombre, rango, 4 números, ejercicios y músculos; Compartir y Cerrar", () => {
     const html = historiasDelMes(datos({ nombre: "Valeria <3" })).find((h) => h.id === "final")!.html;
     expect(html).toContain("OCTUBRE 2026 · OSFIT");

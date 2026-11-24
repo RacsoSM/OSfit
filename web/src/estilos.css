@@ -2335,22 +2335,6 @@ body.historia-abierta { overflow: hidden; }
 /* Un solo acento, el azul: la portada lo usa de fondo; las demás, un brillo leve arriba. */
 /* Fondos con transparencia: el fondo opaco es el del visor, y el confeti pasa por en medio. */
 .rh-portada { background: radial-gradient(130% 75% at 85% 0%, rgba(57, 135, 229, 0.85) 0%, rgba(28, 92, 171, 0.6) 38%, rgba(15, 15, 14, 0) 85%); }
-/* TEMPORAL: propuestas de portada. */
-.rh-s-hola { margin: 0 0 6px; font-size: 20px; font-weight: 600; color: var(--rh-texto-2); }
-/* S1: centrada, con un brillo azul detrás del mes. */
-.rh-portada.rh-portada-s1 { background: radial-gradient(85% 45% at 50% 40%, rgba(57, 135, 229, 0.5) 0%, rgba(28, 92, 171, 0.18) 45%, rgba(15, 15, 14, 0) 80%); }
-.rh-portada-s1 .rh-portada-c { display: flex; flex-direction: column; align-items: center; text-align: center; justify-content: center; min-height: calc(100vh - 40px); padding-top: 0; }
-.rh-s-marca { margin: 0 0 26px; font-size: 13px; font-weight: 900; letter-spacing: 6px; color: var(--rh-acento-claro); }
-.rh-s-sub { margin: 22px 0 0; font-size: 15px; color: var(--rh-texto-2); }
-.rh-portada-s1 .rh-pista { margin-top: 40px; }
-/* S2: como la actual, con saludo y una línea de acento. */
-.rh-s-linea { display: block; width: 56px; height: 4px; margin: 14px 0 10px; border-radius: 2px; background: var(--rh-acento); }
-.rh-portada-s2 .rh-anio { margin-top: 0; }
-/* S3: como la actual, con tres números del mes de adelanto. */
-.rh-s-chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 26px 0 0; }
-.rh-s-chips span { padding: 8px 14px; border-radius: 99px; background: rgba(255, 255, 255, 0.1); font-size: 14px; color: var(--rh-texto-2); }
-.rh-s-chips b { color: var(--rh-texto); font-weight: 800; }
-.rh-portada-s3 .rh-pista { margin-top: 32px; }
 .rh-entrenamiento, .rh-constancia, .rh-fuerza, .rh-marcas, .rh-final {
   background: radial-gradient(120% 45% at 50% 0%, rgba(57, 135, 229, 0.16) 0%, rgba(57, 135, 229, 0) 70%);
 }
@@ -2359,7 +2343,10 @@ body.historia-abierta { overflow: hidden; }
 .rh-etiqueta { margin: 0 0 14px; font-size: 12px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; color: var(--rh-acento-claro); }
 .rh-portada .rh-etiqueta { color: var(--rh-texto); opacity: 0.85; }
 .rh-mes { margin: 0; font-size: 66px; font-weight: 900; line-height: 1; letter-spacing: -1.5px; }
-.rh-anio { margin: 6px 0 0; font-size: 28px; font-weight: 300; color: var(--rh-texto-2); }
+.rh-anio { margin: 0; font-size: 28px; font-weight: 300; color: var(--rh-texto-2); }
+/* Portada: "Hola, Valeria. Así fue tu" sobre el mes y una línea de acento antes del año. */
+.rh-hola { margin: 0 0 6px; font-size: 20px; font-weight: 600; color: var(--rh-texto-2); }
+.rh-linea-acento { display: block; width: 56px; height: 4px; margin: 14px 0 10px; border-radius: 2px; background: var(--rh-acento); }
 .rh-pista { margin: 48px 0 0; font-size: 15px; color: var(--rh-texto-2); }
 .rh-grande { margin: 0; font-size: 54px; font-weight: 900; line-height: 1.05; letter-spacing: -1px; font-variant-numeric: tabular-nums; }
 .rh-grande small { font-size: 0.42em; font-weight: 700; letter-spacing: 0; color: var(--rh-texto-2); }
