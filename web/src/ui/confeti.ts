@@ -17,11 +17,35 @@ const PIEZAS = 36;
 interface Pieza {
   x: number; y: number; ancho: number; alto: number; color: string;
   vy: number; giro: number; vgiro: number; fase: number; vaiven: number; redonda: boolean;
+  /** De una ráfaga: sale disparada, cae con gravedad y al salir de la pantalla ya no vuelve. */
+  rafaga?: { vx: number };
 }
 
 let piezas: Pieza[] = [];
 let ciclo = 0;
 let lienzo: HTMLCanvasElement | null = null;
+/** El tamaño del canvas en uso, para que una ráfaga sepa desde dónde salir. */
+let medida = { ancho: 0, alto: 0 };
+
+/**
+ * Una ráfaga de confeti disparada desde (`x`, `y`), en fracciones del canvas: el remate del
+ * espectáculo de la historia final. Sin efecto si no hay canvas o con "reducir movimiento".
+ */
+export function rafagaDeConfeti(cuantas = 90, x = 0.5, y = 0.55): void {
+  if (!lienzo || medida.ancho === 0) return;
+  if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
+  for (let i = 0; i < cuantas; i++) {
+    const p = nueva(medida.ancho, medida.alto, false);
+    const angulo = -Math.PI / 2 + (Math.random() - 0.5) * Math.PI * 0.9;
+    const fuerza = 260 + Math.random() * 380;
+    p.x = medida.ancho * x;
+    p.y = medida.alto * y;
+    p.vy = Math.sin(angulo) * fuerza;
+    p.rafaga = { vx: Math.cos(angulo) * fuerza };
+    p.vgiro *= 2.5;
+    piezas.push(p);
+  }
+}
 
 function nueva(ancho: number, alto: number, arriba: boolean): Pieza {
   return {
@@ -73,6 +97,7 @@ export function lluviaDeConfeti(canvas: HTMLCanvasElement | null): void {
     canvas.width = Math.round(width * dpr);
     canvas.height = Math.round(height * dpr);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    medida = { ancho: width, alto: height };
     return { ancho: width, alto: height };
   };
   let { ancho, alto } = ajustar();
@@ -92,11 +117,18 @@ export function lluviaDeConfeti(canvas: HTMLCanvasElement | null): void {
     }
     for (let i = 0; i < piezas.length; i++) {
       const p = piezas[i];
+      if (p.rafaga) {
+        // Gravedad y aire: suben, se frenan y caen meciéndose como las demás.
+        p.rafaga.vx *= Math.pow(0.35, dt);
+        p.x += p.rafaga.vx * dt;
+        p.vy = Math.min(p.vy + 520 * dt, 160);
+      }
       p.y += p.vy * dt;
       p.fase += dt * 1.6;
       p.giro += p.vgiro * dt;
-      if (p.y > alto + 20) piezas[i] = nueva(ancho, alto, true);
+      if (p.y > alto + 20) piezas[i] = p.rafaga ? (null as unknown as Pieza) : nueva(ancho, alto, true);
     }
+    piezas = piezas.filter((p) => p !== null);
     dibujar(ctx, ancho, alto);
     ciclo = requestAnimationFrame(paso);
   };

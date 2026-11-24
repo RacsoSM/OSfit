@@ -2,7 +2,7 @@ import { NIVEL_MAX, nombreMusculo, nombreRango, percentilEntrenanDe } from "../f
 import { comparaMarca, formatoKg, nombreMes, type ResumenMensual, type SerieMarca } from "../resumenMensual";
 import { prepararSvg } from "./mapaMuscular";
 import { escapar } from "./tarjetaDia";
-import { lluviaDeConfeti } from "./confeti";
+import { lluviaDeConfeti, rafagaDeConfeti } from "./confeti";
 
 /**
  * La ventana Resumen mensual, estilo "historias" (entrenador, 2026-11-24, inspirado en el
@@ -63,6 +63,12 @@ let abierta = false;
 let pagina = 0;
 /** La historia acaba de abrirse: la portada entra con animación una sola vez. */
 let recienAbierta = false;
+/**
+ * Cuándo empezó el espectáculo de la historia final (`performance.now()`), o null si todavía no
+ * llega a ella. Vive aquí porque un snapshot repinta el visor a media función: con esto el
+ * espectáculo sigue donde iba en vez de empezar de nuevo.
+ */
+let escenaInicio: number | null = null;
 
 export function elegirMes(mes: string | null): void {
   mesElegido = mes;
@@ -78,6 +84,7 @@ export function abrirHistoria(mes: string): void {
   abierta = true;
   pagina = 0;
   recienAbierta = true;
+  escenaInicio = null;
 }
 
 export function cerrarHistoria(): void {
@@ -374,11 +381,45 @@ function marcas(r: ResumenMensual, previas: DatosResumenMensual["previas"]): His
     <ol class="rh-marcas-lista">${r.marcas.map(tarjeta).join("")}</ol>`);
 }
 
+// ── El espectáculo de la historia final ──────────────────────────────────────
+
+/**
+ * Los tiempos del espectáculo, en segundos (entrenador, 2026-11-24: "un espectáculo de luces
+ * destapando cada card"). Escenario a oscuras con dos reflectores barriendo; cada tarjeta, en su
+ * turno, recibe un cono de luz, se voltea, su número corre desde cero, suelta chispas y muestra
+ * su comparación. Al final: destello, se encienden las luces, un brillo cruza todas las
+ * tarjetas, ráfaga de confeti y aparecen el ejercicio del mes y los botones. Los mismos números
+ * están en `estilos.css` (`--rh-intro`, `--rh-paso`, `--rh-remate`): si cambian aquí, allá.
+ */
+export const ESCENA = { intro: 0.9, paso: 1.15, voltear: 0.35, contar: 0.9, remate: 8.1, total: 9.6 } as const;
+
+/** Cuándo se voltea la tarjeta `i`. */
+const turno = (i: number) => ESCENA.intro + i * ESCENA.paso;
+
+type Formato = "pct" | "kg" | "tiempo" | "entero";
+function formatear(n: number, f: Formato): string {
+  if (f === "pct") return `${Math.round(n)} %`;
+  if (f === "kg") return `${formatoKg(n)} <small>kg</small>`;
+  if (f === "tiempo") return tiempo(n);
+  return formatoKg(n);
+}
+
 function final(r: ResumenMensual, sexo: "H" | "M" | null, ant: ResumenMensual | null): Historia {
   const a = r.asistencia;
   const t = r.entrenamiento;
-  const dato = (valor: string, etiqueta: string, cambio = "") =>
-    `<div class="rh-dato"><p class="rh-num">${valor}</p><p class="rh-etq">${etiqueta}</p>${cambio}</div>`;
+  const chispas = Array.from({ length: 10 }, (_, k) => `<span style="--a: ${k * 36}deg"></span>`).join("");
+  let i = 0;
+  // Cada tarjeta tiene dos caras: el dorso con "?" y su nombre, y el frente con el número. Un
+  // número que se puede contar lleva `data-contar` y `data-formato`; el rango, no.
+  const dato = (valor: string, etiqueta: string, cambio = "", contar?: { n: number; f: Formato }) => `
+    <div class="rh-dato" style="--i: ${i++}">
+      <div class="rh-dato-dorso" aria-hidden="true"><span class="rh-dorso-signo">?</span><span class="rh-dorso-etq">${etiqueta}</span></div>
+      <div class="rh-dato-frente">
+        <p class="rh-num"${contar ? ` data-contar="${contar.n}" data-formato="${contar.f}"` : ""}>${valor}</p>
+        <p class="rh-etq">${etiqueta}</p>${cambio}
+      </div>
+      <i class="rh-chispas" aria-hidden="true">${chispas}</i>
+    </div>`;
   const conRegistros = a.entreno + a.justificadas + a.faltas > 0;
   const pa = ant && ant.asistencia.entreno + ant.asistencia.justificadas + ant.asistencia.faltas > 0 ? ant.asistencia : null;
   const pt = ant && ant.entrenamiento.sesiones > 0 ? ant.entrenamiento : null;
@@ -386,27 +427,101 @@ function final(r: ResumenMensual, sexo: "H" | "M" | null, ant: ResumenMensual | 
   return {
     id: "final",
     html: `
+      <div class="rh-escenario" aria-hidden="true">
+        <i class="rh-oscuro"></i><i class="rh-haz izq"></i><i class="rh-haz der"></i><i class="rh-flash"></i>
+      </div>
       <p class="rh-etiqueta">Tu ${nombreMes(r.mes)} en resumen</p>
       <div class="rh-final-datos">
         ${dato(conRegistros ? `${a.porcentaje} %` : "—", "asistencia",
-          conRegistros && pa ? vs(variacion(a.porcentaje, pa.porcentaje, "puntos"), mp) : "")}
-        ${dato(t.sesiones > 0 ? `${formatoKg(t.kg)} <small>kg</small>` : "—", "levantados",
-          t.sesiones > 0 && pt ? vs(variacion(t.kg, pt.kg, "relativo"), mp) : "")}
+          conRegistros && pa ? vs(variacion(a.porcentaje, pa.porcentaje, "puntos"), mp) : "",
+          conRegistros ? { n: a.porcentaje, f: "pct" } : undefined)}
+        ${dato(t.sesiones > 0 ? formatear(t.kg, "kg") : "—", "levantados",
+          t.sesiones > 0 && pt ? vs(variacion(t.kg, pt.kg, "relativo"), mp) : "",
+          t.sesiones > 0 ? { n: t.kg, f: "kg" } : undefined)}
         ${dato(a.visitasConMinutos > 0 ? tiempo(a.minutos) : "—", "en el gym",
-          a.visitasConMinutos > 0 && pa && pa.visitasConMinutos > 0 ? vs(variacion(a.minutos, pa.minutos, "relativo"), mp) : "")}
+          a.visitasConMinutos > 0 && pa && pa.visitasConMinutos > 0 ? vs(variacion(a.minutos, pa.minutos, "relativo"), mp) : "",
+          a.visitasConMinutos > 0 ? { n: a.minutos, f: "tiempo" } : undefined)}
         ${dato(t.sesiones > 0 ? formatoKg(t.series) : "—", "series",
-          t.sesiones > 0 && pt ? vs(variacion(t.series, pt.series, "relativo"), mp) : "")}
+          t.sesiones > 0 && pt ? vs(variacion(t.series, pt.series, "relativo"), mp) : "",
+          t.sesiones > 0 ? { n: t.series, f: "entero" } : undefined)}
         ${dato(r.fuerza ? nombreRango(r.fuerza.general, sexo ?? "H") : "—", "rango general",
           r.fuerza && ant?.fuerza ? vs(variacion(r.fuerza.general, ant.fuerza.general, "relativo"), mp) : "")}
         ${dato(String(a.rachaMasLarga), "racha más larga",
-          pa ? vs(variacion(a.rachaMasLarga, pa.rachaMasLarga, "relativo"), mp) : "")}
+          pa ? vs(variacion(a.rachaMasLarga, pa.rachaMasLarga, "relativo"), mp) : "",
+          { n: a.rachaMasLarga, f: "entero" })}
       </div>
-      ${t.top[0] ? `<p class="rh-nota">Tu ejercicio del mes: <strong>${escapar(t.top[0].nombre)}</strong></p>` : ""}
+      ${t.top[0] ? `<p class="rh-nota rh-final-nota">Tu ejercicio del mes: <strong>${escapar(t.top[0].nombre)}</strong></p>` : ""}
       <div class="rh-botones">
         <button type="button" class="rh-boton" data-rh="otra-vez">Ver otra vez</button>
         <button type="button" class="rh-boton secundario" data-rh="cerrar">Cerrar</button>
       </div>`,
   };
+}
+
+/** Los relojes del espectáculo en curso: se cancelan antes de volver a armarlo. */
+let relojes: number[] = [];
+
+function quietoPorPreferencia(): boolean {
+  return window.matchMedia?.("(prefers-reduced-motion: reduce)").matches === true;
+}
+
+/**
+ * Pone en escena la historia final, `transcurrido` segundos después de que empezó (0 al llegar;
+ * más si un repintado la rehízo a media función). El movimiento lo hace el CSS con
+ * `animation-delay` corridos por `--desfase`; aquí solo los números que corren desde cero y la
+ * ráfaga del remate.
+ */
+function ponerEnEscena(seccion: HTMLElement, transcurrido: number): void {
+  for (const r of relojes) { clearTimeout(r); cancelAnimationFrame(r); }
+  relojes = [];
+  seccion.style.setProperty("--desfase", `${-transcurrido}s`);
+  // Quitar y volver a poner la clase reinicia las animaciones; con el desfase, siguen donde iban.
+  seccion.classList.remove("en-escena");
+  void seccion.offsetWidth;
+  seccion.classList.add("en-escena");
+  const terminado = transcurrido >= ESCENA.total || quietoPorPreferencia();
+  seccion.classList.toggle("terminado", terminado);
+
+  seccion.querySelectorAll<HTMLElement>("[data-contar]").forEach((el) => {
+    const n = Number(el.dataset.contar);
+    const f = el.dataset.formato as Formato;
+    const i = Number(el.closest<HTMLElement>(".rh-dato")?.style.getPropertyValue("--i") || 0);
+    const desde = turno(i) + ESCENA.voltear - transcurrido;
+    if (terminado || desde + ESCENA.contar <= 0) { el.innerHTML = formatear(n, f); return; }
+    el.innerHTML = formatear(0, f);
+    relojes.push(window.setTimeout(() => {
+      const inicio = performance.now() + Math.min(0, desde) * 1000;
+      const correr = (ahora: number) => {
+        const p = Math.min(1, (ahora - inicio) / (ESCENA.contar * 1000));
+        const suave = 1 - Math.pow(1 - p, 3);
+        el.innerHTML = formatear(p >= 1 ? n : n * suave, f);
+        if (p < 1) relojes.push(requestAnimationFrame(correr));
+      };
+      relojes.push(requestAnimationFrame(correr));
+    }, Math.max(0, desde) * 1000));
+  });
+
+  const remate = ESCENA.remate - transcurrido;
+  if (!terminado && remate > 0) relojes.push(window.setTimeout(() => rafagaDeConfeti(110, 0.5, 0.45), remate * 1000));
+  // Al acabar queda "terminado": los botones (invisibles hasta el remate) ya reciben toques.
+  if (!terminado) relojes.push(window.setTimeout(() => seccion.classList.add("terminado"), (ESCENA.total - transcurrido) * 1000));
+}
+
+/** Llega (o vuelve) a la historia final: arranca el espectáculo o lo retoma donde iba. */
+function escenaFinal(visorEl: HTMLElement, total: number): void {
+  const seccion = visorEl.querySelector<HTMLElement>(".rh-pagina.rh-final");
+  if (!seccion || pagina !== total - 1) return;
+  if (escenaInicio === null) escenaInicio = performance.now();
+  ponerEnEscena(seccion, (performance.now() - escenaInicio) / 1000);
+}
+
+/** Tocar a media función la salta al final. */
+function saltarEscena(visorEl: HTMLElement): boolean {
+  const seccion = visorEl.querySelector<HTMLElement>(".rh-pagina.rh-final.en-escena:not(.terminado)");
+  if (!seccion || escenaInicio === null) return false;
+  escenaInicio = performance.now() - ESCENA.total * 1000;
+  ponerEnEscena(seccion, ESCENA.total);
+  return true;
 }
 
 /** Las historias del mes, en orden, sin las secciones vacías. */
@@ -503,6 +618,7 @@ export function conectarResumenMensual(repintar: () => void, nav: NavegacionHist
       b.className = i < pagina ? "vista" : i === pagina ? "actual" : "";
     });
     visorEl.querySelectorAll<HTMLElement>(".rh-pagina").forEach((p, i) => p.setAttribute("aria-hidden", String(i !== pagina)));
+    escenaFinal(visorEl, total);
   };
   const cerrar = () => {
     cerrarHistoria();
@@ -515,7 +631,12 @@ export function conectarResumenMensual(repintar: () => void, nav: NavegacionHist
     b.addEventListener("click", (e) => {
       e.stopPropagation();
       if (b.dataset.rh === "cerrar") cerrar();
-      if (b.dataset.rh === "otra-vez") ir(0);
+      if (b.dataset.rh === "otra-vez") {
+        // Que el espectáculo se vuelva a hacer al llegar otra vez al final.
+        escenaInicio = null;
+        visorEl.querySelector(".rh-pagina.rh-final")?.classList.remove("en-escena", "terminado");
+        ir(0);
+      }
     })
   );
 
@@ -548,6 +669,7 @@ export function conectarResumenMensual(repintar: () => void, nav: NavegacionHist
       return;
     }
     if (horizontal === null) {
+      if (pagina === total - 1 && saltarEscena(visorEl)) return;
       const caja = visorEl.getBoundingClientRect();
       ir(e.clientX - caja.left < caja.width / 3 ? pagina - 1 : pagina + 1);
     }
@@ -559,6 +681,8 @@ export function conectarResumenMensual(repintar: () => void, nav: NavegacionHist
     if (e.key === "ArrowLeft") ir(pagina - 1);
     if (e.key === "Escape") cerrar();
   };
+  // Un repintado a media función (un snapshot) la retoma donde iba.
+  escenaFinal(visorEl, total);
   visorEl.tabIndex = -1;
   if (document.activeElement === document.body) visorEl.focus({ preventScroll: true });
 }
