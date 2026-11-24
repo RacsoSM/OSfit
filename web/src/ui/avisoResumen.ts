@@ -10,13 +10,25 @@ import { mesAnterior } from "../tirada";
  * avisa del mes que acaba de terminar: un resumen de hace meses ya no es noticia.
  */
 
-/** El mes ("AAAA-MM") del que hay que avisar, o null. */
+/**
+ * La hora de la ventana emergente el día 1: la misma que la notificación del resumen
+ * (`avisarResumenMes`, 9:00 de Mazatlán). El resumen se guarda a las 00:30, pero se anuncia junto
+ * con el aviso (entrenador, 2026-11-24: "cada 1ero del mes a las 9 am").
+ */
+export const HORA_AVISO = "09:00";
+
+/**
+ * El mes ("AAAA-MM") del que hay que avisar, o null. Cada mes: el día 1 desde las 9:00 (`hora`,
+ * "HH:MM" en Mazatlán) y los días siguientes, hasta que lo ve o lo cancela.
+ */
 export function resumenPorAvisar(
   meses: readonly { mes: string }[] | null,
   hoy: string,
-  visto: string | null
+  visto: string | null,
+  hora = "23:59"
 ): string | null {
   if (!meses) return null;
+  if (hoy.endsWith("-01") && hora < HORA_AVISO) return null;
   const terminado = mesAnterior(hoy.slice(0, 7));
   return meses.some((m) => m.mes === terminado) && visto !== terminado ? terminado : null;
 }

@@ -18,6 +18,19 @@ describe("resumenPorAvisar", () => {
   });
 });
 
+describe("a las 9:00 del día 1", () => {
+  const meses = [{ mes: "2026-11" }];
+  it("el día 1 antes de las 9:00 todavía no; desde las 9:00 sí; los días siguientes, a cualquier hora", () => {
+    expect(resumenPorAvisar(meses, "2026-12-01", null, "08:59")).toBeNull();
+    expect(resumenPorAvisar(meses, "2026-12-01", null, "09:00")).toBe("2026-11");
+    expect(resumenPorAvisar(meses, "2026-12-02", null, "07:00")).toBe("2026-11");
+  });
+  it("cada mes: el 1 de enero avisa de diciembre a las 9:00", () => {
+    expect(resumenPorAvisar([{ mes: "2026-12" }], "2027-01-01", "2026-11", "08:00")).toBeNull();
+    expect(resumenPorAvisar([{ mes: "2026-12" }], "2027-01-01", "2026-11", "09:30")).toBe("2026-12");
+  });
+});
+
 describe("avisoResumen", () => {
   it("el texto con el mes y los dos botones; nada sin mes", () => {
     const html = avisoResumen("2026-10");

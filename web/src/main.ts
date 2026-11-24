@@ -30,7 +30,7 @@ import type {
   ResumenMensualGuardado,
   EntradaBuzon,
 } from "./datos";
-import { hoyEnMazatlan } from "./fecha";
+import { horaEnMazatlan, hoyEnMazatlan } from "./fecha";
 import { mesAnterior, type Tirada } from "./tirada";
 import {
   batallaAmigos, borrarSesion, enviarSugerencia, compararMusculos, editarSesion, elegirMostrarEnAmigos, guardarPeso, marcarAsistencia, obtenerRanking, registrarEntrada, registrarSesion,
@@ -42,7 +42,7 @@ import { estadoNotificaciones, plataforma } from "./notificaciones";
 import { activarNotificaciones, entornoDelNavegador, sincronizarToken } from "./notificacionesNavegador";
 import { conectarNotificaciones } from "./ui/tarjetaNotificaciones";
 import { conectarAvisoReviveExtra } from "./ui/avisoReviveExtra";
-import { conectarAvisoResumen, resumenPorAvisar } from "./ui/avisoResumen";
+import { HORA_AVISO, conectarAvisoResumen, resumenPorAvisar } from "./ui/avisoResumen";
 import { almacenDeEstilo, ponerEstilo } from "./ui/cambioDeEstilo";
 import { estiloGuardado, type IdEstilo } from "./estilo";
 import { cerrarSesion, credencialLista, huellaDeLaSesion, iniciarSesion, redDeFirestore, urlDeDescarga } from "./firebase";
@@ -457,7 +457,13 @@ async function arrancar(): Promise<void> {
   let resumenPedido: string | null = null;
   // La ventana emergente se enciende hasta el 1 de diciembre (`lanzamiento.ts`); el diseño ya está.
   const resumenDelAviso = (): string | null =>
-    avisoResumenActivo(hoy) ? resumenPedido ?? resumenPorAvisar(resumenes, hoy, resumenVisto) : null;
+    avisoResumenActivo(hoy) ? resumenPedido ?? resumenPorAvisar(resumenes, hoy, resumenVisto, horaEnMazatlan()) : null;
+  // El día 1 con la página abierta antes de las 9:00: a esa hora se repinta y sale sola.
+  if (hoy.endsWith("-01") && horaEnMazatlan() < HORA_AVISO) {
+    const [h, m] = horaEnMazatlan().split(":").map(Number);
+    const [hh, mm] = HORA_AVISO.split(":").map(Number);
+    setTimeout(() => pintar(), ((hh * 60 + mm) - (h * 60 + m)) * 60_000 + 5_000);
+  }
 
   /** Abre Resumen mensual con la historia de ese mes ya abierta. */
   function verHistoria(mes: string): void {
@@ -749,7 +755,7 @@ async function arrancar(): Promise<void> {
       observarHistorial(clienteId, (s) => { historial = s; pintar(); });
     }
     // Entrar a Resumen mensual, por donde sea, cuenta como haber visto el del mes que terminó.
-    const porAvisar = resumenPorAvisar(resumenes, hoy, resumenVisto);
+    const porAvisar = resumenPorAvisar(resumenes, hoy, resumenVisto, horaEnMazatlan());
     if (activa.id === "resumenMensual" && porAvisar) marcarResumenVisto(porAvisar);
     // Con Notificaciones abierta, todo lo que hay (y lo que llegue mientras) queda leído.
     if (activa.id === "notificaciones" && buzon) buzonVisto = marcarVistas(buzon, almacenBuzon, buzonVisto);
