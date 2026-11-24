@@ -1,5 +1,5 @@
 import { RANGOS, indiceRango, nombreMusculo, nombreRango, percentilEntrenanDe } from "../fuerza";
-import { COLORES_RANGO } from "./insigniaRango";
+import { COLORES_RANGO, insigniaRango } from "./insigniaRango";
 import { comparaMarca, formatoKg, nombreMes, type ResumenMensual, type SerieMarca } from "../resumenMensual";
 import { prepararSvg } from "./mapaMuscular";
 import { escapar } from "./tarjetaDia";
@@ -335,7 +335,7 @@ function fuerza(r: ResumenMensual, sexo: "H" | "M" | null, mapa: DatosResumenMen
         ${cuerpoPintado(mapa.espalda, "rh-espalda", r.fuerza.musculos)}
       </figure>
       <ul class="rh-rangos" aria-label="Los rangos, de menor a mayor">
-        ${RANGOS.map((rg, k) => `<li><i style="background: ${COLORES_RANGO[k]}"></i>${nombreRango(rg.desde, s)}</li>`).join("")}
+        ${RANGOS.map((rg, k) => `<li>${insigniaRango(k, 18, `rh-ley-${k}`)}${nombreRango(rg.desde, s)}</li>`).join("")}
       </ul>` : `
       <div class="rh-mapa-cargando">Cargando tu cuerpo…</div>`}
     ${fuertes.length ? `
@@ -343,7 +343,7 @@ function fuerza(r: ResumenMensual, sexo: "H" | "M" | null, mapa: DatosResumenMen
         <p class="rh-etq">${fuertes.length === 1 ? "Tu músculo más fuerte" : "Tus músculos más fuertes"}</p>
         <ol class="rh-fuertes">
           ${fuertes.map(([g, n], k) => `
-            <li><span class="rh-fuertes-pos">${k + 1}</span><i style="background: ${colorNivel(n)}"></i>
+            <li><span class="rh-fuertes-pos">${k + 1}</span>${insigniaRango(indiceRango(n), 26, `rh-fuerte-${k}`)}
               <span class="rh-fuertes-nombre">${escapar(nombreMusculo(g))}</span><span class="rh-fuertes-rango">${nombreRango(n, s)}</span></li>`).join("")}
         </ol>
       </div>` : ""}`);
@@ -434,6 +434,7 @@ export function datosPoster(r: ResumenMensual, sexo: "H" | "M" | null, ant: Resu
     rango: r.fuerza ? {
       nombre: nombreRango(r.fuerza.general, s),
       color: colorNivel(r.fuerza.general),
+      indice: indiceRango(r.fuerza.general),
       percentil: percentilEntrenanDe(r.fuerza.general),
       cambio: ant?.fuerza ? cambio(variacion(r.fuerza.general, ant.fuerza.general, "relativo")) : null,
     } : null,
@@ -451,7 +452,7 @@ export function datosPoster(r: ResumenMensual, sexo: "H" | "M" | null, ant: Resu
     musculos: r.fuerza
       // Top 5 en el póster (entrenador, 2026-11-24); la historia de Fuerza sigue con su top 3.
       ? Object.entries(r.fuerza.musculos).sort(([, x], [, y]) => y - x).slice(0, 5)
-        .map(([g, n]) => ({ nombre: nombreMusculo(g), color: colorNivel(n) }))
+        .map(([g, n]) => ({ nombre: nombreMusculo(g), color: colorNivel(n), indice: indiceRango(n) }))
       : [],
   };
 }
@@ -496,14 +497,13 @@ function final(r: ResumenMensual, sexo: "H" | "M" | null, ant: ResumenMensual | 
   return {
     id: "final",
     html: `
-      <div class="rh-escenario" aria-hidden="true">
-        <i class="rh-oscuro"></i><i class="rh-haz izq"></i><i class="rh-haz der"></i><i class="rh-flash"></i>
-      </div>
+      <div class="rh-escenario" aria-hidden="true"><i class="rh-oscuro"></i><i class="rh-flash"></i></div>
+      <div class="rh-luces" aria-hidden="true"><i class="rh-haz izq"></i><i class="rh-haz der"></i></div>
       <div class="rh-poster">
         <p class="rh-poster-mes">${nombreMes(r.mes).toUpperCase()} ${r.mes.slice(0, 4)} · OSFIT</p>
         <p class="rh-poster-nombre">${escapar(nombre)}</p>
         ${parte(0, "rh-poster-rango", "tu rango", p.rango ? `
-          <i class="rh-medalla" style="--color: ${p.rango.color}"></i>
+          <span class="rh-poster-insignia" style="--color: ${p.rango.color}">${insigniaRango(p.rango.indice, 56, "rh-poster-rango")}</span>
           <div>
             <p class="rh-poster-rango-nombre">${p.rango.nombre}</p>
             <p class="rh-poster-rango-texto">Más fuerte que el ${p.rango.percentil} % de quienes entrenan ${pastilla(p.rango.cambio)}</p>
@@ -518,7 +518,7 @@ function final(r: ResumenMensual, sexo: "H" | "M" | null, ant: ResumenMensual | 
           ${p.ejercicios.length ? `<div><p class="rh-poster-tt">Tus ejercicios</p>
             <ol class="rh-poster-lista">${p.ejercicios.map((e, i) => `<li><b>${i + 1}</b>${escapar(e)}</li>`).join("")}</ol></div>` : ""}
           ${p.musculos.length ? `<div><p class="rh-poster-tt">Tus músculos</p>
-            <ol class="rh-poster-lista">${p.musculos.map((m) => `<li><i style="background: ${m.color}"></i>${escapar(m.nombre)}</li>`).join("")}</ol></div>` : ""}`)}
+            <ol class="rh-poster-lista">${p.musculos.map((m, k) => `<li>${insigniaRango(m.indice, 18, `rh-poster-m${k}`)}${escapar(m.nombre)}</li>`).join("")}</ol></div>` : ""}`)}
         <p class="rh-compartir-aviso" id="rh-compartir-aviso" role="status"></p>
         <div class="rh-botones">
           <button type="button" class="rh-boton" data-rh="compartir">Compartir</button>
@@ -589,32 +589,50 @@ function apuntarReflectores(seccion: HTMLElement, transcurrido: number, terminad
   const hazes = [...seccion.querySelectorAll<HTMLElement>(".rh-haz")];
   const soltar = () => {
     seccion.classList.add("libre");
-    hazes.forEach((h) => { h.style.height = ""; });
+    // De vuelta a su forma de barrer (la del CSS).
+    hazes.forEach((h) => { h.removeAttribute("style"); });
     datos.forEach((d) => d.classList.remove("foco"));
   };
   if (terminado || transcurrido >= ESCENA.remate) { soltar(); return; }
   seccion.classList.remove("libre");
 
-  // El ángulo con que un reflector, girando sobre el centro de su base, apunta al centro de la
-  // tarjeta. Con la posición sin transformar (`offset*`), que no cambia al girarlo.
+  /**
+   * Cada reflector sale de un punto fijo abajo (uno a cada lado) y se vuelve un cono que apunta
+   * EXACTO al centro de la tarjeta y se detiene en su orilla, casi tan ancho como ella: así se ve
+   * que la apunta y la luz le pega sin tapar el texto. El largo, el
+   * ancho, la posición y el giro se calculan aquí con la tarjeta sin escalar (`offset*`, no la
+   * caja en pantalla, que con el foco va al 104 %); el círculo de luz es una elipse de su tamaño.
+   */
   const apuntar = (i: number) => {
     const d = datos[i];
     if (!d) return;
-    // Las dos cajas en el mismo instante: el carril puede ir deslizándose, y así se cancela.
-    const caja = seccion.getBoundingClientRect();
-    const r = d.getBoundingClientRect();
-    const x = r.left + r.width / 2 - caja.left;
-    const y = r.top + r.height / 2 - caja.top + seccion.scrollTop;
-    for (const h of hazes) {
-      const px = h.offsetLeft + h.offsetWidth / 2;
-      const py = h.offsetTop + h.offsetHeight;
+    const { x, y, ancho, alto } = centroEn(d, seccion);
+    const W = seccion.clientWidth;
+    const H = Math.max(seccion.clientHeight, seccion.scrollHeight);
+    hazes.forEach((h, k) => {
+      const px = k === 0 ? W * 0.1 : W * 0.9;
+      const py = H + 16;
+      const hasta = Math.hypot(x - px, py - y);
+      // Apunta al centro pero se detiene en la orilla de la tarjeta: la luz le pega y la ilumina
+      // sin que el cono quede encima del texto. `borde` es lo que hay del centro a la orilla en
+      // esa dirección.
+      const ux = Math.abs((x - px) / hasta), uy = Math.abs((py - y) / hasta);
+      const borde = Math.min(ux > 0.001 ? ancho / 2 / ux : Infinity, uy > 0.001 ? alto / 2 / uy : Infinity);
+      const largo = hasta - borde + 2;
+      const ancho2 = Math.min(ancho * 0.92, W * 0.9);
       const grados = (Math.atan2(x - px, py - y) * 180) / Math.PI;
-      h.style.transform = `rotate(${grados.toFixed(1)}deg)`;
-      // Que el haz termine justo pasando la tarjeta: la luz "cae" ahí y no sigue de largo.
-      h.style.height = `${Math.round(Math.hypot(x - px, py - y) + 70)}px`;
-    }
-    seccion.style.setProperty("--fx", `${x.toFixed(0)}px`);
-    seccion.style.setProperty("--fy", `${y.toFixed(0)}px`);
+      h.style.left = `${(px - ancho2 / 2).toFixed(1)}px`;
+      h.style.top = `${(py - largo).toFixed(1)}px`;
+      h.style.bottom = "auto";
+      h.style.right = "auto";
+      h.style.width = `${ancho2.toFixed(1)}px`;
+      h.style.height = `${largo.toFixed(1)}px`;
+      h.style.transform = `rotate(${grados.toFixed(2)}deg)`;
+    });
+    seccion.style.setProperty("--fx", `${x.toFixed(1)}px`);
+    seccion.style.setProperty("--fy", `${y.toFixed(1)}px`);
+    seccion.style.setProperty("--fw", `${(ancho / 2 + 26).toFixed(0)}px`);
+    seccion.style.setProperty("--fh", `${(alto / 2 + 22).toFixed(0)}px`);
     datos.forEach((dd, k) => dd.classList.toggle("foco", k === i));
   };
 
@@ -627,6 +645,24 @@ function apuntarReflectores(seccion: HTMLElement, transcurrido: number, terminad
     else relojes.push(window.setTimeout(() => apuntar(i), cuando * 1000));
   });
   relojes.push(window.setTimeout(soltar, (ESCENA.remate - transcurrido) * 1000));
+}
+
+/**
+ * El centro y el tamaño de `el` en las coordenadas de `seccion` (las de su contenido), sumando
+ * `offsetLeft`/`offsetTop` hasta ella: sin transformaciones, así no lo mueven ni el carril
+ * deslizándose ni el foco que agranda la tarjeta.
+ */
+export function centroEn(el: HTMLElement, seccion: HTMLElement): { x: number; y: number; ancho: number; alto: number } {
+  let x = 0, y = 0;
+  let n: HTMLElement | null = el;
+  while (n && n !== seccion) {
+    x += n.offsetLeft;
+    y += n.offsetTop;
+    const padre = n.offsetParent as HTMLElement | null;
+    if (padre && padre !== seccion && !seccion.contains(padre)) break;
+    n = padre;
+  }
+  return { x: x + el.offsetWidth / 2, y: y + el.offsetHeight / 2, ancho: el.offsetWidth, alto: el.offsetHeight };
 }
 
 /** Llega (o vuelve) a la historia final: arranca el espectáculo o lo retoma donde iba. */

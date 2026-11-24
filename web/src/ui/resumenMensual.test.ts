@@ -122,6 +122,9 @@ describe("las historias", () => {
     expect(html).toContain('data-rh="compartir">Compartir');
     expect(html).toContain('data-rh="cerrar"');
     expect(html).not.toContain("Ver otra vez");
+    // La insignia de su rango y la de cada músculo, no bolitas de color.
+    expect(html).toContain('id="rh-poster-rango-f"');
+    expect(html).toMatch(/rh-poster-lista">(<li><svg class="insignia-rango")/);
   });
 });
 
@@ -171,7 +174,8 @@ describe("fuerza: tu cuerpo pintado", () => {
     expect(html).toMatch(/rh-fuertes-nombre">Pecho<\/span><span class="rh-fuertes-rango">Élite/);
     // Los 8 rangos de leyenda, cada uno con su color.
     const leyenda = html.slice(html.indexOf('class="rh-rangos"'), html.indexOf("</ul>", html.indexOf('class="rh-rangos"')));
-    expect(leyenda.match(/<li><i style="background: #/g)).toHaveLength(8);
+    // Cada rango con su insignia, la misma de toda la app.
+    expect(leyenda.match(/<li><svg class="insignia-rango"/g)).toHaveLength(8);
   });
   it("cada músculo con datos lleva su tono; los demás quedan para el gris del CSS", () => {
     const html = todo(datos({ mapa: { frente: svg, espalda: svg } }));

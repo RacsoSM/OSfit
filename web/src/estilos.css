@@ -2418,13 +2418,13 @@ body.historia-abierta { overflow: hidden; }
 /* Los 8 rangos con su color, como leyenda del cuerpo (entrenador, 2026-11-24: en vez de la barra). */
 .rh-rangos { list-style: none; margin: 0 0 14px; padding: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px 8px; }
 .rh-rangos li { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--rh-texto-2); white-space: nowrap; }
-.rh-rangos i { width: 10px; height: 10px; border-radius: 3px; flex: none; }
+.rh-rangos svg { flex: none; }
 /* Tus músculos más fuertes: los 3 de nivel más alto. */
 .rh-fuertes { list-style: none; margin: 8px 0 0; padding: 0; }
 .rh-fuertes li { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-top: 1px solid var(--rh-superficie-alta); }
 .rh-fuertes li:first-child { border-top: 0; }
 .rh-fuertes-pos { width: 20px; font-weight: 900; color: var(--rh-texto-3); }
-.rh-fuertes i { width: 12px; height: 12px; border-radius: 4px; flex: none; }
+.rh-fuertes svg { flex: none; }
 .rh-fuertes-nombre { flex: 1; font-size: 16px; font-weight: 800; }
 .rh-fuertes-rango { font-size: 13px; font-weight: 700; color: var(--rh-texto-2); }
 .rh-destacado { background: var(--rh-superficie); border-radius: 12px; padding: 12px 14px; }
@@ -2471,16 +2471,29 @@ body.historia-abierta { overflow: hidden; }
 /* El centro del círculo de luz: propiedades registradas para que se deslice de tarjeta en tarjeta. */
 @property --fx { syntax: "<length-percentage>"; inherits: true; initial-value: 50%; }
 @property --fy { syntax: "<length-percentage>"; inherits: true; initial-value: 22%; }
+@property --fw { syntax: "<length>"; inherits: true; initial-value: 150px; }
+@property --fh { syntax: "<length>"; inherits: true; initial-value: 90px; }
 .rh-pagina.rh-final {
   position: relative; --desfase: 0s; --rh-intro: 1s; --rh-paso: 2s; --rh-remate: 12.6s;
-  transition: --fx 0.7s cubic-bezier(0.5, 0, 0.2, 1), --fy 0.7s cubic-bezier(0.5, 0, 0.2, 1);
+  transition: --fx 0.7s cubic-bezier(0.5, 0, 0.2, 1), --fy 0.7s cubic-bezier(0.5, 0, 0.2, 1),
+    --fw 0.7s cubic-bezier(0.5, 0, 0.2, 1), --fh 0.7s cubic-bezier(0.5, 0, 0.2, 1);
 }
 .rh-final .rh-contenido { position: relative; z-index: 1; }
 .rh-escenario { position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
-.rh-escenario i { position: absolute; display: block; }
+.rh-escenario i, .rh-luces i { position: absolute; display: block; }
+/* Los reflectores van ENCIMA del póster, como en un escenario: cruzan por delante de las demás
+   tarjetas (que están en penumbra) y se detienen en la orilla de la de turno, sin taparla. */
+.rh-luces { position: absolute; inset: 0; z-index: 2; overflow: hidden; pointer-events: none; }
+/* Ya destapado todo, siguen barriendo pero tenues, para no estorbar la lectura. */
+.rh-final.libre .rh-luces { opacity: 0.35; transition: opacity 1s ease; }
 /* La sala a oscuras, que se ilumina en el remate. */
 /* La sala a oscuras con un círculo de luz sobre la tarjeta de turno (`--fx`, `--fy`). */
-.rh-oscuro { inset: 0; background: radial-gradient(circle at var(--fx) var(--fy), rgba(0, 0, 0, 0) 0, rgba(0, 0, 0, 0.15) 90px, rgba(0, 0, 0, 0.82) 190px); }
+/* La luz cae en una elipse del tamaño de la tarjeta de turno (`--fw` × `--fh`). */
+.rh-oscuro {
+  inset: 0;
+  background: radial-gradient(var(--fw) var(--fh) at var(--fx) var(--fy),
+    rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0) 62%, rgba(0, 0, 0, 0.55) 86%, rgba(0, 0, 0, 0.84) 100%);
+}
 /* Dos reflectores desde abajo que barren el escenario cruzándose. */
 .rh-haz {
   bottom: -8%; width: 60%; height: 125%; transform-origin: 50% 100%; opacity: 0;
@@ -2492,7 +2505,15 @@ body.historia-abierta { overflow: hidden; }
 .rh-haz.izq { left: -12%; }
 .rh-haz.der { right: -12%; }
 /* Giran hacia la tarjeta de turno (el ángulo lo pone `apuntarReflectores`). */
-.rh-final.en-escena .rh-haz { transition: transform 0.7s cubic-bezier(0.5, 0, 0.2, 1), height 0.7s cubic-bezier(0.5, 0, 0.2, 1); }
+/* Apuntando (`apuntarReflectores`): un cono que nace en un punto y termina, tan ancho como la
+   tarjeta, justo en su centro; más brillante donde pega. */
+.rh-final.en-escena:not(.libre) .rh-haz {
+  clip-path: polygon(48.5% 100%, 51.5% 100%, 100% 0, 0 0); filter: blur(2px);
+  background: linear-gradient(to top, rgba(158, 197, 244, 0.03) 0%, rgba(158, 197, 244, 0.12) 45%,
+    rgba(198, 222, 250, 0.42) 85%, rgba(230, 240, 255, 0.62) 100%);
+  transition: transform 0.7s cubic-bezier(0.5, 0, 0.2, 1), left 0.7s cubic-bezier(0.5, 0, 0.2, 1),
+    top 0.7s cubic-bezier(0.5, 0, 0.2, 1), width 0.7s cubic-bezier(0.5, 0, 0.2, 1), height 0.7s cubic-bezier(0.5, 0, 0.2, 1);
+}
 /* El destello del remate. */
 .rh-flash {
   left: 50%; top: 30%; width: 160vmax; height: 160vmax; margin: -80vmax 0 0 -80vmax; opacity: 0; transform: scale(0.1);
@@ -2554,6 +2575,11 @@ body.historia-abierta { overflow: hidden; }
 .rh-final.en-escena .rh-dato { transition: filter 0.6s ease, transform 0.6s ease; }
 .rh-final.en-escena:not(.libre) .rh-dato:not(.foco) { filter: brightness(0.5) saturate(0.7); }
 .rh-final.en-escena:not(.libre) .rh-dato.foco { transform: scale(1.04); z-index: 2; }
+/* Donde pega la luz: un brillo que baja desde el borde de arriba de la tarjeta en foco. */
+.rh-final.en-escena:not(.libre) .rh-dato.foco::after {
+  content: ""; position: absolute; inset: 0; border-radius: 14px; pointer-events: none; z-index: 3;
+  background: radial-gradient(120% 90% at 50% 0%, rgba(230, 240, 255, 0.16), rgba(230, 240, 255, 0) 70%);
+}
 .rh-final.en-escena:not(.libre) .rh-dato.foco .rh-dato-frente,
 .rh-final.en-escena:not(.libre) .rh-dato.foco .rh-dato-dorso { box-shadow: 0 0 34px 4px rgba(158, 197, 244, 0.38); }
 .rh-final.en-escena .rh-flash { animation: rh-destello 1.3s ease-out both; animation-delay: calc(var(--desfase) + var(--rh-remate)); }
@@ -2665,11 +2691,13 @@ body.historia-abierta { overflow: hidden; }
   display: flex; align-items: center; gap: 12px; padding: 12px;
   background: rgba(224, 69, 123, 0.13); box-shadow: inset 0 0 0 1px rgba(224, 69, 123, 0.45); border-radius: 16px;
 }
-.rh-medalla {
-  width: 46px; height: 46px; border-radius: 50%; flex: none;
-  background: radial-gradient(circle at 35% 30%, #fff 0%, var(--color) 38%, #3a1530 100%);
-  box-shadow: 0 0 22px color-mix(in srgb, var(--color) 60%, transparent);
+/* La insignia de su rango (la misma de toda la app), con un halo de su color. */
+.rh-poster-insignia { position: relative; flex: none; display: grid; place-items: center; width: 56px; height: 56px; }
+.rh-poster-insignia::before {
+  content: ""; position: absolute; inset: -10px; border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--color) 55%, transparent), transparent 70%);
 }
+.rh-poster-insignia svg { position: relative; filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.5)); }
 .rh-poster-rango-nombre { margin: 0; font-size: 26px; font-weight: 900; line-height: 1.05; }
 .rh-poster-rango-texto { margin: 3px 0 0; font-size: 12px; color: var(--rh-texto-2); line-height: 1.35; }
 .rh-poster-rango-texto .rh-vs { margin: 0 0 0 4px; }
@@ -2689,7 +2717,7 @@ body.historia-abierta { overflow: hidden; }
 .rh-poster-lista { list-style: none; margin: 0; padding: 0; font-size: 13px; }
 .rh-poster-lista li { display: flex; align-items: center; gap: 7px; padding: 3.5px 0; min-width: 0; }
 .rh-poster-lista b { width: 12px; color: var(--rh-acento-claro); font-weight: 900; }
-.rh-poster-lista i { width: 10px; height: 10px; border-radius: 3px; flex: none; }
+.rh-poster-lista svg { flex: none; margin: -2px 0; }
 .rh-poster .rh-botones { flex-direction: row; margin-top: auto; padding-top: 14px; }
 .rh-poster .rh-boton { flex: 1; }
 .rh-compartir-aviso { margin: 8px 0 0; min-height: 1em; font-size: 12px; text-align: center; color: var(--rh-texto-2); }

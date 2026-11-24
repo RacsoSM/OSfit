@@ -1,4 +1,5 @@
 import { nombreMes } from "../resumenMensual";
+import { insigniaRango } from "./insigniaRango";
 
 /**
  * El póster del mes (la historia final del resumen, diseño "A1 · S1" del entrenador, 2026-11-24)
@@ -18,11 +19,11 @@ export interface DatosPoster {
   mes: string;
   nombre: string;
   /** Su rango general, con su color y contra quiénes entrenan; null sin datos de fuerza. */
-  rango: { nombre: string; color: string; percentil: number; cambio: Cambio | null } | null;
+  rango: { nombre: string; color: string; indice: number; percentil: number; cambio: Cambio | null } | null;
   /** Los 4 números: asistencia, kilos, tiempo en el gym y racha más larga. */
   numeros: { valor: string; etiqueta: string; color: string; cambio: Cambio | null }[];
   ejercicios: string[];
-  musculos: { nombre: string; color: string }[];
+  musculos: { nombre: string; color: string; indice: number }[];
 }
 
 const ANCHO = 1080;
@@ -61,8 +62,27 @@ function ajustado(ctx: CanvasRenderingContext2D, texto: string, x: number, y: nu
   ctx.fillText(texto, x, y);
 }
 
+/** La insignia del rango `indice` como imagen, para dibujarla en el canvas. */
+function cargarInsignia(indice: number, tam: number): Promise<HTMLImageElement | null> {
+  const svg = insigniaRango(indice, tam, `img-${indice}`).replace("<svg ", '<svg xmlns="http://www.w3.org/2000/svg" ');
+  return new Promise((resolver) => {
+    const img = new Image();
+    img.onload = () => resolver(img);
+    img.onerror = () => resolver(null);
+    img.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+  });
+}
+
+/** Las insignias que lleva el póster, por índice de rango. */
+export async function insigniasDe(d: DatosPoster): Promise<Map<number, HTMLImageElement>> {
+  const indices = new Set<number>([...(d.rango ? [d.rango.indice] : []), ...d.musculos.map((m) => m.indice)]);
+  const mapa = new Map<number, HTMLImageElement>();
+  await Promise.all([...indices].map(async (i) => { const img = await cargarInsignia(i, 256); if (img) mapa.set(i, img); }));
+  return mapa;
+}
+
 /** Dibuja el póster en un canvas nuevo de 1080 × 1920. */
-export function dibujarPoster(d: DatosPoster): HTMLCanvasElement {
+export function dibujarPoster(d: DatosPoster, insignias: Map<number, HTMLImageElement> = new Map()): HTMLCanvasElement {
   const canvas = document.createElement("canvas");
   canvas.width = ANCHO;
   canvas.height = ALTO;
@@ -107,14 +127,16 @@ export function dibujarPoster(d: DatosPoster): HTMLCanvasElement {
     ctx.strokeStyle = "rgba(224, 69, 123, 0.5)";
     ctx.stroke();
     const cx = izq + 100, cy = y + alto / 2;
-    const medalla = ctx.createRadialGradient(cx - 18, cy - 20, 6, cx, cy, 60);
-    medalla.addColorStop(0, "#ffffff");
-    medalla.addColorStop(0.35, d.rango.color);
-    medalla.addColorStop(1, "#3a1530");
-    ctx.fillStyle = medalla;
-    ctx.beginPath();
-    ctx.arc(cx, cy, 58, 0, Math.PI * 2);
-    ctx.fill();
+    const icono = insignias.get(d.rango.indice);
+    // Un halo del color del rango detrás de su insignia.
+    const halo = ctx.createRadialGradient(cx, cy, 10, cx, cy, 96);
+    halo.addColorStop(0, d.rango.color);
+    halo.addColorStop(1, "rgba(0, 0, 0, 0)");
+    ctx.globalAlpha = 0.45;
+    ctx.fillStyle = halo;
+    ctx.fillRect(cx - 100, cy - 100, 200, 200);
+    ctx.globalAlpha = 1;
+    if (icono) ctx.drawImage(icono, cx - 70, cy - 70, 140, 140);
     ctx.fillStyle = C.texto;
     ajustado(ctx, d.rango.nombre, izq + 190, y + 92, ancho - 220, 900, 76);
     ctx.fillStyle = C.texto2;
@@ -167,11 +189,11 @@ export function dibujarPoster(d: DatosPoster): HTMLCanvasElement {
   });
   d.musculos.forEach((m, i) => {
     const yy = y + 58 * (i + 1);
-    ctx.fillStyle = m.color;
-    redondo(ctx, col2, yy - 26, 26, 26, 8);
-    ctx.fill();
+    const icono = insignias.get(m.indice);
+    if (icono) ctx.drawImage(icono, col2 - 4, yy - 36, 44, 44);
+    else { ctx.fillStyle = m.color; redondo(ctx, col2, yy - 26, 26, 26, 8); ctx.fill(); }
     ctx.fillStyle = C.texto;
-    ajustado(ctx, m.nombre, col2 + 44, yy, ANCHO - izq - col2 - 44, 600, 36);
+    ajustado(ctx, m.nombre, col2 + 58, yy, ANCHO - izq - col2 - 58, 600, 36);
   });
 
   // Pie.
@@ -184,9 +206,10 @@ export function dibujarPoster(d: DatosPoster): HTMLCanvasElement {
 }
 
 /** El póster como archivo PNG. */
-export function posterComoArchivo(d: DatosPoster): Promise<File> {
+export async function posterComoArchivo(d: DatosPoster): Promise<File> {
+  const insignias = await insigniasDe(d);
   return new Promise((resolver, rechazar) => {
-    dibujarPoster(d).toBlob((blob) => {
+    dibujarPoster(d, insignias).toBlob((blob) => {
       if (!blob) { rechazar(new Error("sin imagen")); return; }
       resolver(new File([blob], `osfit-${nombreMes(d.mes)}-${d.mes.slice(0, 4)}.png`, { type: "image/png" }));
     }, "image/png");
