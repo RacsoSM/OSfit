@@ -31,9 +31,9 @@ export interface Juego {
 export const TORRE_DISCOS: Juego = {
   coleccion: "juegoDiscos", nombre: "Torre de discos", clave: "torreDiscos", ventana: "juego", msMinimos: 250, puntosPorPunto: 2,
 };
-/** Las barras van a ~0.7 s una de otra a la velocidad más alta: medio segundo es imposible. */
+/** En el nivel más alto las barras van a ~0.47 s una de otra: menos de 0.35 s es imposible. */
 export const KETTLEBELL_BIRD: Juego = {
-  coleccion: "juegoKettlebell", nombre: "Kettlebell Bird", clave: "kettlebellBird", ventana: "kettlebell", msMinimos: 500, puntosPorPunto: 1,
+  coleccion: "juegoKettlebell", nombre: "Kettlebell Bird", clave: "kettlebellBird", ventana: "kettlebell", msMinimos: 350, puntosPorPunto: 1,
 };
 
 export const MAXIMO_DISCOS = 2000;

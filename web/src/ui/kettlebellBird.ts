@@ -1,7 +1,9 @@
 import {
-  ALTO, ANCHO_DISCO, ANCHO_TUBO, PISO, RADIO, aletear, avanzar, nuevoVuelo, type Vuelo,
+  ALTO, ANCHO_DISCO, ANCHO_TUBO, PISO, RADIO, aletear, avanzar, nivel, nuevoVuelo, type Vuelo,
 } from "../kettlebellBird";
 import { conPartida, htmlLista, type ApiJuego, type EnvioPartida, type TablaDiscos } from "./juegoDiscos";
+import { ZONAS, pintarPolvo, pintarZona } from "./gimnasioFondo";
+import { escapar } from "./tarjetaDia";
 
 /**
  * La pantalla de Kettlebell Bird (lógica en `../kettlebellBird.ts`), del Arcade. Como Torre de
@@ -34,6 +36,11 @@ let aleteo = 1;
 let cuadro = 0;
 let ultimo = 0;
 let reloj = 0;
+/** El nivel en pantalla (su zona del gimnasio), la zona de la que viene y cuánto lleva la transición. */
+let nivelVisto = 1;
+let zonaAnterior: number | null = null;
+let mezcla = 1;
+let anuncio: { nivel: number; zona: string; vida: number } | null = null;
 let tabla: TablaDiscos | null = null;
 let errorTabla = false;
 let guardado: Guardado = "nada";
@@ -66,6 +73,7 @@ export function htmlKettlebell(): string {
       <div class="jd-hud" aria-live="polite">
         <p class="jd-hud-puntos" id="kb-puntos">0</p>
         <p class="jd-hud-record">Récord <b id="kb-record">—</b></p>
+        <p class="jd-hud-nivel" id="kb-nivel"></p>
       </div>
       <div class="jd-capa" id="kb-capa"></div>
       <section class="jd-hoja" id="kb-hoja" hidden aria-label="Records">
@@ -80,7 +88,7 @@ export function htmlKettlebell(): string {
     </div>`;
 }
 
-export function htmlCapaKettlebell(e: Estado, puntos: number, g: Guardado, nuevoRecord: boolean): string {
+export function htmlCapaKettlebell(e: Estado, puntos: number, g: Guardado, nuevoRecord: boolean, nivelAlcanzado = 1): string {
   if (e === "jugando") return "";
   if (e === "pausa") {
     return `<div class="jd-capa-caja"><p class="jd-capa-titulo">Pausa</p>
@@ -91,7 +99,7 @@ export function htmlCapaKettlebell(e: Estado, puntos: number, g: Guardado, nuevo
       <div class="jd-capa-caja">
         <p class="jd-capa-marca">OSFIT · Arcade</p>
         <p class="jd-capa-titulo">Kettlebell Bird</p>
-        <p class="jd-capa-texto">Toca para que la kettlebell aletee y suba. Pasa por el hueco entre las barras sin tocarlas ni caer al piso. Cada barra que pasas es un punto.</p>
+        <p class="jd-capa-texto">Toca para que la kettlebell aletee y suba. Pasa por el hueco entre las barras sin tocarlas ni caer al piso. Cada barra es un punto, y cada 8 subes de nivel: otra zona del gimnasio, más rápido y con las barras más juntas.</p>
         <button type="button" class="jd-boton" data-kb="jugar">Jugar</button>
         <button type="button" class="jd-boton secundario" data-kb="marcador">Ver marcador</button>
       </div>`;
@@ -103,7 +111,7 @@ export function htmlCapaKettlebell(e: Estado, puntos: number, g: Guardado, nuevo
     <div class="jd-capa-caja fin">
       ${nuevoRecord ? `<p class="jd-capa-record">¡Nuevo récord!</p>` : `<p class="jd-capa-marca">¡Pum!</p>`}
       <p class="jd-capa-puntos">${puntos}</p>
-      <p class="jd-capa-texto">${puntos === 1 ? "barra pasada" : "barras pasadas"}</p>
+      <p class="jd-capa-texto">${puntos === 1 ? "barra pasada" : "barras pasadas"} · Nivel ${nivelAlcanzado}, ${escapar(ZONAS[nivelAlcanzado - 1]?.nombre ?? "")}</p>
       ${nota}
       <button type="button" class="jd-boton" data-kb="jugar">Reintentar</button>
       <button type="button" class="jd-boton secundario" data-kb="marcador">Ver marcador</button>
@@ -120,10 +128,11 @@ function actualizar(): void {
     puntos.classList.remove("pop"); void puntos.offsetWidth; puntos.classList.add("pop");
   }
   const rec = q("#kb-record"); if (rec) rec.textContent = tabla && tabla.tuMejor > 0 ? String(tabla.tuMejor) : "—";
+  const niv = q("#kb-nivel"); if (niv) niv.textContent = `Nivel ${nivelVisto} · ${ZONAS[nivelVisto - 1]!.nombre}`;
   q("#kb-pantalla")?.classList.toggle("en-juego", estado === "jugando");
   const capa = q("#kb-capa");
   if (capa) {
-    const html = htmlCapaKettlebell(estado, vuelo.puntos, guardado, record);
+    const html = htmlCapaKettlebell(estado, vuelo.puntos, guardado, record, nivel(vuelo.puntos));
     if (capa.dataset.html !== html) { capa.innerHTML = html; capa.dataset.html = html; }
     capa.hidden = estado === "jugando" || hoja;
   }
@@ -200,6 +209,7 @@ function vistaAncho(): number {
 function jugar(): void {
   vuelo = nuevoVuelo(vistaAncho());
   chispas = []; letreros = []; sacudida = 0; destello = 0;
+  nivelVisto = 1; zonaAnterior = null; mezcla = 1; anuncio = null;
   guardado = "nada"; record = false; hoja = false;
   estado = "jugando";
   inicio = performance.now();
@@ -222,6 +232,14 @@ function ciclo(ahora: number): void {
   aleteo += dt;
   if (estado === "jugando") {
     const ev = avanzar(vuelo, dt);
+    if (ev === "punto" && nivel(vuelo.puntos) > nivelVisto) {
+      zonaAnterior = nivelVisto - 1;
+      nivelVisto = nivel(vuelo.puntos);
+      mezcla = 0;
+      anuncio = { nivel: nivelVisto, zona: ZONAS[nivelVisto - 1]!.nombre, vida: 2.2 };
+      destello = 0.5;
+      navigator.vibrate?.(25);
+    }
     if (ev === "punto") {
       letreros.push({ texto: "+1", x: vuelo.x + 4, y: vuelo.y - 8, vida: 1 });
       for (let k = 0; k < 10; k++) {
@@ -258,6 +276,8 @@ function ciclo(ahora: number): void {
   for (const l of letreros) { l.vida -= dt * 1.4; l.y -= 10 * dt; }
   letreros = letreros.filter((l) => l.vida > 0);
   sacudida = Math.max(0, sacudida - dt * 2.5);
+  mezcla = Math.min(1, mezcla + dt / 1.2);
+  if (anuncio) anuncio.vida -= dt;
   destello = Math.max(0, destello - dt * 4);
   dibujar();
   cuadro = requestAnimationFrame(ciclo);
@@ -270,10 +290,6 @@ function arrancar(): void {
 }
 
 // ── Dibujo ───────────────────────────────────────────────────────────────────
-
-const mod = (a: number, b: number) => ((a % b) + b) % b;
-/** Un número fijo por posición, para que cada ventana o máquina sea siempre la misma. */
-const ruido = (n: number) => mod(Math.sin(n * 12.9898) * 43758.5453, 1);
 
 function caja2(c: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number): void {
   const rr = Math.min(r, w / 2, h / 2);
@@ -300,106 +316,16 @@ function dibujar(): void {
   const r = vuelo.recorrido;
   const piso = PISO * e;
 
-  // Pared del fondo.
-  const pared = c.createLinearGradient(0, 0, 0, piso);
-  pared.addColorStop(0, "#160f26");
-  pared.addColorStop(1, "#2a1a33");
-  c.fillStyle = pared;
-  c.fillRect(-20, -20, W + 40, piso + 20);
-
-  // Capa lejana (0.15): ventanales con la ciudad de noche y letreros de neón.
-  const lejos = r * 0.15 * e;
-  const paso1 = 70 * e;
-  for (let i = Math.floor(lejos / paso1) - 1; i * paso1 - lejos < W + paso1; i++) {
-    const x = i * paso1 - lejos;
-    // Ventanal, o un letrero de neón, pero nunca dos letreros seguidos.
-    if (ruido(i) < 0.62 || ruido(i - 1) >= 0.62) {
-      const vx = x + 8 * e, vy = 10 * e, vw = 40 * e, vh = 34 * e;
-      const cielo = c.createLinearGradient(0, vy, 0, vy + vh);
-      cielo.addColorStop(0, "#1b2a55"); cielo.addColorStop(1, "#3a2457");
-      c.fillStyle = cielo; c.fillRect(vx, vy, vw, vh);
-      // Edificios y luces de la ciudad.
-      for (let k = 0; k < 6; k++) {
-        const bh = (8 + ruido(i * 7 + k) * 18) * e, bx = vx + (k * vw) / 6;
-        c.fillStyle = "#0f1330"; c.fillRect(bx, vy + vh - bh, vw / 6 - 2, bh);
-        c.fillStyle = "rgba(255, 214, 120, 0.7)";
-        for (let w = 0; w < 4; w++) if (ruido(i * 31 + k * 5 + w) > 0.5) c.fillRect(bx + 3, vy + vh - bh + 4 + w * 6, 2.5, 2.5);
-      }
-      c.strokeStyle = "#3b2d4d"; c.lineWidth = Math.max(2, e * 0.8);
-      c.strokeRect(vx, vy, vw, vh);
-      c.beginPath(); c.moveTo(vx + vw / 2, vy); c.lineTo(vx + vw / 2, vy + vh); c.stroke();
-    } else {
-      // Letrero de neón.
-      const texto = ruido(i + 3) < 0.5 ? "OSFIT" : "NO PAIN NO GAIN";
-      const color = ruido(i + 5) < 0.5 ? "#ff3bd4" : "#7ef3ff";
-      // Atenuado: es fondo, no debe competir con las barras.
-      const prende = 0.28 + 0.08 * Math.sin(reloj * 3 + i);
-      c.save();
-      c.font = `900 ${Math.round((texto.length > 6 ? 5 : 9) * e)}px system-ui, sans-serif`;
-      c.textAlign = "center";
-      c.shadowColor = color; c.shadowBlur = 10;
-      c.fillStyle = color; c.globalAlpha = prende;
-      c.fillText(texto, x + 28 * e, 30 * e);
-      c.restore();
-    }
+  // El gimnasio de la zona del nivel; al subir de nivel, la zona nueva aparece sobre la anterior.
+  const zona = ZONAS[nivelVisto - 1]!;
+  if (zonaAnterior !== null && mezcla < 1) {
+    pintarZona(c, ZONAS[zonaAnterior]!, W, H, e, piso, r, reloj);
+    c.globalAlpha = mezcla;
+    pintarZona(c, zona, W, H, e, piso, r, reloj);
+    c.globalAlpha = 1;
+  } else {
+    pintarZona(c, zona, W, H, e, piso, r, reloj);
   }
-
-  // Lámparas colgando (0.4) con su cono de luz.
-  const medio = r * 0.4 * e;
-  const paso2 = 46 * e;
-  for (let i = Math.floor(medio / paso2) - 1; i * paso2 - medio < W + paso2; i++) {
-    const x = i * paso2 - medio + 20 * e;
-    c.strokeStyle = "#2c2238"; c.lineWidth = 2;
-    c.beginPath(); c.moveTo(x, 0); c.lineTo(x, 7 * e); c.stroke();
-    c.fillStyle = "#3a3048"; c.beginPath(); c.moveTo(x - 4 * e, 9 * e); c.lineTo(x + 4 * e, 9 * e); c.lineTo(x + 2 * e, 6.5 * e); c.lineTo(x - 2 * e, 6.5 * e); c.fill();
-    const cono = c.createLinearGradient(0, 9 * e, 0, piso);
-    cono.addColorStop(0, "rgba(255, 228, 170, 0.16)"); cono.addColorStop(1, "rgba(255, 228, 170, 0)");
-    c.fillStyle = cono;
-    c.beginPath(); c.moveTo(x - 4 * e, 9 * e); c.lineTo(x + 4 * e, 9 * e); c.lineTo(x + 18 * e, piso); c.lineTo(x - 18 * e, piso); c.fill();
-  }
-
-  // Máquinas (0.55): racks, mancuerneros y caminadoras, en silueta.
-  const cerca = r * 0.55 * e;
-  const paso3 = 52 * e;
-  c.save();
-  for (let i = Math.floor(cerca / paso3) - 1; i * paso3 - cerca < W + paso3; i++) {
-    const x = i * paso3 - cerca;
-    const tipo = Math.floor(ruido(i * 3 + 1) * 3);
-    c.fillStyle = "#231a30"; c.strokeStyle = "#3a2c4c"; c.lineWidth = Math.max(2, e * 0.9);
-    if (tipo === 0) {
-      // Rack de sentadilla con su barra.
-      const a = piso - 40 * e;
-      c.strokeRect(x + 6 * e, a, 26 * e, 40 * e);
-      c.beginPath(); c.moveTo(x + 6 * e, a + 14 * e); c.lineTo(x + 32 * e, a + 14 * e); c.stroke();
-      c.fillStyle = "#4a3c5e"; c.fillRect(x + 2 * e, a + 11 * e, 34 * e, 1.6 * e);
-      c.fillStyle = "#33284a"; c.fillRect(x + 1 * e, a + 7 * e, 3 * e, 10 * e); c.fillRect(x + 34 * e, a + 7 * e, 3 * e, 10 * e);
-    } else if (tipo === 1) {
-      // Mancuernero.
-      const a = piso - 20 * e;
-      c.fillRect(x + 4 * e, a, 38 * e, 3 * e); c.fillRect(x + 4 * e, a + 9 * e, 38 * e, 3 * e);
-      c.fillRect(x + 6 * e, a, 2 * e, 20 * e); c.fillRect(x + 38 * e, a, 2 * e, 20 * e);
-      for (let k = 0; k < 5; k++) for (const fila of [a - 2.5 * e, a + 6.5 * e]) {
-        c.fillStyle = "#3d3052"; c.fillRect(x + (9 + k * 6.5) * e, fila, 1.6 * e, 3 * e); c.fillRect(x + (12.4 + k * 6.5) * e, fila, 1.6 * e, 3 * e);
-        c.fillStyle = "#2e2440"; c.fillRect(x + (10.6 + k * 6.5) * e, fila + 1 * e, 1.8 * e, 1 * e);
-      }
-    } else {
-      // Caminadora.
-      const a = piso - 8 * e;
-      c.beginPath(); c.moveTo(x + 4 * e, piso); c.lineTo(x + 34 * e, piso); c.lineTo(x + 30 * e, a); c.lineTo(x + 8 * e, a); c.closePath(); c.fill(); c.stroke();
-      c.beginPath(); c.moveTo(x + 30 * e, a); c.lineTo(x + 34 * e, piso - 30 * e); c.lineTo(x + 26 * e, piso - 30 * e); c.stroke();
-      c.fillStyle = "rgba(126, 243, 255, 0.5)"; c.fillRect(x + 27 * e, piso - 31.5 * e, 6 * e, 2.5 * e);
-    }
-  }
-  c.restore();
-
-  // Piso de caucho, que corre a la velocidad del juego.
-  const gp = c.createLinearGradient(0, piso, 0, H);
-  gp.addColorStop(0, "#26222c"); gp.addColorStop(1, "#121015");
-  c.fillStyle = gp; c.fillRect(-20, piso, W + 40, H - piso + 20);
-  c.fillStyle = "#3b3346"; c.fillRect(-20, piso, W + 40, Math.max(2, e * 0.8));
-  const losa = 16 * e, des = mod(r * e, losa);
-  c.strokeStyle = "rgba(255, 255, 255, 0.05)"; c.lineWidth = 1;
-  for (let x = -des; x < W + losa; x += losa) { c.beginPath(); c.moveTo(x, piso); c.lineTo(x - 6 * e, H); c.stroke(); }
 
   // Las barras: una barra de acero con sus discos en la punta, colgando del techo y parada en el piso.
   for (const b of vuelo.barras) {
@@ -423,6 +349,24 @@ function dibujar(): void {
   for (const l of letreros) {
     c.fillStyle = `rgba(126, 243, 255, ${Math.max(0, l.vida)})`;
     c.fillText(l.texto, l.x * e, l.y * e);
+  }
+  pintarPolvo(c, zona, W, H, 1 / 60, reloj);
+  if (anuncio && anuncio.vida > 0) {
+    // "NIVEL 2 · ZONA DE PESAS": entra grande y se desvanece.
+    const a = Math.min(1, anuncio.vida * 1.5), s2 = 1 + Math.max(0, anuncio.vida - 1.6) * 1.2;
+    c.save();
+    c.translate(W / 2, H * 0.36);
+    c.scale(s2, s2);
+    c.textAlign = "center"; c.textBaseline = "middle";
+    c.shadowColor = "#ff3bd4"; c.shadowBlur = 18;
+    c.fillStyle = `rgba(255, 255, 255, ${a})`;
+    c.font = `900 ${Math.round(11 * e)}px system-ui, sans-serif`;
+    c.fillText(`NIVEL ${anuncio.nivel}`, 0, 0);
+    c.shadowColor = "#7ef3ff"; c.shadowBlur = 10;
+    c.fillStyle = `rgba(126, 243, 255, ${a})`;
+    c.font = `800 ${Math.round(4.4 * e)}px ui-monospace, "SF Mono", Menlo, monospace`;
+    c.fillText(anuncio.zona.toUpperCase(), 0, 9 * e);
+    c.restore();
   }
   c.setTransform(dpr, 0, 0, dpr, 0, 0);
   if (destello > 0) { c.fillStyle = `rgba(255, 255, 255, ${destello * 0.5})`; c.fillRect(0, 0, W, H); }

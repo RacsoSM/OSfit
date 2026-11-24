@@ -5,7 +5,9 @@
  * barra o el piso termina la partida.
  *
  * Se pone difícil poco a poco: las barras vienen más rápido, el hueco se cierra y la altura del
- * hueco cambia más de una barra a la siguiente.
+ * hueco cambia más de una barra a la siguiente. Además, cada `POR_NIVEL` barras se sube de nivel
+ * (hasta `NIVELES`, entrenador 2026-11-24): las barras vienen más juntas y todo va más rápido, y
+ * el gimnasio de fondo cambia de zona.
  *
  * Aquí solo la lógica, sin pantalla (la pinta `ui/kettlebellBird.ts`). Unidades: el alto del
  * juego mide `ALTO` (y crece hacia abajo); el ancho que se ve depende de la pantalla y se pasa al
@@ -30,8 +32,20 @@ export const ANCHO_TUBO = 2.4;
 /** Un poco antes de la orilla: la cara del disco asoma hacia el hueco. */
 export const DISCO_DESDE = -0.3;
 export const DISCO_HASTA = 3.9;
-/** De una barra a la siguiente. */
-export const SEPARACION = 44;
+/** Barras por nivel, y cuántos niveles hay. */
+export const POR_NIVEL = 8;
+export const NIVELES = 6;
+/** De una barra a la siguiente, en cada nivel: cada vez más juntas. */
+export const SEPARACIONES = [44, 40, 37, 34, 32, 30] as const;
+export const SEPARACION = SEPARACIONES[0];
+
+export function nivel(puntos: number): number {
+  return Math.min(NIVELES, 1 + Math.floor(puntos / POR_NIVEL));
+}
+
+export function separacion(puntos: number): number {
+  return SEPARACIONES[nivel(puntos) - 1]!;
+}
 
 export interface Barra {
   x: number;
@@ -55,9 +69,9 @@ export interface Vuelo {
   azar: () => number;
 }
 
-/** Unidades por segundo: arranca tranquilo y sube con cada barra, con tope. */
+/** Unidades por segundo: sube un poco con cada barra y un salto con cada nivel, con tope. */
 export function velocidad(puntos: number): number {
-  return Math.min(56, 32 * (1 + 0.025 * puntos));
+  return Math.min(64, 32 * (1 + 0.018 * puntos) + (nivel(puntos) - 1) * 2.5);
 }
 
 /** El alto del hueco: se cierra con los puntos, sin bajar de 23. */
@@ -126,7 +140,7 @@ export function avanzar(v: Vuelo, dt: number): "punto" | "fin" | null {
   if (v.barras.length > 0 && v.barras[0]!.x + ANCHO_DISCO < -10) v.barras.shift();
   const ultima = v.barras[v.barras.length - 1];
   if (!ultima || ultima.x < v.vistaAncho + 10) {
-    v.barras.push(nuevaBarra((ultima?.x ?? v.vistaAncho) + SEPARACION, ultima, v.puntos, v.azar));
+    v.barras.push(nuevaBarra((ultima?.x ?? v.vistaAncho) + separacion(v.puntos), ultima, v.puntos, v.azar));
   }
   if (v.y + RADIO >= PISO) {
     v.y = PISO - RADIO;

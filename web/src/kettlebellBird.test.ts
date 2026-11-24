@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ANCHO_DISCO, ANCHO_TUBO, DISCO_HASTA, IMPULSO, PISO, RADIO, aletear, avanzar, choca, chocaConBarra, hueco, nuevoVuelo, salto, velocidad } from "./kettlebellBird";
+import { NIVELES, POR_NIVEL, nivel, separacion, ANCHO_DISCO, ANCHO_TUBO, DISCO_HASTA, IMPULSO, PISO, RADIO, aletear, avanzar, choca, chocaConBarra, hueco, nuevoVuelo, salto, velocidad } from "./kettlebellBird";
 
 const fijo = () => 0.5; // el hueco siempre a media altura
 
@@ -44,11 +44,19 @@ describe("Kettlebell Bird", () => {
 
   it("se pone difícil: más rápido, hueco más chico y alturas más cambiantes, con topes", () => {
     expect(velocidad(20)).toBeGreaterThan(velocidad(0));
-    expect(velocidad(999)).toBe(56);
+    expect(velocidad(999)).toBe(64);
     expect(hueco(30)).toBeLessThan(hueco(0));
     expect(hueco(999)).toBe(23);
     expect(salto(20)).toBeGreaterThan(salto(0));
     expect(salto(999)).toBe(34);
+  });
+
+  it("cada 8 barras sube de nivel (hasta el 6): más juntas y más rápido", () => {
+    expect([0, 7, 8, 16, 40, 200].map(nivel)).toEqual([1, 1, 2, 3, 6, NIVELES]);
+    expect(separacion(POR_NIVEL)).toBeLessThan(separacion(0));
+    expect(separacion(999)).toBe(30);
+    // El salto de velocidad al pasar de nivel es mayor que el de una barra cualquiera.
+    expect(velocidad(8) - velocidad(7)).toBeGreaterThan(velocidad(7) - velocidad(6));
   });
 
   it("los huecos siempre quedan entre el techo y el piso", () => {

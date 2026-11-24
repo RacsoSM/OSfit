@@ -2781,6 +2781,7 @@ body.historia-abierta { overflow: hidden; }
 .ar-jugar { color: #ffd45c; font-weight: 800; letter-spacing: 1px; animation: ar-parpadeo 2.4s infinite; }
 .ar-nuevo { position: absolute; right: 16px; top: 16px; z-index: 1; padding: 4px 10px; border-radius: 6px; background: #ffd45c; color: #1a1300; font: 800 11px ui-monospace, monospace; letter-spacing: 1px; }
 .kb-pantalla { background: #160f26; }
+.jd-hud-nivel { margin: 4px 0 0; font: 800 12px ui-monospace, "SF Mono", Menlo, monospace; letter-spacing: 1px; color: #7ef3ff; text-shadow: 0 0 8px rgba(126, 243, 255, 0.6); text-transform: uppercase; }
 
 /* ---------- Torre de discos (minijuego, `ui/juegoDiscos.ts`) ----------
    Toda la pestaña es el juego: fijo entre la cabecera y la barra de abajo (`ajustarMarco` pone

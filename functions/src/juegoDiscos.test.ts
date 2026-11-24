@@ -68,9 +68,10 @@ describe("avisoSuperada", () => {
 });
 
 describe("Kettlebell Bird", () => {
-  it("cada barra es un punto y tarda al menos medio segundo", () => {
+  it("cada barra es un punto y tarda al menos 0.35 s (el nivel más alto va a ~0.47 s)", () => {
     expect(partidaValida({ puntos: 20, apilados: 20, duracionMs: 15_000 }, KETTLEBELL_BIRD)).toEqual({ puntos: 20, apilados: 20, duracionMs: 15_000 });
     expect(partidaValida({ puntos: 40, apilados: 20, duracionMs: 15_000 }, KETTLEBELL_BIRD)).toBeNull();
+    expect(partidaValida({ puntos: 20, apilados: 20, duracionMs: 9_500 }, KETTLEBELL_BIRD)).not.toBeNull();
     expect(partidaValida({ puntos: 20, apilados: 20, duracionMs: 5_000 }, KETTLEBELL_BIRD)).toBeNull();
   });
   it("su aviso dice el juego y abre su ventana; no choca con los de Torre de discos", () => {
