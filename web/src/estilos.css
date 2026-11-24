@@ -2613,3 +2613,12 @@ body.historia-abierta { overflow: hidden; }
 /* La ventana emergente del resumen, sobria: sin ícono, texto a la izquierda. */
 .aviso-resumen { text-align: left; }
 .aviso-resumen .logro-titulo { margin-top: 0; }
+
+/* Quejas y sugerencias (`ui/sugerencias.ts`). */
+.sugerencias-intro { margin: 0 0 12px; font-size: 15px; line-height: 1.45; }
+.sugerencias-campo { width: 100%; min-height: 150px; resize: vertical; }
+.sugerencias-pie { display: flex; justify-content: space-between; gap: 10px; margin: 6px 2px 12px; }
+.sugerencias-nota { font-size: 13px; color: var(--texto-tenue); }
+.sugerencias-contador { font-size: 12px; color: var(--texto-tenue); font-variant-numeric: tabular-nums; }
+.sugerencias-gracias { margin: 4px 0 6px; font-size: 22px; font-weight: 800; }
+.sugerencias .sugerencias-nota + .boton { margin-top: 14px; }

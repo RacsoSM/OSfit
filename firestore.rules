@@ -179,5 +179,8 @@ service cloud.firestore {
     // Avisos que el entrenador manda desde la app. Son cola y a la vez historial: la función
     // `enviarNotificacion` los toma al crearse y les anota el resultado.
     match /notificaciones/{doc} { allow read, write: if esEntrenador(); }
+    // Quejas y sugerencias de las clientas. Las escribe solo la función `enviarSugerencia`
+    // (Admin SDK); el entrenador las lee.
+    match /sugerencias/{doc} { allow read, write: if esEntrenador(); }
   }
 }

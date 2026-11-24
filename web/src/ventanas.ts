@@ -23,6 +23,7 @@ import { tarjetaAjustes } from "./ui/tarjetaAjustes";
 import { tarjetaSinDatos } from "./ui/tarjetaSinDatos";
 import { ventanaEstadisticas, type DatosEstadisticas } from "./ui/estadisticas";
 import { resumenNuevoActivo } from "./lanzamiento";
+import { ventanaSugerencias } from "./ui/sugerencias";
 import * as anterior from "./ui/resumenMensualAnterior";
 import { mesElegidoResumen, ventanaResumenMensual, type DatosResumenMensual, type MesDeLista } from "./ui/resumenMensual";
 import { compararFuerza, kgPorSemana, mejoresAntes, mesAnterior, mesesConActividad, resumenDelMes, ultimoDiaDe, type ResumenMensual } from "./resumenMensual";
@@ -48,7 +49,7 @@ import { edadEn, fuerzaPorMusculo, pesoParaFuerza, type FuerzaMusculo } from "./
 
 export type IdVentana =
   | "inicio" | "musculos" | "registro" | "comparar" | "estadisticas"
-  | "ranking" | "medallas" | "logros" | "videos" | "ajustes" | "resumenMensual" | "notificaciones";
+  | "ranking" | "medallas" | "logros" | "videos" | "ajustes" | "resumenMensual" | "notificaciones" | "sugerencias";
 
 /** Todo lo que los listeners de Firestore tienen a mano en cada repintado. */
 export interface DatosCliente {
@@ -331,6 +332,8 @@ export const VENTANAS: readonly Ventana[] = [
     id: "ranking", titulo: "Ranking", icono: "🏆", grupo: "principal",
     pintar: (d) => tarjetaRanking(d.ranking),
   },
+  // Quejas y sugerencias (entrenador, 2026-11-24): un campo de texto que le llega como notificación.
+  { id: "sugerencias", titulo: "Quejas y sugerencias", icono: "💬", grupo: "principal", pintar: () => ventanaSugerencias() },
   // Medallas y Logros personales, ocultas del menú (decisión del entrenador, 2026-10-21). Las
   // ventanas siguen existiendo: volver a mostrarlas es quitar `oculta`.
   {

@@ -33,7 +33,7 @@ import type {
 import { hoyEnMazatlan } from "./fecha";
 import { mesAnterior, type Tirada } from "./tirada";
 import {
-  batallaAmigos, borrarSesion, compararMusculos, editarSesion, elegirMostrarEnAmigos, guardarPeso, marcarAsistencia, obtenerRanking, registrarEntrada, registrarSesion,
+  batallaAmigos, borrarSesion, enviarSugerencia, compararMusculos, editarSesion, elegirMostrarEnAmigos, guardarPeso, marcarAsistencia, obtenerRanking, registrarEntrada, registrarSesion,
 } from "./acciones";
 import { modalRuleta, conectarRuleta } from "./ui/ruleta";
 import { conectarRanking, type EstadoRanking } from "./ui/tarjetaRanking";
@@ -97,6 +97,7 @@ import {
 } from "./ui/menuLateral";
 import type { VideoConUrl } from "./ui/tarjetaVideos";
 import { iniciarCronometros } from "./ui/cronometro";
+import { conectarSugerencias, reiniciarSugerencias } from "./ui/sugerencias";
 import { conectarBuzon, leerVisto, marcarVistas, resaltarAviso, sinLeer } from "./ui/buzon";
 
 const app = document.querySelector<HTMLElement>("#app")!;
@@ -768,6 +769,8 @@ async function arrancar(): Promise<void> {
       const nav = navigator as Navigator & { setAppBadge?: (n: number) => Promise<void>; clearAppBadge?: () => Promise<void> };
       (noLeidas > 0 ? nav.setAppBadge?.(noLeidas) : nav.clearAppBadge?.())?.catch(() => {});
     }
+    // Al salir de Quejas y sugerencias después de enviar, la próxima vez abre con el campo vacío.
+    if (ventanaPintada === "sugerencias" && activa.id !== "sugerencias") reiniciarSugerencias();
     // Al salir de Notificaciones se olvida el aviso marcado.
     if (ventanaPintada === "notificaciones" && activa.id !== "notificaciones") resaltarAviso(null);
     // Al salir de Resumen mensual se olvida el mes: la próxima vez abre en el mes en curso.
@@ -879,6 +882,10 @@ async function arrancar(): Promise<void> {
         if (v === "resumenMensual" && mes) verHistoria(mes);
         else abrirVentana(v as IdVentana);
       });
+      return;
+    }
+    if (activa.id === "sugerencias") {
+      conectarSugerencias(pintar, (texto) => enviarSugerencia({ texto }));
       return;
     }
     if (activa.id === "ranking") {

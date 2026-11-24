@@ -117,3 +117,6 @@ export const borrarSesion = llamable<{ id: string }, { ok: true; id: string }>("
 
 /** Su peso corporal en kg, para Músculos. El servidor rechaza lo que no sea de 25 a 300 kg. */
 export const guardarPeso = llamable<{ peso: number }, { ok: true; peso: number }>("guardarPeso");
+
+/** Quejas y sugerencias: le llega al entrenador como notificación (`functions/src/sugerencias.ts`). */
+export const enviarSugerencia = llamable<{ texto: string }, { ok: true }>("enviarSugerencia");
