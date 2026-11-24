@@ -182,5 +182,8 @@ service cloud.firestore {
     // Quejas y sugerencias de las clientas. Las escribe solo la función `enviarSugerencia`
     // (Admin SDK); el entrenador las lee.
     match /sugerencias/{doc} { allow read, write: if esEntrenador(); }
+    // Torre de discos (minijuego de la web): solo las funciones guardarPartidaDiscos y
+    // tablaDiscos lo leen y escriben, para que nadie se ponga una puntuación a mano.
+    match /juegoDiscos/{doc} { allow read, write: if esEntrenador(); }
   }
 }

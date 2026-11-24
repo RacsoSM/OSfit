@@ -33,7 +33,7 @@ import type {
 import { horaEnMazatlan, hoyEnMazatlan } from "./fecha";
 import { mesAnterior, type Tirada } from "./tirada";
 import {
-  batallaAmigos, borrarSesion, enviarSugerencia, compararMusculos, editarSesion, elegirMostrarEnAmigos, guardarPeso, marcarAsistencia, obtenerRanking, registrarEntrada, registrarSesion,
+  batallaAmigos, borrarSesion, enviarSugerencia, guardarPartidaDiscos, tablaDiscos, compararMusculos, editarSesion, elegirMostrarEnAmigos, guardarPeso, marcarAsistencia, obtenerRanking, registrarEntrada, registrarSesion,
 } from "./acciones";
 import { modalRuleta, conectarRuleta } from "./ui/ruleta";
 import { conectarRanking, type EstadoRanking } from "./ui/tarjetaRanking";
@@ -97,6 +97,7 @@ import {
 import type { VideoConUrl } from "./ui/tarjetaVideos";
 import { iniciarCronometros } from "./ui/cronometro";
 import { conectarSugerencias, reiniciarSugerencias } from "./ui/sugerencias";
+import { mostrarJuego } from "./ui/juegoDiscos";
 import { conectarBuzon, leerVisto, marcarVistas, resaltarAviso, sinLeer } from "./ui/buzon";
 
 const app = document.querySelector<HTMLElement>("#app")!;
@@ -597,7 +598,7 @@ async function arrancar(): Promise<void> {
     // repintado destruiría.
     const barra = barraInferior(BARRA.map(ventana));
     app.innerHTML = `${cabecera(saludo(nombre))}<div id="contenido"></div>` +
-      `<div id="videos" hidden></div><div id="barra">${barra}</div>` +
+      `<div id="videos" hidden></div><div id="juego" hidden></div><div id="barra">${barra}</div>` +
       `<div id="menu"></div><div id="ruleta"></div>`;
     conectarSaludo();
     conectarCabecera(abrirMenu, () => abrirVentana("ajustes"), () => abrirVentana("notificaciones"));
@@ -803,6 +804,8 @@ async function arrancar(): Promise<void> {
     contenido.innerHTML = contenidoDe(activa, datos);
     marcarBotonAtras(contenido);
     pintarVideos(activa.contenedorPropio === "videos");
+    const cajaJuego = document.querySelector<HTMLElement>("#juego");
+    if (cajaJuego) mostrarJuego(cajaJuego, activa.contenedorPropio === "juego", { guardar: async (p) => (await guardarPartidaDiscos(p)).data, tabla: async () => (await tablaDiscos({})).data });
     pintarMenu(activa.id, cliente.nombre);
     marcarVentanaActiva(document.querySelectorAll<HTMLElement>("#barra [data-ventana]"), ventanaDeBarra(activa.id));
     pintarRuleta();

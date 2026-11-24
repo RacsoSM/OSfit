@@ -1,3 +1,4 @@
+import type { EnvioPartida, RespuestaPartida, TablaDiscos } from "./ui/juegoDiscos";
 import { httpsCallable, type HttpsCallableResult } from "firebase/functions";
 import type { Candidato, EleccionAmigos, PersonaComparar } from "./ui/comparar";
 import { functions } from "./firebase";
@@ -120,3 +121,9 @@ export const guardarPeso = llamable<{ peso: number }, { ok: true; peso: number }
 
 /** Quejas y sugerencias: le llega al entrenador como notificación (`functions/src/sugerencias.ts`). */
 export const enviarSugerencia = llamable<{ texto: string }, { ok: true }>("enviarSugerencia");
+
+/** Torre de discos: guarda la partida (el servidor revisa que sea posible) y devuelve la tabla. */
+export const guardarPartidaDiscos = llamable<EnvioPartida, RespuestaPartida>("guardarPartidaDiscos");
+
+/** La tabla de puntuaciones de Torre de discos: este mes y la histórica. */
+export const tablaDiscos = llamable<Record<string, never>, TablaDiscos>("tablaDiscos");

@@ -47,7 +47,7 @@ import { edadEn, fuerzaPorMusculo, pesoParaFuerza, type FuerzaMusculo } from "./
 
 export type IdVentana =
   | "inicio" | "musculos" | "registro" | "comparar" | "estadisticas"
-  | "ranking" | "medallas" | "logros" | "videos" | "ajustes" | "resumenMensual" | "notificaciones" | "sugerencias";
+  | "ranking" | "medallas" | "logros" | "videos" | "ajustes" | "resumenMensual" | "notificaciones" | "sugerencias" | "juego";
 
 /** Todo lo que los listeners de Firestore tienen a mano en cada repintado. */
 export interface DatosCliente {
@@ -232,10 +232,11 @@ export interface Ventana {
   /** Lo que va dentro de `#contenido`. */
   pintar?: (d: DatosCliente) => string;
   /**
-   * La ventana vive en un contenedor fuera del repintado. Hoy solo los videos: el `<video>`
-   * tiene estado propio que `innerHTML` destruiría (ver `pintarVideos` en `main.ts`).
+   * La ventana vive en un contenedor fuera del repintado: los videos (el `<video>` tiene estado
+   * propio que `innerHTML` destruiría, ver `pintarVideos` en `main.ts`) y el minijuego (su
+   * canvas a media partida, ver `mostrarJuego`).
    */
-  contenedorPropio?: "videos";
+  contenedorPropio?: "videos" | "juego";
 }
 
 /**
@@ -330,6 +331,9 @@ export const VENTANAS: readonly Ventana[] = [
   },
   // Quejas y sugerencias (entrenador, 2026-11-24): un campo de texto que le llega como notificación.
   { id: "sugerencias", titulo: "Quejas y sugerencias", icono: "💬", grupo: "principal", pintar: () => ventanaSugerencias() },
+  // El minijuego (entrenador, 2026-11-24), debajo de Quejas y sugerencias. En su propio
+  // contenedor: un repintado a media partida tiraría el canvas (`ui/juegoDiscos.ts`).
+  { id: "juego", titulo: "Torre de discos", icono: "🏋️", grupo: "principal", contenedorPropio: "juego" },
   // Medallas y Logros personales, ocultas del menú (decisión del entrenador, 2026-10-21). Las
   // ventanas siguen existiendo: volver a mostrarlas es quitar `oculta`.
   {

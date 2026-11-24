@@ -37,7 +37,7 @@ describe("el registro de ventanas", () => {
 
   it("va Inicio, Notificaciones, Músculos, Registro, Amigos, Estadísticas, Resumen mensual, Ranking, Medallas, Logros, Videos y Ajustes al final", () => {
     expect(VENTANAS.map((v) => v.id)).toEqual(
-      ["inicio", "notificaciones", "musculos", "registro", "comparar", "estadisticas", "resumenMensual", "ranking", "sugerencias", "medallas", "logros", "videos", "ajustes"]
+      ["inicio", "notificaciones", "musculos", "registro", "comparar", "estadisticas", "resumenMensual", "ranking", "sugerencias", "juego", "medallas", "logros", "videos", "ajustes"]
     );
   });
 
