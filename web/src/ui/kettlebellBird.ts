@@ -433,178 +433,196 @@ function dibujar(): void {
   c.fillStyle = vin; c.fillRect(0, 0, W, H);
 }
 
-// TEMPORAL: selector para comparar las tres propuestas de obstáculos.
-function varianteObstaculo(): string {
-  try { return globalThis.localStorage?.getItem("osfit:kb-barras") ?? "a"; } catch { return "a"; }
+// TEMPORAL: selector para comparar las propuestas de obstáculos (B1, B2, B3).
+type Estilo = "bumper" | "hierro" | "escenario";
+function estiloObstaculo(): Estilo {
+  try {
+    const v = globalThis.localStorage?.getItem("osfit:kb-barras");
+    return v === "b2" ? "hierro" : v === "b3" ? "escenario" : "bumper";
+  } catch { return "bumper"; }
 }
 
-function pintarObstaculo(c: CanvasRenderingContext2D, x: number, w: number, y0: number, y1: number, cuelga: boolean, color: string, e: number): void {
-  const v = varianteObstaculo();
-  if (v === "b") pintarBarraOlimpica(c, x, w, y0, y1, cuelga, e);
-  else if (v === "c") pintarRack(c, x, w, y0, y1, cuelga, e);
-  else pintarColumna(c, x, w, y0, y1, cuelga, e);
-  void color;
+function pintarObstaculo(c: CanvasRenderingContext2D, x: number, w: number, y0: number, y1: number, cuelga: boolean, _color: string, e: number): void {
+  pintarBarra3D(c, x, w, y0, y1, cuelga, e, estiloObstaculo());
 }
 
-function cromo(c: CanvasRenderingContext2D, x: number, y: number, w: number, h: number): void {
-  const g = c.createLinearGradient(x, 0, x + w, 0);
-  g.addColorStop(0, "#5c6168"); g.addColorStop(0.35, "#f2f4f6"); g.addColorStop(0.6, "#aeb3ba"); g.addColorStop(1, "#4f545b");
-  c.fillStyle = g;
-  c.fillRect(x, y, w, h);
-}
-
-/**
- * A · La columna de placas de una máquina de poleas: guías cromadas, placas de acero con su
- * número de kilos y el hoyo del perno; la de la orilla lleva el perno selector. Arriba cuelga de
- * su viga y abajo se apoya en su base.
- */
-function pintarColumna(c: CanvasRenderingContext2D, x: number, w: number, y0: number, y1: number, cuelga: boolean, e: number): void {
-  const rw = Math.max(2, w * 0.07);
-  cromo(c, x + w * 0.2 - rw / 2, y0, rw, y1 - y0);
-  cromo(c, x + w * 0.8 - rw / 2, y0, rw, y1 - y0);
-  const h = 2.5 * e, sep = 0.3 * e;
-  const n = Math.min(16, Math.floor((y1 - y0) / (h + sep)) - 1);
-  for (let k = 0; k < n; k++) {
-    const py = cuelga ? y1 - (k + 1) * (h + sep) : y0 + sep + k * (h + sep);
-    const orilla = k === 0;
-    const g = c.createLinearGradient(0, py, 0, py + h);
-    if (orilla) { g.addColorStop(0, "#c9cdd3"); g.addColorStop(0.5, "#8e949c"); g.addColorStop(1, "#5d626a"); }
-    else { g.addColorStop(0, "#4a4e56"); g.addColorStop(0.45, "#2c2f35"); g.addColorStop(1, "#1a1c20"); }
-    c.fillStyle = g;
-    caja2(c, x, py, w, h, Math.min(3, h * 0.25));
-    c.fill();
-    // Brillo del canto de arriba y sombra del de abajo.
-    c.fillStyle = "rgba(255, 255, 255, 0.18)"; c.fillRect(x + 2, py + 0.5, w - 4, Math.max(1, h * 0.08));
-    c.fillStyle = "rgba(0, 0, 0, 0.35)"; c.fillRect(x + 2, py + h - Math.max(1, h * 0.1), w - 4, Math.max(1, h * 0.1));
-    // Los hoyos de las guías y el del perno.
-    c.fillStyle = "#0b0c0e";
-    c.fillRect(x + w * 0.2 - rw * 0.8, py, rw * 1.6, h * 0.3);
-    c.fillRect(x + w * 0.8 - rw * 0.8, py, rw * 1.6, h * 0.3);
-    if (!orilla) {
-      c.beginPath(); c.arc(x + w / 2, py + h / 2, Math.max(1.5, h * 0.17), 0, Math.PI * 2); c.fill();
-      // El número de kilos, en su calcomanía.
-      if (w > 30) {
-        c.fillStyle = "#e9e7e1";
-        caja2(c, x + w * 0.62, py + h * 0.22, w * 0.13, h * 0.56, 1.5); c.fill();
-        c.fillStyle = "#16171a";
-        c.font = `800 ${Math.max(7, Math.round(h * 0.42))}px system-ui, sans-serif`;
-        c.textAlign = "center"; c.textBaseline = "middle";
-        c.fillText(String((k) * 5), x + w * 0.685, py + h * 0.52);
-      }
-    } else {
-      // El perno selector: la perilla roja asomando.
-      c.fillStyle = "#c9302a";
-      c.beginPath(); c.arc(x + w * 0.42, py + h / 2, Math.max(2, h * 0.24), 0, Math.PI * 2); c.fill();
-      c.fillStyle = "#9aa0a8"; c.fillRect(x + w * 0.42, py + h * 0.42, w * 0.18, h * 0.16);
-      if (cuelga) {
-        // El vástago que sube por en medio de la pila.
-        cromo(c, x + w / 2 - rw * 0.6, y0, rw * 1.2, py - y0);
-      }
-    }
+/** Una textura de grano (caucho o hierro martelinado), hecha una vez y repetida. */
+const texturas = new Map<string, CanvasPattern | null>();
+function textura(c: CanvasRenderingContext2D, tipo: "caucho" | "hierro"): CanvasPattern | null {
+  if (texturas.has(tipo)) return texturas.get(tipo)!;
+  const t = document.createElement("canvas");
+  t.width = 96; t.height = 96;
+  const x = t.getContext("2d")!;
+  const img = x.createImageData(96, 96);
+  for (let i = 0; i < img.data.length; i += 4) {
+    const n = Math.random();
+    // El hierro martelinado tiene manchas más grandes y contrastadas que el grano del caucho.
+    const v = tipo === "hierro" ? (n > 0.55 ? 255 : 0) : (n > 0.5 ? 255 : 0);
+    img.data[i] = img.data[i + 1] = img.data[i + 2] = v;
+    img.data[i + 3] = tipo === "hierro" ? Math.round(n * 70) : Math.round(n * 38);
   }
-  // Viga de arriba o base de abajo.
-  c.fillStyle = "#1d1f24";
-  if (cuelga) { c.fillRect(x - w * 0.12, y0, w * 1.24, 3 * e); c.fillStyle = "rgba(255,255,255,0.08)"; c.fillRect(x - w * 0.12, y0 + 3 * e - 2, w * 1.24, 2); }
-  else { c.fillRect(x - w * 0.12, y1 - 1.6 * e, w * 1.24, 1.6 * e); c.fillStyle = "#111"; c.fillRect(x - w * 0.05, y1 - 0.5 * e, w * 0.2, 0.5 * e); c.fillRect(x + w * 0.85, y1 - 0.5 * e, w * 0.2, 0.5 * e); }
+  x.putImageData(img, 0, 0);
+  if (tipo === "hierro") { x.filter = "blur(0.8px)"; x.drawImage(t, 0, 0); }
+  const patron = c.createPattern(t, "repeat");
+  texturas.set(tipo, patron);
+  return patron;
+}
+
+/** El brillo de un cilindro de metal visto de lado: oscuro en las orillas, una raya de luz. */
+function gradCilindro(c: CanvasRenderingContext2D, x0: number, x1: number, base: [string, string, string, string]): CanvasGradient {
+  const g = c.createLinearGradient(x0, 0, x1, 0);
+  g.addColorStop(0, base[0]); g.addColorStop(0.22, base[1]); g.addColorStop(0.32, base[2]);
+  g.addColorStop(0.62, base[1]); g.addColorStop(1, base[3]);
+  return g;
+}
+
+const CROMO: [string, string, string, string] = ["#3e4248", "#c3c8ce", "#ffffff", "#2c2f34"];
+const INCL = 0.27;
+
+interface Pieza { h: number; ancho: number; tipo: "manga" | "seguro" | "disco" | "hombro"; color?: string; kg?: string }
+
+/** Un cilindro vertical de `ya` a `yb` con su tapa visible arriba (`tapaArriba`) o abajo. */
+function cilindro(c: CanvasRenderingContext2D, cx: number, r: number, ya: number, yb: number, tapaArriba: boolean,
+  lado: CanvasGradient | string, tapa: (cy: number) => void): void {
+  const ry = r * INCL;
+  c.fillStyle = lado;
+  c.beginPath();
+  if (tapaArriba) {
+    c.moveTo(cx - r, ya); c.lineTo(cx - r, yb); c.ellipse(cx, yb, r, ry, 0, Math.PI, 0, true); c.lineTo(cx + r, ya); c.closePath();
+  } else {
+    c.moveTo(cx - r, yb); c.lineTo(cx - r, ya); c.ellipse(cx, ya, r, ry, 0, Math.PI, 0, false); c.lineTo(cx + r, yb); c.closePath();
+  }
+  c.fill();
+  tapa(tapaArriba ? ya : yb);
 }
 
 /**
- * B · Una barra olímpica de verdad, parada: el acero con su moleteado, el hombro, la manga
- * cromada con discos de caucho de distintos tamaños y el seguro en la punta del hueco.
+ * B · La barra olímpica en 3/4, fotorrealista: se ve un poco desde arriba (la de abajo) o desde
+ * abajo (la que cuelga), así los discos muestran su cara, su grosor de caucho o hierro y su aro
+ * de acero. Desde la orilla del hueco: la tapa de la manga, el seguro, los discos de menor a
+ * mayor, la manga, el hombro y la barra con su moleteado.
  */
-function pintarBarraOlimpica(c: CanvasRenderingContext2D, x: number, w: number, y0: number, y1: number, cuelga: boolean, e: number): void {
-  const bw = w * 0.2, bx = x + (w - bw) / 2;
-  // La manga y los discos, desde la punta (la orilla del hueco) hacia adentro.
-  const piezas: { h: number; ancho: number; color: string | null }[] = [
-    { h: 0.9 * e, ancho: 0.36, color: null },          // tapa de la manga
-    { h: 1.5 * e, ancho: 0.55, color: "seguro" },      // seguro
-    { h: 1.7 * e, ancho: 0.72, color: "#24964a" },     // 10 kg
-    { h: 2.3 * e, ancho: 1, color: "#2a6fd6" },        // 20 kg
-    { h: 2.6 * e, ancho: 1, color: "#d6372c" },        // 25 kg
-    { h: 2.2 * e, ancho: 0.34, color: null },          // manga hasta el hombro
-    { h: 1.1 * e, ancho: 0.48, color: "hombro" },      // hombro
+function pintarBarra3D(c: CanvasRenderingContext2D, x: number, w: number, y0: number, y1: number, cuelga: boolean, e: number, estilo: Estilo): void {
+  const cx = x + w / 2;
+  const hierro = estilo === "hierro";
+  const piezas: Pieza[] = [
+    { h: 0.7 * e, ancho: 0.34, tipo: "manga" },
+    { h: 1.3 * e, ancho: 0.5, tipo: "seguro" },
+    { h: 1.5 * e, ancho: 0.66, tipo: "disco", color: hierro ? "#2b2c30" : "#24964a", kg: "10" },
+    { h: 2.1 * e, ancho: 0.98, tipo: "disco", color: hierro ? "#2b2c30" : "#2a6fd6", kg: "20" },
+    { h: 2.4 * e, ancho: 1, tipo: "disco", color: hierro ? "#2b2c30" : "#d6372c", kg: "25" },
+    { h: 2.4 * e, ancho: 0.34, tipo: "manga" },
+    { h: 0.9 * e, ancho: 0.46, tipo: "hombro" },
   ];
-  let pos = cuelga ? y1 : y0;
+  // Dónde va cada pieza (de la orilla del hueco hacia adentro).
+  const pos: { pieza: Pieza; ya: number; yb: number }[] = [];
+  let borde = cuelga ? y1 : y0;
   for (const p of piezas) {
-    const py = cuelga ? pos - p.h : pos;
-    const pw = w * p.ancho, px = x + (w - pw) / 2;
-    if (p.color === null) cromo(c, px, py, pw, p.h);
-    else if (p.color === "seguro") {
-      c.fillStyle = "#1b1c20"; caja2(c, px, py, pw, p.h, 2); c.fill();
-      c.fillStyle = "#c9302a"; c.fillRect(px + pw * 0.75, py + p.h * 0.2, pw * 0.4, p.h * 0.35);
-    } else if (p.color === "hombro") cromo(c, px, py, pw, p.h);
-    else {
-      const g = c.createLinearGradient(px, 0, px + pw, 0);
-      g.addColorStop(0, shade(p.color, 0.45)); g.addColorStop(0.3, shade(p.color, 1.05)); g.addColorStop(0.55, p.color); g.addColorStop(1, shade(p.color, 0.4));
-      c.fillStyle = g;
-      caja2(c, px, py + 0.4, pw, p.h - 0.8, p.h * 0.3); c.fill();
-      // El labio del caucho y la ranura del medio.
-      c.fillStyle = "rgba(255, 255, 255, 0.18)"; c.fillRect(px + 3, py + p.h * 0.2, pw - 6, Math.max(1, p.h * 0.07));
-      c.fillStyle = "rgba(0, 0, 0, 0.3)"; c.fillRect(px + 3, py + p.h * 0.5, pw - 6, Math.max(1, p.h * 0.06));
-    }
-    pos = cuelga ? py : py + p.h;
+    const ya = cuelga ? borde - p.h : borde, yb = cuelga ? borde : borde + p.h;
+    pos.push({ pieza: p, ya, yb });
+    borde = cuelga ? ya : yb;
   }
-  // La barra: acero con moleteado en diagonal.
-  const ya = cuelga ? y0 : pos, yb = cuelga ? pos : y1;
-  cromo(c, bx, ya, bw, yb - ya);
+  const barraA = cuelga ? y0 : borde, barraB = cuelga ? borde : y1;
+
+  // La sombra en la pared (B3): la barra entera, corrida y difusa.
+  if (estilo === "escenario") {
+    const sg = c.createLinearGradient(x + w * 0.3, 0, x + w * 1.5, 0);
+    sg.addColorStop(0, "rgba(0, 0, 0, 0.32)"); sg.addColorStop(1, "rgba(0, 0, 0, 0)");
+    c.fillStyle = sg;
+    c.fillRect(x + w * 0.3, y0, w * 1.2, y1 - y0);
+  }
+
+  // La barra, con su moleteado.
+  const bw = w * 0.17;
+  c.fillStyle = gradCilindro(c, cx - bw / 2, cx + bw / 2, ["#4a4e55", "#b4b9c0", "#eef0f3", "#33363b"]);
+  c.fillRect(cx - bw / 2, barraA, bw, barraB - barraA);
   c.save();
-  c.beginPath(); c.rect(bx, ya, bw, yb - ya); c.clip();
-  c.strokeStyle = "rgba(40, 44, 50, 0.45)"; c.lineWidth = 1;
-  for (let yy = ya - bw; yy < yb + bw; yy += 3) {
-    c.beginPath(); c.moveTo(bx, yy); c.lineTo(bx + bw, yy + bw * 0.6); c.stroke();
-    c.beginPath(); c.moveTo(bx + bw, yy); c.lineTo(bx, yy + bw * 0.6); c.stroke();
+  c.beginPath(); c.rect(cx - bw / 2, barraA, bw, barraB - barraA); c.clip();
+  c.strokeStyle = "rgba(25, 28, 33, 0.4)"; c.lineWidth = 0.8;
+  for (let yy = barraA - bw; yy < barraB + bw; yy += 2.6) {
+    c.beginPath(); c.moveTo(cx - bw / 2, yy); c.lineTo(cx + bw / 2, yy + bw * 0.55); c.stroke();
+    c.beginPath(); c.moveTo(cx + bw / 2, yy); c.lineTo(cx - bw / 2, yy + bw * 0.55); c.stroke();
   }
   c.restore();
+  // La base en el piso: una sombra de contacto.
+  if (!cuelga) pintarSombra(c, cx, y1, w * 0.45, w * 0.1, 0.6);
+
+  // Las piezas, del fondo hacia la cámara: la que queda más lejos de la orilla primero.
+  const orden = [...pos].reverse();
+  for (const { pieza: p, ya, yb } of orden) {
+    const r = (w * p.ancho) / 2;
+    if (p.tipo === "manga" || p.tipo === "hombro") {
+      cilindro(c, cx, r, ya, yb, !cuelga, gradCilindro(c, cx - r, cx + r, CROMO), (cy) => {
+        c.fillStyle = "#e9ecef"; c.beginPath(); c.ellipse(cx, cy, r, r * INCL, 0, 0, Math.PI * 2); c.fill();
+        c.strokeStyle = "rgba(0,0,0,0.25)"; c.lineWidth = 1; c.stroke();
+      });
+      continue;
+    }
+    if (p.tipo === "seguro") {
+      cilindro(c, cx, r, ya, yb, !cuelga, gradCilindro(c, cx - r, cx + r, ["#0d0e10", "#3a3d44", "#5a5e66", "#08090a"]), (cy) => {
+        c.fillStyle = "#26282d"; c.beginPath(); c.ellipse(cx, cy, r, r * INCL, 0, 0, Math.PI * 2); c.fill();
+        c.fillStyle = gradCilindro(c, cx - r * 0.6, cx + r * 0.6, CROMO);
+        c.beginPath(); c.ellipse(cx, cy, r * 0.62, r * 0.62 * INCL, 0, 0, Math.PI * 2); c.fill();
+      });
+      // La palanca roja del seguro.
+      c.fillStyle = "#c9302a";
+      caja2(c, cx + r * 0.7, ya + (yb - ya) * 0.25, r * 0.9, (yb - ya) * 0.4, 2); c.fill();
+      continue;
+    }
+    // Un disco: el canto (caucho o hierro) y la cara que se ve, con su aro de acero y su peso.
+    const color = p.color!;
+    const canto = c.createLinearGradient(cx - r, 0, cx + r, 0);
+    canto.addColorStop(0, shade(color, hierro ? 0.5 : 0.38));
+    canto.addColorStop(0.25, shade(color, hierro ? 1.3 : 0.95));
+    canto.addColorStop(0.34, shade(color, hierro ? 1.6 : 1.12));
+    canto.addColorStop(0.6, shade(color, hierro ? 1.0 : 0.78));
+    canto.addColorStop(1, shade(color, hierro ? 0.4 : 0.3));
+    cilindro(c, cx, r, ya, yb, !cuelga, canto, (cy) => {
+      const ry = r * INCL;
+      const cara = c.createRadialGradient(cx - r * 0.3, cy - ry * 0.5, r * 0.05, cx, cy, r * 1.05);
+      cara.addColorStop(0, shade(color, hierro ? 1.7 : 1.2)); cara.addColorStop(0.6, color); cara.addColorStop(1, shade(color, 0.7));
+      c.fillStyle = cara;
+      c.beginPath(); c.ellipse(cx, cy, r, ry, 0, 0, Math.PI * 2); c.fill();
+      // Grano de la textura y el borde levantado.
+      const tex = textura(c, hierro ? "hierro" : "caucho");
+      if (tex) { c.save(); c.clip(); c.fillStyle = tex; c.fillRect(cx - r, cy - ry, r * 2, ry * 2); c.restore(); }
+      c.strokeStyle = shade(color, hierro ? 1.9 : 0.6); c.lineWidth = Math.max(1, r * 0.06);
+      c.beginPath(); c.ellipse(cx, cy, r * 0.9, ry * 0.9, 0, 0, Math.PI * 2); c.stroke();
+      // El peso en la cara (en su plano).
+      if (r > 14) {
+        c.save(); c.translate(cx, cy); c.scale(1, INCL);
+        c.fillStyle = hierro ? "rgba(235, 235, 235, 0.85)" : "rgba(255, 255, 255, 0.92)";
+        c.font = `900 ${Math.round(r * 0.28)}px system-ui, sans-serif`;
+        c.textAlign = "center"; c.textBaseline = "middle";
+        c.fillText(`${p.kg} KG`, 0, cuelga ? -r * 0.66 : r * 0.66);
+        c.restore();
+      }
+      // El aro de acero del centro (por donde pasa la manga).
+      c.fillStyle = gradCilindro(c, cx - r * 0.3, cx + r * 0.3, CROMO);
+      c.beginPath(); c.ellipse(cx, cy, r * 0.3, ry * 0.3, 0, 0, Math.PI * 2); c.fill();
+      c.fillStyle = "#101114";
+      c.beginPath(); c.ellipse(cx, cy, r * 0.18, ry * 0.18, 0, 0, Math.PI * 2); c.fill();
+    });
+    if (estilo === "escenario") {
+      // Un filo de luz de los neones del gimnasio en cada orilla del canto: rosa a la izquierda,
+      // cian a la derecha.
+      const lw = Math.max(1.5, r * 0.07);
+      c.fillStyle = "rgba(255, 79, 216, 0.55)"; c.fillRect(cx - r, ya, lw, yb - ya);
+      c.fillStyle = "rgba(126, 243, 255, 0.55)"; c.fillRect(cx + r - lw, ya, lw, yb - ya);
+    }
+    // Oclusión: una línea oscura donde toca el siguiente disco.
+    c.fillStyle = "rgba(0, 0, 0, 0.35)";
+    c.fillRect(cx - r, cuelga ? ya : yb - 1, r * 2, 1);
+  }
 }
 
-/**
- * C · El poste de un rack de potencia: tubo cuadrado de acero negro con su fila de agujeros, y
- * en la orilla del hueco el gancho J (arriba) o el brazo de seguridad (abajo). Atornillado a una
- * viga en el techo o a su placa en el piso.
- */
-function pintarRack(c: CanvasRenderingContext2D, x: number, w: number, y0: number, y1: number, cuelga: boolean, e: number): void {
-  const pw = w * 0.56, px = x + (w - pw) / 2;
-  const g = c.createLinearGradient(px, 0, px + pw, 0);
-  g.addColorStop(0, "#0f1013"); g.addColorStop(0.3, "#2e3138"); g.addColorStop(0.5, "#24262b"); g.addColorStop(1, "#0c0d10");
-  c.fillStyle = g;
-  c.fillRect(px, y0, pw, y1 - y0);
-  // La fila de agujeros, cada 2 e, con su número cada cinco.
-  const paso = 2.1 * e;
-  let k = 0;
-  for (let yy = cuelga ? y1 - 4 * e : y0 + 4 * e; cuelga ? yy > y0 : yy < y1; yy += cuelga ? -paso : paso, k++) {
-    c.fillStyle = "#020203";
-    caja2(c, px + pw * 0.35, yy - 0.45 * e, pw * 0.3, 0.9 * e, 0.45 * e); c.fill();
-    c.fillStyle = "rgba(255, 255, 255, 0.12)"; c.fillRect(px + pw * 0.35, yy + 0.45 * e, pw * 0.3, 1);
-    if (k % 5 === 0 && w > 30) {
-      c.fillStyle = "rgba(255, 255, 255, 0.55)";
-      c.font = `700 ${Math.max(7, Math.round(e * 1.1))}px system-ui, sans-serif`;
-      c.textAlign = "right"; c.textBaseline = "middle";
-      c.fillText(String(k + 1), px - 2, yy);
-    }
-  }
-  // La orilla del hueco: gancho J arriba, brazo de seguridad abajo.
-  const ah = 2.2 * e;
-  if (cuelga) {
-    const ay = y1 - ah;
-    c.fillStyle = "#b8302a"; caja2(c, x, ay, w, ah, 2); c.fill();
-    c.fillStyle = "rgba(255,255,255,0.18)"; c.fillRect(x + 2, ay + 1, w - 4, Math.max(1, ah * 0.12));
-    // El forro de plástico del gancho, y su pestaña.
-    c.fillStyle = "#16171a"; c.fillRect(x + w * 0.62, ay - ah * 0.55, w * 0.38, ah * 0.6);
-    c.fillStyle = "#b8302a"; c.fillRect(x + w * 0.9, ay - ah * 0.9, w * 0.1, ah * 0.95);
-  } else {
-    const ay = y0;
-    cromo(c, x - w * 0.08, ay, w * 1.16, ah * 0.8);
-    c.fillStyle = "#16171a"; c.fillRect(x - w * 0.08, ay, w * 0.18, ah * 0.8); c.fillRect(x + w * 0.9, ay, w * 0.18, ah * 0.8);
-    c.fillStyle = "#c9302a"; c.beginPath(); c.arc(x + w / 2, ay + ah * 0.4, Math.max(2, ah * 0.16), 0, Math.PI * 2); c.fill();
-  }
-  // Viga o placa base con tornillos.
-  c.fillStyle = "#14151a";
-  if (cuelga) c.fillRect(x - w * 0.2, y0, w * 1.4, 2.6 * e);
-  else {
-    c.fillRect(x - w * 0.2, y1 - 1.2 * e, w * 1.4, 1.2 * e);
-    c.fillStyle = "#8e949c";
-    for (const bxx of [x - w * 0.1, x + w * 1.02]) { c.beginPath(); c.arc(bxx, y1 - 0.6 * e, Math.max(1.5, e * 0.3), 0, Math.PI * 2); c.fill(); }
-  }
+/** Una sombra suave en el piso, con forma de elipse. */
+function pintarSombra(c: CanvasRenderingContext2D, cx: number, cy: number, rx: number, ry: number, alfa: number): void {
+  const g = c.createRadialGradient(cx, cy, 0, cx, cy, rx);
+  g.addColorStop(0, `rgba(0, 0, 0, ${alfa})`); g.addColorStop(1, "rgba(0, 0, 0, 0)");
+  c.save(); c.translate(cx, cy); c.scale(1, ry / rx); c.translate(-cx, -cy);
+  c.fillStyle = g; c.beginPath(); c.arc(cx, cy, rx, 0, Math.PI * 2); c.fill();
+  c.restore();
 }
 
 function shade(hex: string, f: number): string {
