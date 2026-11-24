@@ -4,6 +4,7 @@ import { comparaMarca, formatoKg, nombreMes, type ResumenMensual, type SerieMarc
 import { prepararSvg } from "./mapaMuscular";
 import { escapar } from "./tarjetaDia";
 import { lluviaDeConfeti, rafagaDeConfeti } from "./confeti";
+import { alternarSonido, prepararSonido, sonar, sonidoActivo, sonidosDeLaEscena } from "./sonidos";
 import { decidirDeslizamiento } from "./deslizarRegistro";
 import { compartirPoster, posterComoArchivo, sinEtiquetas, type Cambio, type DatosPoster } from "./posterImagen";
 
@@ -573,6 +574,15 @@ function ponerEnEscena(seccion: HTMLElement, transcurrido: number): void {
 
   apuntarReflectores(seccion, transcurrido, terminado);
 
+  // Los sonidos que faltan: el reflector que se prende, la tarjeta que se voltea, el número que
+  // corre y el remate. Los que ya pasaron (si se retoma a media función) no se repiten.
+  if (!terminado) {
+    const conNumero = [...seccion.querySelectorAll<HTMLElement>(".rh-dato")].map((d) => !!d.querySelector("[data-contar]"));
+    for (const s of sonidosDeLaEscena(conNumero, transcurrido, ESCENA)) {
+      relojes.push(window.setTimeout(() => sonar(s.sonido), s.en * 1000));
+    }
+  }
+
   const remate = ESCENA.remate - transcurrido;
   if (!terminado && remate > 0) relojes.push(window.setTimeout(() => rafagaDeConfeti(110, 0.5, 0.45), remate * 1000));
   // Al acabar queda "terminado": los botones (invisibles hasta el remate) ya reciben toques.
@@ -718,6 +728,17 @@ export function historiasDelMes(
 
 const CERRAR = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>`;
 
+const BOCINA = `<path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" fill="currentColor" stroke="none"/>`;
+const CON_SONIDO = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">${BOCINA}<path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/></svg>`;
+const SIN_SONIDO = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">${BOCINA}<path d="M16 9.5l5 5M21 9.5l-5 5"/></svg>`;
+
+/** La bocina del visor: silencia o prende los sonidos del resumen. */
+function botonSonido(): string {
+  const activo = sonidoActivo();
+  return `<button type="button" class="rh-cerrar rh-sonido" data-rh="sonido" aria-pressed="${!activo}"
+    aria-label="${activo ? "Silenciar" : "Activar sonido"}">${activo ? CON_SONIDO : SIN_SONIDO}</button>`;
+}
+
 function visor(d: DatosResumenMensual): string {
   const historias = historiasDelMes(d);
   if (historias.length === 0) {
@@ -737,7 +758,10 @@ function visor(d: DatosResumenMensual): string {
       <div class="rh-progreso" aria-hidden="true">${barras}</div>
       <div class="rh-cabeza">
         <span>${capital(nombreMes(d.mes ?? ""))} ${(d.mes ?? "").slice(0, 4)}</span>
-        <button type="button" class="rh-cerrar" data-rh="cerrar" aria-label="Cerrar">${CERRAR}</button>
+        <span class="rh-acciones">
+          ${botonSonido()}
+          <button type="button" class="rh-cerrar" data-rh="cerrar" aria-label="Cerrar">${CERRAR}</button>
+        </span>
       </div>
       <div class="rh-carril" style="transform: translateX(${-pagina * 100}%)">
         ${historias.map((h, i) => `
@@ -772,6 +796,7 @@ export function conectarResumenMensual(repintar: () => void, nav: NavegacionHist
     b.addEventListener("click", () => {
       const mes = b.dataset.rmMes;
       if (!mes || !ES_MES.test(mes)) return;
+      prepararSonido();
       abrirHistoria(mes);
       nav.alAbrir();
       repintar();
@@ -787,7 +812,9 @@ export function conectarResumenMensual(repintar: () => void, nav: NavegacionHist
   // Cambiar de historia mueve el carril en su lugar, sin repintar: así se ve deslizarse. Un
   // repintado posterior (un snapshot) ya sale en la página nueva.
   const ir = (nueva: number) => {
+    const antes = pagina;
     pagina = Math.max(0, Math.min(total - 1, nueva));
+    if (pagina !== antes) sonar("pasar");
     if (carril) carril.style.transform = `translateX(${-pagina * 100}%)`;
     visorEl.querySelectorAll<HTMLElement>(".rh-progreso span").forEach((b, i) => {
       b.className = i < pagina ? "vista" : i === pagina ? "actual" : "";
@@ -825,7 +852,15 @@ export function conectarResumenMensual(repintar: () => void, nav: NavegacionHist
     b.addEventListener("click", (e) => {
       e.stopPropagation();
       if (b.dataset.rh === "cerrar") cerrar();
-      if (b.dataset.rh === "compartir") void compartir(b as HTMLButtonElement);
+      if (b.dataset.rh === "compartir") { prepararSonido(); sonar("compartir"); void compartir(b as HTMLButtonElement); }
+      if (b.dataset.rh === "sonido") {
+        const activo = alternarSonido();
+        if (activo) prepararSonido();
+        b.innerHTML = activo ? CON_SONIDO : SIN_SONIDO;
+        b.setAttribute("aria-pressed", String(!activo));
+        b.setAttribute("aria-label", activo ? "Silenciar" : "Activar sonido");
+        if (activo) sonar("pasar");
+      }
     })
   );
 
@@ -837,6 +872,7 @@ export function conectarResumenMensual(repintar: () => void, nav: NavegacionHist
   visorEl.addEventListener("dragstart", (e) => e.preventDefault());
   visorEl.addEventListener("pointerdown", (e) => {
     if (e.pointerType === "mouse" && e.button !== 0) return;
+    prepararSonido();
     if ((e.target as HTMLElement).closest("button")) return;
     x0 = e.clientX; y0 = e.clientY; t0 = performance.now(); arrastrando = true; horizontal = null;
     try { visorEl.setPointerCapture(e.pointerId); } catch { /* sin captura también funciona */ }
@@ -870,6 +906,7 @@ export function conectarResumenMensual(repintar: () => void, nav: NavegacionHist
   visorEl.addEventListener("pointerup", soltar);
   visorEl.addEventListener("pointercancel", () => { arrastrando = false; carril?.classList.remove("arrastrando"); ir(pagina); });
   visorEl.onkeydown = (e) => {
+    prepararSonido();
     if (e.key === "ArrowRight") ir(pagina + 1);
     if (e.key === "ArrowLeft") ir(pagina - 1);
     if (e.key === "Escape") cerrar();
