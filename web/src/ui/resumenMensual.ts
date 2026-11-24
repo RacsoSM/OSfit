@@ -218,15 +218,85 @@ function historia(id: string, etiqueta: string, cuerpo: string): Historia {
   return { id, html: `<p class="rh-etiqueta">${etiqueta}</p>${cuerpo}` };
 }
 
-function portada(r: ResumenMensual, enCurso: boolean, hoy: string): Historia {
+// TEMPORAL: selector para mostrar las propuestas de portada.
+function variantePortada(): string {
+  try { return globalThis.localStorage?.getItem("osfit:portada") ?? "actual"; } catch { return "actual"; }
+}
+
+/** Los días del mes en una cuadrícula de lunes a domingo, encendidos los que entrenó. */
+function calendario(r: ResumenMensual): string {
+  const [a, m] = r.mes.split("-").map(Number) as [number, number];
+  const dias = new Date(Date.UTC(a, m, 0)).getUTCDate();
+  const primero = (new Date(Date.UTC(a, m - 1, 1)).getUTCDay() + 6) % 7;
+  const celdas: string[] = ["L", "M", "M", "J", "V", "S", "D"].map((l) => `<b>${l}</b>`);
+  for (let i = 0; i < primero; i++) celdas.push("<i></i>");
+  let orden = 0;
+  for (let d = 1; d <= dias; d++) {
+    const marca = r.asistencia.dias[String(d).padStart(2, "0")];
+    const clase = marca === "e" ? "si" : marca === "j" ? "just" : marca === "f" ? "no" : "";
+    const retraso = marca === "e" ? ` style="--k:${orden++}"` : "";
+    celdas.push(`<span class="${clase}"${retraso}>${d}</span>`);
+  }
+  return `<div class="rh-cal">${celdas.join("")}</div>`;
+}
+
+function portada(r: ResumenMensual, enCurso: boolean, hoy: string, nombre = ""): Historia {
+  const mes = capital(nombreMes(r.mes));
+  const anio = r.mes.slice(0, 4);
+  const etiqueta = enCurso ? `En curso · al ${Number(hoy.slice(8, 10))} de ${nombreMes(r.mes)}` : "Tu resumen del mes";
+  const pista = `<p class="rh-pista">Desliza para ver tu mes <span aria-hidden="true">→</span></p>`;
+  const quien = nombre ? escapar(nombre.split(" ")[0]!) : "";
+  const v = variantePortada();
+  if (v === "escenario") {
+    return {
+      id: "portada rh-portada-escenario",
+      html: `
+      <div class="rh-portada-c">
+        <i class="rh-pz izq" aria-hidden="true"></i><i class="rh-pz der" aria-hidden="true"></i>
+        <p class="rh-etiqueta">OSFIT presenta</p>
+        <p class="rh-mes">${mes}</p>
+        <p class="rh-anio">${quien ? `${quien} · ` : ""}${anio}</p>
+        <p class="rh-sub-esc">${enCurso ? etiqueta : "Tu mes, en escena"}</p>
+        ${pista}
+      </div>`,
+    };
+  }
+  if (v === "calendario") {
+    const n = r.asistencia.entreno;
+    return {
+      id: "portada rh-portada-calendario",
+      html: `
+      <div class="rh-portada-c">
+        <p class="rh-etiqueta">${etiqueta}</p>
+        <p class="rh-hola">${quien ? `Hola, ${quien}` : "Hola"}</p>
+        <p class="rh-mes">${mes} <span>${anio}</span></p>
+        ${calendario(r)}
+        <p class="rh-cal-pie"><strong>${n} ${n === 1 ? "día" : "días"}</strong> en el gym. Veamos qué hiciste con ellos.</p>
+        ${pista}
+      </div>`,
+    };
+  }
+  if (v === "tipografico") {
+    return {
+      id: "portada rh-portada-tipo",
+      html: `
+      <div class="rh-portada-c">
+        <p class="rh-etiqueta">${etiqueta}</p>
+        <p class="rh-tipo-mes" aria-label="${mes}" style="--n:${mes.length}">${[...mes.toUpperCase()].map((l, i) => `<span style="--k:${i}">${l}</span>`).join("")}</p>
+        <p class="rh-tipo-anio">${anio}</p>
+        <p class="rh-tipo-nombre">${quien ? `Para ${quien}` : ""}</p>
+        ${pista}
+      </div>`,
+    };
+  }
   return {
     id: "portada",
     html: `
       <div class="rh-portada-c">
-        <p class="rh-etiqueta">${enCurso ? `En curso · al ${Number(hoy.slice(8, 10))} de ${nombreMes(r.mes)}` : "Tu resumen del mes"}</p>
-        <p class="rh-mes">${capital(nombreMes(r.mes))}</p>
-        <p class="rh-anio">${r.mes.slice(0, 4)}</p>
-        <p class="rh-pista">Desliza para ver tu mes <span aria-hidden="true">→</span></p>
+        <p class="rh-etiqueta">${etiqueta}</p>
+        <p class="rh-mes">${mes}</p>
+        <p class="rh-anio">${anio}</p>
+        ${pista}
       </div>`,
   };
 }
@@ -707,7 +777,7 @@ export function historiasDelMes(
   if (!r) return [];
   const ant = d.anterior ?? null;
   return [
-    portada(r, d.enCurso, d.hoy),
+    portada(r, d.enCurso, d.hoy, d.nombre ?? ""),
     entrenamiento(r, d.semanas ?? null, ant),
     constancia(r, d.enCurso, d.hoy, ant),
     fuerza(r, d.sexo, d.mapa ?? null, ant),
