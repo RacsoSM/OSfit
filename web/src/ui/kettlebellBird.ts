@@ -433,17 +433,17 @@ function dibujar(): void {
   c.fillStyle = vin; c.fillRect(0, 0, W, H);
 }
 
-// TEMPORAL: selector para comparar las propuestas de obstáculos (B1, B2, B3).
-type Estilo = "bumper" | "hierro" | "escenario";
+// TEMPORAL: selector para comparar las propuestas de discos (P1, P2, P3).
+type Estilo = "p1" | "p2" | "p3";
 function estiloObstaculo(): Estilo {
   try {
     const v = globalThis.localStorage?.getItem("osfit:kb-barras");
-    return v === "b2" ? "hierro" : v === "b3" ? "escenario" : "bumper";
-  } catch { return "bumper"; }
+    return v === "p2" ? "p2" : v === "p3" ? "p3" : "p1";
+  } catch { return "p1"; }
 }
 
 function pintarObstaculo(c: CanvasRenderingContext2D, x: number, w: number, y0: number, y1: number, cuelga: boolean, _color: string, e: number): void {
-  pintarBarra3D(c, x, w, y0, y1, cuelga, e, estiloObstaculo());
+  pintarBarraConDiscos(c, x, w, y0, y1, cuelga, e, estiloObstaculo());
 }
 
 /** Una textura de grano (caucho o hierro martelinado), hecha una vez y repetida. */
@@ -459,7 +459,7 @@ function textura(c: CanvasRenderingContext2D, tipo: "caucho" | "hierro"): Canvas
     // El hierro martelinado tiene manchas más grandes y contrastadas que el grano del caucho.
     const v = tipo === "hierro" ? (n > 0.55 ? 255 : 0) : (n > 0.5 ? 255 : 0);
     img.data[i] = img.data[i + 1] = img.data[i + 2] = v;
-    img.data[i + 3] = tipo === "hierro" ? Math.round(n * 70) : Math.round(n * 38);
+    img.data[i + 3] = tipo === "hierro" ? Math.round(n * 34) : Math.round(n * 22);
   }
   x.putImageData(img, 0, 0);
   if (tipo === "hierro") { x.filter = "blur(0.8px)"; x.drawImage(t, 0, 0); }
@@ -479,7 +479,6 @@ function gradCilindro(c: CanvasRenderingContext2D, x0: number, x1: number, base:
 const CROMO: [string, string, string, string] = ["#3e4248", "#c3c8ce", "#ffffff", "#2c2f34"];
 const INCL = 0.27;
 
-interface Pieza { h: number; ancho: number; tipo: "manga" | "seguro" | "disco" | "hombro"; color?: string; kg?: string }
 
 /** Un cilindro vertical de `ya` a `yb` con su tapa visible arriba (`tapaArriba`) o abajo. */
 function cilindro(c: CanvasRenderingContext2D, cx: number, r: number, ya: number, yb: number, tapaArriba: boolean,
@@ -496,43 +495,175 @@ function cilindro(c: CanvasRenderingContext2D, cx: number, r: number, ya: number
   tapa(tapaArriba ? ya : yb);
 }
 
+/** Una sombra suave en el piso, con forma de elipse. */
+function pintarSombra(c: CanvasRenderingContext2D, cx: number, cy: number, rx: number, ry: number, alfa: number): void {
+  const g = c.createRadialGradient(cx, cy, 0, cx, cy, rx);
+  g.addColorStop(0, `rgba(0, 0, 0, ${alfa})`); g.addColorStop(1, "rgba(0, 0, 0, 0)");
+  c.save(); c.translate(cx, cy); c.scale(1, ry / rx); c.translate(-cx, -cy);
+  c.fillStyle = g; c.beginPath(); c.arc(cx, cy, rx, 0, Math.PI * 2); c.fill();
+  c.restore();
+}
+
+/** El texto alrededor de la cara de un disco, en su plano (moldeado en el caucho o en el hierro). */
+function textoCircular(c: CanvasRenderingContext2D, cx: number, cy: number, r: number, incl: number, texto: string, tam: number, color: string, desde: number): void {
+  c.save();
+  c.translate(cx, cy);
+  c.scale(1, incl);
+  c.fillStyle = color;
+  c.font = `900 ${Math.round(tam)}px system-ui, sans-serif`;
+  c.textAlign = "center"; c.textBaseline = "middle";
+  const paso = (tam * 0.78) / r;
+  let ang = desde - (paso * (texto.length - 1)) / 2;
+  for (const letra of texto) {
+    c.save();
+    c.rotate(ang);
+    c.translate(0, r);
+    c.rotate(Math.PI);
+    c.fillText(letra, 0, 0);
+    c.restore();
+    ang += paso;
+  }
+  c.restore();
+}
+
+interface Disco3D {
+  r: number;          // radio en px
+  incl: number;       // alto de la elipse ÷ ancho
+  grueso: number;     // px
+  material: "bumper" | "hierro";
+  color: string;
+  kg: string;
+  luz: "estudio" | "calida" | "contraluz";
+  agarraderas?: boolean;
+  textoCanto?: boolean;
+}
+
 /**
- * B · La barra olímpica en 3/4, fotorrealista: se ve un poco desde arriba (la de abajo) o desde
- * abajo (la que cuelga), así los discos muestran su cara, su grosor de caucho o hierro y su aro
- * de acero. Desde la orilla del hueco: la tapa de la manga, el seguro, los discos de menor a
- * mayor, la manga, el hombro y la barra con su moleteado.
+ * Un disco 3D con su cara del lado de la cámara (`caraArriba`): el canto con su luz, la cara con
+ * su grano, el borde levantado, el texto moldeado alrededor, el inserto de acero con tornillos
+ * (bumper) o las tres agarraderas (hierro), y el hoyo.
  */
-function pintarBarra3D(c: CanvasRenderingContext2D, x: number, w: number, y0: number, y1: number, cuelga: boolean, e: number, estilo: Estilo): void {
+function pintarDisco3D(c: CanvasRenderingContext2D, cx: number, cy: number, d: Disco3D, caraArriba: boolean): void {
+  const { r, incl, grueso } = d;
+  const ry = r * incl;
+  const hierro = d.material === "hierro";
+  const ya = caraArriba ? cy : cy - grueso, yb = caraArriba ? cy + grueso : cy;
+  // Canto.
+  const canto = c.createLinearGradient(cx - r, 0, cx + r, 0);
+  const luzCanto = d.luz === "contraluz" ? 0.55 : d.luz === "calida" ? 1.05 : 1;
+  canto.addColorStop(0, shade(d.color, 0.3 * luzCanto));
+  canto.addColorStop(0.3, shade(d.color, (hierro ? 1.5 : 1.08) * luzCanto));
+  canto.addColorStop(0.4, shade(d.color, (hierro ? 1.75 : 1.22) * luzCanto));
+  canto.addColorStop(0.7, shade(d.color, 0.75 * luzCanto));
+  canto.addColorStop(1, shade(d.color, 0.28 * luzCanto));
+  c.fillStyle = canto;
+  c.beginPath();
+  if (caraArriba) { c.moveTo(cx - r, ya); c.lineTo(cx - r, yb); c.ellipse(cx, yb, r, ry, 0, Math.PI, 0, true); c.lineTo(cx + r, ya); }
+  else { c.moveTo(cx - r, yb); c.lineTo(cx - r, ya); c.ellipse(cx, ya, r, ry, 0, Math.PI, 0, false); c.lineTo(cx + r, yb); }
+  c.closePath();
+  c.fill();
+  c.save(); c.clip();
+  const tex = textura(c, hierro ? "hierro" : "caucho");
+  if (tex) { c.fillStyle = tex; c.fillRect(cx - r, ya - ry, r * 2, grueso + ry * 2); }
+  // Dos estrías del molde a lo largo del canto.
+  c.strokeStyle = "rgba(0, 0, 0, 0.28)"; c.lineWidth = 1;
+  for (const f of [0.33, 0.66]) { const yy = ya + (yb - ya) * f; c.beginPath(); c.ellipse(cx, yy, r, ry, 0, 0, Math.PI); c.stroke(); }
+  if (d.textoCanto) {
+    c.fillStyle = "rgba(255, 255, 255, 0.85)";
+    c.font = `900 ${Math.round(grueso * 0.42)}px system-ui, sans-serif`;
+    c.textAlign = "center"; c.textBaseline = "middle";
+    c.fillText(`OSFIT · ${d.kg} KG`, cx, (ya + yb) / 2 + ry * 0.6);
+  }
+  c.restore();
+  if (d.luz === "contraluz") {
+    // El neón detrás: un filo de luz en las dos orillas del canto.
+    const lw = Math.max(2, r * 0.05);
+    c.fillStyle = "rgba(255, 79, 216, 0.75)"; c.fillRect(cx - r, ya, lw, yb - ya);
+    c.fillStyle = "rgba(126, 243, 255, 0.75)"; c.fillRect(cx + r - lw, ya, lw, yb - ya);
+  }
+  // Cara.
+  const fy = caraArriba ? ya : yb;
+  const brillo = d.luz === "contraluz" ? 0.85 : d.luz === "calida" ? 1.35 : 1.25;
+  const cara = c.createRadialGradient(cx - r * 0.35, fy - ry * 0.6, r * 0.05, cx, fy, r * 1.1);
+  cara.addColorStop(0, shade(d.color, hierro ? brillo * 1.5 : brillo));
+  cara.addColorStop(0.55, shade(d.color, d.luz === "contraluz" ? 0.75 : 1));
+  cara.addColorStop(1, shade(d.color, 0.62));
+  c.fillStyle = cara;
+  c.beginPath(); c.ellipse(cx, fy, r, ry, 0, 0, Math.PI * 2); c.fill();
+  c.save(); c.clip();
+  if (tex) { c.fillStyle = tex; c.fillRect(cx - r, fy - ry, r * 2, ry * 2); }
+  if (d.luz === "calida") {
+    const calida = c.createRadialGradient(cx - r * 0.2, fy - ry, 0, cx - r * 0.2, fy - ry, r * 1.2);
+    calida.addColorStop(0, "rgba(255, 210, 140, 0.28)"); calida.addColorStop(1, "rgba(255, 210, 140, 0)");
+    c.fillStyle = calida; c.fillRect(cx - r, fy - ry, r * 2, ry * 2);
+  }
+  c.restore();
+  // Borde levantado (labio) con su brillo.
+  c.lineWidth = Math.max(1.5, r * 0.07);
+  c.strokeStyle = shade(d.color, hierro ? 1.9 : 0.62);
+  c.beginPath(); c.ellipse(cx, fy, r * 0.93, ry * 0.93, 0, 0, Math.PI * 2); c.stroke();
+  c.lineWidth = Math.max(1, r * 0.025);
+  c.strokeStyle = d.luz === "contraluz" ? "rgba(126, 243, 255, 0.8)" : "rgba(255, 255, 255, 0.45)";
+  c.beginPath(); c.ellipse(cx, fy, r * 0.97, ry * 0.97, 0, Math.PI * 1.05, Math.PI * 1.95); c.stroke();
+  if (d.agarraderas) {
+    // Las tres agarraderas del disco de hierro: huecos con su canto.
+    for (let k = 0; k < 3; k++) {
+      const a = -Math.PI / 2 + k * (Math.PI * 2) / 3 + 0.3;
+      const hx = cx + Math.cos(a) * r * 0.66, hy = fy + Math.sin(a) * ry * 0.66;
+      c.save(); c.translate(hx, hy); c.scale(1, incl); c.rotate(a + Math.PI / 2);
+      c.fillStyle = "#050506";
+      caja2(c, -r * 0.2, -r * 0.08, r * 0.4, r * 0.16, r * 0.08); c.fill();
+      c.strokeStyle = "rgba(255, 255, 255, 0.25)"; c.lineWidth = 1.2; c.stroke();
+      c.restore();
+    }
+  } else {
+    textoCircular(c, cx, fy, r * 0.78, incl, "OSFIT", r * 0.15, "rgba(255, 255, 255, 0.85)", Math.PI);
+    textoCircular(c, cx, fy, r * 0.78, incl, `${d.kg} KG`, r * 0.15, "rgba(255, 255, 255, 0.85)", 0);
+  }
+  if (hierro) textoCircular(c, cx, fy, r * 0.8, incl, `${d.kg} KG`, r * 0.13, "rgba(225, 225, 225, 0.75)", Math.PI);
+  // Inserto de acero con seis tornillos (bumper) o el cubo fundido (hierro), y el hoyo.
+  const ri = r * (hierro ? 0.3 : 0.34);
+  c.fillStyle = gradCilindro(c, cx - ri, cx + ri, hierro ? ["#1c1d20", "#5a5d63", "#8a8e95", "#151619"] : CROMO);
+  c.beginPath(); c.ellipse(cx, fy, ri, ri * incl, 0, 0, Math.PI * 2); c.fill();
+  if (!hierro) {
+    c.fillStyle = "#6b7078";
+    for (let k = 0; k < 6; k++) {
+      const a = (k * Math.PI) / 3;
+      c.beginPath(); c.ellipse(cx + Math.cos(a) * ri * 0.75, fy + Math.sin(a) * ri * 0.75 * incl, ri * 0.09, ri * 0.09 * incl + 0.5, 0, 0, Math.PI * 2); c.fill();
+    }
+  }
+  c.fillStyle = "#0b0c0e";
+  c.beginPath(); c.ellipse(cx, fy, ri * 0.48, ri * 0.48 * incl, 0, 0, Math.PI * 2); c.fill();
+}
+
+/**
+ * P · La barra que te gustó con discos nuevos (propuestas P1, P2, P3): la manga sale de la orilla
+ * del hueco con el seguro y uno o dos discos grandes, y la barra moleteada sigue hasta el techo o
+ * el piso.
+ */
+function pintarBarraConDiscos(c: CanvasRenderingContext2D, x: number, w: number, y0: number, y1: number, cuelga: boolean, e: number, estilo: Estilo): void {
   const cx = x + w / 2;
-  const hierro = estilo === "hierro";
-  const piezas: Pieza[] = [
-    { h: 0.7 * e, ancho: 0.34, tipo: "manga" },
-    { h: 1.3 * e, ancho: 0.5, tipo: "seguro" },
-    { h: 1.5 * e, ancho: 0.66, tipo: "disco", color: hierro ? "#2b2c30" : "#24964a", kg: "10" },
-    { h: 2.1 * e, ancho: 0.98, tipo: "disco", color: hierro ? "#2b2c30" : "#2a6fd6", kg: "20" },
-    { h: 2.4 * e, ancho: 1, tipo: "disco", color: hierro ? "#2b2c30" : "#d6372c", kg: "25" },
-    { h: 2.4 * e, ancho: 0.34, tipo: "manga" },
-    { h: 0.9 * e, ancho: 0.46, tipo: "hombro" },
-  ];
-  // Dónde va cada pieza (de la orilla del hueco hacia adentro).
-  const pos: { pieza: Pieza; ya: number; yb: number }[] = [];
-  let borde = cuelga ? y1 : y0;
-  for (const p of piezas) {
-    const ya = cuelga ? borde - p.h : borde, yb = cuelga ? borde : borde + p.h;
-    pos.push({ pieza: p, ya, yb });
-    borde = cuelga ? ya : yb;
-  }
-  const barraA = cuelga ? y0 : borde, barraB = cuelga ? borde : y1;
+  const discos: Disco3D[] = estilo === "p2"
+    ? [{ r: w * 0.85, incl: 0.42, grueso: 1.9 * e, material: "hierro", color: "#3b3d42", kg: "20", luz: "calida", agarraderas: true }]
+    : estilo === "p3"
+      ? [
+        { r: w * 0.78, incl: 0.13, grueso: 3.3 * e, material: "bumper", color: "#1f1f24", kg: "20", luz: "contraluz", textoCanto: true },
+        { r: w * 0.78, incl: 0.13, grueso: 3.3 * e, material: "bumper", color: "#1f1f24", kg: "20", luz: "contraluz", textoCanto: true },
+      ]
+      : [{ r: w * 0.85, incl: 0.38, grueso: 2.6 * e, material: "bumper", color: "#2a6fd6", kg: "20", luz: "estudio" }];
+  // Desde la orilla: tapa de la manga, seguro, discos, manga, hombro; luego la barra.
+  const tapa = 0.7 * e, seguro = 1.3 * e, manga = 2.2 * e, hombro = 0.9 * e;
+  const dir = cuelga ? -1 : 1;
+  let p = cuelga ? y1 : y0;
+  const tramo = (h: number) => { const a = cuelga ? p - h : p; const b = cuelga ? p : p + h; p += dir * h; return [a, b] as const; };
+  const [tA, tB] = tramo(tapa);
+  const [sA, sB] = tramo(seguro);
+  const lugares = discos.map((d) => tramo(d.grueso));
+  const [mA, mB] = tramo(manga);
+  const [hA, hB] = tramo(hombro);
+  const barraA = cuelga ? y0 : p, barraB = cuelga ? p : y1;
 
-  // La sombra en la pared (B3): la barra entera, corrida y difusa.
-  if (estilo === "escenario") {
-    const sg = c.createLinearGradient(x + w * 0.3, 0, x + w * 1.5, 0);
-    sg.addColorStop(0, "rgba(0, 0, 0, 0.32)"); sg.addColorStop(1, "rgba(0, 0, 0, 0)");
-    c.fillStyle = sg;
-    c.fillRect(x + w * 0.3, y0, w * 1.2, y1 - y0);
-  }
-
-  // La barra, con su moleteado.
+  // La barra moleteada (igual que antes: la que te gustó).
   const bw = w * 0.17;
   c.fillStyle = gradCilindro(c, cx - bw / 2, cx + bw / 2, ["#4a4e55", "#b4b9c0", "#eef0f3", "#33363b"]);
   c.fillRect(cx - bw / 2, barraA, bw, barraB - barraA);
@@ -544,85 +675,26 @@ function pintarBarra3D(c: CanvasRenderingContext2D, x: number, w: number, y0: nu
     c.beginPath(); c.moveTo(cx + bw / 2, yy); c.lineTo(cx - bw / 2, yy + bw * 0.55); c.stroke();
   }
   c.restore();
-  // La base en el piso: una sombra de contacto.
-  if (!cuelga) pintarSombra(c, cx, y1, w * 0.45, w * 0.1, 0.6);
+  if (!cuelga) pintarSombra(c, cx, y1, w * 0.5, w * 0.1, 0.6);
 
-  // Las piezas, del fondo hacia la cámara: la que queda más lejos de la orilla primero.
-  const orden = [...pos].reverse();
-  for (const { pieza: p, ya, yb } of orden) {
-    const r = (w * p.ancho) / 2;
-    if (p.tipo === "manga" || p.tipo === "hombro") {
-      cilindro(c, cx, r, ya, yb, !cuelga, gradCilindro(c, cx - r, cx + r, CROMO), (cy) => {
-        c.fillStyle = "#e9ecef"; c.beginPath(); c.ellipse(cx, cy, r, r * INCL, 0, 0, Math.PI * 2); c.fill();
-        c.strokeStyle = "rgba(0,0,0,0.25)"; c.lineWidth = 1; c.stroke();
-      });
-      continue;
-    }
-    if (p.tipo === "seguro") {
-      cilindro(c, cx, r, ya, yb, !cuelga, gradCilindro(c, cx - r, cx + r, ["#0d0e10", "#3a3d44", "#5a5e66", "#08090a"]), (cy) => {
-        c.fillStyle = "#26282d"; c.beginPath(); c.ellipse(cx, cy, r, r * INCL, 0, 0, Math.PI * 2); c.fill();
-        c.fillStyle = gradCilindro(c, cx - r * 0.6, cx + r * 0.6, CROMO);
-        c.beginPath(); c.ellipse(cx, cy, r * 0.62, r * 0.62 * INCL, 0, 0, Math.PI * 2); c.fill();
-      });
-      // La palanca roja del seguro.
-      c.fillStyle = "#c9302a";
-      caja2(c, cx + r * 0.7, ya + (yb - ya) * 0.25, r * 0.9, (yb - ya) * 0.4, 2); c.fill();
-      continue;
-    }
-    // Un disco: el canto (caucho o hierro) y la cara que se ve, con su aro de acero y su peso.
-    const color = p.color!;
-    const canto = c.createLinearGradient(cx - r, 0, cx + r, 0);
-    canto.addColorStop(0, shade(color, hierro ? 0.5 : 0.38));
-    canto.addColorStop(0.25, shade(color, hierro ? 1.3 : 0.95));
-    canto.addColorStop(0.34, shade(color, hierro ? 1.6 : 1.12));
-    canto.addColorStop(0.6, shade(color, hierro ? 1.0 : 0.78));
-    canto.addColorStop(1, shade(color, hierro ? 0.4 : 0.3));
-    cilindro(c, cx, r, ya, yb, !cuelga, canto, (cy) => {
-      const ry = r * INCL;
-      const cara = c.createRadialGradient(cx - r * 0.3, cy - ry * 0.5, r * 0.05, cx, cy, r * 1.05);
-      cara.addColorStop(0, shade(color, hierro ? 1.7 : 1.2)); cara.addColorStop(0.6, color); cara.addColorStop(1, shade(color, 0.7));
-      c.fillStyle = cara;
-      c.beginPath(); c.ellipse(cx, cy, r, ry, 0, 0, Math.PI * 2); c.fill();
-      // Grano de la textura y el borde levantado.
-      const tex = textura(c, hierro ? "hierro" : "caucho");
-      if (tex) { c.save(); c.clip(); c.fillStyle = tex; c.fillRect(cx - r, cy - ry, r * 2, ry * 2); c.restore(); }
-      c.strokeStyle = shade(color, hierro ? 1.9 : 0.6); c.lineWidth = Math.max(1, r * 0.06);
-      c.beginPath(); c.ellipse(cx, cy, r * 0.9, ry * 0.9, 0, 0, Math.PI * 2); c.stroke();
-      // El peso en la cara (en su plano).
-      if (r > 14) {
-        c.save(); c.translate(cx, cy); c.scale(1, INCL);
-        c.fillStyle = hierro ? "rgba(235, 235, 235, 0.85)" : "rgba(255, 255, 255, 0.92)";
-        c.font = `900 ${Math.round(r * 0.28)}px system-ui, sans-serif`;
-        c.textAlign = "center"; c.textBaseline = "middle";
-        c.fillText(`${p.kg} KG`, 0, cuelga ? -r * 0.66 : r * 0.66);
-        c.restore();
-      }
-      // El aro de acero del centro (por donde pasa la manga).
-      c.fillStyle = gradCilindro(c, cx - r * 0.3, cx + r * 0.3, CROMO);
-      c.beginPath(); c.ellipse(cx, cy, r * 0.3, ry * 0.3, 0, 0, Math.PI * 2); c.fill();
-      c.fillStyle = "#101114";
-      c.beginPath(); c.ellipse(cx, cy, r * 0.18, ry * 0.18, 0, 0, Math.PI * 2); c.fill();
+  // Del fondo a la cámara: hombro, manga, discos (el más lejano primero), seguro, tapa.
+  const caraArriba = !cuelga;
+  const cil = (r: number, a: number, b: number, grad: [string, string, string, string]) =>
+    cilindro(c, cx, r, a, b, caraArriba, gradCilindro(c, cx - r, cx + r, grad), (cy) => {
+      c.fillStyle = "#e3e6ea"; c.beginPath(); c.ellipse(cx, cy, r, r * INCL, 0, 0, Math.PI * 2); c.fill();
     });
-    if (estilo === "escenario") {
-      // Un filo de luz de los neones del gimnasio en cada orilla del canto: rosa a la izquierda,
-      // cian a la derecha.
-      const lw = Math.max(1.5, r * 0.07);
-      c.fillStyle = "rgba(255, 79, 216, 0.55)"; c.fillRect(cx - r, ya, lw, yb - ya);
-      c.fillStyle = "rgba(126, 243, 255, 0.55)"; c.fillRect(cx + r - lw, ya, lw, yb - ya);
-    }
-    // Oclusión: una línea oscura donde toca el siguiente disco.
-    c.fillStyle = "rgba(0, 0, 0, 0.35)";
-    c.fillRect(cx - r, cuelga ? ya : yb - 1, r * 2, 1);
+  cil(w * 0.24, hA, hB, CROMO);
+  cil(w * 0.11, mA, mB, CROMO);
+  for (let k = discos.length - 1; k >= 0; k--) {
+    const d = discos[k]!;
+    const [a, b] = lugares[k]!;
+    // Sombra que deja en el disco de atrás (oclusión).
+    pintarSombra(c, cx, caraArriba ? b : a, d.r * 1.02, d.r * d.incl * 1.1, 0.45);
+    pintarDisco3D(c, cx, caraArriba ? a : b, d, caraArriba);
   }
-}
-
-/** Una sombra suave en el piso, con forma de elipse. */
-function pintarSombra(c: CanvasRenderingContext2D, cx: number, cy: number, rx: number, ry: number, alfa: number): void {
-  const g = c.createRadialGradient(cx, cy, 0, cx, cy, rx);
-  g.addColorStop(0, `rgba(0, 0, 0, ${alfa})`); g.addColorStop(1, "rgba(0, 0, 0, 0)");
-  c.save(); c.translate(cx, cy); c.scale(1, ry / rx); c.translate(-cx, -cy);
-  c.fillStyle = g; c.beginPath(); c.arc(cx, cy, rx, 0, Math.PI * 2); c.fill();
-  c.restore();
+  cil(w * 0.17, sA, sB, ["#0d0e10", "#3a3d44", "#5a5e66", "#08090a"]);
+  c.fillStyle = "#c9302a"; caja2(c, cx + w * 0.14, sA + (sB - sA) * 0.25, w * 0.26, (sB - sA) * 0.42, 2); c.fill();
+  cil(w * 0.11, tA, tB, CROMO);
 }
 
 function shade(hex: string, f: number): string {
