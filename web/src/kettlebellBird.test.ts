@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ANCHO_BARRA, IMPULSO, PISO, RADIO, aletear, avanzar, choca, hueco, nuevoVuelo, salto, velocidad } from "./kettlebellBird";
+import { ANCHO_DISCO, ANCHO_TUBO, DISCO_HASTA, IMPULSO, PISO, RADIO, aletear, avanzar, choca, chocaConBarra, hueco, nuevoVuelo, salto, velocidad } from "./kettlebellBird";
 
 const fijo = () => 0.5; // el hueco siempre a media altura
 
@@ -38,7 +38,7 @@ describe("Kettlebell Bird", () => {
     expect(puntos).toBe(3);
     const w = nuevoVuelo(60, fijo);
     const b = w.barras[0]!;
-    w.y = b.centro - b.hueco / 2 - 1; w.x = b.x + ANCHO_BARRA / 2; w.vy = 0;
+    w.y = b.centro - b.hueco / 2 - 1; w.x = b.x + ANCHO_DISCO / 2; w.vy = 0;
     expect(avanzar(w, 0.001)).toBe("fin");
   });
 
@@ -64,6 +64,19 @@ describe("Kettlebell Bird", () => {
         expect(b.centro + b.hueco / 2).toBeLessThanOrEqual(PISO - 8 + 1e-9);
       }
     }
+  });
+
+  it("se choca con lo que se ve: el disco ancho cerca de la orilla, la barra delgada en el resto", () => {
+    const b = { x: 20, centro: 50, hueco: 30, pasada: false };
+    const arriba = b.centro - b.hueco / 2;
+    // Junto a la barra, lejos del disco: no toca (antes la caja era del ancho del disco en todo el largo).
+    expect(chocaConBarra(b.x + 1, arriba - 12, 2, b)).toBe(false);
+    // Sobre la barra misma: toca.
+    expect(chocaConBarra(b.x + ANCHO_DISCO / 2, arriba - 12, 1, b)).toBe(true);
+    // Al lado del eje pero a la altura del disco: toca.
+    expect(chocaConBarra(b.x + ANCHO_DISCO / 2 - ANCHO_TUBO * 2, arriba - DISCO_HASTA / 2, 1, b)).toBe(true);
+    // En el hueco: libre.
+    expect(chocaConBarra(b.x + ANCHO_DISCO / 2, b.centro, 3.6, b)).toBe(false);
   });
 
   it("choca: círculo contra rectángulo", () => {

@@ -1,5 +1,5 @@
 import {
-  ALTO, ANCHO_BARRA, PISO, RADIO, aletear, avanzar, nuevoVuelo, type Vuelo,
+  ALTO, ANCHO_DISCO, ANCHO_TUBO, PISO, RADIO, aletear, avanzar, nuevoVuelo, type Vuelo,
 } from "../kettlebellBird";
 import { conPartida, htmlLista, type ApiJuego, type EnvioPartida, type TablaDiscos } from "./juegoDiscos";
 
@@ -271,7 +271,6 @@ function arrancar(): void {
 
 // ── Dibujo ───────────────────────────────────────────────────────────────────
 
-const COLORES = ["#d6372c", "#2a6fd6", "#f0b400", "#24964a"];
 const mod = (a: number, b: number) => ((a % b) + b) % b;
 /** Un número fijo por posición, para que cada ventana o máquina sea siempre la misma. */
 const ruido = (n: number) => mod(Math.sin(n * 12.9898) * 43758.5453, 1);
@@ -313,7 +312,8 @@ function dibujar(): void {
   const paso1 = 70 * e;
   for (let i = Math.floor(lejos / paso1) - 1; i * paso1 - lejos < W + paso1; i++) {
     const x = i * paso1 - lejos;
-    if (ruido(i) < 0.62) {
+    // Ventanal, o un letrero de neón, pero nunca dos letreros seguidos.
+    if (ruido(i) < 0.62 || ruido(i - 1) >= 0.62) {
       const vx = x + 8 * e, vy = 10 * e, vw = 40 * e, vh = 34 * e;
       const cielo = c.createLinearGradient(0, vy, 0, vy + vh);
       cielo.addColorStop(0, "#1b2a55"); cielo.addColorStop(1, "#3a2457");
@@ -403,12 +403,10 @@ function dibujar(): void {
 
   // Las barras: una barra de acero con sus discos en la punta, colgando del techo y parada en el piso.
   for (const b of vuelo.barras) {
-    const x = b.x * e, w = ANCHO_BARRA * e;
+    const x = b.x * e, w = ANCHO_DISCO * e;
     const arriba = (b.centro - b.hueco / 2) * e, abajo = (b.centro + b.hueco / 2) * e;
-    // El color sale de la altura de su hueco: es fijo para cada barra mientras cruza.
-    const color = COLORES[Math.floor(ruido(Math.round(b.centro * 100)) * 4)] ?? COLORES[0]!;
-    pintarObstaculo(c, x, w, -10, arriba, true, color, e);
-    pintarObstaculo(c, x, w, abajo, piso, false, color, e);
+    pintarBarraConDisco(c, x, w, -10, arriba, true, e);
+    pintarBarraConDisco(c, x, w, abajo, piso, false, e);
   }
 
   // La kettlebell.
@@ -431,19 +429,6 @@ function dibujar(): void {
   const vin = c.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.4, W / 2, H / 2, Math.max(W, H) * 0.8);
   vin.addColorStop(0, "rgba(0, 0, 0, 0)"); vin.addColorStop(1, "rgba(0, 0, 0, 0.45)");
   c.fillStyle = vin; c.fillRect(0, 0, W, H);
-}
-
-// TEMPORAL: selector para comparar las propuestas de discos (P1, P2, P3).
-type Estilo = "p1" | "p2" | "p3";
-function estiloObstaculo(): Estilo {
-  try {
-    const v = globalThis.localStorage?.getItem("osfit:kb-barras");
-    return v === "p2" ? "p2" : v === "p3" ? "p3" : "p1";
-  } catch { return "p1"; }
-}
-
-function pintarObstaculo(c: CanvasRenderingContext2D, x: number, w: number, y0: number, y1: number, cuelga: boolean, _color: string, e: number): void {
-  pintarBarraConDiscos(c, x, w, y0, y1, cuelga, e, estiloObstaculo());
 }
 
 /** Una textura de grano (caucho o hierro martelinado), hecha una vez y repetida. */
@@ -637,34 +622,27 @@ function pintarDisco3D(c: CanvasRenderingContext2D, cx: number, cy: number, d: D
 }
 
 /**
- * P · La barra que te gustó con discos nuevos (propuestas P1, P2, P3): la manga sale de la orilla
- * del hueco con el seguro y uno o dos discos grandes, y la barra moleteada sigue hasta el techo o
- * el piso.
+ * El obstáculo (entrenador, 2026-11-24, discos "P2"): la barra olímpica moleteada y, en la punta
+ * del lado del hueco, un disco de hierro fundido con sus tres agarraderas, visto un poco desde
+ * arriba (el de abajo) o desde abajo (el que cuelga), con luz cálida de lámpara. Las medidas son
+ * las de la lógica (`ANCHO_DISCO`, `ANCHO_TUBO`, `DISCO_HASTA`): se ve lo que se choca.
  */
-function pintarBarraConDiscos(c: CanvasRenderingContext2D, x: number, w: number, y0: number, y1: number, cuelga: boolean, e: number, estilo: Estilo): void {
+function pintarBarraConDisco(c: CanvasRenderingContext2D, x: number, w: number, y0: number, y1: number, cuelga: boolean, e: number): void {
   const cx = x + w / 2;
-  const discos: Disco3D[] = estilo === "p2"
-    ? [{ r: w * 0.85, incl: 0.42, grueso: 1.9 * e, material: "hierro", color: "#3b3d42", kg: "20", luz: "calida", agarraderas: true }]
-    : estilo === "p3"
-      ? [
-        { r: w * 0.78, incl: 0.13, grueso: 3.3 * e, material: "bumper", color: "#1f1f24", kg: "20", luz: "contraluz", textoCanto: true },
-        { r: w * 0.78, incl: 0.13, grueso: 3.3 * e, material: "bumper", color: "#1f1f24", kg: "20", luz: "contraluz", textoCanto: true },
-      ]
-      : [{ r: w * 0.85, incl: 0.38, grueso: 2.6 * e, material: "bumper", color: "#2a6fd6", kg: "20", luz: "estudio" }];
-  // Desde la orilla: tapa de la manga, seguro, discos, manga, hombro; luego la barra.
-  const tapa = 0.7 * e, seguro = 1.3 * e, manga = 2.2 * e, hombro = 0.9 * e;
+  const disco: Disco3D = { r: w / 2, incl: 0.3, grueso: 1.9 * e, material: "hierro", color: "#3b3d42", kg: "20", luz: "calida", agarraderas: true };
+  // Desde la orilla del hueco: tapa de la manga, seguro, disco, manga, hombro; luego la barra.
   const dir = cuelga ? -1 : 1;
   let p = cuelga ? y1 : y0;
   const tramo = (h: number) => { const a = cuelga ? p - h : p; const b = cuelga ? p : p + h; p += dir * h; return [a, b] as const; };
-  const [tA, tB] = tramo(tapa);
-  const [sA, sB] = tramo(seguro);
-  const lugares = discos.map((d) => tramo(d.grueso));
-  const [mA, mB] = tramo(manga);
-  const [hA, hB] = tramo(hombro);
+  const [tA, tB] = tramo(0.7 * e);
+  const [sA, sB] = tramo(1.3 * e);
+  const [dA, dB] = tramo(disco.grueso);
+  const [mA, mB] = tramo(2.2 * e);
+  const [hA, hB] = tramo(0.9 * e);
   const barraA = cuelga ? y0 : p, barraB = cuelga ? p : y1;
 
-  // La barra moleteada (igual que antes: la que te gustó).
-  const bw = w * 0.17;
+  // La barra moleteada.
+  const bw = ANCHO_TUBO * e * 0.64;
   c.fillStyle = gradCilindro(c, cx - bw / 2, cx + bw / 2, ["#4a4e55", "#b4b9c0", "#eef0f3", "#33363b"]);
   c.fillRect(cx - bw / 2, barraA, bw, barraB - barraA);
   c.save();
@@ -675,26 +653,22 @@ function pintarBarraConDiscos(c: CanvasRenderingContext2D, x: number, w: number,
     c.beginPath(); c.moveTo(cx + bw / 2, yy); c.lineTo(cx - bw / 2, yy + bw * 0.55); c.stroke();
   }
   c.restore();
-  if (!cuelga) pintarSombra(c, cx, y1, w * 0.5, w * 0.1, 0.6);
+  if (!cuelga) pintarSombra(c, cx, y1, w * 0.3, w * 0.06, 0.6);
 
-  // Del fondo a la cámara: hombro, manga, discos (el más lejano primero), seguro, tapa.
+  // Del fondo a la cámara: hombro, manga, disco, seguro, tapa.
   const caraArriba = !cuelga;
+  const u = ANCHO_TUBO * e;
   const cil = (r: number, a: number, b: number, grad: [string, string, string, string]) =>
     cilindro(c, cx, r, a, b, caraArriba, gradCilindro(c, cx - r, cx + r, grad), (cy) => {
       c.fillStyle = "#e3e6ea"; c.beginPath(); c.ellipse(cx, cy, r, r * INCL, 0, 0, Math.PI * 2); c.fill();
     });
-  cil(w * 0.24, hA, hB, CROMO);
-  cil(w * 0.11, mA, mB, CROMO);
-  for (let k = discos.length - 1; k >= 0; k--) {
-    const d = discos[k]!;
-    const [a, b] = lugares[k]!;
-    // Sombra que deja en el disco de atrás (oclusión).
-    pintarSombra(c, cx, caraArriba ? b : a, d.r * 1.02, d.r * d.incl * 1.1, 0.45);
-    pintarDisco3D(c, cx, caraArriba ? a : b, d, caraArriba);
-  }
-  cil(w * 0.17, sA, sB, ["#0d0e10", "#3a3d44", "#5a5e66", "#08090a"]);
-  c.fillStyle = "#c9302a"; caja2(c, cx + w * 0.14, sA + (sB - sA) * 0.25, w * 0.26, (sB - sA) * 0.42, 2); c.fill();
-  cil(w * 0.11, tA, tB, CROMO);
+  cil(u * 0.45, hA, hB, CROMO);
+  cil(u * 0.21, mA, mB, CROMO);
+  pintarSombra(c, cx, caraArriba ? dB : dA, disco.r * 1.02, disco.r * disco.incl * 1.1, 0.45);
+  pintarDisco3D(c, cx, caraArriba ? dA : dB, disco, caraArriba);
+  cil(u * 0.32, sA, sB, ["#0d0e10", "#3a3d44", "#5a5e66", "#08090a"]);
+  c.fillStyle = "#c9302a"; caja2(c, cx + u * 0.26, sA + (sB - sA) * 0.25, u * 0.5, (sB - sA) * 0.42, 2); c.fill();
+  cil(u * 0.21, tA, tB, CROMO);
 }
 
 function shade(hex: string, f: number): string {

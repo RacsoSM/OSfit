@@ -19,8 +19,17 @@ export const RADIO = 3.6;
 export const GRAVEDAD = 250;
 export const IMPULSO = -82;
 export const CAIDA_MAXIMA = 130;
-/** Lo grueso de una barra con sus discos. */
-export const ANCHO_BARRA = 9;
+/**
+ * La forma de cada obstáculo, como se ve (entrenador, 2026-11-24, discos "P2"): una barra
+ * delgada (`ANCHO_TUBO`, con su manga y su seguro) y, cerca de la punta, un disco de hierro
+ * ancho (`ANCHO_DISCO`) entre `DISCO_DESDE` y `DISCO_HASTA` desde la orilla del hueco. Se choca
+ * con lo que se ve: el disco solo en su zona, la barra en el resto.
+ */
+export const ANCHO_DISCO = 15;
+export const ANCHO_TUBO = 2.4;
+/** Un poco antes de la orilla: la cara del disco asoma hacia el hueco. */
+export const DISCO_DESDE = -0.3;
+export const DISCO_HASTA = 3.9;
 /** De una barra a la siguiente. */
 export const SEPARACION = 44;
 
@@ -92,6 +101,18 @@ export function choca(cx: number, cy: number, r: number, x: number, y: number, w
   return (cx - px) ** 2 + (cy - py) ** 2 < r * r;
 }
 
+/** ¿Toca la barra de arriba o la de abajo (su tubo o su disco)? */
+export function chocaConBarra(cx: number, cy: number, r: number, b: Barra): boolean {
+  const arriba = b.centro - b.hueco / 2, abajo = b.centro + b.hueco / 2;
+  const tx = b.x + (ANCHO_DISCO - ANCHO_TUBO) / 2;
+  // El disco se angosta hacia su cara (es un cilindro visto en 3/4): su zona es un poco más angosta.
+  const dw = ANCHO_DISCO * 0.88, dx = b.x + (ANCHO_DISCO - dw) / 2, dh = DISCO_HASTA - DISCO_DESDE;
+  return choca(cx, cy, r, tx, -50, ANCHO_TUBO, arriba + 50)
+    || choca(cx, cy, r, tx, abajo, ANCHO_TUBO, PISO - abajo)
+    || choca(cx, cy, r, dx, arriba - DISCO_HASTA, dw, dh)
+    || choca(cx, cy, r, dx, abajo + DISCO_DESDE, dw, dh);
+}
+
 /** Avanza `dt` segundos. Devuelve "punto" al pasar una barra y "fin" al chocar. */
 export function avanzar(v: Vuelo, dt: number): "punto" | "fin" | null {
   if (v.terminada) return null;
@@ -102,7 +123,7 @@ export function avanzar(v: Vuelo, dt: number): "punto" | "fin" | null {
   const vel = velocidad(v.puntos);
   v.recorrido += vel * dt;
   for (const b of v.barras) b.x -= vel * dt;
-  if (v.barras.length > 0 && v.barras[0]!.x + ANCHO_BARRA < -10) v.barras.shift();
+  if (v.barras.length > 0 && v.barras[0]!.x + ANCHO_DISCO < -10) v.barras.shift();
   const ultima = v.barras[v.barras.length - 1];
   if (!ultima || ultima.x < v.vistaAncho + 10) {
     v.barras.push(nuevaBarra((ultima?.x ?? v.vistaAncho) + SEPARACION, ultima, v.puntos, v.azar));
@@ -114,12 +135,11 @@ export function avanzar(v: Vuelo, dt: number): "punto" | "fin" | null {
   }
   let evento: "punto" | null = null;
   for (const b of v.barras) {
-    const arriba = b.centro - b.hueco / 2, abajo = b.centro + b.hueco / 2;
-    if (choca(v.x, v.y, RADIO * 0.88, b.x, -50, ANCHO_BARRA, arriba + 50) || choca(v.x, v.y, RADIO * 0.88, b.x, abajo, ANCHO_BARRA, PISO - abajo)) {
+    if (chocaConBarra(v.x, v.y, RADIO * 0.88, b)) {
       v.terminada = true;
       return "fin";
     }
-    if (!b.pasada && b.x + ANCHO_BARRA < v.x - RADIO) {
+    if (!b.pasada && b.x + ANCHO_DISCO < v.x - RADIO) {
       b.pasada = true;
       v.puntos++;
       evento = "punto";
