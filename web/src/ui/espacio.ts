@@ -8,7 +8,9 @@
  */
 import { escapar } from "./tarjetaDia";
 import { caja, p, poligono, type Vista } from "./iso";
-import { pintarPradera, type Lugar, type Zona } from "./pradera";
+import { pintarPradera, vistaPradera, type Lugar, type Zona } from "./pradera";
+import { avanzarHabitante, nuevoHabitante, pintarHabitante, type Habitante } from "./habitante";
+import type { Sexo } from "../datos";
 import { ajustarMarcoJuego, vigilarMarcoJuego } from "./marcoJuego";
 
 /** TEMPORAL: propuestas de estilo del cuarto (`osfit:espacio-estilo`: a, b, c). */
@@ -39,8 +41,10 @@ const TITULOS: Record<"pradera" | Lugar, (q: string) => string> = {
  * A toda la pantalla, como los juegos (`ajustarMarcoJuego`): de arriba hasta la barra de abajo,
  * sin recuadro. El ☰ queda encima; los letreros van sobre el dibujo.
  */
-export function ventanaEspacio(nombre: string): string {
+export function ventanaEspacio(nombre: string, sexoDelPerfil?: Sexo | null): string {
   nombreDe = nombre.trim().split(/\s+/)[0] ?? "";
+  // Sin sexo en el perfil, el habitante es mujer (la mayoría de las clientas).
+  sexo = sexoDelPerfil === "H" ? "H" : "M";
   return `
     <section class="espacio" id="espacio-pantalla" aria-label="Mi espacio">
       <canvas id="espacio-canvas" aria-label="${escapar(TITULOS[lugar](nombreDe))}"></canvas>
@@ -132,39 +136,86 @@ function vistaPara(c: CanvasRenderingContext2D, W: number, H: number): Vista {
   return { c, tw, th, alto, ox: W / 2, oy: (H - total) / 2 + alto * th };
 }
 
-/** Dibuja lo que toca (la pradera, la casa o el gimnasio) en `#espacio-canvas`. */
+/** El fondo ya dibujado (lo pesado: pasto, árboles, edificios), para no repintarlo en cada cuadro. */
+let fondo: { clave: string; lienzo: HTMLCanvasElement; pixel: boolean } | null = null;
+let habitante: Habitante | null = null;
+let sexo: Sexo = "M";
+let ciclo = 0;
+let ultimo = 0;
+
+/**
+ * Dibuja lo que toca (la pradera, la casa o el gimnasio) en `#espacio-canvas` y arranca la
+ * animación del habitante. El fondo se dibuja una vez por lugar y tamaño; cada cuadro solo lo
+ * copia y pinta al habitante encima. La animación se detiene sola al salir de Mi espacio.
+ */
 export function dibujarEspacio(estilo: EstiloEspacio = estiloGuardado(), ejemplos = conEjemplos()): void {
   const canvas = document.querySelector<HTMLCanvasElement>("#espacio-canvas");
   if (!canvas) return;
   const W = canvas.clientWidth, H = canvas.clientHeight;
   if (W === 0 || H === 0) return;
   const pixel = lugar !== "pradera" && estilo === "c";
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  const clave = `${lugar}|${W}|${H}|${dpr}|${estilo}|${ejemplos}`;
+  if (!fondo || fondo.clave !== clave) fondo = { clave, lienzo: pintarFondo(W, H, dpr, estilo, ejemplos, pixel), pixel };
+  if (!habitante || habitante.lugar !== lugar) habitante = nuevoHabitante(lugar, performance.now() / 1000);
   // Que el navegador no suavice los cuadritos al agrandar el canvas.
   canvas.style.imageRendering = pixel ? "pixelated" : "";
-  const dpr = pixel ? 1 : Math.min(2, window.devicePixelRatio || 1);
+  if (!ciclo) { ultimo = performance.now(); ciclo = requestAnimationFrame(cuadro); }
+}
+
+/** El fondo del lugar, en un lienzo aparte del tamaño del canvas. Calcula las zonas tocables. */
+function pintarFondo(W: number, H: number, dpr: number, estilo: EstiloEspacio, ejemplos: boolean, pixel: boolean): HTMLCanvasElement {
   // En 8 bits se dibuja chiquito y se agranda sin suavizar: así salen los cuadritos.
   const escala = pixel ? 3 : 1;
-  const w = Math.round((W * dpr) / escala), h = Math.round((H * dpr) / escala);
-  const lienzo = pixel ? document.createElement("canvas") : canvas;
-  lienzo.width = w; lienzo.height = h;
+  const final = document.createElement("canvas");
+  final.width = Math.round(W * dpr); final.height = Math.round(H * dpr);
+  const lienzo = pixel ? document.createElement("canvas") : final;
+  if (pixel) { lienzo.width = Math.round(W / escala); lienzo.height = Math.round(H / escala); }
   const c = lienzo.getContext("2d");
-  if (!c) return;
+  if (!c) return final;
   if (!pixel) c.setTransform(dpr, 0, 0, dpr, 0, 0);
-  const cw = pixel ? w : W, ch = pixel ? h : H;
+  const cw = pixel ? lienzo.width : W, ch = pixel ? lienzo.height : H;
   if (lugar === "pradera") {
-    // Las zonas tocables, en px de pantalla (en 8 bits se dibujó a un tercio).
     zonas = pintarPradera(c, cw, ch);
   } else {
     zonas = [];
     pintarCuarto(c, cw, ch, estilo, ejemplos, lugar);
   }
   if (pixel) {
-    canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
-    const d = canvas.getContext("2d");
-    if (!d) return;
-    d.imageSmoothingEnabled = false;
-    d.drawImage(lienzo, 0, 0, canvas.width, canvas.height);
+    const d = final.getContext("2d");
+    if (d) { d.imageSmoothingEnabled = false; d.drawImage(lienzo, 0, 0, final.width, final.height); }
   }
+  return final;
+}
+
+/** La vista isométrica del lugar (en px del canvas), para poner al habitante en su cuadro. */
+function vistaDelLugar(c: CanvasRenderingContext2D, W: number, H: number): Vista {
+  return lugar === "pradera" ? vistaPradera(c, W, H) : vistaPara(c, W, H);
+}
+
+function cuadro(ahoraMs: number): void {
+  const canvas = document.querySelector<HTMLCanvasElement>("#espacio-canvas");
+  if (!canvas || !fondo || !canvas.isConnected) { ciclo = 0; return; }
+  ciclo = requestAnimationFrame(cuadro);
+  const dt = Math.min(0.05, (ahoraMs - ultimo) / 1000);
+  ultimo = ahoraMs;
+  const W = canvas.clientWidth, H = canvas.clientHeight;
+  if (W === 0 || H === 0) return;
+  if (canvas.width !== fondo.lienzo.width || canvas.height !== fondo.lienzo.height) { canvas.width = fondo.lienzo.width; canvas.height = fondo.lienzo.height; }
+  const c = canvas.getContext("2d");
+  if (!c) return;
+  const dpr = canvas.width / W;
+  c.setTransform(1, 0, 0, 1, 0, 0);
+  c.imageSmoothingEnabled = !fondo.pixel;
+  c.drawImage(fondo.lienzo, 0, 0);
+  if (!habitante) return;
+  c.setTransform(dpr, 0, 0, dpr, 0, 0);
+  c.imageSmoothingEnabled = true;
+  const v = vistaDelLugar(c, W, H);
+  const t = ahoraMs / 1000;
+  avanzarHabitante(habitante, t, dt, (i, j) => p(v, i, j)[0]);
+  const [x, y] = p(v, habitante.i, habitante.j);
+  pintarHabitante(c, x, y, v.tw * (lugar === "pradera" ? 0.52 : 0.44), sexo, habitante, t);
 }
 
 function pintarCuarto(c: CanvasRenderingContext2D, W: number, H: number, estilo: EstiloEspacio, ejemplos: boolean, tipo: Lugar): void {

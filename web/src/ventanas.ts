@@ -341,7 +341,7 @@ export const VENTANAS: readonly Ventana[] = [
   // El Arcade (entrenador, 2026-11-24), debajo de Quejas y sugerencias: reúne los minijuegos.
   { id: "arcade", titulo: "Arcade", icono: "🕹️", grupo: "principal", pintar: () => ventanaArcade() },
   // Mi espacio (entrenador, 2026-11-25; backlog 2, punto 29): por ahora solo para probarlo.
-  { id: "espacio", titulo: "Mi espacio", icono: "🏠", grupo: "principal", soloCon: "pruebasEspacio", pintar: (d) => ventanaEspacio(d.cliente.nombre ?? "") },
+  { id: "espacio", titulo: "Mi espacio", icono: "🏠", grupo: "principal", soloCon: "pruebasEspacio", pintar: (d) => ventanaEspacio(d.cliente.nombre ?? "", d.cliente.sexo) },
   // Los juegos, subventanas del Arcade (`PADRE` en `navegacion.ts`). En su propio contenedor: un
   // repintado a media partida tiraría el canvas (`ui/juegoDiscos.ts`, `ui/kettlebellBird.ts`).
   { id: "juego", titulo: "Torre de discos", icono: "🏋️", grupo: "sub", contenedorPropio: "juego" },
