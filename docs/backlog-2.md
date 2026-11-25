@@ -1028,3 +1028,83 @@ de la tarjeta del día solo sale si la clienta tiene `entrenaADistancia`. Las de
 registrando en Registro, que también continúa un entrenamiento abierto. El interruptor de la
 app lo explica: "ve el entrenamiento guiado" / "no ve el entrenamiento guiado".
 
+
+## 29. Monedas del Arcade y "Mi espacio" (un lugar propio que se mejora y otros visitan)
+
+> "crear un entorno, un apartado nuevo, donde tengas tu espacio, como tu gimnasio o tu casa. Que por llegar al primer lugar en cualquier juego del arcade te dé una moneda, y por mantener el primer lugar por 24 horas otra moneda, y por diferentes cosas. Con las monedas puedas comprar cosas para mejorar tu lugar, y que los demás miembros de la comunidad puedan visitar tu lugar. Lo primero, la acumulación de monedas." (2026-11-25)
+
+Se hace por fases. Cada una se prueba y se publica sola.
+
+| Fase | Qué agrega | Qué ve la clienta |
+|---|---|---|
+| 1. Monedas | Ganar y acumular monedas por el Arcade | Su saldo, su historial y avisos de "¡Ganaste una moneda!" |
+| 2. Mi espacio | Su lugar propio: un gimnasio sencillo, vacío al inicio | Una sección nueva con su espacio |
+| 3. Tienda | Comprar objetos con monedas y acomodarlos | Catálogo, precios y su espacio mejorando |
+| 4. Visitas | Ver los espacios de los demás | Entrar al espacio de otra persona desde el Ranking o el Arcade |
+| 5. Más formas de ganar | Monedas por entrenar, rachas, logros… | Más maneras de juntar monedas |
+
+### Fase 1 — Monedas (la primera)
+
+Cómo se ganan (propuesta inicial):
+
+- **Llegar al 1er lugar** en cualquier juego del Arcade: 1 moneda.
+- **Mantener el 1er lugar 24 horas seguidas:** 1 moneda por cada día completo que lo conserve.
+
+Reglas para que no se pueda abusar:
+
+- **Turnarse el 1er lugar:** si dos personas se lo quitan una a la otra todo el día, ganarían
+  monedas sin parar. Por eso "llegar al 1er lugar" paga máximo 1 vez por juego al día.
+- **Empates en el 1er lugar:** propuesta: cuentan para todos los empatados.
+- **Lo decide el servidor, nunca el teléfono**, igual que hoy se validan las partidas
+  (`functions/src/juegoDiscos.ts`). Nadie puede darse monedas editando la app.
+- **Sin duplicados:** cada moneda lleva un id único (como los avisos de "te ha superado",
+  `auto_<clave>_…`), así que si algo se repite no se paga doble.
+
+Lo que se construye:
+
+1. **Al guardar una partida** (`guardarPartida`): revisar si con esa partida llegó al 1er lugar.
+   Si sí, darle la moneda y guardar desde cuándo es campeón de ese juego
+   (por ejemplo `juegoX/_campeon`: quién y desde cuándo).
+2. **Revisión automática cada hora** (función programada, hora de Mazatlán): quien lleve 24 h o
+   más de campeón recibe 1 moneda por cada día completo. El id incluye el juego, la persona,
+   desde cuándo y el número de día.
+3. **Base de datos:** `monedas/{clienteId}` con el saldo y `monedas/{clienteId}/movimientos/{id}`
+   con el historial ("+1 · Llegaste al 1er lugar en Fit Bird"). Reglas: cada quien lee lo suyo;
+   escribe solo el servidor.
+4. **Aviso** "¡Ganaste una moneda!" por el sistema de notificaciones que ya existe
+   (`notificaciones/` y `enviarNotificacion`).
+5. **En la web:**
+   - un contador de monedas en el Arcade, junto al letrero, con estética neón;
+   - al tocarlo, una hoja con el saldo, el historial y cómo ganar más.
+6. **Pruebas** de todas las reglas: conquista, empates, el tope diario y los días completos.
+
+Decisiones pendientes del entrenador antes de construirla:
+
+1. **Nombre:** ¿"monedas", o algo más de Arcade como "fichas"?
+2. **Cantidades:** ¿1 por llegar al 1º y 1 por cada 24 h? (Se ajustan después con los precios
+   de la tienda.)
+3. **Tope diario:** ¿máximo una moneda al día por "llegar al 1er lugar" en cada juego?
+4. **Empates en el 1er lugar:** ¿ganan todos los empatados?
+5. **Arranque:** ¿quien ya es campeón al publicar empieza a contar sus 24 h desde ese momento, o
+   recibe una moneda de bienvenida?
+6. **La cuenta del entrenador:** ¿gana monedas como cualquier jugador o queda fuera?
+
+### Fase 2 — Mi espacio
+
+Un cuarto dibujado en canvas como los juegos, visto un poco desde arriba, con el estilo del
+Arcade. Empieza con lo básico: piso, paredes y un tapete. Se detalla al llegar.
+
+### Fase 3 — Tienda
+
+Objetos con precio en monedas (mancuernas, rack, caminadora, posters, luces de neón,
+plantas…). Al comprar (función del servidor que valida el saldo y descuenta), el objeto se
+agrega a su espacio y lo puede acomodar.
+
+### Fase 4 — Visitas
+
+Un botón "Visitar" en los nombres del Ranking o del Arcade para ver el espacio de otra
+persona. Quizá con un 👍 o un contador de visitas.
+
+### Fase 5 — Más formas de ganar monedas
+
+Por entrenar, por rachas, por logros y otras que se definan.
