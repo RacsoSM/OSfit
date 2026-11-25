@@ -30,16 +30,33 @@ export function estiloPradera(): EstiloPradera {
  * pantalla y los cuadros de un tamaño que deja ver la casa y el gimnasio completos. La casa
  * llega a ~3 cuadros a la izquierda del centro y el gimnasio a ~3.7 a la derecha.
  */
+/** TEMPORAL: propuestas de cámara de la pradera (`osfit:pradera-camara`). */
+export type CamaraPradera = "iso" | "baja" | "alta" | "cerca";
+export function camaraPradera(): CamaraPradera {
+  try { const v = globalThis.localStorage?.getItem("osfit:pradera-camara"); return v === "baja" || v === "alta" || v === "cerca" ? v : "iso"; } catch { return "iso"; }
+}
+/**
+ * Cada cámara: qué tan aplastado se ve el piso (`piso`: alto de un cuadro entre su ancho; 0.5 es
+ * la isométrica), qué tan altas se ven las cosas (`alto`) y el acercamiento.
+ */
+const CAMARAS: Record<CamaraPradera, { piso: number; alto: number; zoom: number }> = {
+  iso: { piso: 0.5, alto: 0.5, zoom: 1 },
+  baja: { piso: 0.34, alto: 0.62, zoom: 1.12 },
+  alta: { piso: 0.72, alto: 0.36, zoom: 0.92 },
+  cerca: { piso: 0.5, alto: 0.5, zoom: 1.5 },
+};
+
 export function vistaPradera(c: CanvasRenderingContext2D, W: number, H: number): Vista {
-  const tw = Math.min(W / 8.3, H / 6.2);
-  const v: Vista = { c, tw, th: tw / 2, alto: 0, ox: W / 2 - tw * 0.35, oy: 0 };
+  const cam = CAMARAS[camaraPradera()];
+  const tw = Math.min(W / 8.3, H / 6.2) * cam.zoom;
+  const v: Vista = { c, tw, th: tw * cam.piso, zEsc: tw * cam.alto, alto: 0, ox: W / 2 - tw * 0.35, oy: 0 };
   const [, ycentro] = p(v, 5.2, 5.2);
   v.oy = H * 0.5 - ycentro;
   return v;
 }
 
 /** El camino: de abajo de la pantalla al cruce, y de ahí a la puerta de la casa y del gimnasio. */
-export const TRAMOS: readonly [number, number, number, number][] = [[20, 20, 6.2, 6.2], [6.2, 6.2, 4.1, 6.6], [6.2, 6.2, 6.8, 4.1]];
+export const TRAMOS: readonly [number, number, number, number][] = [[34, 34, 6.2, 6.2], [6.2, 6.2, 4.1, 6.6], [6.2, 6.2, 6.8, 4.1]];
 /** Dónde va cada edificio: [i0, i1, j0, j1, alto]. */
 export const CASA = [1.6, 4.0, 5.4, 7.6, 1.7] as const;
 export const GIMNASIO = [5.2, 8.6, 1.2, 3.8, 2.1] as const;
@@ -136,13 +153,13 @@ export function zonaDe(v: Vista, lugar: Lugar, i0: number, i1: number, j0: numbe
 export function letreroFlotante(v: Vista, i: number, j: number, z: number, texto: string, color: string): void {
   const c = v.c;
   const [x, y] = p(v, i, j, z);
-  c.font = `800 ${Math.max(4, Math.round(v.th * 0.75))}px system-ui, sans-serif`;
-  const w = c.measureText(texto).width + v.th * 1.1, h = v.th * 1.25;
+  c.font = `800 ${Math.max(4, Math.round((v.tw / 2) * 0.75))}px system-ui, sans-serif`;
+  const w = c.measureText(texto).width + (v.tw / 2) * 1.1, h = (v.tw / 2) * 1.25;
   c.fillStyle = "rgba(20, 16, 30, 0.82)";
   c.beginPath(); c.roundRect(x - w / 2, y - h, w, h, h / 2); c.fill();
-  c.strokeStyle = color; c.lineWidth = Math.max(1, v.th * 0.12); c.stroke();
+  c.strokeStyle = color; c.lineWidth = Math.max(1, (v.tw / 2) * 0.12); c.stroke();
   c.fillStyle = "#fff"; c.textAlign = "center"; c.textBaseline = "middle"; c.fillText(texto, x, y - h / 2 + 0.5);
-  const pico = v.th * 0.35;
+  const pico = (v.tw / 2) * 0.35;
   c.fillStyle = "rgba(20, 16, 30, 0.82)"; c.beginPath(); c.moveTo(x - pico, y); c.lineTo(x + pico, y); c.lineTo(x, y + pico * 1.2); c.fill();
 }
 

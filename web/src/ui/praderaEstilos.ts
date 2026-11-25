@@ -10,7 +10,7 @@
  */
 import { ruido } from "./gimnasioFondo";
 import { p, poligono, type Vista } from "./iso";
-import { ARBOLES, CASA, GIMNASIO, TRAMOS, letreroFlotante, vistaPradera, zonaDe, type Zona } from "./pradera";
+import { ARBOLES, CASA, GIMNASIO, TRAMOS, camaraPradera, letreroFlotante, vistaPradera, zonaDe, type Zona } from "./pradera";
 
 type Punto = [number, number];
 
@@ -51,7 +51,7 @@ function ventanaReal(v: Vista, i0: number, j0: number, i1: number, j1: number, z
   c.globalAlpha = 0.35;
   cara(v, i0 + (i1 - i0) * 0.2, j0 + (j1 - j0) * 0.2, i0 + (i1 - i0) * 0.4, j0 + (j1 - j0) * 0.4, z0 + m, z1 - m, "#ffffff");
   c.restore();
-  c.strokeStyle = "#f4f1ea"; c.lineWidth = Math.max(1, v.th * 0.06);
+  c.strokeStyle = "#f4f1ea"; c.lineWidth = Math.max(1, (v.tw / 2) * 0.06);
   const mi = (i0 + i1) / 2, mj = (j0 + j1) / 2, mz = (z0 + z1) / 2;
   c.beginPath(); c.moveTo(...p(v, mi, mj, z0)); c.lineTo(...p(v, mi, mj, z1)); c.moveTo(...p(v, i0, j0, mz)); c.lineTo(...p(v, i1, j1, mz)); c.stroke();
 }
@@ -79,7 +79,7 @@ function copaReal(c: CanvasRenderingContext2D, x: number, y: number, r: number, 
 function arbolReal(v: Vista, i: number, j: number): void {
   const c = v.c;
   const [bx, by] = p(v, i, j);
-  const r = v.th * 1.15, alto = v.th * 1.6;
+  const r = (v.tw / 2) * 1.15, alto = (v.zEsc ?? v.th) * 1.6;
   // Sombra en el pasto, hacia abajo a la derecha.
   c.fillStyle = "rgba(20, 40, 15, 0.22)"; c.beginPath(); c.ellipse(bx + r * 0.7, by + r * 0.15, r * 1.1, r * 0.45, 0, 0, Math.PI * 2); c.fill();
   // Tronco que se afina.
@@ -103,7 +103,7 @@ function casaReal(v: Vista): Zona {
   cara(v, i0, j1, i1, j1, 0, 0.18, "#b9ad9a"); cara(v, i1, j0, i1, j1, 0, 0.18, "#a39784");
   // Puerta de madera con su escalón y ventanas.
   cara(v, i1, 6.2, i1, 6.8, 0, 1.05, degradado(c, p(v, i1, 6.2, 1.05), p(v, i1, 6.2, 0), ["#9a6a40", "#6e4527"]));
-  const [px, py] = p(v, i1, 6.7, 0.5); c.fillStyle = "#e6c25a"; c.beginPath(); c.arc(px, py, Math.max(1, v.th * 0.06), 0, Math.PI * 2); c.fill();
+  const [px, py] = p(v, i1, 6.7, 0.5); c.fillStyle = "#e6c25a"; c.beginPath(); c.arc(px, py, Math.max(1, (v.tw / 2) * 0.06), 0, Math.PI * 2); c.fill();
   poligono(v, [p(v, i1, 6.1), p(v, i1 + 0.3, 6.1), p(v, i1 + 0.3, 6.9), p(v, i1, 6.9)], "#c9bfae");
   ventanaReal(v, i1, 5.6, i1, 6.0, 0.6, 1.25);
   ventanaReal(v, i1, 7.0, i1, 7.4, 0.6, 1.25);
@@ -111,7 +111,7 @@ function casaReal(v: Vista): Zona {
   // Arbustos al pie del frente.
   for (let k = 0; k < 5; k++) {
     const [x, y] = p(v, i0 + 0.3 + k * 0.48, j1 + 0.18, 0.1);
-    copaReal(c, x, y, v.th * 0.32, 40 + k, -10);
+    copaReal(c, x, y, (v.tw / 2) * 0.32, 40 + k, -10);
   }
   // Chimenea y techo de tejas.
   const jm = (j0 + j1) / 2;
@@ -128,7 +128,7 @@ function casaReal(v: Vista): Zona {
     const jj = jm + (j1 + 0.15 - jm) * f, zz = h + 1.2 - 1.2 * f;
     c.beginPath(); c.moveTo(...p(v, i0 - 0.15, jj, zz)); c.lineTo(...p(v, i1 + 0.15, jj, zz)); c.stroke();
   }
-  c.strokeStyle = "#5e2a20"; c.lineWidth = Math.max(1.5, v.th * 0.08);
+  c.strokeStyle = "#5e2a20"; c.lineWidth = Math.max(1.5, (v.tw / 2) * 0.08);
   c.beginPath(); c.moveTo(...p(v, i0 - 0.15, jm, h + 1.2)); c.lineTo(...p(v, i1 + 0.15, jm, h + 1.2)); c.stroke();
   letreroFlotante(v, (i0 + i1) / 2, (j0 + j1) / 2, h + 2.5, "🏠 Casa", "#ffd45c");
   return zonaDe(v, "casa", i0, i1, j0, j1, h + 2.6);
@@ -149,7 +149,7 @@ function gimnasioReal(v: Vista): Zona {
   c.save(); c.globalAlpha = 0.3;
   for (const [f0, f1] of [[0.1, 0.18], [0.24, 0.27], [0.55, 0.66], [0.72, 0.75]]) cara(v, i0 + 0.2 + (i1 - i0 - 0.4) * f0!, j1, i0 + 0.2 + (i1 - i0 - 0.4) * f1!, j1, 0.12, 1.5, "#ffffff");
   c.restore();
-  c.strokeStyle = "#2b2f38"; c.lineWidth = Math.max(1, v.th * 0.06);
+  c.strokeStyle = "#2b2f38"; c.lineWidth = Math.max(1, (v.tw / 2) * 0.06);
   for (let k = 0; k <= 6; k++) { const ii = i0 + 0.2 + ((i1 - i0 - 0.4) * k) / 6; c.beginPath(); c.moveTo(...p(v, ii, j1, 0.12)); c.lineTo(...p(v, ii, j1, 1.5)); c.stroke(); }
   c.beginPath(); c.moveTo(...p(v, i0 + 0.2, j1, 0.8)); c.lineTo(...p(v, i1 - 0.2, j1, 0.8)); c.stroke();
   cara(v, 6.4, j1, 7.1, j1, 0, 1.2, "#1f232b");
@@ -164,8 +164,8 @@ function gimnasioReal(v: Vista): Zona {
   const [x0, y0] = p(v, i0 + 0.5, j1, h - 0.15), [x1, y1] = p(v, i1 - 0.5, j1, h - 0.15);
   c.save(); c.translate(x0, y0); c.rotate(Math.atan2(y1 - y0, x1 - x0));
   const largo = Math.hypot(x1 - x0, y1 - y0);
-  c.fillStyle = "#14151a"; c.fillRect(0, -v.th * 0.42, largo, v.th * 0.8);
-  c.font = `900 ${Math.round(v.th * 0.55)}px system-ui, sans-serif`; c.textAlign = "center"; c.textBaseline = "middle";
+  c.fillStyle = "#14151a"; c.fillRect(0, -(v.tw / 2) * 0.42, largo, (v.tw / 2) * 0.8);
+  c.font = `900 ${Math.round((v.tw / 2) * 0.55)}px system-ui, sans-serif`; c.textAlign = "center"; c.textBaseline = "middle";
   c.fillStyle = "#ffffff"; c.shadowColor = "#ff3bd4"; c.shadowBlur = 6; c.fillText("OSFIT GYM", largo / 2, 0);
   c.restore();
   letreroFlotante(v, (i0 + i1) / 2, (j0 + j1) / 2, h + 2.4, "🏋️ Gimnasio", "#ff3bd4");
@@ -251,6 +251,12 @@ export function praderaRealista(c: CanvasRenderingContext2D, W: number, H: numbe
   ];
   const zonas: Zona[] = [];
   for (const cosa of cosas.sort((a, b) => a.orden - b.orden)) { const z = cosa.pinta(); if (z) zonas.push(z); }
+  // Con la cámara baja se alcanza a ver a lo lejos: el horizonte con bruma y cielo arriba.
+  if (camaraPradera() === "baja") {
+    const lejos = c.createLinearGradient(0, 0, 0, H * 0.3);
+    lejos.addColorStop(0, "rgba(190, 220, 245, 1)"); lejos.addColorStop(0.35, "rgba(200, 225, 235, 0.85)"); lejos.addColorStop(1, "rgba(200, 225, 235, 0)");
+    c.fillStyle = lejos; c.fillRect(0, 0, W, H * 0.3);
+  }
   // Viñeta suave en las orillas.
   const vin = c.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.45, W / 2, H / 2, Math.max(W, H) * 0.75);
   vin.addColorStop(0, "rgba(0, 0, 0, 0)"); vin.addColorStop(1, "rgba(0, 30, 0, 0.28)");
@@ -272,7 +278,7 @@ function triangulo(c: CanvasRenderingContext2D, a: Punto, b: Punto, d: Punto, co
 function pinoLow(v: Vista, i: number, j: number): void {
   const c = v.c;
   const [x, y] = p(v, i, j);
-  const r = v.th * 0.95;
+  const r = (v.tw / 2) * 0.95;
   c.fillStyle = "rgba(20, 50, 20, 0.25)"; c.beginPath(); c.ellipse(x + r * 0.6, y + r * 0.1, r * 0.9, r * 0.32, 0, 0, Math.PI * 2); c.fill();
   triangulo(c, [x - r * 0.12, y], [x + r * 0.12, y], [x, y - r * 0.8], "#6b4428");
   const redondo = ruido(i * 5 + j) > 0.5;
@@ -342,7 +348,7 @@ export function praderaLowPoly(c: CanvasRenderingContext2D, W: number, H: number
     cajaLow(v, i0 - 0.1, j0 - 0.1, i1 - i0 + 0.2, j1 - j0 + 0.2, h, 0.2, [70, 76, 92]);
     const [x0, y0] = p(v, i0 + 0.5, j1, h - 0.2), [x1, y1] = p(v, i1 - 0.5, j1, h - 0.2);
     c.save(); c.translate(x0, y0); c.rotate(Math.atan2(y1 - y0, x1 - x0));
-    c.font = `900 ${Math.round(v.th * 0.6)}px system-ui, sans-serif`; c.textAlign = "center"; c.textBaseline = "middle";
+    c.font = `900 ${Math.round((v.tw / 2) * 0.6)}px system-ui, sans-serif`; c.textAlign = "center"; c.textBaseline = "middle";
     c.fillStyle = "#ff3bd4"; c.fillText("OSFIT GYM", Math.hypot(x1 - x0, y1 - y0) / 2, 0);
     c.restore();
     letreroFlotante(v, (i0 + i1) / 2, (j0 + j1) / 2, h + 2.4, "🏋️ Gimnasio", "#ff3bd4");

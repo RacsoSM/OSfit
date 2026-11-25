@@ -2,11 +2,15 @@
  * Lo isométrico de Mi espacio (`ui/espacio.ts`, `ui/pradera.ts`): del piso a la pantalla, y las
  * figuras básicas (polígonos y cajas). i va a la derecha-abajo, j a la izquierda-abajo, z arriba.
  */
-export interface Vista { c: CanvasRenderingContext2D; ox: number; oy: number; tw: number; th: number; alto: number; }
+export interface Vista {
+  c: CanvasRenderingContext2D; ox: number; oy: number; tw: number; th: number; alto: number;
+  /** Cuántos px mide una unidad de alto; sin él, lo mismo que `th` (la isométrica de siempre). */
+  zEsc?: number;
+}
 
 /** Del piso (i a la derecha-abajo, j a la izquierda-abajo, z hacia arriba) a la pantalla. */
 export function p(v: Vista, i: number, j: number, z = 0): [number, number] {
-  return [v.ox + (i - j) * (v.tw / 2), v.oy + (i + j) * (v.th / 2) - z * v.th];
+  return [v.ox + (i - j) * (v.tw / 2), v.oy + (i + j) * (v.th / 2) - z * (v.zEsc ?? v.th)];
 }
 
 export function poligono(v: Vista, puntos: [number, number][], relleno: string | CanvasGradient, borde?: string): void {
