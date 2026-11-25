@@ -36,12 +36,15 @@ function tablaDe(llave: string): TablaDiscos | null {
   } catch { return null; }
 }
 
-/** "👑 Jessica M." y su puntuación, o la invitación a estrenarlo. */
+/** Cuántas letras del nombre del campeón caben en la tarjeta. */
+export const MAX_NOMBRE = 18;
+
+/** "👑 Jessica Morales Iba" y su puntuación, o la invitación a estrenarlo. */
 export function hiScore(t: TablaDiscos | null): { quien: string; puntos: string } {
   const campeon = t?.filas[0];
   if (!campeon) return { quien: t ? "¡Sé el primer campeón!" : "Cargando…", puntos: "" };
-  const [nombre, apellido] = campeon.nombre.split(/\s+/);
-  const corto = apellido ? `${nombre} ${apellido.charAt(0)}.` : nombre ?? "";
+  // Hasta 18 letras del nombre completo (entrenador, 2026-11-25); antes era "Jose J.".
+  const corto = campeon.nombre.trim().replace(/\s+/g, " ").slice(0, MAX_NOMBRE).trimEnd();
   // Empate en el primer lugar: el primero en orden y "+1", "+2".
   const empatados = t!.filas.filter((f) => f.puesto === 1).length - 1;
   return { quien: `👑 ${corto}${empatados > 0 ? ` +${empatados}` : ""}`, puntos: String(campeon.puntos) };

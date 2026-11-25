@@ -9,7 +9,8 @@ describe("Arcade", () => {
   afterEach(() => vi.unstubAllGlobals());
 
   it("el HI-SCORE es el campeón (primer nombre e inicial) y su puntuación; empates como +n", () => {
-    expect(hiScore(tabla([[1, "Jessica Morales Ibarra", 47], [2, "Said", 28]]))).toEqual({ quien: "👑 Jessica M.", puntos: "47" });
+    expect(hiScore(tabla([[1, "Jessica Morales Ibarra", 47], [2, "Said", 28]]))).toEqual({ quien: "👑 Jessica Morales Ib", puntos: "47" });
+    expect(hiScore(tabla([[1, "Jose  Juan", 36]])).quien).toBe("👑 Jose Juan");
     expect(hiScore(tabla([[1, "Said", 31], [1, "Ana Soto", 31]]))).toEqual({ quien: "👑 Said +1", puntos: "31" });
     expect(hiScore(tabla([]))).toEqual({ quien: "¡Sé el primer campeón!", puntos: "" });
     expect(hiScore(null).quien).toBe("Cargando…");
@@ -23,7 +24,7 @@ describe("Arcade", () => {
     expect(html).toContain('data-arcade="juego"');
     expect(html).toContain('data-arcade="kettlebell"');
     expect(html).toContain("Fit Bird");
-    expect(html).toContain("👑 Jessica M.");
+    expect(html).toContain("👑 Jessica Morales Ib");
     expect(html).toContain("Tu récord 28 · #3");
     expect(html).toContain("¡Sé el primer campeón!");
     expect(html).toContain(">ARCADE<");
