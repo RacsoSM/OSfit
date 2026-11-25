@@ -131,6 +131,12 @@ export const guardarPartidaDiscos = llamable<EnvioPartida, RespuestaPartida>("gu
 /** Kettlebell Bird: guarda la partida y devuelve su tabla (`functions/src/juegoDiscos.ts`). */
 export const guardarPartidaKettlebell = llamable<EnvioPartida, RespuestaPartida>("guardarPartidaKettlebell");
 
+/** Box Jump: guarda la partida (metros) y devuelve su tabla. */
+export const guardarPartidaBoxJump = llamable<EnvioPartida, RespuestaPartida>("guardarPartidaBoxJump");
+
+/** La tabla de puntuaciones de Box Jump. */
+export const tablaBoxJump = llamable<Record<string, never>, TablaDiscos>("tablaBoxJump");
+
 /** La tabla de puntuaciones de Kettlebell Bird. */
 export const tablaKettlebell = llamable<Record<string, never>, TablaDiscos>("tablaKettlebell");
 

@@ -102,7 +102,7 @@ function neon(c: CanvasRenderingContext2D, texto: string, x: number, y: number, 
 }
 
 /** Lo que cuelga en la pared entre ventanales: cambia con la zona. */
-function decoracion(c: CanvasRenderingContext2D, z: Zona, i: number, x: number, e: number, t: number): void {
+export function decoracion(c: CanvasRenderingContext2D, z: Zona, i: number, x: number, e: number, t: number): void {
   const cx = x + 28 * e;
   switch (z.aparatos) {
     case "recepcion":

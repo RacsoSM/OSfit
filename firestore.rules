@@ -192,5 +192,7 @@ service cloud.firestore {
     match /juegoDiscos/{doc} { allow read, write: if esEntrenador(); }
     // Kettlebell Bird (Arcade): igual, solo guardarPartidaKettlebell y tablaKettlebell.
     match /juegoKettlebell/{doc} { allow read, write: if esEntrenador(); }
+    // Box Jump (Arcade): igual, solo guardarPartidaBoxJump y tablaBoxJump.
+    match /juegoBoxJump/{doc} { allow read, write: if esEntrenador(); }
   }
 }

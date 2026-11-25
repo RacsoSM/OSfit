@@ -59,6 +59,7 @@ const ACCION: Readonly<Record<string, string>> = {
   resumenMensual: "Ver mi resumen",
   juego: "Jugar Torre de discos",
   kettlebell: "Jugar Kettlebell Bird",
+  boxjump: "Jugar Box Jump",
   inicio: "Ir a Inicio",
   musculos: "Ver mis músculos",
   registro: "Ir a Registro",

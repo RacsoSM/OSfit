@@ -13,18 +13,19 @@ import type { TablaDiscos } from "./juegoDiscos";
 
 export interface JuegoArcade {
   /** La ventana del juego. */
-  ventana: "juego" | "kettlebell";
+  ventana: "juego" | "kettlebell" | "boxjump";
   nombre: string;
   imagen: string;
   /** Dónde guarda el teléfono su tabla. */
   llave: string;
   /** El color del neón de su marco. */
-  neon: "cian" | "rosa";
+  neon: "cian" | "rosa" | "lima";
   nuevo?: boolean;
 }
 
 export const JUEGOS_ARCADE: readonly JuegoArcade[] = [
-  { ventana: "kettlebell", nombre: "Kettlebell Bird", imagen: "/arcade/kettlebell.webp", llave: "osfit:kettlebell-tabla", neon: "rosa", nuevo: true },
+  { ventana: "boxjump", nombre: "Box Jump", imagen: "/arcade/boxjump.webp", llave: "osfit:boxjump-tabla", neon: "lima", nuevo: true },
+  { ventana: "kettlebell", nombre: "Kettlebell Bird", imagen: "/arcade/kettlebell.webp", llave: "osfit:kettlebell-tabla", neon: "rosa" },
   { ventana: "juego", nombre: "Torre de discos", imagen: "/arcade/torre.webp", llave: "osfit:torre-tabla", neon: "cian" },
 ];
 
