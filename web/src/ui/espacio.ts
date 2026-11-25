@@ -139,7 +139,22 @@ function vistaPara(c: CanvasRenderingContext2D, W: number, H: number): Vista {
 
 /** El fondo ya dibujado (lo pesado: pasto, árboles, edificios), para no repintarlo en cada cuadro. */
 /** Un recorte ya dibujado (un árbol, un edificio) y su profundidad. */
-interface Recorte { orden: number; lienzo: HTMLCanvasElement; x: number; y: number; w: number; h: number; }
+interface Recorte {
+  orden: number; lienzo: HTMLCanvasElement; x: number; y: number; w: number; h: number;
+  /** Para los muebles: la caja de piso que ocupan (ver `tapa`). */
+  base?: { i0: number; i1: number; j0: number; j1: number };
+}
+
+/**
+ * Si el recorte queda delante del personaje (y lo tapa). Un árbol (un punto) tapa si su base está
+ * más abajo en pantalla (i + j mayor). Un mueble (una caja) solo tapa si el personaje está en la
+ * zona de atrás de la caja: así, de pie junto al sillón o sentado en él, no queda tapado.
+ */
+export function tapa(r: Pick<Recorte, "orden" | "base">, i: number, j: number): boolean {
+  if (!r.base) return r.orden > i + j;
+  const b = r.base;
+  return i <= b.i1 && j <= b.j1 && (i < b.i0 || j < b.j0);
+}
 /**
  * Lo ya dibujado del lugar, para no repintarlo en cada cuadro. En la pradera va por capas: el
  * suelo, un recorte por cada cosa parada en ella (ordenados por profundidad) y la viñeta; en
@@ -165,7 +180,9 @@ export function dibujarEspacio(estilo: EstiloEspacio = estiloGuardado(), ejemplo
   const dpr = Math.min(2, window.devicePixelRatio || 1);
   const clave = `${lugar}|${W}|${H}|${dpr}|${estilo}|${ejemplos}`;
   if (!fondo || fondo.clave !== clave) {
-    fondo = lugar === "pradera" ? { clave, pixel: false, ...pintarPraderaEnCapas(W, H, dpr) } : { clave, lienzo: pintarFondo(W, H, dpr, estilo, ejemplos, pixel), pixel, recortes: [], encima: null };
+    fondo = lugar === "pradera" ? { clave, pixel: false, ...pintarPraderaEnCapas(W, H, dpr) }
+      : pixel ? { clave, lienzo: pintarFondo(W, H, dpr, estilo, ejemplos, pixel), pixel, recortes: [], encima: null }
+      : { clave, pixel: false, encima: null, ...pintarCuartoEnCapas(W, H, dpr, estilo, ejemplos, lugar) };
   }
   if (!habitante || habitante.lugar !== lugar) habitante = nuevoHabitante(lugar, performance.now() / 1000);
   // Que el navegador no suavice los cuadritos al agrandar el canvas.
@@ -187,7 +204,10 @@ function pintarFondo(W: number, H: number, dpr: number, estilo: EstiloEspacio, e
   const cw = pixel ? lienzo.width : W, ch = pixel ? lienzo.height : H;
   // (La pradera va por capas: `pintarPraderaEnCapas`.)
   zonas = [];
-  if (lugar !== "pradera") pintarCuarto(c, cw, ch, estilo, ejemplos, lugar);
+  if (lugar !== "pradera") {
+    const v = pintarCuarto(c, cw, ch, estilo, ejemplos, lugar);
+    for (const m of mueblesDelCuarto(v, estilo, ejemplos, lugar).sort((a, b) => ordenDe(a) - ordenDe(b))) m.pinta();
+  }
   if (pixel) {
     const d = final.getContext("2d");
     if (d) { d.imageSmoothingEnabled = false; d.drawImage(lienzo, 0, 0, final.width, final.height); }
@@ -227,6 +247,26 @@ function pintarPraderaEnCapas(W: number, H: number, dpr: number): { lienzo: HTML
   return { lienzo, recortes, encima };
 }
 
+/** El cuarto por capas: lo fijo y un recorte por mueble (el personaje pasa detrás de ellos). */
+function pintarCuartoEnCapas(W: number, H: number, dpr: number, estilo: EstiloEspacio, ejemplos: boolean, tipo: Lugar): { lienzo: HTMLCanvasElement; recortes: Recorte[] } {
+  const [lienzo, c] = lienzoDe(W, H, dpr);
+  zonas = [];
+  if (!c) return { lienzo, recortes: [] };
+  c.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const v = pintarCuarto(c, W, H, estilo, ejemplos, tipo);
+  const recortes: Recorte[] = [];
+  for (const m of mueblesDelCuarto(v, estilo, ejemplos, tipo)) {
+    const { x, y, w, h } = cajaDeMueble(v, m);
+    const [l, cc] = lienzoDe(w, h, dpr);
+    if (!cc) continue;
+    cc.setTransform(dpr, 0, 0, dpr, -x * dpr, -y * dpr);
+    v.c = cc;
+    m.pinta();
+    recortes.push({ orden: ordenDe(m), lienzo: l, x, y, w, h, base: { i0: m.i0, i1: m.i1, j0: m.j0, j1: m.j1 } });
+  }
+  return { lienzo, recortes: recortes.sort((a, b) => a.orden - b.orden) };
+}
+
 /** La vista isométrica del lugar (en px del canvas), para poner al habitante en su cuadro. */
 function vistaDelLugar(c: CanvasRenderingContext2D, W: number, H: number): Vista {
   return lugar === "pradera" ? vistaPradera(c, W, H) : vistaPara(c, W, H);
@@ -253,19 +293,23 @@ function cuadro(ahoraMs: number): void {
   const t = ahoraMs / 1000;
   const h = habitante;
   if (h) avanzarHabitante(h, t, dt, (i, j) => p(v, i, j)[0]);
-  const profundidad = h ? h.i + h.j : Infinity;
   const recorte = (r: Recorte) => c.drawImage(r.lienzo, r.x, r.y, r.w, r.h);
+  const delante = (r: Recorte) => !!h && tapa(r, h.i, h.j);
   // Lo que está detrás del personaje, el personaje, y lo que está delante (que lo tapa).
-  for (const r of fondo.recortes) if (r.orden <= profundidad) recorte(r);
+  for (const r of fondo.recortes) if (!delante(r)) recorte(r);
   if (h) {
     const [x, y] = p(v, h.i, h.j);
     pintarHabitante(c, x, y, v.tw * (lugar === "pradera" ? 0.2 : 0.3), sexo, h, t);
   }
-  for (const r of fondo.recortes) if (r.orden > profundidad) recorte(r);
+  for (const r of fondo.recortes) if (delante(r)) recorte(r);
   if (fondo.encima) { c.setTransform(1, 0, 0, 1, 0, 0); c.drawImage(fondo.encima, 0, 0); }
 }
 
-function pintarCuarto(c: CanvasRenderingContext2D, W: number, H: number, estilo: EstiloEspacio, ejemplos: boolean, tipo: Lugar): void {
+/**
+ * Lo fijo del cuarto: paredes, ventana, letrero, piso y lo plano sobre él (tapete o alfombra).
+ * Los muebles van aparte (`mueblesDelCuarto`), para que el personaje pueda pasar detrás de ellos.
+ */
+function pintarCuarto(c: CanvasRenderingContext2D, W: number, H: number, estilo: EstiloEspacio, ejemplos: boolean, tipo: Lugar): Vista {
   const pal = PALETAS[estilo];
   const fondo = c.createLinearGradient(0, 0, 0, H);
   fondo.addColorStop(0, pal.fondo[0]); fondo.addColorStop(1, pal.fondo[1]);
@@ -314,10 +358,10 @@ function pintarCuarto(c: CanvasRenderingContext2D, W: number, H: number, estilo:
   c.shadowBlur = 0;
 
   // Lo que trae de base: un tapete (en la casa, una alfombra y un sillón).
-  if (tipo === "casa") { casaDeBase(v, estilo); return; }
-  caja(v, 2, 2.4, 2.2, 1.2, 0.06, pal.tapete);
-
-  if (ejemplos) objetosDeEjemplo(v, estilo);
+  if (tipo === "casa") alfombraCasa(v, estilo);
+  else caja(v, 2, 2.4, 2.2, 1.2, 0.06, pal.tapete);
+  if (ejemplos && tipo === "gimnasio") posterDeEjemplo(v, estilo);
+  return v;
 }
 
 function ladrillos(v: Vista): void {
@@ -385,52 +429,92 @@ function letrero(v: Vista, estilo: EstiloEspacio): void {
   c.restore();
 }
 
-/** Para las capturas: lo que se podrá ir comprando, para ver cómo luce el cuarto lleno. */
-function objetosDeEjemplo(v: Vista, estilo: EstiloEspacio): void {
-  const metal: [string, string, string] = estilo === "c" ? ["#c8d0e0", "#7d86a0", "#5d6680"] : ["#d6dae2", "#8d939e", "#666c77"];
-  const negro: [string, string, string] = ["#3a3d44", "#22242a", "#16171b"];
-  const acento: [string, string, string] = estilo === "a" ? ["#7ef3ff", "#2fb7c8", "#1d8a99"] : estilo === "b" ? ["#c0392b", "#962d22", "#73221a"] : ["#ffd45c", "#e0a82e", "#b88520"];
-  // Rack de mancuernas contra la pared izquierda.
-  caja(v, 0.3, 0.25, 2.4, 0.6, 0.12, negro, 0.6);
-  for (const di of [0.1, 2.5]) caja(v, 0.3 + di - 0.1, 0.3, 0.12, 0.5, 0.6, negro);
-  for (let k = 0; k < 5; k++) caja(v, 0.45 + k * 0.45, 0.4, 0.3, 0.3, 0.18, k % 2 ? acento : metal, 0.72);
-  // Banca plana.
-  caja(v, 3.4, 2.5, 0.3, 0.3, 0.35, metal);
-  caja(v, 3.4, 4.1, 0.3, 0.3, 0.35, metal);
-  caja(v, 3.3, 2.4, 0.5, 2.2, 0.15, acento, 0.35);
-  // Kettlebell y planta.
-  const [kx, ky] = p(v, 1.2, 4.3, 0.25);
-  v.c.fillStyle = "#2a2c31"; v.c.beginPath(); v.c.arc(kx, ky, v.th * 0.42, 0, Math.PI * 2); v.c.fill();
-  v.c.strokeStyle = "#2a2c31"; v.c.lineWidth = v.th * 0.14; v.c.beginPath(); v.c.arc(kx, ky - v.th * 0.42, v.th * 0.28, Math.PI, 0); v.c.stroke();
-  caja(v, 5.1, 0.3, 0.5, 0.5, 0.5, estilo === "b" ? ["#d9b27a", "#b08a5a", "#8d6a43"] : ["#eeeeee", "#bbbbbb", "#999999"]);
-  const [px, py] = p(v, 5.35, 0.55, 1.05);
-  v.c.fillStyle = "#3f9e3c";
-  for (const [dx, dy, r] of [[0, 0, 0.55], [-0.35, 0.15, 0.4], [0.35, 0.15, 0.4], [0, -0.35, 0.4]] as const) { v.c.beginPath(); v.c.arc(px + dx * v.th, py + dy * v.th, r * v.th, 0, Math.PI * 2); v.c.fill(); }
-  // Póster en la pared izquierda.
-  enParedIzq(v, 4.9, 5.7, 1.0, 2.0, estilo === "a" ? "#ff3bd4" : estilo === "b" ? "#2b1a14" : "#ff5c8a");
-  enParedIzq(v, 5.0, 5.6, 1.12, 1.88, estilo === "a" ? "#1d1033" : estilo === "b" ? "#e8c37a" : "#ffffff");
+/** Un mueble del cuarto: la caja de piso que ocupa, su alto y cómo se dibuja (con `v.c`). */
+interface Mueble { i0: number; i1: number; j0: number; j1: number; alto: number; margen?: number; pinta: () => void; }
+
+/** La profundidad de un mueble: el centro de su base (lo de más abajo en pantalla tapa). */
+function ordenDe(m: Mueble): number { return (m.i0 + m.i1) / 2 + (m.j0 + m.j1) / 2; }
+
+/** El rectángulo de pantalla que ocupa un mueble, con un margen (px) para brillos y sombras. */
+function cajaDeMueble(v: Vista, m: Mueble): { x: number; y: number; w: number; h: number } {
+  const pts: [number, number][] = [];
+  for (const i of [m.i0, m.i1]) for (const j of [m.j0, m.j1]) for (const z of [0, m.alto]) pts.push(p(v, i, j, z));
+  const xs = pts.map((q) => q[0]), ys = pts.map((q) => q[1]), mg = m.margen ?? 4;
+  const x = Math.min(...xs) - mg, y = Math.min(...ys) - mg;
+  return { x, y, w: Math.max(...xs) + mg - x, h: Math.max(...ys) + mg - y };
 }
 
-/** La casa por dentro, de base: alfombra redonda, sillón, mesita y una lámpara. */
-function casaDeBase(v: Vista, estilo: EstiloEspacio): void {
+/** La alfombra redonda de la casa (plana: va con el piso). */
+function alfombraCasa(v: Vista, estilo: EstiloEspacio): void {
   const c = v.c;
   const [ax, ay] = p(v, 3, 3.2);
   c.fillStyle = estilo === "a" ? "#3b2a6b" : estilo === "b" ? "#c98f62" : "#ffd45c";
   c.beginPath(); c.ellipse(ax, ay, v.tw * 1.4, v.th * 1.4, 0, 0, Math.PI * 2); c.fill();
   c.strokeStyle = "rgba(255, 255, 255, 0.35)"; c.lineWidth = 2;
   c.beginPath(); c.ellipse(ax, ay, v.tw * 1.2, v.th * 1.2, 0, 0, Math.PI * 2); c.stroke();
-  const tela: [string, string, string] = estilo === "a" ? ["#7ef3ff", "#2fb7c8", "#1d8a99"] : estilo === "b" ? ["#5b8f6a", "#46735a", "#365a46"] : ["#ff5c8a", "#d13a6a", "#a82a54"];
-  // Sillón contra la pared izquierda: base, respaldo y brazos.
-  caja(v, 1.4, 0.35, 3.2, 1.1, 0.45, tela);
-  caja(v, 1.4, 0.25, 3.2, 0.35, 1.0, tela);
-  caja(v, 1.2, 0.25, 0.3, 1.2, 0.7, tela);
-  caja(v, 4.6, 0.25, 0.3, 1.2, 0.7, tela);
-  // Mesita de centro.
-  caja(v, 2.5, 2.7, 1.2, 0.8, 0.4, estilo === "b" ? ["#8a5a32", "#6e4527", "#5a3820"] : ["#d6dae2", "#8d939e", "#666c77"]);
-  // Lámpara de pie en la esquina.
-  caja(v, 0.45, 0.45, 0.12, 0.12, 1.7, ["#2a2c31", "#22242a", "#16171b"]);
-  const [lx, ly] = p(v, 0.5, 0.5, 1.95);
-  c.fillStyle = "#ffe08a"; c.shadowColor = "#ffe08a"; c.shadowBlur = 14;
-  c.beginPath(); c.moveTo(lx - v.th * 0.45, ly + v.th * 0.3); c.lineTo(lx + v.th * 0.45, ly + v.th * 0.3); c.lineTo(lx + v.th * 0.25, ly - v.th * 0.35); c.lineTo(lx - v.th * 0.25, ly - v.th * 0.35); c.fill();
-  c.shadowBlur = 0;
+}
+
+/** Para las capturas: un póster en la pared (va con lo fijo). */
+function posterDeEjemplo(v: Vista, estilo: EstiloEspacio): void {
+  enParedIzq(v, 4.9, 5.7, 1.0, 2.0, estilo === "a" ? "#ff3bd4" : estilo === "b" ? "#2b1a14" : "#ff5c8a");
+  enParedIzq(v, 5.0, 5.6, 1.12, 1.88, estilo === "a" ? "#1d1033" : estilo === "b" ? "#e8c37a" : "#ffffff");
+}
+
+/**
+ * Los muebles de cada cuarto. La casa trae de base un sillón, una mesita y una lámpara; el
+ * gimnasio, nada (los objetos de ejemplo son solo para las capturas: lo que se podrá comprar).
+ */
+function mueblesDelCuarto(v: Vista, estilo: EstiloEspacio, ejemplos: boolean, tipo: Lugar): Mueble[] {
+  if (tipo === "casa") {
+    const tela: [string, string, string] = estilo === "a" ? ["#7ef3ff", "#2fb7c8", "#1d8a99"] : estilo === "b" ? ["#5b8f6a", "#46735a", "#365a46"] : ["#ff5c8a", "#d13a6a", "#a82a54"];
+    return [
+      // Sillón contra la pared: base, respaldo y brazos.
+      { i0: 1.2, i1: 4.9, j0: 0.25, j1: 1.45, alto: 1.0, pinta: () => {
+        caja(v, 1.4, 0.35, 3.2, 1.1, 0.45, tela);
+        caja(v, 1.4, 0.25, 3.2, 0.35, 1.0, tela);
+        caja(v, 1.2, 0.25, 0.3, 1.2, 0.7, tela);
+        caja(v, 4.6, 0.25, 0.3, 1.2, 0.7, tela);
+      } },
+      // Mesita de centro.
+      { i0: 2.5, i1: 3.7, j0: 2.7, j1: 3.5, alto: 0.4, pinta: () => caja(v, 2.5, 2.7, 1.2, 0.8, 0.4, estilo === "b" ? ["#8a5a32", "#6e4527", "#5a3820"] : ["#d6dae2", "#8d939e", "#666c77"]) },
+      // Lámpara de pie en la esquina, con su brillo.
+      { i0: 0.45, i1: 0.57, j0: 0.45, j1: 0.57, alto: 2.3, margen: 26, pinta: () => {
+        const c = v.c;
+        caja(v, 0.45, 0.45, 0.12, 0.12, 1.7, ["#2a2c31", "#22242a", "#16171b"]);
+        const [lx, ly] = p(v, 0.5, 0.5, 1.95);
+        c.fillStyle = "#ffe08a"; c.shadowColor = "#ffe08a"; c.shadowBlur = 14;
+        c.beginPath(); c.moveTo(lx - v.th * 0.45, ly + v.th * 0.3); c.lineTo(lx + v.th * 0.45, ly + v.th * 0.3); c.lineTo(lx + v.th * 0.25, ly - v.th * 0.35); c.lineTo(lx - v.th * 0.25, ly - v.th * 0.35); c.fill();
+        c.shadowBlur = 0;
+      } },
+    ];
+  }
+  if (!ejemplos) return [];
+  const metal: [string, string, string] = estilo === "c" ? ["#c8d0e0", "#7d86a0", "#5d6680"] : ["#d6dae2", "#8d939e", "#666c77"];
+  const negro: [string, string, string] = ["#3a3d44", "#22242a", "#16171b"];
+  const acento: [string, string, string] = estilo === "a" ? ["#7ef3ff", "#2fb7c8", "#1d8a99"] : estilo === "b" ? ["#c0392b", "#962d22", "#73221a"] : ["#ffd45c", "#e0a82e", "#b88520"];
+  return [
+    // Rack de mancuernas contra la pared.
+    { i0: 0.2, i1: 2.8, j0: 0.25, j1: 0.85, alto: 0.95, pinta: () => {
+      caja(v, 0.3, 0.25, 2.4, 0.6, 0.12, negro, 0.6);
+      for (const di of [0.1, 2.5]) caja(v, 0.3 + di - 0.1, 0.3, 0.12, 0.5, 0.6, negro);
+      for (let k = 0; k < 5; k++) caja(v, 0.45 + k * 0.45, 0.4, 0.3, 0.3, 0.18, k % 2 ? acento : metal, 0.72);
+    } },
+    // Banca plana.
+    { i0: 3.3, i1: 3.8, j0: 2.4, j1: 4.6, alto: 0.5, pinta: () => {
+      caja(v, 3.4, 2.5, 0.3, 0.3, 0.35, metal); caja(v, 3.4, 4.1, 0.3, 0.3, 0.35, metal); caja(v, 3.3, 2.4, 0.5, 2.2, 0.15, acento, 0.35);
+    } },
+    // Kettlebell.
+    { i0: 1.0, i1: 1.4, j0: 4.1, j1: 4.5, alto: 0.9, pinta: () => {
+      const [kx, ky] = p(v, 1.2, 4.3, 0.25);
+      v.c.fillStyle = "#2a2c31"; v.c.beginPath(); v.c.arc(kx, ky, v.th * 0.42, 0, Math.PI * 2); v.c.fill();
+      v.c.strokeStyle = "#2a2c31"; v.c.lineWidth = v.th * 0.14; v.c.beginPath(); v.c.arc(kx, ky - v.th * 0.42, v.th * 0.28, Math.PI, 0); v.c.stroke();
+    } },
+    // Planta en su maceta.
+    { i0: 5.1, i1: 5.6, j0: 0.3, j1: 0.8, alto: 1.7, margen: 8, pinta: () => {
+      caja(v, 5.1, 0.3, 0.5, 0.5, 0.5, estilo === "b" ? ["#d9b27a", "#b08a5a", "#8d6a43"] : ["#eeeeee", "#bbbbbb", "#999999"]);
+      const [px, py] = p(v, 5.35, 0.55, 1.05);
+      v.c.fillStyle = "#3f9e3c";
+      for (const [dx, dy, r] of [[0, 0, 0.55], [-0.35, 0.15, 0.4], [0.35, 0.15, 0.4], [0, -0.35, 0.4]] as const) { v.c.beginPath(); v.c.arc(px + dx * v.th, py + dy * v.th, r * v.th, 0, Math.PI * 2); v.c.fill(); }
+    } },
+  ];
 }
