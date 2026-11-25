@@ -337,8 +337,8 @@ export const VENTANAS: readonly Ventana[] = [
   // Los juegos, subventanas del Arcade (`PADRE` en `navegacion.ts`). En su propio contenedor: un
   // repintado a media partida tiraría el canvas (`ui/juegoDiscos.ts`, `ui/kettlebellBird.ts`).
   { id: "juego", titulo: "Torre de discos", icono: "🏋️", grupo: "sub", contenedorPropio: "juego" },
-  { id: "kettlebell", titulo: "Kettlebell Bird", icono: "🏋️", grupo: "sub", contenedorPropio: "kettlebell" },
-  { id: "boxjump", titulo: "Box Jump", icono: "🏋️", grupo: "sub", contenedorPropio: "boxjump" },
+  { id: "kettlebell", titulo: "Fit Bird", icono: "🏋️", grupo: "sub", contenedorPropio: "kettlebell" },
+  { id: "boxjump", titulo: "Jumper", icono: "🏋️", grupo: "sub", contenedorPropio: "boxjump" },
   // Medallas y Logros personales, ocultas del menú (decisión del entrenador, 2026-10-21). Las
   // ventanas siguen existiendo: volver a mostrarlas es quitar `oculta`.
   {

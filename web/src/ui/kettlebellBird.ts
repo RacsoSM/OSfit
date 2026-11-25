@@ -70,7 +70,7 @@ function recordarTabla(t: TablaDiscos): void {
 export function htmlKettlebell(): string {
   return `
     <div class="jd-pantalla kb-pantalla" id="kb-pantalla">
-      <canvas id="kb-canvas" aria-label="Kettlebell Bird"></canvas>
+      <canvas id="kb-canvas" aria-label="Fit Bird"></canvas>
       <div class="jd-hud" aria-live="polite">
         <p class="jd-hud-puntos" id="kb-puntos">0</p>
         <p class="jd-hud-record">Récord <b id="kb-record">—</b></p>
@@ -99,7 +99,7 @@ export function htmlCapaKettlebell(e: Estado, puntos: number, g: Guardado, nuevo
     return `
       <div class="jd-capa-caja">
         <p class="jd-capa-marca">OSFIT · Arcade</p>
-        <p class="jd-capa-titulo">Kettlebell Bird</p>
+        <p class="jd-capa-titulo">Fit Bird</p>
         <p class="jd-capa-texto">Toca para que la kettlebell aletee y suba. Pasa por el hueco entre las barras sin tocarlas ni caer al piso. Cada barra es un punto, y cada 8 subes de nivel: otra zona del gimnasio, más rápido y con las barras más juntas.</p>
         <button type="button" class="jd-boton" data-kb="jugar">Jugar</button>
         <button type="button" class="jd-boton secundario" data-kb="marcador">Ver marcador</button>

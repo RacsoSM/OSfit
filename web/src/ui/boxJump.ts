@@ -79,7 +79,7 @@ function recordarTabla(t: TablaDiscos): void {
 export function htmlBoxJump(): string {
   return `
     <div class="jd-pantalla bj-pantalla" id="bj-pantalla">
-      <canvas id="bj-canvas" aria-label="Box Jump"></canvas>
+      <canvas id="bj-canvas" aria-label="Jumper"></canvas>
       <div class="jd-hud" aria-live="polite">
         <p class="jd-hud-puntos" id="bj-puntos">0 m</p>
         <p class="jd-hud-record">Récord <b id="bj-record">—</b></p>
@@ -108,7 +108,7 @@ export function htmlCapaBoxJump(e: Estado, puntos: number, g: Guardado, nuevoRec
     return `
       <div class="jd-capa-caja">
         <p class="jd-capa-marca">OSFIT · Arcade</p>
-        <p class="jd-capa-titulo">Box Jump</p>
+        <p class="jd-capa-titulo">Jumper</p>
         <p class="jd-capa-texto">Rebotas sola sobre las plataformas: desliza el dedo a la izquierda o a la derecha para moverte y sube de la Tierra al cielo, al espacio, a la Luna, a Marte… Cada metro es un punto. Cuidado con las que se rompen; los resortes te dan un súper salto.</p>
         <button type="button" class="jd-boton" data-bj="jugar">Jugar</button>
         <button type="button" class="jd-boton secundario" data-bj="marcador">Ver marcador</button>

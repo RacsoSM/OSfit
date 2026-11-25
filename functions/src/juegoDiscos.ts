@@ -36,11 +36,11 @@ export const TORRE_DISCOS: Juego = {
  * unos 19 m/s: menos de 40 ms por metro es imposible.
  */
 export const BOX_JUMP: Juego = {
-  coleccion: "juegoBoxJump", nombre: "Box Jump", clave: "boxJump", ventana: "boxjump", msMinimos: 40, puntosPorPunto: 1,
+  coleccion: "juegoBoxJump", nombre: "Jumper", clave: "boxJump", ventana: "boxjump", msMinimos: 40, puntosPorPunto: 1,
 };
 /** En el nivel más alto las barras van a ~0.47 s una de otra: menos de 0.35 s es imposible. */
 export const KETTLEBELL_BIRD: Juego = {
-  coleccion: "juegoKettlebell", nombre: "Kettlebell Bird", clave: "kettlebellBird", ventana: "kettlebell", msMinimos: 350, puntosPorPunto: 1,
+  coleccion: "juegoKettlebell", nombre: "Fit Bird", clave: "kettlebellBird", ventana: "kettlebell", msMinimos: 350, puntosPorPunto: 1,
 };
 
 export const MAXIMO_DISCOS = 2000;

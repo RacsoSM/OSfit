@@ -16,11 +16,14 @@ describe("Box Jump: la ventana", () => {
     expect(fin).toMatch(/data-bj="jugar">Reintentar</);
     expect(fin).toMatch(/data-bj="marcador">Ver marcador</);
     expect(htmlCapaBoxJump("fin", 5, "error", false)).toContain('data-bj="reintentar-guardar"');
-    expect(htmlCapaBoxJump("inicio", 0, "nada", false)).toContain("Box Jump");
+    expect(htmlCapaBoxJump("inicio", 0, "nada", false)).toContain("Jumper");
   });
-  it("está en el Arcade, primero y como nuevo", () => {
+  it("está en el Arcade, al final (Torre, Fit Bird, Jumper) y como nuevo", () => {
     const html = ventanaArcade({});
-    expect(html.indexOf('data-arcade="boxjump"')).toBeLessThan(html.indexOf('data-arcade="kettlebell"'));
+    const torre = html.indexOf('data-arcade="juego"'), bird = html.indexOf('data-arcade="kettlebell"'), jumper = html.indexOf('data-arcade="boxjump"');
+    expect(torre).toBeGreaterThan(-1);
+    expect(torre).toBeLessThan(bird);
+    expect(bird).toBeLessThan(jumper);
     expect(html).toMatch(/ar-maquina lima" data-arcade="boxjump"/);
   });
 });

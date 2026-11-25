@@ -22,7 +22,7 @@ describe("Arcade", () => {
     });
     expect(html).toContain('data-arcade="juego"');
     expect(html).toContain('data-arcade="kettlebell"');
-    expect(html).toContain("Kettlebell Bird");
+    expect(html).toContain("Fit Bird");
     expect(html).toContain("👑 Jessica M.");
     expect(html).toContain("Tu récord 28 · #3");
     expect(html).toContain("¡Sé el primer campeón!");
