@@ -1,6 +1,6 @@
 /**
  * El habitante de Mi espacio (entrenador, 2026-11-25; backlog 2, punto 29, "ideas tomadas de
- * Tsuki's Odyssey"): un personaje chibi, original, que vive en el espacio de cada quien y está
+ * Tsuki's Odyssey"): un personaje original, a escala con la casa, que vive en el espacio de cada quien y está
  * contigo en la pestaña donde estés. En la pradera pasea por el camino y se detiene a admirar
  * los árboles; en la casa camina, se sienta en el sillón y se asoma por la ventana; en el
  * gimnasio camina y hace sentadillas en el tapete.
@@ -110,149 +110,249 @@ export function avanzarHabitante(h: Habitante, ahora: number, dt: number, aPanta
 
 // ── Dibujo ──────────────────────────────────────────────────────────────────
 
-const ROPA: Record<Sexo, { playera: string; playeraSombra: string; pants: string; pelo: string; tenis: string }> = {
-  M: { playera: "#f08a9c", playeraSombra: "#d2697c", pants: "#4a3f63", pelo: "#5a3826", tenis: "#ffffff" },
-  H: { playera: "#5aa6d6", playeraSombra: "#3f86b8", pants: "#33404f", pelo: "#3a2618", tenis: "#ffffff" },
+/**
+ * La ropa y el pelo. Proporciones de persona (unas 4.5 cabezas), no de muñequito: el
+ * entrenador pidió que se viera a escala con la casa y "estéticamente más cuidado" (2026-11-25).
+ */
+const ESTILO: Record<Sexo, { arriba: string; arribaSombra: string; abajo: string; abajoSombra: string; pelo: string; peloLuz: string; piernaPiel: boolean }> = {
+  // Ella: top deportivo, leggings y pelo largo.
+  M: { arriba: "#ef7f97", arribaSombra: "#cf6179", abajo: "#4b3f66", abajoSombra: "#3a3052", pelo: "#5b3524", peloLuz: "#8a5a3f", piernaPiel: false },
+  // Él: playera, shorts (se le ven las pantorrillas) y pelo corto.
+  H: { arriba: "#4f9fd3", arribaSombra: "#3a80b0", abajo: "#2f3b4a", abajoSombra: "#232d39", pelo: "#33221a", peloLuz: "#5a3d2c", piernaPiel: true },
 };
-const PIEL = "#f3c9a6", PIEL_SOMBRA = "#e3b08a";
+const PIEL = "#f1c4a0", PIEL_SOMBRA = "#d9a47f", CONTORNO = "rgba(45, 28, 22, 0.55)";
 
-function redondo(c: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number): void {
-  c.beginPath(); c.roundRect(x, y, w, h, Math.min(r, w / 2, h / 2));
+/** Una extremidad: un trazo de punta redonda con un contorno suave. */
+function trazo(c: CanvasRenderingContext2D, x1: number, y1: number, x2: number, y2: number, ancho: number, color: string): void {
+  c.lineCap = "round";
+  c.strokeStyle = CONTORNO; c.lineWidth = ancho + Math.max(0.8, ancho * 0.18);
+  c.beginPath(); c.moveTo(x1, y1); c.lineTo(x2, y2); c.stroke();
+  c.strokeStyle = color; c.lineWidth = ancho;
+  c.beginPath(); c.moveTo(x1, y1); c.lineTo(x2, y2); c.stroke();
+}
+
+function relleno(c: CanvasRenderingContext2D, color: string | CanvasGradient, contorno = true): void {
+  c.fillStyle = color; c.fill();
+  if (contorno) { c.strokeStyle = CONTORNO; c.lineWidth = 0.9; c.stroke(); }
 }
 
 /**
- * Dibuja al habitante con los pies en (x, y). `u` es su tamaño: mide ~2.6 u de alto. `t` son los
- * segundos del reloj, para la animación (pasos, parpadeo, respiración).
+ * Dibuja al habitante con los pies en (x, y). `u` es su escala: mide ~3.4 u de alto. `t` son los
+ * segundos del reloj, para la animación (pasos, pelo, parpadeo, respiración).
  */
 export function pintarHabitante(c: CanvasRenderingContext2D, x: number, y: number, u: number, sexo: Sexo, h: Pick<Habitante, "accion" | "mira" | "desde">, t: number): void {
-  const ropa = ROPA[sexo];
+  const e = ESTILO[sexo];
   const accion = h.accion;
-  const fase = (t - h.desde) * 9;
-  const andar = accion === "camina" ? Math.sin(fase) : 0;
-  // Sentadilla: baja y sube cada ~1.6 s.
-  const baja = accion === "ejercicio" ? (1 - Math.cos((t - h.desde) * 4)) / 2 : 0;
-  const respira = accion === "camina" ? Math.abs(Math.sin(fase)) * 0.06 : Math.sin(t * 2.2) * 0.02;
+  const fase = (t - h.desde) * 8.5;
+  const camina = accion === "camina";
+  const andar = camina ? Math.sin(fase) : 0;
+  const baja = accion === "ejercicio" ? (1 - Math.cos((t - h.desde) * 3.6)) / 2 : 0;
   const sentado = accion === "sentado";
+  const rebote = camina ? Math.abs(Math.cos(fase)) * 0.06 * u : Math.sin(t * 2) * 0.015 * u;
 
   c.save();
   c.translate(x, y);
   // Sombra en el piso.
-  c.fillStyle = "rgba(20, 30, 15, 0.25)";
-  c.beginPath(); c.ellipse(0, 0, u * 0.55, u * 0.18, 0, 0, Math.PI * 2); c.fill();
+  c.fillStyle = "rgba(20, 30, 15, 0.28)";
+  c.beginPath(); c.ellipse(0, 0, u * 0.42, u * 0.13, 0, 0, Math.PI * 2); c.fill();
   c.scale(h.mira, 1);
 
-  const cadera = sentado ? -u * 0.55 : -u * (0.9 - baja * 0.35) - respira * u;
-  // Piernas: alternan al caminar; sentado, hacia adelante.
-  c.fillStyle = ropa.pants;
-  if (sentado) {
-    redondo(c, -u * 0.05, cadera - u * 0.05, u * 0.55, u * 0.26, u * 0.12); c.fill();
-    redondo(c, u * 0.38, cadera, u * 0.2, u * 0.5, u * 0.1); c.fill();
-    c.fillStyle = ropa.tenis; redondo(c, u * 0.34, cadera + u * 0.45, u * 0.32, u * 0.14, u * 0.07); c.fill();
-  } else {
-    for (const lado of [-1, 1]) {
-      // Cada pierna gira desde la cadera: una adelante y la otra atrás.
-      const largo = -cadera - u * 0.04;
-      c.save();
-      c.translate(lado * u * 0.12, cadera);
-      c.rotate(-andar * lado * 0.45);
-      redondo(c, -u * 0.11, 0, u * 0.22, largo, u * 0.1); c.fill();
-      c.fillStyle = ropa.tenis;
-      redondo(c, -u * 0.12, largo - u * 0.12, u * 0.32, u * 0.15, u * 0.07); c.fill();
-      c.fillStyle = ropa.pants;
-      c.restore();
+  // Alturas del cuerpo.
+  const cadera = sentado ? -0.95 * u : -(1.5 - baja * 0.55) * u - rebote;
+  const inclina = baja * 0.25 * u;
+  const hombro = cadera - 1.0 * u;
+  const cuello = hombro - 0.12 * u;
+  const cabeza = cuello - 0.36 * u;
+  const r = 0.35 * u;
+
+  // Pelo largo de ella, detrás del cuerpo: cae por la espalda y se mece al caminar.
+  if (sexo === "M") peloLargo(c, u, r, inclina, cabeza, hombro, e.pelo, e.peloLuz, camina ? fase : t * 1.6, camina, h.mira);
+
+  // Piernas: muslo y pantorrilla; la de atrás un poco más oscura.
+  const pierna = (lado: number, color: string, piel: string) => {
+    const hx = lado * 0.1 * u;
+    let rodX: number, rodY: number, pieX: number, pieY: number;
+    if (sentado) {
+      rodX = hx + 0.55 * u; rodY = cadera; pieX = hx + 0.62 * u; pieY = 0;
+    } else if (baja > 0) {
+      pieX = hx; pieY = 0; rodX = hx + 0.45 * u * baja; rodY = (cadera + pieY) / 2;
+    } else {
+      // El muslo va y viene; la pantorrilla lo sigue a medias (la rodilla apenas se dobla) y el
+      // pie que va atrás se levanta un poquito del piso.
+      const a = andar * lado * 0.36;
+      rodX = hx + Math.sin(a) * 0.72 * u; rodY = cadera + Math.cos(a) * 0.72 * u;
+      const b = a * 0.45 - (a < 0 ? 0.25 * -a : 0);
+      pieX = rodX + Math.sin(b) * 0.72 * u; pieY = Math.min(0, rodY + Math.cos(b) * 0.72 * u);
     }
-  }
-  // Cuerpo: una playera redondita.
-  const hombros = cadera - u * 0.62;
-  c.fillStyle = ropa.playera;
-  redondo(c, -u * 0.32, hombros, u * 0.64, u * 0.68, u * 0.22); c.fill();
-  c.fillStyle = ropa.playeraSombra;
-  redondo(c, -u * 0.32, hombros + u * 0.5, u * 0.64, u * 0.18, u * 0.12); c.fill();
-  // Brazos: se mecen al caminar, al frente en la sentadilla, arriba al admirar (señalando).
-  c.fillStyle = ropa.playera;
-  for (const lado of [-1, 1]) {
-    c.save();
-    c.translate(lado * u * 0.3, hombros + u * 0.12);
-    let giro = -andar * lado * 0.5;
-    // Brazos al frente para equilibrarse (rotar negativo lleva el brazo hacia donde mira).
-    if (accion === "ejercicio") giro = -1.4 * (0.7 + baja * 0.3);
-    if (accion === "admira" && lado > 0) giro = -2.4 + Math.sin(t * 3) * 0.08;
-    if (sentado) giro = lado * 0.25;
-    c.rotate(giro);
-    redondo(c, -u * 0.09, 0, u * 0.18, u * 0.46, u * 0.09); c.fill();
-    c.fillStyle = PIEL; c.beginPath(); c.arc(0, u * 0.48, u * 0.09, 0, Math.PI * 2); c.fill();
-    c.fillStyle = ropa.playera;
-    c.restore();
-  }
-  // Cabeza grande (chibi).
-  const cy = hombros - u * 0.52;
-  const r = u * 0.58;
-  const mirarArriba = accion === "admira" ? -u * 0.08 : 0;
-  // Cola de caballo (detrás de la cabeza) o nada.
-  if (sexo === "M") {
-    c.fillStyle = ropa.pelo;
-    const cola = Math.sin(t * (accion === "camina" ? 9 : 2)) * 0.15;
-    c.save(); c.translate(-r * 0.75, cy - r * 0.1); c.rotate(0.5 + cola);
-    c.beginPath(); c.ellipse(0, r * 0.35, r * 0.22, r * 0.5, 0, 0, Math.PI * 2); c.fill();
-    c.restore();
-  }
-  c.fillStyle = PIEL; c.beginPath(); c.arc(0, cy, r, 0, Math.PI * 2); c.fill();
-  c.fillStyle = PIEL_SOMBRA; c.beginPath(); c.arc(-r * 0.05, cy + r * 0.08, r * 0.92, Math.PI * 0.15, Math.PI * 0.85); c.fill();
-  c.fillStyle = PIEL; c.beginPath(); c.arc(0, cy - r * 0.04, r * 0.92, 0, Math.PI * 2); c.fill();
-  // Orejas.
-  c.fillStyle = PIEL_SOMBRA; c.beginPath(); c.arc(-r * 0.9, cy + r * 0.08, r * 0.16, 0, Math.PI * 2); c.fill();
-  // Pelo: casquito con fleco; ella con un moño arriba.
-  c.fillStyle = ropa.pelo;
-  c.save();
-  // Todo el pelo dentro de la silueta de la cabeza (un poquito más grande): sin esquinas.
-  c.beginPath(); c.arc(0, cy - r * 0.02, r * 1.06, 0, Math.PI * 2); c.clip();
+    trazo(c, hx, cadera, rodX, rodY, 0.24 * u, color);
+    trazo(c, rodX, rodY, pieX, pieY - 0.05 * u, (e.piernaPiel ? 0.19 : 0.21) * u, piel);
+    // Tenis.
+    c.beginPath(); c.ellipse(pieX + 0.08 * u, pieY - 0.05 * u, 0.17 * u, 0.08 * u, 0, 0, Math.PI * 2);
+    relleno(c, "#f7f7f7");
+    c.fillStyle = sexo === "M" ? "#ef7f97" : "#4f9fd3"; c.fillRect(pieX - 0.04 * u, pieY - 0.07 * u, 0.18 * u, 0.03 * u);
+  };
+  pierna(-1, e.abajoSombra, e.piernaPiel ? PIEL_SOMBRA : e.abajoSombra);
+
+  // Brazo de atrás.
+  const brazo = (lado: number, color: string, piel: string) => {
+    const sx = lado * 0.2 * u + inclina, sy = hombro + 0.1 * u;
+    let a = -andar * lado * 0.55;
+    if (baja > 0 || accion === "ejercicio") a = -1.45;
+    if (accion === "admira" && lado > 0) a = -2.5 + Math.sin(t * 3) * 0.08;
+    if (sentado) a = -0.5;
+    const cx = sx + Math.sin(-a) * 0.45 * u, cy = sy + Math.cos(a) * 0.45 * u;
+    const a2 = a * (sentado ? 1.6 : 1.15);
+    const mx = cx + Math.sin(-a2) * 0.42 * u, my = cy + Math.cos(a2) * 0.42 * u;
+    trazo(c, sx, sy, cx, cy, 0.16 * u, color);
+    trazo(c, cx, cy, mx, my, 0.14 * u, piel);
+    c.beginPath(); c.arc(mx, my, 0.085 * u, 0, Math.PI * 2); relleno(c, piel);
+  };
+  brazo(-1, sexo === "M" ? PIEL_SOMBRA : e.arribaSombra, PIEL_SOMBRA);
+
+  // Torso: él con playera recta; ella con top y cintura.
   c.beginPath();
-  c.moveTo(-r * 1.1, cy + r * 0.25);
-  c.quadraticCurveTo(-r * 0.75, cy - r * 0.05, -r * 0.3, cy - r * 0.12);
-  c.quadraticCurveTo(r * 0.05, cy - r * 0.2, r * 0.25, cy - r * 0.48);
-  c.quadraticCurveTo(r * 0.5, cy - r * 0.12, r * 1.1, cy - r * 0.1);
-  c.lineTo(r * 1.1, cy - r * 1.2); c.lineTo(-r * 1.1, cy - r * 1.2); c.closePath(); c.fill();
-  // Brillo del pelo.
-  c.strokeStyle = "rgba(255, 255, 255, 0.18)"; c.lineWidth = Math.max(1, r * 0.08); c.lineCap = "round";
-  c.beginPath(); c.arc(0, cy - r * 0.05, r * 0.82, Math.PI * 1.2, Math.PI * 1.45); c.stroke();
-  c.restore();
   if (sexo === "M") {
-    c.beginPath(); c.arc(-r * 0.25, cy - r * 1.05, r * 0.3, 0, Math.PI * 2); c.fill();
-    c.fillStyle = ropa.playera; c.beginPath(); c.ellipse(-r * 0.05, cy - r * 0.92, r * 0.16, r * 0.1, 0.4, 0, Math.PI * 2); c.fill();
+    c.moveTo(-0.22 * u + inclina, hombro + 0.02 * u);
+    c.quadraticCurveTo(0 + inclina, hombro - 0.06 * u, 0.22 * u + inclina, hombro + 0.02 * u);
+    c.quadraticCurveTo(0.16 * u + inclina * 0.5, cadera - 0.45 * u, 0.2 * u, cadera + 0.04 * u);
+    c.lineTo(-0.2 * u, cadera + 0.04 * u);
+    c.quadraticCurveTo(-0.16 * u + inclina * 0.5, cadera - 0.45 * u, -0.22 * u + inclina, hombro + 0.02 * u);
   } else {
-    // Un mechón parado.
-    c.beginPath(); c.moveTo(r * 0.05, cy - r * 0.95); c.quadraticCurveTo(r * 0.3, cy - r * 1.35, r * 0.45, cy - r * 1.1); c.quadraticCurveTo(r * 0.25, cy - r * 1.0, r * 0.2, cy - r * 0.9); c.fill();
+    c.moveTo(-0.26 * u + inclina, hombro + 0.02 * u);
+    c.quadraticCurveTo(0 + inclina, hombro - 0.07 * u, 0.26 * u + inclina, hombro + 0.02 * u);
+    c.lineTo(0.22 * u, cadera + 0.06 * u);
+    c.lineTo(-0.22 * u, cadera + 0.06 * u);
   }
-  // Cara: ojos que parpadean, cachetitos y sonrisa; mira hacia donde va.
-  const ojoY = cy + r * 0.12 + mirarArriba;
-  const parpadea = (t % 4.2) < 0.12 || accion === "sentado" && (t % 6) < 1.4;
-  c.fillStyle = "#2a1d17";
-  for (const ox of [r * 0.12, r * 0.58]) {
-    if (parpadea) { c.fillRect(ox - r * 0.1, ojoY, r * 0.2, r * 0.05); continue; }
-    c.beginPath(); c.ellipse(ox, ojoY, r * 0.08, r * 0.12, 0, 0, Math.PI * 2); c.fill();
-    c.fillStyle = "#ffffff"; c.beginPath(); c.arc(ox + r * 0.03, ojoY - r * 0.05, r * 0.03, 0, Math.PI * 2); c.fill();
-    c.fillStyle = "#2a1d17";
+  c.closePath();
+  const torso = c.createLinearGradient(-0.25 * u, 0, 0.25 * u, 0);
+  if (sexo === "M") {
+    // Piel en la panza y el top encima.
+    torso.addColorStop(0, PIEL_SOMBRA); torso.addColorStop(1, PIEL);
+    relleno(c, torso);
+    c.beginPath();
+    c.moveTo(-0.22 * u + inclina, hombro + 0.02 * u);
+    c.quadraticCurveTo(inclina, hombro - 0.06 * u, 0.22 * u + inclina, hombro + 0.02 * u);
+    c.lineTo(0.19 * u + inclina * 0.7, hombro + 0.48 * u); c.lineTo(-0.19 * u + inclina * 0.7, hombro + 0.48 * u); c.closePath();
+    const top = c.createLinearGradient(-0.25 * u, 0, 0.25 * u, 0); top.addColorStop(0, e.arribaSombra); top.addColorStop(1, e.arriba);
+    relleno(c, top);
+    // Leggings de talle alto.
+    c.beginPath(); c.moveTo(-0.2 * u, cadera - 0.22 * u); c.lineTo(0.2 * u, cadera - 0.22 * u); c.lineTo(0.22 * u, cadera + 0.08 * u); c.lineTo(-0.22 * u, cadera + 0.08 * u); c.closePath();
+    relleno(c, e.abajo);
+  } else {
+    torso.addColorStop(0, e.arribaSombra); torso.addColorStop(1, e.arriba);
+    relleno(c, torso);
+    c.beginPath(); c.moveTo(-0.22 * u, cadera - 0.06 * u); c.lineTo(0.22 * u, cadera - 0.06 * u); c.lineTo(0.23 * u, cadera + 0.1 * u); c.lineTo(-0.23 * u, cadera + 0.1 * u); c.closePath();
+    relleno(c, e.abajo);
   }
-  c.fillStyle = "rgba(240, 120, 120, 0.45)";
-  for (const ox of [r * 0.02, r * 0.72]) { c.beginPath(); c.ellipse(ox, ojoY + r * 0.24, r * 0.12, r * 0.07, 0, 0, Math.PI * 2); c.fill(); }
-  c.strokeStyle = "#7a3f30"; c.lineWidth = Math.max(1, u * 0.04); c.lineCap = "round";
-  c.beginPath(); c.arc(r * 0.36, ojoY + r * 0.22, r * 0.1, Math.PI * 0.15, Math.PI * 0.85); c.stroke();
+
+  // Pierna y brazo de enfrente.
+  pierna(1, e.abajo, e.piernaPiel ? PIEL : e.abajo);
+  brazo(1, sexo === "M" ? PIEL : e.arriba, PIEL);
+
+  // Cuello y cabeza (tres cuartos, mirando hacia donde va).
+  trazo(c, inclina, hombro, inclina + 0.02 * u, cuello, 0.14 * u, PIEL_SOMBRA);
+  const hx = inclina + 0.02 * u;
+  const cara = c.createRadialGradient(hx + r * 0.3, cabeza - r * 0.3, r * 0.1, hx, cabeza, r);
+  cara.addColorStop(0, "#f7d3b4"); cara.addColorStop(1, PIEL);
+  c.beginPath(); c.ellipse(hx, cabeza, r * 0.92, r, 0, 0, Math.PI * 2); relleno(c, cara);
+  // Oreja (a ella se la tapa el pelo).
+  if (sexo === "H") { c.beginPath(); c.ellipse(hx - r * 0.25, cabeza + r * 0.05, r * 0.14, r * 0.2, 0, 0, Math.PI * 2); relleno(c, PIEL_SOMBRA); }
+  // Cara: ojos (parpadean), ceja, nariz y boca.
+  const mirarArriba = accion === "admira" ? -r * 0.18 : 0;
+  const ojoY = cabeza + r * 0.02 + mirarArriba;
+  const parpadea = (t % 4.3) < 0.12 || sentado && (t % 6) < 1.5;
+  c.fillStyle = "#2a1a14";
+  for (const ox of [hx + r * 0.32, hx + r * 0.7]) {
+    if (parpadea) c.fillRect(ox - r * 0.09, ojoY, r * 0.18, Math.max(0.6, r * 0.04));
+    else { c.beginPath(); c.ellipse(ox, ojoY, r * 0.06, r * 0.1, 0, 0, Math.PI * 2); c.fill(); }
+  }
+  c.strokeStyle = e.pelo; c.lineWidth = Math.max(0.6, r * 0.06); c.lineCap = "round";
+  c.beginPath(); c.moveTo(hx + r * 0.22, ojoY - r * 0.2); c.lineTo(hx + r * 0.42, ojoY - r * 0.24); c.stroke();
+  c.beginPath(); c.moveTo(hx + r * 0.62, ojoY - r * 0.24); c.lineTo(hx + r * 0.8, ojoY - r * 0.2); c.stroke();
+  c.fillStyle = "rgba(235, 120, 120, 0.35)"; c.beginPath(); c.ellipse(hx + r * 0.5, ojoY + r * 0.25, r * 0.12, r * 0.07, 0, 0, Math.PI * 2); c.fill();
+  c.strokeStyle = "#9a4f3d"; c.lineWidth = Math.max(0.6, r * 0.06);
+  c.beginPath(); c.arc(hx + r * 0.55, ojoY + r * 0.38, r * 0.12, Math.PI * 0.15, Math.PI * 0.85); c.stroke();
   c.lineCap = "butt";
+
+  // Pelo de enfrente.
+  if (sexo === "M") flequillo(c, hx, cabeza, r, e.pelo, e.peloLuz);
+  else peloCorto(c, hx, cabeza, r, e.pelo, e.peloLuz);
   c.restore();
 
-  // Lo que flota arriba: corazoncitos al admirar, "z" sentado, gotitas de sudor al hacer ejercicio.
+  // Lo que flota arriba: corazoncitos al admirar, notitas sentado, gotitas de sudor al hacer ejercicio.
   const k = (t * 0.7) % 1;
+  const arriba = y + cabeza - r * 1.6;
   if (accion === "admira") {
     c.fillStyle = `rgba(255, 110, 150, ${1 - k})`;
-    corazon(c, x + h.mira * u * 0.5, y - u * 3.1 - k * u * 0.8, u * 0.22);
+    corazon(c, x + h.mira * u * 0.45, arriba - k * u * 0.6, u * 0.16);
   } else if (accion === "sentado") {
     c.fillStyle = `rgba(255, 255, 255, ${0.9 - k * 0.9})`;
-    c.font = `800 ${Math.round(u * 0.45)}px system-ui, sans-serif`; c.textAlign = "center";
-    c.fillText("♪", x + u * 0.6, y - u * 2.8 - k * u * 0.7);
+    c.font = `800 ${Math.max(8, Math.round(u * 0.4))}px system-ui, sans-serif`; c.textAlign = "center";
+    c.fillText("♪", x + u * 0.5, arriba - k * u * 0.5);
   } else if (accion === "ejercicio") {
     c.fillStyle = `rgba(140, 200, 255, ${1 - k})`;
-    c.beginPath(); c.ellipse(x + u * 0.6, y - u * 2.4 + k * u * 0.6, u * 0.06, u * 0.1, 0, 0, Math.PI * 2); c.fill();
+    c.beginPath(); c.ellipse(x + u * 0.45, arriba + u * 0.3 + k * u * 0.4, u * 0.05, u * 0.08, 0, 0, Math.PI * 2); c.fill();
   }
+}
+
+/**
+ * El pelo largo de ella por detrás: baja hasta media espalda y, al caminar, se va hacia atrás y
+ * se mece en ondas (cada mechón con su propio tiempo).
+ */
+function peloLargo(c: CanvasRenderingContext2D, u: number, r: number, inclina: number, cabeza: number, hombro: number, pelo: string, luz: string, fase: number, camina: boolean, mira: number): void {
+  void mira;
+  const hx = inclina + 0.02 * u;
+  const largo = hombro + 0.85 * u;
+  const atras = camina ? 0.16 * u : 0.04 * u;
+  const onda = (k: number) => Math.sin(fase * (camina ? 0.5 : 1) + k) * (camina ? 0.07 : 0.025) * u;
+  c.beginPath();
+  c.moveTo(hx - r * 0.95, cabeza - r * 0.2);
+  c.bezierCurveTo(hx - r * 1.25 - atras * 0.4, cabeza + r * 0.8, hx - r * 1.1 - atras + onda(0), largo - 0.3 * u, hx - r * 0.85 - atras + onda(0.6), largo);
+  c.quadraticCurveTo(hx - r * 0.35 - atras * 0.7 + onda(1.2), largo + 0.08 * u, hx + r * 0.05 - atras * 0.4 + onda(1.8), largo - 0.06 * u);
+  c.bezierCurveTo(hx + r * 0.25 + onda(2.2) * 0.5, hombro + 0.2 * u, hx + r * 0.55, cabeza + r * 0.6, hx + r * 0.6, cabeza - r * 0.3);
+  c.closePath();
+  const g = c.createLinearGradient(hx - r, 0, hx + r * 0.5, 0);
+  g.addColorStop(0, pelo); g.addColorStop(1, luz);
+  relleno(c, g);
+  // Mechones: líneas de brillo que siguen la onda.
+  c.strokeStyle = "rgba(255, 220, 190, 0.22)"; c.lineWidth = Math.max(0.6, u * 0.03);
+  for (const f of [0.25, 0.55]) {
+    c.beginPath();
+    c.moveTo(hx - r * (0.9 - f), cabeza + r * 0.3);
+    c.quadraticCurveTo(hx - r * (1.05 - f) - atras * 0.6 + onda(f * 3), hombro + 0.3 * u, hx - r * (0.8 - f) - atras + onda(f * 3 + 0.8), largo - 0.08 * u);
+    c.stroke();
+  }
+}
+
+/** Fleco y coronilla de ella (lo que va encima de la cabeza). */
+function flequillo(c: CanvasRenderingContext2D, hx: number, cy: number, r: number, pelo: string, luz: string): void {
+  c.beginPath();
+  c.moveTo(hx - r * 0.95, cy + r * 0.2);
+  c.bezierCurveTo(hx - r * 1.05, cy - r * 1.15, hx + r * 0.6, cy - r * 1.35, hx + r * 0.95, cy - r * 0.25);
+  c.quadraticCurveTo(hx + r * 0.65, cy - r * 0.45, hx + r * 0.35, cy - r * 0.35);
+  c.quadraticCurveTo(hx + r * 0.05, cy - r * 0.2, hx - r * 0.3, cy - r * 0.35);
+  c.quadraticCurveTo(hx - r * 0.55, cy - r * 0.1, hx - r * 0.95, cy + r * 0.2);
+  c.closePath();
+  const g = c.createLinearGradient(hx - r, cy - r, hx + r, cy);
+  g.addColorStop(0, pelo); g.addColorStop(1, luz);
+  relleno(c, g);
+  c.strokeStyle = "rgba(255, 230, 200, 0.3)"; c.lineWidth = Math.max(0.6, r * 0.08); c.lineCap = "round";
+  c.beginPath(); c.arc(hx, cy - r * 0.1, r * 0.78, Math.PI * 1.2, Math.PI * 1.45); c.stroke();
+  c.lineCap = "butt";
+}
+
+/** Pelo corto de él, con un copete. */
+function peloCorto(c: CanvasRenderingContext2D, hx: number, cy: number, r: number, pelo: string, luz: string): void {
+  c.beginPath();
+  c.moveTo(hx - r * 0.92, cy + r * 0.15);
+  c.bezierCurveTo(hx - r * 1.05, cy - r * 1.1, hx + r * 0.2, cy - r * 1.45, hx + r * 0.95, cy - r * 0.6);
+  c.quadraticCurveTo(hx + r * 0.75, cy - r * 0.45, hx + r * 0.5, cy - r * 0.5);
+  c.quadraticCurveTo(hx - r * 0.1, cy - r * 0.45, hx - r * 0.45, cy - r * 0.15);
+  c.quadraticCurveTo(hx - r * 0.6, cy + r * 0.05, hx - r * 0.92, cy + r * 0.15);
+  c.closePath();
+  const g = c.createLinearGradient(hx - r, cy - r, hx + r, cy);
+  g.addColorStop(0, pelo); g.addColorStop(1, luz);
+  relleno(c, g);
 }
 
 function corazon(c: CanvasRenderingContext2D, x: number, y: number, s: number): void {
