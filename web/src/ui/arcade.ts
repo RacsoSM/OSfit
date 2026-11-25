@@ -24,8 +24,8 @@ export interface JuegoArcade {
 }
 
 export const JUEGOS_ARCADE: readonly JuegoArcade[] = [
-  { ventana: "boxjump", nombre: "Box Jump", imagen: "/arcade/boxjump.webp", llave: "osfit:boxjump-tabla", neon: "lima", nuevo: true },
-  { ventana: "kettlebell", nombre: "Kettlebell Bird", imagen: "/arcade/kettlebell.webp", llave: "osfit:kettlebell-tabla", neon: "rosa" },
+  { ventana: "boxjump", nombre: "Box Jump", imagen: "/arcade/boxjump.webp?v=3", llave: "osfit:boxjump-tabla", neon: "lima", nuevo: true },
+  { ventana: "kettlebell", nombre: "Kettlebell Bird", imagen: "/arcade/kettlebell.webp?v=3", llave: "osfit:kettlebell-tabla", neon: "rosa" },
   { ventana: "juego", nombre: "Torre de discos", imagen: "/arcade/torre.webp", llave: "osfit:torre-tabla", neon: "cian" },
 ];
 

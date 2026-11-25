@@ -2768,6 +2768,9 @@ body.historia-abierta { overflow: hidden; }
    toda la pantalla"): el morado y el piso cuadriculado son capas fijas detrás de todo, como la
    batalla de Amigos; las capas de la paleta se esconden mientras el Arcade está abierto. */
 body:has(.arcade) { background: #0d0b16; }
+/* En el Arcade no va el título "Arcade" de arriba (ya está el letrero de neón); el ☰ se queda
+   (entrenador, 2026-11-25). */
+body:has(.arcade) .cabecera .titulo-ventana { visibility: hidden; }
 body:has(.arcade)::before {
   content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
   background: radial-gradient(130% 70% at 50% 0%, #2a1250 0%, #120c22 55%, #0d0b16 100%);
