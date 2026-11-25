@@ -2,6 +2,7 @@ import {
   ANCHO_TABLERO, avanzar, nuevaPartida, pesoDe, soltar, type Partida,
 } from "../juegoDiscos";
 import { escapar } from "./tarjetaDia";
+import { ajustarMarcoJuego, pintarSeguro, prepararMarcoJuego, vigilarMarcoJuego } from "./marcoJuego";
 
 /**
  * La ventana del minijuego Torre de discos (lógica en `../juegoDiscos.ts`) y su tabla de
@@ -344,8 +345,8 @@ function ciclo(ahora: number): void {
   for (const l of letreros) { l.vida -= dt * 0.8; l.y += 10 * dt; }
   letreros = letreros.filter((l) => l.vida > 0);
   sacudida = Math.max(0, sacudida - dt * 2.2);
-  dibujar(dt);
   cuadro = requestAnimationFrame(ciclo);
+  pintarSeguro(() => dibujar(dt));
 }
 
 function arrancar(): void {
@@ -651,15 +652,7 @@ function dibujar(dt: number): void {
 
 /** El juego va de la cabecera a la barra de abajo. */
 function ajustarMarco(): void {
-  const pantalla = q("#jd-pantalla");
-  if (!pantalla) return;
-  const cab = document.querySelector<HTMLElement>(".cabecera");
-  // `#barra` es solo el contenedor (mide 0): lo que se ve es la barra fija adentro.
-  const barra = [...document.querySelectorAll<HTMLElement>("#barra, #barra > *")].find((b) => b.offsetHeight > 0) ?? null;
-  const arriba = cab ? Math.max(0, cab.getBoundingClientRect().bottom + 6) : 0;
-  const abajo = barra ? Math.max(0, window.innerHeight - barra.getBoundingClientRect().top) : 0;
-  pantalla.style.top = `${arriba}px`;
-  pantalla.style.bottom = `${abajo}px`;
+  ajustarMarcoJuego(q("#jd-pantalla"));
 }
 
 /** Muestra u oculta la ventana. La primera vez arma su DOM; al salir a media partida la pausa. */
@@ -680,9 +673,7 @@ export function mostrarJuego(contenedor: HTMLElement, visible: boolean, conexion
     conectar(contenedor);
     tabla = tabla ?? tablaGuardada();
   }
-  window.scrollTo(0, 0);
-  ajustarMarco();
-  requestAnimationFrame(ajustarMarco);
+  prepararMarcoJuego(ajustarMarco);
   actualizar();
   arrancar();
   void cargarTabla();
@@ -712,5 +703,5 @@ function conectar(c: HTMLElement): void {
     e.preventDefault();
     tocar();
   });
-  window.addEventListener("resize", () => { if (!c.hidden) ajustarMarco(); });
+  vigilarMarcoJuego(() => { if (!c.hidden) ajustarMarco(); });
 }
