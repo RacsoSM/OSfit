@@ -215,7 +215,7 @@ function cuadro(ahoraMs: number): void {
   const t = ahoraMs / 1000;
   avanzarHabitante(habitante, t, dt, (i, j) => p(v, i, j)[0]);
   const [x, y] = p(v, habitante.i, habitante.j);
-  pintarHabitante(c, x, y, v.tw * (lugar === "pradera" ? 0.15 : 0.26), sexo, habitante, t);
+  pintarHabitante(c, x, y, v.tw * (lugar === "pradera" ? 0.2 : 0.3), sexo, habitante, t);
 }
 
 function pintarCuarto(c: CanvasRenderingContext2D, W: number, H: number, estilo: EstiloEspacio, ejemplos: boolean, tipo: Lugar): void {
