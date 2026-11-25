@@ -33,7 +33,7 @@ import type {
 import { horaEnMazatlan, hoyEnMazatlan } from "./fecha";
 import { mesAnterior, type Tirada } from "./tirada";
 import {
-  batallaAmigos, borrarSesion, enviarSugerencia, guardarEsfuerzo, guardarPartidaDiscos, guardarPartidaKettlebell, tablaDiscos, tablaKettlebell, compararMusculos, editarSesion, elegirMostrarEnAmigos, guardarPeso, marcarAsistencia, obtenerRanking, registrarEntrada, registrarSesion,
+  batallaAmigos, borrarSesion, enviarSugerencia, guardarEsfuerzo, guardarPartidaBoxJump, guardarPartidaDiscos, guardarPartidaKettlebell, tablaBoxJump, tablaDiscos, tablaKettlebell, compararMusculos, editarSesion, elegirMostrarEnAmigos, guardarPeso, marcarAsistencia, obtenerRanking, registrarEntrada, registrarSesion,
 } from "./acciones";
 import { modalRuleta, conectarRuleta } from "./ui/ruleta";
 import { conectarRanking, type EstadoRanking } from "./ui/tarjetaRanking";
@@ -100,6 +100,7 @@ import { iniciarCronometros } from "./ui/cronometro";
 import { conectarSugerencias, reiniciarSugerencias } from "./ui/sugerencias";
 import { mostrarJuego } from "./ui/juegoDiscos";
 import { mostrarKettlebell } from "./ui/kettlebellBird";
+import { mostrarBoxJump } from "./ui/boxJump";
 import { cargarArcade, conectarArcade } from "./ui/arcade";
 import { calificarEsfuerzo, reenviarEsfuerzos } from "./esfuerzo";
 import { conectarBuzon, leerVisto, marcarVistas, resaltarAviso, sinLeer } from "./ui/buzon";
@@ -602,7 +603,7 @@ async function arrancar(): Promise<void> {
     // repintado destruiría.
     const barra = barraInferior(BARRA.map(ventana));
     app.innerHTML = `${cabecera(saludo(nombre))}<div id="contenido"></div>` +
-      `<div id="videos" hidden></div><div id="juego" hidden></div><div id="kettlebell" hidden></div><div id="barra">${barra}</div>` +
+      `<div id="videos" hidden></div><div id="juego" hidden></div><div id="kettlebell" hidden></div><div id="boxjump" hidden></div><div id="barra">${barra}</div>` +
       `<div id="menu"></div><div id="ruleta"></div>`;
     conectarSaludo();
     conectarCabecera(abrirMenu, () => abrirVentana("ajustes"), () => abrirVentana("notificaciones"));
@@ -749,6 +750,7 @@ async function arrancar(): Promise<void> {
       void cargarArcade({
         "osfit:torre-tabla": async () => (await tablaDiscos({})).data,
         "osfit:kettlebell-tabla": async () => (await tablaKettlebell({})).data,
+        "osfit:boxjump-tabla": async () => (await tablaBoxJump({})).data,
       }, () => { if (ventanaActiva() === "arcade") pintar(); });
     }
     // Cada vez y no solo al entrar: si el entrenador le pone el sexo con la ventana abierta,
@@ -825,8 +827,10 @@ async function arrancar(): Promise<void> {
     if (cajaJuego) mostrarJuego(cajaJuego, activa.contenedorPropio === "juego", { guardar: async (p) => (await guardarPartidaDiscos(p)).data, tabla: async () => (await tablaDiscos({})).data, nombre: cliente.nombre ?? "" });
     const cajaKettlebell = document.querySelector<HTMLElement>("#kettlebell");
     if (cajaKettlebell) mostrarKettlebell(cajaKettlebell, activa.contenedorPropio === "kettlebell", { guardar: async (p) => (await guardarPartidaKettlebell(p)).data, tabla: async () => (await tablaKettlebell({})).data, nombre: cliente.nombre ?? "" });
+    const cajaBoxJump = document.querySelector<HTMLElement>("#boxjump");
+    if (cajaBoxJump) mostrarBoxJump(cajaBoxJump, activa.contenedorPropio === "boxjump", { guardar: async (p) => (await guardarPartidaBoxJump(p)).data, tabla: async () => (await tablaBoxJump({})).data, nombre: cliente.nombre ?? "" });
     // Con un juego abierto la página no se mueve (el juego es toda la pestaña).
-    const conJuego = activa.contenedorPropio === "juego" || activa.contenedorPropio === "kettlebell";
+    const conJuego = activa.contenedorPropio === "juego" || activa.contenedorPropio === "kettlebell" || activa.contenedorPropio === "boxjump";
     document.body.classList.toggle("con-juego", conJuego);
     if (!conJuego) soltarMarcoJuego();
     pintarMenu(activa.id, cliente.nombre);

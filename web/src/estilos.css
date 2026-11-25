@@ -2770,6 +2770,8 @@ body:has(.arcade) :is(.fondo, .fondo-pixel, .fondo-sakura, .fondo-halloween, .pe
   transition: transform 0.15s ease;
 }
 .ar-maquina.rosa { box-shadow: 0 0 0 2px #ff3bd4, 0 0 18px rgba(255, 59, 212, 0.4); }
+.ar-maquina.lima { box-shadow: 0 0 0 2px #9dff5c, 0 0 18px rgba(157, 255, 92, 0.4); }
+.ar-maquina.lima .ar-titulo-campeon { color: #b8ff8a; text-shadow: 0 0 8px rgba(157, 255, 92, 0.8), 0 0 20px rgba(157, 255, 92, 0.4); }
 .ar-maquina:active { transform: scale(0.98); }
 .ar-pantalla { position: relative; display: block; height: 150px; border-radius: 12px; overflow: hidden; background: #0d0e13; }
 .ar-pantalla img { width: 100%; height: 100%; object-fit: cover; display: block; }
@@ -2787,8 +2789,18 @@ body:has(.arcade) :is(.fondo, .fondo-pixel, .fondo-sakura, .fondo-halloween, .pe
 .ar-tuyo { margin: 6px 2px 0; font-size: 11px; color: rgba(255, 255, 255, 0.55); letter-spacing: 0.5px; }
 .ar-jugar { color: #ffd45c; font-weight: 800; letter-spacing: 1px; animation: ar-parpadeo 2.4s infinite; }
 .ar-nuevo { position: absolute; right: 16px; top: 16px; z-index: 1; padding: 4px 10px; border-radius: 6px; background: #ffd45c; color: #1a1300; font: 800 11px ui-monospace, monospace; letter-spacing: 1px; }
-.kb-pantalla { background: #160f26; }
+.kb-pantalla, .bj-pantalla { background: #160f26; }
 .jd-hud-nivel { margin: 4px 0 0; font: 800 12px ui-monospace, "SF Mono", Menlo, monospace; letter-spacing: 1px; color: #7ef3ff; text-shadow: 0 0 8px rgba(126, 243, 255, 0.6); text-transform: uppercase; }
+/* En Kettlebell Bird el nivel va abajo, sobre el piso (entrenador, 2026-11-25: "ponlo abajo"). */
+.kb-nivel-abajo { position: absolute; left: 0; right: 0; bottom: 10px; margin: 0; text-align: center; pointer-events: none; }
+.jd-pantalla:not(.en-juego) .kb-nivel-abajo { opacity: 0; }
+/* Al subir de nivel la línea brilla un momento, sin tapar el juego. */
+.jd-hud-nivel.sube { animation: jd-sube-nivel 1.6s ease-out; }
+@keyframes jd-sube-nivel {
+  0% { color: #fff; text-shadow: 0 0 14px #ff3bd4, 0 0 4px #fff; transform: scale(1.25); }
+  25% { transform: scale(1); }
+  100% { color: #7ef3ff; text-shadow: 0 0 8px rgba(126, 243, 255, 0.6); }
+}
 
 /* ---------- Torre de discos (minijuego, `ui/juegoDiscos.ts`) ----------
    Toda la pestaña es el juego: fijo entre la cabecera y la barra de abajo (`ajustarMarco` pone

@@ -48,7 +48,7 @@ import { edadEn, fuerzaPorMusculo, pesoParaFuerza, type FuerzaMusculo } from "./
 
 export type IdVentana =
   | "inicio" | "musculos" | "registro" | "comparar" | "estadisticas"
-  | "ranking" | "medallas" | "logros" | "videos" | "ajustes" | "resumenMensual" | "notificaciones" | "sugerencias" | "arcade" | "juego" | "kettlebell";
+  | "ranking" | "medallas" | "logros" | "videos" | "ajustes" | "resumenMensual" | "notificaciones" | "sugerencias" | "arcade" | "juego" | "kettlebell" | "boxjump";
 
 /** Todo lo que los listeners de Firestore tienen a mano en cada repintado. */
 export interface DatosCliente {
@@ -237,7 +237,7 @@ export interface Ventana {
    * propio que `innerHTML` destruiría, ver `pintarVideos` en `main.ts`) y el minijuego (su
    * canvas a media partida, ver `mostrarJuego`).
    */
-  contenedorPropio?: "videos" | "juego" | "kettlebell";
+  contenedorPropio?: "videos" | "juego" | "kettlebell" | "boxjump";
 }
 
 /**
@@ -338,6 +338,7 @@ export const VENTANAS: readonly Ventana[] = [
   // repintado a media partida tiraría el canvas (`ui/juegoDiscos.ts`, `ui/kettlebellBird.ts`).
   { id: "juego", titulo: "Torre de discos", icono: "🏋️", grupo: "sub", contenedorPropio: "juego" },
   { id: "kettlebell", titulo: "Kettlebell Bird", icono: "🏋️", grupo: "sub", contenedorPropio: "kettlebell" },
+  { id: "boxjump", titulo: "Box Jump", icono: "🏋️", grupo: "sub", contenedorPropio: "boxjump" },
   // Medallas y Logros personales, ocultas del menú (decisión del entrenador, 2026-10-21). Las
   // ventanas siguen existiendo: volver a mostrarlas es quitar `oculta`.
   {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { KETTLEBELL_BIRD, armarTabla, avisoSuperada, nombreVisible, partidaValida, superadas, type Registro } from "./juegoDiscos";
+import { BOX_JUMP, KETTLEBELL_BIRD, armarTabla, avisoSuperada, nombreVisible, partidaValida, superadas, type Registro } from "./juegoDiscos";
 
 describe("partidaValida", () => {
   it("acepta una partida posible", () => {
@@ -80,5 +80,19 @@ describe("Kettlebell Bird", () => {
     expect(a.abrir).toEqual({ ventana: "kettlebell" });
     expect(a.id).toBe("auto_kettlebellBird_said_bogue_31");
     expect(avisoSuperada("said", "bogue", "Bogue", 31).id).toBe("auto_torreDiscos_said_bogue_31");
+  });
+});
+
+describe("Box Jump", () => {
+  it("cada metro es un punto; subir más rápido que el trampolín es imposible", () => {
+    expect(partidaValida({ puntos: 120, apilados: 120, duracionMs: 60_000 }, BOX_JUMP)).not.toBeNull();
+    expect(partidaValida({ puntos: 120, apilados: 120, duracionMs: 3_000 }, BOX_JUMP)).toBeNull();
+    expect(partidaValida({ puntos: 240, apilados: 120, duracionMs: 60_000 }, BOX_JUMP)).toBeNull();
+  });
+  it("su aviso dice el juego y abre su ventana", () => {
+    const a = avisoSuperada("said", "bogue", "Bogue", 87, BOX_JUMP);
+    expect(a.titulo).toBe("Bogue te ha superado en Box Jump");
+    expect(a.abrir).toEqual({ ventana: "boxjump" });
+    expect(a.id).toBe("auto_boxJump_said_bogue_87");
   });
 });

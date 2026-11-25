@@ -31,6 +31,13 @@ export interface Juego {
 export const TORRE_DISCOS: Juego = {
   coleccion: "juegoDiscos", nombre: "Torre de discos", clave: "torreDiscos", ventana: "juego", msMinimos: 250, puntosPorPunto: 2,
 };
+/**
+ * Box Jump: cada metro subido es un punto. Lo más rápido que se sube es con el trampolín, a
+ * unos 19 m/s: menos de 40 ms por metro es imposible.
+ */
+export const BOX_JUMP: Juego = {
+  coleccion: "juegoBoxJump", nombre: "Box Jump", clave: "boxJump", ventana: "boxjump", msMinimos: 40, puntosPorPunto: 1,
+};
 /** En el nivel más alto las barras van a ~0.47 s una de otra: menos de 0.35 s es imposible. */
 export const KETTLEBELL_BIRD: Juego = {
   coleccion: "juegoKettlebell", nombre: "Kettlebell Bird", clave: "kettlebellBird", ventana: "kettlebell", msMinimos: 350, puntosPorPunto: 1,
@@ -181,3 +188,5 @@ export const guardarPartidaDiscos = guardarPartida(TORRE_DISCOS);
 export const tablaDiscos = tabla(TORRE_DISCOS);
 export const guardarPartidaKettlebell = guardarPartida(KETTLEBELL_BIRD);
 export const tablaKettlebell = tabla(KETTLEBELL_BIRD);
+export const guardarPartidaBoxJump = guardarPartida(BOX_JUMP);
+export const tablaBoxJump = tabla(BOX_JUMP);
