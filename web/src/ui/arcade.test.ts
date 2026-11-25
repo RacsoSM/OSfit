@@ -27,6 +27,8 @@ describe("Arcade", () => {
     expect(html).toContain("Tu récord 28 · #3");
     expect(html).toContain("¡Sé el primer campeón!");
     expect(html).toContain(">ARCADE<");
+    expect(html).toContain(">CAMPEÓN<");
+    expect(html).not.toContain("HI-SCORE");
   });
 
   it("escapa los nombres", () => {

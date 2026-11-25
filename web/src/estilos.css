@@ -2739,19 +2739,23 @@ body.historia-abierta { overflow: hidden; }
 }
 
 /* ---------- Arcade (`ui/arcade.ts`, diseño "B · Arcade neón", entrenador 2026-11-24) ---------- */
-.arcade {
-  position: relative; overflow: hidden; margin: 0 -4px; padding: 18px 12px 26px; border-radius: 22px;
-  min-height: calc(100dvh - 190px);
-  background: radial-gradient(120% 60% at 50% 0%, #2a1250 0%, #0d0b16 62%);
+/* A toda la pantalla (entrenador, 2026-11-25: "que no se vea el borde que no es neón, que abarque
+   toda la pantalla"): el morado y el piso cuadriculado son capas fijas detrás de todo, como la
+   batalla de Amigos; las capas de la paleta se esconden mientras el Arcade está abierto. */
+body:has(.arcade) { background: #0d0b16; }
+body:has(.arcade)::before {
+  content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  background: radial-gradient(130% 70% at 50% 0%, #2a1250 0%, #120c22 55%, #0d0b16 100%);
 }
-/* El piso cuadriculado en perspectiva, como de maquinita. */
-.ar-piso {
-  position: absolute; left: -30%; right: -30%; bottom: 0; height: 240px; pointer-events: none; opacity: 0.45;
+body:has(.arcade)::after {
+  content: ""; position: fixed; left: -30%; right: -30%; bottom: 0; height: 300px; z-index: -1; pointer-events: none; opacity: 0.5;
   background: repeating-linear-gradient(90deg, rgba(255, 59, 212, 0.45) 0 1px, transparent 1px 40px),
               repeating-linear-gradient(0deg, rgba(255, 59, 212, 0.45) 0 1px, transparent 1px 28px);
   transform: perspective(300px) rotateX(60deg); transform-origin: bottom;
   -webkit-mask-image: linear-gradient(transparent, #000 60%); mask-image: linear-gradient(transparent, #000 60%);
 }
+body:has(.arcade) :is(.fondo, .fondo-pixel, .fondo-sakura, .fondo-halloween, .petalos-frente) { visibility: hidden; }
+.arcade { position: relative; padding: 4px 0 24px; }
 .ar-marquesina { position: relative; text-align: center; margin: 0 0 16px; }
 .ar-marquesina b {
   display: block; font-size: 46px; font-weight: 900; letter-spacing: 8px; color: #fff;
@@ -2773,10 +2777,13 @@ body.historia-abierta { overflow: hidden; }
 .ar-pantalla::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.18) 0 2px, transparent 2px 4px); }
 .ar-nombre, .ar-hi, .ar-tuyo { display: flex; justify-content: space-between; align-items: baseline; font-family: ui-monospace, "SF Mono", Menlo, "Courier New", monospace; }
 .ar-nombre { margin: 10px 2px 4px; font-size: 16px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; }
-.ar-hi { margin: 0 2px; font-size: 12px; letter-spacing: 1px; color: #7ef3ff; white-space: nowrap; gap: 8px; }
-.ar-hi span { overflow: hidden; text-overflow: ellipsis; }
-.ar-maquina.rosa .ar-hi { color: #ff8be8; }
-.ar-hi b { font-size: 18px; color: #ffd45c; }
+/* El campeón: "CAMPEÓN" en grande, en neón, y abajo su nombre y su puntuación. */
+.ar-titulo-campeon { display: block; margin: 2px 2px 0; font: 900 20px ui-monospace, "SF Mono", Menlo, monospace; letter-spacing: 4px;
+  color: #7ef3ff; text-shadow: 0 0 8px rgba(126, 243, 255, 0.8), 0 0 20px rgba(126, 243, 255, 0.4); }
+.ar-maquina.rosa .ar-titulo-campeon { color: #ff8be8; text-shadow: 0 0 8px rgba(255, 59, 212, 0.8), 0 0 20px rgba(255, 59, 212, 0.4); }
+.ar-hi { margin: 2px 2px 0; align-items: center; gap: 10px; white-space: nowrap; }
+.ar-hi span { overflow: hidden; text-overflow: ellipsis; font-size: 20px; font-weight: 800; color: #fff; letter-spacing: 0.5px; }
+.ar-hi b { flex: none; font-size: 30px; color: #ffd45c; text-shadow: 0 0 10px rgba(255, 212, 92, 0.5); }
 .ar-tuyo { margin: 6px 2px 0; font-size: 11px; color: rgba(255, 255, 255, 0.55); letter-spacing: 0.5px; }
 .ar-jugar { color: #ffd45c; font-weight: 800; letter-spacing: 1px; animation: ar-parpadeo 2.4s infinite; }
 .ar-nuevo { position: absolute; right: 16px; top: 16px; z-index: 1; padding: 4px 10px; border-radius: 6px; background: #ffd45c; color: #1a1300; font: 800 11px ui-monospace, monospace; letter-spacing: 1px; }

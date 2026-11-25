@@ -3,8 +3,8 @@ import type { TablaDiscos } from "./juegoDiscos";
 
 /**
  * El Arcade (entrenador, 2026-11-24, diseño "B · Arcade neón"): la ventana del menú que reúne los
- * minijuegos. Cada juego es una pantalla de maquinita con su imagen y su "HI-SCORE": el nombre y
- * la puntuación de su campeón (el #1 de sus Records) y tu propio récord. Tocarla abre el juego,
+ * minijuegos, a toda la pantalla. Cada juego es una pantalla de maquinita con su imagen y su
+ * "CAMPEÓN" (el #1 de sus Records) en grande, con su puntuación, y tu propio récord. Tocarla abre el juego,
  * que es una subventana del Arcade ("atrás" regresa aquí).
  *
  * Las tablas se piden al entrar (`cargarArcade`) y se recuerdan en el teléfono, en las mismas
@@ -35,7 +35,7 @@ function tablaDe(llave: string): TablaDiscos | null {
   } catch { return null; }
 }
 
-/** "HI-SCORE · 👑 JESSICA M." y su puntuación, o la invitación a estrenarlo. */
+/** "👑 Jessica M." y su puntuación, o la invitación a estrenarlo. */
 export function hiScore(t: TablaDiscos | null): { quien: string; puntos: string } {
   const campeon = t?.filas[0];
   if (!campeon) return { quien: t ? "¡Sé el primer campeón!" : "Cargando…", puntos: "" };
@@ -58,13 +58,13 @@ export function ventanaArcade(tablas: Readonly<Record<string, TablaDiscos | null
         ${j.nuevo ? `<span class="ar-nuevo">¡NUEVO!</span>` : ""}
         <span class="ar-pantalla"><img src="${j.imagen}" alt="" loading="lazy" decoding="async"></span>
         <span class="ar-nombre">${escapar(j.nombre)}</span>
-        <span class="ar-hi"><span>HI-SCORE · ${escapar(hi.quien)}</span><b>${hi.puntos}</b></span>
+        <span class="ar-titulo-campeon">CAMPEÓN</span>
+        <span class="ar-hi"><span>${escapar(hi.quien)}</span><b>${hi.puntos}</b></span>
         <span class="ar-tuyo"><span>${escapar(tuyo)}</span><span class="ar-jugar">JUGAR ▶</span></span>
       </button>`;
   }).join("");
   return `
     <div class="arcade">
-      <i class="ar-piso" aria-hidden="true"></i>
       <div class="ar-marquesina"><b>ARCADE</b><span>OSFIT · INSERT COIN</span></div>
       ${tarjetas}
     </div>`;
