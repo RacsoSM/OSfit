@@ -9,7 +9,6 @@
  * 2026-11-25, igual que esta cámara.
  */
 import { p, type Vista } from "./iso";
-import { praderaRealista } from "./praderaEstilos";
 
 export type Lugar = "casa" | "gimnasio";
 
@@ -40,9 +39,6 @@ export const ARBOLES: readonly [number, number][] = [[1.2, 1.4], [8.6, 0.6], [0.
   [6.4, 11.2], [11, 14.2], [-2.5, 10], [13.5, 1.5], [-1, -1.5], [1, -3], [15, 6.5], [7.5, 14.5], [0.5, 12.8], [14.6, 12.4], [-3.2, 5.6], [10.2, -2.5],
   [-2.6, -2.2], [-0.4, -4.6], [-4.8, 0.2], [2.4, -4.4], [4.6, -3.2], [-4.4, 2.6], [-6.2, -2.4], [-2.2, -6.4], [6.8, -4.6], [-6.8, 3.4], [0.6, -7.2], [-7.4, 0.8]];
 
-export function pintarPradera(c: CanvasRenderingContext2D, W: number, H: number): Zona[] {
-  return praderaRealista(c, W, H);
-}
 
 export function zonaDe(v: Vista, lugar: Lugar, i0: number, i1: number, j0: number, j1: number, h: number): Zona {
   const pts = [p(v, i0, j0, h), p(v, i1, j0, 0), p(v, i1, j1, 0), p(v, i0, j1, 0), p(v, i1, j1, h), p(v, i0, j1, h), p(v, i1, j0, h)];

@@ -8,7 +8,8 @@
  */
 import { escapar } from "./tarjetaDia";
 import { caja, p, poligono, type Vista } from "./iso";
-import { pintarPradera, vistaPradera, type Lugar, type Zona } from "./pradera";
+import { vistaPradera, type Lugar, type Zona } from "./pradera";
+import { escenaRealista } from "./praderaEstilos";
 import { avanzarHabitante, nuevoHabitante, pintarHabitante, type Habitante } from "./habitante";
 import type { Sexo } from "../datos";
 import { ajustarMarcoJuego, vigilarMarcoJuego } from "./marcoJuego";
@@ -137,7 +138,14 @@ function vistaPara(c: CanvasRenderingContext2D, W: number, H: number): Vista {
 }
 
 /** El fondo ya dibujado (lo pesado: pasto, árboles, edificios), para no repintarlo en cada cuadro. */
-let fondo: { clave: string; lienzo: HTMLCanvasElement; pixel: boolean } | null = null;
+/** Un recorte ya dibujado (un árbol, un edificio) y su profundidad. */
+interface Recorte { orden: number; lienzo: HTMLCanvasElement; x: number; y: number; w: number; h: number; }
+/**
+ * Lo ya dibujado del lugar, para no repintarlo en cada cuadro. En la pradera va por capas: el
+ * suelo, un recorte por cada cosa parada en ella (ordenados por profundidad) y la viñeta; en
+ * cada cuadro el personaje se mete entre los recortes según dónde va. Los cuartos van completos.
+ */
+let fondo: { clave: string; lienzo: HTMLCanvasElement; pixel: boolean; recortes: Recorte[]; encima: HTMLCanvasElement | null } | null = null;
 let habitante: Habitante | null = null;
 let sexo: Sexo = "M";
 let ciclo = 0;
@@ -156,14 +164,16 @@ export function dibujarEspacio(estilo: EstiloEspacio = estiloGuardado(), ejemplo
   const pixel = lugar !== "pradera" && estilo === "c";
   const dpr = Math.min(2, window.devicePixelRatio || 1);
   const clave = `${lugar}|${W}|${H}|${dpr}|${estilo}|${ejemplos}`;
-  if (!fondo || fondo.clave !== clave) fondo = { clave, lienzo: pintarFondo(W, H, dpr, estilo, ejemplos, pixel), pixel };
+  if (!fondo || fondo.clave !== clave) {
+    fondo = lugar === "pradera" ? { clave, pixel: false, ...pintarPraderaEnCapas(W, H, dpr) } : { clave, lienzo: pintarFondo(W, H, dpr, estilo, ejemplos, pixel), pixel, recortes: [], encima: null };
+  }
   if (!habitante || habitante.lugar !== lugar) habitante = nuevoHabitante(lugar, performance.now() / 1000);
   // Que el navegador no suavice los cuadritos al agrandar el canvas.
   canvas.style.imageRendering = pixel ? "pixelated" : "";
   if (!ciclo) { ultimo = performance.now(); ciclo = requestAnimationFrame(cuadro); }
 }
 
-/** El fondo del lugar, en un lienzo aparte del tamaño del canvas. Calcula las zonas tocables. */
+/** El fondo de un cuarto (la casa o el gimnasio), en un lienzo aparte del tamaño del canvas. */
 function pintarFondo(W: number, H: number, dpr: number, estilo: EstiloEspacio, ejemplos: boolean, pixel: boolean): HTMLCanvasElement {
   // En 8 bits se dibuja chiquito y se agranda sin suavizar: así salen los cuadritos.
   const escala = pixel ? 3 : 1;
@@ -175,17 +185,46 @@ function pintarFondo(W: number, H: number, dpr: number, estilo: EstiloEspacio, e
   if (!c) return final;
   if (!pixel) c.setTransform(dpr, 0, 0, dpr, 0, 0);
   const cw = pixel ? lienzo.width : W, ch = pixel ? lienzo.height : H;
-  if (lugar === "pradera") {
-    zonas = pintarPradera(c, cw, ch);
-  } else {
-    zonas = [];
-    pintarCuarto(c, cw, ch, estilo, ejemplos, lugar);
-  }
+  // (La pradera va por capas: `pintarPraderaEnCapas`.)
+  zonas = [];
+  if (lugar !== "pradera") pintarCuarto(c, cw, ch, estilo, ejemplos, lugar);
   if (pixel) {
     const d = final.getContext("2d");
     if (d) { d.imageSmoothingEnabled = false; d.drawImage(lienzo, 0, 0, final.width, final.height); }
   }
   return final;
+}
+
+function lienzoDe(w: number, h: number, dpr: number): [HTMLCanvasElement, CanvasRenderingContext2D | null] {
+  const l = document.createElement("canvas");
+  l.width = Math.max(1, Math.round(w * dpr)); l.height = Math.max(1, Math.round(h * dpr));
+  return [l, l.getContext("2d")];
+}
+
+/** La pradera por capas: el suelo, un recorte por cosa y la viñeta. Calcula las zonas tocables. */
+function pintarPraderaEnCapas(W: number, H: number, dpr: number): { lienzo: HTMLCanvasElement; recortes: Recorte[]; encima: HTMLCanvasElement } {
+  const [lienzo, c] = lienzoDe(W, H, dpr);
+  const [encima, ce] = lienzoDe(W, H, dpr);
+  if (!c || !ce) return { lienzo, recortes: [], encima };
+  c.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const escena = escenaRealista(c, W, H);
+  escena.suelo();
+  zonas = [];
+  const recortes: Recorte[] = [];
+  for (const cosa of escena.cosas) {
+    const { x, y, w, h } = cosa.caja;
+    const [l, cc] = lienzoDe(w, h, dpr);
+    if (!cc) continue;
+    cc.setTransform(dpr, 0, 0, dpr, -x * dpr, -y * dpr);
+    escena.v.c = cc;
+    const z = cosa.pinta();
+    if (z) zonas.push(z);
+    recortes.push({ orden: cosa.orden, lienzo: l, x, y, w, h });
+  }
+  ce.setTransform(dpr, 0, 0, dpr, 0, 0);
+  escena.v.c = ce;
+  escena.encima();
+  return { lienzo, recortes, encima };
 }
 
 /** La vista isométrica del lugar (en px del canvas), para poner al habitante en su cuadro. */
@@ -208,14 +247,22 @@ function cuadro(ahoraMs: number): void {
   c.setTransform(1, 0, 0, 1, 0, 0);
   c.imageSmoothingEnabled = !fondo.pixel;
   c.drawImage(fondo.lienzo, 0, 0);
-  if (!habitante) return;
   c.setTransform(dpr, 0, 0, dpr, 0, 0);
   c.imageSmoothingEnabled = true;
   const v = vistaDelLugar(c, W, H);
   const t = ahoraMs / 1000;
-  avanzarHabitante(habitante, t, dt, (i, j) => p(v, i, j)[0]);
-  const [x, y] = p(v, habitante.i, habitante.j);
-  pintarHabitante(c, x, y, v.tw * (lugar === "pradera" ? 0.2 : 0.3), sexo, habitante, t);
+  const h = habitante;
+  if (h) avanzarHabitante(h, t, dt, (i, j) => p(v, i, j)[0]);
+  const profundidad = h ? h.i + h.j : Infinity;
+  const recorte = (r: Recorte) => c.drawImage(r.lienzo, r.x, r.y, r.w, r.h);
+  // Lo que está detrás del personaje, el personaje, y lo que está delante (que lo tapa).
+  for (const r of fondo.recortes) if (r.orden <= profundidad) recorte(r);
+  if (h) {
+    const [x, y] = p(v, h.i, h.j);
+    pintarHabitante(c, x, y, v.tw * (lugar === "pradera" ? 0.2 : 0.3), sexo, h, t);
+  }
+  for (const r of fondo.recortes) if (r.orden > profundidad) recorte(r);
+  if (fondo.encima) { c.setTransform(1, 0, 0, 1, 0, 0); c.drawImage(fondo.encima, 0, 0); }
 }
 
 function pintarCuarto(c: CanvasRenderingContext2D, W: number, H: number, estilo: EstiloEspacio, ejemplos: boolean, tipo: Lugar): void {

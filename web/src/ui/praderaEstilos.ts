@@ -218,37 +218,76 @@ function caminoDePiedra(v: Vista): void {
   }
 }
 
-export function praderaRealista(c: CanvasRenderingContext2D, W: number, H: number): Zona[] {
+/** Algo parado en la pradera (un árbol, un edificio), con su profundidad y lo que ocupa en pantalla. */
+export interface Cosa {
+  /** i + j de su base: lo que está más abajo en pantalla tapa a lo de atrás. */
+  orden: number;
+  /** El rectángulo (px) donde cabe todo su dibujo, sombra y letrero incluidos. */
+  caja: { x: number; y: number; w: number; h: number };
+  /** La dibuja con `v.c` (quien llama puede cambiar `v.c` para dibujarla en otro lienzo). */
+  pinta: () => Zona | void;
+}
+
+/** El rectángulo de pantalla que cubren unos puntos del piso, con un margen. */
+function cajaDe(v: Vista, puntos: [number, number, number][], margenX: number, margenY: number): Cosa["caja"] {
+  const pts = puntos.map(([i, j, z]) => p(v, i, j, z));
+  const xs = pts.map((q) => q[0]), ys = pts.map((q) => q[1]);
+  const x = Math.min(...xs) - margenX, y = Math.min(...ys) - margenY;
+  return { x, y, w: Math.max(...xs) + margenX - x, h: Math.max(...ys) + margenY - y };
+}
+
+/**
+ * La pradera separada en capas: el suelo (pasto, flores y camino), las cosas paradas en ella
+ * (cada una por su lado, con su profundidad) y la viñeta de encima. Así el personaje puede ir
+ * entre ellas: lo que está delante de él lo tapa (entrenador, 2026-11-25: "que si pasa debajo
+ * de un árbol, que el árbol la tape").
+ */
+export function escenaRealista(c: CanvasRenderingContext2D, W: number, H: number): { v: Vista; suelo: () => void; cosas: Cosa[]; encima: () => void } {
   const v = vistaPradera(c, W, H);
-  c.fillStyle = degradado(c, [0, 0], [0, H], ["#76b84f", "#4f9a3c"]); c.fillRect(0, 0, W, H);
-  // Manchas grandes de luz y sombra, como nubes pasando.
-  for (let k = 0; k < 14; k++) {
-    const x = ruido(k * 4.3) * W, y = ruido(k * 6.1) * H, r = W * (0.15 + ruido(k * 2.2) * 0.2);
-    const g = c.createRadialGradient(x, y, 0, x, y, r);
-    g.addColorStop(0, k % 2 ? "rgba(180, 230, 120, 0.22)" : "rgba(30, 80, 25, 0.18)"); g.addColorStop(1, "rgba(0, 0, 0, 0)");
-    c.fillStyle = g; c.fillRect(x - r, y - r, r * 2, r * 2);
-  }
-  const pat = patronPasto(c);
-  if (pat) { c.fillStyle = pat; c.fillRect(0, 0, W, H); }
-  // Florecitas silvestres en grupitos.
-  for (let k = 0; k < 30; k++) {
-    const x = ruido(k * 7.7) * W, y = ruido(k * 3.3) * H;
-    for (let q = 0; q < 5; q++) {
-      c.fillStyle = ["#ffffff", "#ffe27a", "#f6a8d8"][k % 3]!;
-      c.beginPath(); c.arc(x + (ruido(k + q * 2) - 0.5) * 14, y + (ruido(k * 2 + q) - 0.5) * 8, 1.3, 0, Math.PI * 2); c.fill();
+  const suelo = () => {
+    const c = v.c;
+    c.fillStyle = degradado(c, [0, 0], [0, H], ["#76b84f", "#4f9a3c"]); c.fillRect(0, 0, W, H);
+    // Manchas grandes de luz y sombra, como nubes pasando.
+    for (let k = 0; k < 14; k++) {
+      const x = ruido(k * 4.3) * W, y = ruido(k * 6.1) * H, r = W * (0.15 + ruido(k * 2.2) * 0.2);
+      const g = c.createRadialGradient(x, y, 0, x, y, r);
+      g.addColorStop(0, k % 2 ? "rgba(180, 230, 120, 0.22)" : "rgba(30, 80, 25, 0.18)"); g.addColorStop(1, "rgba(0, 0, 0, 0)");
+      c.fillStyle = g; c.fillRect(x - r, y - r, r * 2, r * 2);
     }
-  }
-  caminoDePiedra(v);
-  const cosas: { orden: number; pinta: () => Zona | void }[] = [
-    { orden: 2.5 + 6.3, pinta: () => gimnasioReal(v) },
-    { orden: 1.6 + 7.4, pinta: () => casaReal(v) },
-    ...ARBOLES.map(([i, j]) => ({ orden: i + j, pinta: () => arbolReal(v, i, j) })),
-  ];
-  const zonas: Zona[] = [];
-  for (const cosa of cosas.sort((a, b) => a.orden - b.orden)) { const z = cosa.pinta(); if (z) zonas.push(z); }
-  // Viñeta suave en las orillas.
-  const vin = c.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.45, W / 2, H / 2, Math.max(W, H) * 0.75);
-  vin.addColorStop(0, "rgba(0, 0, 0, 0)"); vin.addColorStop(1, "rgba(0, 30, 0, 0.28)");
-  c.fillStyle = vin; c.fillRect(0, 0, W, H);
-  return zonas;
+    const pat = patronPasto(c);
+    if (pat) { c.fillStyle = pat; c.fillRect(0, 0, W, H); }
+    // Florecitas silvestres en grupitos.
+    for (let k = 0; k < 30; k++) {
+      const x = ruido(k * 7.7) * W, y = ruido(k * 3.3) * H;
+      for (let q = 0; q < 5; q++) {
+        c.fillStyle = ["#ffffff", "#ffe27a", "#f6a8d8"][k % 3]!;
+        c.beginPath(); c.arc(x + (ruido(k + q * 2) - 0.5) * 14, y + (ruido(k * 2 + q) - 0.5) * 8, 1.3, 0, Math.PI * 2); c.fill();
+      }
+    }
+    caminoDePiedra(v);
+  };
+  const u = v.tw / 2;
+  const edificio = (b: readonly [number, number, number, number, number], extraAlto: number): Cosa["caja"] => {
+    const [i0, i1, j0, j1, h] = b;
+    const pts: [number, number, number][] = [];
+    for (const i of [i0 - 0.3, i1 + h + 1.9]) for (const j of [j0 - 0.3, j1 + 0.5]) for (const z of [0, h + extraAlto]) pts.push([i, j, z]);
+    return cajaDe(v, pts, u * 2.4, u * 0.6);
+  };
+  const cosas: Cosa[] = [
+    { orden: 2.5 + 6.3, caja: edificio(GIMNASIO, 3.2), pinta: () => gimnasioReal(v) },
+    { orden: 1.6 + 7.4, caja: edificio(CASA, 3.4), pinta: () => casaReal(v) },
+    ...ARBOLES.map(([i, j]): Cosa => {
+      const [bx, by] = p(v, i, j);
+      const r = u * 1.15, alto = (v.zEsc ?? v.th) * 1.6;
+      return { orden: i + j, caja: { x: bx - r * 1.6, y: by - alto - r * 2.1, w: r * 3.6, h: alto + r * 2.9 }, pinta: () => arbolReal(v, i, j) };
+    }),
+  ].sort((a, b) => a.orden - b.orden);
+  const encima = () => {
+    // Viñeta suave en las orillas.
+    const c = v.c;
+    const vin = c.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.45, W / 2, H / 2, Math.max(W, H) * 0.75);
+    vin.addColorStop(0, "rgba(0, 0, 0, 0)"); vin.addColorStop(1, "rgba(0, 30, 0, 0.28)");
+    c.fillStyle = vin; c.fillRect(0, 0, W, H);
+  };
+  return { v, suelo, cosas, encima };
 }
