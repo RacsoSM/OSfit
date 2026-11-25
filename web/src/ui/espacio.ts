@@ -8,7 +8,8 @@
  */
 import { escapar } from "./tarjetaDia";
 import { caja, p, poligono, type Vista } from "./iso";
-import { pintarPradera, type EstiloPradera, type Lugar, type Zona } from "./pradera";
+import { pintarPradera, type Lugar, type Zona } from "./pradera";
+import { ajustarMarcoJuego, vigilarMarcoJuego } from "./marcoJuego";
 
 /** TEMPORAL: propuestas de estilo del cuarto (`osfit:espacio-estilo`: a, b, c). */
 export type EstiloEspacio = "a" | "b" | "c";
@@ -18,11 +19,6 @@ function estiloGuardado(): EstiloEspacio {
 /** TEMPORAL: para las capturas, el cuarto con objetos de ejemplo (lo que se podrá comprar). */
 function conEjemplos(): boolean {
   try { return globalThis.localStorage?.getItem("osfit:espacio-ejemplos") === "1"; } catch { return false; }
-}
-
-/** TEMPORAL: propuestas de la pradera (`osfit:pradera-estilo`: a, b, c). */
-function praderaGuardada(): EstiloPradera {
-  try { const v = globalThis.localStorage?.getItem("osfit:pradera-estilo"); return v === "b" || v === "c" ? v : "a"; } catch { return "a"; }
 }
 
 /**
@@ -39,18 +35,30 @@ const TITULOS: Record<"pradera" | Lugar, (q: string) => string> = {
   gimnasio: (q) => `El gimnasio de ${q}`,
 };
 
+/**
+ * A toda la pantalla, como los juegos (`ajustarMarcoJuego`): de arriba hasta la barra de abajo,
+ * sin recuadro. El ☰ queda encima; los letreros van sobre el dibujo.
+ */
 export function ventanaEspacio(nombre: string): string {
   nombreDe = nombre.trim().split(/\s+/)[0] ?? "";
   return `
-    <section class="espacio" aria-label="Mi espacio">
+    <section class="espacio" id="espacio-pantalla" aria-label="Mi espacio">
+      <canvas id="espacio-canvas" aria-label="${escapar(TITULOS[lugar](nombreDe))}"></canvas>
       <p class="espacio-aviso">Vista de pruebas · solo tú la ves</p>
-      <div class="espacio-cuarto">
-        <canvas id="espacio-canvas" aria-label="${escapar(TITULOS[lugar](nombreDe))}"></canvas>
-        <button type="button" class="espacio-volver" data-espacio-volver ${lugar === "pradera" ? "hidden" : ""}>← Pradera</button>
+      <button type="button" class="espacio-volver" data-espacio-volver ${lugar === "pradera" ? "hidden" : ""}>← Pradera</button>
+      <div class="espacio-pie">
+        <p class="espacio-nombre" id="espacio-nombre">${escapar(TITULOS[lugar](nombreDe))}</p>
+        <p class="espacio-pista" id="espacio-pista" ${lugar === "pradera" ? "" : "hidden"}>Toca tu casa o tu gimnasio para entrar.</p>
       </div>
-      <p class="espacio-nombre" id="espacio-nombre">${escapar(TITULOS[lugar](nombreDe))}</p>
-      <p class="espacio-pista" id="espacio-pista" ${lugar === "pradera" ? "" : "hidden"}>Toca tu casa o tu gimnasio para entrar.</p>
     </section>`;
+}
+
+/** Pone la pantalla entre arriba y la barra, y vuelve a dibujar (al abrir y al cambiar el tamaño). */
+export function acomodarEspacio(): void {
+  const pantalla = document.querySelector<HTMLElement>("#espacio-pantalla");
+  if (!pantalla) return;
+  ajustarMarcoJuego(pantalla);
+  dibujarEspacio();
 }
 
 function ir(a: "pradera" | Lugar): void {
@@ -69,6 +77,7 @@ let conectado = false;
 export function conectarEspacio(): void {
   if (conectado) return;
   conectado = true;
+  vigilarMarcoJuego(acomodarEspacio);
   document.addEventListener("click", (ev) => {
     const el = ev.target as HTMLElement;
     if (el.closest("[data-espacio-volver]")) { ir("pradera"); return; }
@@ -129,8 +138,7 @@ export function dibujarEspacio(estilo: EstiloEspacio = estiloGuardado(), ejemplo
   if (!canvas) return;
   const W = canvas.clientWidth, H = canvas.clientHeight;
   if (W === 0 || H === 0) return;
-  const pradera = praderaGuardada();
-  const pixel = lugar === "pradera" ? pradera === "c" : estilo === "c";
+  const pixel = lugar !== "pradera" && estilo === "c";
   // Que el navegador no suavice los cuadritos al agrandar el canvas.
   canvas.style.imageRendering = pixel ? "pixelated" : "";
   const dpr = pixel ? 1 : Math.min(2, window.devicePixelRatio || 1);
@@ -145,8 +153,9 @@ export function dibujarEspacio(estilo: EstiloEspacio = estiloGuardado(), ejemplo
   const cw = pixel ? w : W, ch = pixel ? h : H;
   if (lugar === "pradera") {
     // Las zonas tocables, en px de pantalla (en 8 bits se dibujó a un tercio).
-    zonas = pintarPradera(c, cw, ch, pradera, performance.now() / 1000).map((z) => (pixel ? { ...z, x: z.x * escala, y: z.y * escala, w: z.w * escala, h: z.h * escala } : z));
+    zonas = pintarPradera(c, cw, ch);
   } else {
+    zonas = [];
     pintarCuarto(c, cw, ch, estilo, ejemplos, lugar);
   }
   if (pixel) {

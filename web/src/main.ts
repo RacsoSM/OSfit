@@ -76,7 +76,7 @@ import {
   cabeceraRegistro, cerrarSiVencido, conectarRegistro, empezarGuiado, entrenamientoAbierto, vistaDesdeHistorial,
 } from "./ui/registro";
 import { soltarMarcoJuego } from "./ui/marcoJuego";
-import { conectarEspacio, dibujarEspacio } from "./ui/espacio";
+import { acomodarEspacio, conectarEspacio } from "./ui/espacio";
 import { barraInferior, conectarBarra, marcarSexoBarra } from "./ui/barraInferior";
 import { archivosMapa, conectarMapa, type EstadoSvg } from "./ui/mapaMuscular";
 import { conectarPeso } from "./ui/pesoCorporal";
@@ -835,7 +835,9 @@ async function arrancar(): Promise<void> {
     // Con un juego abierto la página no se mueve (el juego es toda la pestaña).
     const conJuego = activa.contenedorPropio === "juego" || activa.contenedorPropio === "kettlebell" || activa.contenedorPropio === "boxjump";
     document.body.classList.toggle("con-juego", conJuego);
-    if (!conJuego) soltarMarcoJuego();
+    // Mi espacio también va a toda la pantalla, pero con el ☰ a la vista.
+    document.body.classList.toggle("con-espacio", activa.id === "espacio");
+    if (!conJuego && activa.id !== "espacio") soltarMarcoJuego();
     pintarMenu(activa.id, cliente.nombre);
     marcarVentanaActiva(document.querySelectorAll<HTMLElement>("#barra [data-ventana]"), ventanaDeBarra(activa.id));
     pintarRuleta();
@@ -851,8 +853,8 @@ async function arrancar(): Promise<void> {
     // snapshot a destiempo no lo borre.
     if (activa.id === "espacio") {
       conectarEspacio();
-      dibujarEspacio();
-      requestAnimationFrame(() => dibujarEspacio());
+      acomodarEspacio();
+      requestAnimationFrame(() => acomodarEspacio());
     }
     if (activa.id === "musculos") {
       conectarMapa(cliente.sexo, fuerzaDelCliente(datos), cliente.peso ?? null);
