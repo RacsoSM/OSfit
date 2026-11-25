@@ -644,7 +644,6 @@ function pintarAvatar(c: CanvasRenderingContext2D, x: number, y: number, r: numb
   c.fillStyle = g; c.beginPath(); c.arc(0, 0, r * 0.85, 0, Math.PI * 2); c.fill();
   c.fillStyle = "#fff"; for (const lado of [-1, 1]) { c.beginPath(); c.arc(lado * r * 0.25, -r * 0.1, r * 0.14, 0, Math.PI * 2); c.fill(); }
   c.fillStyle = "#111"; for (const lado of [-1, 1]) { c.beginPath(); c.arc(lado * r * 0.25 + r * 0.03, -r * 0.07, r * 0.07, 0, Math.PI * 2); c.fill(); }
-  c.fillStyle = "#ffd45c"; c.font = `900 ${Math.round(r * 0.42)}px system-ui, sans-serif`; c.textAlign = "center"; c.textBaseline = "middle"; c.fillText("16", 0, r * 0.4);
   c.restore();
 }
 

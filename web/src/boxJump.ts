@@ -29,12 +29,12 @@ export const ALTO_CAJON = 7;
 /**
  * Lo de lado (entrenador, 2026-11-25: "siento que los controles no son tan precisos, un leve
  * delay"): antes perseguía el dedo despacio (0.42 s para llegar a un tercio de la pantalla) y al
- * soltar seguía resbalando más de una plataforma. Ahora sigue al dedo de cerca y frena casi en seco.
+ * soltar seguía resbalando más de una plataforma. Ahora va derecho al dedo casi al instante (cruza toda la pantalla en ~0.25 s) y frena casi en seco.
  */
-const VEL_LATERAL = 170;
-const GANANCIA = 24;
-/** Al soltar: cuánto se conserva de la velocidad por segundo (frena en ~0.1 s). */
-const FRENO = Math.exp(-40);
+const VEL_LATERAL = 420;
+const GANANCIA = 45;
+/** Al soltar: cuánto se conserva de la velocidad por segundo (frena en menos de 0.1 s). */
+const FRENO = Math.exp(-60);
 
 export type Tipo = "firme" | "movil" | "espuma";
 
@@ -132,11 +132,11 @@ export type Evento = "rebote" | "trampolin" | "espuma" | "fin" | null;
  */
 export function avanzar(s: Salto, dt: number, objetivo: number | null): Evento {
   if (s.terminada) return null;
-  // De lado: hacia el dedo, por el camino corto (se puede cruzar la orilla).
+  // De lado: derecho hacia el dedo. Antes tomaba el "camino corto" cruzando la orilla, y con el
+  // dedo a más de media pantalla se iba para el otro lado y cambiaba de dirección a medio camino
+  // (entrenador, 2026-11-25). Cruzar la orilla queda para las flechas del teclado.
   if (objetivo !== null) {
-    let d = objetivo - s.x;
-    if (d > ANCHO / 2) d -= ANCHO;
-    if (d < -ANCHO / 2) d += ANCHO;
+    const d = objetivo - s.x;
     s.vx = Math.max(-VEL_LATERAL, Math.min(VEL_LATERAL, d * GANANCIA));
   } else {
     s.vx *= Math.pow(FRENO, dt);

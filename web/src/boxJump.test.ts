@@ -39,14 +39,25 @@ describe("Box Jump", () => {
     expect(s.h).toBeGreaterThan(30);
   });
 
-  it("si sale por un lado entra por el otro, y va hacia el dedo por el camino corto", () => {
+  it("si sale por un lado entra por el otro", () => {
+    const s = nuevoSalto(180, semilla(4));
+    s.x = 1; s.vx = 0;
+    // Como con la flecha del teclado: siempre un poco más a la izquierda.
+    let cruzo = false;
+    for (let i = 0; i < 10; i++) { avanzar(s, 1 / 60, s.x - 30); if (s.x > ANCHO * 0.8) cruzo = true; }
+    expect(cruzo).toBe(true);
+  });
+
+  it("con el dedo va derecho hacia él, sin cruzar la orilla ni cambiar de dirección", () => {
     const s = nuevoSalto(180, semilla(4));
     s.x = 2; s.vx = 0;
-    avanzar(s, 1 / 60, ANCHO - 4);
-    expect(s.vx).toBeLessThan(0); // hacia la izquierda: cruzar la orilla es más corto
-    for (let i = 0; i < 40; i++) avanzar(s, 1 / 60, ANCHO - 4);
-    // Llega a donde apunta el dedo (x = −4 es el mismo lugar que 96, del otro lado de la orilla).
-    expect(((s.x % ANCHO) + ANCHO) % ANCHO).toBeCloseTo(ANCHO - 4, 0);
+    let antes = s.x;
+    for (let i = 0; i < 30; i++) {
+      avanzar(s, 1 / 60, ANCHO - 4);
+      expect(s.x).toBeGreaterThanOrEqual(antes - 1e-9); // nunca se regresa
+      antes = s.x;
+    }
+    expect(s.x).toBeCloseTo(ANCHO - 4, 0);
   });
 
   it("caer debajo de la pantalla termina", () => {
@@ -88,7 +99,7 @@ describe("Box Jump", () => {
     s.x = 50; s.vx = 0;
     let t = 0;
     while (Math.abs(s.x - 80) > 1 && t < 1) { avanzar(s, 1 / 60, 80); t += 1 / 60; }
-    expect(t).toBeLessThan(0.25);
+    expect(t).toBeLessThan(0.12);
     s.x = 20; s.vx = 170;
     const desde = s.x;
     for (let k = 0; k < 60; k++) avanzar(s, 1 / 60, null);

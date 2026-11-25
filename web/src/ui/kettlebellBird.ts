@@ -659,10 +659,6 @@ function pintarKettlebell(c: CanvasRenderingContext2D, x: number, y: number, r: 
   g.addColorStop(0, "#6b6f78"); g.addColorStop(0.55, "#2a2c31"); g.addColorStop(1, "#0f1013");
   c.fillStyle = g;
   c.beginPath(); c.arc(0, 0, r, 0, Math.PI * 2); c.fill();
-  c.fillStyle = "#ffd45c";
-  c.font = `900 ${Math.round(r * 0.62)}px system-ui, sans-serif`;
-  c.textAlign = "center"; c.textBaseline = "middle";
-  c.fillText("16", 0, r * 0.12);
   c.restore();
 }
 
