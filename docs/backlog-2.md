@@ -1094,8 +1094,15 @@ Lo que se construye:
 
 ### Fase 2 — Mi espacio (va primero)
 
-Un cuarto dibujado en canvas como los juegos, visto un poco desde arriba, con el estilo del
-Arcade. Empieza con lo básico: piso, paredes y un tapete. Se detalla al llegar.
+> "la pantalla principal será como un camino, donde podrás seleccionar tu casa o tu gimnasio, una escena en la pradera con las dos cosas, ambas seleccionables, y podremos comprar cosas en la tienda tanto para la pantalla principal como para el gimnasio o la casa" (2026-11-25)
+
+- **Pantalla principal: la pradera**, con un camino que se parte hacia la **casa** y el
+  **gimnasio** de cada quien. Tocar cualquiera de los dos entra a él; "← Pradera" regresa.
+- **Adentro**, cada lugar es un cuarto visto un poco desde arriba. La casa empieza con un
+  sillón, una alfombra, una mesita y una lámpara; el gimnasio, con un tapete.
+- **La tienda (fase 3) vende para los tres lugares:** cosas para afuera (árboles, bancas, una
+  fuente…), para la casa y para el gimnasio.
+- Dibujado en canvas, como los juegos (`ui/espacio.ts`, `ui/pradera.ts`, `ui/iso.ts`).
 
 Mientras se prueba, **solo lo ve la cuenta del entrenador**: un interruptor en su perfil de
 Firestore (como `adminAmigos`, que se pone a mano). Sin el interruptor, la sección no aparece
@@ -1103,8 +1110,8 @@ en el menú ni se puede abrir.
 
 ### Fase 3 — Tienda
 
-Objetos con precio en monedas (mancuernas, rack, caminadora, posters, luces de neón,
-plantas…). Al comprar (función del servidor que valida el saldo y descuenta), el objeto se
+Objetos con precio en monedas para los tres lugares: la pradera, la casa y el gimnasio
+(mancuernas, rack, caminadora, posters, luces de neón, plantas, árboles, bancas…). Al comprar (función del servidor que valida el saldo y descuenta), el objeto se
 agrega a su espacio y lo puede acomodar.
 
 ### Fase 4 — Visitas

@@ -7,6 +7,8 @@
  * `ventanas.ts`). Todo se dibuja a mano en un canvas, como los juegos.
  */
 import { escapar } from "./tarjetaDia";
+import { caja, p, poligono, type Vista } from "./iso";
+import { pintarPradera, type EstiloPradera, type Lugar, type Zona } from "./pradera";
 
 /** TEMPORAL: propuestas de estilo del cuarto (`osfit:espacio-estilo`: a, b, c). */
 export type EstiloEspacio = "a" | "b" | "c";
@@ -18,45 +20,71 @@ function conEjemplos(): boolean {
   try { return globalThis.localStorage?.getItem("osfit:espacio-ejemplos") === "1"; } catch { return false; }
 }
 
+/** TEMPORAL: propuestas de la pradera (`osfit:pradera-estilo`: a, b, c). */
+function praderaGuardada(): EstiloPradera {
+  try { const v = globalThis.localStorage?.getItem("osfit:pradera-estilo"); return v === "b" || v === "c" ? v : "a"; } catch { return "a"; }
+}
+
+/**
+ * Dónde está la persona dentro de Mi espacio: la pradera (la pantalla principal) o dentro de su
+ * casa o su gimnasio. Vive aquí y no en la navegación: un repintado de la página no la regresa.
+ */
+let lugar: "pradera" | Lugar = "pradera";
+let zonas: Zona[] = [];
+let nombreDe = "";
+
+const TITULOS: Record<"pradera" | Lugar, (q: string) => string> = {
+  pradera: (q) => `El espacio de ${q}`,
+  casa: (q) => `La casa de ${q}`,
+  gimnasio: (q) => `El gimnasio de ${q}`,
+};
+
 export function ventanaEspacio(nombre: string): string {
-  const quien = nombre.trim().split(/\s+/)[0] ?? "";
+  nombreDe = nombre.trim().split(/\s+/)[0] ?? "";
   return `
     <section class="espacio" aria-label="Mi espacio">
       <p class="espacio-aviso">Vista de pruebas · solo tú la ves</p>
-      <div class="espacio-cuarto"><canvas id="espacio-canvas" aria-label="El gimnasio de ${escapar(quien)}"></canvas></div>
-      <p class="espacio-nombre">El gimnasio de ${escapar(quien)}</p>
+      <div class="espacio-cuarto">
+        <canvas id="espacio-canvas" aria-label="${escapar(TITULOS[lugar](nombreDe))}"></canvas>
+        <button type="button" class="espacio-volver" data-espacio-volver ${lugar === "pradera" ? "hidden" : ""}>← Pradera</button>
+      </div>
+      <p class="espacio-nombre" id="espacio-nombre">${escapar(TITULOS[lugar](nombreDe))}</p>
+      <p class="espacio-pista" id="espacio-pista" ${lugar === "pradera" ? "" : "hidden"}>Toca tu casa o tu gimnasio para entrar.</p>
     </section>`;
+}
+
+function ir(a: "pradera" | Lugar): void {
+  lugar = a;
+  const volver = document.querySelector<HTMLElement>("[data-espacio-volver]");
+  if (volver) volver.hidden = a === "pradera";
+  const nombre = document.querySelector<HTMLElement>("#espacio-nombre");
+  if (nombre) nombre.textContent = TITULOS[a](nombreDe);
+  const pista = document.querySelector<HTMLElement>("#espacio-pista");
+  if (pista) pista.hidden = a !== "pradera";
+  dibujarEspacio();
+}
+
+let conectado = false;
+/** Una sola vez: los toques se escuchan en el documento, así sobreviven a los repintados. */
+export function conectarEspacio(): void {
+  if (conectado) return;
+  conectado = true;
+  document.addEventListener("click", (ev) => {
+    const el = ev.target as HTMLElement;
+    if (el.closest("[data-espacio-volver]")) { ir("pradera"); return; }
+    const canvas = el.closest<HTMLCanvasElement>("#espacio-canvas");
+    if (!canvas || lugar !== "pradera") return;
+    const r = canvas.getBoundingClientRect();
+    const x = ev.clientX - r.left, y = ev.clientY - r.top;
+    const tocada = zonas.find((z) => x >= z.x && x <= z.x + z.w && y >= z.y && y <= z.y + z.h);
+    if (tocada) ir(tocada.lugar);
+  });
 }
 
 // ── Isométrico ──────────────────────────────────────────────────────────────
 
 /** Cuántos cuadros tiene el piso por lado. */
 const N = 6;
-
-interface Vista { c: CanvasRenderingContext2D; ox: number; oy: number; tw: number; th: number; alto: number; }
-
-/** Del piso (i a la derecha-abajo, j a la izquierda-abajo, z hacia arriba) a la pantalla. */
-function p(v: Vista, i: number, j: number, z = 0): [number, number] {
-  return [v.ox + (i - j) * (v.tw / 2), v.oy + (i + j) * (v.th / 2) - z * v.th];
-}
-
-function poligono(v: Vista, puntos: [number, number][], relleno: string | CanvasGradient, borde?: string): void {
-  const c = v.c;
-  c.beginPath();
-  puntos.forEach(([x, y], k) => (k ? c.lineTo(x, y) : c.moveTo(x, y)));
-  c.closePath();
-  c.fillStyle = relleno; c.fill();
-  if (borde) { c.strokeStyle = borde; c.lineWidth = 1; c.stroke(); }
-}
-
-/** Una caja en el piso: de (i, j) con ancho `w` (en i), fondo `d` (en j), alto `h`, a altura `z`. */
-function caja(v: Vista, i: number, j: number, w: number, d: number, h: number, colores: [string, string, string], z = 0): void {
-  const [tapa, izq, der] = colores;
-  // Cara izquierda (mira hacia j+), derecha (hacia i+) y la tapa.
-  poligono(v, [p(v, i, j + d, z), p(v, i + w, j + d, z), p(v, i + w, j + d, z + h), p(v, i, j + d, z + h)], izq);
-  poligono(v, [p(v, i + w, j, z), p(v, i + w, j + d, z), p(v, i + w, j + d, z + h), p(v, i + w, j, z + h)], der);
-  poligono(v, [p(v, i, j, z + h), p(v, i + w, j, z + h), p(v, i + w, j + d, z + h), p(v, i, j + d, z + h)], tapa);
-}
 
 /** Un rectángulo pegado a la pared de atrás-izquierda (j = 0), de i0 a i1 y de z0 a z1. */
 function enParedIzq(v: Vista, i0: number, i1: number, z0: number, z1: number, relleno: string | CanvasGradient, borde?: string): void {
@@ -95,13 +123,14 @@ function vistaPara(c: CanvasRenderingContext2D, W: number, H: number): Vista {
   return { c, tw, th, alto, ox: W / 2, oy: (H - total) / 2 + alto * th };
 }
 
-/** Dibuja el cuarto en el canvas `#espacio-canvas` (si está en la página). */
+/** Dibuja lo que toca (la pradera, la casa o el gimnasio) en `#espacio-canvas`. */
 export function dibujarEspacio(estilo: EstiloEspacio = estiloGuardado(), ejemplos = conEjemplos()): void {
   const canvas = document.querySelector<HTMLCanvasElement>("#espacio-canvas");
   if (!canvas) return;
   const W = canvas.clientWidth, H = canvas.clientHeight;
   if (W === 0 || H === 0) return;
-  const pixel = estilo === "c";
+  const pradera = praderaGuardada();
+  const pixel = lugar === "pradera" ? pradera === "c" : estilo === "c";
   // Que el navegador no suavice los cuadritos al agrandar el canvas.
   canvas.style.imageRendering = pixel ? "pixelated" : "";
   const dpr = pixel ? 1 : Math.min(2, window.devicePixelRatio || 1);
@@ -114,7 +143,12 @@ export function dibujarEspacio(estilo: EstiloEspacio = estiloGuardado(), ejemplo
   if (!c) return;
   if (!pixel) c.setTransform(dpr, 0, 0, dpr, 0, 0);
   const cw = pixel ? w : W, ch = pixel ? h : H;
-  pintarCuarto(c, cw, ch, estilo, ejemplos);
+  if (lugar === "pradera") {
+    // Las zonas tocables, en px de pantalla (en 8 bits se dibujó a un tercio).
+    zonas = pintarPradera(c, cw, ch, pradera, performance.now() / 1000).map((z) => (pixel ? { ...z, x: z.x * escala, y: z.y * escala, w: z.w * escala, h: z.h * escala } : z));
+  } else {
+    pintarCuarto(c, cw, ch, estilo, ejemplos, lugar);
+  }
   if (pixel) {
     canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
     const d = canvas.getContext("2d");
@@ -124,7 +158,7 @@ export function dibujarEspacio(estilo: EstiloEspacio = estiloGuardado(), ejemplo
   }
 }
 
-function pintarCuarto(c: CanvasRenderingContext2D, W: number, H: number, estilo: EstiloEspacio, ejemplos: boolean): void {
+function pintarCuarto(c: CanvasRenderingContext2D, W: number, H: number, estilo: EstiloEspacio, ejemplos: boolean, tipo: Lugar): void {
   const pal = PALETAS[estilo];
   const fondo = c.createLinearGradient(0, 0, 0, H);
   fondo.addColorStop(0, pal.fondo[0]); fondo.addColorStop(1, pal.fondo[1]);
@@ -145,7 +179,7 @@ function pintarCuarto(c: CanvasRenderingContext2D, W: number, H: number, estilo:
 
   // La ventana (pared derecha) y la puerta o el letrero (pared izquierda).
   ventana(v, estilo);
-  letrero(v, estilo);
+  if (tipo === "gimnasio") letrero(v, estilo);
 
   // El piso.
   const piso = c.createLinearGradient(...p(v, 0, 0), ...p(v, N, N));
@@ -172,7 +206,8 @@ function pintarCuarto(c: CanvasRenderingContext2D, W: number, H: number, estilo:
   c.beginPath(); c.moveTo(...p(v, 0, N)); c.lineTo(...p(v, 0, 0)); c.lineTo(...p(v, N, 0)); c.stroke();
   c.shadowBlur = 0;
 
-  // Lo que trae de base: un tapete.
+  // Lo que trae de base: un tapete (en la casa, una alfombra y un sillón).
+  if (tipo === "casa") { casaDeBase(v, estilo); return; }
   caja(v, 2, 2.4, 2.2, 1.2, 0.06, pal.tapete);
 
   if (ejemplos) objetosDeEjemplo(v, estilo);
@@ -267,4 +302,28 @@ function objetosDeEjemplo(v: Vista, estilo: EstiloEspacio): void {
   // Póster en la pared izquierda.
   enParedIzq(v, 4.9, 5.7, 1.0, 2.0, estilo === "a" ? "#ff3bd4" : estilo === "b" ? "#2b1a14" : "#ff5c8a");
   enParedIzq(v, 5.0, 5.6, 1.12, 1.88, estilo === "a" ? "#1d1033" : estilo === "b" ? "#e8c37a" : "#ffffff");
+}
+
+/** La casa por dentro, de base: alfombra redonda, sillón, mesita y una lámpara. */
+function casaDeBase(v: Vista, estilo: EstiloEspacio): void {
+  const c = v.c;
+  const [ax, ay] = p(v, 3, 3.2);
+  c.fillStyle = estilo === "a" ? "#3b2a6b" : estilo === "b" ? "#c98f62" : "#ffd45c";
+  c.beginPath(); c.ellipse(ax, ay, v.tw * 1.4, v.th * 1.4, 0, 0, Math.PI * 2); c.fill();
+  c.strokeStyle = "rgba(255, 255, 255, 0.35)"; c.lineWidth = 2;
+  c.beginPath(); c.ellipse(ax, ay, v.tw * 1.2, v.th * 1.2, 0, 0, Math.PI * 2); c.stroke();
+  const tela: [string, string, string] = estilo === "a" ? ["#7ef3ff", "#2fb7c8", "#1d8a99"] : estilo === "b" ? ["#5b8f6a", "#46735a", "#365a46"] : ["#ff5c8a", "#d13a6a", "#a82a54"];
+  // Sillón contra la pared izquierda: base, respaldo y brazos.
+  caja(v, 1.4, 0.35, 3.2, 1.1, 0.45, tela);
+  caja(v, 1.4, 0.25, 3.2, 0.35, 1.0, tela);
+  caja(v, 1.2, 0.25, 0.3, 1.2, 0.7, tela);
+  caja(v, 4.6, 0.25, 0.3, 1.2, 0.7, tela);
+  // Mesita de centro.
+  caja(v, 2.5, 2.7, 1.2, 0.8, 0.4, estilo === "b" ? ["#8a5a32", "#6e4527", "#5a3820"] : ["#d6dae2", "#8d939e", "#666c77"]);
+  // Lámpara de pie en la esquina.
+  caja(v, 0.45, 0.45, 0.12, 0.12, 1.7, ["#2a2c31", "#22242a", "#16171b"]);
+  const [lx, ly] = p(v, 0.5, 0.5, 1.95);
+  c.fillStyle = "#ffe08a"; c.shadowColor = "#ffe08a"; c.shadowBlur = 14;
+  c.beginPath(); c.moveTo(lx - v.th * 0.45, ly + v.th * 0.3); c.lineTo(lx + v.th * 0.45, ly + v.th * 0.3); c.lineTo(lx + v.th * 0.25, ly - v.th * 0.35); c.lineTo(lx - v.th * 0.25, ly - v.th * 0.35); c.fill();
+  c.shadowBlur = 0;
 }

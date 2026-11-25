@@ -76,7 +76,7 @@ import {
   cabeceraRegistro, cerrarSiVencido, conectarRegistro, empezarGuiado, entrenamientoAbierto, vistaDesdeHistorial,
 } from "./ui/registro";
 import { soltarMarcoJuego } from "./ui/marcoJuego";
-import { dibujarEspacio } from "./ui/espacio";
+import { conectarEspacio, dibujarEspacio } from "./ui/espacio";
 import { barraInferior, conectarBarra, marcarSexoBarra } from "./ui/barraInferior";
 import { archivosMapa, conectarMapa, type EstadoSvg } from "./ui/mapaMuscular";
 import { conectarPeso } from "./ui/pesoCorporal";
@@ -850,6 +850,7 @@ async function arrancar(): Promise<void> {
     // estado de las dos acciones no vive acá, sino dentro de sus módulos, justo para que un
     // snapshot a destiempo no lo borre.
     if (activa.id === "espacio") {
+      conectarEspacio();
       dibujarEspacio();
       requestAnimationFrame(() => dibujarEspacio());
     }
