@@ -8,6 +8,7 @@
  */
 import { ruido } from "./gimnasioFondo";
 import { caja, p, poligono, type Vista } from "./iso";
+import { praderaLowPoly, praderaPerspectiva, praderaRealista } from "./praderaEstilos";
 
 export type Lugar = "casa" | "gimnasio";
 
@@ -15,15 +16,45 @@ export type Lugar = "casa" | "gimnasio";
 export interface Zona { lugar: Lugar; x: number; y: number; w: number; h: number; }
 
 
-export function pintarPradera(c: CanvasRenderingContext2D, W: number, H: number): Zona[] {
-  // El centro de la escena (el cruce del camino) va a media pantalla; los cuadros, de un tamaño
-  // que deja ver la casa y el gimnasio completos. Lo de afuera del rango también es pasto.
-  // La casa llega a ~3 cuadros a la izquierda del centro y el gimnasio a ~3.7 a la derecha.
+/** TEMPORAL: propuestas de gráficos de la pradera (`osfit:pradera-estilo`). */
+export type EstiloPradera = "caricatura" | "realista" | "lowpoly" | "perspectiva";
+export function estiloPradera(): EstiloPradera {
+  try {
+    const v = globalThis.localStorage?.getItem("osfit:pradera-estilo");
+    return v === "realista" || v === "lowpoly" || v === "perspectiva" ? v : "caricatura";
+  } catch { return "caricatura"; }
+}
+
+/**
+ * El acomodo de la escena, igual en todos los estilos isométricos: el cruce del camino a media
+ * pantalla y los cuadros de un tamaño que deja ver la casa y el gimnasio completos. La casa
+ * llega a ~3 cuadros a la izquierda del centro y el gimnasio a ~3.7 a la derecha.
+ */
+export function vistaPradera(c: CanvasRenderingContext2D, W: number, H: number): Vista {
   const tw = Math.min(W / 8.3, H / 6.2);
-  const th = tw / 2;
-  const v: Vista = { c, tw, th, alto: 0, ox: W / 2 - tw * 0.35, oy: 0 };
+  const v: Vista = { c, tw, th: tw / 2, alto: 0, ox: W / 2 - tw * 0.35, oy: 0 };
   const [, ycentro] = p(v, 5.2, 5.2);
   v.oy = H * 0.5 - ycentro;
+  return v;
+}
+
+/** El camino: de abajo de la pantalla al cruce, y de ahí a la puerta de la casa y del gimnasio. */
+export const TRAMOS: readonly [number, number, number, number][] = [[20, 20, 6.2, 6.2], [6.2, 6.2, 4.1, 6.6], [6.2, 6.2, 6.8, 4.1]];
+/** Dónde va cada edificio: [i0, i1, j0, j1, alto]. */
+export const CASA = [1.6, 4.0, 5.4, 7.6, 1.7] as const;
+export const GIMNASIO = [5.2, 8.6, 1.2, 3.8, 2.1] as const;
+/** Los árboles alrededor, también en las orillas (ninguno sobre el camino, que va por i = j). */
+export const ARBOLES: readonly [number, number][] = [[1.2, 1.4], [8.6, 0.6], [0.9, 4.2], [9.4, 5.6], [9.6, 7.4], [2.2, 9.4], [4.4, 1.0], [-1.5, 3], [3, -1.6], [11.5, 3.5], [4.2, 11.6], [12.6, 9.4], [-0.5, 7.5], [7, -0.8],
+  [6.4, 11.2], [11, 14.2], [-2.5, 10], [13.5, 1.5], [-1, -1.5], [1, -3], [15, 6.5], [7.5, 14.5], [0.5, 12.8], [14.6, 12.4], [-3.2, 5.6], [10.2, -2.5],
+  [-2.6, -2.2], [-0.4, -4.6], [-4.8, 0.2], [2.4, -4.4], [4.6, -3.2], [-4.4, 2.6], [-6.2, -2.4], [-2.2, -6.4], [6.8, -4.6], [-6.8, 3.4], [0.6, -7.2], [-7.4, 0.8]];
+
+export function pintarPradera(c: CanvasRenderingContext2D, W: number, H: number): Zona[] {
+  const estilo = estiloPradera();
+  if (estilo === "realista") return praderaRealista(c, W, H);
+  if (estilo === "lowpoly") return praderaLowPoly(c, W, H);
+  if (estilo === "perspectiva") return praderaPerspectiva(c, W, H);
+  const v = vistaPradera(c, W, H);
+  const th = v.th, tw = v.tw;
 
   const pasto = c.createLinearGradient(0, 0, 0, H);
   pasto.addColorStop(0, "#7fd35e"); pasto.addColorStop(1, "#45a84b");
@@ -41,7 +72,7 @@ export function pintarPradera(c: CanvasRenderingContext2D, W: number, H: number)
 
   // El camino: entra por abajo de la pantalla y se parte en dos, a la casa y al gimnasio. Una
   // franja de tierra clara con piedritas, con su orilla un poco más oscura.
-  const tramos: [number, number, number, number][] = [[20, 20, 6.2, 6.2], [6.2, 6.2, 4.1, 6.6], [6.2, 6.2, 6.8, 4.1]];
+  const tramos = TRAMOS;
   const franja = (ancho: number, color: string) => {
     for (const [i0, j0, i1, j1] of tramos) {
       const largo = Math.hypot(i1 - i0, j1 - j0), ni = -(j1 - j0) / largo * ancho / 2, nj = (i1 - i0) / largo * ancho / 2;
@@ -64,12 +95,8 @@ export function pintarPradera(c: CanvasRenderingContext2D, W: number, H: number)
     }
   }
 
-  // Lo que está encima, de atrás hacia adelante (por i + j). Árboles alrededor, también en las
-  // orillas, para que la pradera no se vea cortada.
-  // (Ninguno sobre el camino, que va por la diagonal i = j.)
-  const arboles = [[1.2, 1.4], [8.6, 0.6], [0.9, 4.2], [9.4, 5.6], [9.6, 7.4], [2.2, 9.4], [4.4, 1.0], [-1.5, 3], [3, -1.6], [11.5, 3.5], [4.2, 11.6], [12.6, 9.4], [-0.5, 7.5], [7, -0.8],
-    [6.4, 11.2], [11, 14.2], [-2.5, 10], [13.5, 1.5], [-1, -1.5], [1, -3], [15, 6.5], [7.5, 14.5], [0.5, 12.8], [14.6, 12.4], [-3.2, 5.6], [10.2, -2.5],
-    [-2.6, -2.2], [-0.4, -4.6], [-4.8, 0.2], [2.4, -4.4], [4.6, -3.2], [-4.4, 2.6], [-6.2, -2.4], [-2.2, -6.4], [6.8, -4.6], [-6.8, 3.4], [0.6, -7.2], [-7.4, 0.8]];
+  // Lo que está encima, de atrás hacia adelante (por i + j).
+  const arboles = ARBOLES;
   const cosas: { orden: number; pinta: () => Zona | void }[] = [
     { orden: 2.5 + 6.3, pinta: () => gimnasio(v) },
     { orden: 1.6 + 7.4, pinta: () => casa(v) },
@@ -91,7 +118,7 @@ function arbol(v: Vista, i: number, j: number): void {
 }
 
 /** Un techo de dos aguas sobre la caja (i0..i1, j0..j1) a la altura h, con la cumbrera en i. */
-function techo(v: Vista, i0: number, i1: number, j0: number, j1: number, h: number, alto: number, colores: [string, string, string]): void {
+export function techo(v: Vista, i0: number, i1: number, j0: number, j1: number, h: number, alto: number, colores: [string, string, string]): void {
   const jm = (j0 + j1) / 2;
   const [frente, atras, lado] = colores;
   poligono(v, [p(v, i0 - 0.15, j0 - 0.15, h), p(v, i1 + 0.15, j0 - 0.15, h), p(v, i1 + 0.15, jm, h + alto), p(v, i0 - 0.15, jm, h + alto)], atras);
@@ -99,14 +126,14 @@ function techo(v: Vista, i0: number, i1: number, j0: number, j1: number, h: numb
   poligono(v, [p(v, i0 - 0.15, j1 + 0.15, h), p(v, i1 + 0.15, j1 + 0.15, h), p(v, i1 + 0.15, jm, h + alto), p(v, i0 - 0.15, jm, h + alto)], frente);
 }
 
-function zonaDe(v: Vista, lugar: Lugar, i0: number, i1: number, j0: number, j1: number, h: number): Zona {
+export function zonaDe(v: Vista, lugar: Lugar, i0: number, i1: number, j0: number, j1: number, h: number): Zona {
   const pts = [p(v, i0, j0, h), p(v, i1, j0, 0), p(v, i1, j1, 0), p(v, i0, j1, 0), p(v, i1, j1, h), p(v, i0, j1, h), p(v, i1, j0, h)];
   const xs = pts.map((q) => q[0]), ys = pts.map((q) => q[1]);
   const x = Math.min(...xs), y = Math.min(...ys);
   return { lugar, x, y, w: Math.max(...xs) - x, h: Math.max(...ys) - y };
 }
 
-function letreroFlotante(v: Vista, i: number, j: number, z: number, texto: string, color: string): void {
+export function letreroFlotante(v: Vista, i: number, j: number, z: number, texto: string, color: string): void {
   const c = v.c;
   const [x, y] = p(v, i, j, z);
   c.font = `800 ${Math.max(4, Math.round(v.th * 0.75))}px system-ui, sans-serif`;
