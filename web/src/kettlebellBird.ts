@@ -53,6 +53,8 @@ export interface Barra {
   centro: number;
   hueco: number;
   pasada: boolean;
+  /** Qué número de barra es (la primera es la 1): ahí van las marcas de los records. */
+  n: number;
 }
 
 export interface Vuelo {
@@ -90,7 +92,7 @@ function nuevaBarra(x: number, anterior: Barra | undefined, puntos: number, azar
   const base = anterior?.centro ?? (min + max) / 2;
   const s = salto(puntos);
   const centro = Math.max(min, Math.min(max, base + (azar() * 2 - 1) * s));
-  return { x, centro, hueco: h, pasada: false };
+  return { x, centro, hueco: h, pasada: false, n: (anterior?.n ?? 0) + 1 };
 }
 
 export function nuevoVuelo(vistaAncho: number, azar: () => number = Math.random): Vuelo {

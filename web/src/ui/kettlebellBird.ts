@@ -4,6 +4,7 @@ import {
 import { conPartida, htmlLista, type ApiJuego, type EnvioPartida, type TablaDiscos } from "./juegoDiscos";
 import { ZONAS, pintarPolvo, pintarZona } from "./gimnasioFondo";
 import { escapar } from "./tarjetaDia";
+import { marcasDe, pintarEtiqueta } from "./marcasRecords";
 
 /**
  * La pantalla de Kettlebell Bird (lógica en `../kettlebellBird.ts`), del Arcade. Como Torre de
@@ -333,6 +334,27 @@ function dibujar(): void {
     const arriba = (b.centro - b.hueco / 2) * e, abajo = (b.centro + b.hueco / 2) * e;
     pintarBarraConDisco(c, x, w, -10, arriba, true, e);
     pintarBarraConDisco(c, x, w, abajo, piso, false, e);
+  }
+
+  // Dónde quedaron los records: una meta cuadriculada en el hueco de esa barra, con su nombre.
+  const marcas = marcasDe(tabla);
+  for (const b of vuelo.barras) {
+    const m = marcas.find((x) => x.puntos === b.n);
+    if (!m) continue;
+    const cx = (b.x + ANCHO_DISCO / 2) * e;
+    const arriba = (b.centro - b.hueco / 2) * e, abajo = (b.centro + b.hueco / 2) * e;
+    const superada = vuelo.puntos > m.puntos;
+    const cuadro = Math.max(3, e * 0.9);
+    c.save();
+    c.globalAlpha = superada ? 0.35 : 0.85;
+    for (let y = arriba + 3 * e, k = 0; y < abajo - 3 * e; y += cuadro, k++) {
+      c.fillStyle = k % 2 ? (m.tuya ? "#ffd45c" : "#ff4fd8") : "#ffffff";
+      c.fillRect(cx - cuadro, y, cuadro, cuadro);
+      c.fillStyle = k % 2 ? "#ffffff" : (m.tuya ? "#ffd45c" : "#ff4fd8");
+      c.fillRect(cx, y, cuadro, cuadro);
+    }
+    c.restore();
+    pintarEtiqueta(c, m, "", cx, arriba + 3 * e + 10, "centro", superada);
   }
 
   // La kettlebell.

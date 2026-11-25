@@ -4,6 +4,7 @@ import {
 import { conPartida, htmlLista, type ApiJuego, type EnvioPartida, type TablaDiscos } from "./juegoDiscos";
 import { ZONAS, decoracion, pintarPolvo, ruido, type Zona } from "./gimnasioFondo";
 import { escapar } from "./tarjetaDia";
+import { marcasDe, pintarEtiqueta, pintarLinea } from "./marcasRecords";
 
 /**
  * La pantalla de Box Jump (lógica en `../boxJump.ts`), del Arcade. Como los otros juegos: toda la
@@ -495,6 +496,18 @@ function dibujar(dt: number): void {
     c.globalAlpha = 1;
   } else pintarEdificio(c, zona, W, H, e, cam, reloj);
   pintarLosas(c, W, H, e, cam);
+  // Dónde quedaron los records: una línea a esa altura, con su banderita y su nombre.
+  for (const m of marcasDe(tabla)) {
+    const y = sy(m.puntos * UNIDADES_POR_METRO);
+    if (y < -20 || y > H + 20) continue;
+    const superada = metros(salto) > m.puntos;
+    pintarLinea(c, m, 0, W, y, superada);
+    c.strokeStyle = "#c9cdd3"; c.lineWidth = 2;
+    c.beginPath(); c.moveTo(W - 10, y); c.lineTo(W - 10, y - 26); c.stroke();
+    c.fillStyle = m.tuya ? "#ffd45c" : "#ff4fd8";
+    c.beginPath(); c.moveTo(W - 10, y - 26); c.lineTo(W - 24, y - 21); c.lineTo(W - 10, y - 16); c.fill();
+    pintarEtiqueta(c, m, " m", W - 28, y - 12, "der", superada);
+  }
 
   for (const cj of salto.cajones) {
     if (cj.ancho <= 0) continue;
