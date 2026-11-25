@@ -109,7 +109,33 @@ export function actualizarCabecera(titulo: string | null, detalle: string | null
   }
 }
 
+// TEMPORAL: propuestas del renglón de Arcade en el menú (`osfit:menu-arcade`: a, b, c, d).
+function estiloArcade(): string {
+  try { const v = globalThis.localStorage?.getItem("osfit:menu-arcade"); return v === "b" || v === "c" || v === "d" ? v : "a"; } catch { return "a"; }
+}
+
+/** Un marcianito de 8 bits, cuadrito por cuadrito. */
+const INVASOR = (() => {
+  const filas = ["00100000100", "00010001000", "00111111100", "01101110110", "11111111111", "10111111101", "10100000101", "00011011000"];
+  const rects = filas.flatMap((f, y) => [...f].map((b, x) => (b === "1" ? `<rect x="${x}" y="${y}" width="1" height="1"/>` : ""))).join("");
+  return `<svg class="ma-invasor" viewBox="0 0 11 8" shape-rendering="crispEdges" aria-hidden="true" focusable="false">${rects}</svg>`;
+})();
+
+/**
+ * El renglón de Arcade: con su propia estética de videojuego, distinta del resto del menú
+ * (entrenador, 2026-11-25: "algo que diferencie que es de gamer, una estética retro").
+ */
+function opcionArcade(v: Ventana): string {
+  return `
+        <button type="button" class="menu-opcion menu-arcade" data-ventana="${v.id}" data-estilo="${estiloArcade()}">
+          <span class="ma-icono" aria-hidden="true">${INVASOR}</span>
+          <span class="menu-texto">${escapar(v.titulo)}</span>
+          <span class="ma-extra" aria-hidden="true"></span>
+        </button>`;
+}
+
 function opcion(v: Ventana): string {
+  if (v.id === "arcade") return opcionArcade(v);
   return `
         <button type="button" class="menu-opcion" data-ventana="${v.id}">
           <span class="menu-texto">${escapar(v.titulo)}</span>
