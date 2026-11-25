@@ -175,6 +175,11 @@ export interface Cliente {
    * Said). Se pone a mano en Firestore; ausente es "no".
    */
   adminAmigos?: boolean;
+  /**
+   * Ve Mi espacio mientras se prueba (backlog 2, punto 29): hoy solo el perfil del entrenador.
+   * Se pone a mano en Firestore; ausente es "no".
+   */
+  pruebasEspacio?: boolean;
 }
 
 /** GEMELO: `ModoAmigos` de `functions/src/comparar.ts`. Con "nadie" tampoco ve a los demás. */

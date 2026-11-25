@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Timestamp } from "firebase/firestore";
 import type { Asistencia, Cliente } from "./datos";
-import { BARRA, VENTANAS, contenidoDe, datosResumenMensual, tituloCabecera, ventana, type DatosCliente, type IdVentana } from "./ventanas";
+import { BARRA, VENTANAS, contenidoDe, datosResumenMensual, puedeVer, tituloCabecera, ventana, type DatosCliente, type IdVentana } from "./ventanas";
 import type { ResumenMensualGuardado } from "./datos";
 import { resumenDelMes } from "./resumenMensual";
 
@@ -37,7 +37,7 @@ describe("el registro de ventanas", () => {
 
   it("va Inicio, Notificaciones, Músculos, Registro, Amigos, Estadísticas, Resumen mensual, Ranking, Medallas, Logros, Videos y Ajustes al final", () => {
     expect(VENTANAS.map((v) => v.id)).toEqual(
-      ["inicio", "notificaciones", "musculos", "registro", "comparar", "estadisticas", "resumenMensual", "ranking", "sugerencias", "arcade", "juego", "kettlebell", "boxjump", "medallas", "logros", "videos", "ajustes"]
+      ["inicio", "notificaciones", "musculos", "registro", "comparar", "estadisticas", "resumenMensual", "ranking", "sugerencias", "arcade", "espacio", "juego", "kettlebell", "boxjump", "medallas", "logros", "videos", "ajustes"]
     );
   });
 
@@ -230,5 +230,16 @@ describe("datosResumenMensual", () => {
 
   it("mientras llegan los meses cerrados dice que carga", () => {
     expect(datosResumenMensual(datos({ asistencias }), null).cargando).toBe(true);
+  });
+});
+
+describe("Mi espacio, solo para pruebas", () => {
+  it("solo la ve quien tiene pruebasEspacio en su perfil", () => {
+    const espacio = VENTANAS.find((v) => v.id === "espacio")!;
+    expect(puedeVer(espacio, {})).toBe(false);
+    expect(puedeVer(espacio, { pruebasEspacio: false })).toBe(false);
+    expect(puedeVer(espacio, { pruebasEspacio: true })).toBe(true);
+    // Las demás ventanas no piden nada.
+    expect(VENTANAS.filter((v) => v.id !== "espacio").every((v) => puedeVer(v, {}))).toBe(true);
   });
 });

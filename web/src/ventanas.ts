@@ -24,6 +24,7 @@ import { tarjetaSinDatos } from "./ui/tarjetaSinDatos";
 import { ventanaEstadisticas, type DatosEstadisticas } from "./ui/estadisticas";
 import { ventanaSugerencias } from "./ui/sugerencias";
 import { ventanaArcade } from "./ui/arcade";
+import { ventanaEspacio } from "./ui/espacio";
 import { mesElegidoResumen, ventanaResumenMensual, type DatosResumenMensual, type MesDeLista } from "./ui/resumenMensual";
 import { compararFuerza, kgPorSemana, mejoresAntes, mesAnterior, mesesConActividad, resumenDelMes, ultimoDiaDe, type ResumenMensual } from "./resumenMensual";
 import { invitacionNotificaciones, seccionNotificaciones } from "./ui/tarjetaNotificaciones";
@@ -48,7 +49,7 @@ import { edadEn, fuerzaPorMusculo, pesoParaFuerza, type FuerzaMusculo } from "./
 
 export type IdVentana =
   | "inicio" | "musculos" | "registro" | "comparar" | "estadisticas"
-  | "ranking" | "medallas" | "logros" | "videos" | "ajustes" | "resumenMensual" | "notificaciones" | "sugerencias" | "arcade" | "juego" | "kettlebell" | "boxjump";
+  | "ranking" | "medallas" | "logros" | "videos" | "ajustes" | "resumenMensual" | "notificaciones" | "sugerencias" | "arcade" | "juego" | "kettlebell" | "boxjump" | "espacio";
 
 /** Todo lo que los listeners de Firestore tienen a mano en cada repintado. */
 export interface DatosCliente {
@@ -228,6 +229,11 @@ export interface Ventana {
   grupo: "principal" | "pie" | "barra" | "sub";
   /** No sale en el menú: la función está apagada pero su código se queda. */
   oculta?: boolean;
+  /**
+   * Solo la ve quien tiene ese interruptor en su perfil (para probar algo antes de darlo a
+   * todos). Sin él no sale en el menú y tampoco se abre: se queda en Inicio.
+   */
+  soloCon?: "pruebasEspacio";
   /** Se puede abrir, pero todavía muestra "Muy pronto". */
   proximamente?: boolean;
   /** Lo que va dentro de `#contenido`. */
@@ -334,6 +340,8 @@ export const VENTANAS: readonly Ventana[] = [
   { id: "sugerencias", titulo: "Quejas y sugerencias", icono: "💬", grupo: "principal", pintar: () => ventanaSugerencias() },
   // El Arcade (entrenador, 2026-11-24), debajo de Quejas y sugerencias: reúne los minijuegos.
   { id: "arcade", titulo: "Arcade", icono: "🕹️", grupo: "principal", pintar: () => ventanaArcade() },
+  // Mi espacio (entrenador, 2026-11-25; backlog 2, punto 29): por ahora solo para probarlo.
+  { id: "espacio", titulo: "Mi espacio", icono: "🏠", grupo: "principal", soloCon: "pruebasEspacio", pintar: (d) => ventanaEspacio(d.cliente.nombre ?? "") },
   // Los juegos, subventanas del Arcade (`PADRE` en `navegacion.ts`). En su propio contenedor: un
   // repintado a media partida tiraría el canvas (`ui/juegoDiscos.ts`, `ui/kettlebellBird.ts`).
   { id: "juego", titulo: "Torre de discos", icono: "🏋️", grupo: "sub", contenedorPropio: "juego" },
@@ -373,6 +381,11 @@ export const BARRA: readonly IdVentana[] = ["inicio", "musculos", "registro"];
 export function tituloCabecera(v: Ventana): string | null {
   if (v.id === "inicio") return null;
   return v.grupo === "barra" ? "" : v.titulo;
+}
+
+/** Si esta persona puede ver la ventana (las que piden un interruptor del perfil). */
+export function puedeVer(v: Ventana, cliente: Pick<Cliente, "pruebasEspacio">): boolean {
+  return !v.soloCon || cliente[v.soloCon] === true;
 }
 
 /** Un id que no está en el registro (un `history.state` viejo, por ejemplo) cae en Inicio. */

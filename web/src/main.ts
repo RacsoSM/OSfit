@@ -70,12 +70,13 @@ import { conectarAccionFalta } from "./ui/accionFalta";
 import { moverMes } from "./ui/calendario";
 import { tarjetaVideos, ultimosRangoDescendente, firmaVideos, MAXIMO_VIDEOS } from "./ui/tarjetaVideos";
 import {
-  BARRA, VENTANAS, contenidoDe, datosRegistro, fuerzaDelCliente, tituloCabecera, ventana, type IdVentana,
+  BARRA, VENTANAS, contenidoDe, datosRegistro, fuerzaDelCliente, puedeVer, tituloCabecera, ventana, type IdVentana,
 } from "./ventanas";
 import {
   cabeceraRegistro, cerrarSiVencido, conectarRegistro, empezarGuiado, entrenamientoAbierto, vistaDesdeHistorial,
 } from "./ui/registro";
 import { soltarMarcoJuego } from "./ui/marcoJuego";
+import { dibujarEspacio } from "./ui/espacio";
 import { barraInferior, conectarBarra, marcarSexoBarra } from "./ui/barraInferior";
 import { archivosMapa, conectarMapa, type EstadoSvg } from "./ui/mapaMuscular";
 import { conectarPeso } from "./ui/pesoCorporal";
@@ -685,7 +686,7 @@ async function arrancar(): Promise<void> {
   function pintarMenu(activa: IdVentana, nombre: string): void {
     const caja = document.querySelector<HTMLElement>("#menu");
     if (!caja) return;
-    const html = panelMenu(VENTANAS, nombre);
+    const html = panelMenu(VENTANAS.filter((v) => puedeVer(v, cliente ?? {})), nombre);
     if (html !== firmaMenuPintada) {
       firmaMenuPintada = html;
       caja.innerHTML = html;
@@ -742,7 +743,9 @@ async function arrancar(): Promise<void> {
     const contenido = document.querySelector<HTMLElement>("#contenido");
     if (!contenido) return;
 
-    const activa = ventana(ventanaActiva());
+    // Una ventana de pruebas (Mi espacio) que este perfil no tiene: se queda en Inicio.
+    const pedida = ventana(ventanaActiva());
+    const activa = puedeVer(pedida, cliente) ? pedida : ventana("inicio");
     // Al entrar a Ranking se pide antes de pintar, así un error viejo ya sale como "cargando".
     if (activa.id === "ranking" && activa.id !== ventanaPintada) cargarRanking();
     // Al entrar al Arcade se piden las tablas de los juegos (para sus campeones).
@@ -846,6 +849,10 @@ async function arrancar(): Promise<void> {
     // a colgar en cada repintado: `innerHTML` tira los anteriores junto con los elementos. El
     // estado de las dos acciones no vive acá, sino dentro de sus módulos, justo para que un
     // snapshot a destiempo no lo borre.
+    if (activa.id === "espacio") {
+      dibujarEspacio();
+      requestAnimationFrame(() => dibujarEspacio());
+    }
     if (activa.id === "musculos") {
       conectarMapa(cliente.sexo, fuerzaDelCliente(datos), cliente.peso ?? null);
       conectarPeso(pintar, (peso) => guardarPeso({ peso }));

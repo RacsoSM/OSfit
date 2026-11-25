@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { VENTANAS } from "../ventanas";
+import { VENTANAS, puedeVer } from "../ventanas";
 import { cabecera, marcarVentanaActiva, numeroCampana, panelMenu } from "./menuLateral";
 
 /** Los textos de las opciones, en el orden en que se pintaron. */
@@ -8,7 +8,8 @@ function opciones(html: string): string[] {
 }
 
 describe("panelMenu", () => {
-  const html = panelMenu(VENTANAS, "Ana");
+  // Como en main.ts: sin el interruptor de pruebas, Mi espacio no sale.
+  const html = panelMenu(VENTANAS.filter((v) => puedeVer(v, {})), "Ana");
 
   it("lista las ventanas del registro en orden, sin las ocultas (Videos, 2026-10-17; Medallas y Logros, 2026-10-21)", () => {
     expect(opciones(html)).toEqual(
