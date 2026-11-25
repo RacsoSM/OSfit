@@ -75,7 +75,7 @@ export function htmlKettlebell(): string {
         <p class="jd-hud-puntos" id="kb-puntos">0</p>
         <p class="jd-hud-record">Récord <b id="kb-record">—</b></p>
       </div>
-      <p class="jd-hud-nivel kb-nivel-abajo" id="kb-nivel"></p>
+      <p class="jd-hud-nivel jd-nivel-abajo" id="kb-nivel"></p>
       <div class="jd-capa" id="kb-capa"></div>
       <section class="jd-hoja" id="kb-hoja" hidden aria-label="Records">
         <div class="jd-hoja-cabeza">

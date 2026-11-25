@@ -2791,9 +2791,9 @@ body:has(.arcade) :is(.fondo, .fondo-pixel, .fondo-sakura, .fondo-halloween, .pe
 .ar-nuevo { position: absolute; right: 16px; top: 16px; z-index: 1; padding: 4px 10px; border-radius: 6px; background: #ffd45c; color: #1a1300; font: 800 11px ui-monospace, monospace; letter-spacing: 1px; }
 .kb-pantalla, .bj-pantalla { background: #160f26; }
 .jd-hud-nivel { margin: 4px 0 0; font: 800 12px ui-monospace, "SF Mono", Menlo, monospace; letter-spacing: 1px; color: #7ef3ff; text-shadow: 0 0 8px rgba(126, 243, 255, 0.6); text-transform: uppercase; }
-/* En Kettlebell Bird el nivel va abajo, sobre el piso (entrenador, 2026-11-25: "ponlo abajo"). */
-.kb-nivel-abajo { position: absolute; left: 0; right: 0; bottom: 10px; margin: 0; text-align: center; pointer-events: none; }
-.jd-pantalla:not(.en-juego) .kb-nivel-abajo { opacity: 0; }
+/* En Kettlebell Bird y Box Jump el nivel va abajo (entrenador, 2026-11-25: "ponlo abajo"). */
+.jd-nivel-abajo { position: absolute; left: 0; right: 0; bottom: 10px; margin: 0; text-align: center; pointer-events: none; }
+.jd-pantalla:not(.en-juego) .jd-nivel-abajo { opacity: 0; }
 /* Al subir de nivel la línea brilla un momento, sin tapar el juego. */
 .jd-hud-nivel.sube { animation: jd-sube-nivel 1.6s ease-out; }
 @keyframes jd-sube-nivel {

@@ -44,7 +44,6 @@ let cuadro = 0;
 let ultimo = 0;
 let reloj = 0;
 let pisoVisto = 1;
-let anuncio: { piso: number; zona: string; vida: number } | null = null;
 let tabla: TablaDiscos | null = null;
 let errorTabla = false;
 let guardado: Guardado = "nada";
@@ -77,8 +76,8 @@ export function htmlBoxJump(): string {
       <div class="jd-hud" aria-live="polite">
         <p class="jd-hud-puntos" id="bj-puntos">0 m</p>
         <p class="jd-hud-record">Récord <b id="bj-record">—</b></p>
-        <p class="jd-hud-nivel" id="bj-piso"></p>
       </div>
+      <p class="jd-hud-nivel jd-nivel-abajo" id="bj-piso"></p>
       <div class="jd-capa" id="bj-capa"></div>
       <section class="jd-hoja" id="bj-hoja" hidden aria-label="Records">
         <div class="jd-hoja-cabeza">
@@ -216,7 +215,7 @@ function vistaAlto(): number {
 function jugar(): void {
   salto = nuevoSalto(vistaAlto());
   particulas = []; pedazos = []; letreros = []; sacudida = 0; destello = 0; aplaste = 1;
-  pisoVisto = 1; anuncio = null;
+  pisoVisto = 1;
   objetivo = null;
   guardado = "nada"; record = false; hoja = false;
   estado = "jugando";
@@ -256,8 +255,10 @@ function ciclo(ahora: number): void {
     const p = piso(metros(salto));
     if (p > pisoVisto) {
       pisoVisto = p;
-      anuncio = { piso: p, zona: ETAPAS[p - 1]!, vida: 2.2 };
-      destello = 0.4;
+      // Discreto, como en Kettlebell Bird: sin letrero en medio; brilla la línea del nivel abajo.
+      actualizar();
+      const pis = q("#bj-piso");
+      if (pis) { pis.classList.remove("sube"); void pis.offsetWidth; pis.classList.add("sube"); }
       navigator.vibrate?.(25);
     }
     if (ev === "fin") {
@@ -282,7 +283,6 @@ function ciclo(ahora: number): void {
   letreros = letreros.filter((l) => l.vida > 0);
   sacudida = Math.max(0, sacudida - dt * 2.5);
   destello = Math.max(0, destello - dt * 4);
-  if (anuncio) anuncio.vida -= dt;
   cuadro = requestAnimationFrame(ciclo);
   pintarSeguro(() => dibujar(dt));
 }
@@ -720,16 +720,6 @@ function dibujar(_dt: number): void {
   for (const l of letreros) {
     c.save(); c.font = `900 ${Math.round(5 * e)}px system-ui, sans-serif`; c.fillStyle = `rgba(255, 212, 92, ${Math.max(0, l.vida)})`;
     c.shadowColor = "#ff3bd4"; c.shadowBlur = 10; c.fillText(l.texto, Math.min(W - 60, Math.max(60, l.x * e)), sy(l.h)); c.restore();
-  }
-  if (anuncio && anuncio.vida > 0) {
-    const a = Math.min(1, anuncio.vida * 1.5), s2 = 1 + Math.max(0, anuncio.vida - 1.6) * 1.2;
-    c.save(); c.translate(W / 2, H * 0.34); c.scale(s2, s2);
-    c.textAlign = "center"; c.textBaseline = "middle";
-    c.shadowColor = "#ff3bd4"; c.shadowBlur = 18; c.fillStyle = `rgba(255, 255, 255, ${a})`;
-    c.font = `900 ${Math.round(11 * e)}px system-ui, sans-serif`; c.fillText(`NIVEL ${anuncio.piso}`, 0, 0);
-    c.shadowColor = "#7ef3ff"; c.shadowBlur = 10; c.fillStyle = `rgba(126, 243, 255, ${a})`;
-    c.font = `800 ${Math.round(4.4 * e)}px ui-monospace, "SF Mono", Menlo, monospace`; c.fillText(anuncio.zona.toUpperCase(), 0, 9 * e);
-    c.restore();
   }
   c.setTransform(dpr, 0, 0, dpr, 0, 0);
   if (destello > 0) { c.fillStyle = `rgba(255, 255, 255, ${destello * 0.5})`; c.fillRect(0, 0, W, H); }
