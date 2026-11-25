@@ -10,6 +10,7 @@ import { escapar } from "./tarjetaDia";
 import { caja, p, poligono, type Vista } from "./iso";
 import { vistaPradera, type Lugar, type Zona } from "./pradera";
 import { escenaRealista } from "./praderaEstilos";
+import { mueblesCasaAcogedora, pintarCasaAcogedora } from "./casaAcogedora";
 import { avanzarHabitante, nuevoHabitante, pintarHabitante, type Habitante } from "./habitante";
 import type { Sexo } from "../datos";
 import { ajustarMarcoJuego, vigilarMarcoJuego } from "./marcoJuego";
@@ -310,6 +311,8 @@ function cuadro(ahoraMs: number): void {
  * Los muebles van aparte (`mueblesDelCuarto`), para que el personaje pueda pasar detrás de ellos.
  */
 function pintarCuarto(c: CanvasRenderingContext2D, W: number, H: number, estilo: EstiloEspacio, ejemplos: boolean, tipo: Lugar): Vista {
+  // La casa va acogedora y realista, como la pradera (`casaAcogedora.ts`).
+  if (tipo === "casa") { const v = vistaPara(c, W, H); pintarCasaAcogedora(v, W, H); return v; }
   const pal = PALETAS[estilo];
   const fondo = c.createLinearGradient(0, 0, 0, H);
   fondo.addColorStop(0, pal.fondo[0]); fondo.addColorStop(1, pal.fondo[1]);
@@ -358,8 +361,7 @@ function pintarCuarto(c: CanvasRenderingContext2D, W: number, H: number, estilo:
   c.shadowBlur = 0;
 
   // Lo que trae de base: un tapete (en la casa, una alfombra y un sillón).
-  if (tipo === "casa") alfombraCasa(v, estilo);
-  else caja(v, 2, 2.4, 2.2, 1.2, 0.06, pal.tapete);
+  caja(v, 2, 2.4, 2.2, 1.2, 0.06, pal.tapete);
   if (ejemplos && tipo === "gimnasio") posterDeEjemplo(v, estilo);
   return v;
 }
@@ -444,16 +446,6 @@ function cajaDeMueble(v: Vista, m: Mueble): { x: number; y: number; w: number; h
   return { x, y, w: Math.max(...xs) + mg - x, h: Math.max(...ys) + mg - y };
 }
 
-/** La alfombra redonda de la casa (plana: va con el piso). */
-function alfombraCasa(v: Vista, estilo: EstiloEspacio): void {
-  const c = v.c;
-  const [ax, ay] = p(v, 3, 3.2);
-  c.fillStyle = estilo === "a" ? "#3b2a6b" : estilo === "b" ? "#c98f62" : "#ffd45c";
-  c.beginPath(); c.ellipse(ax, ay, v.tw * 1.4, v.th * 1.4, 0, 0, Math.PI * 2); c.fill();
-  c.strokeStyle = "rgba(255, 255, 255, 0.35)"; c.lineWidth = 2;
-  c.beginPath(); c.ellipse(ax, ay, v.tw * 1.2, v.th * 1.2, 0, 0, Math.PI * 2); c.stroke();
-}
-
 /** Para las capturas: un póster en la pared (va con lo fijo). */
 function posterDeEjemplo(v: Vista, estilo: EstiloEspacio): void {
   enParedIzq(v, 4.9, 5.7, 1.0, 2.0, estilo === "a" ? "#ff3bd4" : estilo === "b" ? "#2b1a14" : "#ff5c8a");
@@ -461,33 +453,10 @@ function posterDeEjemplo(v: Vista, estilo: EstiloEspacio): void {
 }
 
 /**
- * Los muebles de cada cuarto. La casa trae de base un sillón, una mesita y una lámpara; el
- * gimnasio, nada (los objetos de ejemplo son solo para las capturas: lo que se podrá comprar).
+ * Los muebles de cada cuarto. La casa trae los suyos (`casaAcogedora.ts`); el gimnasio, nada (los objetos de ejemplo son solo para las capturas: lo que se podrá comprar).
  */
 function mueblesDelCuarto(v: Vista, estilo: EstiloEspacio, ejemplos: boolean, tipo: Lugar): Mueble[] {
-  if (tipo === "casa") {
-    const tela: [string, string, string] = estilo === "a" ? ["#7ef3ff", "#2fb7c8", "#1d8a99"] : estilo === "b" ? ["#5b8f6a", "#46735a", "#365a46"] : ["#ff5c8a", "#d13a6a", "#a82a54"];
-    return [
-      // Sillón contra la pared: base, respaldo y brazos.
-      { i0: 1.2, i1: 4.9, j0: 0.25, j1: 1.45, alto: 1.0, pinta: () => {
-        caja(v, 1.4, 0.35, 3.2, 1.1, 0.45, tela);
-        caja(v, 1.4, 0.25, 3.2, 0.35, 1.0, tela);
-        caja(v, 1.2, 0.25, 0.3, 1.2, 0.7, tela);
-        caja(v, 4.6, 0.25, 0.3, 1.2, 0.7, tela);
-      } },
-      // Mesita de centro.
-      { i0: 2.5, i1: 3.7, j0: 2.7, j1: 3.5, alto: 0.4, pinta: () => caja(v, 2.5, 2.7, 1.2, 0.8, 0.4, estilo === "b" ? ["#8a5a32", "#6e4527", "#5a3820"] : ["#d6dae2", "#8d939e", "#666c77"]) },
-      // Lámpara de pie en la esquina, con su brillo.
-      { i0: 0.45, i1: 0.57, j0: 0.45, j1: 0.57, alto: 2.3, margen: 26, pinta: () => {
-        const c = v.c;
-        caja(v, 0.45, 0.45, 0.12, 0.12, 1.7, ["#2a2c31", "#22242a", "#16171b"]);
-        const [lx, ly] = p(v, 0.5, 0.5, 1.95);
-        c.fillStyle = "#ffe08a"; c.shadowColor = "#ffe08a"; c.shadowBlur = 14;
-        c.beginPath(); c.moveTo(lx - v.th * 0.45, ly + v.th * 0.3); c.lineTo(lx + v.th * 0.45, ly + v.th * 0.3); c.lineTo(lx + v.th * 0.25, ly - v.th * 0.35); c.lineTo(lx - v.th * 0.25, ly - v.th * 0.35); c.fill();
-        c.shadowBlur = 0;
-      } },
-    ];
-  }
+  if (tipo === "casa") return mueblesCasaAcogedora(v);
   if (!ejemplos) return [];
   const metal: [string, string, string] = estilo === "c" ? ["#c8d0e0", "#7d86a0", "#5d6680"] : ["#d6dae2", "#8d939e", "#666c77"];
   const negro: [string, string, string] = ["#3a3d44", "#22242a", "#16171b"];
