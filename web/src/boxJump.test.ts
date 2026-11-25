@@ -82,4 +82,16 @@ describe("Box Jump", () => {
     s.maxH = 123;
     expect(metros(s)).toBe(12);
   });
+
+  it("sigue al dedo sin retraso y al soltar frena casi en seco", () => {
+    const s = nuevoSalto(180, semilla(3));
+    s.x = 50; s.vx = 0;
+    let t = 0;
+    while (Math.abs(s.x - 80) > 1 && t < 1) { avanzar(s, 1 / 60, 80); t += 1 / 60; }
+    expect(t).toBeLessThan(0.25);
+    s.x = 20; s.vx = 170;
+    const desde = s.x;
+    for (let k = 0; k < 60; k++) avanzar(s, 1 / 60, null);
+    expect(s.x - desde).toBeLessThan(5);
+  });
 });

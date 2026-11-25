@@ -26,7 +26,15 @@ export const PISOS = 8;
 /** Cada nivel es una altura del viaje (entrenador, 2026-11-25: "empieza en la tierra, luego va al cielo, al espacio, pasa por la luna, marte…"). */
 export const ETAPAS = ["Tierra", "Cielo", "Estratósfera", "Espacio", "Luna", "Marte", "Júpiter", "Galaxia"] as const;
 export const ALTO_CAJON = 7;
-const VEL_LATERAL = 115;
+/**
+ * Lo de lado (entrenador, 2026-11-25: "siento que los controles no son tan precisos, un leve
+ * delay"): antes perseguía el dedo despacio (0.42 s para llegar a un tercio de la pantalla) y al
+ * soltar seguía resbalando más de una plataforma. Ahora sigue al dedo de cerca y frena casi en seco.
+ */
+const VEL_LATERAL = 170;
+const GANANCIA = 24;
+/** Al soltar: cuánto se conserva de la velocidad por segundo (frena en ~0.1 s). */
+const FRENO = Math.exp(-40);
 
 export type Tipo = "firme" | "movil" | "espuma";
 
@@ -129,9 +137,9 @@ export function avanzar(s: Salto, dt: number, objetivo: number | null): Evento {
     let d = objetivo - s.x;
     if (d > ANCHO / 2) d -= ANCHO;
     if (d < -ANCHO / 2) d += ANCHO;
-    s.vx = Math.max(-VEL_LATERAL, Math.min(VEL_LATERAL, d * 9));
+    s.vx = Math.max(-VEL_LATERAL, Math.min(VEL_LATERAL, d * GANANCIA));
   } else {
-    s.vx *= Math.pow(0.02, dt);
+    s.vx *= Math.pow(FRENO, dt);
   }
   s.x += s.vx * dt;
   if (s.x < -RADIO) s.x += ANCHO + RADIO * 2;
