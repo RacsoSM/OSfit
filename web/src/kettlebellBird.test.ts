@@ -75,7 +75,7 @@ describe("Kettlebell Bird", () => {
   });
 
   it("se choca con lo que se ve: el disco ancho cerca de la orilla, la barra delgada en el resto", () => {
-    const b = { x: 20, centro: 50, hueco: 30, pasada: false };
+    const b = { x: 20, centro: 50, hueco: 30, pasada: false, n: 1 };
     const arriba = b.centro - b.hueco / 2;
     // Junto a la barra, lejos del disco: no toca (antes la caja era del ancho del disco en todo el largo).
     expect(chocaConBarra(b.x + 1, arriba - 12, 2, b)).toBe(false);
@@ -85,6 +85,14 @@ describe("Kettlebell Bird", () => {
     expect(chocaConBarra(b.x + ANCHO_DISCO / 2 - ANCHO_TUBO * 2, arriba - DISCO_HASTA / 2, 1, b)).toBe(true);
     // En el hueco: libre.
     expect(chocaConBarra(b.x + ANCHO_DISCO / 2, b.centro, 3.6, b)).toBe(false);
+  });
+
+  it("las barras van numeradas en orden, para poner las marcas de los records", () => {
+    const v = nuevoVuelo(60, fijo);
+    for (let i = 0; i < 600; i++) { v.y = 40; v.vy = 0; v.terminada = false; avanzar(v, 0.016); }
+    const ns = v.barras.map((b) => b.n);
+    expect(ns[0]).toBeGreaterThan(1);
+    ns.forEach((n, i) => { if (i > 0) expect(n).toBe(ns[i - 1]! + 1); });
   });
 
   it("choca: círculo contra rectángulo", () => {

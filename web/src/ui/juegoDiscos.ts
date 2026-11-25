@@ -3,6 +3,7 @@ import {
 } from "../juegoDiscos";
 import { escapar } from "./tarjetaDia";
 import { ajustarMarcoJuego, pintarSeguro, prepararMarcoJuego, vigilarMarcoJuego } from "./marcoJuego";
+import { marcasDe, pintarEtiqueta, pintarLinea } from "./marcasRecords";
 
 /**
  * La ventana del minijuego Torre de discos (lógica en `../juegoDiscos.ts`) y su tabla de
@@ -548,6 +549,15 @@ function dibujar(dt: number): void {
     c.setLineDash([]);
     c.fillStyle = "rgba(255, 255, 255, 0.3)";
     c.fillText(`${k}`, 8, y - 5);
+  }
+
+  // Dónde quedaron los records de las demás (y el tuyo): una línea a la altura de ese disco.
+  for (const m of marcasDe(tabla)) {
+    const y = sy(alturaDe(m.puntos));
+    if (y < -20 || y > H + 20) continue;
+    const superada = partida.apilados > m.puntos;
+    pintarLinea(c, m, 0, W, y, superada);
+    pintarEtiqueta(c, m, "", W - 8, y - 12, "der", superada);
   }
 
   // Piso de caucho y plataforma de madera, como las de halterofilia.
