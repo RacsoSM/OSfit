@@ -1122,3 +1122,38 @@ persona. Quizá con un 👍 o un contador de visitas.
 ### Fase 5 — Más formas de ganar monedas
 
 Por entrenar, por rachas, por logros y otras que se definan.
+
+### Ideas tomadas de Tsuki's Odyssey (para las fases 2 a 5)
+
+> "me agrada, agrega las ideas al backlog" (2026-11-25), sobre la investigación de *Tsuki's Odyssey*
+> (HyperBeard, 2021): un juego tranquilo e isométrico donde un personaje vive en su casa, en un pueblo
+> que se va abriendo, y usa los muebles que compras.
+
+Se toman las ideas y las mecánicas, no su arte ni sus personajes.
+
+1. **Un habitante que vive tu espacio** (la más importante). Un personaje (la kettlebell con
+   piernitas o un mini personaje de la clienta) camina por la pradera y entra a la casa y al
+   gimnasio por su cuenta. **Ligado a OSfit:** si hoy entrenó de verdad (asistencia o sesión en
+   Registro), su personaje entrena en su gimnasio; si faltó, está en el sillón de su casa. Eso
+   ningún otro juego lo tiene.
+2. **Que se vea usar lo que se compra.** Cada objeto de la tienda trae su animación: el personaje
+   corre en la caminadora, levanta las mancuernas, se sienta en la banca. Comprar algo y verlo
+   usarlo motiva más que solo verlo puesto.
+3. **Un mundo que crece.** Empieza con la casa y el gimnasio; se desbloquean más lugares en la
+   pradera (un parque, una alberca, una pista…) con monedas o con logros de entrenamiento (rachas,
+   récords).
+4. **Objetos de temporada.** Cosas que solo salen en Halloween, Navidad o en el reto del mes, para
+   que siempre haya algo nuevo. Así se evita la queja principal de ese juego: "ya compré todo y no
+   hay nada que hacer".
+5. **Fotos de colección.** Tomarle fotos a su personaje en su espacio y compartirlas; encaja con
+   las Visitas (fase 4).
+6. **La hora real.** La luz de la pradera cambia con la hora de Mazatlán: atardecer, y de noche las
+   ventanas y faroles prendidos.
+
+Lo que se evita (las críticas a ese juego):
+
+- **Ganar solo por esperar:** las monedas salen de cosas reales (Arcade, entrenar, rachas), no de
+  esperar horas a que algo "se cosecha".
+- **Anunciar lugares que no existen:** se muestra solo lo que ya funciona.
+- **Contadores que fallan al volver a abrir la app:** los tiempos los calcula el servidor (como ya
+  está planeado para las Monedas).
