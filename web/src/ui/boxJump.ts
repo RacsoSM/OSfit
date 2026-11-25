@@ -103,7 +103,7 @@ export function htmlCapaBoxJump(e: Estado, puntos: number, g: Guardado, nuevoRec
       <div class="jd-capa-caja">
         <p class="jd-capa-marca">OSFIT · Arcade</p>
         <p class="jd-capa-titulo">Box Jump</p>
-        <p class="jd-capa-texto">Rebotas sola sobre las plataformas: arrastra el dedo hacia donde quieres ir y sube de la Tierra al cielo, al espacio, a la Luna, a Marte… Cada metro es un punto. Cuidado con las que se rompen; los trampolines te dan un súper salto.</p>
+        <p class="jd-capa-texto">Rebotas sola sobre las plataformas: arrastra el dedo hacia donde quieres ir y sube de la Tierra al cielo, al espacio, a la Luna, a Marte… Cada metro es un punto. Cuidado con las que se rompen; los resortes te dan un súper salto.</p>
         <button type="button" class="jd-boton" data-bj="jugar">Jugar</button>
         <button type="button" class="jd-boton secundario" data-bj="marcador">Ver marcador</button>
       </div>`;
@@ -242,6 +242,10 @@ function ciclo(ahora: number): void {
     if (ev === "rebote" || ev === "trampolin" || ev === "espuma") {
       aplaste = ev === "trampolin" ? 0.55 : 0.72;
       polvo(salto.x, salto.h, "rgba(230, 220, 200, 0.7)", ev === "trampolin" ? 14 : 6, ev === "trampolin" ? 40 : 22);
+      if (ev === "trampolin") {
+        const resorte = salto.cajones.find((cj) => cj.trampolin && Math.abs(cj.h - salto.h) < 0.01);
+        if (resorte) resortesUsados.set(resorte, reloj);
+      }
       if (ev === "trampolin") { letreros.push({ texto: "¡SÚPER SALTO!", x: salto.x, h: salto.h + 8, vida: 1 }); navigator.vibrate?.(20); }
       if (ev === "espuma") {
         const c = salto.cajones.find((x) => x.roto && Math.abs(x.h - salto.h) < 1);
@@ -298,11 +302,6 @@ function redondeado(c: CanvasRenderingContext2D, x: number, y: number, w: number
   c.beginPath();
   c.moveTo(x + rr, y); c.arcTo(x + w, y, x + w, y + h, rr); c.arcTo(x + w, y + h, x, y + h, rr);
   c.arcTo(x, y + h, x, y, rr); c.arcTo(x, y, x + w, y, rr); c.closePath();
-}
-
-// TEMPORAL: selectores para comparar las propuestas de plataforma y de avatar.
-function opcion(llave: string): "a" | "b" | "c" {
-  try { const v = globalThis.localStorage?.getItem(llave); return v === "b" || v === "c" ? v : "a"; } catch { return "a"; }
 }
 
 /**
@@ -386,7 +385,7 @@ function pintarViaje(c: CanvasRenderingContext2D, W: number, H: number, e: numbe
       if (y < -paso) break;
       if (y > H + paso || k < 0) continue;
       const x = ruido(k * 3.1) * W, w = (18 + ruido(k) * 20) * e;
-      c.fillStyle = `rgba(255, 255, 255, ${0.75 * a})`;
+      c.fillStyle = `rgba(255, 255, 255, ${0.38 * a})`;
       redondeado(c, x - w / 2, y, w, 6 * e, 3 * e); c.fill();
       redondeado(c, x - w / 4, y - 3.5 * e, w / 2, 6 * e, 3 * e); c.fill();
     }
@@ -437,8 +436,21 @@ function pintarViaje(c: CanvasRenderingContext2D, W: number, H: number, e: numbe
       const bw = W / 9, bh = (14 + ruido(k * 5) * 22) * e;
       c.fillRect(k * bw + 1, suelo - bh, bw - 2, bh);
     }
-    c.fillStyle = "#5fbf6a"; c.fillRect(-10, suelo, W + 20, H);
-    c.fillStyle = "#4aa457"; c.fillRect(-10, suelo, W + 20, 2.5 * e);
+    // El pasto del suelo: degradado, manchas de otro tono y briznas a lo largo de la orilla.
+    const prado = c.createLinearGradient(0, suelo, 0, suelo + 40 * e);
+    prado.addColorStop(0, "#5cb84a"); prado.addColorStop(1, "#2f7d34");
+    c.fillStyle = prado; c.fillRect(-10, suelo, W + 20, H);
+    for (let k = 0; k < 40; k++) {
+      c.fillStyle = k % 2 ? "rgba(140, 215, 100, 0.25)" : "rgba(20, 70, 25, 0.22)";
+      c.beginPath(); c.ellipse(ruido(k * 4.7) * W, suelo + (3 + ruido(k * 2.3) * 30) * e, (2 + ruido(k) * 4) * e, (0.6 + ruido(k * 1.9)) * e, 0, 0, Math.PI * 2); c.fill();
+    }
+    const briznas = Math.round(W / (0.5 * e));
+    for (let k = 0; k < briznas; k++) {
+      const px = (k / briznas) * W + ruido(k * 0.9) * 0.5 * e;
+      const largo = (1.2 + ruido(k * 1.7) * 2.2) * e, incl = (ruido(k * 2.6) - 0.5) * 1.2 * e;
+      c.strokeStyle = ["#3f9e3c", "#5cbf4a", "#8ad866", "#2e7f33"][k % 4]!; c.lineWidth = Math.max(0.8, 0.3 * e);
+      c.beginPath(); c.moveTo(px, suelo + 0.6 * e); c.quadraticCurveTo(px + incl * 0.3, suelo - largo * 0.5, px + incl, suelo - largo); c.stroke();
+    }
   }
 }
 
@@ -446,91 +458,134 @@ function pintarViaje(c: CanvasRenderingContext2D, W: number, H: number, e: numbe
 
 const GROSOR = 4.5;
 
-/** A · Una barra olímpica acostada: la barra cromada y un disco en cada punta. */
-function plataformaBarra(c: CanvasRenderingContext2D, cj: Cajon, x: number, y: number, w: number, e: number): void {
-  const color = cj.tipo === "movil" ? "#2a6fd6" : cj.tipo === "espuma" ? "#ff7ab6" : "#d6372c";
-  const bar = c.createLinearGradient(0, y, 0, y + 1.6 * e);
-  bar.addColorStop(0, "#f4f6f8"); bar.addColorStop(0.5, "#9aa0a8"); bar.addColorStop(1, "#5d626a");
-  c.fillStyle = bar; c.fillRect(x, y, w, 1.6 * e);
-  for (const px of [x - 1.2 * e, x + w - 1.8 * e]) {
-    c.fillStyle = color; redondeado(c, px, y - 3.2 * e, 3 * e, 8 * e, 1.2 * e); c.fill();
-    c.fillStyle = "rgba(255, 255, 255, 0.25)"; c.fillRect(px + 0.5 * e, y - 3 * e, 0.6 * e, 7.6 * e);
-  }
-  if (cj.tipo === "espuma") { c.fillStyle = "rgba(255, 255, 255, 0.7)"; c.fillRect(x + w * 0.45, y - 0.2 * e, 1, 2 * e); }
+/**
+ * Cada plataforma se pinta según SU altura, no según dónde va la cámara (entrenador,
+ * 2026-11-25: "que cuando subas ya se vean las plataformas del nivel que sigue"): las del nivel
+ * de arriba ya traen su forma mientras todavía se va en el de abajo.
+ */
+function nivelDePlataforma(h: number): number {
+  return Math.max(0, Math.floor(h / (METROS_POR_PISO * UNIDADES_POR_METRO)));
 }
 
-/** B · Un step aeróbico: plano, con su borde de color y sus patitas de goma. */
-function plataformaStep(c: CanvasRenderingContext2D, cj: Cajon, x: number, y: number, w: number, e: number): void {
-  const borde = cj.tipo === "movil" ? "#ffb703" : cj.tipo === "espuma" ? "#ff7ab6" : "#3b8fff";
-  c.fillStyle = "#1a1a1f";
-  c.fillRect(x + w * 0.1, y + GROSOR * e - 0.5, w * 0.12, 1.6 * e); c.fillRect(x + w * 0.78, y + GROSOR * e - 0.5, w * 0.12, 1.6 * e);
-  c.fillStyle = borde; redondeado(c, x, y + 1, w, GROSOR * e - 1, 1.8 * e); c.fill();
-  c.fillStyle = "#f4f4f7"; redondeado(c, x, y, w, 2 * e, 1 * e); c.fill();
-  c.strokeStyle = "rgba(0, 0, 0, 0.08)"; c.lineWidth = 1;
-  for (let k = 1; k < 6; k++) { c.beginPath(); c.moveTo(x + (w * k) / 6, y + 0.4 * e); c.lineTo(x + (w * k) / 6, y + 1.6 * e); c.stroke(); }
-  if (cj.tipo === "espuma") { c.strokeStyle = "rgba(120, 20, 60, 0.6)"; c.beginPath(); c.moveTo(x + w * 0.5, y); c.lineTo(x + w * 0.46, y + GROSOR * e * 0.5); c.lineTo(x + w * 0.53, y + GROSOR * e); c.stroke(); }
+/** Nivel 1 · Tierra: un bloque de tierra con su capa de pasto de verdad (briznas, tonos, piedritas). */
+function plataformaPasto(c: CanvasRenderingContext2D, cj: Cajon, x: number, y: number, w: number, e: number): void {
+  const semilla = Math.round(cj.h * 7.3);
+  const alto = GROSOR * e;
+  // La tierra: café con degradado y piedritas.
+  const tierra = c.createLinearGradient(0, y, 0, y + alto);
+  tierra.addColorStop(0, cj.tipo === "espuma" ? "#b58a5a" : "#7a4e2b");
+  tierra.addColorStop(1, cj.tipo === "espuma" ? "#8f6a43" : "#4e2f17");
+  c.fillStyle = tierra; redondeado(c, x, y, w, alto, 1.2 * e); c.fill();
+  for (let k = 0; k < Math.max(3, w / (2.4 * e)); k++) {
+    const px = x + ruido(semilla + k * 1.7) * w, py = y + 1.6 * e + ruido(semilla + k * 2.9) * (alto - 2.2 * e);
+    c.fillStyle = k % 3 ? "rgba(30, 15, 5, 0.35)" : "rgba(200, 170, 130, 0.35)";
+    c.beginPath(); c.arc(px, py, (0.25 + ruido(semilla + k) * 0.35) * e, 0, Math.PI * 2); c.fill();
+  }
+  // La capa de pasto: una franja con degradado y el borde irregular colgando sobre la tierra.
+  const pasto = c.createLinearGradient(0, y - 0.8 * e, 0, y + 1.8 * e);
+  pasto.addColorStop(0, "#7fd35a"); pasto.addColorStop(1, "#2f8a3a");
+  c.fillStyle = pasto;
+  c.beginPath();
+  c.moveTo(x - 0.4 * e, y - 0.3 * e); c.lineTo(x + w + 0.4 * e, y - 0.3 * e);
+  const n = Math.max(4, Math.round(w / (1.6 * e)));
+  for (let k = n; k >= 0; k--) {
+    const px = x + (w * k) / n;
+    c.lineTo(px, y + (1.2 + ruido(semilla + k * 3.3) * 1.1) * e);
+  }
+  c.closePath(); c.fill();
+  // Las briznas: muchas, de tonos distintos, inclinadas un poco.
+  const briznas = Math.round(w / (0.55 * e));
+  for (let k = 0; k < briznas; k++) {
+    const px = x + ((k + ruido(semilla + k * 0.7) * 0.8) * w) / briznas;
+    const largo = (0.9 + ruido(semilla + k * 1.3) * 1.3) * e;
+    const incl = (ruido(semilla + k * 2.1) - 0.5) * 0.9 * e;
+    c.strokeStyle = ["#3f9e3c", "#5cbf4a", "#8ad866", "#2e7f33"][k % 4]!;
+    c.lineWidth = Math.max(0.8, 0.28 * e);
+    c.beginPath(); c.moveTo(px, y + 0.2 * e); c.quadraticCurveTo(px + incl * 0.3, y - largo * 0.5, px + incl, y - largo); c.stroke();
+  }
+  if (cj.tipo === "espuma") {
+    c.strokeStyle = "rgba(40, 20, 5, 0.7)"; c.lineWidth = Math.max(1, 0.3 * e);
+    c.beginPath(); c.moveTo(x + w * 0.5, y + 0.8 * e); c.lineTo(x + w * 0.45, y + alto * 0.6); c.lineTo(x + w * 0.53, y + alto); c.stroke();
+  }
 }
 
-/** C · Temática según la altura: tablón en la Tierra, nube en el cielo, asteroide en el espacio. */
-function plataformaTematica(c: CanvasRenderingContext2D, cj: Cajon, x: number, y: number, w: number, e: number, etapa: number): void {
-  if (etapa < 1.5) {
-    c.fillStyle = cj.tipo === "espuma" ? "#c9a06a" : "#8a5a32"; redondeado(c, x, y, w, GROSOR * e, 1 * e); c.fill();
-    c.fillStyle = "#5fbf6a"; redondeado(c, x - 0.5 * e, y - 0.6 * e, w + 1 * e, 2 * e, 1 * e); c.fill();
-  } else if (etapa < 3.5) {
-    c.fillStyle = cj.tipo === "espuma" ? "rgba(255, 255, 255, 0.55)" : "#ffffff";
-    redondeado(c, x, y, w, GROSOR * e, GROSOR * e * 0.5); c.fill();
-    c.beginPath(); c.arc(x + w * 0.35, y, GROSOR * e * 0.7, 0, Math.PI * 2); c.arc(x + w * 0.62, y + 0.3 * e, GROSOR * e * 0.55, 0, Math.PI * 2); c.fill();
-  } else {
-    const roja = etapa >= 5 && etapa < 6;
-    c.fillStyle = cj.tipo === "espuma" ? (roja ? "#e08a6a" : "#9a9aa8") : roja ? "#b44a2e" : "#6c6a78";
-    c.beginPath();
-    c.moveTo(x, y + GROSOR * e * 0.4); c.lineTo(x + w * 0.15, y); c.lineTo(x + w * 0.85, y); c.lineTo(x + w, y + GROSOR * e * 0.5);
-    c.lineTo(x + w * 0.8, y + GROSOR * e * 1.2); c.lineTo(x + w * 0.2, y + GROSOR * e * 1.1); c.closePath(); c.fill();
-    c.fillStyle = "rgba(0, 0, 0, 0.25)";
-    c.beginPath(); c.arc(x + w * 0.35, y + GROSOR * e * 0.5, 1.2 * e, 0, Math.PI * 2); c.arc(x + w * 0.65, y + GROSOR * e * 0.7, 0.8 * e, 0, Math.PI * 2); c.fill();
-  }
+/** Niveles 2 y 3 · Cielo y estratósfera: una nube esponjada (la que se rompe, medio transparente). */
+function plataformaNube(c: CanvasRenderingContext2D, cj: Cajon, x: number, y: number, w: number, e: number, nivel: number): void {
+  const alto = GROSOR * e;
+  c.fillStyle = cj.tipo === "espuma" ? "rgba(255, 255, 255, 0.5)" : nivel === 1 ? "#ffffff" : "#eef3ff";
+  redondeado(c, x, y, w, alto, alto * 0.5); c.fill();
+  c.beginPath(); c.arc(x + w * 0.35, y, alto * 0.7, 0, Math.PI * 2); c.arc(x + w * 0.62, y + 0.3 * e, alto * 0.55, 0, Math.PI * 2); c.fill();
+  c.fillStyle = "rgba(120, 150, 200, 0.25)"; redondeado(c, x + w * 0.08, y + alto * 0.6, w * 0.84, alto * 0.4, alto * 0.2); c.fill();
+}
+
+/** Del espacio en adelante: una roca, del color de cada lugar (Luna gris, Marte roja, Júpiter ocre, galaxia violeta). */
+const ROCAS: Record<number, [string, string]> = {
+  3: ["#6c6a78", "#9a9aa8"], 4: ["#9a9ba6", "#c4c5ce"], 5: ["#b44a2e", "#e08a6a"], 6: ["#b5835a", "#ddb68e"], 7: ["#6b3fa0", "#b48ae0"],
+};
+
+function plataformaRoca(c: CanvasRenderingContext2D, cj: Cajon, x: number, y: number, w: number, e: number, nivel: number): void {
+  const [firme, espuma] = ROCAS[Math.min(7, nivel)]!;
+  c.fillStyle = cj.tipo === "espuma" ? espuma : firme;
+  c.beginPath();
+  c.moveTo(x, y + GROSOR * e * 0.4); c.lineTo(x + w * 0.15, y); c.lineTo(x + w * 0.85, y); c.lineTo(x + w, y + GROSOR * e * 0.5);
+  c.lineTo(x + w * 0.8, y + GROSOR * e * 1.2); c.lineTo(x + w * 0.2, y + GROSOR * e * 1.1); c.closePath(); c.fill();
+  c.fillStyle = "rgba(255, 255, 255, 0.18)"; c.fillRect(x + w * 0.15, y, w * 0.7, 0.6 * e);
+  c.fillStyle = "rgba(0, 0, 0, 0.25)";
+  c.beginPath(); c.arc(x + w * 0.35, y + GROSOR * e * 0.5, 1.2 * e, 0, Math.PI * 2); c.arc(x + w * 0.65, y + GROSOR * e * 0.7, 0.8 * e, 0, Math.PI * 2); c.fill();
+  if (nivel >= 7) { c.shadowColor = "#ff4fd8"; c.shadowBlur = 8; c.strokeStyle = "rgba(255, 140, 240, 0.6)"; c.lineWidth = 1; c.stroke(); c.shadowBlur = 0; }
+}
+
+function pintarPlataforma(c: CanvasRenderingContext2D, cj: Cajon, x: number, y: number, w: number, e: number): void {
+  const nivel = nivelDePlataforma(cj.h);
+  if (nivel === 0) plataformaPasto(c, cj, x, y, w, e);
+  else if (nivel <= 2) plataformaNube(c, cj, x, y, w, e, nivel);
+  else plataformaRoca(c, cj, x, y, w, e, nivel);
   if (cj.tipo === "movil") { c.fillStyle = "rgba(126, 243, 255, 0.9)"; c.fillRect(x + w * 0.2, y + GROSOR * e + 1, w * 0.6, 1.2); }
+  if (cj.trampolin) pintarResorte(c, cj, x + w / 2, y, e);
 }
 
-function pintarPlataforma(c: CanvasRenderingContext2D, cj: Cajon, x: number, y: number, w: number, e: number, t: number, etapa: number): void {
-  const v = opcion("osfit:bj-plataforma");
-  if (v === "b") plataformaStep(c, cj, x, y, w, e);
-  else if (v === "c") plataformaTematica(c, cj, x, y, w, e, etapa);
-  else plataformaBarra(c, cj, x, y, w, e);
-  if (cj.trampolin) pintarTrampolin(c, x + w / 2, y, Math.min(w * 0.38, 8 * e), e, t);
+/** Cuándo se usó cada resorte, para que se estire y rebote al pisarlo. */
+const resortesUsados = new WeakMap<Cajon, number>();
+
+/**
+ * El súper salto es un resorte (entrenador, 2026-11-25): una espiral de acero con su tapa roja.
+ * Al pisarlo se estira de golpe y vibra un momento antes de volver a su lugar.
+ */
+function pintarResorte(c: CanvasRenderingContext2D, cj: Cajon, cx: number, y: number, e: number): void {
+  const usado = resortesUsados.get(cj);
+  const t = usado === undefined ? 99 : reloj - usado;
+  const estirado = t < 1.2 ? 1 + 0.9 * Math.exp(-t * 4) * Math.cos(t * 22) : 1;
+  const ancho = 3.6 * e, alto = 4.2 * e * Math.max(0.4, estirado), vueltas = 4;
+  const base = y, tope = y - alto;
+  // La base atornillada a la plataforma.
+  c.fillStyle = "#3a3d44"; redondeado(c, cx - ancho * 0.7, base - 0.7 * e, ancho * 1.4, 0.9 * e, 0.3 * e); c.fill();
+  // La espiral: cada vuelta es media elipse atrás (oscura) y media adelante (brillante).
+  const paso = (alto - 1.1 * e) / vueltas, ry = 0.75 * e;
+  c.lineCap = "round";
+  for (let k = 0; k < vueltas; k++) {
+    const cy = base - 0.7 * e - paso * (k + 0.5);
+    c.strokeStyle = "#5b616b"; c.lineWidth = Math.max(1.4, 0.55 * e);
+    c.beginPath(); c.ellipse(cx, cy, ancho * 0.5, ry, -0.12, Math.PI, Math.PI * 2); c.stroke();
+    c.strokeStyle = "#eef1f5"; c.lineWidth = Math.max(1.6, 0.65 * e);
+    c.beginPath(); c.ellipse(cx, cy, ancho * 0.5, ry, -0.12, 0, Math.PI); c.stroke();
+    c.strokeStyle = "rgba(0, 0, 0, 0.25)"; c.lineWidth = Math.max(0.6, 0.2 * e);
+    c.beginPath(); c.ellipse(cx, cy + 0.25 * e, ancho * 0.5, ry, -0.12, 0.3, Math.PI - 0.3); c.stroke();
+  }
+  c.lineCap = "butt";
+  // La tapa roja donde se pisa.
+  const tapa = c.createLinearGradient(0, tope - 1.2 * e, 0, tope);
+  tapa.addColorStop(0, "#ff6b5c"); tapa.addColorStop(1, "#b8261a");
+  c.fillStyle = tapa; redondeado(c, cx - ancho * 0.75, tope - 1.1 * e, ancho * 1.5, 1.3 * e, 0.5 * e); c.fill();
+  c.fillStyle = "rgba(255, 255, 255, 0.45)"; c.fillRect(cx - ancho * 0.55, tope - 0.95 * e, ancho * 1.1, 0.3 * e);
 }
 
-function pintarTrampolin(c: CanvasRenderingContext2D, cx: number, y: number, r: number, e: number, t: number): void {
-  const ry = r * 0.28, alto = 2.6 * e;
-  c.strokeStyle = "#9aa0a8"; c.lineWidth = Math.max(1.5, e * 0.4);
-  for (const dx of [-0.8, 0.8]) { c.beginPath(); c.moveTo(cx + dx * r, y - alto); c.lineTo(cx + dx * r * 1.05, y); c.stroke(); }
-  c.fillStyle = "#14151a"; c.beginPath(); c.ellipse(cx, y - alto, r * 0.86, ry * 0.86 * (1 + Math.sin(t * 8) * 0.04), 0, 0, Math.PI * 2); c.fill();
-  c.strokeStyle = "#ffb703"; c.lineWidth = Math.max(2, e * 0.6); c.beginPath(); c.ellipse(cx, y - alto, r, ry, 0, 0, Math.PI * 2); c.stroke();
-}
+// ── Avatar ───────────────────────────────────────────────────────────────────
 
-// ── Avatares ─────────────────────────────────────────────────────────────────
-
-/** A · Astronauta OSFIT: traje blanco, casco con visor que refleja y su inicial en el pecho. */
-function avatarAstronauta(c: CanvasRenderingContext2D, r: number, inicial: string, subiendo: boolean): void {
-  const pies = subiendo ? r * 0.1 : r * 0.3;
-  c.fillStyle = "#d9dde3";
-  for (const lado of [-1, 1]) { redondeado(c, lado * r * 0.42 - r * 0.22, r * 0.75 + pies, r * 0.44, r * 0.34, r * 0.12); c.fill(); }
-  c.fillStyle = "#c4cad2"; redondeado(c, -r * 0.95, -r * 0.2, r * 0.4, r * 0.8, r * 0.15); c.fill(); // mochila
-  const traje = c.createRadialGradient(-r * 0.3, -r * 0.2, r * 0.1, 0, r * 0.2, r * 1.1);
-  traje.addColorStop(0, "#ffffff"); traje.addColorStop(1, "#c9ced6");
-  c.fillStyle = traje; redondeado(c, -r * 0.75, -r * 0.05, r * 1.5, r * 1.0, r * 0.4); c.fill();
-  c.fillStyle = "#ff3bd4"; c.beginPath(); c.arc(0, r * 0.45, r * 0.24, 0, Math.PI * 2); c.fill();
-  c.fillStyle = "#fff"; c.font = `900 ${Math.round(r * 0.34)}px system-ui, sans-serif`; c.textAlign = "center"; c.textBaseline = "middle"; c.fillText(inicial, 0, r * 0.47);
-  // Casco y visor.
-  c.fillStyle = "#f4f6f9"; c.beginPath(); c.arc(0, -r * 0.35, r * 0.72, 0, Math.PI * 2); c.fill();
-  const visor = c.createLinearGradient(-r * 0.5, -r * 0.7, r * 0.5, 0);
-  visor.addColorStop(0, "#1b2a55"); visor.addColorStop(0.6, "#3b6fd6"); visor.addColorStop(1, "#ffb703");
-  c.fillStyle = visor; redondeado(c, -r * 0.5, -r * 0.7, r * 1.0, r * 0.62, r * 0.28); c.fill();
-  c.fillStyle = "rgba(255, 255, 255, 0.55)"; c.beginPath(); c.ellipse(-r * 0.22, -r * 0.55, r * 0.14, r * 0.07, -0.5, 0, Math.PI * 2); c.fill();
-}
-
-/** B · La kettlebell del Arcade, ahora con piernitas y tenis. */
-function avatarKettlebell(c: CanvasRenderingContext2D, r: number, _inicial: string, subiendo: boolean): void {
+/** La kettlebell del Arcade, con piernitas y tenis (entrenador, 2026-11-25: "que el avatar sea una kettlebell"). */
+function pintarAvatar(c: CanvasRenderingContext2D, x: number, y: number, r: number, subiendo: boolean): void {
+  c.save();
+  c.translate(x, y);
+  c.scale(1 / Math.sqrt(aplaste), aplaste);
   const pies = subiendo ? r * 0.05 : r * 0.35;
   c.strokeStyle = "#2a2c31"; c.lineWidth = r * 0.14;
   for (const lado of [-1, 1]) { c.beginPath(); c.moveTo(lado * r * 0.35, r * 0.7); c.lineTo(lado * r * 0.4, r * 0.95 + pies); c.stroke(); }
@@ -543,30 +598,6 @@ function avatarKettlebell(c: CanvasRenderingContext2D, r: number, _inicial: stri
   c.fillStyle = "#fff"; for (const lado of [-1, 1]) { c.beginPath(); c.arc(lado * r * 0.25, -r * 0.1, r * 0.14, 0, Math.PI * 2); c.fill(); }
   c.fillStyle = "#111"; for (const lado of [-1, 1]) { c.beginPath(); c.arc(lado * r * 0.25 + r * 0.03, -r * 0.07, r * 0.07, 0, Math.PI * 2); c.fill(); }
   c.fillStyle = "#ffd45c"; c.font = `900 ${Math.round(r * 0.42)}px system-ui, sans-serif`; c.textAlign = "center"; c.textBaseline = "middle"; c.fillText("16", 0, r * 0.4);
-}
-
-/** C · Un balón medicinal con sus costuras, su banda y la inicial. */
-function avatarBalon(c: CanvasRenderingContext2D, r: number, inicial: string, subiendo: boolean): void {
-  const pies = subiendo ? r * 0.1 : r * 0.3;
-  for (const lado of [-1, 1]) { c.fillStyle = "#f2f2f2"; redondeado(c, lado * r * 0.45 - r * 0.25, r * 0.85 + pies, r * 0.5, r * 0.26, r * 0.12); c.fill(); }
-  const g = c.createRadialGradient(-r * 0.35, -r * 0.35, r * 0.1, 0, 0, r);
-  g.addColorStop(0, "#5a5f6b"); g.addColorStop(0.6, "#25272e"); g.addColorStop(1, "#111216");
-  c.fillStyle = g; c.beginPath(); c.arc(0, 0, r, 0, Math.PI * 2); c.fill();
-  c.strokeStyle = "rgba(255, 255, 255, 0.25)"; c.lineWidth = Math.max(1, r * 0.05);
-  c.beginPath(); c.ellipse(0, 0, r * 0.45, r, 0, 0, Math.PI * 2); c.stroke();
-  c.beginPath(); c.moveTo(-r, 0); c.lineTo(r, 0); c.stroke();
-  c.fillStyle = "#3b8fff"; c.fillRect(-r * 0.95, -r * 0.5, r * 1.9, r * 0.22);
-  c.fillStyle = "#fff"; c.font = `900 ${Math.round(r * 0.8)}px system-ui, sans-serif`; c.textAlign = "center"; c.textBaseline = "middle"; c.fillText(inicial, 0, r * 0.22);
-}
-
-function pintarAvatar(c: CanvasRenderingContext2D, x: number, y: number, r: number, inicial: string, subiendo: boolean): void {
-  c.save();
-  c.translate(x, y);
-  c.scale(1 / Math.sqrt(aplaste), aplaste);
-  const v = opcion("osfit:bj-avatar");
-  if (v === "b") avatarKettlebell(c, r, inicial, subiendo);
-  else if (v === "c") avatarBalon(c, r, inicial, subiendo);
-  else avatarAstronauta(c, r, inicial, subiendo);
   c.restore();
 }
 
@@ -617,14 +648,14 @@ function dibujar(_dt: number): void {
     if (cj.ancho <= 0) continue;
     const y = sy(cj.h);
     if (y < -40 || y > H + 40) continue;
-    pintarPlataforma(c, cj, cj.x * e, y, cj.ancho * e, e, reloj, etapa);
+    pintarPlataforma(c, cj, cj.x * e, y, cj.ancho * e, e);
   }
   for (const pz of pedazos) {
     const w = (pz.cajon.ancho / 2) * e;
     const x = (pz.cajon.x + (pz.lado > 0 ? pz.cajon.ancho / 2 : 0) + pz.dx) * e;
     const y = sy(pz.cajon.h + pz.dh);
     c.save(); c.translate(x + w / 2, y); c.rotate(pz.giro); c.globalAlpha = 0.85;
-    pintarPlataforma(c, { ...pz.cajon, ancho: pz.cajon.ancho / 2, trampolin: false }, -w / 2, 0, w, e, reloj, etapa);
+    pintarPlataforma(c, { ...pz.cajon, ancho: pz.cajon.ancho / 2, trampolin: false }, -w / 2, 0, w, e);
     c.restore();
   }
   for (const pt of particulas) {
@@ -633,13 +664,12 @@ function dibujar(_dt: number): void {
   }
   c.globalAlpha = 1;
   // La clienta (y su copia del otro lado cuando cruza la orilla).
-  const inicial = (api?.nombre.trim().charAt(0) || "O").toUpperCase();
   const r = RADIO * e;
   const y = sy(salto.h) - r * 0.9;
   for (const dx of [0, -ANCHO, ANCHO]) {
     const x = (salto.x + dx) * e;
     if (x < -r * 2 || x > W + r * 2) continue;
-    pintarAvatar(c, x, y, r, inicial, salto.vh > 0);
+    pintarAvatar(c, x, y, r, salto.vh > 0);
   }
   c.textAlign = "center";
   for (const l of letreros) {
