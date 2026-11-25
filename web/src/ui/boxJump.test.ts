@@ -8,11 +8,11 @@ describe("Box Jump: la ventana", () => {
     expect(html).toContain('id="bj-pantalla"');
     expect(html).toContain(">Records<");
   });
-  it("al caer: metros, piso alcanzado, Reintentar y Ver marcador", () => {
+  it("al caer: metros, nivel alcanzado (de la Tierra a la galaxia), Reintentar y Ver marcador", () => {
     const fin = htmlCapaBoxJump("fin", 87, "nada", true, 3);
     expect(fin).toContain("¡Nuevo récord!");
     expect(fin).toContain("87 m");
-    expect(fin).toContain("Piso 3, Cardio");
+    expect(fin).toContain("Nivel 3, Estratósfera");
     expect(fin).toMatch(/data-bj="jugar">Reintentar</);
     expect(fin).toMatch(/data-bj="marcador">Ver marcador</);
     expect(htmlCapaBoxJump("fin", 5, "error", false)).toContain('data-bj="reintentar-guardar"');

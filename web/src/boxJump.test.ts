@@ -57,10 +57,10 @@ describe("Box Jump", () => {
     expect(fin).toBe("fin");
   });
 
-  it("cada 40 m un piso más difícil (hasta el 6): más separados y más angostos", () => {
-    expect([0, 39, 40, 80, 240, 999].map(piso)).toEqual([1, 1, 2, 3, PISOS, PISOS]);
+  it("cada 40 m un nivel más difícil (hasta el 8, de la Tierra a la galaxia): más separados y más angostos", () => {
+    expect([0, 39, 40, 80, 320, 999].map(piso)).toEqual([1, 1, 2, 3, PISOS, PISOS]);
     expect(separacion(3)[1]).toBeGreaterThan(separacion(1)[1]);
-    expect(anchoCajon(6)).toBeLessThan(anchoCajon(1));
+    expect(anchoCajon(PISOS)).toBeLessThan(anchoCajon(1));
     expect(METROS_POR_PISO).toBe(40);
   });
 

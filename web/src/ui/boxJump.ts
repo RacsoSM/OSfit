@@ -1,8 +1,8 @@
 import {
-  ANCHO, ALTO_CAJON, METROS_POR_PISO, RADIO, UNIDADES_POR_METRO, avanzar, metros, nuevoSalto, piso, type Cajon, type Salto,
+  ANCHO, ETAPAS, METROS_POR_PISO, RADIO, UNIDADES_POR_METRO, avanzar, metros, nuevoSalto, piso, type Cajon, type Salto,
 } from "../boxJump";
 import { conPartida, htmlLista, type ApiJuego, type EnvioPartida, type TablaDiscos } from "./juegoDiscos";
-import { ZONAS, decoracion, pintarPolvo, ruido, type Zona } from "./gimnasioFondo";
+import { ruido } from "./gimnasioFondo";
 import { escapar } from "./tarjetaDia";
 import { marcasDe, pintarEtiqueta, pintarLinea } from "./marcasRecords";
 
@@ -43,8 +43,6 @@ let cuadro = 0;
 let ultimo = 0;
 let reloj = 0;
 let pisoVisto = 1;
-let zonaAnterior: number | null = null;
-let mezcla = 1;
 let anuncio: { piso: number; zona: string; vida: number } | null = null;
 let tabla: TablaDiscos | null = null;
 let errorTabla = false;
@@ -104,7 +102,7 @@ export function htmlCapaBoxJump(e: Estado, puntos: number, g: Guardado, nuevoRec
       <div class="jd-capa-caja">
         <p class="jd-capa-marca">OSFIT · Arcade</p>
         <p class="jd-capa-titulo">Box Jump</p>
-        <p class="jd-capa-texto">Rebotas sola sobre los cajones: arrastra el dedo hacia donde quieres ir para subir el edificio OSFIT. Cada metro es un punto. Cuidado con los cajones de espuma: se rompen. Los trampolines te dan un súper salto.</p>
+        <p class="jd-capa-texto">Rebotas sola sobre las plataformas: arrastra el dedo hacia donde quieres ir y sube de la Tierra al cielo, al espacio, a la Luna, a Marte… Cada metro es un punto. Cuidado con las que se rompen; los trampolines te dan un súper salto.</p>
         <button type="button" class="jd-boton" data-bj="jugar">Jugar</button>
         <button type="button" class="jd-boton secundario" data-bj="marcador">Ver marcador</button>
       </div>`;
@@ -116,7 +114,7 @@ export function htmlCapaBoxJump(e: Estado, puntos: number, g: Guardado, nuevoRec
     <div class="jd-capa-caja fin">
       ${nuevoRecord ? `<p class="jd-capa-record">¡Nuevo récord!</p>` : `<p class="jd-capa-marca">¡Te caíste!</p>`}
       <p class="jd-capa-puntos">${puntos} m</p>
-      <p class="jd-capa-texto">${puntos === 1 ? "metro subido" : "metros subidos"} · Piso ${pisoAlcanzado}, ${escapar(ZONAS[pisoAlcanzado - 1]?.nombre ?? "")}</p>
+      <p class="jd-capa-texto">${puntos === 1 ? "metro subido" : "metros subidos"} · Nivel ${pisoAlcanzado}, ${escapar(ETAPAS[pisoAlcanzado - 1] ?? "")}</p>
       ${nota}
       <button type="button" class="jd-boton" data-bj="jugar">Reintentar</button>
       <button type="button" class="jd-boton secundario" data-bj="marcador">Ver marcador</button>
@@ -135,7 +133,7 @@ function actualizar(): void {
     if (m % 10 === 0 && m > 0) { puntos.classList.remove("pop"); void puntos.offsetWidth; puntos.classList.add("pop"); }
   }
   const rec = q("#bj-record"); if (rec) rec.textContent = tabla && tabla.tuMejor > 0 ? `${tabla.tuMejor} m` : "—";
-  const pis = q("#bj-piso"); if (pis) pis.textContent = `Piso ${pisoVisto} · ${ZONAS[pisoVisto - 1]!.nombre}`;
+  const pis = q("#bj-piso"); if (pis) pis.textContent = `Nivel ${pisoVisto} · ${ETAPAS[pisoVisto - 1]}`;
   q("#bj-pantalla")?.classList.toggle("en-juego", estado === "jugando");
   const capa = q("#bj-capa");
   if (capa) {
@@ -217,7 +215,7 @@ function vistaAlto(): number {
 function jugar(): void {
   salto = nuevoSalto(vistaAlto());
   particulas = []; pedazos = []; letreros = []; sacudida = 0; destello = 0; aplaste = 1;
-  pisoVisto = 1; zonaAnterior = null; mezcla = 1; anuncio = null;
+  pisoVisto = 1; anuncio = null;
   objetivo = null;
   guardado = "nada"; record = false; hoja = false;
   estado = "jugando";
@@ -252,10 +250,8 @@ function ciclo(ahora: number): void {
     }
     const p = piso(metros(salto));
     if (p > pisoVisto) {
-      zonaAnterior = pisoVisto - 1;
       pisoVisto = p;
-      mezcla = 0;
-      anuncio = { piso: p, zona: ZONAS[p - 1]!.nombre, vida: 2.2 };
+      anuncio = { piso: p, zona: ETAPAS[p - 1]!, vida: 2.2 };
       destello = 0.4;
       navigator.vibrate?.(25);
     }
@@ -281,7 +277,6 @@ function ciclo(ahora: number): void {
   letreros = letreros.filter((l) => l.vida > 0);
   sacudida = Math.max(0, sacudida - dt * 2.5);
   destello = Math.max(0, destello - dt * 4);
-  mezcla = Math.min(1, mezcla + dt / 1.2);
   if (anuncio) anuncio.vida -= dt;
   dibujar(dt);
   cuadro = requestAnimationFrame(ciclo);
@@ -304,174 +299,277 @@ function redondeado(c: CanvasRenderingContext2D, x: number, y: number, w: number
   c.arcTo(x, y + h, x, y, rr); c.arcTo(x, y, x + w, y, rr); c.closePath();
 }
 
-/** El edificio OSFIT en la zona `z`: pared, ventanales, decoración y las losas de cada piso. */
-function pintarEdificio(c: CanvasRenderingContext2D, z: Zona, W: number, H: number, e: number, cam: number, t: number): void {
-  const pared = c.createLinearGradient(0, 0, 0, H);
-  pared.addColorStop(0, z.pared[0]); pared.addColorStop(1, z.pared[1]);
-  c.fillStyle = pared; c.fillRect(-20, -20, W + 40, H + 40);
-  // Ventanales (0.3): dos columnas; la ciudad se ve más abajo conforme se sube.
-  const lejos = cam * 0.3 * e, paso = 74 * e;
-  const altura = Math.min(1, Math.max(0, cam / (METROS_POR_PISO * UNIDADES_POR_METRO * 6)));
-  for (let i = Math.floor(-lejos / paso) - 2; ; i++) {
-    const y = H - (i * paso + lejos) - 40 * e;
-    if (y < -paso) break;
-    if (y > H + paso) continue;
-    for (const [col, vx] of [[0, 6], [1, 58]] as const) {
-      if (ruido(i * 7 + col) < 0.25) continue;
-      const x = vx * e, w = 36 * e, h = 42 * e;
-      const cielo = c.createLinearGradient(0, y, 0, y + h);
-      cielo.addColorStop(0, z.cielo[0]); cielo.addColorStop(1, z.cielo[1]);
-      c.fillStyle = cielo; c.fillRect(x, y, w, h);
-      c.save(); c.beginPath(); c.rect(x, y, w, h); c.clip();
-      const noche = z.astro === "luna" || z.astro === "ninguno";
-      if (noche) for (let k = 0; k < 7; k++) { c.fillStyle = `rgba(255,255,255,${0.3 + 0.5 * Math.abs(Math.sin(t + k + i))})`; c.fillRect(x + ruido(i * 13 + k + col) * w, y + ruido(i * 17 + k) * h * 0.5, 1.5, 1.5); }
-      // La ciudad: entre más alto, más abajo y más chica.
-      for (let k = 0; k < 6; k++) {
-        const bh = (6 + ruido(i * 7 + k + col * 3) * 16) * e * (1 - altura * 0.7);
-        const bx = x + (k * w) / 6;
-        c.fillStyle = noche ? "#0d1130" : "rgba(60, 70, 100, 0.75)";
-        c.fillRect(bx, y + h - bh, w / 6 - 1.5, bh);
-        if (noche) { c.fillStyle = "rgba(255, 214, 120, 0.7)"; for (let v = 0; v < 4; v++) if (ruido(i * 31 + k * 5 + v + col) > 0.5) c.fillRect(bx + 2, y + h - bh + 3 + v * 5, 2, 2); }
-      }
-      c.restore();
-      c.strokeStyle = "#3b2d4d"; c.lineWidth = Math.max(2, e * 0.8);
-      c.strokeRect(x, y, w, h);
-      c.beginPath(); c.moveTo(x + w / 2, y); c.lineTo(x + w / 2, y + h); c.stroke();
+// TEMPORAL: selectores para comparar las propuestas de plataforma y de avatar.
+function opcion(llave: string): "a" | "b" | "c" {
+  try { const v = globalThis.localStorage?.getItem(llave); return v === "b" || v === "c" ? v : "a"; } catch { return "a"; }
+}
+
+/**
+ * El viaje (entrenador, 2026-11-25): minimalista, colores planos. El cielo cambia poco a poco
+ * con la altura: de la Tierra al cielo, la estratósfera, el espacio, la Luna, Marte, Júpiter y
+ * la galaxia. Cada etapa tiene su color de arriba y de abajo; entre una y otra se mezclan.
+ */
+const CIELOS: readonly [string, string][] = [
+  ["#7cc7f7", "#d8f1ff"], // Tierra
+  ["#4fa6ee", "#b5dfff"], // Cielo
+  ["#1f4fa3", "#5d97dc"], // Estratósfera
+  ["#070b26", "#152056"], // Espacio
+  ["#05061a", "#10132f"], // Luna
+  ["#140812", "#341319"], // Marte
+  ["#0c0915", "#2a1d14"], // Júpiter
+  ["#08041a", "#2a0b3c"], // Galaxia
+];
+
+function mezclarColor(a: string, b: string, f: number): string {
+  const pa = parseInt(a.slice(1), 16), pb = parseInt(b.slice(1), 16);
+  const m = (s: number) => Math.round(((pa >> s) & 255) * (1 - f) + ((pb >> s) & 255) * f);
+  return `rgb(${m(16)}, ${m(8)}, ${m(0)})`;
+}
+
+/** En qué etapa va la cámara (0…7, con fracción): cambia en los últimos metros de cada nivel. */
+function etapaDe(cam: number): number {
+  const porNivel = METROS_POR_PISO * UNIDADES_POR_METRO;
+  const n = Math.max(0, cam + 60) / porNivel;
+  const i = Math.floor(n), f = n - i;
+  // El cambio de color ocurre en el último 35 % de cada nivel.
+  return Math.min(CIELOS.length - 1, i + Math.max(0, (f - 0.65) / 0.35));
+}
+
+const estrellas: { x: number; y: number; r: number; fase: number }[] = [];
+
+function pintarViaje(c: CanvasRenderingContext2D, W: number, H: number, e: number, cam: number, t: number): void {
+  const etapa = etapaDe(cam);
+  const i = Math.floor(etapa), f = etapa - i;
+  const j = Math.min(CIELOS.length - 1, i + 1);
+  const arriba = mezclarColor(CIELOS[i]![0], CIELOS[j]![0], f);
+  const abajo = mezclarColor(CIELOS[i]![1], CIELOS[j]![1], f);
+  const g = c.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, arriba); g.addColorStop(1, abajo);
+  c.fillStyle = g; c.fillRect(-20, -20, W + 40, H + 40);
+
+  // Estrellas: aparecen desde la estratósfera.
+  const brilloEstrellas = Math.max(0, Math.min(1, etapa - 2.2));
+  if (brilloEstrellas > 0) {
+    if (estrellas.length === 0) for (let k = 0; k < 90; k++) estrellas.push({ x: Math.random(), y: Math.random(), r: 0.5 + Math.random() * 1.4, fase: Math.random() * 6 });
+    for (const s of estrellas) {
+      const y = mod(s.y * H + cam * 0.06 * e, H);
+      c.fillStyle = `rgba(255, 255, 255, ${brilloEstrellas * (0.45 + 0.4 * Math.sin(t * 2 + s.fase))})`;
+      c.beginPath(); c.arc(s.x * W, y, s.r, 0, Math.PI * 2); c.fill();
     }
   }
-  // Decoración de la pared (0.6): la misma de cada zona en Kettlebell Bird, en huecos alternados.
-  const medio = cam * 0.6 * e, paso2 = 96 * e;
-  for (let i = Math.floor(-medio / paso2) - 2; ; i++) {
-    const y = H - (i * paso2 + medio) - 60 * e;
-    if (y < -paso2) break;
-    if (y > H + paso2) continue;
-    c.save();
-    c.translate(i % 2 ? 44 * e : -2 * e, y - 10 * e);
-    c.globalAlpha *= 0.9;
-    decoracion(c, z, i, 0, e, t);
-    c.restore();
+
+  const porNivel = METROS_POR_PISO * UNIDADES_POR_METRO;
+  // El sol en el cielo, y la curva azul de la Tierra en la estratósfera.
+  if (etapa < 2.6) {
+    const a = Math.max(0, 1 - Math.max(0, etapa - 1.6));
+    c.fillStyle = `rgba(255, 236, 170, ${0.9 * a})`;
+    c.beginPath(); c.arc(W * 0.78, H * 0.18 + cam * 0.05 * e, 9 * e, 0, Math.PI * 2); c.fill();
+    c.fillStyle = `rgba(255, 236, 170, ${0.18 * a})`;
+    c.beginPath(); c.arc(W * 0.78, H * 0.18 + cam * 0.05 * e, 15 * e, 0, Math.PI * 2); c.fill();
   }
-  // Marcas de metros en la pared y la losa de cada piso.
-  const sy = (h: number) => H - (h - cam) * e;
-  for (let m = Math.ceil(cam / UNIDADES_POR_METRO / 10) * 10; m * UNIDADES_POR_METRO < cam + H / e + 20; m += 10) {
-    const y = sy(m * UNIDADES_POR_METRO);
-    if (m % METROS_POR_PISO === 0) continue;
-    c.strokeStyle = "rgba(255, 255, 255, 0.07)"; c.setLineDash([4, 7]);
-    c.beginPath(); c.moveTo(0, y); c.lineTo(W, y); c.stroke(); c.setLineDash([]);
-    c.fillStyle = "rgba(255, 255, 255, 0.35)"; c.font = "700 11px system-ui, sans-serif"; c.textAlign = "left";
-    c.fillText(`${m} m`, 6, y - 4);
+  if (etapa > 1.6 && etapa < 4.2) {
+    const a = Math.min(1, etapa - 1.6) * Math.max(0, Math.min(1, 4.2 - etapa));
+    const cy = H + W * 1.2 - (etapa - 1.6) * 40 * e * 0.2;
+    c.fillStyle = `rgba(90, 170, 255, ${0.35 * a})`;
+    c.beginPath(); c.arc(W / 2, cy + H * 0.2, W * 1.4, 0, Math.PI * 2); c.fill();
+    c.fillStyle = `rgba(30, 90, 170, ${0.8 * a})`;
+    c.beginPath(); c.arc(W / 2, cy + H * 0.23, W * 1.4, 0, Math.PI * 2); c.fill();
+  }
+
+  // Nubes planas: en la Tierra y el cielo; se quedan abajo al llegar al espacio.
+  if (etapa < 3.2) {
+    const a = Math.max(0, Math.min(1, 3.2 - etapa));
+    const paso = 70 * e;
+    for (let k = Math.floor((-cam * 0.5 * e) / paso) - 2; ; k++) {
+      const y = H - (k * paso + cam * 0.5 * e) - 30 * e;
+      if (y < -paso) break;
+      if (y > H + paso || k < 0) continue;
+      const x = ruido(k * 3.1) * W, w = (18 + ruido(k) * 20) * e;
+      c.fillStyle = `rgba(255, 255, 255, ${0.75 * a})`;
+      redondeado(c, x - w / 2, y, w, 6 * e, 3 * e); c.fill();
+      redondeado(c, x - w / 4, y - 3.5 * e, w / 2, 6 * e, 3 * e); c.fill();
+    }
+  }
+
+  // Los astros de cada etapa: pasan despacio mientras se sube.
+  const astro = (nivel: number, dibujar: (x: number, y: number, r: number) => void, lado: number, radio: number) => {
+    const centro = (nivel - 1 + 0.55) * porNivel;
+    const y = H * 0.4 + (cam - centro) * e * 0.45;
+    if (y < -radio * 2 || y > H + radio * 2) return;
+    dibujar(W * lado, y, radio);
+  };
+  astro(5, (x, y, r) => {
+    c.fillStyle = "#e6e8ef"; c.beginPath(); c.arc(x, y, r, 0, Math.PI * 2); c.fill();
+    c.fillStyle = "rgba(160, 165, 180, 0.6)";
+    for (const [dx, dy, rr] of [[-0.3, -0.2, 0.18], [0.25, 0.1, 0.24], [-0.05, 0.4, 0.12], [0.35, -0.35, 0.1], [-0.45, 0.25, 0.09]] as const) { c.beginPath(); c.arc(x + dx * r, y + dy * r, rr * r, 0, Math.PI * 2); c.fill(); }
+    c.fillStyle = "rgba(5, 6, 26, 0.35)"; c.beginPath(); c.arc(x + r * 0.35, y - r * 0.1, r, 0, Math.PI * 2); c.fill();
+  }, 0.72, 34 * e);
+  astro(6, (x, y, r) => {
+    const gm = c.createRadialGradient(x - r * 0.3, y - r * 0.3, r * 0.1, x, y, r);
+    gm.addColorStop(0, "#ff9a63"); gm.addColorStop(0.7, "#c8452b"); gm.addColorStop(1, "#7a2316");
+    c.fillStyle = gm; c.beginPath(); c.arc(x, y, r, 0, Math.PI * 2); c.fill();
+    c.fillStyle = "rgba(120, 30, 20, 0.45)";
+    for (const [dx, dy, rr] of [[-0.2, 0.1, 0.2], [0.3, -0.3, 0.12], [0.1, 0.45, 0.14]] as const) { c.beginPath(); c.arc(x + dx * r, y + dy * r, rr * r, 0, Math.PI * 2); c.fill(); }
+    c.fillStyle = "rgba(255, 245, 240, 0.7)"; c.beginPath(); c.ellipse(x, y - r * 0.88, r * 0.32, r * 0.1, 0, 0, Math.PI * 2); c.fill();
+  }, 0.28, 26 * e);
+  astro(7, (x, y, r) => {
+    c.save(); c.beginPath(); c.arc(x, y, r, 0, Math.PI * 2); c.clip();
+    const franjas = ["#d9b38c", "#b8875c", "#e8cfae", "#a5704a", "#d9b38c", "#c98f62", "#ecd8bb"];
+    franjas.forEach((col, k) => { c.fillStyle = col; c.fillRect(x - r, y - r + (k * 2 * r) / franjas.length, r * 2, (2 * r) / franjas.length + 1); });
+    c.fillStyle = "#b5523a"; c.beginPath(); c.ellipse(x + r * 0.3, y + r * 0.25, r * 0.2, r * 0.11, 0, 0, Math.PI * 2); c.fill();
+    c.fillStyle = "rgba(0, 0, 0, 0.3)"; c.beginPath(); c.arc(x + r * 0.45, y, r, 0, Math.PI * 2); c.fill();
+    c.restore();
+  }, 0.7, 40 * e);
+  astro(8, (x, y, r) => {
+    for (const [dx, dy, rr, col] of [[0, 0, 1, "rgba(160, 60, 220, 0.28)"], [0.3, -0.2, 0.7, "rgba(255, 79, 216, 0.22)"], [-0.35, 0.25, 0.6, "rgba(126, 243, 255, 0.18)"]] as const) {
+      const gn = c.createRadialGradient(x + dx * r, y + dy * r, 0, x + dx * r, y + dy * r, rr * r);
+      gn.addColorStop(0, col); gn.addColorStop(1, "rgba(0, 0, 0, 0)");
+      c.fillStyle = gn; c.beginPath(); c.arc(x + dx * r, y + dy * r, rr * r, 0, Math.PI * 2); c.fill();
+    }
+  }, 0.5, 60 * e);
+
+  // La Tierra: pasto y la ciudad en silueta, abajo del todo al empezar.
+  const suelo = H - (0 - cam) * e;
+  if (suelo < H + 60 * e) {
+    c.fillStyle = "#9bb9d6";
+    for (let k = 0; k < 9; k++) {
+      const bw = W / 9, bh = (14 + ruido(k * 5) * 22) * e;
+      c.fillRect(k * bw + 1, suelo - bh, bw - 2, bh);
+    }
+    c.fillStyle = "#5fbf6a"; c.fillRect(-10, suelo, W + 20, H);
+    c.fillStyle = "#4aa457"; c.fillRect(-10, suelo, W + 20, 2.5 * e);
   }
 }
 
-/** La losa de concreto de cada piso, con su número y su zona. */
-function pintarLosas(c: CanvasRenderingContext2D, W: number, H: number, e: number, cam: number): void {
-  const sy = (h: number) => H - (h - cam) * e;
-  const porPiso = METROS_POR_PISO * UNIDADES_POR_METRO;
-  for (let k = Math.max(1, Math.floor(cam / porPiso)); k * porPiso < cam + H / e + 20; k++) {
-    const y = sy(k * porPiso);
-    const g = c.createLinearGradient(0, y - 3 * e, 0, y + 3 * e);
-    g.addColorStop(0, "#5a5560"); g.addColorStop(0.4, "#8c8790"); g.addColorStop(1, "#3a3640");
-    c.fillStyle = g; c.fillRect(0, y - 3 * e, W, 6 * e);
-    c.fillStyle = "rgba(0, 0, 0, 0.3)"; for (let x = mod(k * 17, 30) * e; x < W; x += 30 * e) c.fillRect(x, y - 3 * e, 1, 6 * e);
-    const n = Math.min(ZONAS.length, k + 1);
-    c.save();
-    c.font = `900 ${Math.round(3.4 * e)}px ui-monospace, "SF Mono", Menlo, monospace`;
-    c.textAlign = "right"; c.textBaseline = "middle"; c.fillStyle = "#ffd45c";
-    c.fillText(`PISO ${n} · ${ZONAS[n - 1]!.nombre.toUpperCase()}`, W - 6, y);
-    c.restore();
+// ── Plataformas ──────────────────────────────────────────────────────────────
+
+const GROSOR = 4.5;
+
+/** A · Una barra olímpica acostada: la barra cromada y un disco en cada punta. */
+function plataformaBarra(c: CanvasRenderingContext2D, cj: Cajon, x: number, y: number, w: number, e: number): void {
+  const color = cj.tipo === "movil" ? "#2a6fd6" : cj.tipo === "espuma" ? "#ff7ab6" : "#d6372c";
+  const bar = c.createLinearGradient(0, y, 0, y + 1.6 * e);
+  bar.addColorStop(0, "#f4f6f8"); bar.addColorStop(0.5, "#9aa0a8"); bar.addColorStop(1, "#5d626a");
+  c.fillStyle = bar; c.fillRect(x, y, w, 1.6 * e);
+  for (const px of [x - 1.2 * e, x + w - 1.8 * e]) {
+    c.fillStyle = color; redondeado(c, px, y - 3.2 * e, 3 * e, 8 * e, 1.2 * e); c.fill();
+    c.fillStyle = "rgba(255, 255, 255, 0.25)"; c.fillRect(px + 0.5 * e, y - 3 * e, 0.6 * e, 7.6 * e);
   }
+  if (cj.tipo === "espuma") { c.fillStyle = "rgba(255, 255, 255, 0.7)"; c.fillRect(x + w * 0.45, y - 0.2 * e, 1, 2 * e); }
 }
 
-/** Un cajón de salto en 3/4: tapa y frente, según su tipo. */
-function pintarCajon(c: CanvasRenderingContext2D, cj: Cajon, x: number, y: number, w: number, e: number, t: number): void {
-  const alto = ALTO_CAJON * e, prof = 2.4 * e;
-  const tipo = cj.tipo;
-  const [frente1, frente2, tapa, linea] = tipo === "espuma"
-    ? ["#e2475c", "#b32c41", "#f26b7d", "rgba(255,255,255,0.35)"]
-    : tipo === "movil" ? ["#3a6fd8", "#244a99", "#5b8ef0", "rgba(255,255,255,0.25)"]
-    : ["#b07a45", "#7a5230", "#d6a46a", "rgba(70, 40, 15, 0.45)"];
-  // Sombra de contacto debajo.
-  c.fillStyle = "rgba(0, 0, 0, 0.28)";
-  redondeado(c, x + 2, y + alto - 1, w, 3, 2); c.fill();
-  // Tapa (un poco en perspectiva).
-  c.fillStyle = tapa;
-  c.beginPath(); c.moveTo(x, y); c.lineTo(x + w, y); c.lineTo(x + w - prof * 0.6, y - prof); c.lineTo(x + prof * 0.6, y - prof); c.closePath(); c.fill();
-  // Frente.
-  const g = c.createLinearGradient(0, y, 0, y + alto);
-  g.addColorStop(0, frente1); g.addColorStop(1, frente2);
-  c.fillStyle = g;
-  if (tipo === "espuma") { redondeado(c, x, y, w, alto, alto * 0.25); c.fill(); }
-  else c.fillRect(x, y, w, alto);
-  c.save(); c.beginPath(); c.rect(x, y, w, alto); c.clip();
-  if (tipo === "firme") {
-    // Vetas de madera y el estarcido.
-    c.strokeStyle = linea; c.lineWidth = 1;
-    for (let k = 1; k < 4; k++) { c.beginPath(); c.moveTo(x, y + (alto * k) / 4 + Math.sin(k + x) * 1.5); c.bezierCurveTo(x + w * 0.3, y + (alto * k) / 4 - 2, x + w * 0.7, y + (alto * k) / 4 + 2, x + w, y + (alto * k) / 4); c.stroke(); }
-    if (w > 40) { c.fillStyle = "rgba(30, 18, 8, 0.55)"; c.font = `900 ${Math.round(alto * 0.42)}px ui-monospace, monospace`; c.textAlign = "center"; c.textBaseline = "middle"; c.fillText("OSFIT", x + w / 2, y + alto * 0.55); }
-  } else if (tipo === "movil") {
-    // Franjas de peligro y flechas.
-    for (let k = -2; k < w / (alto * 0.5) + 2; k++) {
-      c.fillStyle = k % 2 ? "#ffd400" : "#1a1a1a";
-      c.beginPath(); const sx = x + k * alto * 0.5; c.moveTo(sx, y + alto * 0.7); c.lineTo(sx + alto * 0.5, y + alto * 0.7); c.lineTo(sx + alto * 0.8, y + alto); c.lineTo(sx + alto * 0.3, y + alto); c.fill();
-    }
-    c.fillStyle = "rgba(255,255,255,0.85)"; c.font = `900 ${Math.round(alto * 0.4)}px system-ui, sans-serif`; c.textAlign = "center"; c.textBaseline = "middle";
-    c.fillText(cj.vx < 0 ? "◀  ◀" : "▶  ▶", x + w / 2, y + alto * 0.35);
+/** B · Un step aeróbico: plano, con su borde de color y sus patitas de goma. */
+function plataformaStep(c: CanvasRenderingContext2D, cj: Cajon, x: number, y: number, w: number, e: number): void {
+  const borde = cj.tipo === "movil" ? "#ffb703" : cj.tipo === "espuma" ? "#ff7ab6" : "#3b8fff";
+  c.fillStyle = "#1a1a1f";
+  c.fillRect(x + w * 0.1, y + GROSOR * e - 0.5, w * 0.12, 1.6 * e); c.fillRect(x + w * 0.78, y + GROSOR * e - 0.5, w * 0.12, 1.6 * e);
+  c.fillStyle = borde; redondeado(c, x, y + 1, w, GROSOR * e - 1, 1.8 * e); c.fill();
+  c.fillStyle = "#f4f4f7"; redondeado(c, x, y, w, 2 * e, 1 * e); c.fill();
+  c.strokeStyle = "rgba(0, 0, 0, 0.08)"; c.lineWidth = 1;
+  for (let k = 1; k < 6; k++) { c.beginPath(); c.moveTo(x + (w * k) / 6, y + 0.4 * e); c.lineTo(x + (w * k) / 6, y + 1.6 * e); c.stroke(); }
+  if (cj.tipo === "espuma") { c.strokeStyle = "rgba(120, 20, 60, 0.6)"; c.beginPath(); c.moveTo(x + w * 0.5, y); c.lineTo(x + w * 0.46, y + GROSOR * e * 0.5); c.lineTo(x + w * 0.53, y + GROSOR * e); c.stroke(); }
+}
+
+/** C · Temática según la altura: tablón en la Tierra, nube en el cielo, asteroide en el espacio. */
+function plataformaTematica(c: CanvasRenderingContext2D, cj: Cajon, x: number, y: number, w: number, e: number, etapa: number): void {
+  if (etapa < 1.5) {
+    c.fillStyle = cj.tipo === "espuma" ? "#c9a06a" : "#8a5a32"; redondeado(c, x, y, w, GROSOR * e, 1 * e); c.fill();
+    c.fillStyle = "#5fbf6a"; redondeado(c, x - 0.5 * e, y - 0.6 * e, w + 1 * e, 2 * e, 1 * e); c.fill();
+  } else if (etapa < 3.5) {
+    c.fillStyle = cj.tipo === "espuma" ? "rgba(255, 255, 255, 0.55)" : "#ffffff";
+    redondeado(c, x, y, w, GROSOR * e, GROSOR * e * 0.5); c.fill();
+    c.beginPath(); c.arc(x + w * 0.35, y, GROSOR * e * 0.7, 0, Math.PI * 2); c.arc(x + w * 0.62, y + 0.3 * e, GROSOR * e * 0.55, 0, Math.PI * 2); c.fill();
   } else {
-    // Costura de la espuma.
-    c.strokeStyle = linea; c.setLineDash([3, 3]); c.lineWidth = 1;
-    redondeado(c, x + 3, y + 3, w - 6, alto - 6, alto * 0.2); c.stroke(); c.setLineDash([]);
+    const roja = etapa >= 5 && etapa < 6;
+    c.fillStyle = cj.tipo === "espuma" ? (roja ? "#e08a6a" : "#9a9aa8") : roja ? "#b44a2e" : "#6c6a78";
+    c.beginPath();
+    c.moveTo(x, y + GROSOR * e * 0.4); c.lineTo(x + w * 0.15, y); c.lineTo(x + w * 0.85, y); c.lineTo(x + w, y + GROSOR * e * 0.5);
+    c.lineTo(x + w * 0.8, y + GROSOR * e * 1.2); c.lineTo(x + w * 0.2, y + GROSOR * e * 1.1); c.closePath(); c.fill();
+    c.fillStyle = "rgba(0, 0, 0, 0.25)";
+    c.beginPath(); c.arc(x + w * 0.35, y + GROSOR * e * 0.5, 1.2 * e, 0, Math.PI * 2); c.arc(x + w * 0.65, y + GROSOR * e * 0.7, 0.8 * e, 0, Math.PI * 2); c.fill();
   }
-  c.restore();
-  // Brillo de arriba.
-  c.fillStyle = "rgba(255, 255, 255, 0.18)"; c.fillRect(x + 1, y, w - 2, 1.2);
-  if (cj.trampolin) pintarTrampolin(c, x + w / 2, y - prof * 0.5, Math.min(w * 0.42, 9 * e), e, t);
+  if (cj.tipo === "movil") { c.fillStyle = "rgba(126, 243, 255, 0.9)"; c.fillRect(x + w * 0.2, y + GROSOR * e + 1, w * 0.6, 1.2); }
+}
+
+function pintarPlataforma(c: CanvasRenderingContext2D, cj: Cajon, x: number, y: number, w: number, e: number, t: number, etapa: number): void {
+  const v = opcion("osfit:bj-plataforma");
+  if (v === "b") plataformaStep(c, cj, x, y, w, e);
+  else if (v === "c") plataformaTematica(c, cj, x, y, w, e, etapa);
+  else plataformaBarra(c, cj, x, y, w, e);
+  if (cj.trampolin) pintarTrampolin(c, x + w / 2, y, Math.min(w * 0.38, 8 * e), e, t);
 }
 
 function pintarTrampolin(c: CanvasRenderingContext2D, cx: number, y: number, r: number, e: number, t: number): void {
-  const ry = r * 0.28, alto = 3 * e;
-  // Patas.
+  const ry = r * 0.28, alto = 2.6 * e;
   c.strokeStyle = "#9aa0a8"; c.lineWidth = Math.max(1.5, e * 0.4);
   for (const dx of [-0.8, 0.8]) { c.beginPath(); c.moveTo(cx + dx * r, y - alto); c.lineTo(cx + dx * r * 1.05, y); c.stroke(); }
-  // Aro y lona.
-  const pulso = 1 + Math.sin(t * 8) * 0.04;
-  c.fillStyle = "#14151a"; c.beginPath(); c.ellipse(cx, y - alto, r * 0.86, ry * 0.86 * pulso, 0, 0, Math.PI * 2); c.fill();
-  c.strokeStyle = "#2a6fd6"; c.lineWidth = Math.max(2, e * 0.6); c.beginPath(); c.ellipse(cx, y - alto, r, ry, 0, 0, Math.PI * 2); c.stroke();
-  // Resortes.
-  c.strokeStyle = "#c9cdd3"; c.lineWidth = 1;
-  for (let k = 0; k < 10; k++) { const a = (k / 10) * Math.PI * 2; c.beginPath(); c.moveTo(cx + Math.cos(a) * r * 0.86, y - alto + Math.sin(a) * ry * 0.86); c.lineTo(cx + Math.cos(a) * r, y - alto + Math.sin(a) * ry); c.stroke(); }
-  c.fillStyle = "rgba(126, 243, 255, 0.85)"; c.font = `900 ${Math.round(e * 2.2)}px system-ui, sans-serif`; c.textAlign = "center";
-  c.fillText("▲", cx, y - alto - ry - 2 * e + Math.sin(t * 5) * e * 0.6);
+  c.fillStyle = "#14151a"; c.beginPath(); c.ellipse(cx, y - alto, r * 0.86, ry * 0.86 * (1 + Math.sin(t * 8) * 0.04), 0, 0, Math.PI * 2); c.fill();
+  c.strokeStyle = "#ffb703"; c.lineWidth = Math.max(2, e * 0.6); c.beginPath(); c.ellipse(cx, y - alto, r, ry, 0, 0, Math.PI * 2); c.stroke();
 }
 
-/** La clienta: su inicial en un círculo con aro de neón, sus tenis y el aplaste del rebote. */
+// ── Avatares ─────────────────────────────────────────────────────────────────
+
+/** A · Astronauta OSFIT: traje blanco, casco con visor que refleja y su inicial en el pecho. */
+function avatarAstronauta(c: CanvasRenderingContext2D, r: number, inicial: string, subiendo: boolean): void {
+  const pies = subiendo ? r * 0.1 : r * 0.3;
+  c.fillStyle = "#d9dde3";
+  for (const lado of [-1, 1]) { redondeado(c, lado * r * 0.42 - r * 0.22, r * 0.75 + pies, r * 0.44, r * 0.34, r * 0.12); c.fill(); }
+  c.fillStyle = "#c4cad2"; redondeado(c, -r * 0.95, -r * 0.2, r * 0.4, r * 0.8, r * 0.15); c.fill(); // mochila
+  const traje = c.createRadialGradient(-r * 0.3, -r * 0.2, r * 0.1, 0, r * 0.2, r * 1.1);
+  traje.addColorStop(0, "#ffffff"); traje.addColorStop(1, "#c9ced6");
+  c.fillStyle = traje; redondeado(c, -r * 0.75, -r * 0.05, r * 1.5, r * 1.0, r * 0.4); c.fill();
+  c.fillStyle = "#ff3bd4"; c.beginPath(); c.arc(0, r * 0.45, r * 0.24, 0, Math.PI * 2); c.fill();
+  c.fillStyle = "#fff"; c.font = `900 ${Math.round(r * 0.34)}px system-ui, sans-serif`; c.textAlign = "center"; c.textBaseline = "middle"; c.fillText(inicial, 0, r * 0.47);
+  // Casco y visor.
+  c.fillStyle = "#f4f6f9"; c.beginPath(); c.arc(0, -r * 0.35, r * 0.72, 0, Math.PI * 2); c.fill();
+  const visor = c.createLinearGradient(-r * 0.5, -r * 0.7, r * 0.5, 0);
+  visor.addColorStop(0, "#1b2a55"); visor.addColorStop(0.6, "#3b6fd6"); visor.addColorStop(1, "#ffb703");
+  c.fillStyle = visor; redondeado(c, -r * 0.5, -r * 0.7, r * 1.0, r * 0.62, r * 0.28); c.fill();
+  c.fillStyle = "rgba(255, 255, 255, 0.55)"; c.beginPath(); c.ellipse(-r * 0.22, -r * 0.55, r * 0.14, r * 0.07, -0.5, 0, Math.PI * 2); c.fill();
+}
+
+/** B · La kettlebell del Arcade, ahora con piernitas y tenis. */
+function avatarKettlebell(c: CanvasRenderingContext2D, r: number, _inicial: string, subiendo: boolean): void {
+  const pies = subiendo ? r * 0.05 : r * 0.35;
+  c.strokeStyle = "#2a2c31"; c.lineWidth = r * 0.14;
+  for (const lado of [-1, 1]) { c.beginPath(); c.moveTo(lado * r * 0.35, r * 0.7); c.lineTo(lado * r * 0.4, r * 0.95 + pies); c.stroke(); }
+  for (const lado of [-1, 1]) { c.fillStyle = "#f2f2f2"; redondeado(c, lado * r * 0.4 - r * 0.2 + lado * r * 0.08, r * 0.92 + pies, r * 0.44, r * 0.24, r * 0.1); c.fill(); }
+  c.strokeStyle = "#2a2c31"; c.lineWidth = r * 0.28;
+  c.beginPath(); c.arc(0, -r * 0.7, r * 0.55, Math.PI * 1.05, Math.PI * 1.95); c.stroke();
+  const g = c.createRadialGradient(-r * 0.35, -r * 0.3, r * 0.1, 0, 0, r * 1.1);
+  g.addColorStop(0, "#6b6f78"); g.addColorStop(0.55, "#2a2c31"); g.addColorStop(1, "#0f1013");
+  c.fillStyle = g; c.beginPath(); c.arc(0, 0, r * 0.85, 0, Math.PI * 2); c.fill();
+  c.fillStyle = "#fff"; for (const lado of [-1, 1]) { c.beginPath(); c.arc(lado * r * 0.25, -r * 0.1, r * 0.14, 0, Math.PI * 2); c.fill(); }
+  c.fillStyle = "#111"; for (const lado of [-1, 1]) { c.beginPath(); c.arc(lado * r * 0.25 + r * 0.03, -r * 0.07, r * 0.07, 0, Math.PI * 2); c.fill(); }
+  c.fillStyle = "#ffd45c"; c.font = `900 ${Math.round(r * 0.42)}px system-ui, sans-serif`; c.textAlign = "center"; c.textBaseline = "middle"; c.fillText("16", 0, r * 0.4);
+}
+
+/** C · Un balón medicinal con sus costuras, su banda y la inicial. */
+function avatarBalon(c: CanvasRenderingContext2D, r: number, inicial: string, subiendo: boolean): void {
+  const pies = subiendo ? r * 0.1 : r * 0.3;
+  for (const lado of [-1, 1]) { c.fillStyle = "#f2f2f2"; redondeado(c, lado * r * 0.45 - r * 0.25, r * 0.85 + pies, r * 0.5, r * 0.26, r * 0.12); c.fill(); }
+  const g = c.createRadialGradient(-r * 0.35, -r * 0.35, r * 0.1, 0, 0, r);
+  g.addColorStop(0, "#5a5f6b"); g.addColorStop(0.6, "#25272e"); g.addColorStop(1, "#111216");
+  c.fillStyle = g; c.beginPath(); c.arc(0, 0, r, 0, Math.PI * 2); c.fill();
+  c.strokeStyle = "rgba(255, 255, 255, 0.25)"; c.lineWidth = Math.max(1, r * 0.05);
+  c.beginPath(); c.ellipse(0, 0, r * 0.45, r, 0, 0, Math.PI * 2); c.stroke();
+  c.beginPath(); c.moveTo(-r, 0); c.lineTo(r, 0); c.stroke();
+  c.fillStyle = "#3b8fff"; c.fillRect(-r * 0.95, -r * 0.5, r * 1.9, r * 0.22);
+  c.fillStyle = "#fff"; c.font = `900 ${Math.round(r * 0.8)}px system-ui, sans-serif`; c.textAlign = "center"; c.textBaseline = "middle"; c.fillText(inicial, 0, r * 0.22);
+}
+
 function pintarAvatar(c: CanvasRenderingContext2D, x: number, y: number, r: number, inicial: string, subiendo: boolean): void {
   c.save();
   c.translate(x, y);
   c.scale(1 / Math.sqrt(aplaste), aplaste);
-  // Tenis.
-  const pies = subiendo ? r * 0.15 : r * 0.35;
-  for (const lado of [-1, 1]) {
-    c.fillStyle = "#f2f2f2";
-    redondeado(c, lado * r * 0.45 - r * 0.28, r * 0.78 + pies, r * 0.56, r * 0.3, r * 0.14); c.fill();
-    c.fillStyle = "#ff3bd4"; c.fillRect(lado * r * 0.45 - r * 0.28, r * 0.78 + pies + r * 0.2, r * 0.56, r * 0.08);
-  }
-  // Aro de neón y cuerpo.
-  c.shadowColor = "#7ef3ff"; c.shadowBlur = r * 0.6;
-  c.fillStyle = "#7ef3ff"; c.beginPath(); c.arc(0, 0, r * 1.08, 0, Math.PI * 2); c.fill();
-  c.shadowBlur = 0;
-  const g = c.createRadialGradient(-r * 0.35, -r * 0.4, r * 0.1, 0, 0, r);
-  g.addColorStop(0, "#ff7ae0"); g.addColorStop(0.6, "#b23ad8"); g.addColorStop(1, "#5a1f9e");
-  c.fillStyle = g; c.beginPath(); c.arc(0, 0, r, 0, Math.PI * 2); c.fill();
-  // Banda en la frente, como de gym.
-  c.fillStyle = "#ffd45c"; c.fillRect(-r * 0.92, -r * 0.62, r * 1.84, r * 0.2);
-  c.fillStyle = "#fff"; c.font = `900 ${Math.round(r * 1.05)}px system-ui, -apple-system, sans-serif`;
-  c.textAlign = "center"; c.textBaseline = "middle";
-  c.fillText(inicial, 0, r * 0.14);
-  c.fillStyle = "rgba(255, 255, 255, 0.25)"; c.beginPath(); c.ellipse(-r * 0.35, -r * 0.2, r * 0.25, r * 0.4, -0.5, 0, Math.PI * 2); c.fill();
+  const v = opcion("osfit:bj-avatar");
+  if (v === "b") avatarKettlebell(c, r, inicial, subiendo);
+  else if (v === "c") avatarBalon(c, r, inicial, subiendo);
+  else avatarAstronauta(c, r, inicial, subiendo);
   c.restore();
 }
 
-function dibujar(dt: number): void {
+function dibujar(_dt: number): void {
   const canvas = q<HTMLCanvasElement>("#bj-canvas");
   if (!canvas) return;
   const W = canvas.clientWidth, H = canvas.clientHeight;
@@ -488,14 +586,19 @@ function dibujar(dt: number): void {
   if (sacudida > 0) c.translate((Math.random() - 0.5) * 10 * sacudida, (Math.random() - 0.5) * 8 * sacudida);
   const cam = salto.camara;
   const sy = (h: number) => H - (h - cam) * e;
-  const zona = ZONAS[pisoVisto - 1]!;
-  if (zonaAnterior !== null && mezcla < 1) {
-    pintarEdificio(c, ZONAS[zonaAnterior]!, W, H, e, cam, reloj);
-    c.globalAlpha = mezcla;
-    pintarEdificio(c, zona, W, H, e, cam, reloj);
-    c.globalAlpha = 1;
-  } else pintarEdificio(c, zona, W, H, e, cam, reloj);
-  pintarLosas(c, W, H, e, cam);
+  pintarViaje(c, W, H, e, cam, reloj);
+  const etapa = etapaDe(cam);
+  const oscuro = etapa > 2.6;
+
+  // Marcas de metros, discretas.
+  for (let m = Math.ceil(cam / UNIDADES_POR_METRO / 10) * 10; m * UNIDADES_POR_METRO < cam + H / e + 20; m += 10) {
+    if (m <= 0) continue;
+    const y = sy(m * UNIDADES_POR_METRO);
+    c.fillStyle = oscuro ? "rgba(255, 255, 255, 0.35)" : "rgba(20, 40, 80, 0.35)";
+    c.font = "700 11px system-ui, sans-serif"; c.textAlign = "left";
+    c.fillText(`${m} m`, 6, y - 4);
+    c.fillRect(0, y, 10, 1);
+  }
   // Dónde quedaron los records: una línea a esa altura, con su banderita y su nombre.
   for (const m of marcasDe(tabla)) {
     const y = sy(m.puntos * UNIDADES_POR_METRO);
@@ -513,15 +616,14 @@ function dibujar(dt: number): void {
     if (cj.ancho <= 0) continue;
     const y = sy(cj.h);
     if (y < -40 || y > H + 40) continue;
-    pintarCajon(c, cj, cj.x * e, y, cj.ancho * e, e, reloj);
+    pintarPlataforma(c, cj, cj.x * e, y, cj.ancho * e, e, reloj, etapa);
   }
-  // La espuma rota: dos mitades que caen girando.
   for (const pz of pedazos) {
     const w = (pz.cajon.ancho / 2) * e;
     const x = (pz.cajon.x + (pz.lado > 0 ? pz.cajon.ancho / 2 : 0) + pz.dx) * e;
     const y = sy(pz.cajon.h + pz.dh);
     c.save(); c.translate(x + w / 2, y); c.rotate(pz.giro); c.globalAlpha = 0.85;
-    pintarCajon(c, { ...pz.cajon, ancho: pz.cajon.ancho / 2, trampolin: false }, -w / 2, 0, w, e, reloj);
+    pintarPlataforma(c, { ...pz.cajon, ancho: pz.cajon.ancho / 2, trampolin: false }, -w / 2, 0, w, e, reloj, etapa);
     c.restore();
   }
   for (const pt of particulas) {
@@ -543,22 +645,18 @@ function dibujar(dt: number): void {
     c.save(); c.font = `900 ${Math.round(5 * e)}px system-ui, sans-serif`; c.fillStyle = `rgba(255, 212, 92, ${Math.max(0, l.vida)})`;
     c.shadowColor = "#ff3bd4"; c.shadowBlur = 10; c.fillText(l.texto, Math.min(W - 60, Math.max(60, l.x * e)), sy(l.h)); c.restore();
   }
-  pintarPolvo(c, zona, W, H, dt, reloj);
   if (anuncio && anuncio.vida > 0) {
     const a = Math.min(1, anuncio.vida * 1.5), s2 = 1 + Math.max(0, anuncio.vida - 1.6) * 1.2;
     c.save(); c.translate(W / 2, H * 0.34); c.scale(s2, s2);
     c.textAlign = "center"; c.textBaseline = "middle";
     c.shadowColor = "#ff3bd4"; c.shadowBlur = 18; c.fillStyle = `rgba(255, 255, 255, ${a})`;
-    c.font = `900 ${Math.round(11 * e)}px system-ui, sans-serif`; c.fillText(`PISO ${anuncio.piso}`, 0, 0);
+    c.font = `900 ${Math.round(11 * e)}px system-ui, sans-serif`; c.fillText(`NIVEL ${anuncio.piso}`, 0, 0);
     c.shadowColor = "#7ef3ff"; c.shadowBlur = 10; c.fillStyle = `rgba(126, 243, 255, ${a})`;
     c.font = `800 ${Math.round(4.4 * e)}px ui-monospace, "SF Mono", Menlo, monospace`; c.fillText(anuncio.zona.toUpperCase(), 0, 9 * e);
     c.restore();
   }
   c.setTransform(dpr, 0, 0, dpr, 0, 0);
   if (destello > 0) { c.fillStyle = `rgba(255, 255, 255, ${destello * 0.5})`; c.fillRect(0, 0, W, H); }
-  const vin = c.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.4, W / 2, H / 2, Math.max(W, H) * 0.8);
-  vin.addColorStop(0, "rgba(0, 0, 0, 0)"); vin.addColorStop(1, "rgba(0, 0, 0, 0.4)");
-  c.fillStyle = vin; c.fillRect(0, 0, W, H);
 }
 
 // ── Montaje ──────────────────────────────────────────────────────────────────

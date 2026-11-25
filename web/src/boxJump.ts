@@ -22,7 +22,9 @@ export const SUPER_SALTO = 200;
 export const ALTURA_SALTO = (SALTO * SALTO) / (2 * GRAVEDAD);
 export const UNIDADES_POR_METRO = 10;
 export const METROS_POR_PISO = 40;
-export const PISOS = 6;
+export const PISOS = 8;
+/** Cada nivel es una altura del viaje (entrenador, 2026-11-25: "empieza en la tierra, luego va al cielo, al espacio, pasa por la luna, marte…"). */
+export const ETAPAS = ["Tierra", "Cielo", "Estratósfera", "Espacio", "Luna", "Marte", "Júpiter", "Galaxia"] as const;
 export const ALTO_CAJON = 7;
 const VEL_LATERAL = 115;
 
@@ -66,16 +68,16 @@ export function metros(s: Salto): number {
 
 /** Cuánto sube de un cajón firme al siguiente, según el piso: [mínimo, máximo]. */
 export function separacion(p: number): [number, number] {
-  const tabla: [number, number][] = [[15, 21], [17, 23], [19, 25], [20, 26], [21, 27], [23, 28]];
+  const tabla: [number, number][] = [[15, 21], [16, 22], [17, 23], [19, 25], [20, 26], [21, 27], [22, 28], [23, 28]];
   return tabla[Math.min(PISOS, Math.max(1, p)) - 1]!;
 }
 
 export function anchoCajon(p: number): number {
-  return [24, 20, 18, 16, 14, 12][Math.min(PISOS, Math.max(1, p)) - 1]!;
+  return [24, 21, 19, 17, 15, 14, 13, 12][Math.min(PISOS, Math.max(1, p)) - 1]!;
 }
 
-export function probMovil(p: number): number { return [0, 0.15, 0.3, 0.4, 0.55, 0.65][Math.min(PISOS, p) - 1]!; }
-export function probEspuma(p: number): number { return [0, 0, 0.2, 0.25, 0.3, 0.35][Math.min(PISOS, p) - 1]!; }
+export function probMovil(p: number): number { return [0, 0.12, 0.22, 0.32, 0.42, 0.52, 0.6, 0.68][Math.min(PISOS, p) - 1]!; }
+export function probEspuma(p: number): number { return [0, 0, 0.15, 0.2, 0.25, 0.3, 0.33, 0.36][Math.min(PISOS, p) - 1]!; }
 export const PROB_TRAMPOLIN = 0.06;
 
 function nuevoCajon(s: Salto): void {
