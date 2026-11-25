@@ -29,12 +29,12 @@ export const ALTO_CAJON = 7;
 /**
  * Lo de lado (entrenador, 2026-11-25: "siento que los controles no son tan precisos, un leve
  * delay"): antes perseguía el dedo despacio (0.42 s para llegar a un tercio de la pantalla) y al
- * soltar seguía resbalando más de una plataforma. Ahora va derecho al dedo casi al instante (cruza toda la pantalla en ~0.25 s) y frena casi en seco.
+ * soltar seguía resbalando más de una plataforma. Ahora sigue al dedo de cerca y frena casi en seco (el entrenador la probó y quedó así: no cambiarla).
  */
-const VEL_LATERAL = 420;
-const GANANCIA = 45;
-/** Al soltar: cuánto se conserva de la velocidad por segundo (frena en menos de 0.1 s). */
-const FRENO = Math.exp(-60);
+const VEL_LATERAL = 170;
+const GANANCIA = 24;
+/** Al soltar: cuánto se conserva de la velocidad por segundo (frena en ~0.1 s). */
+const FRENO = Math.exp(-40);
 
 export type Tipo = "firme" | "movil" | "espuma";
 

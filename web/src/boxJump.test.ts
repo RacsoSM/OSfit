@@ -52,7 +52,7 @@ describe("Box Jump", () => {
     const s = nuevoSalto(180, semilla(4));
     s.x = 2; s.vx = 0;
     let antes = s.x;
-    for (let i = 0; i < 30; i++) {
+    for (let i = 0; i < 70; i++) {
       avanzar(s, 1 / 60, ANCHO - 4);
       expect(s.x).toBeGreaterThanOrEqual(antes - 1e-9); // nunca se regresa
       antes = s.x;
@@ -99,7 +99,7 @@ describe("Box Jump", () => {
     s.x = 50; s.vx = 0;
     let t = 0;
     while (Math.abs(s.x - 80) > 1 && t < 1) { avanzar(s, 1 / 60, 80); t += 1 / 60; }
-    expect(t).toBeLessThan(0.12);
+    expect(t).toBeLessThan(0.25);
     s.x = 20; s.vx = 170;
     const desde = s.x;
     for (let k = 0; k < 60; k++) avanzar(s, 1 / 60, null);
