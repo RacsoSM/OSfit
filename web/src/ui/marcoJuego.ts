@@ -1,6 +1,6 @@
 /**
- * El marco de los juegos del Arcade: la pantalla del juego va fija entre la cabecera y la barra
- * de abajo. Compartido por los tres juegos.
+ * El marco de los juegos del Arcade: la pantalla del juego va fija desde arriba de la pantalla
+ * hasta la barra de abajo (sin el título, que se esconde en los juegos). Compartido por los tres juegos.
  *
  * Bug (2026-11-25, "quise jugar mientras estaba con un entrenamiento abierto y desapareció la
  * kettlebell y la barra inferior"): en el iPhone, con la app instalada, si el teclado estaba
@@ -25,7 +25,7 @@ function barraFija(): HTMLElement | null {
   return document.querySelector<HTMLElement>("#barra .barra");
 }
 
-/** Pone `pantalla` entre la cabecera y la barra, dentro de lo que se ve. */
+/** Pone `pantalla` desde arriba hasta la barra, dentro de lo que se ve. */
 export function ajustarMarcoJuego(pantalla: HTMLElement | null): void {
   if (!pantalla) return;
   const v = visible();
@@ -36,11 +36,11 @@ export function ajustarMarcoJuego(pantalla: HTMLElement | null): void {
     const sobra = Math.round(window.innerHeight - v.abajo);
     barra.style.bottom = sobra > 1 ? `${sobra}px` : "";
   }
-  const cab = document.querySelector<HTMLElement>(".cabecera");
+  // Sin el título de arriba (va escondido en los juegos): el juego empieza hasta arriba, solo
+  // respetando la muesca o la barra de estado del teléfono.
   const visibleBarra = barra && barra.offsetHeight > 0 ? barra : null;
-  const arriba = Math.max(v.arriba, cab ? cab.getBoundingClientRect().bottom + 6 : 0);
   const abajo = visibleBarra ? Math.min(v.abajo, visibleBarra.getBoundingClientRect().top) : v.abajo;
-  pantalla.style.top = `${Math.max(0, Math.round(arriba))}px`;
+  pantalla.style.top = `calc(env(safe-area-inset-top) + ${Math.max(0, Math.round(v.arriba))}px)`;
   pantalla.style.bottom = `${Math.max(0, Math.round(window.innerHeight - abajo))}px`;
 }
 

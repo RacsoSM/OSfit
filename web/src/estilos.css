@@ -2806,6 +2806,10 @@ body:has(.arcade) :is(.fondo, .fondo-pixel, .fondo-sakura, .fondo-halloween, .pe
    Toda la pestaña es el juego: fijo entre la cabecera y la barra de abajo (`ajustarMarco` pone
    `top` y `bottom`). Sin scroll mientras está abierto. */
 body.con-juego { overflow: hidden; overscroll-behavior: none; }
+/* En los juegos no va el título de arriba: el juego llega hasta arriba de la pantalla
+   (entrenador, 2026-11-25: "quita ese título, que el juego abarque toda la pantalla hacia arriba"). */
+body.con-juego .cabecera { visibility: hidden; }
+body.con-juego .jd-pantalla { border-radius: 0; }
 .jd-pantalla {
   position: fixed; left: 50%; transform: translateX(-50%); width: min(100vw, 480px); top: 0; bottom: 0; z-index: 1;
   overflow: hidden; background: #0d0e13; border-radius: 18px 18px 0 0;
