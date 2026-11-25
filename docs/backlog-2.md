@@ -1035,6 +1035,10 @@ app lo explica: "ve el entrenamiento guiado" / "no ve el entrenamiento guiado".
 
 Se hace por fases. Cada una se prueba y se publica sola.
 
+**Orden decidido (2026-11-25):** primero la base de **Mi espacio** (fase 2), visible solo para la
+cuenta del entrenador mientras se prueba; las **Monedas** (fase 1) quedan definidas abajo y se
+implementan después.
+
 | Fase | Qué agrega | Qué ve la clienta |
 |---|---|---|
 | 1. Monedas | Ganar y acumular monedas por el Arcade | Su saldo, su historial y avisos de "¡Ganaste una moneda!" |
@@ -1043,56 +1047,59 @@ Se hace por fases. Cada una se prueba y se publica sola.
 | 4. Visitas | Ver los espacios de los demás | Entrar al espacio de otra persona desde el Ranking o el Arcade |
 | 5. Más formas de ganar | Monedas por entrenar, rachas, logros… | Más maneras de juntar monedas |
 
-### Fase 1 — Monedas (la primera)
+### Fase 1 — Monedas (después de la base de Mi espacio)
 
-Cómo se ganan (propuesta inicial):
+Decidido por el entrenador (2026-11-25):
 
-- **Llegar al 1er lugar** en cualquier juego del Arcade: 1 moneda.
-- **Mantener el 1er lugar 24 horas seguidas:** 1 moneda por cada día completo que lo conserve.
+- **Nombre:** Monedas.
+- **Llegar al 1er lugar** en cualquier juego del Arcade: **5 monedas**.
+- **Mantener el 1er lugar:** **1 moneda extra por cada 24 horas** con el puesto.
+- **Sin tope diario.**
+- **Empate en el 1er lugar:** les da monedas a todos los empatados.
+- **Arranque:** al publicar, cada campeón actual recibe **1 moneda de bienvenida**, y desde ese
+  momento empieza su cronómetro de 24 h para la siguiente.
+- **El cronómetro se ve para todos** en el inicio de cada juego (cuánto le falta al campeón
+  para su siguiente moneda).
+- **La cuenta del entrenador gana monedas** como cualquier jugador.
 
-Reglas para que no se pueda abusar:
+Cuidados:
 
-- **Turnarse el 1er lugar:** si dos personas se lo quitan una a la otra todo el día, ganarían
-  monedas sin parar. Por eso "llegar al 1er lugar" paga máximo 1 vez por juego al día.
-- **Empates en el 1er lugar:** propuesta: cuentan para todos los empatados.
 - **Lo decide el servidor, nunca el teléfono**, igual que hoy se validan las partidas
   (`functions/src/juegoDiscos.ts`). Nadie puede darse monedas editando la app.
 - **Sin duplicados:** cada moneda lleva un id único (como los avisos de "te ha superado",
   `auto_<clave>_…`), así que si algo se repite no se paga doble.
+- **Sin tope diario**, turnarse el 1er lugar paga cada vez. Si se ve abuso, se revisa.
 
 Lo que se construye:
 
 1. **Al guardar una partida** (`guardarPartida`): revisar si con esa partida llegó al 1er lugar.
-   Si sí, darle la moneda y guardar desde cuándo es campeón de ese juego
-   (por ejemplo `juegoX/_campeon`: quién y desde cuándo).
+   Si sí, darle las 5 monedas y guardar desde cuándo es campeón de ese juego
+   (por ejemplo `juegoX/_campeon`: quién o quiénes y desde cuándo).
 2. **Revisión automática cada hora** (función programada, hora de Mazatlán): quien lleve 24 h o
    más de campeón recibe 1 moneda por cada día completo. El id incluye el juego, la persona,
    desde cuándo y el número de día.
 3. **Base de datos:** `monedas/{clienteId}` con el saldo y `monedas/{clienteId}/movimientos/{id}`
-   con el historial ("+1 · Llegaste al 1er lugar en Fit Bird"). Reglas: cada quien lee lo suyo;
+   con el historial ("+5 · Llegaste al 1er lugar en Fit Bird", "+1 · 24 h de campeón en Jumper"). Reglas: cada quien lee lo suyo;
    escribe solo el servidor.
 4. **Aviso** "¡Ganaste una moneda!" por el sistema de notificaciones que ya existe
    (`notificaciones/` y `enviarNotificacion`).
 5. **En la web:**
    - un contador de monedas en el Arcade, junto al letrero, con estética neón;
-   - al tocarlo, una hoja con el saldo, el historial y cómo ganar más.
-6. **Pruebas** de todas las reglas: conquista, empates, el tope diario y los días completos.
+   - al tocarlo, una hoja con el saldo, el historial y cómo ganar más;
+   - en el inicio de cada juego, el cronómetro del campeón: cuánto le falta para su siguiente
+     moneda.
+6. **Al publicar:** una corrida única que da la moneda de bienvenida a los campeones actuales
+   y arranca sus cronómetros.
+7. **Pruebas** de todas las reglas: conquista, empates, días completos y la bienvenida.
 
-Decisiones pendientes del entrenador antes de construirla:
-
-1. **Nombre:** ¿"monedas", o algo más de Arcade como "fichas"?
-2. **Cantidades:** ¿1 por llegar al 1º y 1 por cada 24 h? (Se ajustan después con los precios
-   de la tienda.)
-3. **Tope diario:** ¿máximo una moneda al día por "llegar al 1er lugar" en cada juego?
-4. **Empates en el 1er lugar:** ¿ganan todos los empatados?
-5. **Arranque:** ¿quien ya es campeón al publicar empieza a contar sus 24 h desde ese momento, o
-   recibe una moneda de bienvenida?
-6. **La cuenta del entrenador:** ¿gana monedas como cualquier jugador o queda fuera?
-
-### Fase 2 — Mi espacio
+### Fase 2 — Mi espacio (va primero)
 
 Un cuarto dibujado en canvas como los juegos, visto un poco desde arriba, con el estilo del
 Arcade. Empieza con lo básico: piso, paredes y un tapete. Se detalla al llegar.
+
+Mientras se prueba, **solo lo ve la cuenta del entrenador**: un interruptor en su perfil de
+Firestore (como `adminAmigos`, que se pone a mano). Sin el interruptor, la sección no aparece
+en el menú ni se puede abrir.
 
 ### Fase 3 — Tienda
 
