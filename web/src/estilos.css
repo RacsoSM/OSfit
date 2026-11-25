@@ -2791,6 +2791,13 @@ body:has(.arcade) :is(.fondo, .fondo-pixel, .fondo-sakura, .fondo-halloween, .pe
 .ar-nuevo { position: absolute; right: 16px; top: 16px; z-index: 1; padding: 4px 10px; border-radius: 6px; background: #ffd45c; color: #1a1300; font: 800 11px ui-monospace, monospace; letter-spacing: 1px; }
 .kb-pantalla, .bj-pantalla { background: #160f26; }
 .jd-hud-nivel { margin: 4px 0 0; font: 800 12px ui-monospace, "SF Mono", Menlo, monospace; letter-spacing: 1px; color: #7ef3ff; text-shadow: 0 0 8px rgba(126, 243, 255, 0.6); text-transform: uppercase; }
+/* Al subir de nivel la línea brilla un momento, sin tapar el juego. */
+.jd-hud-nivel.sube { animation: jd-sube-nivel 1.6s ease-out; }
+@keyframes jd-sube-nivel {
+  0% { color: #fff; text-shadow: 0 0 14px #ff3bd4, 0 0 4px #fff; transform: scale(1.25); }
+  25% { transform: scale(1); }
+  100% { color: #7ef3ff; text-shadow: 0 0 8px rgba(126, 243, 255, 0.6); }
+}
 
 /* ---------- Torre de discos (minijuego, `ui/juegoDiscos.ts`) ----------
    Toda la pestaña es el juego: fijo entre la cabecera y la barra de abajo (`ajustarMarco` pone

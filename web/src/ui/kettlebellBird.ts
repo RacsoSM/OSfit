@@ -42,7 +42,6 @@ let reloj = 0;
 let nivelVisto = 1;
 let zonaAnterior: number | null = null;
 let mezcla = 1;
-let anuncio: { nivel: number; zona: string; vida: number } | null = null;
 let tabla: TablaDiscos | null = null;
 let errorTabla = false;
 let guardado: Guardado = "nada";
@@ -211,7 +210,7 @@ function vistaAncho(): number {
 function jugar(): void {
   vuelo = nuevoVuelo(vistaAncho());
   chispas = []; letreros = []; sacudida = 0; destello = 0;
-  nivelVisto = 1; zonaAnterior = null; mezcla = 1; anuncio = null;
+  nivelVisto = 1; zonaAnterior = null; mezcla = 1;
   guardado = "nada"; record = false; hoja = false;
   estado = "jugando";
   inicio = performance.now();
@@ -238,8 +237,10 @@ function ciclo(ahora: number): void {
       zonaAnterior = nivelVisto - 1;
       nivelVisto = nivel(vuelo.puntos);
       mezcla = 0;
-      anuncio = { nivel: nivelVisto, zona: ZONAS[nivelVisto - 1]!.nombre, vida: 2.2 };
-      destello = 0.5;
+      // El cambio de nivel, discreto (entrenador, 2026-11-25: "que no estorbe tanto en la
+      // pantalla"): sin letrero en medio; solo brilla un momento la línea del nivel en el marcador.
+      const niv = q("#kb-nivel");
+      if (niv) { niv.classList.remove("sube"); void niv.offsetWidth; niv.classList.add("sube"); }
       navigator.vibrate?.(25);
     }
     if (ev === "punto") {
@@ -279,7 +280,6 @@ function ciclo(ahora: number): void {
   letreros = letreros.filter((l) => l.vida > 0);
   sacudida = Math.max(0, sacudida - dt * 2.5);
   mezcla = Math.min(1, mezcla + dt / 1.2);
-  if (anuncio) anuncio.vida -= dt;
   destello = Math.max(0, destello - dt * 4);
   cuadro = requestAnimationFrame(ciclo);
   pintarSeguro(dibujar);
@@ -374,23 +374,6 @@ function dibujar(): void {
     c.fillText(l.texto, l.x * e, l.y * e);
   }
   pintarPolvo(c, zona, W, H, 1 / 60, reloj);
-  if (anuncio && anuncio.vida > 0) {
-    // "NIVEL 2 · ZONA DE PESAS": entra grande y se desvanece.
-    const a = Math.min(1, anuncio.vida * 1.5), s2 = 1 + Math.max(0, anuncio.vida - 1.6) * 1.2;
-    c.save();
-    c.translate(W / 2, H * 0.36);
-    c.scale(s2, s2);
-    c.textAlign = "center"; c.textBaseline = "middle";
-    c.shadowColor = "#ff3bd4"; c.shadowBlur = 18;
-    c.fillStyle = `rgba(255, 255, 255, ${a})`;
-    c.font = `900 ${Math.round(11 * e)}px system-ui, sans-serif`;
-    c.fillText(`NIVEL ${anuncio.nivel}`, 0, 0);
-    c.shadowColor = "#7ef3ff"; c.shadowBlur = 10;
-    c.fillStyle = `rgba(126, 243, 255, ${a})`;
-    c.font = `800 ${Math.round(4.4 * e)}px ui-monospace, "SF Mono", Menlo, monospace`;
-    c.fillText(anuncio.zona.toUpperCase(), 0, 9 * e);
-    c.restore();
-  }
   c.setTransform(dpr, 0, 0, dpr, 0, 0);
   if (destello > 0) { c.fillStyle = `rgba(255, 255, 255, ${destello * 0.5})`; c.fillRect(0, 0, W, H); }
   const vin = c.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.4, W / 2, H / 2, Math.max(W, H) * 0.8);
