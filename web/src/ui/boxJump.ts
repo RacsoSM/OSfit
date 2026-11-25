@@ -508,90 +508,129 @@ function nivelDePlataforma(h: number): number {
   return Math.max(0, Math.floor(h / (METROS_POR_PISO * UNIDADES_POR_METRO)));
 }
 
-// TEMPORAL: propuestas de la plataforma de césped del nivel 1 (`osfit:bj-pasto`: a, b, c, d).
-function propuestaPasto(): "a" | "b" | "c" | "d" {
-  try { const v = globalThis.localStorage?.getItem("osfit:bj-pasto"); return v === "b" || v === "c" || v === "d" ? v : "a"; } catch { return "a"; }
+// TEMPORAL: propuestas de la plataforma de césped del nivel 1 (`osfit:bj-pasto`: c, e, f, g, h).
+type Pasto = "c" | "e" | "f" | "g" | "h";
+function propuestaPasto(): Pasto {
+  try { const v = globalThis.localStorage?.getItem("osfit:bj-pasto"); return v === "e" || v === "f" || v === "g" || v === "h" ? v : "c"; } catch { return "c"; }
 }
 
 /** Nivel 1 · Tierra: la plataforma de césped (propuestas). */
 function plataformaPasto(c: CanvasRenderingContext2D, cj: Cajon, x: number, y: number, w: number, e: number): void {
   const v = propuestaPasto();
-  if (v === "a") pastoTurf(c, cj, x, y, w, e);
-  else if (v === "b") pastoIsla(c, cj, x, y, w, e);
-  else if (v === "c") pastoCojin(c, cj, x, y, w, e);
-  else pastoJardinera(c, cj, x, y, w, e);
+  if (v === "e") pastoTreboles(c, cj, x, y, w, e);
+  else if (v === "f") pastoArbusto(c, cj, x, y, w, e);
+  else if (v === "g") pastoTerron(c, cj, x, y, w, e);
+  else if (v === "h") pastoMechones(c, cj, x, y, w, e);
+  else pastoCojin(c, cj, x, y, w, e);
   if (cj.tipo === "espuma") {
-    c.strokeStyle = "rgba(30, 15, 5, 0.75)"; c.lineWidth = Math.max(1, 0.35 * e);
-    c.beginPath(); c.moveTo(x + w * 0.5, y + 0.3 * e); c.lineTo(x + w * 0.45, y + GROSOR * e * 0.6); c.lineTo(x + w * 0.53, y + GROSOR * e); c.stroke();
+    c.strokeStyle = "rgba(30, 50, 20, 0.7)"; c.lineWidth = Math.max(1, 0.35 * e);
+    c.beginPath(); c.moveTo(x + w * 0.5, y - 0.2 * e); c.lineTo(x + w * 0.45, y + GROSOR * e * 0.5); c.lineTo(x + w * 0.53, y + GROSOR * e * 0.9); c.stroke();
   }
 }
 
-/** A · Pasto sintético de gimnasio (el de empujar el trineo): base de goma negra y líneas blancas. */
-function pastoTurf(c: CanvasRenderingContext2D, cj: Cajon, x: number, y: number, w: number, e: number): void {
-  const alto = GROSOR * e;
-  c.fillStyle = "#1c1c22"; redondeado(c, x, y + alto * 0.45, w, alto * 0.55, 0.8 * e); c.fill();
-  const g = c.createLinearGradient(0, y, 0, y + alto * 0.55);
-  g.addColorStop(0, cj.tipo === "espuma" ? "#8fcf6a" : "#3fbf4f"); g.addColorStop(1, cj.tipo === "espuma" ? "#6aa84e" : "#24893a");
-  c.fillStyle = g; redondeado(c, x, y, w, alto * 0.6, 0.8 * e); c.fill();
-  c.strokeStyle = "rgba(255, 255, 255, 0.12)"; c.lineWidth = 1;
-  for (let px = x + 1; px < x + w - 1; px += 1.5) { c.beginPath(); c.moveTo(px, y + 0.3 * e); c.lineTo(px, y + alto * 0.55); c.stroke(); }
-  c.fillStyle = "rgba(255, 255, 255, 0.85)";
-  for (const f of [0.25, 0.75]) c.fillRect(x + w * f - 0.3 * e, y + 0.2 * e, 0.6 * e, alto * 0.4);
-  c.fillStyle = "rgba(255, 255, 255, 0.25)"; c.fillRect(x + 0.8 * e, y + 0.25 * e, w - 1.6 * e, 0.35 * e);
+function verdeCojin(c: CanvasRenderingContext2D, cj: Cajon, y: number, alto: number, claro: string, oscuro: string): CanvasGradient {
+  const g = c.createLinearGradient(0, y, 0, y + alto);
+  g.addColorStop(0, cj.tipo === "espuma" ? "#c4e6a3" : claro); g.addColorStop(1, cj.tipo === "espuma" ? "#93b877" : oscuro);
+  return g;
 }
 
-/** B · Isla flotante: copete de pasto redondeado y tierra que se afina hacia abajo, con raíces. */
-function pastoIsla(c: CanvasRenderingContext2D, cj: Cajon, x: number, y: number, w: number, e: number): void {
-  const semilla = Math.round(cj.h * 7.3), alto = GROSOR * e;
-  const tierra = c.createLinearGradient(0, y, 0, y + alto * 1.9);
-  tierra.addColorStop(0, cj.tipo === "espuma" ? "#b58a5a" : "#8a5a32"); tierra.addColorStop(1, "#3f2412");
-  c.fillStyle = tierra;
-  c.beginPath(); c.moveTo(x, y + 0.6 * e);
-  c.quadraticCurveTo(x + w * 0.1, y + alto * 1.3, x + w * 0.45, y + alto * 1.9);
-  c.quadraticCurveTo(x + w * 0.55, y + alto * 2.0, x + w * 0.62, y + alto * 1.7);
-  c.quadraticCurveTo(x + w * 0.9, y + alto * 1.2, x + w, y + 0.6 * e); c.closePath(); c.fill();
-  c.strokeStyle = "rgba(60, 35, 15, 0.8)"; c.lineWidth = Math.max(0.8, 0.25 * e);
-  for (let k = 0; k < 3; k++) {
-    const px = x + w * (0.3 + ruido(semilla + k) * 0.4);
-    c.beginPath(); c.moveTo(px, y + alto * 1.4); c.quadraticCurveTo(px + 0.8 * e, y + alto * 1.9, px - 0.3 * e, y + alto * (2.1 + ruido(semilla + k * 3) * 0.5)); c.stroke();
-  }
-  const pasto = c.createLinearGradient(0, y - 0.6 * e, 0, y + 1.6 * e);
-  pasto.addColorStop(0, "#8fdc5f"); pasto.addColorStop(1, "#3b9a3e");
-  c.fillStyle = pasto; redondeado(c, x - 0.6 * e, y - 0.6 * e, w + 1.2 * e, 2.2 * e, 1.1 * e); c.fill();
-  c.fillStyle = "rgba(255, 255, 255, 0.25)"; redondeado(c, x + 0.6 * e, y - 0.4 * e, w - 1.2 * e, 0.5 * e, 0.25 * e); c.fill();
+function flor(c: CanvasRenderingContext2D, px: number, py: number, e: number, petalo: string, centro = "#ffcf3f", t = 1): void {
+  c.fillStyle = petalo;
+  for (let p = 0; p < 5; p++) { const a = (p / 5) * Math.PI * 2; c.beginPath(); c.arc(px + Math.cos(a) * 0.45 * e * t, py + Math.sin(a) * 0.45 * e * t, 0.35 * e * t, 0, Math.PI * 2); c.fill(); }
+  c.fillStyle = centro; c.beginPath(); c.arc(px, py, 0.3 * e * t, 0, Math.PI * 2); c.fill();
 }
 
-/** C · Cojín de pasto minimalista: una pastilla verde con brillo y florecitas. */
+/** C · Cojín de pasto minimalista: una pastilla verde con brillo y florecitas (la que te gustó). */
 function pastoCojin(c: CanvasRenderingContext2D, cj: Cajon, x: number, y: number, w: number, e: number): void {
   const semilla = Math.round(cj.h * 7.3), alto = GROSOR * e;
-  const g = c.createLinearGradient(0, y, 0, y + alto);
-  g.addColorStop(0, cj.tipo === "espuma" ? "#b5e08f" : "#6fd16a"); g.addColorStop(1, cj.tipo === "espuma" ? "#86b06a" : "#2e8f4a");
-  c.fillStyle = g; redondeado(c, x, y - 0.3 * e, w, alto, alto * 0.5); c.fill();
+  c.fillStyle = verdeCojin(c, cj, y, alto, "#6fd16a", "#2e8f4a"); redondeado(c, x, y - 0.3 * e, w, alto, alto * 0.5); c.fill();
   c.fillStyle = "rgba(255, 255, 255, 0.3)"; redondeado(c, x + alto * 0.4, y + 0.1 * e, w - alto * 0.8, 0.7 * e, 0.35 * e); c.fill();
-  for (let k = 0; k < Math.max(2, Math.round(w / (6 * e))); k++) {
-    const px = x + w * (0.15 + ruido(semilla + k * 2.2) * 0.7);
-    c.fillStyle = k % 2 ? "#ffd1e8" : "#ffffff";
-    for (let p = 0; p < 5; p++) { const a = (p / 5) * Math.PI * 2; c.beginPath(); c.arc(px + Math.cos(a) * 0.45 * e, y - 0.3 * e + Math.sin(a) * 0.45 * e, 0.35 * e, 0, Math.PI * 2); c.fill(); }
-    c.fillStyle = "#ffcf3f"; c.beginPath(); c.arc(px, y - 0.3 * e, 0.3 * e, 0, Math.PI * 2); c.fill();
-  }
+  for (let k = 0; k < Math.max(2, Math.round(w / (6 * e))); k++) flor(c, x + w * (0.15 + ruido(semilla + k * 2.2) * 0.7), y - 0.3 * e, e, k % 2 ? "#ffd1e8" : "#ffffff");
 }
 
-/** D · Jardinera de madera: tablones con sus vetas y el pasto desbordando por arriba. */
-function pastoJardinera(c: CanvasRenderingContext2D, cj: Cajon, x: number, y: number, w: number, e: number): void {
+/** E · Cojín con orilla de pasto: la pastilla con el borde de arriba en ondas, tréboles y una flor. */
+function pastoTreboles(c: CanvasRenderingContext2D, cj: Cajon, x: number, y: number, w: number, e: number): void {
   const semilla = Math.round(cj.h * 7.3), alto = GROSOR * e;
-  c.fillStyle = cj.tipo === "espuma" ? "#d9b27a" : "#b07a44"; redondeado(c, x, y + 0.4 * e, w, alto, 0.6 * e); c.fill();
-  c.strokeStyle = "rgba(70, 40, 15, 0.45)"; c.lineWidth = 1;
-  c.beginPath(); c.moveTo(x, y + 0.4 * e + alto / 2); c.lineTo(x + w, y + 0.4 * e + alto / 2); c.stroke();
-  for (let k = 1; k < 4; k++) { const px = x + (w * k) / 4 + (ruido(semilla + k) - 0.5) * e; c.beginPath(); c.moveTo(px, y + 0.4 * e); c.lineTo(px, y + 0.4 * e + alto); c.stroke(); }
-  c.fillStyle = "rgba(255, 230, 190, 0.3)"; c.fillRect(x, y + 0.4 * e, w, 0.4 * e);
-  const briznas = Math.round(w / (0.7 * e));
-  for (let k = 0; k < briznas; k++) {
-    const px = x + 0.4 * e + ((k + ruido(semilla + k * 0.7) * 0.6) * (w - 0.8 * e)) / briznas;
-    const largo = (1.1 + ruido(semilla + k * 1.3) * 1.2) * e, incl = (ruido(semilla + k * 2.1) - 0.5) * 1.1 * e;
-    c.strokeStyle = ["#3f9e3c", "#5cbf4a", "#8ad866"][k % 3]!; c.lineWidth = Math.max(1, 0.35 * e); c.lineCap = "round";
-    c.beginPath(); c.moveTo(px, y + 0.6 * e); c.quadraticCurveTo(px + incl * 0.3, y - largo * 0.5, px + incl, y - largo); c.stroke();
+  c.fillStyle = verdeCojin(c, cj, y, alto, "#4fb85a", "#25764a"); redondeado(c, x, y, w, alto, alto * 0.5); c.fill();
+  // La orilla en ondas, un verde más claro que cuelga sobre el cojín.
+  c.fillStyle = cj.tipo === "espuma" ? "#d6f0b8" : "#8ee06a";
+  c.beginPath(); c.moveTo(x + alto * 0.3, y + 0.4 * e);
+  const n = Math.max(4, Math.round(w / (1.8 * e)));
+  for (let k = 0; k <= n; k++) {
+    const px = x + alto * 0.3 + ((w - alto * 0.6) * k) / n;
+    c.quadraticCurveTo(px - (w / n) * 0.5, y + 2.2 * e, px, y + 1.2 * e);
   }
-  c.lineCap = "butt";
+  c.lineTo(x + w - alto * 0.3, y + 0.4 * e);
+  c.closePath(); c.fill();
+  redondeado(c, x + 0.2 * e, y - 0.3 * e, w - 0.4 * e, 1.6 * e, 0.8 * e); c.fill();
+  // Tréboles.
+  c.fillStyle = "#2f9c4a";
+  for (let k = 0; k < Math.max(2, Math.round(w / (5 * e))); k++) {
+    const px = x + w * (0.12 + ruido(semilla + k * 1.9) * 0.76), py = y - 0.2 * e;
+    for (const a of [-Math.PI / 2, Math.PI / 6, (5 * Math.PI) / 6]) { c.beginPath(); c.arc(px + Math.cos(a) * 0.38 * e, py + Math.sin(a) * 0.38 * e, 0.36 * e, 0, Math.PI * 2); c.fill(); }
+  }
+  flor(c, x + w * (0.2 + ruido(semilla) * 0.6), y - 0.5 * e, e, "#ffffff");
+}
+
+/** F · Arbusto esponjoso: bolitas de pasto encimadas, con brillos de rocío y moras rosas. */
+function pastoArbusto(c: CanvasRenderingContext2D, cj: Cajon, x: number, y: number, w: number, e: number): void {
+  const semilla = Math.round(cj.h * 7.3), alto = GROSOR * e;
+  c.fillStyle = verdeCojin(c, cj, y - alto * 0.3, alto * 1.3, "#7ad66a", "#2c8048");
+  redondeado(c, x, y + alto * 0.15, w, alto * 0.85, alto * 0.42); c.fill();
+  const n = Math.max(3, Math.round(w / (3.2 * e)));
+  for (let k = 0; k < n; k++) {
+    const px = x + alto * 0.35 + ((w - alto * 0.7) * (k + 0.5)) / n;
+    const r = (1.5 + ruido(semilla + k * 2.7) * 0.6) * e;
+    c.beginPath(); c.arc(px, y + 0.9 * e, r, 0, Math.PI * 2); c.fill();
+  }
+  c.fillStyle = "rgba(255, 255, 255, 0.35)";
+  for (let k = 0; k < n; k++) {
+    const px = x + alto * 0.35 + ((w - alto * 0.7) * (k + 0.5)) / n;
+    c.beginPath(); c.ellipse(px - 0.5 * e, y - 0.1 * e, 0.6 * e, 0.3 * e, -0.4, 0, Math.PI * 2); c.fill();
+  }
+  c.fillStyle = "#ff7ab6";
+  for (let k = 0; k < Math.max(2, Math.round(w / (5 * e))); k++) { c.beginPath(); c.arc(x + w * (0.15 + ruido(semilla + k * 3.1) * 0.7), y + (0.6 + ruido(semilla + k) * 2) * e, 0.32 * e, 0, Math.PI * 2); c.fill(); }
+}
+
+/** G · Terrón redondeado: arriba pasto con florecitas, abajo una franja de tierra; todo con esquinas suaves. */
+function pastoTerron(c: CanvasRenderingContext2D, cj: Cajon, x: number, y: number, w: number, e: number): void {
+  const semilla = Math.round(cj.h * 7.3), alto = GROSOR * e * 1.1;
+  c.fillStyle = cj.tipo === "espuma" ? "#c9a67c" : "#9a6a40"; redondeado(c, x, y, w, alto, alto * 0.45); c.fill();
+  c.fillStyle = "rgba(60, 30, 10, 0.3)";
+  for (let k = 0; k < Math.max(2, Math.round(w / (4 * e))); k++) { c.beginPath(); c.arc(x + w * (0.12 + ruido(semilla + k * 1.3) * 0.76), y + alto * 0.72, 0.4 * e, 0, Math.PI * 2); c.fill(); }
+  c.fillStyle = verdeCojin(c, cj, y - 0.3 * e, alto * 0.55, "#7fdc6a", "#3c9c48");
+  c.beginPath(); c.moveTo(x, y + alto * 0.45);
+  c.arcTo(x, y - 0.3 * e, x + alto * 0.45, y - 0.3 * e, alto * 0.45);
+  c.lineTo(x + w - alto * 0.45, y - 0.3 * e);
+  c.arcTo(x + w, y - 0.3 * e, x + w, y + alto * 0.45, alto * 0.45);
+  const n = Math.max(4, Math.round(w / (2 * e)));
+  for (let k = n; k >= 0; k--) c.lineTo(x + (w * k) / n, y + alto * 0.45 + (k % 2 ? 0.7 * e : 0));
+  c.closePath(); c.fill();
+  c.fillStyle = "rgba(255, 255, 255, 0.3)"; redondeado(c, x + alto * 0.4, y, w - alto * 0.8, 0.5 * e, 0.25 * e); c.fill();
+  for (let k = 0; k < Math.max(2, Math.round(w / (6 * e))); k++) flor(c, x + w * (0.15 + ruido(semilla + k * 2.2) * 0.7), y - 0.3 * e, e, ["#ffffff", "#ffe07a", "#c9b6ff"][k % 3]!);
+}
+
+/** H · Cojín con mechones: la pastilla con mechoncitos redondos arriba y dientes de león. */
+function pastoMechones(c: CanvasRenderingContext2D, cj: Cajon, x: number, y: number, w: number, e: number): void {
+  const semilla = Math.round(cj.h * 7.3), alto = GROSOR * e;
+  c.fillStyle = verdeCojin(c, cj, y, alto, "#66cc66", "#2a8a4c"); redondeado(c, x, y, w, alto, alto * 0.5); c.fill();
+  c.fillStyle = cj.tipo === "espuma" ? "#c4e6a3" : "#66cc66";
+  for (let k = 0; k < Math.max(3, Math.round(w / (2.6 * e))); k++) {
+    const px = x + alto * 0.3 + (w - alto * 0.6) * ruido(semilla + k * 1.1);
+    c.beginPath(); c.moveTo(px - 0.7 * e, y + 0.3 * e);
+    c.quadraticCurveTo(px - 0.5 * e, y - 1.2 * e, px - 0.1 * e, y - 1.4 * e);
+    c.quadraticCurveTo(px + 0.1 * e, y - 0.6 * e, px + 0.25 * e, y - 1.1 * e);
+    c.quadraticCurveTo(px + 0.6 * e, y - 0.6 * e, px + 0.7 * e, y + 0.3 * e);
+    c.closePath(); c.fill();
+  }
+  c.fillStyle = "rgba(255, 255, 255, 0.28)"; redondeado(c, x + alto * 0.4, y + 0.4 * e, w - alto * 0.8, 0.6 * e, 0.3 * e); c.fill();
+  // Dientes de león: un tallito y su bolita blanca.
+  for (let k = 0; k < Math.max(1, Math.round(w / (8 * e))); k++) {
+    const px = x + w * (0.2 + ruido(semilla + k * 4.4) * 0.6);
+    c.strokeStyle = "#3f8f3a"; c.lineWidth = Math.max(0.8, 0.2 * e);
+    c.beginPath(); c.moveTo(px, y + 0.2 * e); c.lineTo(px + 0.2 * e, y - 2.2 * e); c.stroke();
+    c.fillStyle = "rgba(255, 255, 255, 0.9)"; c.beginPath(); c.arc(px + 0.2 * e, y - 2.6 * e, 0.6 * e, 0, Math.PI * 2); c.fill();
+  }
 }
 
 /** Niveles 2 y 3 · Cielo y estratósfera: una nube esponjada (la que se rompe, medio transparente). */
