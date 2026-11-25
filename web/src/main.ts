@@ -75,6 +75,7 @@ import {
 import {
   cabeceraRegistro, cerrarSiVencido, conectarRegistro, empezarGuiado, entrenamientoAbierto, vistaDesdeHistorial,
 } from "./ui/registro";
+import { soltarMarcoJuego } from "./ui/marcoJuego";
 import { barraInferior, conectarBarra, marcarSexoBarra } from "./ui/barraInferior";
 import { archivosMapa, conectarMapa, type EstadoSvg } from "./ui/mapaMuscular";
 import { conectarPeso } from "./ui/pesoCorporal";
@@ -813,6 +814,12 @@ async function arrancar(): Promise<void> {
       resumenes,
       buzon,
     };
+    // Al cambiar de ventana, el teclado se cierra antes de borrar el campo donde escribía: si se
+    // borra con el teclado arriba, iOS puede dejar la vista corrida (ver `ui/marcoJuego.ts`).
+    if (activa.id !== ventanaPintada) {
+      const enfocado = document.activeElement;
+      if (enfocado instanceof HTMLElement && contenido.contains(enfocado)) enfocado.blur();
+    }
     contenido.innerHTML = contenidoDe(activa, datos);
     marcarBotonAtras(contenido);
     pintarVideos(activa.contenedorPropio === "videos");
@@ -823,7 +830,9 @@ async function arrancar(): Promise<void> {
     const cajaBoxJump = document.querySelector<HTMLElement>("#boxjump");
     if (cajaBoxJump) mostrarBoxJump(cajaBoxJump, activa.contenedorPropio === "boxjump", { guardar: async (p) => (await guardarPartidaBoxJump(p)).data, tabla: async () => (await tablaBoxJump({})).data, nombre: cliente.nombre ?? "" });
     // Con un juego abierto la página no se mueve (el juego es toda la pestaña).
-    document.body.classList.toggle("con-juego", activa.contenedorPropio === "juego" || activa.contenedorPropio === "kettlebell" || activa.contenedorPropio === "boxjump");
+    const conJuego = activa.contenedorPropio === "juego" || activa.contenedorPropio === "kettlebell" || activa.contenedorPropio === "boxjump";
+    document.body.classList.toggle("con-juego", conJuego);
+    if (!conJuego) soltarMarcoJuego();
     pintarMenu(activa.id, cliente.nombre);
     marcarVentanaActiva(document.querySelectorAll<HTMLElement>("#barra [data-ventana]"), ventanaDeBarra(activa.id));
     pintarRuleta();

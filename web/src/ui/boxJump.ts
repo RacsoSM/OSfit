@@ -4,6 +4,7 @@ import {
 import { conPartida, htmlLista, type ApiJuego, type EnvioPartida, type TablaDiscos } from "./juegoDiscos";
 import { ruido } from "./gimnasioFondo";
 import { escapar } from "./tarjetaDia";
+import { ajustarMarcoJuego, pintarSeguro, prepararMarcoJuego, vigilarMarcoJuego } from "./marcoJuego";
 import { marcasDe, pintarEtiqueta, pintarLinea } from "./marcasRecords";
 
 /**
@@ -278,8 +279,8 @@ function ciclo(ahora: number): void {
   sacudida = Math.max(0, sacudida - dt * 2.5);
   destello = Math.max(0, destello - dt * 4);
   if (anuncio) anuncio.vida -= dt;
-  dibujar(dt);
   cuadro = requestAnimationFrame(ciclo);
+  pintarSeguro(() => dibujar(dt));
 }
 
 function arrancar(): void {
@@ -662,12 +663,7 @@ function dibujar(_dt: number): void {
 // ── Montaje ──────────────────────────────────────────────────────────────────
 
 function ajustarMarco(): void {
-  const pantalla = q("#bj-pantalla");
-  if (!pantalla) return;
-  const cab = document.querySelector<HTMLElement>(".cabecera");
-  const barra = [...document.querySelectorAll<HTMLElement>("#barra, #barra > *")].find((b) => b.offsetHeight > 0) ?? null;
-  pantalla.style.top = `${cab ? Math.max(0, cab.getBoundingClientRect().bottom + 6) : 0}px`;
-  pantalla.style.bottom = `${barra ? Math.max(0, window.innerHeight - barra.getBoundingClientRect().top) : 0}px`;
+  ajustarMarcoJuego(q("#bj-pantalla"));
 }
 
 /** Muestra u oculta el juego. La primera vez arma su DOM; al salir a media partida la pausa. */
@@ -688,10 +684,8 @@ export function mostrarBoxJump(contenedor: HTMLElement, visible: boolean, conexi
     conectar(contenedor);
     tabla = tabla ?? tablaGuardada();
   }
-  window.scrollTo(0, 0);
-  ajustarMarco();
+  prepararMarcoJuego(ajustarMarco);
   requestAnimationFrame(() => {
-    ajustarMarco();
     if (estado === "inicio") salto = nuevoSalto(vistaAlto());
   });
   actualizar();
@@ -732,5 +726,5 @@ function conectar(c: HTMLElement): void {
     if (ev.key === "ArrowRight") { teclas = 1; ev.preventDefault(); }
   });
   document.addEventListener("keyup", (ev) => { if (ev.key === "ArrowLeft" || ev.key === "ArrowRight") teclas = 0; });
-  window.addEventListener("resize", () => { if (!c.hidden) ajustarMarco(); });
+  vigilarMarcoJuego(() => { if (!c.hidden) ajustarMarco(); });
 }

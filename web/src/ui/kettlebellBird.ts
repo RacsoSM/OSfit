@@ -5,6 +5,7 @@ import { conPartida, htmlLista, type ApiJuego, type EnvioPartida, type TablaDisc
 import { ZONAS, pintarPolvo, pintarZona } from "./gimnasioFondo";
 import { escapar } from "./tarjetaDia";
 import { marcasDe, pintarEtiqueta } from "./marcasRecords";
+import { ajustarMarcoJuego, pintarSeguro, prepararMarcoJuego, vigilarMarcoJuego } from "./marcoJuego";
 
 /**
  * La pantalla de Kettlebell Bird (lógica en `../kettlebellBird.ts`), del Arcade. Como Torre de
@@ -280,8 +281,8 @@ function ciclo(ahora: number): void {
   mezcla = Math.min(1, mezcla + dt / 1.2);
   if (anuncio) anuncio.vida -= dt;
   destello = Math.max(0, destello - dt * 4);
-  dibujar();
   cuadro = requestAnimationFrame(ciclo);
+  pintarSeguro(dibujar);
 }
 
 function arrancar(): void {
@@ -685,12 +686,7 @@ function pintarKettlebell(c: CanvasRenderingContext2D, x: number, y: number, r: 
 // ── Montaje ──────────────────────────────────────────────────────────────────
 
 function ajustarMarco(): void {
-  const pantalla = q("#kb-pantalla");
-  if (!pantalla) return;
-  const cab = document.querySelector<HTMLElement>(".cabecera");
-  const barra = [...document.querySelectorAll<HTMLElement>("#barra, #barra > *")].find((b) => b.offsetHeight > 0) ?? null;
-  pantalla.style.top = `${cab ? Math.max(0, cab.getBoundingClientRect().bottom + 6) : 0}px`;
-  pantalla.style.bottom = `${barra ? Math.max(0, window.innerHeight - barra.getBoundingClientRect().top) : 0}px`;
+  ajustarMarcoJuego(q("#kb-pantalla"));
 }
 
 /** Muestra u oculta el juego. La primera vez arma su DOM; al salir a media partida la pausa. */
@@ -711,10 +707,8 @@ export function mostrarKettlebell(contenedor: HTMLElement, visible: boolean, con
     conectar(contenedor);
     tabla = tabla ?? tablaGuardada();
   }
-  window.scrollTo(0, 0);
-  ajustarMarco();
+  prepararMarcoJuego(ajustarMarco);
   requestAnimationFrame(() => {
-    ajustarMarco();
     if (estado === "inicio") vuelo = nuevoVuelo(vistaAncho());
   });
   actualizar();
@@ -748,5 +742,5 @@ function conectar(c: HTMLElement): void {
     e.preventDefault();
     tocar();
   });
-  window.addEventListener("resize", () => { if (!c.hidden) ajustarMarco(); });
+  vigilarMarcoJuego(() => { if (!c.hidden) ajustarMarco(); });
 }
