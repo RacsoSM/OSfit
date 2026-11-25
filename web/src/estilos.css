@@ -2904,6 +2904,70 @@ body.con-juego .jd-pantalla { border-radius: 0; }
 .jd-lista li.p3 .jd-puesto { background: linear-gradient(145deg, #f0b07a, #b8692e); color: #1d0f04; }
 .jd-lista li.tuyo { background: rgba(255, 183, 3, 0.12); box-shadow: inset 0 0 0 1.5px rgba(255, 183, 3, 0.7); }
 .jd-lista li.jd-vacio { justify-content: center; color: rgba(255, 255, 255, 0.55); font-size: 14px; }
+.jd-corona { display: none; }
+
+/* ── TEMPORAL: propuestas de la tabla de Records (`:root[data-tabla]`: a, b, c) ── */
+@keyframes jd-brillo { 0%, 100% { filter: drop-shadow(0 0 4px #ffd45c); } 50% { filter: drop-shadow(0 0 12px #ffd45c); } }
+@keyframes jd-destello { from { background-position: -200% 0; } to { background-position: 200% 0; } }
+@keyframes jd-flecha { 0%, 55% { opacity: 1; } 56%, 100% { opacity: 0; } }
+
+/* A · HI-SCORES clásico: pantalla negra con líneas de tele, todo en letras de máquina; el 1 en dorado con corona. */
+:root[data-tabla="a"] .jd-hoja { background: repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.025) 0 1px, transparent 1px 3px), #07060c; box-shadow: 0 -2px 0 #ff3bd4, 0 -20px 50px rgba(0, 0, 0, 0.7); }
+:root[data-tabla="a"] .jd-hoja-titulo { font: 900 26px ui-monospace, "SF Mono", Menlo, monospace; letter-spacing: 4px; text-transform: uppercase; color: #ff3bd4; text-shadow: 0 0 10px #ff3bd4; }
+:root[data-tabla="a"] .jd-hoja-tuyo { font-family: ui-monospace, "SF Mono", Menlo, monospace; color: #7ef3ff; font-size: 12px; letter-spacing: 1px; }
+:root[data-tabla="a"] .jd-lista { gap: 2px; }
+:root[data-tabla="a"] .jd-lista li { background: none; border-radius: 0; padding: 9px 6px; font: 800 15px ui-monospace, "SF Mono", Menlo, monospace; text-transform: uppercase; letter-spacing: 1px; color: #7ef3ff; border-bottom: 1px dashed rgba(126, 243, 255, 0.15); }
+:root[data-tabla="a"] .jd-lista li b { font: 900 18px ui-monospace, "SF Mono", Menlo, monospace; color: inherit; }
+:root[data-tabla="a"] .jd-puesto { background: none !important; width: 34px; border-radius: 0; font: 900 15px ui-monospace, monospace; color: inherit !important; }
+:root[data-tabla="a"] .jd-puesto::after { content: "º"; }
+:root[data-tabla="a"] .jd-lista li.p2 { color: #e3e6ec; }
+:root[data-tabla="a"] .jd-lista li.p3 { color: #f0a868; }
+:root[data-tabla="a"] .jd-lista li.p1 { color: #ffd45c; font-size: 18px; padding: 14px 6px; text-shadow: 0 0 10px rgba(255, 212, 92, 0.8); border-bottom-color: rgba(255, 212, 92, 0.4); }
+:root[data-tabla="a"] .jd-lista li.p1 b { font-size: 24px; }
+:root[data-tabla="a"] .jd-corona { display: inline-block; font-size: 22px; margin-right: -4px; animation: jd-brillo 1.6s ease-in-out infinite; }
+:root[data-tabla="a"] .jd-lista li.tuyo { box-shadow: none; background: rgba(255, 59, 212, 0.1); }
+:root[data-tabla="a"] .jd-lista li.tuyo .jd-puesto::before { content: "▶"; position: absolute; margin-left: -26px; color: #ff3bd4; animation: jd-flecha 0.9s steps(1) infinite; }
+
+/* B · Podio neón: el 1 en una tarjeta dorada grande con corona; 2 y 3 con borde plata y bronce; los demás en neón cian. */
+:root[data-tabla="b"] .jd-hoja { background: radial-gradient(120% 60% at 50% 0%, #2a1650, #0d0b16 70%); }
+:root[data-tabla="b"] .jd-hoja-titulo { font: 900 24px ui-monospace, "SF Mono", Menlo, monospace; letter-spacing: 3px; text-transform: uppercase; color: #fff; text-shadow: 0 0 10px #ff3bd4, 0 0 2px #fff; }
+:root[data-tabla="b"] .jd-hoja-tuyo { color: rgba(255, 255, 255, 0.7); }
+:root[data-tabla="b"] .jd-lista { gap: 8px; }
+:root[data-tabla="b"] .jd-lista li { background: rgba(10, 10, 20, 0.6); border: 1.5px solid rgba(126, 243, 255, 0.35); box-shadow: 0 0 10px rgba(126, 243, 255, 0.12); border-radius: 12px; }
+:root[data-tabla="b"] .jd-lista li b { color: #7ef3ff; text-shadow: 0 0 6px rgba(126, 243, 255, 0.7); font-family: ui-monospace, "SF Mono", Menlo, monospace; }
+:root[data-tabla="b"] .jd-lista li.p2 { border-color: #c9ced8; box-shadow: 0 0 10px rgba(220, 225, 235, 0.25); }
+:root[data-tabla="b"] .jd-lista li.p2 b { color: #e9ecf2; text-shadow: none; }
+:root[data-tabla="b"] .jd-lista li.p3 { border-color: #d38a4c; box-shadow: 0 0 10px rgba(211, 138, 76, 0.3); }
+:root[data-tabla="b"] .jd-lista li.p3 b { color: #f0a868; text-shadow: none; }
+:root[data-tabla="b"] .jd-lista li.p1 { position: relative; flex-wrap: wrap; padding: 26px 16px 16px; border: 2px solid #ffd45c; color: #1a1300;
+  background: linear-gradient(110deg, #b8860b 0%, #ffe08a 25%, #fff4c9 35%, #ffd45c 50%, #c9930a 100%) 0 0 / 200% 100%; animation: jd-destello 3.5s linear infinite;
+  box-shadow: 0 0 22px rgba(255, 212, 92, 0.7); }
+:root[data-tabla="b"] .jd-lista li.p1 .jd-nombre { font-size: 20px; font-weight: 900; }
+:root[data-tabla="b"] .jd-lista li.p1 b { font-size: 30px; color: #1a1300; text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5); }
+:root[data-tabla="b"] .jd-lista li.p1 .jd-puesto { background: #1a1300; color: #ffd45c; width: 34px; height: 34px; }
+:root[data-tabla="b"] .jd-corona { display: block; position: absolute; top: -16px; left: 50%; transform: translateX(-50%) rotate(-8deg); font-size: 30px; animation: jd-brillo 1.6s ease-in-out infinite; }
+:root[data-tabla="b"] .jd-lista { padding-top: 16px; }
+:root[data-tabla="b"] .jd-lista li.tuyo:not(.p1) { border-color: #ff3bd4; box-shadow: 0 0 14px rgba(255, 59, 212, 0.5); background: rgba(255, 59, 212, 0.12); }
+
+/* C · Salón de la fama: medallas de verdad y el 1 en una placa dorada; los demás en morado con números de neón. */
+:root[data-tabla="c"] .jd-hoja { background: linear-gradient(to bottom, #1d1033, #0e0a18); }
+:root[data-tabla="c"] .jd-hoja-titulo { font: italic 900 26px system-ui, sans-serif; text-transform: uppercase; letter-spacing: 1px;
+  background: linear-gradient(to bottom, #fff, #9fe8ff 48%, #3b2a6b 50%, #ff9ee5); -webkit-background-clip: text; background-clip: text; color: transparent; }
+:root[data-tabla="c"] .jd-lista li { background: rgba(140, 90, 255, 0.1); border-radius: 10px; }
+:root[data-tabla="c"] .jd-lista li b { color: #ff9ee5; font-family: ui-monospace, "SF Mono", Menlo, monospace; text-shadow: 0 0 6px rgba(255, 79, 216, 0.6); }
+:root[data-tabla="c"] .jd-lista li.podio .jd-puesto { width: 30px; height: 30px; font-size: 0; position: relative; }
+:root[data-tabla="c"] .jd-lista li.p1 .jd-puesto::after { content: "🥇"; font-size: 24px; }
+:root[data-tabla="c"] .jd-lista li.p2 .jd-puesto::after { content: "🥈"; font-size: 24px; }
+:root[data-tabla="c"] .jd-lista li.p3 .jd-puesto::after { content: "🥉"; font-size: 24px; }
+:root[data-tabla="c"] .jd-lista li.podio .jd-puesto { background: none !important; }
+:root[data-tabla="c"] .jd-lista li.p1 { position: relative; padding: 18px 14px; border-radius: 14px; background: linear-gradient(135deg, #3a2a05, #6b4c0a 45%, #3a2a05); border: 2px solid #ffd45c; box-shadow: 0 0 18px rgba(255, 212, 92, 0.45), inset 0 0 20px rgba(255, 212, 92, 0.2); }
+:root[data-tabla="c"] .jd-lista li.p1 .jd-nombre { font-size: 19px; font-weight: 900; color: #ffe9a8; }
+:root[data-tabla="c"] .jd-lista li.p1 b { font-size: 28px; color: #ffd45c; text-shadow: 0 0 10px rgba(255, 212, 92, 0.8); }
+:root[data-tabla="c"] .jd-corona { display: inline-block; order: 3; font-size: 22px; animation: jd-brillo 1.6s ease-in-out infinite; }
+:root[data-tabla="c"] .jd-lista li.p1 b { order: 4; margin-left: 8px; }
+:root[data-tabla="c"] .jd-lista li.p1 .jd-nombre { order: 2; flex: 1; }
+:root[data-tabla="c"] .jd-lista li.p1 .jd-puesto { order: 1; }
+:root[data-tabla="c"] .jd-lista li.tuyo { box-shadow: inset 0 0 0 1.5px #7ef3ff; background: rgba(126, 243, 255, 0.1); }
 
 /* ---------- El póster del mes (historia final; diseño "A1 · S1" del entrenador, 2026-11-24) ----------
    A toda la pantalla, con el marco de los colores de los rangos. Semitransparente para que el

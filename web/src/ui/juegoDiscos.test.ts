@@ -21,8 +21,10 @@ describe("Torre de discos: la ventana", () => {
   it("la tabla: nombre completo escapado, su fila marcada y el podio", () => {
     const html = htmlLista(tabla, false);
     expect(html).toContain("Bety Cruz &lt;b&gt;");
-    expect(html).toMatch(/class="tuyo podio p2"[\s\S]*Ana Soto Ruiz \(tú\)/);
-    expect(html).toMatch(/class=""[\s\S]*Eva Luna/);
+    expect(html).toMatch(/class="i\d tuyo podio p2"[\s\S]*Ana Soto Ruiz \(tú\)/);
+    expect(html).toMatch(/class="i\d"[\s\S]*Eva Luna/);
+    // Solo el primer lugar lleva corona.
+    expect(html.match(/jd-corona/g)).toHaveLength(1);
     expect(htmlLista({ filas: [], tuMejor: 0 }, false)).toContain("Todavía nadie ha jugado");
     expect(htmlLista(null, false)).toContain("Cargando");
     expect(htmlLista(null, true)).toContain("No se pudo cargar el marcador");

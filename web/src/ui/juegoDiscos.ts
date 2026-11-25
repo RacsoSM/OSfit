@@ -189,9 +189,9 @@ export function htmlLista(t: TablaDiscos | null, error: boolean): string {
   if (error && !t) return `<li class="jd-vacio">No se pudo cargar el marcador.</li>`;
   if (!t) return `<li class="jd-vacio">Cargando…</li>`;
   if (t.filas.length === 0) return `<li class="jd-vacio">Todavía nadie ha jugado. ¡Pon el primer récord!</li>`;
-  return t.filas.map((f) => `
-    <li class="${f.esTuyo ? "tuyo" : ""}${f.puesto <= 3 ? ` podio p${f.puesto}` : ""}">
-      <span class="jd-puesto">${f.puesto}</span><span class="jd-nombre">${escapar(f.nombre)}${f.esTuyo ? " (tú)" : ""}</span><b>${f.puntos}</b>
+  return t.filas.map((f, i) => `
+    <li class="i${i}${f.esTuyo ? " tuyo" : ""}${f.puesto <= 3 ? ` podio p${f.puesto}` : ""}">
+      ${f.puesto === 1 ? `<span class="jd-corona" aria-hidden="true">👑</span>` : ""}<span class="jd-puesto">${f.puesto}</span><span class="jd-nombre">${escapar(f.nombre)}${f.esTuyo ? " (tú)" : ""}</span><b>${f.puntos}</b>
     </li>`).join("");
 }
 
