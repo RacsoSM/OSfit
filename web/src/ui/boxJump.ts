@@ -32,6 +32,13 @@ let salto: Salto = nuevoSalto(180);
 let inicio = 0;
 let duracion = 0;
 let objetivo: number | null = null;
+/**
+ * Se mueve con el deslizar del dedo, no hacia donde se toca (entrenador, 2026-11-25: "que
+ * reaccione a los swipes que hago, no que me siga el dedo en cuanto toco un lugar"): tocar no la
+ * mueve; deslizar la mueve lo mismo que el dedo (un poco más), y puede cruzar la orilla.
+ */
+let dedoX: number | null = null;
+const SENSIBILIDAD = 1.3;
 let teclas = 0;
 let particulas: Particula[] = [];
 let pedazos: Pedazo[] = [];
@@ -102,7 +109,7 @@ export function htmlCapaBoxJump(e: Estado, puntos: number, g: Guardado, nuevoRec
       <div class="jd-capa-caja">
         <p class="jd-capa-marca">OSFIT · Arcade</p>
         <p class="jd-capa-titulo">Box Jump</p>
-        <p class="jd-capa-texto">Rebotas sola sobre las plataformas: arrastra el dedo hacia donde quieres ir y sube de la Tierra al cielo, al espacio, a la Luna, a Marte… Cada metro es un punto. Cuidado con las que se rompen; los resortes te dan un súper salto.</p>
+        <p class="jd-capa-texto">Rebotas sola sobre las plataformas: desliza el dedo a la izquierda o a la derecha para moverte y sube de la Tierra al cielo, al espacio, a la Luna, a Marte… Cada metro es un punto. Cuidado con las que se rompen; los resortes te dan un súper salto.</p>
         <button type="button" class="jd-boton" data-bj="jugar">Jugar</button>
         <button type="button" class="jd-boton secundario" data-bj="marcador">Ver marcador</button>
       </div>`;
@@ -216,7 +223,7 @@ function jugar(): void {
   salto = nuevoSalto(vistaAlto());
   particulas = []; pedazos = []; letreros = []; sacudida = 0; destello = 0; aplaste = 1;
   pisoVisto = 1;
-  objetivo = null;
+  objetivo = null; dedoX = null;
   guardado = "nada"; record = false; hoja = false;
   estado = "jugando";
   inicio = performance.now();
@@ -237,7 +244,10 @@ function ciclo(ahora: number): void {
   reloj += dt;
   if (estado === "jugando") {
     const apunta = teclas !== 0 ? salto.x + teclas * 30 : objetivo;
+    const xAntes = salto.x;
     const ev = avanzar(salto, dt, apunta);
+    // Si cruzó la orilla, la meta del deslizar cruza con ella.
+    if (objetivo !== null && Math.abs(salto.x - xAntes) > ANCHO / 2) objetivo += salto.x - xAntes;
     if (ev === "rebote" || ev === "trampolin" || ev === "espuma") {
       aplaste = ev === "trampolin" ? 0.55 : 0.72;
       polvo(salto.x, salto.h, "rgba(230, 220, 200, 0.7)", ev === "trampolin" ? 14 : 6, ev === "trampolin" ? 40 : 22);
@@ -768,10 +778,16 @@ function conectar(c: HTMLElement): void {
     if (estado !== "jugando") return;
     ev.preventDefault();
     try { pantalla.setPointerCapture(ev.pointerId); } catch { /* sin captura también sirve */ }
-    objetivo = aX(ev);
+    dedoX = aX(ev);
+    objetivo = salto.x;
   });
-  pantalla?.addEventListener("pointermove", (ev) => { if (objetivo !== null && estado === "jugando") objetivo = aX(ev); });
-  const soltar = () => { objetivo = null; };
+  pantalla?.addEventListener("pointermove", (ev) => {
+    if (dedoX === null || estado !== "jugando") return;
+    const x = aX(ev);
+    objetivo = (objetivo ?? salto.x) + (x - dedoX) * SENSIBILIDAD;
+    dedoX = x;
+  });
+  const soltar = () => { objetivo = null; dedoX = null; };
   pantalla?.addEventListener("pointerup", soltar);
   pantalla?.addEventListener("pointercancel", soltar);
   c.addEventListener("click", (ev) => {
