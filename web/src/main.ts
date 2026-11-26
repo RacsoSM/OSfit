@@ -1042,27 +1042,38 @@ async function arrancar(): Promise<void> {
   // Con señal dudosa, igual que con el modo: Firestore sin red. Si no, con la red "prendida"
   // espera unos 10 s a convencerse de que no hay antes de dar lo guardado, y la renovación de
   // la credencial otros tantos. Se vuelve a probar sola hasta que haya internet de verdad.
+  //
+  // Lo guardado no espera a la prueba (2026-11-26): antes, con señal dudosa, la página se
+  // quedaba hasta 3 s (`PLAZO_PRUEBA_MS`) en el esqueleto antes de mostrar nada. Ahora Firestore
+  // arranca sin red, los listeners entregan al instante lo que el teléfono tiene guardado, y la
+  // prueba corre por detrás: si hay internet, credencial primero y luego la red (el mismo orden
+  // de siempre, así nada sale sin credencial); si no, se queda sin red y sigue probando sola.
+  // Mientras se prueba cuenta como señal dudosa: la cola no intenta mandar nada todavía.
   if (modoSinDatos()) await redDeFirestore(false).catch(() => {});
-  else if (!(await pruebaDeRed)) {
+  else {
     senalDudosa = true;
     await redDeFirestore(false).catch(() => {});
-    esperarRed(probarRed, async () => {
+    const conRed = async (): Promise<void> => {
       senalDudosa = false;
       // Con el modo puesto mientras tanto, la red la prende `cambiarSinDatos` al quitarlo.
       if (modoSinDatos()) return;
       await credencialLista().catch(() => {});
       await redDeFirestore(true).catch(() => {});
       enviarCola();
-    }, {
-      cada: (f, ms) => { const reloj = setInterval(f, ms); return () => clearInterval(reloj); },
-      alVolver: (f) => {
-        window.addEventListener("online", f);
-        document.addEventListener("visibilitychange", () => {
-          if (document.visibilityState === "visible") f();
-        });
-      },
+    };
+    void pruebaDeRed.then((hay) => {
+      if (hay) { void conRed(); return; }
+      esperarRed(probarRed, () => { void conRed(); }, {
+        cada: (f, ms) => { const reloj = setInterval(f, ms); return () => clearInterval(reloj); },
+        alVolver: (f) => {
+          window.addEventListener("online", f);
+          document.addEventListener("visibilitychange", () => {
+            if (document.visibilityState === "visible") f();
+          });
+        },
+      });
     });
-  } else await credencialLista().catch(() => {});
+  }
 
   // Lo que se terminó sin internet sale en cuanto hay señal.
   enviarCola();

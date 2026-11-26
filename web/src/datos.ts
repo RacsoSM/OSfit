@@ -315,6 +315,10 @@ export function observarCliente(clienteId: string, alCambiar: (c: Cliente | null
     onSnapshot(
       doc(db, "clientes", clienteId),
       (snap) => {
+        // Sin red y sin copia en el teléfono (la primera visita, mientras se prueba la señal:
+        // ver `arrancar` en `main.ts`), el documento "no existe" solo porque todavía no se trajo.
+        // Eso no es "no encontramos tus datos": se espera al servidor con el esqueleto puesto.
+        if (!snap.exists() && snap.metadata.fromCache) return;
         alLlegar();
         alCambiar(snap.exists() ? (snap.data() as Cliente) : null);
       },
