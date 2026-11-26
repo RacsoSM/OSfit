@@ -106,6 +106,7 @@ import { iniciarCronometros } from "./ui/cronometro";
 import { conectarSugerencias, reiniciarSugerencias } from "./ui/sugerencias";
 import { calificarEsfuerzo, esfuerzosPendientes, reenviarEsfuerzos } from "./esfuerzo";
 import { conectarRpe } from "./ui/rpe";
+import { conectarFacturacion } from "./ui/facturacion";
 import { conectarBuzon, leerVisto, marcarVistas, resaltarAviso, sinLeer } from "./ui/buzon";
 
 const app = document.querySelector<HTMLElement>("#app")!;
@@ -1000,6 +1001,10 @@ async function arrancar(): Promise<void> {
         if (v === "resumenMensual" && mes) verHistoria(mes);
         else abrirVentana(v as IdVentana);
       });
+      return;
+    }
+    if (activa.id === "facturacion") {
+      conectarFacturacion();
       return;
     }
     if (activa.id === "sugerencias") {

@@ -37,6 +37,9 @@ describe("Facturación", () => {
     expect(html).toContain("BBVA");
     expect(html).toContain("0123 &lt;b&gt;");
     expect(html).toContain("Manda tu comprobante");
+    // Cada dato con su botón de copiar, con el valor tal cual.
+    expect(html).toContain('data-copiar="BBVA"');
+    expect(html).toContain('aria-label="Copiar CLABE"');
   });
 
   it("el estado del periodo", () => {

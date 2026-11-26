@@ -43,6 +43,9 @@ export function estadoPeriodo(vence: string, hoy: string): { texto: string; tono
   return { texto: `Te quedan ${dias} días`, tono: dias <= 5 ? "pronto" : "bien" };
 }
 
+const ICONO_COPIAR = `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
+const ICONO_COPIADO = `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>`;
+
 export function ventanaFacturacion(c: Cliente, hoy: string, config: ConfigFacturacion | null): string {
   if (c.facturacionWeb !== true) {
     return `
@@ -80,8 +83,14 @@ export function ventanaFacturacion(c: Cliente, hoy: string, config: ConfigFactur
     mensualidad !== null && mensualidad > 0 ? `<li><span>Tu mensualidad</span><b>${pesos(mensualidad)}</b></li>` : "",
   ].join("");
 
+  // Cada dato con su botón de copiar (entrenador, 2026-11-26): para pegarlo en la app del banco.
   const comoPagar = config
-    ? `<ul class="factura-lista">${config.lineas.map((l) => `<li><span>${escapar(l.etiqueta)}</span><b>${escapar(l.valor)}</b></li>`).join("")}</ul>
+    ? `<ul class="factura-lista">${config.lineas.map((l) => `
+        <li><span>${escapar(l.etiqueta)}</span>
+          <span class="factura-dato"><b>${escapar(l.valor)}</b>
+            <button type="button" class="factura-copiar" data-copiar="${escapar(l.valor)}" aria-label="Copiar ${escapar(l.etiqueta)}">${ICONO_COPIAR}</button>
+          </span>
+        </li>`).join("")}</ul>
        ${config.nota ? `<p class="factura-nota">${escapar(config.nota)}</p>` : ""}`
     : `<p class="factura-nota">Pídele a tu coach los datos para pagar.</p>`;
 
@@ -92,4 +101,36 @@ export function ventanaFacturacion(c: Cliente, hoy: string, config: ConfigFactur
       <p class="tarjeta-titulo">Cómo pagar</p>
       ${comoPagar}
     </div>`;
+}
+
+/**
+ * Los botones de copiar. Al copiar, el ícono cambia a una palomita un momento. Sin permiso del
+ * navegador para el portapapeles, se copia seleccionando un campo de texto escondido.
+ */
+export function conectarFacturacion(): void {
+  document.querySelectorAll<HTMLButtonElement>("#contenido .factura-copiar[data-copiar]").forEach((b) =>
+    b.addEventListener("click", async () => {
+      const valor = b.dataset.copiar ?? "";
+      let ok = false;
+      try {
+        await navigator.clipboard.writeText(valor);
+        ok = true;
+      } catch {
+        const t = document.createElement("textarea");
+        t.value = valor;
+        t.setAttribute("readonly", "");
+        t.style.position = "fixed";
+        t.style.opacity = "0";
+        document.body.append(t);
+        t.select();
+        ok = document.execCommand("copy");
+        t.remove();
+      }
+      if (!ok) return;
+      b.innerHTML = ICONO_COPIADO;
+      b.classList.add("copiado");
+      b.setAttribute("aria-label", "Copiado");
+      setTimeout(() => { b.innerHTML = ICONO_COPIAR; b.classList.remove("copiado"); }, 1600);
+    })
+  );
 }

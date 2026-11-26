@@ -3067,5 +3067,13 @@ body.con-espacio .cabecera .titulo-ventana { visibility: hidden; }
 .factura-lista li:first-child { border-top: 0; }
 .factura-lista span { color: var(--texto-tenue); }
 .factura-lista b { text-align: right; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+.factura-dato { display: inline-flex; align-items: center; gap: 6px; min-width: 0; color: var(--texto); }
+.factura-lista li > span:first-child { white-space: nowrap; }
+.factura-copiar {
+  flex: none; display: inline-grid; place-items: center; width: 30px; height: 30px; margin: -6px -6px -6px 0;
+  border: 0; border-radius: 9px; background: none; color: var(--texto-tenue); cursor: pointer;
+}
+.factura-copiar:active { background: var(--superficie-alta); }
+.factura-copiar.copiado { color: var(--verde); }
 .factura-nota { margin: 10px 0 0; font-size: 13px; color: var(--texto-tenue); line-height: 1.45; }
 .factura-sin-acceso p { line-height: 1.45; }
