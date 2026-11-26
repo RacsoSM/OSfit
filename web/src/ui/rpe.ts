@@ -1,4 +1,4 @@
-import { SEMANAS, type SemanaCiclo, type Sugerencia } from "../ciclo";
+import { DIAS_PARA_AVANZAR, SEMANAS, type SemanaCiclo, type Sugerencia } from "../ciclo";
 
 /**
  * El RPE de la semana en la tarjeta "Hoy te toca" (entrenador, 2026-11-26; el ciclo en
@@ -53,7 +53,8 @@ export function modalRpe(s: SemanaCiclo): string {
         <p class="rpe-texto">${EN_PALABRAS[s.fase]}</p>
         <p class="rpe-texto tenue">El <strong>RPE</strong> es qué tan pesado se siente, del 1 al 10: la misma escala de
           «¿Qué tan pesado estuvo tu entrenamiento?» al terminar. Tu plan va en bloques de 4 semanas que
-          suben poco a poco, con una de descarga para recuperarte.</p>
+          suben poco a poco, con una de descarga para recuperarte. Pasas a la siguiente semana cuando
+          entrenas al menos ${DIAS_PARA_AVANZAR} días; si no, la semana se repite.</p>
         <ol class="rpe-semanas">${filas}</ol>
         <button type="button" class="boton" id="cerrar-rpe">Entendido</button>
       </div>

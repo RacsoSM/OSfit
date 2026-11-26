@@ -2,7 +2,8 @@
  * El ciclo de entrenamiento de cada clienta y su RPE objetivo (entrenador, 2026-11-26).
  *
  * Bloques de 4 semanas: tres de carga que suben (base RPE 7, carga RPE 8, fuerza RPE 8–9) y una
- * de descarga (RPE 5–6), y vuelta a empezar. Cada clienta lleva el suyo, contado desde su primer
+ * de descarga (RPE 5–6), y vuelta a empezar. Una semana solo cuenta si entrenó al menos 3 días
+ * (`DIAS_PARA_AVANZAR`); si no, se repite. Cada clienta lleva el suyo, contado desde su primer
  * entrenamiento (las que ya entrenaban, desde `ARRANQUE_CICLO`), así no descargan todas la misma
  * semana con el tiempo. Las semanas van de lunes a domingo,
  * como el resto de la página.
@@ -33,8 +34,6 @@ export const SEMANAS: readonly Omit<SemanaCiclo, "numero" | "total">[] = [
   { fase: "fuerza", rpe: "8–9", objetivo: 8.5 },
   { fase: "descarga", rpe: "5–6", objetivo: 5.5 },
 ];
-
-const DIA_MS = 86_400_000;
 
 /** El lunes (AAAA-MM-DD) de la semana de `fecha`. */
 export function lunesDe(fecha: string): string {
@@ -68,15 +67,40 @@ export function inicioDelCiclo(
  */
 export const ARRANQUE_CICLO = "2026-11-23";
 
-export function semanaDelCiclo(primerEntreno: string | null, hoy: string): SemanaCiclo {
+/**
+ * Lo que tiene que entrenar en una semana (lunes a domingo) para que el ciclo avance: al menos 3
+ * días con asistencia (entrenador, 2026-11-26). Con menos, la semana del bloque se repite: una
+ * semana de 2 días no es una semana de carga, y unas vacaciones dejan el ciclo donde iba.
+ */
+export const DIAS_PARA_AVANZAR = 3;
+
+/**
+ * En qué semana del bloque va. Cuenta, desde su inicio, las semanas YA TERMINADAS en que fue al
+ * menos `DIAS_PARA_AVANZAR` días; la de hoy todavía no cuenta (avanza el lunes siguiente si la
+ * completa).
+ */
+export function semanaDelCiclo(
+  primerEntreno: string | null,
+  hoy: string,
+  asistencias: readonly { fecha: string; asistio: boolean }[] = []
+): SemanaCiclo {
   const total = SEMANAS.length;
   // Sin ningún entrenamiento todavía, su ciclo empieza con el primero: hasta entonces, semana 1.
   const inicio = primerEntreno === null ? hoy : primerEntreno > ARRANQUE_CICLO ? primerEntreno : ARRANQUE_CICLO;
-  let i = 0;
-  if (inicio <= hoy) {
-    const semanas = Math.round((Date.parse(`${lunesDe(hoy)}T12:00:00Z`) - Date.parse(`${lunesDe(inicio)}T12:00:00Z`)) / (7 * DIA_MS));
-    i = ((semanas % total) + total) % total;
+  const desde = lunesDe(inicio);
+  const hasta = lunesDe(hoy);
+  // Días distintos con asistencia, por semana (su lunes), entre el inicio y antes de esta semana.
+  const diasPorSemana = new Map<string, Set<string>>();
+  for (const a of asistencias) {
+    if (!a.asistio || a.fecha < desde || a.fecha >= hasta) continue;
+    const lunes = lunesDe(a.fecha);
+    const dias = diasPorSemana.get(lunes) ?? new Set<string>();
+    dias.add(a.fecha);
+    diasPorSemana.set(lunes, dias);
   }
+  let completas = 0;
+  for (const dias of diasPorSemana.values()) if (dias.size >= DIAS_PARA_AVANZAR) completas += 1;
+  const i = completas % total;
   return { ...SEMANAS[i], numero: i + 1, total };
 }
 

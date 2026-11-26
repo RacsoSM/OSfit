@@ -262,7 +262,7 @@ export interface Ventana {
  */
 /** El RPE de la semana y la sugerencia según lo que reportó (`ciclo.ts`). */
 function rpeDeLaSemana(d: DatosCliente) {
-  const semana = semanaDelCiclo(inicioDelCiclo(d.asistencias, d.sesiones), d.hoy);
+  const semana = semanaDelCiclo(inicioDelCiclo(d.asistencias, d.sesiones), d.hoy, d.asistencias);
   const fechaDe = new Map((d.sesiones ?? []).map((s) => [s.id, s.fecha] as const));
   const reportes = Object.entries(d.esfuerzos ?? {})
     .map(([id, esfuerzo]) => ({ fecha: fechaDe.get(id) ?? "", esfuerzo }))
