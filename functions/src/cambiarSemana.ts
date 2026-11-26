@@ -1,6 +1,22 @@
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { FieldValue } from "firebase-admin/firestore";
+import { getMessaging } from "firebase-admin/messaging";
+import { logger } from "firebase-functions";
 import { REGION, clienteDeLaSesion, db, hoyEnMazatlan } from "./comun";
+
+/** GEMELOS de `avisarFalta.ts` y `Notificaciones.kt`: el tema del entrenador y su canal. */
+const TEMA_ENTRENADOR = "entrenador";
+const CANAL_AVISOS = "avisos_falta";
+
+/** Los nombres de las semanas del bloque, como los ve la clienta (`web/src/ui/rpe.ts`). */
+const FASES = ["Base", "Carga", "Fuerza", "Descarga"];
+
+/** El texto del aviso al entrenador. `desde` es la semana en que iba (si la página la mandó). */
+export function cuerpoAviso(nombre: string, semana: number, desde: number | null): string {
+  const a = FASES[semana - 1];
+  const de = desde !== null && desde !== semana ? FASES[desde - 1] : null;
+  return de ? `${nombre} cambió su semana de ${de} a ${a}.` : `${nombre} cambió su semana a ${a}.`;
+}
 
 /** Las semanas del bloque del ciclo de RPE (`web/src/ciclo.ts`): 1 base, 2 carga, 3 fuerza, 4 descarga. */
 export const SEMANAS_DEL_BLOQUE = 4;
@@ -23,7 +39,8 @@ export function semanaValida(x: unknown): number | null {
  * del RPE, con una confirmación que le recomienda decidirlo con su coach. Se guarda como
  * `cicloAjuste` en su documento: esta semana (su lunes) es la `semana` elegida, y de ahí el
  * ciclo sigue contando como siempre (avanza con cada semana de 3 días o más). Uno nuevo pisa al
- * anterior. Queda además en `cambiosSemana` para que el entrenador lo vea.
+ * anterior. Queda además en `cambiosSemana`, y al entrenador le llega una notificación
+ * (entrenador, 2026-11-26: prefiere el aviso a verlo en la app).
  */
 export const cambiarSemana = onCall({ region: REGION }, async (request) => {
   const clienteId = await clienteDeLaSesion(request);
@@ -38,5 +55,19 @@ export const cambiarSemana = onCall({ region: REGION }, async (request) => {
     clienteId, fecha: hoy, semana, creado: FieldValue.serverTimestamp(),
   });
   await lote.commit();
+
+  // El aviso es un extra: si falla, el cambio ya quedó guardado y a ella no le sale error.
+  try {
+    const cliente = await firestore.collection("clientes").doc(clienteId).get();
+    const nombre = (cliente.get("nombre") as string | undefined)?.trim() || "Una clienta";
+    const desde = semanaValida({ semana: (request.data as { desde?: unknown } | null)?.desde });
+    await getMessaging().send({
+      topic: TEMA_ENTRENADOR,
+      notification: { title: "Cambio de semana", body: cuerpoAviso(nombre, semana, desde) },
+      android: { priority: "high", notification: { channelId: CANAL_AVISOS } },
+    });
+  } catch (error) {
+    logger.error("No se pudo notificar el cambio de semana", { clienteId, error });
+  }
   return { ok: true as const, semana, lunes };
 });

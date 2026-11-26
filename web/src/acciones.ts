@@ -41,7 +41,7 @@ export const cambiarDia = llamable<
 >("cambiarDia", true);
 
 /** Cambiar en qué semana del bloque del ciclo de RPE va (`ciclo.ts`, `ui/rpe.ts`). */
-export const cambiarSemana = llamable<{ semana: number }, { ok: true; semana: number; lunes: string }>("cambiarSemana");
+export const cambiarSemana = llamable<{ semana: number; desde: number }, { ok: true; semana: number; lunes: string }>("cambiarSemana");
 
 export const revivirRacha = llamable<
   { fecha: string },

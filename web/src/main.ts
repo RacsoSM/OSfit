@@ -1042,7 +1042,7 @@ async function arrancar(): Promise<void> {
       if (empezarGuiado(r)) marcarAsistencia({}).catch(() => {});
       abrirVentana("registro");
     });
-    conectarRpe(pintar, async (semana) => (await conPlazo(cambiarSemana({ semana }), 15_000)).data);
+    conectarRpe(pintar, async (semana, desde) => (await conPlazo(cambiarSemana({ semana, desde }), 15_000)).data);
     conectarAccionDia(pintar, (diaIndex) => {
       anotarCambio(almacenCambio, { diaIndex, fecha: hoy });
       void enviarCambioDia();

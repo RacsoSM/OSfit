@@ -18,6 +18,8 @@ let error: string | null = null;
  * cambia al instante y no regresa un momento a la semana vieja.
  */
 let ajustePropio: { semana: number; lunes: string } | null = null;
+/** La semana en que va, para decirle al entrenador de cuál a cuál se cambió. */
+let semanaActual = 1;
 
 /** La semana elegida que manda, la del documento o la recién cambiada aquí. */
 export function ajusteVigente(delDocumento: { semana: number; lunes: string } | null | undefined): { semana: number; lunes: string } | null {
@@ -69,6 +71,7 @@ export function notaRpe(sug: Sugerencia, s: SemanaCiclo): string {
  * (entrenador, 2026-11-26).
  */
 export function modalRpe(s: SemanaCiclo): string {
+  semanaActual = s.numero;
   if (!abierta) return "";
   if (porConfirmar !== null) return confirmacion(s, porConfirmar);
   const entrada = recienAbierta ? " entrando" : "";
@@ -122,7 +125,7 @@ function confirmacion(s: SemanaCiclo, semana: number): string {
  * `alCambiar` guarda la semana elegida en el servidor (`cambiarSemana`) y dice esta semana (su
  * lunes); si falla, se queda el pop up con el error.
  */
-export function conectarRpe(repintar: () => void, alCambiar: (semana: number) => Promise<{ lunes: string }>): void {
+export function conectarRpe(repintar: () => void, alCambiar: (semana: number, desde: number) => Promise<{ lunes: string }>): void {
   document.querySelector("#abrir-rpe")?.addEventListener("click", () => {
     abierta = true;
     recienAbierta = true;
@@ -161,7 +164,7 @@ export function conectarRpe(repintar: () => void, alCambiar: (semana: number) =>
     error = null;
     repintar();
     try {
-      const { lunes } = await alCambiar(semana);
+      const { lunes } = await alCambiar(semana, semanaActual);
       ajustePropio = { semana, lunes };
       abierta = false;
       porConfirmar = null;
