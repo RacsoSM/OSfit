@@ -36,7 +36,6 @@ object AppContainer {
     val bancoEjerciciosRepository: BancoEjerciciosRepository by lazy { BancoEjerciciosRepository() }
     val accesoWebRepository: AccesoWebRepository by lazy { AccesoWebRepository() }
     val cambioDiaWebRepository: CambioDiaWebRepository by lazy { CambioDiaWebRepository() }
-    val cambioSemanaWebRepository: CambioSemanaWebRepository by lazy { CambioSemanaWebRepository() }
 
     val avisoFaltaWebRepository: AvisoFaltaWebRepository by lazy { AvisoFaltaWebRepository() }
     val videoPublicadoRepository: VideoPublicadoRepository by lazy { VideoPublicadoRepository() }
