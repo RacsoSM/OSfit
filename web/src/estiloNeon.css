@@ -249,16 +249,14 @@
 
 /* ---------- Tarjeta "Hoy te toca" (2026-11-26) ---------- */
 
-/* El tubo de neón solo en el número del día y en el nombre; los separadores, un hilo del color. */
+/* El tubo de neón solo en la pastilla del RPE y en el nombre; los separadores, un hilo del color. */
 :root[data-estilo="neon"] .dia-hoy {
   --dh-acento: var(--primario-claro);
   --dh-linea: color-mix(in srgb, var(--primario) 28%, transparent);
 }
-:root[data-estilo="neon"] .dh-insignia {
-  background: transparent; border: 1.5px solid var(--primario-claro);
-  box-shadow: 0 0 8px var(--halo), inset 0 0 8px color-mix(in srgb, var(--primario) 30%, transparent);
-  text-shadow: var(--brillo-texto);
-}
+
 :root[data-estilo="neon"] .dh-nombre { font-weight: 400; font-size: 26px; color: #fff; text-shadow: var(--brillo-texto); }
 :root[data-estilo="neon"] .cd-opcion { background: transparent; border-color: color-mix(in srgb, var(--primario) 35%, transparent); }
 :root[data-estilo="neon"] .cd-opcion.elegida { border-color: var(--primario-claro); box-shadow: 0 0 8px var(--halo); }
+:root[data-estilo="neon"] .dh-rpe { border-color: var(--primario-claro); box-shadow: 0 0 8px var(--halo); text-shadow: var(--brillo-texto); color: #fff; }
+:root[data-estilo="neon"] .dh-series { background: transparent; border: 1px solid color-mix(in srgb, var(--primario) 45%, transparent); }

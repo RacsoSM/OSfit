@@ -11,6 +11,8 @@ import type { IndiceBanco } from "./banco";
 import { tarjetaRecordatorioPago } from "./ui/tarjetaRecordatorioPago";
 import { tarjetasStats } from "./ui/tarjetasStats";
 import { accionDia, diaCambiable, modalCambioDia } from "./ui/accionDia";
+import { inicioDelCiclo, semanaDelCiclo, sugerencia } from "./ciclo";
+import { modalRpe, notaRpe, pastillaRpe } from "./ui/rpe";
 import { accionHoyNoPuedo, tarjetaRevivir } from "./ui/accionFalta";
 import { calendario } from "./ui/calendario";
 import { tarjetaAutollenado, tarjetaDescanso, tarjetaUnidadPeso } from "./ui/tarjetaUnidadPeso";
@@ -55,6 +57,8 @@ export interface DatosCliente {
   cliente: Cliente;
   /** Hay un cambio de día hecho sin internet que todavía no llega al servidor (`cambioDia.ts`). */
   cambioDiaPendiente?: boolean;
+  /** Sus calificaciones de RPE ("¿Qué tan pesado estuvo?") por id de sesión. */
+  esfuerzos?: Record<string, number>;
   hoy: string;
   asistencias: Asistencia[];
   mesVisible: string;
@@ -256,7 +260,18 @@ export interface Ventana {
  * dato del que habla: cambiar el día y avisar que hoy no se puede van dentro de la tarjeta del
  * día; revivir la racha va debajo de la racha.
  */
+/** El RPE de la semana y la sugerencia según lo que reportó (`ciclo.ts`). */
+function rpeDeLaSemana(d: DatosCliente) {
+  const semana = semanaDelCiclo(inicioDelCiclo(d.asistencias, d.sesiones), d.hoy);
+  const fechaDe = new Map((d.sesiones ?? []).map((s) => [s.id, s.fecha] as const));
+  const reportes = Object.entries(d.esfuerzos ?? {})
+    .map(([id, esfuerzo]) => ({ fecha: fechaDe.get(id) ?? "", esfuerzo }))
+    .filter((r) => r.fecha !== "");
+  return { semana, sugerencia: sugerencia(reportes, semana, d.hoy) };
+}
+
 function inicio(d: DatosCliente): string {
+  const rpe = rpeDeLaSemana(d);
   // Empezar un entrenamiento marca la asistencia, pero el día se puede cambiar hasta guardarlo
   // (`diaCambiable`).
   const acciones = `
@@ -268,7 +283,8 @@ function inicio(d: DatosCliente): string {
         // El modo guiado, solo para quien entrena a distancia (entrenador, 2026-10-21): en el
         // gimnasio lo guía él. Los demás siguen con Registro, que también continúa uno abierto.
         d.cliente.entrenaADistancia === true ? botonEntrenar(diaDeHoy(d.cliente, d.hoy, d.asistencias), entrenamientoAbierto()) : "",
-        d.indiceBanco)}
+        d.indiceBanco,
+        { pastilla: pastillaRpe(rpe.semana), nota: notaRpe(rpe.sugerencia, rpe.semana) })}
       ${invitacionNotificaciones(d.notificaciones, d.invitacionDescartada)}
       ${tarjetasStats(d.asistencias, d.hoy, d.sesiones ? resumenSemana(d.sesiones, d.hoy).entrenamientos : null,
         d.cliente.reviveExtraOtorgado === true)}
@@ -276,6 +292,7 @@ function inicio(d: DatosCliente): string {
       ${tarjetaRevivir(d.cliente, d.hoy, d.asistencias, d.tiradaEsteMes, d.tiradaMesAnterior)}
       ${calendario(d.asistencias, d.mesVisible, d.hoy)}
       ${modalCambioDia(d.cliente, indiceDeHoy(d.cliente, d.hoy))}
+      ${modalRpe(rpe.semana)}
     `;
 }
 

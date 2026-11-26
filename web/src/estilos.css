@@ -129,32 +129,42 @@ main {
 :root .tarjeta.recordatorio-pago.vigente { background: var(--verde); }
 :root .tarjeta.recordatorio-pago.vencido { background: var(--rojo); }
 .recordatorio-pago-texto { margin: 0; font-weight: 700; font-size: 16px; line-height: 1.3; }
-/* La tarjeta "Hoy te toca" (diseño del entrenador, 2026-11-26): la lista editorial numerada
-   (propuesta A), la cabecera con el número de día en un recuadro (B) y abajo el botón de empezar
-   con las dos acciones en un renglón partido (E). Sin fondo de color: es una tarjeta como las
-   demás, y la paleta solo marca el número del día y el botón. Cada estilo ajusta letras y
-   colores con `--dh-acento` (el color del número) y `--dh-linea` (los separadores). */
+/* La tarjeta "Hoy te toca" (diseño del entrenador, 2026-11-26): el nombre del día con la
+   pastilla del RPE de la semana a la derecha, los ejercicios con su GIF y las series en
+   pastilla, y abajo el botón de empezar con las dos acciones en un renglón partido. Sin fondo de
+   color: es una tarjeta como las demás, y la paleta solo marca el RPE y el botón. Cada estilo
+   ajusta letras y colores con `--dh-acento` y `--dh-linea` (los separadores). */
 .dia-hoy { --dh-acento: var(--primario); --dh-linea: rgba(255, 255, 255, 0.08); }
-.dh-cabecera { display: flex; align-items: center; gap: 14px; }
-.dh-insignia {
-  flex: none; width: 52px; height: 52px; border-radius: 16px;
-  display: grid; place-content: center; text-align: center; line-height: 1;
-  background: color-mix(in srgb, var(--dh-acento) 14%, transparent); color: var(--dh-acento);
-}
-.dh-insignia small { display: block; font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 3px; }
-.dh-insignia b { font-size: 22px; font-weight: 800; }
+.dh-cabecera { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
 .dh-textos { min-width: 0; }
 .dh-textos .tarjeta-titulo { margin: 0 0 2px; }
 .dh-nombre { margin: 0; font-size: 22px; font-weight: 800; line-height: 1.15; overflow-wrap: anywhere; }
-.dh-ejercicios { list-style: none; margin: 14px 0 4px; padding: 0; }
-/* Como "Tus ejercicios" del resumen al terminar: el GIF chiquito, el nombre y debajo las series. */
-.dh-ejercicio { display: flex; align-items: center; gap: 12px; padding: 8px 0; border-top: 1px solid var(--dh-linea); }
-.dh-gif { flex: none; width: 46px; height: 46px; border-radius: 12px; object-fit: cover; background: #fff; }
-.dh-sin-gif { display: inline-flex; align-items: center; justify-content: center; font-size: 22px; background: var(--superficie-alta); }
+/* El RPE de la semana (`ui/rpe.ts`): una pastilla delineada a la derecha; se toca para ver qué
+   significa. La de descarga, rellena: es la semana distinta. */
+.dh-rpe {
+  flex: none; margin-top: 2px; padding: 5px 11px; border-radius: 999px; cursor: pointer;
+  font: inherit; font-size: 12px; font-weight: 700; white-space: nowrap; font-variant-numeric: tabular-nums;
+  background: none; color: var(--dh-acento); border: 1px solid color-mix(in srgb, var(--dh-acento) 50%, transparent);
+}
+.dh-rpe.descarga { background: color-mix(in srgb, var(--dh-acento) 14%, transparent); }
+.dh-rpe:focus-visible { outline: 2px solid var(--dh-acento); outline-offset: 2px; }
+.dh-sugerencia {
+  margin: 12px 0 0; padding: 9px 12px; border-radius: 12px; font-size: 13px; line-height: 1.4;
+  background: color-mix(in srgb, var(--dh-acento) 10%, transparent); border-left: 3px solid var(--dh-acento);
+}
+.dh-sugerencia.pesada { border-left-color: var(--ambar); background: color-mix(in srgb, var(--ambar) 12%, transparent); }
+.dh-ejercicios { list-style: none; margin: 12px 0 4px; padding: 0; }
+/* El GIF a la izquierda, el nombre con la nota debajo y las series en una pastilla (propuesta C). */
+.dh-ejercicio { display: flex; align-items: center; gap: 14px; padding: 8px 0; border-top: 1px solid var(--dh-linea); }
+.dh-gif { flex: none; width: 64px; height: 64px; border-radius: 16px; object-fit: cover; background: #fff; }
+.dh-sin-gif { display: inline-flex; align-items: center; justify-content: center; font-size: 26px; background: var(--superficie-alta); }
 .dh-ej-texto { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .dh-ej-nombre { font-size: 15px; font-weight: 700; line-height: 1.25; }
-.dh-ej-detalle { font-size: 13px; color: var(--texto-tenue); line-height: 1.35; }
-.dh-series { font-weight: 600; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.dh-nota { font-size: 12px; color: var(--texto-tenue); line-height: 1.35; }
+.dh-series {
+  flex: none; font-size: 13px; font-weight: 700; white-space: nowrap; font-variant-numeric: tabular-nums;
+  padding: 4px 10px; border-radius: 999px; background: var(--superficie-alta);
+}
 .dh-credito { margin: 4px 0 10px; }
 .dh-sin-ejercicios { font-size: 13px; color: var(--texto-tenue); margin: 14px 0 4px; }
 /* "▶ Empezar entrenamiento guiado": el botón normal del estilo, con el triángulo a la izquierda
@@ -198,6 +208,17 @@ main {
 .cd-hoy { font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--texto-tenue); }
 .cd-botones { display: flex; gap: 10px; margin-top: 16px; }
 .cd-botones .boton { flex: 1; margin: 0; padding-left: 8px; padding-right: 8px; white-space: nowrap; }
+/* La explicación del RPE (`ui/rpe.ts`). */
+.rpe-aviso { text-align: left; }
+.rpe-texto { margin: 0 0 10px; font-size: 14px; line-height: 1.45; }
+.rpe-texto.tenue { color: var(--texto-tenue); font-size: 13px; }
+.rpe-texto strong { color: var(--texto); }
+.rpe-semanas { list-style: none; margin: 4px 0 14px; padding: 0; display: grid; gap: 6px; }
+.rpe-semana { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 12px; background: var(--superficie-alta); font-size: 14px; }
+.rpe-semana.actual { box-shadow: inset 0 0 0 1.5px var(--primario); font-weight: 700; }
+.rpe-num { width: 22px; height: 22px; border-radius: 8px; display: grid; place-items: center; font-size: 12px; font-weight: 800; background: color-mix(in srgb, var(--primario) 18%, transparent); color: var(--primario); }
+.rpe-fase { flex: 1; }
+.rpe-valor { font-variant-numeric: tabular-nums; color: var(--texto-tenue); }
 .fila { display: flex; gap: 12px; }
 .fila > * { flex: 1; }
 .numero { font-size: 30px; font-weight: 800; line-height: 1; margin: 4px 0; }

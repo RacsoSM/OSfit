@@ -72,7 +72,7 @@ function gifDe(nombre: string, indice: IndiceBanco | null | undefined): string {
   const url = urlGif(indice?.get(claveBanco(nombre))?.gifRuta);
   // `alt` vacío: el nombre va justo al lado y un lector de pantalla lo diría dos veces.
   return url
-    ? `<img class="dh-gif" src="${escapar(url)}" alt="" width="46" height="46" loading="lazy" decoding="async">`
+    ? `<img class="dh-gif" src="${escapar(url)}" alt="" width="64" height="64" loading="lazy" decoding="async">`
     : `<span class="dh-gif dh-sin-gif" aria-hidden="true">🏋️</span>`;
 }
 
@@ -82,20 +82,18 @@ function listaEjercicios(ejercicios: Ejercicio[], indice: IndiceBanco | null | u
       <p class="dh-sin-ejercicios">Tu entrenador todavía no cargó los ejercicios de este día.</p>`;
   }
 
-  // Como "Tus ejercicios" del resumen al terminar (entrenador, 2026-11-26): el GIF chiquito, el
-  // nombre y debajo las series, con el peso o la nota del entrenador.
+  // El GIF a la izquierda, el nombre con el peso o la nota del entrenador debajo, y las series en
+  // una pastilla a la derecha (propuesta C del entrenador, 2026-11-26).
   const filas = ejercicios
-    .map((e) => {
-      const series = `${escapar(String(e.series ?? ""))} × ${escapar(e.repeticiones ?? "")}`;
-      return `
+    .map((e) => `
         <li class="dh-ejercicio">
           ${gifDe(e.nombre ?? "", indice)}
           <span class="dh-ej-texto">
             <span class="dh-ej-nombre">${escapar(e.nombre ?? "")}</span>
-            <span class="dh-ej-detalle"><span class="dh-series">${series}</span>${e.pesoONota ? ` · <span class="dh-nota">${escapar(e.pesoONota)}</span>` : ""}</span>
+            ${e.pesoONota ? `<span class="dh-nota">${escapar(e.pesoONota)}</span>` : ""}
           </span>
-        </li>`;
-    })
+          <span class="dh-series">${escapar(String(e.series ?? ""))} × ${escapar(e.repeticiones ?? "")}</span>
+        </li>`)
     .join("");
 
   // Los términos del dataset piden el crédito junto a las animaciones, donde se muestren.
@@ -163,7 +161,9 @@ export function tarjetaDia(
   acciones = "",
   asistencias: Asistencia[] = [],
   entrenar = "",
-  indiceBanco: IndiceBanco | null = null
+  indiceBanco: IndiceBanco | null = null,
+  /** La pastilla del RPE de la semana y la sugerencia (`ui/rpe.ts`); vacías, no sale nada. */
+  rpe: { pastilla?: string; nota?: string } = {}
 ): string {
   const dias = cliente.rutinaAsignada?.dias ?? [];
 
@@ -202,8 +202,8 @@ export function tarjetaDia(
 
   if (indice === null) return "";
 
-  // Diseño del entrenador (2026-11-26): la lista "editorial" (A), la cabecera con el número de
-  // día en un recuadro (B) y abajo el botón de empezar con las dos acciones como renglón partido
+  // Diseño del entrenador (2026-11-26): el nombre del día con la pastilla del RPE de la semana a
+  // la derecha, los ejercicios con su GIF y abajo el botón de empezar con las dos acciones como renglón partido
   // (E). Sin fondo de color: la tarjeta es como las demás y el color de la paleta solo marca lo
   // importante. Las acciones van DENTRO de esta tarjeta, no en una aparte: las dos hablan del
   // día que le toca hoy — cambiarlo o avisar que no viene — así que se leen junto al día.
@@ -211,12 +211,13 @@ export function tarjetaDia(
   return `
     <div class="tarjeta dia-hoy">
       <div class="dh-cabecera">
-        <div class="dh-insignia" aria-hidden="true"><small>Día</small><b>${indice + 1}</b></div>
         <div class="dh-textos">
           <p class="tarjeta-titulo">Hoy te toca<span class="sr-solo"> el día ${indice + 1}</span></p>
           <p class="dh-nombre">${nombre}</p>
         </div>
+        ${rpe.pastilla ?? ""}
       </div>
+      ${rpe.nota ?? ""}
       ${listaEjercicios(
         dias[indice]
           ? conSusPesos(cliente, ejerciciosDeHoy(dias[indice], indice, asistencias, hoy))

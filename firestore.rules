@@ -90,9 +90,11 @@ service cloud.firestore {
       // El buzón: las notificaciones que se le mandaron, para el apartado Notificaciones de la
       // web. Ella solo lo lee; lo escribe la función `enviarNotificacion` con el Admin SDK.
       // "¿Qué tan pesado estuvo tu entrenamiento?" (1 a 10) de cada sesión. Lo escribe solo la
-      // función `guardarEsfuerzo`; el entrenador lo lee.
+      // función `guardarEsfuerzo`; el entrenador lo lee, y ella también (2026-11-26): la tarjeta
+      // del día compara lo que reportó con el RPE objetivo de la semana (`web/src/ciclo.ts`).
       match /esfuerzos/{doc} {
-        allow read, write: if esEntrenador();
+        allow read: if esEntrenador() || esCliente(cid);
+        allow write: if esEntrenador();
       }
       match /buzon/{doc} {
         allow read: if esEntrenador() || esCliente(cid);

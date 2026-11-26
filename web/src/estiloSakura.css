@@ -247,7 +247,7 @@
 
 /* ---------- Tarjeta "Hoy te toca" (2026-11-26) ---------- */
 
-/* Papel claro como las demás tarjetas: el rosa hondo de texto en el número del día, y el
+/* Papel claro como las demás tarjetas: el rosa hondo de texto en la pastilla del RPE, y el
    nombre del día con la letra de pincel. */
 :root[data-estilo="sakura"] .dia-hoy { --dh-acento: #a83258; --dh-linea: rgba(194, 69, 106, 0.14); }
 :root[data-estilo="sakura"] .dh-nombre { font-family: var(--sk-mincho); font-weight: 800; font-size: 24px; }

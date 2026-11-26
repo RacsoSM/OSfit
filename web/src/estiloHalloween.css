@@ -348,8 +348,8 @@
 
 /* ---------- Tarjeta "Hoy te toca" (2026-11-26) ---------- */
 
-/* Noche como las demás tarjetas: el naranja calabaza en el número del día, y el nombre con la
-   letra que chorrea. */
+/* Noche como las demás tarjetas: el naranja calabaza en la pastilla del RPE, y el nombre con
+   la letra que chorrea. */
 :root[data-estilo="halloween"] .dia-hoy { --dh-acento: var(--hw-naranja); --dh-linea: rgba(201, 167, 240, 0.16); }
 :root[data-estilo="halloween"] .dh-nombre { font-family: var(--hw-terror); font-weight: 400; font-size: 28px; letter-spacing: 0.04em; }
 :root[data-estilo="halloween"] .cd-titulo { font-family: var(--hw-letra); }

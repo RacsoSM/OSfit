@@ -517,6 +517,31 @@ export function observarBanco(alCambiar: (b: EjercicioBanco[]) => void) {
  * La query filtra por clienteId porque las reglas validan documento por documento: sin el
  * filtro, Firestore rechaza la consulta entera en vez de devolver solo lo permitido.
  */
+/**
+ * Sus calificaciones de "¿Qué tan pesado estuvo tu entrenamiento?" (1 a 10), por id de sesión:
+ * el RPE que reportó, para compararlo con el objetivo de la semana (`ciclo.ts`). Las escribe
+ * solo la función `guardarEsfuerzo`; ella las lee. Las últimas 40 bastan: se usan las de esta
+ * semana.
+ */
+export function observarEsfuerzos(clienteId: string, alCambiar: (e: Record<string, number>) => void) {
+  const consulta = query(collection(db, "clientes", clienteId, "esfuerzos"), orderBy("actualizado", "desc"), limit(40));
+  return escuchar("esfuerzos", (alLlegar, alFallar) =>
+    onSnapshot(
+      consulta,
+      (snap) => {
+        alLlegar();
+        const e: Record<string, number> = {};
+        for (const d of snap.docs) {
+          const v = d.get("esfuerzo");
+          if (typeof v === "number") e[d.id] = v;
+        }
+        alCambiar(e);
+      },
+      alFallar
+    )
+  );
+}
+
 export function observarAsistencias(clienteId: string, alCambiar: (a: Asistencia[]) => void) {
   const consulta = query(collection(db, "asistencias"), where("clienteId", "==", clienteId));
   return escuchar("asistencias", (alLlegar, alFallar) =>

@@ -159,8 +159,8 @@
 
 /* ---------- Tarjeta "Hoy te toca" (2026-11-26) ---------- */
 
-/* Blanca como las demás: el acento (`--primario-oscuro`, que se lee sobre blanco) solo en el
-   número del día y en el botón de empezar. */
+/* Blanca como las demás: el acento (`--primario-oscuro`, que se lee sobre blanco) solo en la
+   pastilla del RPE y en el botón de empezar. */
 :root[data-estilo="minimalista"] .dia-hoy { --dh-acento: var(--acento); --dh-linea: rgba(0, 0, 0, 0.07); }
 :root[data-estilo="minimalista"] .dh-nombre { font-weight: 650; letter-spacing: -0.02em; }
 :root[data-estilo="minimalista"] .dh-ej-nombre { font-weight: 600; }

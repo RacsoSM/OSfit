@@ -16,6 +16,7 @@ import {
   observarSede,
   observarResumenesMensuales,
   observarBuzon,
+  observarEsfuerzos,
 } from "./datos";
 import { bancoEnSede } from "./sede";
 import type {
@@ -101,7 +102,8 @@ import {
 import type { VideoConUrl } from "./ui/tarjetaVideos";
 import { iniciarCronometros } from "./ui/cronometro";
 import { conectarSugerencias, reiniciarSugerencias } from "./ui/sugerencias";
-import { calificarEsfuerzo, reenviarEsfuerzos } from "./esfuerzo";
+import { calificarEsfuerzo, esfuerzosPendientes, reenviarEsfuerzos } from "./esfuerzo";
+import { conectarRpe } from "./ui/rpe";
 import { conectarBuzon, leerVisto, marcarVistas, resaltarAviso, sinLeer } from "./ui/buzon";
 
 const app = document.querySelector<HTMLElement>("#app")!;
@@ -285,6 +287,8 @@ async function arrancar(): Promise<void> {
   let indice: IndiceBanco = new Map();
   /** Sus sesiones de Registro; null hasta que llegan. */
   let sesiones: Sesion[] | null = null;
+  /** Sus calificaciones de RPE por sesión (`observarEsfuerzos`), para la sugerencia del ciclo. */
+  let esfuerzos: Record<string, number> = {};
   /**
    * Todo su historial, para Estadísticas. Se pide la primera vez que entra a esa ventana y
    * sigue escuchando: las demás pantallas abren con las últimas 140 (`sesiones`).
@@ -846,6 +850,8 @@ async function arrancar(): Promise<void> {
     const datos = {
       cliente: conCambio(cliente, cambioVigente, hoy),
       cambioDiaPendiente: cambioVigente !== null && !cambioVigente.enviado,
+      // Lo que ya llegó al servidor y lo calificado en este teléfono que todavía no.
+      esfuerzos: { ...esfuerzos, ...esfuerzosPendientes() },
       hoy, asistencias, mesVisible, yaAviso, medallas, logros,
       tiradaEsteMes, tiradaMesAnterior, ranking, estilo,
       notificaciones: estadoNotificaciones(cliente.notificacionesWeb === true, entornoDelNavegador()),
@@ -1036,6 +1042,7 @@ async function arrancar(): Promise<void> {
       if (empezarGuiado(r)) marcarAsistencia({}).catch(() => {});
       abrirVentana("registro");
     });
+    conectarRpe(pintar);
     conectarAccionDia(pintar, (diaIndex) => {
       anotarCambio(almacenCambio, { diaIndex, fecha: hoy });
       void enviarCambioDia();
@@ -1265,6 +1272,7 @@ async function arrancar(): Promise<void> {
     pintar();
   });
   observarSesiones(clienteId, (s) => { sesiones = s; pintar(); });
+  observarEsfuerzos(clienteId, (e) => { esfuerzos = e; pintar(); });
   observarBuzon(clienteId, (b) => { buzon = b; pintar(); });
   // Desde el arranque y no al abrir la ventana: la ventana emergente de Inicio necesita saber
   // si ya cerró el mes. Son pocos documentos (uno por mes).

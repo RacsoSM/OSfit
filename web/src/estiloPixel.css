@@ -372,13 +372,12 @@
 
 /* ---------- Tarjeta "Hoy te toca" (2026-11-26) ---------- */
 
-/* Como un menú de videojuego: el número del día en un bloque con sombra dura, la letra de
-   arcade en el nombre y separadores punteados. */
+/* Como un menú de videojuego: la letra de arcade en el nombre, esquinas rectas y separadores
+   punteados. */
 :root[data-estilo="pixel"] .dia-hoy { --dh-acento: var(--primario); --dh-linea: rgba(255, 255, 255, 0.18); }
-:root[data-estilo="pixel"] .dh-insignia { border-radius: 0; box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.4); }
-:root[data-estilo="pixel"] .dh-insignia b,
+
 :root[data-estilo="pixel"] .dh-nombre { font-family: var(--letra-arcade); font-weight: 400; }
-:root[data-estilo="pixel"] .dh-insignia b { font-size: 16px; }
+
 :root[data-estilo="pixel"] .dh-nombre { font-size: 14px; line-height: 1.6; }
 :root[data-estilo="pixel"] .dh-ejercicio,
 :root[data-estilo="pixel"] .dh-acciones { border-top: 2px dashed var(--dh-linea); }
@@ -386,3 +385,6 @@
 :root[data-estilo="pixel"] .dh-gif,
 :root[data-estilo="pixel"] .cd-opcion,
 :root[data-estilo="pixel"] .cd-numero { border-radius: 0; }
+:root[data-estilo="pixel"] .dh-rpe,
+:root[data-estilo="pixel"] .dh-series,
+:root[data-estilo="pixel"] .dh-sugerencia { border-radius: 0; }

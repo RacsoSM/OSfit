@@ -229,13 +229,10 @@
 
 /* ---------- Tarjeta "Hoy te toca" (2026-11-26) ---------- */
 
-/* La viñeta blanca de siempre: el número del día en un recuadro con tinta, el nombre rotulado
-   y separadores punteados de tinta. */
+/* La viñeta blanca de siempre: el RPE en un recuadro amarillo con tinta, el nombre rotulado y
+   separadores punteados de tinta. */
 :root[data-estilo="comic"] .dia-hoy { --dh-acento: var(--primario-oscuro); --dh-linea: rgba(20, 20, 20, 0.25); }
-:root[data-estilo="comic"] .dh-insignia {
-  border-radius: 4px; background: var(--amarillo); color: var(--tinta);
-  border: 2px solid var(--tinta); box-shadow: 2px 2px 0 var(--tinta);
-}
+
 :root[data-estilo="comic"] .dh-nombre { font-family: var(--letra-rotulo); font-weight: 400; font-size: 32px; letter-spacing: 1.5px; line-height: 1.05; }
 :root[data-estilo="comic"] .dh-gif { border: 2px solid var(--tinta); border-radius: 4px; }
 :root[data-estilo="comic"] .dh-ejercicio,
@@ -245,3 +242,5 @@
 :root[data-estilo="comic"] .cd-opcion { background: #fff; border: 2px solid var(--tinta); border-radius: 4px; }
 :root[data-estilo="comic"] .cd-opcion.elegida { background: var(--amarillo); box-shadow: 2px 2px 0 var(--tinta); }
 :root[data-estilo="comic"] .cd-numero { background: var(--tinta); color: #fff; border-radius: 4px; }
+:root[data-estilo="comic"] .dh-rpe { border: 2px solid var(--tinta); border-radius: 4px; color: var(--tinta); background: var(--amarillo); box-shadow: 2px 2px 0 var(--tinta); }
+:root[data-estilo="comic"] .dh-series { background: #fff; border: 2px solid var(--tinta); }
