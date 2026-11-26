@@ -9,6 +9,7 @@ import com.osfit.app.data.model.Cliente
 import com.osfit.app.data.repository.AsistenciaRepository
 import com.osfit.app.data.repository.AvisoFaltaWebRepository
 import com.osfit.app.data.repository.CambioDiaWebRepository
+import com.osfit.app.data.repository.CambioSemanaWebRepository
 import com.osfit.app.data.repository.ClienteRepository
 import com.osfit.app.domain.DiaQueToca
 import com.osfit.app.domain.RutinaProgressCalculator
@@ -32,6 +33,7 @@ class TomarAsistenciaViewModel(
     private val asistenciaRepository: AsistenciaRepository = AppContainer.asistenciaRepository,
     private val sincronizadorDiaWeb: SincronizadorDiaWeb = AppContainer.sincronizadorDiaWeb,
     private val cambioDiaWebRepository: CambioDiaWebRepository = AppContainer.cambioDiaWebRepository,
+    private val cambioSemanaWebRepository: CambioSemanaWebRepository = AppContainer.cambioSemanaWebRepository,
     private val avisoFaltaWebRepository: AvisoFaltaWebRepository = AppContainer.avisoFaltaWebRepository
 ) : ViewModel() {
 
@@ -67,6 +69,12 @@ class TomarAsistenciaViewModel(
             // El doc id es "<clienteId>_<fecha>", así que no puede haber dos por cliente;
             // aun así se asocia por clienteId para que la última lectura mande.
             .map { cambios -> cambios.associate { it.clienteId to it.motivo } }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyMap())
+
+    /** clienteId → semana del ciclo de RPE (1 a 4) a la que se cambió ella misma ese día. */
+    val cambioSemanaPorCliente: StateFlow<Map<String, Int>> =
+        cambioSemanaWebRepository.observarPorFecha(fecha)
+            .map { cambios -> cambios.associate { it.clienteId to it.semana } }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyMap())
 
     /**

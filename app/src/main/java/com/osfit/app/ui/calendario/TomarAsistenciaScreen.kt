@@ -55,6 +55,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.osfit.app.data.model.Asistencia
+import com.osfit.app.data.model.CambioSemanaWeb
 import com.osfit.app.data.model.Cliente
 import com.osfit.app.domain.DiaQueToca
 import com.osfit.app.domain.TiempoGymCalculator
@@ -79,6 +80,7 @@ fun TomarAsistenciaScreen(fecha: String, onGuardado: () -> Unit = {}) {
     val diaQueTocaPorCliente by viewModel.diaQueTocaPorCliente.collectAsState()
     val asistenciasDelDia by viewModel.asistenciasDelDia.collectAsState()
     val cambioDiaPorCliente by viewModel.cambioDiaPorCliente.collectAsState()
+    val cambioSemanaPorCliente by viewModel.cambioSemanaPorCliente.collectAsState()
     val avisoAusenciaPorCliente by viewModel.avisoAusenciaPorCliente.collectAsState()
     val guardando by viewModel.guardando.collectAsState()
     val guardandoDia by viewModel.guardandoDia.collectAsState()
@@ -156,7 +158,8 @@ fun TomarAsistenciaScreen(fecha: String, onGuardado: () -> Unit = {}) {
                             onIniciarTiempo = { viewModel.iniciarTiempo(cliente) },
                             onDetenerTiempo = { viewModel.detenerTiempo(cliente) },
                             avisoAusencia = cliente.id in avisoAusenciaPorCliente,
-                            motivoCambioDia = cambioDiaPorCliente[cliente.id]
+                            motivoCambioDia = cambioDiaPorCliente[cliente.id],
+                            semanaCambiada = cambioSemanaPorCliente[cliente.id]
                         )
                     }
                     item {
@@ -221,7 +224,8 @@ private fun ClienteAsistenciaRow(
     onIniciarTiempo: () -> Unit,
     onDetenerTiempo: () -> Unit,
     avisoAusencia: Boolean,
-    motivoCambioDia: String?
+    motivoCambioDia: String?,
+    semanaCambiada: Int? = null
 ) {
     // El color de fondo es solo indicativo (asistió/faltó); el toggle real vive en el
     // segmento de la derecha para no competir con el botón del cronómetro dentro del card.
@@ -274,6 +278,15 @@ private fun ClienteAsistenciaRow(
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             maxLines = 2,
                             overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                    val nombreSemana = semanaCambiada?.let { CambioSemanaWeb.nombreDeSemana(it) }
+                    if (nombreSemana != null) {
+                        // Ella misma cambió su semana del ciclo de RPE desde la web.
+                        Text(
+                            "📊 Cambió su semana a $nombreSemana",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
