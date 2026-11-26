@@ -3,7 +3,8 @@
  *
  * Bloques de 4 semanas: tres de carga que suben (base RPE 7, carga RPE 8, fuerza RPE 8–9) y una
  * de descarga (RPE 5–6), y vuelta a empezar. Cada clienta lleva el suyo, contado desde su primer
- * entrenamiento, así no descargan todas la misma semana. Las semanas van de lunes a domingo,
+ * entrenamiento (las que ya entrenaban, desde `ARRANQUE_CICLO`), así no descargan todas la misma
+ * semana con el tiempo. Las semanas van de lunes a domingo,
  * como el resto de la página.
  *
  * Lo que ella reporta al terminar ("¿Qué tan pesado estuvo?", del 1 al 10: el RPE de la sesión)
@@ -60,10 +61,19 @@ export function inicioDelCiclo(
   return primero;
 }
 
-export function semanaDelCiclo(inicio: string | null, hoy: string): SemanaCiclo {
+/**
+ * Cuando arrancó el ciclo (entrenador, 2026-11-26): las clientas que ya entrenaban empiezan todas
+ * juntas en la semana 1 la semana del lunes 23 de noviembre de 2026, para que ninguna cayera de
+ * golpe en una descarga; las que llegan después cuentan desde su primera asistencia.
+ */
+export const ARRANQUE_CICLO = "2026-11-23";
+
+export function semanaDelCiclo(primerEntreno: string | null, hoy: string): SemanaCiclo {
   const total = SEMANAS.length;
+  // Sin ningún entrenamiento todavía, su ciclo empieza con el primero: hasta entonces, semana 1.
+  const inicio = primerEntreno === null ? hoy : primerEntreno > ARRANQUE_CICLO ? primerEntreno : ARRANQUE_CICLO;
   let i = 0;
-  if (inicio && inicio <= hoy) {
+  if (inicio <= hoy) {
     const semanas = Math.round((Date.parse(`${lunesDe(hoy)}T12:00:00Z`) - Date.parse(`${lunesDe(inicio)}T12:00:00Z`)) / (7 * DIA_MS));
     i = ((semanas % total) + total) % total;
   }
