@@ -180,6 +180,11 @@ export interface Cliente {
    * Se pone a mano en Firestore; ausente es "no".
    */
   pruebasEspacio?: boolean;
+  /**
+   * La semana del ciclo de RPE que eligió ella misma (`cambiarSemana`): esa semana (su lunes) es
+   * la `semana` elegida y de ahí el ciclo sigue contando. Ausente = el ciclo de siempre.
+   */
+  cicloAjuste?: { semana: number; lunes: string } | null;
 }
 
 /** GEMELO: `ModoAmigos` de `functions/src/comparar.ts`. Con "nadie" tampoco ve a los demás. */

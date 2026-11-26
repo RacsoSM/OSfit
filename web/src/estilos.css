@@ -219,8 +219,12 @@ main {
 .rpe-texto.tenue { color: var(--texto-tenue); font-size: 13px; }
 .rpe-texto strong { color: var(--texto); }
 .rpe-semanas { list-style: none; margin: 4px 0 14px; padding: 0; display: grid; gap: 6px; }
-.rpe-semana { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 12px; background: var(--superficie-alta); font-size: 14px; }
-.rpe-semana.actual { box-shadow: inset 0 0 0 1.5px var(--primario); font-weight: 700; }
+.rpe-semana {
+  display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px 10px; border: 0; border-radius: 12px;
+  background: var(--superficie-alta); color: var(--texto); font: inherit; font-size: 14px; text-align: left; cursor: pointer;
+}
+.rpe-semana.actual { box-shadow: inset 0 0 0 1.5px var(--primario); font-weight: 700; cursor: default; opacity: 1; }
+.rpe-pista { text-align: center; margin-top: -6px; }
 .rpe-num { width: 22px; height: 22px; border-radius: 8px; display: grid; place-items: center; font-size: 12px; font-weight: 800; background: color-mix(in srgb, var(--primario) 18%, transparent); color: var(--primario); }
 .rpe-fase { flex: 1; }
 .rpe-valor { font-variant-numeric: tabular-nums; color: var(--texto-tenue); }

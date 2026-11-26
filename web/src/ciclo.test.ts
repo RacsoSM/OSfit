@@ -73,4 +73,18 @@ describe("ciclo de RPE", () => {
     expect(descarga.fase).toBe("descarga");
     expect(sugerencia([{ fecha: "2026-12-14", esfuerzo: 9 }, { fecha: "2026-12-15", esfuerzo: 9 }], descarga, "2026-12-16")).toBeNull();
   });
+
+  it("la semana que eligió ella manda desde esa semana, y de ahí sigue contando", () => {
+    const a = asistio({ "2026-11-23": [0, 2, 4], "2026-11-30": [0, 2, 4], "2026-12-07": [0, 2] });
+    const ajuste = { semana: 4, lunes: "2026-11-23" };
+    expect(semanaDelCiclo("2026-10-01", "2026-11-26", a, ajuste)).toMatchObject({ numero: 4, fase: "descarga" });
+    expect(semanaDelCiclo("2026-10-01", "2026-12-02", a, ajuste)).toMatchObject({ numero: 1, fase: "base" });
+    expect(semanaDelCiclo("2026-10-01", "2026-12-09", a, ajuste)).toMatchObject({ numero: 2 });
+    expect(semanaDelCiclo("2026-10-01", "2026-12-16", a, ajuste)).toMatchObject({ numero: 2 }); // esa semana fue de 2 días
+  });
+
+  it("un ajuste raro (semana fuera de 1 a 4, o de una semana futura) no cuenta", () => {
+    expect(semanaDelCiclo(null, "2026-11-26", [], { semana: 7, lunes: "2026-11-23" }).numero).toBe(1);
+    expect(semanaDelCiclo(null, "2026-11-26", [], { semana: 3, lunes: "2026-12-07" }).numero).toBe(1);
+  });
 });

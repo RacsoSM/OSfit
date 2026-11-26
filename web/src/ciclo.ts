@@ -82,11 +82,17 @@ export const DIAS_PARA_AVANZAR = 3;
 export function semanaDelCiclo(
   primerEntreno: string | null,
   hoy: string,
-  asistencias: readonly { fecha: string; asistio: boolean }[] = []
+  asistencias: readonly { fecha: string; asistio: boolean }[] = [],
+  /** La semana que eligió ella (`cambiarSemana`): desde esa semana cuenta a partir de la elegida. */
+  ajuste: { semana: number; lunes: string } | null = null
 ): SemanaCiclo {
   const total = SEMANAS.length;
+  const conAjuste = ajuste !== null && Number.isInteger(ajuste.semana) && ajuste.semana >= 1 &&
+    ajuste.semana <= total && ajuste.lunes <= lunesDe(hoy);
   // Sin ningún entrenamiento todavía, su ciclo empieza con el primero: hasta entonces, semana 1.
-  const inicio = primerEntreno === null ? hoy : primerEntreno > ARRANQUE_CICLO ? primerEntreno : ARRANQUE_CICLO;
+  const inicio = conAjuste ? ajuste.lunes
+    : primerEntreno === null ? hoy : primerEntreno > ARRANQUE_CICLO ? primerEntreno : ARRANQUE_CICLO;
+  const desplazamiento = conAjuste ? ajuste.semana - 1 : 0;
   const desde = lunesDe(inicio);
   const hasta = lunesDe(hoy);
   // Días distintos con asistencia, por semana (su lunes), entre el inicio y antes de esta semana.
@@ -100,7 +106,7 @@ export function semanaDelCiclo(
   }
   let completas = 0;
   for (const dias of diasPorSemana.values()) if (dias.size >= DIAS_PARA_AVANZAR) completas += 1;
-  const i = completas % total;
+  const i = (completas + desplazamiento) % total;
   return { ...SEMANAS[i], numero: i + 1, total };
 }
 

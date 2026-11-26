@@ -34,7 +34,7 @@ import type {
 import { horaEnMazatlan, hoyEnMazatlan } from "./fecha";
 import { mesAnterior, type Tirada } from "./tirada";
 import {
-  batallaAmigos, borrarSesion, cambiarDia, enviarSugerencia, guardarEsfuerzo, guardarPartidaBoxJump, guardarPartidaDiscos, guardarPartidaKettlebell, tablaBoxJump, tablaDiscos, tablaKettlebell, compararMusculos, editarSesion, elegirMostrarEnAmigos, guardarPeso, marcarAsistencia, obtenerRanking, registrarEntrada, registrarSesion,
+  batallaAmigos, borrarSesion, cambiarDia, cambiarSemana, enviarSugerencia, guardarEsfuerzo, guardarPartidaBoxJump, guardarPartidaDiscos, guardarPartidaKettlebell, tablaBoxJump, tablaDiscos, tablaKettlebell, compararMusculos, editarSesion, elegirMostrarEnAmigos, guardarPeso, marcarAsistencia, obtenerRanking, registrarEntrada, registrarSesion,
 } from "./acciones";
 import { modalRuleta, conectarRuleta } from "./ui/ruleta";
 import { conectarRanking, type EstadoRanking } from "./ui/tarjetaRanking";
@@ -1042,7 +1042,7 @@ async function arrancar(): Promise<void> {
       if (empezarGuiado(r)) marcarAsistencia({}).catch(() => {});
       abrirVentana("registro");
     });
-    conectarRpe(pintar);
+    conectarRpe(pintar, async (semana) => (await conPlazo(cambiarSemana({ semana }), 15_000)).data);
     conectarAccionDia(pintar, (diaIndex) => {
       anotarCambio(almacenCambio, { diaIndex, fecha: hoy });
       void enviarCambioDia();

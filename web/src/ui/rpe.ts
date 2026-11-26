@@ -9,6 +9,23 @@ import { DIAS_PARA_AVANZAR, SEMANAS, type SemanaCiclo, type Sugerencia } from ".
 
 let abierta = false;
 let recienAbierta = false;
+/** La semana que tocó en la explicación y falta confirmar; null sin confirmación abierta. */
+let porConfirmar: number | null = null;
+let enVuelo = false;
+let error: string | null = null;
+/**
+ * El cambio ya hecho mientras el documento de la clienta todavía no lo trae: así la tarjeta
+ * cambia al instante y no regresa un momento a la semana vieja.
+ */
+let ajustePropio: { semana: number; lunes: string } | null = null;
+
+/** La semana elegida que manda, la del documento o la recién cambiada aquí. */
+export function ajusteVigente(delDocumento: { semana: number; lunes: string } | null | undefined): { semana: number; lunes: string } | null {
+  if (ajustePropio && delDocumento && delDocumento.semana === ajustePropio.semana && delDocumento.lunes === ajustePropio.lunes) {
+    ajustePropio = null;
+  }
+  return ajustePropio ?? delDocumento ?? null;
+}
 
 const NOMBRE_FASE: Record<SemanaCiclo["fase"], string> = {
   base: "Base", carga: "Carga", fuerza: "Fuerza", descarga: "Descarga",
@@ -46,17 +63,27 @@ export function notaRpe(sug: Sugerencia, s: SemanaCiclo): string {
     : `<p class="dh-sugerencia ligera">Esta semana tus entrenamientos se están sintiendo ligeros (${sug.promedio} contra ${objetivo}). Puedes subirle un poco al peso.</p>`;
 }
 
-/** La explicación, como pop up (mismo velo que los demás avisos). */
+/**
+ * La explicación, como pop up (mismo velo que los demás avisos). Las otras semanas del bloque se
+ * pueden tocar para cambiarse a ella, con una confirmación que recomienda decidirlo con su coach
+ * (entrenador, 2026-11-26).
+ */
 export function modalRpe(s: SemanaCiclo): string {
   if (!abierta) return "";
+  if (porConfirmar !== null) return confirmacion(s, porConfirmar);
   const entrada = recienAbierta ? " entrando" : "";
   recienAbierta = false;
-  const filas = SEMANAS.map((x, i) => `
-      <li class="rpe-semana${i + 1 === s.numero ? " actual" : ""}">
-        <span class="rpe-num">${i + 1}</span>
-        <span class="rpe-fase">${NOMBRE_FASE[x.fase]}</span>
-        <span class="rpe-valor">RPE ${x.rpe}</span>
-      </li>`).join("");
+  const filas = SEMANAS.map((x, i) => {
+    const actual = i + 1 === s.numero;
+    return `
+      <li>
+        <button type="button" class="rpe-semana${actual ? " actual" : ""}" data-semana="${i + 1}" ${actual ? "disabled" : ""}>
+          <span class="rpe-num">${i + 1}</span>
+          <span class="rpe-fase">${NOMBRE_FASE[x.fase]}</span>
+          <span class="rpe-valor">${actual ? "Tu semana" : `RPE ${x.rpe}`}</span>
+        </button>
+      </li>`;
+  }).join("");
   return `
     <div class="logro-velo rpe-velo${entrada}" data-cerrar-rpe>
       <div class="logro-aviso tarjeta rpe-aviso${entrada}" role="dialog" aria-modal="true" aria-labelledby="rpe-titulo">
@@ -67,20 +94,82 @@ export function modalRpe(s: SemanaCiclo): string {
           suben poco a poco, con una de descarga para recuperarte. Pasas a la siguiente semana cuando
           entrenas al menos ${DIAS_PARA_AVANZAR} días; si no, la semana se repite.</p>
         <ol class="rpe-semanas">${filas}</ol>
+        <p class="rpe-texto tenue rpe-pista">Toca otra semana si necesitas cambiarte a ella.</p>
+        ${error ? `<p class="aviso-error">${error}</p>` : ""}
         <button type="button" class="boton" id="cerrar-rpe">Entendido</button>
       </div>
     </div>`;
 }
 
-export function conectarRpe(repintar: () => void): void {
+function confirmacion(s: SemanaCiclo, semana: number): string {
+  const nueva = SEMANAS[semana - 1];
+  return `
+    <div class="logro-velo rpe-velo" data-cerrar-rpe>
+      <div class="logro-aviso tarjeta rpe-aviso" role="alertdialog" aria-modal="true" aria-labelledby="rpe-confirmar">
+        <p class="cd-titulo" id="rpe-confirmar">¿Seguro que quieres cambiar tu semana de «${NOMBRE_FASE[s.fase]}» a «${NOMBRE_FASE[nueva.fase]}»?</p>
+        <p class="rpe-texto">Te recomendamos tomar esta decisión con tu coach, ya que cambia tu plan de entrenamiento.</p>
+        <p class="rpe-texto tenue">Esta semana quedará como ${NOMBRE_FASE[nueva.fase]} (RPE ${nueva.rpe}) y de ahí tu plan seguirá avanzando como siempre.</p>
+        ${error ? `<p class="aviso-error">${error}</p>` : ""}
+        <div class="cd-botones">
+          <button type="button" class="boton secundario" id="cancelar-semana" ${enVuelo ? "disabled" : ""}>Cancelar</button>
+          <button type="button" class="boton" id="confirmar-semana" ${enVuelo ? "disabled" : ""}>${enVuelo ? "Cambiando…" : "Sí, cambiar"}</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+/**
+ * `alCambiar` guarda la semana elegida en el servidor (`cambiarSemana`) y dice esta semana (su
+ * lunes); si falla, se queda el pop up con el error.
+ */
+export function conectarRpe(repintar: () => void, alCambiar: (semana: number) => Promise<{ lunes: string }>): void {
   document.querySelector("#abrir-rpe")?.addEventListener("click", () => {
     abierta = true;
     recienAbierta = true;
+    porConfirmar = null;
+    error = null;
     repintar();
   });
-  const cerrar = () => { abierta = false; repintar(); };
+  const cerrar = () => {
+    if (enVuelo) return;
+    abierta = false;
+    porConfirmar = null;
+    error = null;
+    repintar();
+  };
   document.querySelector("#cerrar-rpe")?.addEventListener("click", cerrar);
   document.querySelector("[data-cerrar-rpe]")?.addEventListener("click", (e) => {
     if (e.target === e.currentTarget) cerrar();
+  });
+  document.querySelectorAll<HTMLElement>(".rpe-semana[data-semana]").forEach((b) =>
+    b.addEventListener("click", () => {
+      porConfirmar = Number(b.dataset.semana);
+      error = null;
+      repintar();
+    })
+  );
+  document.querySelector("#cancelar-semana")?.addEventListener("click", () => {
+    if (enVuelo) return;
+    porConfirmar = null;
+    error = null;
+    repintar();
+  });
+  document.querySelector("#confirmar-semana")?.addEventListener("click", async () => {
+    if (enVuelo || porConfirmar === null) return;
+    const semana = porConfirmar;
+    enVuelo = true;
+    error = null;
+    repintar();
+    try {
+      const { lunes } = await alCambiar(semana);
+      ajustePropio = { semana, lunes };
+      abierta = false;
+      porConfirmar = null;
+    } catch {
+      error = "No pudimos cambiar tu semana. Revisa tu conexión e inténtalo otra vez.";
+    } finally {
+      enVuelo = false;
+      repintar();
+    }
   });
 }
