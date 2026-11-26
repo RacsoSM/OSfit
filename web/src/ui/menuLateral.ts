@@ -17,7 +17,6 @@ import { terminarSaludo } from "./saludo";
 export function cabecera(saludoHtml: string): string {
   return `
     <header class="cabecera">
-      <span class="version-app" id="version-app" aria-hidden="true">v${__VERSION__}</span>
       <div class="cabecera-texto">
         ${saludoHtml}
         <h1 class="titulo-ventana" id="titulo-ventana" hidden></h1>
@@ -93,9 +92,6 @@ export function actualizarCabecera(titulo: string | null, detalle: string | null
     if (titulo !== null) terminarSaludo(saludo);
     saludo.hidden = titulo !== null;
   }
-  // La versión del deploy, solo en Inicio (donde va el saludo).
-  const version = document.querySelector<HTMLElement>("#version-app");
-  if (version) version.hidden = titulo !== null;
   if (el) {
     // `""` (ventanas de la barra) esconde las dos cosas: ni saludo ni título.
     el.hidden = !titulo;
@@ -154,7 +150,9 @@ export function panelMenu(ventanas: readonly Ventana[], nombre: string): string 
         <button type="button" class="menu-cerrar" data-cerrar-menu aria-label="Cerrar menú">✕</button>
       </div>
       <div class="menu-lista">${de("principal")}</div>
-      <div class="menu-pie">${de("pie")}</div>
+      <div class="menu-pie">${de("pie")}
+        <p class="version-app" aria-label="Versión de la app">v${__VERSION__}</p>
+      </div>
     </nav>`;
 }
 

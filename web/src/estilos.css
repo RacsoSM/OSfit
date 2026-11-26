@@ -569,13 +569,6 @@ main {
 
 /* La cabecera: el ☰ a la derecha, en el mismo renglón que el saludo o el nombre de la ventana. */
 .cabecera { display: flex; align-items: flex-start; gap: 4px; position: relative; }
-/* Qué deploy tiene la clienta (`__VERSION__`), arriba a la izquierda en Inicio. Absoluta, en el
-   margen de arriba de la página: no mueve el saludo. */
-.version-app {
-  position: absolute; top: -13px; left: 0;
-  font-size: 9px; line-height: 1; color: var(--texto-tenue); opacity: 0.6; pointer-events: none;
-}
-.version-app[hidden] { display: none; }
 .cabecera-texto { flex: 1; min-width: 0; }
 /* "Sin datos" junto al ☰ (`marcarSinDatos` en `menuLateral.ts`): con el modo puesto nada se
    actualiza, y esto dice por qué. Tocarla abre Ajustes. Con fondo y encima: el cómic y sakura
@@ -678,6 +671,9 @@ body.menu-abierto { overflow: hidden; }
 .menu-lista { display: flex; flex-direction: column; gap: 4px; }
 /* `margin-top: auto` empuja Ajustes al fondo del panel, por más ventanas que se agreguen. */
 .menu-pie { margin-top: auto; padding-top: 24px; }
+/* Qué deploy tiene la clienta (`__VERSION__`): hasta abajo del menú, debajo de Ajustes
+   (entrenador, 2026-11-26; antes iba arriba a la izquierda en Inicio). */
+.version-app { margin: 10px 0 0; padding: 0 16px; font-size: 11px; color: var(--texto-tenue); opacity: 0.7; }
 .menu-opcion {
   display: flex; align-items: center; gap: 12px; width: 100%; min-height: 48px;
   padding: 10px 12px; border: 0; border-radius: 12px; background: transparent;

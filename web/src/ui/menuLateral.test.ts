@@ -39,14 +39,19 @@ describe("panelMenu", () => {
     expect(raro).not.toContain("<b>Ana");
   });
 
+  it("lleva la versión del deploy hasta abajo, después de Ajustes", () => {
+    expect(html).toMatch(/class="version-app"[^>]*>v\d{6}\.\d{4}</);
+    expect(html.indexOf("version-app")).toBeGreaterThan(html.indexOf("Ajustes"));
+  });
+
   it("se puede cerrar con la ✕ y con el velo", () => {
     expect(html.match(/data-cerrar-menu/g)).toHaveLength(2);
   });
 });
 
 describe("cabecera", () => {
-  it("lleva la versión del deploy, arriba a la izquierda", () => {
-    expect(cabecera(`<h1 id="saludo">Hola</h1>`)).toMatch(/id="version-app"[^>]*>v\d{6}\.\d{4}</);
+  it("ya no lleva la versión del deploy: va al pie del menú", () => {
+    expect(cabecera(`<h1 id="saludo">Hola</h1>`)).not.toContain("version-app");
   });
 
   it("trae el botón del menú con su etiqueta y el saludo adentro", () => {
