@@ -91,6 +91,7 @@ import {
 import { marcarBotonAtras } from "./ui/botonAtras";
 import { mostrarAvisoVersion } from "./ui/avisoVersion";
 import { vigilarVersion } from "./version";
+import { anotarLugar, lugarARetomar } from "./retomar";
 import {
   actualizarCabecera, aplicarMenuAbierto, cabecera, conectarCabecera, conectarMenu, marcarCampana,
   marcarSinDatos, marcarVentanaActiva, panelMenu,
@@ -696,6 +697,9 @@ async function arrancar(): Promise<void> {
 
   /** La ventana que se pintó la última vez, para volver arriba solo al cambiar de ventana. */
   let ventanaPintada: IdVentana | null = null;
+  // El scroll de donde se quedó (`retomar.ts`): se aplica en cuanto la página es tan alta, y se
+  // deja de intentar a los pocos segundos (los datos pueden llegar en partes).
+  let scrollPorRetomar: { y: number; hasta: number } | null = null;
   // Al llegar una parte que se carga aparte (un juego, el Arcade…), se repinta con ella.
   alCargar(() => pintar());
 
@@ -852,6 +856,14 @@ async function arrancar(): Promise<void> {
     pintarMenu(activa.id, cliente.nombre);
     marcarVentanaActiva(document.querySelectorAll<HTMLElement>("#barra [data-ventana]"), ventanaDeBarra(activa.id));
     pintarRuleta();
+    if (scrollPorRetomar) {
+      const { y, hasta } = scrollPorRetomar;
+      if (Date.now() > hasta) scrollPorRetomar = null;
+      else requestAnimationFrame(() => {
+        window.scrollTo(0, y);
+        if (Math.abs(window.scrollY - y) < 4) scrollPorRetomar = null;
+      });
+    }
     if (activa.id !== ventanaPintada) {
       // Cada ventana arranca arriba. Solo al cambiar: un snapshot no debe mover el scroll.
       if (ventanaPintada !== null) window.scrollTo(0, 0);
@@ -1134,6 +1146,23 @@ async function arrancar(): Promise<void> {
     history.replaceState(history.state, "", direccionSinAbrir(location.pathname, location.search, location.hash));
   }
   abrirDesdeAviso(deLaDireccion);
+  // Si el teléfono la cerró estando en el fondo y se vuelve a abrir pronto, se retoma donde se
+  // quedó (`retomar.ts`). Un aviso tocado manda sobre esto.
+  const almacenLugar = (() => { try { return localStorage; } catch { return null; } })();
+  const lugar = deLaDireccion ? null : lugarARetomar(almacenLugar, Date.now(), VENTANAS.map((v) => v.id));
+  if (lugar) {
+    abrirVentana(lugar.ventana as IdVentana);
+    if (lugar.scroll > 0) {
+      scrollPorRetomar = { y: lugar.scroll, hasta: Date.now() + 6000 };
+      // Si ella ya movió la página, no se la regresa.
+      const soltar = (): void => { scrollPorRetomar = null; };
+      window.addEventListener("touchstart", soltar, { once: true, passive: true });
+      window.addEventListener("wheel", soltar, { once: true, passive: true });
+    }
+  }
+  const anotar = (): void => anotarLugar(almacenLugar, ventanaActiva(), window.scrollY, Date.now());
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") anotar(); });
+  window.addEventListener("pagehide", anotar);
   navigator.serviceWorker?.addEventListener("message", (e) => abrirDesdeAviso(abrirDelMensaje(e.data, idsVentanas)));
 
   // "¿Qué tan pesado estuvo?" que se calificó sin internet: se manda ahora y al volver la señal.
