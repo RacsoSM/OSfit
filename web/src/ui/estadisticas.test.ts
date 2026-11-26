@@ -64,11 +64,12 @@ describe("ventanaEstadisticas", () => {
     expect(ventanaEstadisticas(datos({ cargandoHistorial: true }))).toContain("Cargando todo tu historial");
   });
 
-  it("muestra el ejercicio en grande como en Registro: su video si lo tiene, si no su GIF, con el crédito", () => {
+  it("muestra el ejercicio en grande como en Registro: su video si lo tiene, si no su GIF, sin crédito", () => {
     const conGif = ventanaEstadisticas(datos());
     expect(conGif).toContain(`class="tarjeta estad-medio"`);
     expect(conGif).toContain("ejercicios%2Fpress-banca.webp");
-    expect(conGif).toContain("Animaciones © Gym visual");
+    // Sin el crédito: el entrenador tiene un acuerdo directo con Gym visual (2026-11-26).
+    expect(conGif).not.toContain("Gym visual");
     const conVideo = ventanaEstadisticas(datos({ banco: [{ ...press, videoRuta: "ejercicios/press-banca.mp4" }, plancha] }));
     expect(conVideo).toContain("<video");
     expect(conVideo).toContain("ejercicios%2Fpress-banca.mp4");

@@ -126,7 +126,7 @@ describe("elegir", () => {
     expect(html).toContain("ejercicios%2Fpress-banca.webp");
     expect(html).toContain('data-agregar="plancha"');
     expect(html).toContain("registro-sin-gif");
-    expect(html).toContain("© Gym visual");
+    expect(html).not.toContain("Gym visual");
     // La barra de búsqueda volvió (entrenador, 2026-10-31; se había quitado el 2026-10-10).
     expect(html).toContain('id="registro-buscar"');
     expect(html).toContain('placeholder="Buscar ejercicio"');
@@ -221,8 +221,8 @@ describe("capturar", () => {
     const html = ventanaRegistro(datos());
     expect(html).toContain("Terminar entrenamiento");
     expect(html).toContain("Eliminar entrenamiento");
-    // Hasta abajo, después del crédito: lejos de "Terminar entrenamiento".
-    expect(html.indexOf("Eliminar entrenamiento")).toBeGreaterThan(html.indexOf("registro-credito"));
+    // Hasta abajo, lejos de "Terminar entrenamiento".
+    expect(html.indexOf("Eliminar entrenamiento")).toBeGreaterThan(html.indexOf("Terminar entrenamiento"));
   });
 
   it("sin entrenamiento abierto no hay qué capturar: vuelve al inicio", () => {

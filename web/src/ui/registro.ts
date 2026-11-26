@@ -314,8 +314,6 @@ function gif(ruta: string | null | undefined, clase: string, lado: number): stri
     : `<span class="${clase} registro-sin-gif" aria-hidden="true">🏋️</span>`;
 }
 
-/** Los términos del dataset piden el crédito junto a las animaciones, donde se muestren. */
-export const CREDITO = `<p class="registro-credito">Animaciones © Gym visual</p>`;
 
 const ICONO_BUSCAR = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>`;
 
@@ -717,8 +715,7 @@ function vistaElegir(d: DatosRegistro): string {
     ${modo}
     ${biserie ? `<p class="accion-nota registro-modo-nota">Elige los dos ejercicios, en el orden en que los haces.</p>` : hoy}
     ${cuerpo}
-    ${biserie ? barraBiserie(d.banco) : ""}
-    ${CREDITO}`;
+    ${biserie ? barraBiserie(d.banco) : ""}`;
 }
 
 // ── Capturar ─────────────────────────────────────────────────────────────────
@@ -1046,8 +1043,7 @@ function vistaCardio(d: DatosRegistro): string {
     ${botonAtras(`data-accion="volver"`)}
     <p class="confirmar-titulo cardio-titulo">¿En qué hiciste cardio?</p>
     <div class="cardio-maquinas">${tarjetas}</div>
-    <p class="accion-nota">Se agrega a tu entrenamiento como un ejercicio más: ahí anotas los minutos, la inclinación y la velocidad.</p>
-    ${CREDITO}`;
+    <p class="accion-nota">Se agrega a tu entrenamiento como un ejercicio más: ahí anotas los minutos, la inclinación y la velocidad.</p>`;
 }
 
 function vistaCapturar(d: DatosRegistro): string {
@@ -1075,7 +1071,6 @@ function vistaCapturar(d: DatosRegistro): string {
     <button class="boton${hay ? " secundario" : ""}" data-accion="agregar" ${off}>+ Agregar ejercicio</button>
     ${!b.edicion && hayCardio(d) ? `<button class="boton secundario registro-boton-cardio" data-accion="cardio" ${off}>🏃 Agregar cardio</button>` : ""}
     ${hay ? `<button class="boton" data-accion="guardar" ${off}>${estado.enVuelo ? "Guardando…" : b.edicion ? "Guardar cambios" : "Terminar entrenamiento"}</button>` : ""}
-    ${hay ? CREDITO : ""}
     <button class="boton-texto registro-eliminar" data-accion="descartar" ${off}>${b.edicion ? "Cancelar cambios" : "Eliminar entrenamiento"}</button>`;
 }
 

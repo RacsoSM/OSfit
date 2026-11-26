@@ -9,7 +9,7 @@ import { escapar } from "./tarjetaDia";
 import { conectarGrafica, fechaCorta, graficaLinea, lecturaGrafica, type Banda } from "./grafica";
 import { COLORES_RANGO, insigniaRango } from "./insigniaRango";
 import { bloqueSiguiente } from "./mapaMuscular";
-import { CREDITO, medioDelEjercicio } from "./registro";
+import { medioDelEjercicio } from "./registro";
 
 /**
  * La ventana Estadísticas (backlog 2, punto 22; ver
@@ -182,7 +182,6 @@ function vistaEjercicio(d: DatosEstadisticas, h: EjercicioHecho, sesiones: reado
   return `
     <div class="tarjeta estad-medio">
       <div class="registro-activo-gif">${medioDelEjercicio(delBanco?.gifRuta, delBanco?.videoRuta)}</div>
-      ${CREDITO}
     </div>
     <div class="estad-datos">${datosClave(r)}</div>
     <div class="tarjeta">

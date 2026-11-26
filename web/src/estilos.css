@@ -1412,7 +1412,6 @@ button.registro-serie-num.abierto { border-style: solid; border-color: var(--pri
 .registro-barra-biserie .boton { width: auto; margin: 0; padding: 10px 14px; flex: none; }
 .registro-espacio-biserie { height: 80px; }
 .registro-hist-ej.biserie-b { border-top-style: dashed; }
-.registro-credito { margin: 14px 0 0; font-size: 10px; color: var(--texto-tenue); text-align: right; }
 /* Los títulos de grupo del grid ("Pecho", "Hombro"…). Los del día van con el color del estilo
    para que se lean como "lo de hoy"; el resto, tenues. */
 /* El título de cada grupo muscular: una banda clara con su raya de color, y pegada arriba al
