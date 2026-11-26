@@ -17,6 +17,7 @@ import {
   observarResumenesMensuales,
   observarBuzon,
   observarEsfuerzos,
+  observarConfigFacturacion,
 } from "./datos";
 import { bancoEnSede } from "./sede";
 import type {
@@ -27,6 +28,7 @@ import type {
   VideoResumen,
   EjercicioBanco,
   Sesion,
+  ConfigFacturacion,
   ConfigGrupos,
   ResumenMensualGuardado,
   EntradaBuzon,
@@ -289,6 +291,8 @@ async function arrancar(): Promise<void> {
   let sesiones: Sesion[] | null = null;
   /** Sus calificaciones de RPE por sesión (`observarEsfuerzos`), para la sugerencia del ciclo. */
   let esfuerzos: Record<string, number> = {};
+  /** Cómo pagar, para Facturación (`observarConfigFacturacion`). */
+  let configFacturacion: ConfigFacturacion | null = null;
   /**
    * Todo su historial, para Estadísticas. Se pide la primera vez que entra a esa ventana y
    * sigue escuchando: las demás pantallas abren con las últimas 140 (`sesiones`).
@@ -852,6 +856,7 @@ async function arrancar(): Promise<void> {
       cambioDiaPendiente: cambioVigente !== null && !cambioVigente.enviado,
       // Lo que ya llegó al servidor y lo calificado en este teléfono que todavía no.
       esfuerzos: { ...esfuerzos, ...esfuerzosPendientes() },
+      configFacturacion,
       hoy, asistencias, mesVisible, yaAviso, medallas, logros,
       tiradaEsteMes, tiradaMesAnterior, ranking, estilo,
       notificaciones: estadoNotificaciones(cliente.notificacionesWeb === true, entornoDelNavegador()),
@@ -1273,6 +1278,7 @@ async function arrancar(): Promise<void> {
   });
   observarSesiones(clienteId, (s) => { sesiones = s; pintar(); });
   observarEsfuerzos(clienteId, (e) => { esfuerzos = e; pintar(); });
+  observarConfigFacturacion((c) => { configFacturacion = c; pintar(); });
   observarBuzon(clienteId, (b) => { buzon = b; pintar(); });
   // Desde el arranque y no al abrir la ventana: la ventana emergente de Inicio necesita saber
   // si ya cerró el mes. Son pocos documentos (uno por mes).

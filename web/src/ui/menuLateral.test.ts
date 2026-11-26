@@ -13,7 +13,7 @@ describe("panelMenu", () => {
 
   it("lista las ventanas del registro en orden, sin las ocultas (Videos, 2026-10-17; Medallas y Logros, 2026-10-21)", () => {
     expect(opciones(html)).toEqual(
-      ["Inicio", "Estadísticas", "Resumen mensual", "Ranking", "Quejas y sugerencias", "Arcade", "Ajustes"]
+      ["Inicio", "Estadísticas", "Resumen mensual", "Ranking", "Facturación", "Quejas y sugerencias", "Arcade", "Ajustes"]
     );
   });
 

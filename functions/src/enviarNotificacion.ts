@@ -17,7 +17,7 @@ import {
  * donde vive la base. La base esta en `nam5` (multirregion de EE. UU.), y para `nam5` los
  * triggers van en `us-central1`.
  */
-const REGION_FIRESTORE = "us-central1";
+export const REGION_FIRESTORE = "us-central1";
 
 /**
  * Cuanto espera FCM a un telefono apagado antes de tirar el aviso. Cuatro horas: un "ya

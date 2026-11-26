@@ -3053,3 +3053,19 @@ body.con-espacio .cabecera .titulo-ventana { visibility: hidden; }
 .espacio-nombre { margin: 0; padding: 6px 14px; border-radius: 999px; font-size: 16px; font-weight: 800; color: #fff; background: rgba(20, 16, 30, 0.72); }
 .espacio-pista { margin: 0; font-size: 12px; font-weight: 700; color: #fff; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6); }
 .espacio-pista[hidden] { display: none; }
+
+/* Facturación (`ui/facturacion.ts`, 2026-11-26). */
+.factura-cabecera { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.factura-cabecera .tarjeta-titulo { margin: 0; }
+.factura-estado { font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 999px; white-space: nowrap; }
+.factura-estado.bien { color: var(--verde); background: color-mix(in srgb, var(--verde) 14%, transparent); }
+.factura-estado.pronto { color: var(--ambar); background: color-mix(in srgb, var(--ambar) 16%, transparent); }
+.factura-estado.vencido { color: var(--rojo); background: color-mix(in srgb, var(--rojo) 14%, transparent); }
+.factura-rango { margin: 12px 0 2px; font-size: 20px; font-weight: 800; line-height: 1.3; }
+.factura-lista { list-style: none; margin: 8px 0 0; padding: 0; }
+.factura-lista li { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 10px 0; border-top: 1px solid rgba(127, 127, 127, 0.15); font-size: 14px; }
+.factura-lista li:first-child { border-top: 0; }
+.factura-lista span { color: var(--texto-tenue); }
+.factura-lista b { text-align: right; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+.factura-nota { margin: 10px 0 0; font-size: 13px; color: var(--texto-tenue); line-height: 1.45; }
+.factura-sin-acceso p { line-height: 1.45; }

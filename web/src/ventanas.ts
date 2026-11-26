@@ -1,7 +1,8 @@
 import type {
-  Asistencia, Cliente, ConfigGrupos, EjercicioBanco, EntradaBuzon, LogroPersonalOtorgado, MedallaOtorgada, ResumenMensualGuardado, Sesion,
+  Asistencia, Cliente, ConfigFacturacion, ConfigGrupos, EjercicioBanco, EntradaBuzon, LogroPersonalOtorgado, MedallaOtorgada, ResumenMensualGuardado, Sesion,
 } from "./datos";
 import { ventanaBuzon } from "./ui/buzon";
+import { ventanaFacturacion } from "./ui/facturacion";
 import type { IdEstilo } from "./estilo";
 import type { Tirada } from "./tirada";
 import { recordatorioPago } from "./pago";
@@ -50,13 +51,15 @@ import { edadEn, fuerzaPorMusculo, pesoParaFuerza, type FuerzaMusculo } from "./
 
 export type IdVentana =
   | "inicio" | "musculos" | "registro" | "comparar" | "estadisticas"
-  | "ranking" | "medallas" | "logros" | "videos" | "ajustes" | "resumenMensual" | "notificaciones" | "sugerencias" | "arcade" | "juego" | "kettlebell" | "boxjump" | "espacio";
+  | "ranking" | "medallas" | "logros" | "videos" | "ajustes" | "resumenMensual" | "notificaciones" | "sugerencias" | "facturacion" | "arcade" | "juego" | "kettlebell" | "boxjump" | "espacio";
 
 /** Todo lo que los listeners de Firestore tienen a mano en cada repintado. */
 export interface DatosCliente {
   cliente: Cliente;
   /** Hay un cambio de día hecho sin internet que todavía no llega al servidor (`cambioDia.ts`). */
   cambioDiaPendiente?: boolean;
+  /** Cómo pagar (`configFacturacion/datos`), igual para todas; null mientras no se configure. */
+  configFacturacion?: ConfigFacturacion | null;
   /** Sus calificaciones de RPE ("¿Qué tan pesado estuvo?") por id de sesión. */
   esfuerzos?: Record<string, number>;
   hoy: string;
@@ -360,6 +363,7 @@ export const VENTANAS: readonly Ventana[] = [
     pintar: (d) => tarjetaRanking(d.ranking),
   },
   // Quejas y sugerencias (entrenador, 2026-11-24): un campo de texto que le llega como notificación.
+  { id: "facturacion", titulo: "Facturación", icono: "💳", grupo: "principal", pintar: (d) => ventanaFacturacion(d.cliente, d.hoy, d.configFacturacion ?? null) },
   { id: "sugerencias", titulo: "Quejas y sugerencias", icono: "💬", grupo: "principal", pintar: () => ventanaSugerencias() },
   // El Arcade (entrenador, 2026-11-24), debajo de Quejas y sugerencias: reúne los minijuegos.
   { id: "arcade", titulo: "Arcade", icono: "🕹️", grupo: "principal", pintar: () => parteArcade.ya()?.ventanaArcade() ?? cargando() },

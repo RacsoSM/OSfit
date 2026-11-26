@@ -1,6 +1,7 @@
 export { sesion } from "./sesion";
 export { cambiarDia } from "./cambiarDia";
 export { cambiarSemana } from "./cambiarSemana";
+export { alCambiarPago } from "./ultimoPago";
 export { revivirRacha } from "./revivirRacha";
 export { avisarFalta } from "./avisarFalta";
 export { jugarRuleta } from "./jugarRuleta";

@@ -114,6 +114,18 @@ export interface Cliente {
   /** Cuándo vence su periodo. Lo escribe la app al registrar un pago; puede no existir. */
   fechaProximoPago?: Timestamp | null;
   /**
+   * Si ve el apartado Facturación (entrenador, 2026-11-26). Lo prende o apaga el entrenador
+   * desde la app; ausente es "no": ve "no tienes acceso a este apartado".
+   */
+  facturacionWeb?: boolean;
+  /** Cuánto paga al mes. Lo pone el entrenador en la app; ausente, se usa el monto del último pago. */
+  mensualidad?: number | null;
+  /**
+   * Su último pago: fecha (AAAA-MM-DD), monto y hasta cuándo le alcanza. Lo copia la función
+   * `alCambiarPago` de sus pagos, que ella no puede leer (traen la nota del entrenador).
+   */
+  ultimoPago?: { fecha: string; monto: number; vence: string | null } | null;
+  /**
    * La llave del entrenador para las notificaciones. Opcional por la razón de siempre:
    * Firestore omite los campos que nunca se escribieron, y ausente es "no habilitada".
    */
@@ -541,6 +553,27 @@ export function observarEsfuerzos(clienteId: string, alCambiar: (e: Record<strin
           if (typeof v === "number") e[d.id] = v;
         }
         alCambiar(e);
+      },
+      alFallar
+    )
+  );
+}
+
+/** Cómo pagar (`configFacturacion/datos`): los mismos datos para todas, renglón por renglón. */
+export interface ConfigFacturacion { lineas: { etiqueta: string; valor: string }[]; nota?: string }
+
+export function observarConfigFacturacion(alCambiar: (c: ConfigFacturacion | null) => void) {
+  return escuchar("configFacturacion", (alLlegar, alFallar) =>
+    onSnapshot(
+      doc(db, "configFacturacion", "datos"),
+      (snap) => {
+        alLlegar();
+        const d = snap.data() as Partial<ConfigFacturacion> | undefined;
+        const lineas = Array.isArray(d?.lineas)
+          ? d.lineas.filter((l): l is { etiqueta: string; valor: string } =>
+              typeof l?.etiqueta === "string" && typeof l?.valor === "string")
+          : [];
+        alCambiar(lineas.length > 0 ? { lineas, nota: typeof d?.nota === "string" ? d.nota : undefined } : null);
       },
       alFallar
     )
