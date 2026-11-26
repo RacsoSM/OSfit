@@ -260,3 +260,5 @@
 :root[data-estilo="neon"] .cd-opcion.elegida { border-color: var(--primario-claro); box-shadow: 0 0 8px var(--halo); }
 :root[data-estilo="neon"] .dh-rpe { border-color: var(--primario-claro); box-shadow: 0 0 8px var(--halo); text-shadow: var(--brillo-texto); color: #fff; }
 :root[data-estilo="neon"] .dh-series { background: transparent; border: 1px solid color-mix(in srgb, var(--primario) 45%, transparent); }
+:root[data-estilo="neon"] .dh-tramo.actual i { box-shadow: 0 0 8px var(--halo); }
+:root[data-estilo="neon"] .dh-tramo.actual { text-shadow: var(--brillo-texto); color: #fff; }

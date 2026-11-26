@@ -12,7 +12,7 @@ import { tarjetaRecordatorioPago } from "./ui/tarjetaRecordatorioPago";
 import { tarjetasStats } from "./ui/tarjetasStats";
 import { accionDia, diaCambiable, modalCambioDia } from "./ui/accionDia";
 import { inicioDelCiclo, semanaDelCiclo, sugerencia } from "./ciclo";
-import { modalRpe, notaRpe, pastillaRpe } from "./ui/rpe";
+import { barraCiclo, modalRpe, notaRpe, pastillaRpe } from "./ui/rpe";
 import { accionHoyNoPuedo, tarjetaRevivir } from "./ui/accionFalta";
 import { calendario } from "./ui/calendario";
 import { tarjetaAutollenado, tarjetaDescanso, tarjetaUnidadPeso } from "./ui/tarjetaUnidadPeso";
@@ -284,7 +284,7 @@ function inicio(d: DatosCliente): string {
         // gimnasio lo guía él. Los demás siguen con Registro, que también continúa uno abierto.
         d.cliente.entrenaADistancia === true ? botonEntrenar(diaDeHoy(d.cliente, d.hoy, d.asistencias), entrenamientoAbierto()) : "",
         d.indiceBanco,
-        { pastilla: pastillaRpe(rpe.semana), nota: notaRpe(rpe.sugerencia, rpe.semana) })}
+        { pastilla: pastillaRpe(rpe.semana), barra: barraCiclo(rpe.semana), nota: notaRpe(rpe.sugerencia, rpe.semana) })}
       ${invitacionNotificaciones(d.notificaciones, d.invitacionDescartada)}
       ${tarjetasStats(d.asistencias, d.hoy, d.sesiones ? resumenSemana(d.sesiones, d.hoy).entrenamientos : null,
         d.cliente.reviveExtraOtorgado === true)}

@@ -162,8 +162,8 @@ export function tarjetaDia(
   asistencias: Asistencia[] = [],
   entrenar = "",
   indiceBanco: IndiceBanco | null = null,
-  /** La pastilla del RPE de la semana y la sugerencia (`ui/rpe.ts`); vacías, no sale nada. */
-  rpe: { pastilla?: string; nota?: string } = {}
+  /** La pastilla del RPE, la barra del bloque y la sugerencia (`ui/rpe.ts`); vacías, no sale nada. */
+  rpe: { pastilla?: string; barra?: string; nota?: string } = {}
 ): string {
   const dias = cliente.rutinaAsignada?.dias ?? [];
 
@@ -217,6 +217,7 @@ export function tarjetaDia(
         </div>
         ${rpe.pastilla ?? ""}
       </div>
+      ${rpe.barra ?? ""}
       ${rpe.nota ?? ""}
       ${listaEjercicios(
         dias[indice]

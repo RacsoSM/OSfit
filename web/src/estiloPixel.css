@@ -388,3 +388,4 @@
 :root[data-estilo="pixel"] .dh-rpe,
 :root[data-estilo="pixel"] .dh-series,
 :root[data-estilo="pixel"] .dh-sugerencia { border-radius: 0; }
+:root[data-estilo="pixel"] .dh-tramo i { border-radius: 0; height: 6px; }

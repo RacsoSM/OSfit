@@ -2,8 +2,9 @@ import { DIAS_PARA_AVANZAR, SEMANAS, type SemanaCiclo, type Sugerencia } from ".
 
 /**
  * El RPE de la semana en la tarjeta "Hoy te toca" (entrenador, 2026-11-26; el ciclo en
- * `ciclo.ts`): la pastilla "RPE 8 · Sem 2/4" arriba a la derecha, que al tocarla explica qué es
- * el RPE y muestra las 4 semanas del bloque, y la sugerencia según lo que ella reportó.
+ * `ciclo.ts`): la pastilla "RPE 8" arriba a la derecha, que al tocarla explica qué es el RPE y
+ * muestra las 4 semanas del bloque; debajo del nombre, la barra del bloque con la semana marcada,
+ * y la sugerencia según lo que ella reportó.
  */
 
 let abierta = false;
@@ -22,9 +23,19 @@ const EN_PALABRAS: Record<SemanaCiclo["fase"], string> = {
 };
 
 export function pastillaRpe(s: SemanaCiclo): string {
-  const texto = s.fase === "descarga" ? `Descarga · RPE ${s.rpe}` : `RPE ${s.rpe} · Sem ${s.numero}/${s.total}`;
   return `<button type="button" class="dh-rpe${s.fase === "descarga" ? " descarga" : ""}" id="abrir-rpe"
-            aria-label="Esta semana: ${NOMBRE_FASE[s.fase]}, RPE ${s.rpe}, semana ${s.numero} de ${s.total}. Toca para ver qué significa.">${texto}</button>`;
+            aria-label="Esta semana: ${NOMBRE_FASE[s.fase]}, RPE ${s.rpe}, semana ${s.numero} de ${s.total}. Toca para ver qué significa.">RPE ${s.rpe}</button>`;
+}
+
+/**
+ * Las 4 semanas del bloque como barra, con la de esta semana marcada (diseño 4 del entrenador,
+ * 2026-11-26): así se entiende sola por qué una semana toca descarga. Solo adorno para el lector
+ * de pantalla: la pastilla ya lo dice.
+ */
+export function barraCiclo(s: SemanaCiclo): string {
+  const tramos = SEMANAS.map((x, i) =>
+    `<span class="dh-tramo${i + 1 === s.numero ? " actual" : ""}"><i></i>${NOMBRE_FASE[x.fase]}</span>`).join("");
+  return `<div class="dh-ciclo" aria-hidden="true">${tramos}</div>`;
 }
 
 export function notaRpe(sug: Sugerencia, s: SemanaCiclo): string {

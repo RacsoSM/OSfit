@@ -244,3 +244,6 @@
 :root[data-estilo="comic"] .cd-numero { background: var(--tinta); color: #fff; border-radius: 4px; }
 :root[data-estilo="comic"] .dh-rpe { border: 2px solid var(--tinta); border-radius: 4px; color: var(--tinta); background: var(--amarillo); box-shadow: 2px 2px 0 var(--tinta); }
 :root[data-estilo="comic"] .dh-series { background: #fff; border: 2px solid var(--tinta); }
+:root[data-estilo="comic"] .dh-tramo i { border-radius: 0; border: 2px solid var(--tinta); height: 8px; background: #fff; }
+:root[data-estilo="comic"] .dh-tramo.actual i { background: var(--amarillo); }
+:root[data-estilo="comic"] .dh-tramo.actual { color: var(--tinta); }
