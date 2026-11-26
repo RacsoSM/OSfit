@@ -39,6 +39,10 @@ interface ClienteRepository {
     suspend fun actualizarActivo(clienteId: String, activo: Boolean)
     /** Prende o apaga la tarjeta de recordatorio de pago en la web de la clienta. */
     suspend fun actualizarRecordatorioPago(clienteId: String, activo: Boolean)
+    /** Prende o apaga el apartado Facturación en la web de la clienta. */
+    suspend fun actualizarFacturacionWeb(clienteId: String, activo: Boolean)
+    /** Su mensualidad para Facturación; null la borra (la web usa el monto de su último pago). */
+    suspend fun actualizarMensualidad(clienteId: String, mensualidad: Double?)
     suspend fun actualizarEntrenaADistancia(clienteId: String, aDistancia: Boolean)
     /** Su gimnasio (`sedes/{id}`); null lo regresa a Focus Novum. */
     suspend fun actualizarSede(clienteId: String, sede: String?)

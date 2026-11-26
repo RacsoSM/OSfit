@@ -1,5 +1,9 @@
 package com.osfit.app.ui.clientes
 
+import androidx.compose.material.icons.automirrored.filled.ReceiptLong
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -94,6 +98,21 @@ class WebClienteViewModel(
         _cliente.value = _cliente.value?.copy(recordatorioPago = activo)
         viewModelScope.launch {
             runCatching { clienteRepository.actualizarRecordatorioPago(clienteId, activo) }
+        }
+    }
+
+    fun cambiarFacturacionWeb(activo: Boolean) {
+        _cliente.value = _cliente.value?.copy(facturacionWeb = activo)
+        viewModelScope.launch {
+            runCatching { clienteRepository.actualizarFacturacionWeb(clienteId, activo) }
+        }
+    }
+
+    /** Null la borra: la web usa entonces el monto de su último pago. */
+    fun cambiarMensualidad(mensualidad: Double?) {
+        _cliente.value = _cliente.value?.copy(mensualidad = mensualidad)
+        viewModelScope.launch {
+            runCatching { clienteRepository.actualizarMensualidad(clienteId, mensualidad) }
         }
     }
 
@@ -194,6 +213,15 @@ fun WebClienteScreen(
                     tieneFechaPago = cliente?.fechaProximoPago != null,
                     habilitado = cliente != null,
                     onCambiar = viewModel::cambiarRecordatorioPago
+                )
+            }
+            item {
+                FilaFacturacion(
+                    activo = cliente?.facturacionWeb == true,
+                    mensualidad = cliente?.mensualidad,
+                    habilitado = cliente != null,
+                    onCambiar = viewModel::cambiarFacturacionWeb,
+                    onGuardarMensualidad = viewModel::cambiarMensualidad
                 )
             }
             item {
@@ -299,6 +327,67 @@ private fun FilaRecordatorioPago(
                 )
             }
             Switch(checked = activo, onCheckedChange = onCambiar, enabled = habilitado)
+        }
+    }
+}
+
+/**
+ * El apartado Facturación de su web (2026-11-26): si lo ve y cuánto paga al mes. Las fechas de
+ * pago salen de los pagos que se registran en "Pagos", como siempre: la web muestra el último
+ * (lo copia la función `alCambiarPago`).
+ */
+@Composable
+private fun FilaFacturacion(
+    activo: Boolean,
+    mensualidad: Double?,
+    habilitado: Boolean,
+    onCambiar: (Boolean) -> Unit,
+    onGuardarMensualidad: (Double?) -> Unit
+) {
+    // El texto se edita aparte y se guarda con el botón: guardar en cada tecla mandaría un
+    // "7", luego "70", luego "700" a la clienta.
+    var texto by remember(mensualidad) {
+        mutableStateOf(mensualidad?.let { if (it % 1.0 == 0.0) it.toLong().toString() else it.toString() } ?: "")
+    }
+    val valor = texto.trim().replace(",", ".").toDoubleOrNull()
+    val valido = texto.isBlank() || (valor != null && valor > 0)
+    val cambio = (if (texto.isBlank()) null else valor) != mensualidad
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Icon(Icons.AutoMirrored.Filled.ReceiptLong, contentDescription = null)
+                Column(modifier = Modifier.weight(1f)) {
+                    Text("Facturación en su web", style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        if (activo) "Ve su periodo, su último pago, cuándo vence y cómo pagar."
+                        else "Apagado: ve \"no tienes acceso a este apartado\".",
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+                Switch(checked = activo, onCheckedChange = onCambiar, enabled = habilitado)
+            }
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                OutlinedTextField(
+                    value = texto,
+                    onValueChange = { texto = it },
+                    label = { Text("Mensualidad") },
+                    prefix = { Text("$") },
+                    placeholder = { Text("La de su último pago") },
+                    isError = !valido,
+                    singleLine = true,
+                    enabled = habilitado,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    modifier = Modifier.weight(1f)
+                )
+                TextButton(
+                    onClick = { onGuardarMensualidad(if (texto.isBlank()) null else valor) },
+                    enabled = habilitado && valido && cambio
+                ) { Text("Guardar") }
+            }
         }
     }
 }

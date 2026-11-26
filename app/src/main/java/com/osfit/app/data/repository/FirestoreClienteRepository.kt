@@ -105,6 +105,16 @@ class FirestoreClienteRepository(
         coleccion.document(clienteId).update("recordatorioPago", activo).await()
     }
 
+    override suspend fun actualizarFacturacionWeb(clienteId: String, activo: Boolean) {
+        coleccion.document(clienteId).update("facturacionWeb", activo).await()
+    }
+
+    override suspend fun actualizarMensualidad(clienteId: String, mensualidad: Double?) {
+        coleccion.document(clienteId)
+            .update("mensualidad", mensualidad ?: FieldValue.delete())
+            .await()
+    }
+
     override suspend fun actualizarEntrenaADistancia(clienteId: String, aDistancia: Boolean) {
         coleccion.document(clienteId).update("entrenaADistancia", aDistancia).await()
     }

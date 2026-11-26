@@ -85,6 +85,11 @@ data class Cliente(
     // Si la web le muestra la tarjeta "Tu periodo vence en X días". Apagado por defecto: el
     // entrenador lo prende solo para las clientas a las que quiere recordarles el pago.
     val recordatorioPago: Boolean = false,
+    // Si la web le muestra el apartado Facturación. Apagado por defecto: sin él, la clienta ve
+    // "no tienes acceso a este apartado" (entrenador, 2026-11-26).
+    val facturacionWeb: Boolean = false,
+    // Cuánto paga al mes, para Facturación en la web. Null: la web usa el monto de su último pago.
+    val mensualidad: Double? = null,
     // Llave del entrenador para las notificaciones de la web. Apagada por defecto: solo
     // reciben avisos las clientas que él habilite, además de que ellas den permiso en su
     // teléfono. La función `enviarNotificacion` la vuelve a revisar al enviar.
