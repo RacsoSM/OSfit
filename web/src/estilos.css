@@ -171,7 +171,6 @@ main {
   flex: none; font-size: 13px; font-weight: 700; white-space: nowrap; font-variant-numeric: tabular-nums;
   padding: 4px 10px; border-radius: 999px; background: var(--superficie-alta);
 }
-.dh-credito { margin: 4px 0 10px; }
 .dh-sin-ejercicios { font-size: 13px; color: var(--texto-tenue); margin: 14px 0 4px; }
 /* "▶ Empezar entrenamiento guiado": el botón normal del estilo, con el triángulo a la izquierda
    centrado con el texto. `.boton.dh-empezar` y no solo la clase: `.boton` va más abajo en

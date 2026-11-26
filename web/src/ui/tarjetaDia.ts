@@ -96,9 +96,9 @@ function listaEjercicios(ejercicios: Ejercicio[], indice: IndiceBanco | null | u
         </li>`)
     .join("");
 
-  // Los términos del dataset piden el crédito junto a las animaciones, donde se muestren.
-  const conGif = ejercicios.some((e) => urlGif(indice?.get(claveBanco(e.nombre ?? ""))?.gifRuta));
-  return `<ul class="dh-ejercicios">${filas}</ul>${conGif ? `<p class="registro-credito dh-credito">Animaciones © Gym visual</p>` : ""}`;
+  // Sin el crédito "Animaciones © Gym visual": el entrenador tiene un acuerdo directo con ellos
+  // para usarlas (2026-11-26).
+  return `<ul class="dh-ejercicios">${filas}</ul>`;
 }
 
 /**
