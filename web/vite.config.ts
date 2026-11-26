@@ -1,5 +1,6 @@
 import { fileURLToPath } from "node:url";
 import { defineConfig } from "vite";
+import { hojasDeEstilo } from "./hojasDeEstilo.mjs";
 
 /**
  * La versión de este build: fecha y hora en Mazatlán, `AAMMDD.HHMM` (261015.1432 = 15 de octubre
@@ -24,6 +25,7 @@ export default defineConfig({
     __VERSION__: JSON.stringify(VERSION),
   },
   plugins: [
+    hojasDeEstilo(fileURLToPath(new URL(".", import.meta.url))),
     {
       // `/version.json`: la versión de este build, para que una página abierta desde antes
       // sepa que hay otra y ofrezca actualizar (`src/version.ts`).

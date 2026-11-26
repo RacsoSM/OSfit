@@ -55,16 +55,10 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <link rel="stylesheet" href="/src/estilos.css" />
     <!--
-      Las hojas de los estilos de Ajustes, después de `estilos.css` a propósito: a igual
-      especificidad gana el que va último. Cada una cuelga de su propio `data-estilo`, así que
-      entre ellas no se pisan.
+      Las hojas de los estilos de Ajustes NO van aquí: cada una es su propio archivo y se pide
+      solo la del estilo elegido, con un script que el build pone al final del <head>, después
+      del CSS de la página (ver `hojasDeEstilo.mjs`).
     -->
-    <link rel="stylesheet" href="/src/estiloPixel.css" />
-    <link rel="stylesheet" href="/src/estiloNeon.css" />
-    <link rel="stylesheet" href="/src/estiloComic.css" />
-    <link rel="stylesheet" href="/src/estiloMinimalista.css" />
-    <link rel="stylesheet" href="/src/estiloSakura.css" />
-    <link rel="stylesheet" href="/src/estiloHalloween.css" />
     <!--
       El estilo elegido en Ajustes, puesto antes de que se pinte nada. Va en línea y no en el
       bundle por lo mismo que el esqueleto: el bundle tarda, y sin esto la página se pintaría

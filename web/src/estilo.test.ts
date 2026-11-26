@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
   CLAVE_ESTILO, ESTILOS, ESTILO_POR_DEFECTO, FUENTES, ONOMATOPEYAS, aplicarEstilo, estiloGuardado,
-  guardarEstilo, onomatopeya, retrasosDeCortina, type AlmacenEstilo,
+  guardarEstilo, hojaDeEstilo, onomatopeya, retrasosDeCortina, type AlmacenEstilo,
 } from "./estilo";
+import { ESTILOS_CON_HOJA, archivoDeHoja, scriptDeHojas } from "../hojasDeEstilo.mjs";
 
 import indexHtml from "../index.html?raw";
 
@@ -63,15 +64,34 @@ describe("index.html y los estilos van de la mano", () => {
     expect(html).toContain(`${id}: "${FUENTES[id as keyof typeof FUENTES]}"`);
   });
 
-  it.each(otros.map((e) => e.id))("%s: su hoja está enlazada", (id) => {
-    expect(html).toContain(`href="/src/estilo${id[0].toUpperCase()}${id.slice(1)}.css"`);
+  it("cada estilo menos el clásico tiene su hoja aparte, y su archivo existe", () => {
+    expect([...ESTILOS_CON_HOJA].sort()).toEqual(otros.map((e) => e.id).sort());
+    for (const id of ESTILOS_CON_HOJA) expect(archivoDeHoja(id)).toBe(`estilo${id[0].toUpperCase()}${id.slice(1)}.css`);
   });
 
-  it("las hojas de estilo van después de la clásica, para ganarle a igual especificidad", () => {
-    const clasica = html.indexOf(`href="/src/estilos.css"`);
-    for (const e of otros) {
-      expect(html.indexOf(`/src/estilo${e.id[0].toUpperCase()}${e.id.slice(1)}.css`)).toBeGreaterThan(clasica);
-    }
+  it("las hojas de estilo ya no van en el HTML: se pide solo la del estilo elegido", () => {
+    for (const e of otros) expect(html).not.toContain(`/src/${archivoDeHoja(e.id)}`);
+  });
+});
+
+describe("hojaDeEstilo", () => {
+  const mapa = { sakura: "/assets/estiloSakura-abc.css" };
+
+  it("da el archivo del estilo según el mapa del <head>", () => {
+    expect(hojaDeEstilo("sakura", mapa)).toBe("/assets/estiloSakura-abc.css");
+  });
+
+  it("el clásico no tiene hoja, y sin mapa no hay nada que pedir", () => {
+    expect(hojaDeEstilo("clasico", mapa)).toBeNull();
+    expect(hojaDeEstilo("neon", mapa)).toBeNull();
+    expect(hojaDeEstilo("sakura", undefined)).toBeNull();
+  });
+
+  it("el script del <head> deja el mapa y escribe la hoja del estilo elegido", () => {
+    const script = scriptDeHojas(mapa);
+    expect(script).toContain('window.__hojasEstilo = {"sakura":"/assets/estiloSakura-abc.css"}');
+    expect(script).toContain("document.write");
+    expect(script).toContain('id="hoja-');
   });
 });
 

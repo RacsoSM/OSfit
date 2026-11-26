@@ -1,8 +1,8 @@
 /**
  * Avisar cuando hay una versión nueva de la página (decisión del entrenador, 2026-10-15).
  *
- * Abrir la página desde cero ya trae siempre la última (el HTML va sin caché y `sw.js` lo pide
- * a la red primero). El problema es la página que se queda abierta: instalada en el teléfono,
+ * Abrir la página desde cero sale de lo guardado al instante, y el service worker avisa por su
+ * lado cuando guarda una versión nueva (`public/sw.js`, mensaje `version-lista`). El problema es la página que se queda abierta: instalada en el teléfono,
  * al mandarla al fondo y volver, el sistema la reanuda sin recargar y sigue con el código viejo
  * durante días. Por eso, cada vez que vuelve a la página y cada media hora mientras la tiene
  * abierta, se pregunta cuál es la versión vigente (`/version.json`, que escribe el build: ver

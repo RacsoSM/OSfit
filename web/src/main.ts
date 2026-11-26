@@ -53,8 +53,6 @@ import {
 } from "./sinDatos";
 import { conectarAutollenado, conectarDescanso, conectarUnidadPeso } from "./ui/tarjetaUnidadPeso";
 import { conectarSinDatos } from "./ui/tarjetaSinDatos";
-import { conectarEstadisticas } from "./ui/estadisticas";
-import { abrirHistoria, cerrarHistoria, conectarResumenMensual, reiniciarResumenMensual } from "./ui/resumenMensual";
 import { avisoResumenActivo } from "./lanzamiento";
 import { abrirDelMensaje, abrirDeLaDireccion, direccionSinAbrir, type Abrir } from "./abrirDesdeAviso";
 import { mostrarAvisoSinDatos, quitarAvisoSinDatos } from "./ui/avisoSinDatos";
@@ -76,7 +74,6 @@ import {
   cabeceraRegistro, cerrarSiVencido, conectarRegistro, empezarGuiado, entrenamientoAbierto, vistaDesdeHistorial,
 } from "./ui/registro";
 import { soltarMarcoJuego } from "./ui/marcoJuego";
-import { acomodarEspacio, conectarEspacio } from "./ui/espacio";
 import { barraInferior, conectarBarra, marcarSexoBarra } from "./ui/barraInferior";
 import { archivosMapa, conectarMapa, type EstadoSvg } from "./ui/mapaMuscular";
 import { conectarPeso } from "./ui/pesoCorporal";
@@ -86,9 +83,11 @@ import {
   menuAbierto,
   ventanaActiva, ventanaDeBarra,
 } from "./navegacion";
+import type { EstadoComparar } from "./ui/comparar";
 import {
-  conectarComparar, reiniciarComparar, sexosAComparar, type EstadoComparar,
-} from "./ui/comparar";
+  alCargar, cargando, parteArcade, parteBoxJump, parteComparar, parteDiscos, parteEspacio, parteEstadisticas,
+  parteKettlebell, parteResumen,
+} from "./perezoso";
 import { marcarBotonAtras } from "./ui/botonAtras";
 import { mostrarAvisoVersion } from "./ui/avisoVersion";
 import { vigilarVersion } from "./version";
@@ -99,10 +98,6 @@ import {
 import type { VideoConUrl } from "./ui/tarjetaVideos";
 import { iniciarCronometros } from "./ui/cronometro";
 import { conectarSugerencias, reiniciarSugerencias } from "./ui/sugerencias";
-import { mostrarJuego } from "./ui/juegoDiscos";
-import { mostrarKettlebell } from "./ui/kettlebellBird";
-import { mostrarBoxJump } from "./ui/boxJump";
-import { cargarArcade, conectarArcade } from "./ui/arcade";
 import { calificarEsfuerzo, reenviarEsfuerzos } from "./esfuerzo";
 import { conectarBuzon, leerVisto, marcarVistas, resaltarAviso, sinLeer } from "./ui/buzon";
 
@@ -238,7 +233,7 @@ async function arrancar(): Promise<void> {
   alRetrocederSub((v, s) => {
     if (v === "registro") vistaDesdeHistorial(s);
     // "Atrás" con la historia del resumen abierta la cierra y deja la lista de meses.
-    if (v === "resumenMensual" && s === null) cerrarHistoria();
+    if (v === "resumenMensual" && s === null) parteResumen.listo()?.cerrarHistoria();
   });
   const hoy = hoyEnMazatlan();
 
@@ -474,10 +469,13 @@ async function arrancar(): Promise<void> {
 
   /** Abre Resumen mensual con la historia de ese mes ya abierta. */
   function verHistoria(mes: string): void {
-    abrirHistoria(mes);
-    abrirVentana("resumenMensual");
-    irSub("historia", "adelante");
-    pintar();
+    // La historia vive en su propia parte (`perezoso.ts`): se abre cuando llega.
+    void parteResumen.pedir().then((m) => {
+      m.abrirHistoria(mes);
+      abrirVentana("resumenMensual");
+      irSub("historia", "adelante");
+      pintar();
+    }).catch(() => {});
   }
 
   /** El último mes cuyo resumen ya vio (o descartó): la ventana emergente sale una vez por mes. */
@@ -698,6 +696,8 @@ async function arrancar(): Promise<void> {
 
   /** La ventana que se pintó la última vez, para volver arriba solo al cambiar de ventana. */
   let ventanaPintada: IdVentana | null = null;
+  // Al llegar una parte que se carga aparte (un juego, el Arcade…), se repinta con ella.
+  alCargar(() => pintar());
 
   function pintar(): void {
     // Con el candado de revocado puesto, ningún listener rezagado lo tapa.
@@ -750,11 +750,11 @@ async function arrancar(): Promise<void> {
     if (activa.id === "ranking" && activa.id !== ventanaPintada) cargarRanking();
     // Al entrar al Arcade se piden las tablas de los juegos (para sus campeones).
     if (activa.id === "arcade" && activa.id !== ventanaPintada) {
-      void cargarArcade({
+      void parteArcade.pedir().then((m) => m.cargarArcade({
         "osfit:torre-tabla": async () => (await tablaDiscos({})).data,
         "osfit:kettlebell-tabla": async () => (await tablaKettlebell({})).data,
         "osfit:boxjump-tabla": async () => (await tablaBoxJump({})).data,
-      }, () => { if (ventanaActiva() === "arcade") pintar(); });
+      }, () => { if (ventanaActiva() === "arcade") pintar(); })).catch(() => {});
     }
     // Cada vez y no solo al entrar: si el entrenador le pone el sexo con la ventana abierta,
     // el snapshot del cliente llega aquí y el mapa aparece sin salir y volver.
@@ -763,8 +763,8 @@ async function arrancar(): Promise<void> {
     if (activa.id === "resumenMensual") cargarMapas(false);
     if (activa.id === "comparar") {
       // Sin acceso no se pide: la función lo rechazaría, y la ventana ya lo dice.
-      if (activa.id !== ventanaPintada) { reiniciarComparar(); if (cliente.sinAccesoAmigos !== true || cliente.adminAmigos === true) cargarComparacion(); }
-      cargarMapas(false, sexosAComparar(comparacion, cliente.sexo));
+      if (activa.id !== ventanaPintada) { parteComparar.listo()?.reiniciarComparar(); if (cliente.sinAccesoAmigos !== true || cliente.adminAmigos === true) cargarComparacion(); }
+      cargarMapas(false, parteComparar.listo()?.sexosAComparar(comparacion, cliente.sexo));
     }
     // Resumen mensual también lo usa: la gráfica de kilos por semana de los meses viejos.
     if ((activa.id === "estadisticas" || activa.id === "resumenMensual") && !historialPedido) {
@@ -790,7 +790,7 @@ async function arrancar(): Promise<void> {
     if (ventanaPintada === "notificaciones" && activa.id !== "notificaciones") resaltarAviso(null);
     // Al salir de Resumen mensual se olvida el mes: la próxima vez abre en el mes en curso.
     if (ventanaPintada === "resumenMensual" && activa.id !== "resumenMensual") {
-      reiniciarResumenMensual();
+      parteResumen.listo()?.reiniciarResumenMensual();
       document.body.classList.remove("historia-abierta");
     }
     actualizarCabecera(tituloCabecera(activa));
@@ -826,12 +826,23 @@ async function arrancar(): Promise<void> {
     contenido.innerHTML = contenidoDe(activa, datos);
     marcarBotonAtras(contenido);
     pintarVideos(activa.contenedorPropio === "videos");
+    // Los juegos son partes aparte (`perezoso.ts`): se piden al abrir uno; mientras llega,
+    // "Cargando…". Cerrados, solo se les avisa si ya habían llegado.
+    const juego = <M,>(parte: { ya(): M | null; listo(): M | null }, id: string): M | null => {
+      if (activa.contenedorPropio !== id) return parte.listo();
+      const m = parte.ya();
+      if (!m) contenido.innerHTML = cargando();
+      return m;
+    };
     const cajaJuego = document.querySelector<HTMLElement>("#juego");
-    if (cajaJuego) mostrarJuego(cajaJuego, activa.contenedorPropio === "juego", { guardar: async (p) => (await guardarPartidaDiscos(p)).data, tabla: async () => (await tablaDiscos({})).data, nombre: cliente.nombre ?? "" });
+    const mDiscos = juego(parteDiscos, "juego");
+    if (cajaJuego && mDiscos) mDiscos.mostrarJuego(cajaJuego, activa.contenedorPropio === "juego", { guardar: async (p) => (await guardarPartidaDiscos(p)).data, tabla: async () => (await tablaDiscos({})).data, nombre: cliente.nombre ?? "" });
     const cajaKettlebell = document.querySelector<HTMLElement>("#kettlebell");
-    if (cajaKettlebell) mostrarKettlebell(cajaKettlebell, activa.contenedorPropio === "kettlebell", { guardar: async (p) => (await guardarPartidaKettlebell(p)).data, tabla: async () => (await tablaKettlebell({})).data, nombre: cliente.nombre ?? "" });
+    const mKettlebell = juego(parteKettlebell, "kettlebell");
+    if (cajaKettlebell && mKettlebell) mKettlebell.mostrarKettlebell(cajaKettlebell, activa.contenedorPropio === "kettlebell", { guardar: async (p) => (await guardarPartidaKettlebell(p)).data, tabla: async () => (await tablaKettlebell({})).data, nombre: cliente.nombre ?? "" });
     const cajaBoxJump = document.querySelector<HTMLElement>("#boxjump");
-    if (cajaBoxJump) mostrarBoxJump(cajaBoxJump, activa.contenedorPropio === "boxjump", { guardar: async (p) => (await guardarPartidaBoxJump(p)).data, tabla: async () => (await tablaBoxJump({})).data, nombre: cliente.nombre ?? "" });
+    const mBoxJump = juego(parteBoxJump, "boxjump");
+    if (cajaBoxJump && mBoxJump) mBoxJump.mostrarBoxJump(cajaBoxJump, activa.contenedorPropio === "boxjump", { guardar: async (p) => (await guardarPartidaBoxJump(p)).data, tabla: async () => (await tablaBoxJump({})).data, nombre: cliente.nombre ?? "" });
     // Con un juego abierto la página no se mueve (el juego es toda la pestaña).
     const conJuego = activa.contenedorPropio === "juego" || activa.contenedorPropio === "kettlebell" || activa.contenedorPropio === "boxjump";
     document.body.classList.toggle("con-juego", conJuego);
@@ -852,9 +863,12 @@ async function arrancar(): Promise<void> {
     // estado de las dos acciones no vive acá, sino dentro de sus módulos, justo para que un
     // snapshot a destiempo no lo borre.
     if (activa.id === "espacio") {
-      conectarEspacio();
-      acomodarEspacio();
-      requestAnimationFrame(() => acomodarEspacio());
+      const m = parteEspacio.listo();
+      if (m) {
+        m.conectarEspacio();
+        m.acomodarEspacio();
+        requestAnimationFrame(() => m.acomodarEspacio());
+      }
     }
     if (activa.id === "musculos") {
       conectarMapa(cliente.sexo, fuerzaDelCliente(datos), cliente.peso ?? null);
@@ -863,7 +877,7 @@ async function arrancar(): Promise<void> {
       return;
     }
     if (activa.id === "comparar") {
-      conectarComparar(
+      parteComparar.listo()?.conectarComparar(
         pintar,
         () => { cargarComparacion(); pintar(); },
         () => abrirVentana("musculos"),
@@ -899,11 +913,11 @@ async function arrancar(): Promise<void> {
       return;
     }
     if (activa.id === "estadisticas") {
-      conectarEstadisticas(pintar, () => abrirVentana("registro"));
+      parteEstadisticas.listo()?.conectarEstadisticas(pintar, () => abrirVentana("registro"));
       return;
     }
     if (activa.id === "resumenMensual") {
-      conectarResumenMensual(pintar, {
+      parteResumen.listo()?.conectarResumenMensual(pintar, {
         alAbrir: () => irSub("historia", "adelante"),
         alCerrar: () => irSub(null, "volver"),
       });
@@ -923,7 +937,7 @@ async function arrancar(): Promise<void> {
       return;
     }
     if (activa.id === "arcade") {
-      conectarArcade((v) => abrirVentana(v));
+      parteArcade.listo()?.conectarArcade((v) => abrirVentana(v));
       return;
     }
     if (activa.id === "ranking") {
@@ -1183,5 +1197,10 @@ if ("serviceWorker" in navigator && !modoSinDatos()) {
 
 // Con la página abierta desde antes de un deploy, ofrecer actualizar (`version.ts`).
 vigilarVersion(__VERSION__, mostrarAvisoVersion);
+// La página abre de lo guardado y el service worker revisa por detrás: si guardó una versión
+// nueva, avisa para ofrecer actualizar (`public/sw.js`).
+navigator.serviceWorker?.addEventListener("message", (e) => {
+  if ((e.data as { tipo?: string } | null)?.tipo === "version-lista") mostrarAvisoVersion();
+});
 
 arrancar();

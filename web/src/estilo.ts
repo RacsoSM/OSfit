@@ -128,6 +128,16 @@ interface RaizEstilo {
   removeAttribute(nombre: string): void;
 }
 
+/**
+ * El archivo con la hoja de un estilo, del mapa que deja en `window` el script del `<head>`
+ * (`hojasDeEstilo.mjs`). Null para el clásico, que no tiene hoja propia, o si el mapa no está.
+ */
+export function hojaDeEstilo(id: IdEstilo, mapa: unknown = (globalThis as { __hojasEstilo?: unknown }).__hojasEstilo): string | null {
+  if (id === ESTILO_POR_DEFECTO || !mapa || typeof mapa !== "object") return null;
+  const ruta = (mapa as Record<string, unknown>)[id];
+  return typeof ruta === "string" ? ruta : null;
+}
+
 export function aplicarEstilo(id: IdEstilo, raiz: RaizEstilo): void {
   if (id === ESTILO_POR_DEFECTO) raiz.removeAttribute("data-estilo");
   else raiz.setAttribute("data-estilo", id);

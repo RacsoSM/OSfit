@@ -11,11 +11,15 @@
  *    de los ejercicios, las imágenes y las fuentes del estilo, esos se guardan al verlos con
  *    señal (`CACHE_MEDIOS`).
  *
- * Cómo no se queda con una versión vieja: el HTML va **red primero**. Con señal siempre llega
- * el del último deploy (hosting lo sirve con `no-cache`), y solo sin señal se usa el guardado.
- * Los archivos de `/assets/` llevan el hash en el nombre, así que uno nuevo nunca pisa a uno
- * viejo: esos van **caché primero**. Al llegar un HTML nuevo se guardan sus archivos y se
- * borran los que ya nadie pide.
+ * Cómo abre al instante sin quedarse con una versión vieja (2026-11-26): el HTML va **guardado
+ * primero**. La página sale de lo guardado sin esperar a la red y, por detrás, se pide el HTML
+ * de hosting (que lo sirve con `no-cache`). Si es otro, se guardan la versión nueva y sus
+ * archivos, y al terminar se avisa a la página (`version-lista`) para que ofrezca "Actualizar":
+ * al recargar ya sale la nueva, también guardada. Solo la primera vez, sin nada guardado, el
+ * HTML va red primero. Los archivos de `/assets/` llevan el hash en el nombre, así que uno nuevo
+ * nunca pisa a uno viejo: esos van **caché primero**. Al guardar una versión se guardan todos
+ * sus archivos, también los pedazos que se cargan al abrir una ventana, y se borran los que ya
+ * nadie pide.
  *
  * Los avisos llegan solo con datos (`titulo`, `texto`) y aquí se arma la notificación. En
  * iOS es obligatorio mostrar una notificación por cada push: si llega uno y no se muestra
@@ -55,6 +59,12 @@ const leyendoModo = caches
 
 self.addEventListener("message", (evento) => {
   if (evento.data && evento.data.tipo === "modo-sin-datos") sinDatos = !!evento.data.activo;
+  // "Actualizar" del aviso de versión (`ui/avisoVersion.ts`): antes de recargar, que la versión
+  // nueva quede guardada, o la recarga saldría otra vez con la vieja.
+  if (evento.data && evento.data.tipo === "actualizar") {
+    const fuente = evento.source;
+    evento.waitUntil(refrescarPagina().catch(() => false).then(() => fuente && fuente.postMessage({ tipo: "version-revisada" })));
+  }
 });
 
 self.addEventListener("install", (evento) => {
@@ -105,7 +115,7 @@ function respuestaNormal(evento) {
   // `/version.json` siempre a la red y sin guardar: dice si hay un deploy más nuevo (`src/version.ts`).
   if (url.pathname === "/sw.js" || url.pathname === "/version.json" || url.pathname.startsWith("/__/")) return null;
 
-  if (pedido.mode === "navigate") return paginaRedPrimero(evento);
+  if (pedido.mode === "navigate") return paginaGuardadaPrimero(evento);
   if (url.pathname.startsWith("/assets/")) return cachePrimero(pedido);
   return redPrimero(pedido);
 }
@@ -156,7 +166,53 @@ async function medioGuardado(evento) {
   return deRed.catch(() => fetch(pedido));
 }
 
-/** El HTML: el de la red si llega a tiempo; si no, el guardado. */
+/** El HTML guardado al instante y, por detrás, revisar si hay otro. Sin nada guardado, la red. */
+async function paginaGuardadaPrimero(evento) {
+  const guardada = await caches.match(PAGINA, { cacheName: CACHE });
+  if (!guardada) return paginaRedPrimero(evento);
+  evento.waitUntil(refrescarPagina().catch(() => false));
+  return guardada;
+}
+
+/**
+ * Pide el HTML de hosting y, si no es el guardado, guarda esa versión entera y avisa a las
+ * páginas abiertas. Devuelve si hubo versión nueva. Una sola revisión a la vez: si se abren
+ * dos pestañas, o la clienta toca "Actualizar" mientras ya se revisaba, se comparte.
+ */
+let revisando = null;
+let revisandoDesde = 0;
+const PLAZO_REVISION_MS = 15000;
+function refrescarPagina() {
+  // Se comparte solo una revisión reciente: una que lleva rato esperando a una red que no
+  // contesta no debe impedir que la de ahora, quizá ya con señal, encuentre la versión nueva.
+  if (!revisando || Date.now() - revisandoDesde > 3000) {
+    revisandoDesde = Date.now();
+    const esta = (async () => {
+      // Con un plazo: con "señal" que no contesta, una revisión colgada trabaría las siguientes.
+      const corte = new AbortController();
+      const reloj = setTimeout(() => corte.abort(), PLAZO_REVISION_MS);
+      let html;
+      try {
+        const respuesta = await fetch(PAGINA, { cache: "no-store", signal: corte.signal });
+        if (!respuesta.ok) return false;
+        html = await respuesta.text();
+      } finally {
+        clearTimeout(reloj);
+      }
+      const guardada = await caches.match(PAGINA, { cacheName: CACHE });
+      if (guardada && (await guardada.text()) === html) return false;
+      await guardarVersion(html);
+      if (guardada) {
+        for (const cliente of await self.clients.matchAll({ type: "window" })) cliente.postMessage({ tipo: "version-lista" });
+      }
+      return true;
+    })().finally(() => { if (revisando === esta) revisando = null; });
+    revisando = esta;
+  }
+  return revisando;
+}
+
+/** El HTML: el de la red si llega a tiempo; si no, el guardado. Solo cuando no hay nada guardado. */
 async function paginaRedPrimero(evento) {
   // La copia se saca antes de que la página lea la respuesta: después ya no se puede.
   let copia = null;
@@ -234,25 +290,28 @@ async function guardarPagina() {
  */
 async function guardarVersion(html) {
   const cache = await caches.open(CACHE);
-  await cache.put(PAGINA, new Response(html, { headers: { "Content-Type": "text/html; charset=utf-8" } }));
   const archivos = new Set(html.match(/\/assets\/[\w.-]+\.(?:js|css)/g) ?? []);
-  for (const ruta of [...archivos]) {
+  // Una cola y no una vuelta: un pedazo de JS nombra a otros (los `import()` como "./x.js" y
+  // sus dependencias como "assets/x.js"), y esos a su vez a otros.
+  const pendientes = [...archivos];
+  while (pendientes.length) {
+    const ruta = pendientes.shift();
     let respuesta = await cache.match(ruta);
     if (!respuesta) {
-      respuesta = await fetch(ruta);
-      if (!respuesta.ok) continue;
+      respuesta = await fetch(ruta).catch(() => null);
+      if (!respuesta || !respuesta.ok) continue;
       await cache.put(ruta, respuesta.clone());
     }
     if (ruta.endsWith(".js")) {
       const js = await respuesta.text();
-      for (const [, nombre] of js.matchAll(/["'`]\.\/([\w.-]+\.(?:js|css))["'`]/g)) {
-        archivos.add(`/assets/${nombre}`);
+      for (const [, nombre] of js.matchAll(/["'`](?:\.\/|\/?assets\/)([\w.-]+\.(?:js|css))["'`]/g)) {
+        const otra = `/assets/${nombre}`;
+        if (!archivos.has(otra)) { archivos.add(otra); pendientes.push(otra); }
       }
     }
   }
-  for (const ruta of archivos) {
-    if (!(await cache.match(ruta))) await cache.add(ruta).catch(() => {});
-  }
+  // El HTML al final: si algo se corta a medias, lo guardado sigue siendo una versión completa.
+  await cache.put(PAGINA, new Response(html, { headers: { "Content-Type": "text/html; charset=utf-8" } }));
   for (const pedido of await cache.keys()) {
     const ruta = new URL(pedido.url).pathname;
     if (ruta.startsWith("/assets/") && !archivos.has(ruta)) await cache.delete(pedido);

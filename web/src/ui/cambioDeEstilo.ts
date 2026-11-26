@@ -1,10 +1,17 @@
-import { FUENTES, aplicarEstilo, onomatopeya, retrasosDeCortina, type IdEstilo } from "../estilo";
-import { fondoPixel } from "./fondoPixel";
-import { fondoSakura } from "./sakura";
-import { detenerPetalos, iniciarPetalos, rafagaDePetalos } from "./petalos";
-import {
-  IMAGEN_CALABAZA, IMAGEN_MURCIELAGO, bandadaDeMurcielagos, detenerSustos, fondoHalloween, iniciarSustos,
-} from "./halloween";
+import { FUENTES, aplicarEstilo, hojaDeEstilo, onomatopeya, retrasosDeCortina, type IdEstilo } from "../estilo";
+
+/** Los fondos con dibujo, que se cargan aparte (`fondosDeEstilo.ts`): null hasta que llegan. */
+type Fondos = typeof import("./fondosDeEstilo");
+let fondos: Fondos | null = null;
+let pidiendoFondos: Promise<Fondos> | null = null;
+const CON_FONDO: ReadonlySet<IdEstilo> = new Set<IdEstilo>(["pixel", "sakura", "halloween"]);
+function pedirFondos(): Promise<Fondos> {
+  pidiendoFondos ??= import("./fondosDeEstilo").then(
+    (m) => (fondos = m),
+    (e: unknown) => { pidiendoFondos = null; throw e; }
+  );
+  return pidiendoFondos;
+}
 
 /**
  * Lo que pasa en el DOM al cambiar de estilo: el atributo, las fuentes, el paisaje del pixel y
@@ -41,9 +48,27 @@ const COLOR_BARRA: Record<IdEstilo, string> = {
  * por estilo para no pedirlas dos veces; el script de `index.html` usa los mismos ids.
  */
 export function ponerEstilo(id: IdEstilo): void {
+  void pedirHoja(id);
   aplicarEstilo(id, document.documentElement);
   document.querySelector('meta[name="theme-color"]')?.setAttribute("content", COLOR_BARRA[id]);
   pedirFuentes(id);
+  if (!fondos) {
+    // Sin la parte de los fondos no hay nada que detener; si este estilo la necesita, se pide y
+    // el fondo se pone al llegar (si para entonces sigue siendo el estilo puesto).
+    if (CON_FONDO.has(id)) {
+      void pedirFondos().then(() => {
+        if ((document.documentElement.getAttribute("data-estilo") ?? "clasico") === id) ponerFondo(id);
+      }).catch(() => {});
+    }
+    return;
+  }
+  ponerFondo(id);
+}
+
+/** Lo que el CSS del estilo necesita que exista, con la parte de los fondos ya cargada. */
+function ponerFondo(id: IdEstilo): void {
+  if (!fondos) return;
+  const { detenerPetalos, detenerSustos, fondoHalloween, fondoPixel, fondoSakura, iniciarPetalos, iniciarSustos } = fondos;
   // Pixel, sakura y halloween son los únicos fondos que necesitan nodos: los demás son CSS puro.
   if (id === "pixel" && !document.getElementById("fondo-pixel")) {
     document.body.insertAdjacentHTML("afterbegin", fondoPixel());
@@ -72,6 +97,35 @@ export function ponerEstilo(id: IdEstilo): void {
     document.querySelector<HTMLCanvasElement>("#petalos-fondo"),
     document.querySelector<HTMLCanvasElement>("#petalos-frente")
   );
+}
+
+/**
+ * La hoja del estilo, que es su propio archivo (`hojasDeEstilo.mjs`): se pide la primera vez que
+ * hace falta, con el mismo id que usa el script del `<head>`, y queda puesta. Se cumple cuando
+ * está lista (o si falla, para no trabar el cambio).
+ */
+function pedirHoja(id: IdEstilo): Promise<void> {
+  const ruta = hojaDeEstilo(id);
+  if (!ruta) return Promise.resolve();
+  const idHoja = `hoja-${id}`;
+  const existente = document.getElementById(idHoja) as HTMLLinkElement | null;
+  if (existente) {
+    return existente.sheet ? Promise.resolve() : new Promise((listo) => {
+      existente.addEventListener("load", () => listo(), { once: true });
+      existente.addEventListener("error", () => listo(), { once: true });
+    });
+  }
+  const enlace = document.createElement("link");
+  enlace.id = idHoja;
+  enlace.rel = "stylesheet";
+  enlace.href = ruta;
+  const lista = new Promise<void>((listo) => {
+    enlace.addEventListener("load", () => listo(), { once: true });
+    enlace.addEventListener("error", () => listo(), { once: true });
+  });
+  // Al final del <head>: después del CSS de la página, para ganarle a igual especificidad.
+  document.head.append(enlace);
+  return lista;
 }
 
 function pedirFuentes(id: IdEstilo): void {
@@ -178,7 +232,7 @@ const vinetaComic: Transicion = {
 const rafagaSakura: Transicion = {
   cubrir: (velo) => {
     velo.classList.add("transicion-sakura");
-    velo.innerHTML = rafagaDePetalos(46).map((estilo) => `<i style="${estilo}"></i>`).join("");
+    velo.innerHTML = (fondos?.rafagaDePetalos(46) ?? []).map((estilo) => `<i style="${estilo}"></i>`).join("");
     return 520;
   },
   destapar: (velo) => {
@@ -194,10 +248,12 @@ const rafagaSakura: Transicion = {
 const nocheDeBrujas: Transicion = {
   cubrir: (velo) => {
     velo.classList.add("transicion-halloween");
-    velo.style.setProperty("--murcielago", IMAGEN_MURCIELAGO());
-    velo.style.setProperty("--calabaza", IMAGEN_CALABAZA());
+    if (fondos) {
+      velo.style.setProperty("--murcielago", fondos.IMAGEN_MURCIELAGO());
+      velo.style.setProperty("--calabaza", fondos.IMAGEN_CALABAZA());
+    }
     velo.innerHTML = `<span class="hw-calabaza-grande"></span>` +
-      bandadaDeMurcielagos(22).map((estilo) => `<i style="${estilo}"></i>`).join("");
+      (fondos?.bandadaDeMurcielagos(22) ?? []).map((estilo) => `<i style="${estilo}"></i>`).join("");
     return 560;
   },
   destapar: (velo) => {
@@ -227,18 +283,27 @@ export function cambiarConTransicion(id: IdEstilo, cambiar: () => void): void {
     cambiar();
     return;
   }
+  // Las transiciones del sakura y de halloween usan la parte de los fondos: primero se pide.
+  if (CON_FONDO.has(id) && !fondos) {
+    pedirFondos().then(() => cambiarConTransicion(id, cambiar), () => cambiar());
+    return;
+  }
   // Las fuentes se piden YA, no al poner el estilo: así llegan mientras la pantalla se tapa, y
   // la propia transición (el "¡POW!" del cómic va en Bangers) sale con su letra.
   pedirFuentes(id);
+  // La hoja del estilo también: el cambio espera, con la pantalla ya tapada, a que llegue (hasta
+  // 4 s, por si la red no contesta), o se vería un momento la página sin su estilo.
+  const hoja = Promise.race([pedirHoja(id), new Promise<void>((r) => setTimeout(r, 4000))]);
   const transicion = TRANSICIONES[id];
   const velo = document.createElement("div");
   velo.className = "velo-estilo";
   velo.setAttribute("aria-hidden", "true");
   const cubrir = transicion.cubrir(velo);
   document.body.append(velo);
-  setTimeout(() => {
+  const tapada = new Promise<void>((r) => setTimeout(r, cubrir));
+  void Promise.all([tapada, hoja]).then(() => {
     cambiar();
     const destapar = transicion.destapar(velo);
     setTimeout(() => velo.remove(), destapar + 60);
-  }, cubrir);
+  });
 }

@@ -21,17 +21,16 @@ import { seccionVacia, tarjetaLogrosPersonales, tarjetaMedallas } from "./ui/tar
 import { tarjetaRanking, type EstadoRanking } from "./ui/tarjetaRanking";
 import { tarjetaAjustes } from "./ui/tarjetaAjustes";
 import { tarjetaSinDatos } from "./ui/tarjetaSinDatos";
-import { ventanaEstadisticas, type DatosEstadisticas } from "./ui/estadisticas";
+import type { DatosEstadisticas } from "./ui/estadisticas";
 import { ventanaSugerencias } from "./ui/sugerencias";
-import { ventanaArcade } from "./ui/arcade";
-import { ventanaEspacio } from "./ui/espacio";
-import { mesElegidoResumen, ventanaResumenMensual, type DatosResumenMensual, type MesDeLista } from "./ui/resumenMensual";
+import type { DatosResumenMensual, MesDeLista } from "./ui/resumenMensual";
+import { cargando, parteArcade, parteComparar, parteEspacio, parteEstadisticas, parteResumen } from "./perezoso";
 import { compararFuerza, kgPorSemana, mejoresAntes, mesAnterior, mesesConActividad, resumenDelMes, ultimoDiaDe, type ResumenMensual } from "./resumenMensual";
 import { invitacionNotificaciones, seccionNotificaciones } from "./ui/tarjetaNotificaciones";
 import type { EstadoNotificaciones } from "./notificaciones";
 import { archivosMapa, tarjetaMusculos, type EstadoSvg } from "./ui/mapaMuscular";
 import { bloquePeso } from "./ui/pesoCorporal";
-import { ventanaComparar, type EstadoComparar } from "./ui/comparar";
+import type { EstadoComparar } from "./ui/comparar";
 import { promedioMinutos } from "./racha";
 import { avisoReviveExtra } from "./ui/avisoReviveExtra";
 import { avisoResumen } from "./ui/avisoResumen";
@@ -320,17 +319,20 @@ export const VENTANAS: readonly Ventana[] = [
   },
   {
     id: "comparar", titulo: "Amigos", icono: "👥", grupo: "sub",
-    pintar: (d) => ventanaComparar(d.comparacion ?? { estado: "cargando" }, d.cliente.sexo, d.mapas, d.cliente),
+    pintar: (d) => parteComparar.ya()?.ventanaComparar(d.comparacion ?? { estado: "cargando" }, d.cliente.sexo, d.mapas, d.cliente) ?? cargando(),
   },
   {
     id: "estadisticas", titulo: "Estadísticas", icono: "📈", grupo: "principal",
-    pintar: (d) => ventanaEstadisticas(datosEstadisticas(d)),
+    pintar: (d) => parteEstadisticas.ya()?.ventanaEstadisticas(datosEstadisticas(d)) ?? cargando(),
   },
   // Sin emoji (entrenador, 2026-10-28): el menú pinta solo el título, e `icono` va vacío porque
   // el tipo lo pide y solo se usa en "Muy pronto".
   {
     id: "resumenMensual", titulo: "Resumen mensual", icono: "", grupo: "principal",
-    pintar: (d) => ventanaResumenMensual(datosResumenMensual(d, mesElegidoResumen())),
+    pintar: (d) => {
+      const m = parteResumen.ya();
+      return m ? m.ventanaResumenMensual(datosResumenMensual(d, m.mesElegidoResumen())) : cargando();
+    },
   },
   {
     id: "ranking", titulo: "Ranking", icono: "🏆", grupo: "principal",
@@ -339,9 +341,9 @@ export const VENTANAS: readonly Ventana[] = [
   // Quejas y sugerencias (entrenador, 2026-11-24): un campo de texto que le llega como notificación.
   { id: "sugerencias", titulo: "Quejas y sugerencias", icono: "💬", grupo: "principal", pintar: () => ventanaSugerencias() },
   // El Arcade (entrenador, 2026-11-24), debajo de Quejas y sugerencias: reúne los minijuegos.
-  { id: "arcade", titulo: "Arcade", icono: "🕹️", grupo: "principal", pintar: () => ventanaArcade() },
+  { id: "arcade", titulo: "Arcade", icono: "🕹️", grupo: "principal", pintar: () => parteArcade.ya()?.ventanaArcade() ?? cargando() },
   // Mi espacio (entrenador, 2026-11-25; backlog 2, punto 29): por ahora solo para probarlo.
-  { id: "espacio", titulo: "Mi espacio", icono: "🏠", grupo: "principal", soloCon: "pruebasEspacio", pintar: (d) => ventanaEspacio(d.cliente.nombre ?? "", d.cliente.sexo) },
+  { id: "espacio", titulo: "Mi espacio", icono: "🏠", grupo: "principal", soloCon: "pruebasEspacio", pintar: (d) => parteEspacio.ya()?.ventanaEspacio(d.cliente.nombre ?? "", d.cliente.sexo) ?? cargando() },
   // Los juegos, subventanas del Arcade (`PADRE` en `navegacion.ts`). En su propio contenedor: un
   // repintado a media partida tiraría el canvas (`ui/juegoDiscos.ts`, `ui/kettlebellBird.ts`).
   { id: "juego", titulo: "Torre de discos", icono: "🏋️", grupo: "sub", contenedorPropio: "juego" },
