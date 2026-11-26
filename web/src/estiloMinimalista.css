@@ -69,7 +69,7 @@
   background: var(--acento); border-color: transparent;
   box-shadow: 0 12px 30px -14px color-mix(in srgb, var(--acento) 70%, transparent);
 }
-:root[data-estilo="minimalista"] .hoy .tarjeta-titulo { color: rgba(255, 255, 255, 0.7); }
+:root[data-estilo="minimalista"] .hoy .tarjeta-titulo { color: rgba(255, 255, 255, 0.85); }
 :root[data-estilo="minimalista"] .hoy-dia { font-weight: 600; font-size: 28px; letter-spacing: -0.03em; }
 :root[data-estilo="minimalista"] .ejercicio { border-top-color: rgba(255, 255, 255, 0.14); padding: 9px 0; }
 :root[data-estilo="minimalista"] .ejercicio-nombre { font-weight: 500; }
@@ -153,3 +153,25 @@
 :root[data-estilo="minimalista"] .menu-nombre { font-weight: 650; letter-spacing: -0.02em; }
 :root[data-estilo="minimalista"] .menu-opcion { font-weight: 500; }
 :root[data-estilo="minimalista"] .menu-opcion.activa { background: var(--fondo); color: var(--acento); font-weight: 650; }
+
+/* ---------- Legibilidad (2026-11-26) ---------- */
+
+/* Los textos que la hoja base pinta con `--primario` o `--primario-claro`: con las paletas,
+   pensadas para fondo oscuro, quedaban casi blancos sobre blanco ("Recientes", "Ver todo",
+   la pestaña activa de la barra…). Aquí van en el acento, `--primario-oscuro`, que da más de
+   6:1 sobre blanco en las 15 paletas. */
+:root[data-estilo="minimalista"] :is(
+  .pastilla-sin-datos, .barra-opcion.activa, .ayuda-titulo, .registro-nav-boton, .registro-mas-serie,
+  button.registro-serie-num.abierto, .registro-serie-num.caida, .registro-menu-opcion, .registro-biserie-cab,
+  .registro-grupo.del-dia, .registro-barra.del-dia, .registro-recientes-titulo, .registro-recientes-cabecera .boton-texto,
+  .peso-linea .boton-texto, .registro-objetivo, .cmp-visibilidad .boton-texto, .estad-cambiar, .estad-pastilla
+) { color: var(--acento); }
+/* Con letra blanca encima, el verde y el rojo del calendario y del globo de la campana se
+   oscurecen lo justo para pasar de 4.5:1. */
+:root[data-estilo="minimalista"] { --verde: #23803e; }
+:root[data-estilo="minimalista"] .campana-numero { background: #c62828; }
+:root[data-estilo="minimalista"] .nombre-oro { color: #846000; }
+/* Un botón apagado era el acento a media opacidad con letra blanca: ni se leía. Ahora gris. */
+:root[data-estilo="minimalista"] .boton:not(.ruleta-caja .boton):disabled {
+  background: var(--superficie-alta); color: var(--texto-tenue); opacity: 1;
+}

@@ -238,3 +238,41 @@
 
 /* Con la campana de Notificaciones (Inicio), el sello se corre un botón a la izquierda. */
 :root[data-estilo="sakura"] body.con-campana::after { right: max(112px, calc(50% - 240px + 104px)); }
+
+/* ---------- Legibilidad (2026-11-26) ---------- */
+
+/* Los textos que la hoja base pinta con `--primario` o `--primario-claro` (los de la paleta,
+   claros, para fondo oscuro) quedaban casi blancos sobre el papel rosa: "Recientes", "Ver
+   todo", la pestaña activa de la barra… Aquí van en un rosa hondo de texto (6.4:1 sobre blanco). */
+:root[data-estilo="sakura"] :is(
+  .pastilla-sin-datos, .barra-opcion.activa, .ayuda-titulo, .registro-nav-boton, .registro-mas-serie,
+  button.registro-serie-num.abierto, .registro-serie-num.caida, .registro-menu-opcion, .registro-biserie-cab,
+  .registro-grupo.del-dia, .registro-barra.del-dia, .registro-recientes-titulo, .registro-recientes-cabecera .boton-texto,
+  .peso-linea .boton-texto, .registro-objetivo, .cmp-visibilidad .boton-texto, .estad-cambiar, .estad-pastilla
+) { color: #a83258; }
+:root[data-estilo="sakura"] :is(.cal-nav button, .cal span.hoy-celda) { color: #a83258; }
+/* Los textos que van sueltos sobre el paisaje (no dentro de una tarjeta) pasaban encima del
+   cerezo y de los pétalos: un halo del color del papel los separa del dibujo. */
+:root[data-estilo="sakura"] :is(.registro-recientes-cabecera, .peso-linea, .mapa-leyenda, .rango-general-sub, .rango-general-detalle, .rango-general-base, .titulo-ventana, .saludo, #detalle-ventana,
+  .boton-texto:not(.tarjeta .boton-texto)) {
+  text-shadow: 0 0 3px #fff4f7, 0 0 8px #fff4f7, 0 0 14px rgba(255, 244, 247, 0.9);
+}
+/* Con letra blanca encima los rosas de la tarjeta del día, de los botones y de tu fila del
+   ranking eran muy claros (2.2–3.7:1). Se hunden un tono para pasar de 4.5:1. */
+:root[data-estilo="sakura"] .hoy {
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='20'%3E%3Cg fill='none' stroke='white' stroke-opacity='0.13'%3E%3Ccircle cx='20' cy='20' r='18'/%3E%3Ccircle cx='20' cy='20' r='13'/%3E%3Ccircle cx='20' cy='20' r='8'/%3E%3Ccircle cx='0' cy='10' r='18'/%3E%3Ccircle cx='40' cy='10' r='18'/%3E%3Ccircle cx='0' cy='10' r='13'/%3E%3Ccircle cx='40' cy='10' r='13'/%3E%3C/g%3E%3C/svg%3E"),
+    linear-gradient(150deg, #9a2850 0%, #a8305a 55%, #b0385f 100%);
+}
+:root[data-estilo="sakura"] .ejercicio-series { background: rgba(255, 255, 255, 0.1); }
+:root[data-estilo="sakura"] .hoy-acciones .boton.secundario:not(.ruleta-caja .boton) { background: rgba(255, 255, 255, 0.06); }
+:root[data-estilo="sakura"] .boton:not(.ruleta-caja .boton):not(.secundario),
+:root[data-estilo="sakura"] .segmento.activo { background: linear-gradient(180deg, #c4466e, #a83258); }
+:root[data-estilo="sakura"] .hoy-acciones .boton:not(.ruleta-caja .boton):not(.secundario) { background: #fff; }
+:root[data-estilo="sakura"] .boton:not(.ruleta-caja .boton):disabled {
+  background: var(--superficie-alta); color: var(--sk-tenue); box-shadow: none; opacity: 1;
+}
+:root[data-estilo="sakura"] .ranking-fila.tuya { background: linear-gradient(150deg, #a83258, #b8375f); }
+:root[data-estilo="sakura"] { --verde: #4a7f56; }
+:root[data-estilo="sakura"] .campana-numero { background: #c62828; }
+:root[data-estilo="sakura"] .nombre-oro { color: #846000; }
