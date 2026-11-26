@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Cliente } from "../datos";
-import { SIN_ACCESO, estadoPeriodo, fechaLarga, pesos, ventanaFacturacion } from "./facturacion";
+import { SIN_ACCESO, esSemanal, estadoPeriodo, fechaLarga, pesos, ventanaFacturacion } from "./facturacion";
 
 const HOY = "2026-11-26";
 const base = { nombre: "Ana", activo: true } as Cliente;
@@ -55,5 +55,20 @@ describe("Facturación", () => {
     expect(fechaLarga("2026-01-05")).toBe("5 de enero de 2026");
     expect(pesos(1250.5)).toBe("$1,250.50");
     expect(pesos(650)).toBe("$650");
+  });
+
+  it("un pago de 7 días es semanal: dice «Tu pago semanal» con su monto, no la mensualidad", () => {
+    const semanal = { ...conPago, ultimoPago: { fecha: "2026-11-26", monto: 500, vence: "2026-12-03" } } as Cliente;
+    const html = ventanaFacturacion(semanal, HOY, null);
+    expect(html).toMatch(/Tu pago semanal<\/span><b>\$500/);
+    expect(html).not.toContain("Tu mensualidad");
+  });
+
+  it("semanal o mensual por los días entre el pago y su vencimiento", () => {
+    expect(esSemanal({ fecha: "2026-11-26", vence: "2026-12-03" })).toBe(true);
+    expect(esSemanal({ fecha: "2026-11-26", vence: "2026-12-10" })).toBe(true);
+    expect(esSemanal({ fecha: "2026-11-26", vence: "2026-12-26" })).toBe(false);
+    expect(esSemanal({ fecha: "2026-11-26", vence: null })).toBe(false);
+    expect(esSemanal(null)).toBe(false);
   });
 });

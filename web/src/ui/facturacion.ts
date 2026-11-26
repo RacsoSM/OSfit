@@ -34,6 +34,18 @@ export function venceEl(c: Cliente): string | null {
   return c.ultimoPago?.vence ?? null;
 }
 
+/**
+ * Si su pago es semanal o mensual. La app no lo guarda en el pago, pero sí la fecha de
+ * vencimiento que calcula con él (7 días para semanal, 30 para mensual): menos de 25 días entre
+ * el pago y su vencimiento es semanal. GEMELO del corte de `periodoEnPalabras` en
+ * `functions/src/ultimoPago.ts`. Sin las dos fechas, mensual (como siempre).
+ */
+export function esSemanal(pago: { fecha: string; vence: string | null } | null | undefined): boolean {
+  if (!pago?.vence) return false;
+  const dias = Math.round((Date.parse(`${pago.vence}T12:00:00Z`) - Date.parse(`${pago.fecha}T12:00:00Z`)) / 86_400_000);
+  return dias > 0 && dias < 25;
+}
+
 /** El estado del periodo en palabras, y si va bien, por vencer o vencido. */
 export function estadoPeriodo(vence: string, hoy: string): { texto: string; tono: "bien" | "pronto" | "vencido" } {
   const dias = diasParaPago(vence, hoy);
@@ -57,7 +69,12 @@ export function ventanaFacturacion(c: Cliente, hoy: string, config: ConfigFactur
 
   const ultimo = c.ultimoPago ?? null;
   const vence = venceEl(c);
-  const mensualidad = typeof c.mensualidad === "number" && c.mensualidad > 0 ? c.mensualidad : ultimo?.monto ?? null;
+  // Semanal: lo que paga es el monto de su pago de la semana (la mensualidad de la app es por
+  // mes). Mensual: la mensualidad de la app, o si no hay, el monto de su último pago.
+  const semanal = esSemanal(ultimo);
+  const cuota = semanal
+    ? ultimo?.monto ?? null
+    : typeof c.mensualidad === "number" && c.mensualidad > 0 ? c.mensualidad : ultimo?.monto ?? null;
 
   const periodo = vence
     ? (() => {
@@ -80,7 +97,7 @@ export function ventanaFacturacion(c: Cliente, hoy: string, config: ConfigFactur
   const filas = [
     ultimo ? `<li><span>Pagaste</span><b>${escapar(fechaLarga(ultimo.fecha))}${ultimo.monto > 0 ? ` · ${pesos(ultimo.monto)}` : ""}</b></li>` : "",
     vence ? `<li><span>Vence</span><b>${escapar(fechaLarga(vence))}</b></li>` : "",
-    mensualidad !== null && mensualidad > 0 ? `<li><span>Tu mensualidad</span><b>${pesos(mensualidad)}</b></li>` : "",
+    cuota !== null && cuota > 0 ? `<li><span>${semanal ? "Tu pago semanal" : "Tu mensualidad"}</span><b>${pesos(cuota)}</b></li>` : "",
   ].join("");
 
   // Cada dato con su botón de copiar (entrenador, 2026-11-26): para pegarlo en la app del banco.
