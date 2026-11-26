@@ -118,7 +118,6 @@
 /* La letra de arcade solo donde hay pocas palabras: títulos, el día y los números. */
 :root[data-estilo="pixel"] .saludo,
 :root[data-estilo="pixel"] .titulo-ventana,
-:root[data-estilo="pixel"] .hoy-dia,
 :root[data-estilo="pixel"] .numero,
 :root[data-estilo="pixel"] .tarjeta-titulo,
 :root[data-estilo="pixel"] .menu-nombre,
@@ -172,26 +171,6 @@
     0 calc(var(--px) * 2) 0 var(--tinta);
 }
 :root[data-estilo="pixel"] .fila { gap: calc(12px + var(--px) * 2); }
-
-/* La tarjeta del día: el degradado de la paleta en cuatro franjas, con un tramado de tablero
-   de ajedrez por encima. Es el dithering con el que las consolas fingían más colores de los
-   que tenían. */
-:root[data-estilo="pixel"] .hoy {
-  --borde-px: var(--primario-claro);
-  background:
-    conic-gradient(rgba(0, 0, 0, 0.1) 25%, transparent 0 50%, rgba(0, 0, 0, 0.1) 0 75%, transparent 0)
-      0 0 / 8px 8px,
-    linear-gradient(165deg,
-      var(--primario-oscuro) 0 28%,
-      color-mix(in srgb, var(--primario-oscuro) 62%, var(--primario)) 28% 52%,
-      color-mix(in srgb, var(--primario-oscuro) 30%, var(--primario)) 52% 76%,
-      var(--primario) 76%);
-  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.35);
-}
-:root[data-estilo="pixel"] .hoy-dia { font-size: 16px; line-height: 1.6; margin: 8px 0; }
-:root[data-estilo="pixel"] .ejercicio { border-top: 2px dashed rgba(255, 255, 255, 0.25); }
-:root[data-estilo="pixel"] .ejercicio-series { border-radius: 0; box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.3); }
-:root[data-estilo="pixel"] .hoy-acciones { border-top: 2px dashed rgba(255, 255, 255, 0.3); }
 
 /* ---------- Botones y controles ---------- */
 
@@ -390,3 +369,19 @@
 
 /* Con la campana de Notificaciones (Inicio), la luna se corre un botón a la izquierda. */
 :root[data-estilo="pixel"] body.con-campana .px-luna { right: max(116px, calc(50% - 240px + 108px)); }
+
+/* ---------- Tarjeta "Hoy te toca" (2026-11-26) ---------- */
+
+/* Como un menú de videojuego: el número del día en un bloque con sombra dura, la letra de
+   arcade en el nombre y separadores punteados. */
+:root[data-estilo="pixel"] .dia-hoy { --dh-acento: var(--primario); --dh-linea: rgba(255, 255, 255, 0.18); }
+:root[data-estilo="pixel"] .dh-insignia { border-radius: 0; box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.4); }
+:root[data-estilo="pixel"] .dh-insignia b,
+:root[data-estilo="pixel"] .dh-nombre { font-family: var(--letra-arcade); font-weight: 400; }
+:root[data-estilo="pixel"] .dh-insignia b { font-size: 16px; }
+:root[data-estilo="pixel"] .dh-nombre { font-size: 14px; line-height: 1.6; }
+:root[data-estilo="pixel"] .dh-ejercicio,
+:root[data-estilo="pixel"] .dh-acciones { border-top: 2px dashed var(--dh-linea); }
+:root[data-estilo="pixel"] .dh-accion + .dh-accion { border-left: 2px dashed var(--dh-linea); }
+:root[data-estilo="pixel"] .cd-opcion,
+:root[data-estilo="pixel"] .cd-numero { border-radius: 0; }

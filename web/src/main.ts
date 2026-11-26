@@ -33,7 +33,7 @@ import type {
 import { horaEnMazatlan, hoyEnMazatlan } from "./fecha";
 import { mesAnterior, type Tirada } from "./tirada";
 import {
-  batallaAmigos, borrarSesion, enviarSugerencia, guardarEsfuerzo, guardarPartidaBoxJump, guardarPartidaDiscos, guardarPartidaKettlebell, tablaBoxJump, tablaDiscos, tablaKettlebell, compararMusculos, editarSesion, elegirMostrarEnAmigos, guardarPeso, marcarAsistencia, obtenerRanking, registrarEntrada, registrarSesion,
+  batallaAmigos, borrarSesion, cambiarDia, enviarSugerencia, guardarEsfuerzo, guardarPartidaBoxJump, guardarPartidaDiscos, guardarPartidaKettlebell, tablaBoxJump, tablaDiscos, tablaKettlebell, compararMusculos, editarSesion, elegirMostrarEnAmigos, guardarPeso, marcarAsistencia, obtenerRanking, registrarEntrada, registrarSesion,
 } from "./acciones";
 import { modalRuleta, conectarRuleta } from "./ui/ruleta";
 import { conectarRanking, type EstadoRanking } from "./ui/tarjetaRanking";
@@ -46,7 +46,8 @@ import { HORA_AVISO, conectarAvisoResumen, resumenPorAvisar } from "./ui/avisoRe
 import { almacenDeEstilo, ponerEstilo } from "./ui/cambioDeEstilo";
 import { estiloGuardado, type IdEstilo } from "./estilo";
 import { cerrarSesion, credencialLista, huellaDeLaSesion, iniciarSesion, redDeFirestore, urlDeDescarga } from "./firebase";
-import { esperarRed, hayRed } from "./senal";
+import { conPlazo, esperarRed, hayRed } from "./senal";
+import { VIGENCIA_ENVIADO_MS, anotarCambio, borrarCambio, conCambio, esRechazoDefinitivo, leerCambio } from "./cambioDia";
 import {
   alBloquear, almacenDelNavegador, conexionDelNavegador, esWifi, guardarFaltantes, guardarModoSinDatos, modoSinDatos,
   sugerirApagar,
@@ -63,7 +64,8 @@ import { almacenCola, encolar, enviarPendientes, pendientesDe } from "./cola";
 import type { Envio } from "./registro";
 import { indiceBanco, urlGif, type IndiceBanco } from "./banco";
 import { saludo, conectarSaludo, actualizarNombre } from "./ui/saludo";
-import { conectarAccionDia } from "./ui/accionDia";
+import { avisarRechazoCambio, conectarAccionDia, mensajeDeError } from "./ui/accionDia";
+import { indiceDeHoy } from "./ui/tarjetaDia";
 import { conectarAccionFalta } from "./ui/accionFalta";
 import { moverMes } from "./ui/calendario";
 import { tarjetaVideos, ultimosRangoDescendente, firmaVideos, MAXIMO_VIDEOS } from "./ui/tarjetaVideos";
@@ -320,6 +322,40 @@ async function arrancar(): Promise<void> {
    * Manda los entrenamientos que esperan internet. Se llama al abrir, al volver la señal y
    * cada minuto mientras quede alguno: en iOS el evento `online` no siempre llega.
    */
+  /**
+   * El cambio de día anotado en el teléfono (`cambioDia.ts`), hacia el servidor. Se llama al
+   * elegir otro día, al abrir, al volver la señal y cada minuto, como `enviarCola`. Si no hay
+   * internet se queda anotado; si el servidor lo rechaza para siempre (ya entrenó hoy, era de
+   * otro día…) se descarta y se le dice por qué. Mandado, se queda marcado como `enviado`
+   * hasta que el documento de la clienta ya diga ese día: borrarlo antes haría que la tarjeta
+   * volviera un instante al día viejo, mientras llega el snapshot.
+   */
+  const almacenCambio = (() => { try { return localStorage; } catch { return null; } })();
+  let enviandoCambio = false;
+  async function enviarCambioDia(): Promise<void> {
+    const c = leerCambio(almacenCambio);
+    if (!c || c.enviado) return;
+    if (c.fecha !== hoy) { borrarCambio(almacenCambio); pintar(); return; }
+    if (enviandoCambio || modoSinDatos() || senalDudosa) return;
+    enviandoCambio = true;
+    try {
+      await conPlazo(cambiarDia({ diaIndex: c.diaIndex, fecha: c.fecha }), 15_000);
+      const ahora = leerCambio(almacenCambio);
+      if (ahora && ahora.diaIndex === c.diaIndex && ahora.fecha === c.fecha) anotarCambio(almacenCambio, { ...c, enviado: true, enviadoEn: Date.now() });
+    } catch (error) {
+      if (esRechazoDefinitivo(error)) {
+        borrarCambio(almacenCambio);
+        avisarRechazoCambio(mensajeDeError(error));
+      }
+    } finally {
+      enviandoCambio = false;
+      pintar();
+    }
+    // Si eligió otro día mientras se mandaba este, va el nuevo.
+    const otro = leerCambio(almacenCambio);
+    if (otro && !otro.enviado && otro.diaIndex !== c.diaIndex) void enviarCambioDia();
+  }
+
   function enviarCola(): void {
     // Con el modo sin datos esperan a que lo apague (`cambiarSinDatos` la vuelve a llamar).
     if (pendientes === 0 || modoSinDatos() || senalDudosa) return;
@@ -396,6 +432,7 @@ async function arrancar(): Promise<void> {
     // red, igual que al arrancar.
     await credencialLista().catch(() => {});
     await redDeFirestore(true).catch(() => {});
+    void enviarCambioDia();
     enviarCola();
     resolverVideos(videosCrudos);
   }
@@ -798,8 +835,18 @@ async function arrancar(): Promise<void> {
       document.body.classList.remove("historia-abierta");
     }
     actualizarCabecera(tituloCabecera(activa));
+    // El cambio de día hecho en el teléfono manda sobre el documento hasta que el servidor lo
+    // tenga; cuando el documento ya dice ese día, se olvida (`enviarCambioDia`).
+    const cambio = leerCambio(almacenCambio);
+    if (cambio && (cambio.fecha !== hoy || (cambio.enviado &&
+      (indiceDeHoy(cliente, hoy) === cambio.diaIndex || Date.now() - (cambio.enviadoEn ?? 0) > VIGENCIA_ENVIADO_MS)))) {
+      borrarCambio(almacenCambio);
+    }
+    const cambioVigente = leerCambio(almacenCambio);
     const datos = {
-      cliente, hoy, asistencias, mesVisible, yaAviso, medallas, logros,
+      cliente: conCambio(cliente, cambioVigente, hoy),
+      cambioDiaPendiente: cambioVigente !== null && !cambioVigente.enviado,
+      hoy, asistencias, mesVisible, yaAviso, medallas, logros,
       tiradaEsteMes, tiradaMesAnterior, ranking, estilo,
       notificaciones: estadoNotificaciones(cliente.notificacionesWeb === true, entornoDelNavegador()),
       invitacionDescartada,
@@ -989,7 +1036,10 @@ async function arrancar(): Promise<void> {
       if (empezarGuiado(r)) marcarAsistencia({}).catch(() => {});
       abrirVentana("registro");
     });
-    conectarAccionDia(pintar);
+    conectarAccionDia(pintar, (diaIndex) => {
+      anotarCambio(almacenCambio, { diaIndex, fecha: hoy });
+      void enviarCambioDia();
+    });
     conectarAccionFalta(hoy, asistencias, pintar);
     conectarNotificaciones(alActivarNotificaciones, alDescartarInvitacion);
     conectarAvisoReviveExtra(alCerrarReviveExtra);
@@ -1059,6 +1109,7 @@ async function arrancar(): Promise<void> {
       if (modoSinDatos()) return;
       await credencialLista().catch(() => {});
       await redDeFirestore(true).catch(() => {});
+      void enviarCambioDia();
       enviarCola();
     };
     void pruebaDeRed.then((hay) => {
@@ -1079,6 +1130,10 @@ async function arrancar(): Promise<void> {
   enviarCola();
   window.addEventListener("online", enviarCola);
   setInterval(enviarCola, 60_000);
+  // El cambio de día hecho sin internet, igual.
+  void enviarCambioDia();
+  window.addEventListener("online", () => { void enviarCambioDia(); });
+  setInterval(() => { void enviarCambioDia(); }, 60_000);
 
   revisarCierreAutomatico();
   setInterval(revisarCierreAutomatico, 60_000);

@@ -123,22 +123,6 @@
   border-radius: 14px;
   box-shadow: var(--brillo-caja);
 }
-/* La del día es el letrero que más brilla: doble tubo y halo más ancho. */
-:root[data-estilo="neon"] .hoy {
-  background: linear-gradient(160deg, color-mix(in srgb, var(--primario-oscuro) 50%, #07030f), rgba(7, 3, 15, 0.92));
-  border: 2px solid var(--primario-claro);
-  box-shadow:
-    0 0 4px var(--primario), 0 0 22px var(--halo), 0 0 46px color-mix(in srgb, var(--primario) 25%, transparent),
-    inset 0 0 18px color-mix(in srgb, var(--primario) 35%, transparent);
-}
-:root[data-estilo="neon"] .hoy .tarjeta-titulo { color: var(--primario-claro); }
-:root[data-estilo="neon"] .hoy-dia { font-size: 30px; font-weight: 400; color: #fff; text-shadow: var(--brillo-texto); }
-:root[data-estilo="neon"] .ejercicio { border-top-color: color-mix(in srgb, var(--primario) 35%, transparent); }
-:root[data-estilo="neon"] .ejercicio-series {
-  background: transparent; border: 1px solid var(--primario-claro);
-  box-shadow: 0 0 6px var(--halo);
-}
-
 /* ---------- Botones y controles ---------- */
 
 /* Fuera de la ruleta: sobre su tapete verde, un tubo del color de la paleta se camuflaría
@@ -262,3 +246,19 @@
 
 /* El verde neón es tan claro que el texto blanco del recordatorio de pago no se lee encima. */
 :root[data-estilo="neon"] .tarjeta.recordatorio-pago.vigente { color: #0b0b0b; text-shadow: none; }
+
+/* ---------- Tarjeta "Hoy te toca" (2026-11-26) ---------- */
+
+/* El tubo de neón solo en el número del día y en el nombre; los separadores, un hilo del color. */
+:root[data-estilo="neon"] .dia-hoy {
+  --dh-acento: var(--primario-claro);
+  --dh-linea: color-mix(in srgb, var(--primario) 28%, transparent);
+}
+:root[data-estilo="neon"] .dh-insignia {
+  background: transparent; border: 1.5px solid var(--primario-claro);
+  box-shadow: 0 0 8px var(--halo), inset 0 0 8px color-mix(in srgb, var(--primario) 30%, transparent);
+  text-shadow: var(--brillo-texto);
+}
+:root[data-estilo="neon"] .dh-nombre { font-weight: 400; font-size: 26px; color: #fff; text-shadow: var(--brillo-texto); }
+:root[data-estilo="neon"] .cd-opcion { background: transparent; border-color: color-mix(in srgb, var(--primario) 35%, transparent); }
+:root[data-estilo="neon"] .cd-opcion.elegida { border-color: var(--primario-claro); box-shadow: 0 0 8px var(--halo); }

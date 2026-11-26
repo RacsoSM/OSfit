@@ -1,113 +1,32 @@
 import type { Cliente } from "../datos";
-import { MOTIVOS, motivosPara } from "../motivos";
-import { cambiarDia } from "../acciones";
 import { horaEnMazatlan } from "../fecha";
 import { escapar } from "./tarjetaDia";
 
-/** Mismo tope que `MOTIVO_MAXIMO` en `functions/src/cambiarDia.ts`. */
-const MOTIVO_MAXIMO = 200;
-
 /**
+ * "Cambiar el día": un pop up con los días de su rutina (entrenador, 2026-11-26). Antes era una
+ * hoja dentro de la tarjeta que además pedía el motivo; ya no se pide. Elegir un día lo cambia
+ * al instante, también sin internet: quien lo guarda y lo manda es `main.ts` (ver
+ * `cambioDia.ts`), por eso este módulo solo pinta y avisa con `alElegir`.
+ *
  * El estado vive en el módulo y no en el DOM porque `pintar()` reconstruye toda la página en
- * cada snapshot de Firestore: si la hoja abierta, la selección o el "enviando…" vivieran en
- * los elementos, un snapshot que llegara mientras el cliente elige le cerraría la hoja en la
- * cara sin que él hubiera tocado nada.
+ * cada snapshot de Firestore: si el pop up abierto o el día elegido vivieran en los elementos,
+ * un snapshot que llegara mientras elige se lo cerraría en la cara.
  */
 interface Estado {
   abierta: boolean;
   diaElegido: number | null;
-  motivoId: string | null;
-  motivoTexto: string;
-  textoLibre: string;
-  enVuelo: boolean;
   error: string | null;
-  /** Lo que se le confirma al cliente después de cambiar: hora y motivo elegido. */
-  confirmacion: { hora: string; motivo: string } | null;
+  /** La hora del último cambio, para confirmarlo en la tarjeta. */
+  confirmacion: string | null;
+  /** La primera vez que se pinta abierto entra con animación; los repintados, no. */
+  recienAbierta: boolean;
 }
 
-const estado: Estado = {
-  abierta: false,
-  diaElegido: null,
-  motivoId: null,
-  motivoTexto: "",
-  textoLibre: "",
-  enVuelo: false,
-  error: null,
-  confirmacion: null,
-};
+const estado: Estado = { abierta: false, diaElegido: null, error: null, confirmacion: null, recienAbierta: false };
 
-/**
- * Si la hoja de motivos está abierta. Mientras lo esté, la tarjeta del día no dibuja el otro
- * botón: el cliente está en mitad de elegir día y motivo, y un "Hoy no voy a poder ir" colgado
- * debajo de Cancelar/Cambiar se lee como una tercera opción del formulario.
- */
-export function hojaDeMotivosAbierta(): boolean {
+/** Si el pop up está abierto (para las pruebas). */
+export function cambioDiaAbierto(): boolean {
   return estado.abierta;
-}
-
-/** El motivo que se va a mandar: el texto libre si eligió "Otro", si no el del catálogo. */
-function motivoAEnviar(): string {
-  return estado.motivoId === "otro" ? estado.textoLibre.trim() : estado.motivoTexto;
-}
-
-function listoParaEnviar(): boolean {
-  const motivo = motivoAEnviar();
-  return (
-    estado.diaElegido !== null &&
-    estado.motivoId !== null &&
-    motivo !== "" &&
-    motivo.length <= MOTIVO_MAXIMO
-  );
-}
-
-function hoja(cliente: Cliente): string {
-  const dias = cliente.rutinaAsignada?.dias ?? [];
-
-  const opcionesDia = dias
-    .map(
-      (dia, indice) => `
-        <button class="opcion ${estado.diaElegido === indice ? "elegida" : ""}"
-                data-dia="${indice}" ${estado.enVuelo ? "disabled" : ""}>
-          Día ${indice + 1} · ${escapar(dia.nombreDia)}
-        </button>`
-    )
-    .join("");
-
-  const opcionesMotivo = motivosPara(cliente.nombre)
-    .map(
-      (motivo) => `
-        <button class="opcion ${estado.motivoId === motivo.id ? "elegida" : ""}"
-                data-motivo="${motivo.id}" ${estado.enVuelo ? "disabled" : ""}>
-          ${escapar(motivo.texto)}
-        </button>`
-    )
-    .join("");
-
-  // El texto libre es lo único de esta pantalla que escribe el cliente, así que se escapa al
-  // devolverlo: acaba dentro del HTML que arma esta misma función.
-  const campoLibre =
-    estado.motivoId === "otro"
-      ? `<textarea id="motivo-libre" class="campo-libre" rows="2" maxlength="${MOTIVO_MAXIMO}"
-                   placeholder="Cuéntale a tu entrenador"
-                   ${estado.enVuelo ? "disabled" : ""}>${escapar(estado.textoLibre)}</textarea>`
-      : "";
-
-  return `
-    <p class="accion-subtitulo">¿Qué día quieres hacer?</p>
-    <div class="opciones">${opcionesDia}</div>
-    <p class="accion-subtitulo">¿Por qué?</p>
-    <div class="opciones">${opcionesMotivo}</div>
-    ${campoLibre}
-    ${estado.error ? `<p class="aviso-error">${escapar(estado.error)}</p>` : ""}
-    <div class="fila-botones">
-      <button id="cerrar-cambio-dia" class="boton secundario" ${estado.enVuelo ? "disabled" : ""}>
-        Cancelar
-      </button>
-      <button id="enviar-cambio-dia" class="boton"
-              ${estado.enVuelo || !listoParaEnviar() ? "disabled" : ""}>
-        ${estado.enVuelo ? "Cambiando…" : "Cambiar mi día"}
-      </button>
-    </div>`;
 }
 
 /**
@@ -125,121 +44,131 @@ export function diaCambiable(
   return deHoy.marcadaDesde === "registro" && !(sesiones ?? []).some((s) => s.fecha === hoy);
 }
 
-/** Lo que dice la hoja cuando la función lo rechaza, según el motivo que manda. */
+/** Lo que se le dice cuando el servidor rechaza el cambio, según el motivo que manda. */
 export function mensajeDeError(error: unknown): string {
   const motivo = (error as { message?: unknown } | null)?.message;
   if (motivo === "ya_asistio_hoy") return "Ya entrenaste hoy, así que tu día ya quedó registrado. Mañana podrás elegir otro.";
   if (motivo === "sin_rutina") return "Todavía no tienes rutina asignada. Habla con tu entrenador.";
+  if (motivo === "cambio_vencido") return "El cambio de día que hiciste sin internet era de un día que ya pasó, así que no se aplicó.";
   return "No pudimos cambiar tu día. Inténtalo otra vez en un momento.";
 }
 
+/** Cuando el servidor rechaza un cambio ya hecho en el teléfono (`main.ts`). */
+export function avisarRechazoCambio(texto: string): void {
+  estado.error = texto;
+  estado.confirmacion = null;
+}
+
 /**
- * "Quiero cambiar el día que me toca" (spec, "Tarjeta del día"), con su hoja de motivos.
+ * El botón "Cambiar el día" de la tarjeta, con lo que haya que decir debajo (confirmación,
+ * error o por qué no se puede).
  *
- * No se muestra sin rutina asignada. El fin de semana sí: se entrena como cualquier día
- * (2026-10-17). Con el
- * cliente inactivo la acción queda deshabilitada: su historial es suyo, cambiar una rutina
- * que no está haciendo no.
+ * No se muestra sin rutina asignada. Con la cuenta pausada, o con el día ya hecho
+ * (`diaCambiable`), queda deshabilitado con su nota: un botón que desaparece sin decir nada se
+ * lee como que la página se rompió. El servidor rechaza esos casos igual.
  *
- * `yaAsistioHoy` la deshabilita también (ver `diaCambiable`): con el día ya hecho, cambiarlo no
- * movería el entrenamiento que acaba de hacer, solo desordenaría el ciclo. El servidor
- * rechaza el caso igual, por si alguien llama a la función a mano.
+ * `pendiente`: hay un cambio hecho sin internet que todavía no llega al servidor.
  */
-export function accionDia(cliente: Cliente, hoy: string, yaAsistioHoy: boolean): string {
+export function accionDia(cliente: Cliente, hoy: string, yaAsistioHoy: boolean, pendiente = false): string {
   const dias = cliente.rutinaAsignada?.dias ?? [];
   if (dias.length === 0) return "";
 
+  const boton = (deshabilitado: boolean) =>
+    `<button type="button" id="abrir-cambio-dia" class="dh-accion" ${deshabilitado ? "disabled" : ""}>Cambiar el día</button>`;
+
   if (!cliente.activo) {
-    return `
-      <button class="boton" disabled>Quiero cambiar el día que me toca</button>
-      <p class="accion-nota">Tu cuenta está pausada. Habla con tu entrenador.</p>`;
+    return `${boton(true)}<p class="accion-nota">Tu cuenta está pausada. Habla con tu entrenador.</p>`;
   }
-
-  // Deshabilitado y no escondido: la nota explica por qué, y un botón que desaparece sin
-  // decir nada se lee como que la página se rompió.
   if (yaAsistioHoy) {
-    return `
-      <button class="boton" disabled>Quiero cambiar el día que me toca</button>
-      <p class="accion-nota">Ya entrenaste hoy: tu día quedó registrado.</p>`;
+    return `${boton(true)}<p class="accion-nota">Ya entrenaste hoy: tu día quedó registrado.</p>`;
   }
 
-  // Sin esta línea el cliente no sabe si el toque funcionó y vuelve a tocar (spec, "Tarjeta
-  // del día").
   const confirmacion = estado.confirmacion
-    ? `<p class="aviso-ok">
-         Cambiaste tu día a las ${escapar(estado.confirmacion.hora)} ·
-         ${escapar(estado.confirmacion.motivo)}
-       </p>`
+    ? `<p class="aviso-ok">Cambiaste tu día a las ${escapar(estado.confirmacion)}.${
+        pendiente ? " Se guardará en cuanto haya internet." : ""}</p>`
     : "";
-
-  const cuerpo = estado.abierta
-    ? hoja(cliente)
-    : `<button id="abrir-cambio-dia" class="boton">Quiero cambiar el día que me toca</button>
-       ${estado.error ? `<p class="aviso-error">${escapar(estado.error)}</p>` : ""}`;
-
-  // Sin envoltorio de tarjeta: esto se pinta dentro de la tarjeta del día.
-  return `${confirmacion}${cuerpo}`;
+  const error = estado.error ? `<p class="aviso-error">${escapar(estado.error)}</p>` : "";
+  return `${boton(false)}${confirmacion}${error}`;
 }
 
-/** Se vuelve a llamar en cada repintado, porque `innerHTML` tira los listeners anteriores. */
-export function conectarAccionDia(repintar: () => void): void {
+/**
+ * El pop up: los días de su rutina, con el de hoy marcado, y "Cambiar" para confirmar. Va fuera
+ * de la tarjeta (al final de Inicio) y fijo sobre toda la pantalla, como los demás avisos.
+ * `indiceHoy`: el día que le toca ahora, o null si no se sabe.
+ */
+export function modalCambioDia(cliente: Cliente, indiceHoy: number | null): string {
+  if (!estado.abierta) return "";
+  const dias = cliente.rutinaAsignada?.dias ?? [];
+  if (dias.length === 0) return "";
+  const entrada = estado.recienAbierta ? " entrando" : "";
+  estado.recienAbierta = false;
+  const elegido = estado.diaElegido;
+  const opciones = dias
+    .map((dia, i) => {
+      const esHoy = i === indiceHoy;
+      return `
+        <button type="button" class="cd-opcion${elegido === i ? " elegida" : ""}" data-dia="${i}" ${esHoy ? "disabled" : ""}
+                aria-pressed="${elegido === i}">
+          <span class="cd-numero">${i + 1}</span>
+          <span class="cd-nombre">${escapar(dia.nombreDia ?? "")}</span>
+          ${esHoy ? `<span class="cd-hoy">Hoy</span>` : ""}
+        </button>`;
+    })
+    .join("");
+  return `
+    <div class="logro-velo cd-velo${entrada}" data-cerrar-cambio-dia>
+      <div class="logro-aviso tarjeta cd-aviso${entrada}" role="dialog" aria-modal="true" aria-labelledby="cd-titulo">
+        <p class="cd-titulo" id="cd-titulo">¿Qué día quieres hacer hoy?</p>
+        <div class="cd-opciones">${opciones}</div>
+        <div class="cd-botones">
+          <button type="button" class="boton secundario" id="cerrar-cambio-dia">Cancelar</button>
+          <button type="button" class="boton" id="enviar-cambio-dia" ${elegido === null ? "disabled" : ""}>
+            ${elegido === null ? "Elige un día" : `Cambiar al día ${elegido + 1}`}
+          </button>
+        </div>
+      </div>
+    </div>`;
+}
+
+/**
+ * Se vuelve a llamar en cada repintado, porque `innerHTML` tira los listeners anteriores.
+ * `alElegir` guarda el cambio (en el teléfono y, si hay señal, en el servidor).
+ */
+export function conectarAccionDia(repintar: () => void, alElegir: (diaIndex: number) => void): void {
   document.querySelector("#abrir-cambio-dia")?.addEventListener("click", () => {
     estado.abierta = true;
+    estado.recienAbierta = true;
+    estado.diaElegido = null;
     estado.error = null;
     repintar();
   });
 
-  document.querySelector("#cerrar-cambio-dia")?.addEventListener("click", () => {
+  const cerrar = () => {
     estado.abierta = false;
-    estado.error = null;
+    estado.diaElegido = null;
     repintar();
+  };
+  document.querySelector("#cerrar-cambio-dia")?.addEventListener("click", cerrar);
+  // Tocar fuera del recuadro también cierra, como cualquier pop up.
+  document.querySelector("[data-cerrar-cambio-dia]")?.addEventListener("click", (e) => {
+    if (e.target === e.currentTarget) cerrar();
   });
 
-  document.querySelectorAll<HTMLElement>("[data-dia]").forEach((boton) => {
+  document.querySelectorAll<HTMLElement>(".cd-opcion[data-dia]").forEach((boton) => {
     boton.addEventListener("click", () => {
       estado.diaElegido = Number(boton.dataset.dia);
       repintar();
     });
   });
 
-  document.querySelectorAll<HTMLElement>("[data-motivo]").forEach((boton) => {
-    boton.addEventListener("click", () => {
-      estado.motivoId = boton.dataset.motivo ?? null;
-      estado.motivoTexto = MOTIVOS.find((m) => m.id === estado.motivoId)?.texto ?? "";
-      repintar();
-    });
-  });
-
-  const libre = document.querySelector<HTMLTextAreaElement>("#motivo-libre");
-  libre?.addEventListener("input", () => {
-    estado.textoLibre = libre.value;
-    // Se habilita el botón a mano en vez de repintar: repintar en cada tecla le quitaría el
-    // foco al cliente a media palabra.
-    const enviar = document.querySelector<HTMLButtonElement>("#enviar-cambio-dia");
-    if (enviar) enviar.disabled = !listoParaEnviar();
-  });
-
-  document.querySelector("#enviar-cambio-dia")?.addEventListener("click", async () => {
-    if (estado.enVuelo || !listoParaEnviar()) return;
-    const motivo = motivoAEnviar();
-    estado.enVuelo = true;
+  document.querySelector("#enviar-cambio-dia")?.addEventListener("click", () => {
+    if (estado.diaElegido === null) return;
+    const dia = estado.diaElegido;
+    estado.abierta = false;
+    estado.diaElegido = null;
     estado.error = null;
+    estado.confirmacion = horaEnMazatlan();
+    alElegir(dia);
     repintar();
-    try {
-      await cambiarDia({ diaIndex: estado.diaElegido!, motivo });
-      // La tarjeta del día se repinta sola: `observarCliente` ya está suscrito y la función
-      // dejó el trío denormalizado actualizado antes de responder.
-      estado.confirmacion = { hora: horaEnMazatlan(), motivo };
-      estado.abierta = false;
-      estado.diaElegido = null;
-      estado.motivoId = null;
-      estado.motivoTexto = "";
-      estado.textoLibre = "";
-    } catch (error) {
-      estado.error = mensajeDeError(error);
-    } finally {
-      estado.enVuelo = false;
-      repintar();
-    }
   });
 }

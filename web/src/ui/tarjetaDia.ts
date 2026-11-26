@@ -66,21 +66,22 @@ function conSusPesos(cliente: Cliente, ejercicios: Ejercicio[]): Ejercicio[] {
 function listaEjercicios(ejercicios: Ejercicio[]): string {
   if (ejercicios.length === 0) {
     return `
-      <p class="hoy-sin-ejercicios">Tu entrenador todavía no cargó los ejercicios de este día.</p>`;
+      <p class="dh-sin-ejercicios">Tu entrenador todavía no cargó los ejercicios de este día.</p>`;
   }
 
+  // Numerados (01, 02…) por CSS: el número es adorno, el orden ya lo dice la lista.
   const filas = ejercicios
     .map(
       (e) => `
-        <li class="ejercicio">
-          <span class="ejercicio-nombre">${escapar(e.nombre ?? "")}</span>
-          <span class="ejercicio-series">${escapar(String(e.series ?? ""))} x ${escapar(e.repeticiones ?? "")}</span>
-          ${e.pesoONota ? `<span class="ejercicio-nota">${escapar(e.pesoONota)}</span>` : ""}
+        <li class="dh-ejercicio">
+          <span class="dh-ej-nombre">${escapar(e.nombre ?? "")}</span>
+          <span class="dh-series">${escapar(String(e.series ?? ""))} × ${escapar(e.repeticiones ?? "")}</span>
+          ${e.pesoONota ? `<span class="dh-nota">${escapar(e.pesoONota)}</span>` : ""}
         </li>`
     )
     .join("");
 
-  return `<ul class="hoy-ejercicios">${filas}</ul>`;
+  return `<ol class="dh-ejercicios">${filas}</ol>`;
 }
 
 /**
@@ -123,8 +124,18 @@ export function botonEntrenar(
   const texto = abierto === "nuevo" ? "Continuar entrenamiento" : "Empezar entrenamiento guiado";
   // Triángulo dibujado y no el carácter ▶: el carácter se sienta en la línea base de la fuente
   // y se ve más alto que el texto; el SVG se centra exacto con `align-items: center`.
-  const play = `<svg class="hoy-empezar-play" viewBox="0 0 20 20" aria-hidden="true"><path d="M5 2.5v15l13-7.5z" fill="currentColor"/></svg>`;
-  return `<button id="empezar-entrenamiento" class="boton hoy-empezar">${play}<span>${texto}</span></button>`;
+  const play = `<svg class="dh-empezar-play" viewBox="0 0 20 20" aria-hidden="true"><path d="M5 2.5v15l13-7.5z" fill="currentColor"/></svg>`;
+  return `<button id="empezar-entrenamiento" class="boton dh-empezar">${play}<span>${texto}</span></button>`;
+}
+
+/** El índice del día que le toca hoy, o null (sin rutina, descanso o sin datos). */
+export function indiceDeHoy(cliente: Cliente, hoy: string): number | null {
+  const dias = cliente.rutinaAsignada?.dias ?? [];
+  const i = interpretar(
+    { dia: cliente.ultimoDia, fecha: cliente.ultimoDiaFecha, esAncla: cliente.ultimoDiaEsAncla },
+    dias.length, hoy, cliente.rutinaAsignada?.reinicioSemanal ?? false
+  );
+  return typeof i === "number" ? i : null;
 }
 
 export function tarjetaDia(
@@ -171,19 +182,27 @@ export function tarjetaDia(
 
   if (indice === null) return "";
 
-  // Las acciones van DENTRO de esta tarjeta, no en una aparte: las dos hablan del día que le
-  // toca hoy — cambiarlo o avisar que no viene — así que se leen junto al día del que hablan.
+  // Diseño del entrenador (2026-11-26): la lista "editorial" (A), la cabecera con el número de
+  // día en un recuadro (B) y abajo el botón de empezar con las dos acciones como renglón partido
+  // (E). Sin fondo de color: la tarjeta es como las demás y el color de la paleta solo marca lo
+  // importante. Las acciones van DENTRO de esta tarjeta, no en una aparte: las dos hablan del
+  // día que le toca hoy — cambiarlo o avisar que no viene — así que se leen junto al día.
+  const nombre = escapar(dias[indice]?.nombreDia ?? "");
   return `
-    <div class="tarjeta hoy">
-      <span class="hoy-fantasmitas" aria-hidden="true"><i></i><i></i><i></i></span>
-      <p class="tarjeta-titulo">Hoy te toca</p>
-      <p class="hoy-dia">Día ${indice + 1}<br>${escapar(dias[indice]?.nombreDia ?? "")}</p>
-      ${entrenar}
+    <div class="tarjeta dia-hoy">
+      <div class="dh-cabecera">
+        <div class="dh-insignia" aria-hidden="true"><small>Día</small><b>${indice + 1}</b></div>
+        <div class="dh-textos">
+          <p class="tarjeta-titulo">Hoy te toca<span class="sr-solo"> el día ${indice + 1}</span></p>
+          <p class="dh-nombre">${nombre}</p>
+        </div>
+      </div>
       ${listaEjercicios(
         dias[indice]
           ? conSusPesos(cliente, ejerciciosDeHoy(dias[indice], indice, asistencias, hoy))
           : []
       )}
-      ${acciones ? `<div class="hoy-acciones">${acciones}</div>` : ""}
+      ${entrenar}
+      ${acciones.trim() ? `<div class="dh-acciones">${acciones}</div>` : ""}
     </div>`;
 }

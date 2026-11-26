@@ -125,9 +125,9 @@ export function accionHoyNoPuedo(cliente: Cliente, hoy: string, yaAviso: boolean
 
   return `
     ${error}
-    <button id="falta-hoy" class="boton secundario"
+    <button type="button" id="falta-hoy" class="dh-accion"
             ${!cliente.activo || estado.enVuelo ? "disabled" : ""}>
-      ${estado.enVuelo && estado.pendiente === null ? "Avisando…" : "Hoy no voy a poder ir"}
+      ${estado.enVuelo && estado.pendiente === null ? "Avisando…" : "Hoy no puedo ir"}
     </button>`;
 }
 

@@ -103,24 +103,6 @@
 /* Las tarjetas vacías no tienen narrador arriba: les sobraría el aire. */
 :root[data-estilo="comic"] .tarjeta.vacio { margin-top: 12px; }
 
-/* La del día: el color de la paleta con trama de puntos claros encima. */
-:root[data-estilo="comic"] .hoy {
-  background:
-    radial-gradient(rgba(255, 255, 255, 0.16) 2px, transparent 2.6px) 0 0 / 10px 10px,
-    var(--primario-oscuro);
-  color: #fff;
-}
-:root[data-estilo="comic"] .hoy-dia {
-  font-family: var(--letra-rotulo); font-weight: 400; font-size: 40px; letter-spacing: 1.5px;
-  line-height: 1.05; text-shadow: 3px 3px 0 var(--tinta);
-}
-:root[data-estilo="comic"] .ejercicio { border-top: 2px dashed rgba(255, 255, 255, 0.4); }
-:root[data-estilo="comic"] .ejercicio-nombre { font-weight: 700; }
-:root[data-estilo="comic"] .ejercicio-series {
-  background: #fff; color: var(--tinta); border: 2px solid var(--tinta); box-shadow: 2px 2px 0 var(--tinta);
-}
-:root[data-estilo="comic"] .hoy-acciones { border-top: 2px dashed rgba(255, 255, 255, 0.45); }
-
 /* ---------- Botones y controles ---------- */
 
 /* Fuera de la ruleta, que tiene sus colores propios sobre el tapete (entrada 26 del backlog). */
@@ -244,3 +226,22 @@
 /* Con la campana de Notificaciones (Inicio), el ¡POW! se corre un botón a la izquierda. */
 :root[data-estilo="comic"] body.con-campana::before,
 :root[data-estilo="comic"] body.con-campana::after { right: max(104px, calc(50% - 240px + 96px)); }
+
+/* ---------- Tarjeta "Hoy te toca" (2026-11-26) ---------- */
+
+/* La viñeta blanca de siempre: el número del día en un recuadro con tinta, el nombre rotulado
+   y separadores punteados de tinta. */
+:root[data-estilo="comic"] .dia-hoy { --dh-acento: var(--primario-oscuro); --dh-linea: rgba(20, 20, 20, 0.25); }
+:root[data-estilo="comic"] .dh-insignia {
+  border-radius: 4px; background: var(--amarillo); color: var(--tinta);
+  border: 2px solid var(--tinta); box-shadow: 2px 2px 0 var(--tinta);
+}
+:root[data-estilo="comic"] .dh-nombre { font-family: var(--letra-rotulo); font-weight: 400; font-size: 32px; letter-spacing: 1.5px; line-height: 1.05; }
+:root[data-estilo="comic"] .dh-ej-nombre { font-weight: 700; }
+:root[data-estilo="comic"] .dh-ejercicio,
+:root[data-estilo="comic"] .dh-acciones { border-top: 2px dashed var(--dh-linea); }
+:root[data-estilo="comic"] .dh-accion + .dh-accion { border-left: 2px dashed var(--dh-linea); }
+:root[data-estilo="comic"] .dh-accion { font-weight: 700; color: var(--texto); }
+:root[data-estilo="comic"] .cd-opcion { background: #fff; border: 2px solid var(--tinta); border-radius: 4px; }
+:root[data-estilo="comic"] .cd-opcion.elegida { background: var(--amarillo); box-shadow: 2px 2px 0 var(--tinta); }
+:root[data-estilo="comic"] .cd-numero { background: var(--tinta); color: #fff; border-radius: 4px; }

@@ -5,12 +5,12 @@ import { ventanaBuzon } from "./ui/buzon";
 import type { IdEstilo } from "./estilo";
 import type { Tirada } from "./tirada";
 import { recordatorioPago } from "./pago";
-import { botonEntrenar, diaDeHoy, tarjetaDia } from "./ui/tarjetaDia";
+import { botonEntrenar, diaDeHoy, indiceDeHoy, tarjetaDia } from "./ui/tarjetaDia";
 import { entrenamientoAbierto, ventanaRegistro, type DatosRegistro } from "./ui/registro";
 import type { IndiceBanco } from "./banco";
 import { tarjetaRecordatorioPago } from "./ui/tarjetaRecordatorioPago";
 import { tarjetasStats } from "./ui/tarjetasStats";
-import { accionDia, diaCambiable, hojaDeMotivosAbierta } from "./ui/accionDia";
+import { accionDia, diaCambiable, modalCambioDia } from "./ui/accionDia";
 import { accionHoyNoPuedo, tarjetaRevivir } from "./ui/accionFalta";
 import { calendario } from "./ui/calendario";
 import { tarjetaAutollenado, tarjetaDescanso, tarjetaUnidadPeso } from "./ui/tarjetaUnidadPeso";
@@ -53,6 +53,8 @@ export type IdVentana =
 /** Todo lo que los listeners de Firestore tienen a mano en cada repintado. */
 export interface DatosCliente {
   cliente: Cliente;
+  /** Hay un cambio de día hecho sin internet que todavía no llega al servidor (`cambioDia.ts`). */
+  cambioDiaPendiente?: boolean;
   hoy: string;
   asistencias: Asistencia[];
   mesVisible: string;
@@ -258,8 +260,8 @@ function inicio(d: DatosCliente): string {
   // Empezar un entrenamiento marca la asistencia, pero el día se puede cambiar hasta guardarlo
   // (`diaCambiable`).
   const acciones = `
-      ${accionDia(d.cliente, d.hoy, !diaCambiable(d.asistencias, d.sesiones, d.hoy))}
-      ${hojaDeMotivosAbierta() || d.cliente.entrenaADistancia === true ? "" : accionHoyNoPuedo(d.cliente, d.hoy, d.yaAviso)}`;
+      ${accionDia(d.cliente, d.hoy, !diaCambiable(d.asistencias, d.sesiones, d.hoy), d.cambioDiaPendiente === true)}
+      ${d.cliente.entrenaADistancia === true ? "" : accionHoyNoPuedo(d.cliente, d.hoy, d.yaAviso)}`;
   return `
       ${tarjetaRecordatorioPago(recordatorioPago(d.cliente, d.hoy))}
       ${tarjetaDia(d.cliente, d.hoy, acciones, d.asistencias,
@@ -272,6 +274,7 @@ function inicio(d: DatosCliente): string {
       ${avisoEmergente(d)}
       ${tarjetaRevivir(d.cliente, d.hoy, d.asistencias, d.tiradaEsteMes, d.tiradaMesAnterior)}
       ${calendario(d.asistencias, d.mesVisible, d.hoy)}
+      ${modalCambioDia(d.cliente, indiceDeHoy(d.cliente, d.hoy))}
     `;
 }
 

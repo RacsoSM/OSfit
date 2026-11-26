@@ -37,13 +37,15 @@ export function planCambioDia(
 export const cambiarDia = onCall({ region: REGION }, async (request) => {
   const clienteId = await clienteDeLaSesion(request);
 
-  const datos = request.data as { diaIndex?: unknown; motivo?: unknown } | undefined;
+  const datos = request.data as { diaIndex?: unknown; motivo?: unknown; fecha?: unknown } | undefined;
   const diaIndex = datos?.diaIndex;
+  // El motivo ya no se pide (entrenador, 2026-11-26: el cambio es un pop up de un toque). Si
+  // llega, se guarda como antes; la app lo muestra si hay, y si no, solo "Cambió su día".
   const motivo = typeof datos?.motivo === "string" ? datos.motivo.trim() : "";
   if (typeof diaIndex !== "number" || !Number.isInteger(diaIndex) || diaIndex < 0) {
     throw new HttpsError("invalid-argument", "dia_invalido");
   }
-  if (motivo === "" || motivo.length > MOTIVO_MAXIMO) {
+  if (motivo.length > MOTIVO_MAXIMO) {
     throw new HttpsError("invalid-argument", "motivo_invalido");
   }
 
@@ -59,6 +61,12 @@ export const cambiarDia = onCall({ region: REGION }, async (request) => {
   if (diaIndex >= totalDias) throw new HttpsError("invalid-argument", "dia_invalido");
 
   const hoy = hoyEnMazatlan();
+  // El cambio se puede hacer sin internet y mandarse al volver la señal (2026-11-26). Trae la
+  // fecha en que se hizo: si llega otro día, ese día ya pasó y cambiarlo ahora movería el de
+  // hoy, que ella no eligió. Sin fecha (páginas viejas), cuenta como de hoy.
+  if (typeof datos?.fecha === "string" && datos.fecha !== hoy) {
+    throw new HttpsError("failed-precondition", "cambio_vencido");
+  }
   // El ancla se fecha el dia ANTERIOR a hoy porque el calculador toma el historial
   // estrictamente despues del ancla: asi la asistencia de hoy entra en la ventana y manana
   // el ciclo avanza, en vez de quedarse trabado en el dia asignado para siempre.

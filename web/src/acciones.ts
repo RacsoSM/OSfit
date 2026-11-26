@@ -31,10 +31,14 @@ function llamable<A, R>(nombre: string, deFondo = false): (datos: A) => Promise<
   };
 }
 
+/**
+ * De fondo: el cambio de día se guarda en el teléfono y se manda cuando hay señal
+ * (`cambioDia.ts`), así que con el modo sin datos no hay nada que avisar: se manda al quitarlo.
+ */
 export const cambiarDia = llamable<
-  { diaIndex: number; motivo: string },
+  { diaIndex: number; fecha: string; motivo?: string },
   { ok: true; diaIndex: number }
->("cambiarDia");
+>("cambiarDia", true);
 
 export const revivirRacha = llamable<
   { fecha: string },
