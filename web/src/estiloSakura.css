@@ -251,7 +251,6 @@
    nombre del día con la letra de pincel. */
 :root[data-estilo="sakura"] .dia-hoy { --dh-acento: #a83258; --dh-linea: rgba(194, 69, 106, 0.14); }
 :root[data-estilo="sakura"] .dh-nombre { font-family: var(--sk-mincho); font-weight: 800; font-size: 24px; }
-:root[data-estilo="sakura"] .dh-ejercicio::before { color: #c2456a; }
 :root[data-estilo="sakura"] .cd-titulo { font-family: var(--sk-mincho); }
 :root[data-estilo="sakura"] .cd-opcion { background: #fff; border-color: rgba(194, 69, 106, 0.2); font-family: var(--sk-maru); }
 :root[data-estilo="sakura"] .cd-opcion.elegida { border-color: #a83258; box-shadow: inset 0 0 0 1px #a83258; }

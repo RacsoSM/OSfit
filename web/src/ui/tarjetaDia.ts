@@ -2,6 +2,7 @@ import type { Asistencia, Cliente, DiaRutina, Ejercicio } from "../datos";
 import { DESCANSO, interpretar } from "../dia";
 import { conPesosPropios } from "../pesosPropios";
 import { variacionQueToca } from "../variacion";
+import { claveBanco, urlGif, type IndiceBanco } from "../banco";
 
 /**
  * Sábado o domingo. Desde 2026-10-17 se entrena también en fin de semana, pero es opcional:
@@ -63,25 +64,43 @@ function conSusPesos(cliente: Cliente, ejercicios: Ejercicio[]): Ejercicio[] {
   return sigueUnaPlantilla ? conPesosPropios(ejercicios, cliente.pesoPorEjercicio) : ejercicios;
 }
 
-function listaEjercicios(ejercicios: Ejercicio[]): string {
+/**
+ * El GIF chiquito del ejercicio, del banco por su nombre (la rutina no guarda la ruta). Sin
+ * banco todavía, o sin GIF, la pesa: el renglón no salta cuando llega.
+ */
+function gifDe(nombre: string, indice: IndiceBanco | null | undefined): string {
+  const url = urlGif(indice?.get(claveBanco(nombre))?.gifRuta);
+  // `alt` vacío: el nombre va justo al lado y un lector de pantalla lo diría dos veces.
+  return url
+    ? `<img class="dh-gif" src="${escapar(url)}" alt="" width="46" height="46" loading="lazy" decoding="async">`
+    : `<span class="dh-gif dh-sin-gif" aria-hidden="true">🏋️</span>`;
+}
+
+function listaEjercicios(ejercicios: Ejercicio[], indice: IndiceBanco | null | undefined): string {
   if (ejercicios.length === 0) {
     return `
       <p class="dh-sin-ejercicios">Tu entrenador todavía no cargó los ejercicios de este día.</p>`;
   }
 
-  // Numerados (01, 02…) por CSS: el número es adorno, el orden ya lo dice la lista.
+  // Como "Tus ejercicios" del resumen al terminar (entrenador, 2026-11-26): el GIF chiquito, el
+  // nombre y debajo las series, con el peso o la nota del entrenador.
   const filas = ejercicios
-    .map(
-      (e) => `
+    .map((e) => {
+      const series = `${escapar(String(e.series ?? ""))} × ${escapar(e.repeticiones ?? "")}`;
+      return `
         <li class="dh-ejercicio">
-          <span class="dh-ej-nombre">${escapar(e.nombre ?? "")}</span>
-          <span class="dh-series">${escapar(String(e.series ?? ""))} × ${escapar(e.repeticiones ?? "")}</span>
-          ${e.pesoONota ? `<span class="dh-nota">${escapar(e.pesoONota)}</span>` : ""}
-        </li>`
-    )
+          ${gifDe(e.nombre ?? "", indice)}
+          <span class="dh-ej-texto">
+            <span class="dh-ej-nombre">${escapar(e.nombre ?? "")}</span>
+            <span class="dh-ej-detalle"><span class="dh-series">${series}</span>${e.pesoONota ? ` · <span class="dh-nota">${escapar(e.pesoONota)}</span>` : ""}</span>
+          </span>
+        </li>`;
+    })
     .join("");
 
-  return `<ol class="dh-ejercicios">${filas}</ol>`;
+  // Los términos del dataset piden el crédito junto a las animaciones, donde se muestren.
+  const conGif = ejercicios.some((e) => urlGif(indice?.get(claveBanco(e.nombre ?? ""))?.gifRuta));
+  return `<ul class="dh-ejercicios">${filas}</ul>${conGif ? `<p class="registro-credito dh-credito">Animaciones © Gym visual</p>` : ""}`;
 }
 
 /**
@@ -143,7 +162,8 @@ export function tarjetaDia(
   hoy: string,
   acciones = "",
   asistencias: Asistencia[] = [],
-  entrenar = ""
+  entrenar = "",
+  indiceBanco: IndiceBanco | null = null
 ): string {
   const dias = cliente.rutinaAsignada?.dias ?? [];
 
@@ -200,7 +220,8 @@ export function tarjetaDia(
       ${listaEjercicios(
         dias[indice]
           ? conSusPesos(cliente, ejerciciosDeHoy(dias[indice], indice, asistencias, hoy))
-          : []
+          : [],
+        indiceBanco
       )}
       ${entrenar}
       ${acciones.trim() ? `<div class="dh-acciones">${acciones}</div>` : ""}

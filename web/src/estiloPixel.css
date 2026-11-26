@@ -383,5 +383,6 @@
 :root[data-estilo="pixel"] .dh-ejercicio,
 :root[data-estilo="pixel"] .dh-acciones { border-top: 2px dashed var(--dh-linea); }
 :root[data-estilo="pixel"] .dh-accion + .dh-accion { border-left: 2px dashed var(--dh-linea); }
+:root[data-estilo="pixel"] .dh-gif,
 :root[data-estilo="pixel"] .cd-opcion,
 :root[data-estilo="pixel"] .cd-numero { border-radius: 0; }

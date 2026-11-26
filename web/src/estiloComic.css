@@ -237,7 +237,7 @@
   border: 2px solid var(--tinta); box-shadow: 2px 2px 0 var(--tinta);
 }
 :root[data-estilo="comic"] .dh-nombre { font-family: var(--letra-rotulo); font-weight: 400; font-size: 32px; letter-spacing: 1.5px; line-height: 1.05; }
-:root[data-estilo="comic"] .dh-ej-nombre { font-weight: 700; }
+:root[data-estilo="comic"] .dh-gif { border: 2px solid var(--tinta); border-radius: 4px; }
 :root[data-estilo="comic"] .dh-ejercicio,
 :root[data-estilo="comic"] .dh-acciones { border-top: 2px dashed var(--dh-linea); }
 :root[data-estilo="comic"] .dh-accion + .dh-accion { border-left: 2px dashed var(--dh-linea); }
