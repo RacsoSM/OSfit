@@ -6,8 +6,8 @@ import { conPartida, htmlLista, type ApiJuego, type EnvioPartida, type TablaDisc
 import { escapar } from "./tarjetaDia";
 import { ajustarMarcoJuego, pintarSeguro, prepararMarcoJuego, vigilarMarcoJuego, densidadJuego } from "./marcoJuego";
 import { marcasDe } from "./marcasRecords";
-import { CAM_ALTO, CAM_ATRAS, CARRIL, ORILLA, crearVista, niebla, proyectar } from "./pesaRun3d";
-import { cosasDeEscena, lineasVelocidad, pintarBanca, pintarBarra, pintarBatido, pintarColchonetas, pintarCarro, pintarCunaDe, pintarFosa, DETALLE, pintarMaquina, pintarPasillo, type Cosa } from "./pesaRunEscena";
+import { CAM_ALTO, CAM_ATRAS, CARRIL, ORILLA, caja3d, crearVista, niebla, proyectar, quadFrente, quadPiso } from "./pesaRun3d";
+import { cosasDeEscena, lineasVelocidad, pintarBanca, pintarBarra, pintarBatido, pintarColchonetas, pintarCarro, pintarCunaDe, pintarFosa, DETALLE, pintarMaquina, pintarPasillo, textoEnFrente, type Cosa } from "./pesaRunEscena";
 import { pintarMancuerna, type AnimMancuerna, type Gesto } from "./pesaRunMancuerna";
 
 /**
@@ -325,6 +325,25 @@ function ciclo(ahora: number): void {
   pintarSeguro(dibujar);
 }
 
+/**
+ * La meta de un récord: franja a cuadros en el piso, dos postes y un letrero colgante con el
+ * nombre y los puntos. Rosa los de los demás, dorado el del campeón (con corona), amarillo el tuyo.
+ */
+function pintarMeta(c: CanvasRenderingContext2D, v: ReturnType<typeof crearVista>, z: number, m: { texto: string; puntos: number; tuya: boolean; campeon: boolean }): void {
+  const color = m.tuya ? "#ffd45c" : m.campeon ? "#ffb627" : "#ff4fd8";
+  const oscuro = m.tuya ? "#5a4300" : m.campeon ? "#5a3a00" : "#4a0f3e";
+  // La franja a cuadros en el piso, a lo ancho de los carriles.
+  for (let k = 0; k < 12; k++) for (let f = 0; f < 2; f++) {
+    const x0 = -ORILLA + (k * 2 * ORILLA) / 12;
+    quadPiso(c, v, x0, x0 + (2 * ORILLA) / 12, 0.006, z + f * 0.35, z + (f + 1) * 0.35, (k + f) % 2 ? "#ffffff" : color);
+  }
+  // Los postes y el letrero.
+  for (const lado of [-1, 1]) caja3d(c, v, lado * (ORILLA + 0.12) - 0.07, lado * (ORILLA + 0.12) + 0.07, 0, 4.05, z, z + 0.14, "#d9dde4", "#f4f6f9", "#9aa0aa");
+  quadFrente(c, v, -ORILLA - 0.05, ORILLA + 0.05, 3.2, 4.0, z - 0.01, color);
+  quadFrente(c, v, -ORILLA + 0.06, ORILLA - 0.06, 3.27, 3.93, z - 0.02, oscuro);
+  textoEnFrente(c, v, -ORILLA + 0.1, ORILLA - 0.1, 3.3, 3.9, z - 0.03, `${m.campeon ? "👑 " : ""}${m.texto} · ${m.puntos}`, "#ffffff");
+}
+
 function arrancar(): void {
   cancelAnimationFrame(cuadro);
   ultimo = performance.now();
@@ -355,25 +374,18 @@ function dibujar(): void {
   const pilas = carrera.obstaculos.filter((o) => o.tipo === "colchoneta");
   pintarPasillo(c, v, carrera.z, reloj, fosas);
 
-  // Dónde quedan los records: una línea en el piso con su nombre. Los puntos no son solo metros
-  // (los batidos suman), así que la línea va donde se rebasaría ese récord sin tomar más batidos.
+  // De lo lejano a lo cercano: utilería, arcos, obstáculos, batidos y la mancuerna en su lugar.
+  const cosas: Cosa[] = cosasDeEscena(c, v, reloj);
+  // Dónde quedan los récords de los demás (y el tuyo): una meta a lo ancho de los carriles
+  // (entrenador, 2026-11-27: "casi no se ve"). Los puntos no son solo metros (los batidos
+  // suman), así que va donde se rebasaría ese récord sin tomar más batidos.
   const falta = carrera.z - puntos(carrera);
   if (estado !== "inicio") for (const m of marcasDe(tabla)) {
     const zr = m.puntos + falta;
-    if (zr < v.camZ + 1 || zr > v.lejos) continue;
-    const a = proyectar(v, -ORILLA, 0, zr), b = proyectar(v, ORILLA, 0, zr);
-    c.globalAlpha = niebla(v, zr);
-    c.strokeStyle = m.tuya ? "#ffd45c" : "#ff4fd8"; c.lineWidth = Math.max(1, a.s * 0.05);
-    c.beginPath(); c.moveTo(a.x, a.y); c.lineTo(b.x, b.y); c.stroke();
-    if (a.s > 12) {
-      c.font = `800 ${Math.round(Math.min(14, a.s * 0.18))}px system-ui, sans-serif`; c.textAlign = "left"; c.fillStyle = c.strokeStyle;
-      c.fillText(`${m.campeon ? "👑 " : ""}${m.texto} · ${m.puntos}`, Math.max(4, a.x + 4), a.y - 4);
-    }
-    c.globalAlpha = 1;
+    if (zr < v.camZ + CAM_ATRAS - 1 || zr > v.lejos) continue;
+    const superada = metros(carrera) + carrera.batidosTomados * PUNTOS_BATIDO > m.puntos;
+    cosas.push({ z: zr, pintar: () => { c.globalAlpha = niebla(v, zr) * (superada ? 0.5 : 1); pintarMeta(c, v, zr, m); c.globalAlpha = 1; } });
   }
-
-  // De lo lejano a lo cercano: utilería, arcos, obstáculos, batidos y la mancuerna en su lugar.
-  const cosas: Cosa[] = cosasDeEscena(c, v, reloj);
   for (const o of carrera.obstaculos) {
     if (o.z > v.lejos || o.z + largoDe(o) < v.camZ + 0.5) continue;
     if (o.tipo === "colchoneta") {
