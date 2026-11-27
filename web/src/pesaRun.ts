@@ -424,7 +424,8 @@ export function rutaElevada(c: Carrera, z: number): void {
 /**
  * Un combo (entrenador, 2026-11-27: "partes en las que tengas que hacer una combinación de
  * movimientos específicos para pasar"): una secuencia armada, con el tiempo de reacción justo
- * (`d`, ~0.6 s a la velocidad de ese tramo). Cada una puede salir hacia un lado o en espejo:
+ * (`d`, ~0.45 s a la velocidad de ese tramo; entrenador, 2026-11-27: "de 0.6 bájalo a 0.45").
+ * Cada una puede salir hacia un lado o en espejo:
  *  - embudo: máquinas en las dos orillas y en medio una banca o una barra; enseguida, máquinas en
  *    medio y en una orilla: hay que irse a la otra orilla;
  *  - zigzag: libre una orilla, luego la orilla contraria (dos swipes), y al final el centro con
@@ -444,7 +445,7 @@ export function rutaElevada(c: Carrera, z: number): void {
 export function combo(c: Carrera, z: number, tipo?: Combo): number {
   const az = c.azar;
   const vel = velocidad(z);
-  const d = vel * 0.62;
+  const d = vel * 0.45;
   const s = (az() < 0.5 ? -1 : 1) as 1 | -1;
   const k = (l: number) => (l * s) as Carril;
   const t = tipo ?? elegir(nivel(z) >= 3 ? COMBOS : COMBOS.filter((k) => !COMBOS_DE_CARRITOS.includes(k)), az);
@@ -457,7 +458,9 @@ export function combo(c: Carrera, z: number, tipo?: Combo): number {
     pon(0, z, medio);
     pon(0, z + d, "maquina"); pon(k(1), z + d, "maquina");
     // Variante: en la orilla libre de la segunda fila, la mitad de las veces, una banca o una barra.
-    if (az() < 0.5) pon(k(-1), z + d, az() < 0.5 ? "banca" : "barra");
+    // (Si en medio hubo banca, todavía se va en el aire al llegar a la segunda fila: ahí no cabe
+    // otro brinco, así que en la orilla va una barra, que se pasa bajando de golpe y barriéndose.)
+    if (az() < 0.5) pon(k(-1), z + d, medio === "banca" ? "barra" : az() < 0.5 ? "banca" : "barra");
     else { batido(k(-1), z + d - 2); batido(k(-1), z + d + 1); }
     batido(0, z - 3);
     fin = z + d + LARGO.maquina;
@@ -496,7 +499,8 @@ export function combo(c: Carrera, z: number, tipo?: Combo): number {
       // Oleadas de dos carritos: un solo carril libre en cada una. En la estampida el hueco se
       // mueve de a un carril (a veces se queda); en el zigzag salta de orilla a orilla.
       const oleadas = t === "estampida" ? Math.min(8, 5 + Math.floor(nivel(z) / 3)) : 4;
-      const hueco = (t === "estampida" ? 0.62 : 0.8) * (vel + u);
+      // (El zigzag pide cruzar dos carriles en cada oleada: un poco más de tiempo.)
+      const hueco = (t === "estampida" ? 0.45 : 0.6) * (vel + u);
       let libre: Carril = k(1);
       for (let j = 0; j < oleadas; j++) {
         const zc = primera + j * hueco;
