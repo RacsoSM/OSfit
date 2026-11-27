@@ -59,8 +59,13 @@ export type TipoObstaculo = "banca" | "barra" | "maquina" | "colchoneta" | "carr
 export const LARGO: Readonly<Record<TipoObstaculo, number>> = { banca: 1.4, barra: 0.3, maquina: 1.0, colchoneta: 12, carro: 1.4, fosa: 20 };
 
 /** La altura de la pila de colchonetas y el largo de su cuña de subida. */
-export const ALTO_COLCHONETA = 1.3;
-export const RAMPA = 3.5;
+/**
+ * Más altas que lo que alcanza un salto (`ALTURA_SALTO`, ~1.67 m): a la vista queda claro que
+ * sin cuña no se llega (entrenador, 2026-11-27). La cuña, larga, para que la subida no sea tan
+ * empinada.
+ */
+export const ALTO_COLCHONETA = 2.0;
+export const RAMPA = 5;
 /** Cuánto más abajo de la tapa todavía se "sube" al caer encima (en vez de chocar). */
 const TOLERANCIA_TAPA = 0.4;
 
