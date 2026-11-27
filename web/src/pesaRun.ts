@@ -14,7 +14,10 @@
  *    Chocar de frente o de lado contra ellas, abajo de su tapa, termina la carrera.
  *  - el carrito de discos, que viene rodando por un carril directo hacia la mancuerna: solo se
  *    esquiva cambiándose de carril (entrenador, 2026-11-27).
- * Desde el nivel 2 hay circuitos de colchonetas: un tramo en que el piso de los tres carriles
+ * Desde el nivel 2 hay rutas elevadas de unos 15 segundos (entrenador, 2026-11-27): el piso se
+ * vuelve una fosa de cubos de hule espuma (caer ahí es perder) y se va por encima de las
+ * colchonetas, brincando huecos, pasándose de una pila a otra y esquivando lo que hay arriba.
+ * También hay circuitos de colchonetas más cortos: un tramo en que el piso de los tres carriles
  * está cerrado por máquinas y hay que subir por la cuña e ir pasándose de una pila a la de al
  * lado antes de que se acabe la que se pisa.
  * Por el camino hay batidos de proteína; cada uno vale `PUNTOS_BATIDO`. Cada metro corrido es un
@@ -31,9 +34,9 @@ export const CARRILES = [-1, 0, 1] as const;
 export type Carril = (typeof CARRILES)[number];
 
 export const VEL_INICIAL = 11;
-export const VEL_MAXIMA = 26;
+export const VEL_MAXIMA = 28;
 /** Cuánto sube la velocidad por cada metro corrido. */
-export const ACELERACION = 0.012;
+export const ACELERACION = 0.014;
 export const GRAVEDAD = 30;
 export const SALTO = 10;
 /** Lo más alto que llega un salto: v² / 2g (≈ 1.67 m). */
@@ -50,10 +53,10 @@ export const ALTO_BARRA = 1.0;
 /** De la mitad del cuerpo de la mancuerna a cada lado, de frente. */
 const PROFUNDIDAD_JUGADORA = 0.35;
 
-export type TipoObstaculo = "banca" | "barra" | "maquina" | "colchoneta" | "carro";
+export type TipoObstaculo = "banca" | "barra" | "maquina" | "colchoneta" | "carro" | "fosa";
 
 /** El largo de cada obstáculo; las colchonetas traen el suyo (`largo`). */
-export const LARGO: Readonly<Record<TipoObstaculo, number>> = { banca: 1.4, barra: 0.3, maquina: 1.0, colchoneta: 12, carro: 1.4 };
+export const LARGO: Readonly<Record<TipoObstaculo, number>> = { banca: 1.4, barra: 0.3, maquina: 1.0, colchoneta: 12, carro: 1.4, fosa: 20 };
 
 /** La altura de la pila de colchonetas y el largo de su cuña de subida. */
 export const ALTO_COLCHONETA = 1.3;
@@ -71,13 +74,15 @@ export interface Obstaculo {
   rampa?: boolean;
   /** Si se mueve: su velocidad a lo largo (negativa = viene hacia la mancuerna). */
   vz?: number;
+  /** Si está encima de unas colchonetas: la altura de donde se apoya. */
+  base?: number;
 }
 
 /** Qué tan rápido rueda el carrito de discos hacia la mancuerna. */
 export const VEL_CARRO = 7;
 
 export function largoDe(o: Obstaculo): number {
-  return o.tipo === "colchoneta" ? o.largo ?? LARGO.colchoneta : LARGO[o.tipo];
+  return o.tipo === "colchoneta" || o.tipo === "fosa" ? o.largo ?? LARGO[o.tipo] : LARGO[o.tipo];
 }
 
 export interface Batido {
@@ -112,6 +117,7 @@ export interface Carrera {
   /** Dónde terminó el último circuito de colchonetas y dónde salió el último carrito. */
   ultimoCircuito: number;
   ultimoCarro: number;
+  ultimaRuta: number;
   terminada: boolean;
   /** Con qué chocó (para pintarlo). */
   choque: Obstaculo | null;
@@ -144,17 +150,23 @@ export function nivel(m: number): number {
 
 /** El tiempo entre fila y fila, en segundos: [mínimo, máximo]. Nunca menos de lo que tarda un salto. */
 export function separacion(n: number): [number, number] {
-  const tabla: [number, number][] = [[1.25, 1.6], [1.15, 1.5], [1.05, 1.4], [0.98, 1.3], [0.92, 1.2], [0.86, 1.12], [0.8, 1.05], [0.76, 1]];
+  const tabla: [number, number][] = [[1.15, 1.5], [1.05, 1.4], [0.98, 1.3], [0.92, 1.2], [0.86, 1.12], [0.82, 1.05], [0.78, 1], [0.75, 0.95]];
   return tabla[Math.min(NIVELES, Math.max(1, n)) - 1]!;
 }
 
 /** Cuántos obstáculos lleva una fila: más con el nivel, nunca tres máquinas. */
-export function probDos(n: number): number { return [0.25, 0.35, 0.45, 0.52, 0.58, 0.62, 0.66, 0.7][Math.min(NIVELES, n) - 1]!; }
-export function probTres(n: number): number { return [0, 0.05, 0.1, 0.15, 0.2, 0.24, 0.28, 0.32][Math.min(NIVELES, n) - 1]!; }
+export function probDos(n: number): number { return [0.3, 0.42, 0.5, 0.56, 0.6, 0.62, 0.64, 0.66][Math.min(NIVELES, n) - 1]!; }
+export function probTres(n: number): number { return [0.03, 0.1, 0.16, 0.22, 0.27, 0.31, 0.34, 0.37][Math.min(NIVELES, n) - 1]!; }
 /** Los circuitos de colchonetas (desde el nivel 2, separados al menos 250 m) y los carritos (desde el 3). */
 export function probCircuito(n: number): number { return n < 2 ? 0 : 0.14; }
 export const SEPARACION_CIRCUITOS = 250;
-export function probCarro(n: number): number { return n < 3 ? 0 : [0, 0, 0.12, 0.14, 0.16, 0.18, 0.2, 0.22][Math.min(NIVELES, n) - 1]!; }
+/** Las rutas elevadas: desde el nivel 2, separadas al menos 450 m. */
+export function probRuta(n: number): number { return n < 2 ? 0 : 0.3; }
+export const SEPARACION_RUTAS = 450;
+export const SEGUNDOS_RUTA = 15;
+/** Carritos (entrenador, 2026-11-27: "que existan más carritos"): desde el nivel 2, cada vez más; desde el 5, a veces dos a la vez. */
+export function probCarro(n: number): number { return n < 2 ? 0 : [0, 0.16, 0.22, 0.26, 0.3, 0.33, 0.36, 0.4][Math.min(NIVELES, n) - 1]!; }
+export function probDosCarros(n: number): number { return n < 5 ? 0 : [0, 0, 0, 0, 0.25, 0.32, 0.38, 0.45][Math.min(NIVELES, n) - 1]!; }
 export function probColchonetas(n: number): number { return [0.12, 0.2, 0.24, 0.26, 0.28, 0.3, 0.3, 0.32][Math.min(NIVELES, n) - 1]!; }
 export function probMaquina(n: number): number { return [0.2, 0.26, 0.32, 0.36, 0.4, 0.43, 0.46, 0.5][Math.min(NIVELES, n) - 1]!; }
 
@@ -238,27 +250,108 @@ export function circuito(c: Carrera, z: number): void {
  * (que no lo atraviese). Cerca del cruce, las máquinas de los otros carriles se vuelven bancas:
  * siempre hay a dónde hacerse a un lado. No sale si en su camino hay colchonetas.
  */
-export function carro(c: Carrera, z: number): boolean {
+export function carro(c: Carrera, z: number, dos = false): boolean {
   const az = c.azar;
   const t = Math.max(0, z - c.z) / (c.vel + VEL_CARRO);
   const cruce = c.z + c.vel * t;
   const desde = cruce - 18;
-  if (c.obstaculos.some((o) => o.tipo === "colchoneta" && o.z < z + 2 && o.z + largoDe(o) > desde)) return false;
-  const carril = elegir(CARRILES, az);
-  c.obstaculos = c.obstaculos.filter((o) => !(o.carril === carril && o.z + largoDe(o) > desde && o.z < z + 2));
-  c.batidos = c.batidos.filter((b) => !(b.carril === carril && b.z > desde && b.z < z + 2));
+  if (c.obstaculos.some((o) => (o.tipo === "colchoneta" || o.tipo === "fosa") && o.z < z + 8 && o.z + largoDe(o) > desde)) return false;
+  // Con dos: en dos carriles distintos, el segundo un poco más atrás; el tercero queda libre.
+  const carriles = [...CARRILES].sort(() => az() - 0.5).slice(0, dos ? 2 : 1);
+  for (const carril of carriles) {
+    c.obstaculos = c.obstaculos.filter((o) => !(o.carril === carril && o.z + largoDe(o) > desde && o.z < z + 8));
+    c.batidos = c.batidos.filter((b) => !(b.carril === carril && b.z > desde && b.z < z + 8));
+  }
   for (const o of c.obstaculos) if (o.tipo === "maquina" && Math.abs(o.z - cruce) < 18) o.tipo = "banca";
-  c.obstaculos.push({ carril, z, tipo: "carro", vz: -VEL_CARRO });
+  carriles.forEach((carril, k) => c.obstaculos.push({ carril, z: z + k * 6, tipo: "carro", vz: -VEL_CARRO }));
   c.ultimoCarro = z;
   return true;
+}
+
+/**
+ * La ruta elevada (entrenador, 2026-11-27: "15 segundos enteros donde el juego te obligue a ir
+ * por encima de las colchonetas y tengas que brincar entre ellas o esquivar algún obstáculo
+ * ahí"). Unos `SEGUNDOS_RUTA` de colchonetas encadenadas sobre una fosa de hule espuma que cubre
+ * los tres carriles. Se entra por una cuña y luego, tramo por tramo, toca:
+ *  - brincar un hueco a la siguiente pila del mismo carril;
+ *  - pasarse a la pila del carril de al lado, encimada un tramo;
+ *  - en una pila doble (dos carriles juntos), esquivar una máquina pasándose a la otra;
+ * y encima hay bancas para saltar y barras para barrerse. Los batidos marcan el camino.
+ */
+export function rutaElevada(c: Carrera, z: number): void {
+  const az = c.azar;
+  const vel = velocidad(z);
+  const fin = z + RAMPA + vel * SEGUNDOS_RUTA;
+  const encimado = Math.max(7, vel * 0.8);
+  const hueco = Math.max(2.5, vel * 0.28);
+  const arriba = ALTO_COLCHONETA;
+  const batidos = (carril: Carril, z0: number, z1: number, alto = arriba + 0.5) => {
+    for (let bz = z0; bz < z1; bz += 1.6) c.batidos.push({ carril, z: bz, alto, tomado: false });
+  };
+  let carril = elegir(CARRILES, az);
+  let zc = z;
+  let primera = true;
+  while (zc < fin - 10) {
+    // Largas según la velocidad: cabe algo encima, el aterrizaje y el siguiente brinco.
+    const largo = Math.min(fin - zc, (primera ? RAMPA : 0) + 12 + vel * 1.8 + Math.floor(az() * 8));
+    const pila: Obstaculo = { carril, z: zc, tipo: "colchoneta", largo, rampa: primera };
+    c.obstaculos.push(pila);
+    // Lo de encima, lejos del final: tras brincarlo (o barrerse) hay que alcanzar a aterrizar y
+    // todavía brincar el hueco o cambiarse de pila.
+    // Y lejos del principio: tras brincar el hueco anterior hay que alcanzar a aterrizar.
+    const util0 = zc + (primera ? RAMPA + 2 : vel * 0.75 + 2), util1 = zc + largo - (vel * 0.8 + 3);
+    // Lo de encima: a veces una pila doble con una máquina que obliga a cambiarse; si no, una banca o una barra.
+    const r = az();
+    let destino = carril;
+    if (!primera && r < 0.35 && util1 - util0 > 10) {
+      const otro = (carril === 0 ? (az() < 0.5 ? -1 : 1) : 0) as Carril;
+      c.obstaculos.push({ carril: otro, z: zc, tipo: "colchoneta", largo, rampa: false });
+      const zm = (util0 + util1) / 2;
+      c.obstaculos.push({ carril, z: zm, tipo: "maquina", base: arriba });
+      batidos(carril, util0, zm - vel * 0.6);
+      batidos(otro, zm - vel * 0.35, util1);
+      destino = otro;
+    } else if (r < 0.8 && util1 - util0 > 6) {
+      const zo = util0 + (util1 - util0) * (0.4 + az() * 0.2);
+      const tipo: TipoObstaculo = az() < 0.5 ? "banca" : "barra";
+      c.obstaculos.push({ carril, z: zo, tipo, base: arriba });
+      batidos(carril, util0, zo - 3);
+      if (tipo === "banca") for (let k = -1; k <= 1; k++) c.batidos.push({ carril, z: zo + LARGO.banca / 2 + k * 1.6, alto: arriba + ALTO_BANCA + 0.9 - Math.abs(k) * 0.3, tomado: false });
+      batidos(carril, zo + 3, util1);
+    } else batidos(carril, util0, util1);
+    carril = destino;
+    zc = zc + largo;
+    primera = false;
+    if (zc >= fin - 10) break;
+    // La transición al siguiente tramo: brincar un hueco o pasarse al carril de al lado.
+    if (az() < 0.5) {
+      // Batidos en arco sobre el hueco.
+      for (let k = 0; k < 3; k++) c.batidos.push({ carril, z: zc - 1 + k * (hueco + 2) / 2, alto: arriba + 0.9 + (k === 1 ? 0.6 : 0), tomado: false });
+      zc += hueco;
+    } else {
+      const sig = (carril === 0 ? (az() < 0.5 ? -1 : 1) : 0) as Carril;
+      // La siguiente empieza antes de que se acabe esta (encimadas), en el carril de al lado.
+      const ultima = c.obstaculos.filter((o) => o.tipo === "colchoneta" && o.carril === carril).at(-1)!;
+      ultima.largo = largoDe(ultima) + encimado;
+      zc = zc + encimado * 0.1;
+      carril = sig;
+    }
+  }
+  const finReal = Math.max(...c.obstaculos.filter((o) => o.tipo === "colchoneta" && o.z >= z).map((o) => o.z + largoDe(o)));
+  // La fosa de hule espuma bajo todo, después de la cuña.
+  for (const k of CARRILES) c.obstaculos.push({ carril: k, z: z + RAMPA + 0.5, tipo: "fosa", largo: finReal - (z + RAMPA + 0.5) });
+  c.ultimoCircuito = finReal;
+  c.ultimaRuta = finReal;
+  c.proximaFila = finReal + Math.max(12, vel * 1.1);
 }
 
 function nuevaFila(c: Carrera): void {
   const z = c.proximaFila;
   const n = nivel(z);
   const az = c.azar;
+  if (z - c.ultimaRuta > SEPARACION_RUTAS && z - c.ultimoCircuito > 120 && az() < probRuta(n)) { rutaElevada(c, z); return; }
   if (z - c.ultimoCircuito > SEPARACION_CIRCUITOS && az() < probCircuito(n)) { circuito(c, z); return; }
-  if (z - c.ultimoCarro > 70 && az() < probCarro(n) && carro(c, z)) {
+  if (z - c.ultimoCarro > 40 && az() < probCarro(n) && carro(c, z, az() < probDosCarros(n))) {
     const [min, max] = separacion(n);
     c.proximaFila = z + Math.max(10, (min + az() * (max - min)) * velocidad(z));
     return;
@@ -302,7 +395,7 @@ function nuevaFila(c: Carrera): void {
 export function nuevaCarrera(azar: () => number = Math.random): Carrera {
   const c: Carrera = {
     z: 0, vel: VEL_INICIAL, x: 0, carril: 0, y: 0, vy: 0, barrida: 0, barrerAlCaer: false, suelo: 0,
-    obstaculos: [], batidos: [], batidosTomados: 0, proximaFila: 30, ultimoCircuito: 0, ultimoCarro: 0, terminada: false, choque: null, azar,
+    obstaculos: [], batidos: [], batidosTomados: 0, proximaFila: 30, ultimoCircuito: 0, ultimoCarro: 0, ultimaRuta: 0, terminada: false, choque: null, azar,
   };
   // Al arrancar, unos batidos derechito para calentar.
   for (let k = 0; k < 5; k++) c.batidos.push({ carril: 0, z: 12 + k * 1.6, alto: 0.5, tomado: false });
@@ -370,6 +463,10 @@ function contraColchonetas(c: Carrera): Obstaculo | null {
 export function choca(o: Obstaculo, x: number, y: number, barriendo: boolean): boolean {
   if (Math.abs(x - o.carril) > 0.5) return false;
   if (o.tipo === "colchoneta") return y < ALTO_COLCHONETA - TOLERANCIA_TAPA;
+  // La fosa: solo si se cae hasta el fondo.
+  if (o.tipo === "fosa") return y < 0.15;
+  // Lo que está encima de unas colchonetas cuenta desde su tapa.
+  y -= o.base ?? 0;
   if (o.tipo === "maquina" || o.tipo === "carro") return true;
   if (o.tipo === "banca") return y < ALTO_BANCA;
   return !barriendo;
@@ -417,7 +514,7 @@ export function avanzar(c: Carrera, dt: number): Evento {
   for (const o of c.obstaculos) {
     if (o.tipo === "colchoneta") continue;
     // Si se mueve, cuenta también lo que recorrió en este cuadro (no se "atraviesan").
-    const ini = o.z - PROFUNDIDAD_JUGADORA, fin = o.z + LARGO[o.tipo] + PROFUNDIDAD_JUGADORA + Math.abs(o.vz ?? 0) * dt;
+    const ini = o.z - PROFUNDIDAD_JUGADORA, fin = o.z + largoDe(o) + PROFUNDIDAD_JUGADORA + Math.abs(o.vz ?? 0) * dt;
     if (c.z < ini || antes > fin) continue;
     if (choca(o, c.x, c.y, barriendo)) {
       c.terminada = true;

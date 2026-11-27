@@ -1,6 +1,6 @@
 import { ALTO_BARRA, ALTO_COLCHONETA, LARGO, METROS_POR_NIVEL, RAMPA, ZONAS, largoDe, type Batido, type Obstaculo } from "../pesaRun";
 import {
-  CAM_ATRAS, CARRIL, ORILLA, PARED, TECHO, azarFijo, bola, caja3d, disco3d, mezclar, poligono, proyectar, quadFrente, quadPared, quadPiso,
+  CAM_ATRAS, CARRIL, ORILLA, PARED, TECHO, azarFijo, bola, caja3d, disco3d, trazoPiso, mezclar, poligono, proyectar, quadFrente, quadPared, quadPiso,
   type Vista,
 } from "./pesaRun3d";
 
@@ -76,7 +76,9 @@ const CARTELES = [["NO PAIN", "NO GAIN"], ["LEG", "DAY"], ["OS", "FIT"], ["1 REP
 
 // ── El pasillo (lo que no se ordena por distancia) ───────────────────────────
 
-export function pintarPasillo(c: CanvasRenderingContext2D, v: Vista, z: number, reloj: number): void {
+export function pintarPasillo(c: CanvasRenderingContext2D, v: Vista, z: number, reloj: number, fosas: readonly [number, number][] = []): void {
+  // Donde hay fosa, las losetas y las líneas del piso quedan tapadas: no se pintan.
+  const enFosa = (z0: number, z1: number) => fosas.some(([a, b]) => z0 >= a && z1 <= b);
   const { W } = v;
   const zona = COLORES_ZONA[zonaDe(z + 40)]!;
   const cerca = v.camZ + 0.3, lejos = v.lejos;
@@ -110,7 +112,7 @@ export function pintarPasillo(c: CanvasRenderingContext2D, v: Vista, z: number, 
     const z0 = Math.max(cerca, r * LOSETA), z1 = Math.min(detalle, r * LOSETA + LOSETA);
     if (z1 <= z0) continue;
     const zn = COLORES_ZONA[zonaDe(r * LOSETA)]!;
-    for (let l = -1; l <= 1; l++) if ((r + l) % 2 === 0) quadPiso(c, v, l * CARRIL - CARRIL / 2, l * CARRIL + CARRIL / 2, 0, z0, z1, zn.hule2);
+    if (!enFosa(z0, z1)) for (let l = -1; l <= 1; l++) if ((r + l) % 2 === 0) quadPiso(c, v, l * CARRIL - CARRIL / 2, l * CARRIL + CARRIL / 2, 0, z0, z1, zn.hule2);
     // Las juntas de la madera, escalonadas.
     for (const lado of [-1, 1]) for (let t = 0; t < 4; t++) {
       if ((r + t) % 3 !== 0) continue;
@@ -122,7 +124,7 @@ export function pintarPasillo(c: CanvasRenderingContext2D, v: Vista, z: number, 
   for (let r = Math.floor((detalle + 14) / LOSETA); r >= Math.floor(cerca / LOSETA); r--) {
     const z0 = Math.max(cerca, r * LOSETA), z1 = Math.min(lejos, r * LOSETA + LOSETA * 0.55);
     if (z1 <= z0) continue;
-    for (const x of [-CARRIL / 2, CARRIL / 2]) quadPiso(c, v, x - 0.04, x + 0.04, 0.002, z0, z1, "rgba(240, 240, 250, 0.32)");
+    if (!enFosa(z0, z1)) for (const x of [-CARRIL / 2, CARRIL / 2]) quadPiso(c, v, x - 0.04, x + 0.04, 0.002, z0, z1, "rgba(240, 240, 250, 0.32)");
     for (const lado of [-1, 1]) quadPiso(c, v, lado * ORILLA - 0.06, lado * ORILLA + 0.06, 0.002, z0, z1, (r % 2) ? "#e8c13a" : "#1d1d1d");
   }
 
@@ -590,10 +592,20 @@ export function pintarColchonetas(c: CanvasRenderingContext2D, v: Vista, o: Obst
   const capa = ALTO_COLCHONETA / CAPAS.length;
   quadPiso(c, v, x0 - 0.1, x1 + 0.1, 0.004, Math.max(o.z, v.camZ + 0.5), z1 + 0.3, "rgba(0, 0, 0, 0.3)");
   if (z1 > v.camZ + 0.4) {
-    CAPAS.forEach(([frente, tapa, lado], k) => caja3d(c, v, x0, x1, k * capa, (k + 1) * capa, z0, z1, frente, tapa, lado));
+    // Un solo bloque azul y, encima de sus caras, la franja de la colchoneta roja.
+    caja3d(c, v, x0, x1, 0, ALTO_COLCHONETA, z0, z1, CAPAS[0][0], CAPAS[3][1], CAPAS[0][2]);
     const zc = Math.max(z0, v.camZ + 0.4);
-    // Costuras de la tapa y del costado, cada 1.5 m.
-    for (let zs = Math.ceil(zc / 1.5) * 1.5; zs < z1 - 0.2; zs += 1.5) {
+    const xl0 = x0 > v.camX ? x0 : x1 < v.camX ? x1 : null;
+    if (xl0 !== null) {
+      quadPared(c, v, xl0, capa * 2, capa * 3, zc, z1, CAPAS[2][2]);
+      for (const k of [1, 3]) quadPared(c, v, xl0, k * capa - 0.02, k * capa + 0.02, zc, z1, "rgba(0, 0, 0, 0.25)");
+    }
+    if (z0 > v.camZ + 0.4) {
+      quadFrente(c, v, x0, x1, capa * 2, capa * 3, z0 - 0.001, CAPAS[2][0]);
+      for (const k of [1, 3]) quadFrente(c, v, x0, x1, k * capa - 0.02, k * capa + 0.02, z0 - 0.001, "rgba(0, 0, 0, 0.25)");
+    }
+    // Costuras de la tapa y del costado, cada 3 m.
+    for (let zs = Math.ceil(zc / 3) * 3; zs < Math.min(z1 - 0.2, v.camZ + DETALLE); zs += 3) {
       quadPiso(c, v, x0 + 0.05, x1 - 0.05, ALTO_COLCHONETA + 0.001, zs, zs + 0.05, "rgba(20, 40, 90, 0.45)");
       const xl = x0 > v.camX ? x0 : x1 < v.camX ? x1 : null;
       if (xl !== null) quadPared(c, v, xl, 0.05, ALTO_COLCHONETA - 0.05, zs, zs + 0.04, "rgba(0, 0, 0, 0.25)");
@@ -630,6 +642,48 @@ function pintarCuna(c: CanvasRenderingContext2D, v: Vista, o: Obstaculo, x0: num
     const xm = (x0 + x1) / 2;
     poligono(c, [P(x0 + 0.25, alto(zf), zf), P(xm, alto(zp), zp), P(x1 - 0.25, alto(zf), zf), P(x1 - 0.25, alto(zf + 0.15), zf + 0.15), P(xm, alto(zp + 0.15), zp + 0.15), P(x0 + 0.25, alto(zf + 0.15), zf + 0.15)], "#1d1d1d");
   }
+}
+
+/**
+ * La fosa de cubos de hule espuma (entrenador, 2026-11-27): el piso de la ruta elevada. Un
+ * hueco en el piso lleno de cubos de colores, con su orilla acolchada al empezar. Caer ahí es
+ * perder. Los cubos solo se pintan cerca (más allá, el color de fondo basta).
+ */
+const CUBOS = ["#ff6fa8", "#7ec8ff", "#ffd45c", "#9dff8a", "#c79bff", "#ffffff"];
+
+export function pintarFosa(c: CanvasRenderingContext2D, v: Vista, o: Obstaculo, encima: readonly Obstaculo[] = []): void {
+  const x = o.carril * CARRIL, x0 = x - CARRIL / 2, x1 = x + CARRIL / 2;
+  const a = Math.max(o.z, v.camZ + 0.5), b = Math.min(o.z + largoDe(o), v.lejos);
+  if (b <= a) return;
+  // Solo lo que no tapan las colchonetas de ese carril (pintarlo debajo era pintar dos veces).
+  const tapas = encima.filter((m) => m.carril === o.carril && m.z < b && m.z + largoDe(m) > a).map((m) => [m.z, m.z + largoDe(m)] as const).sort((p, q) => p[0] - q[0]);
+  const huecos: [number, number][] = [];
+  let desde = a;
+  for (const [t0, t1] of tapas) { if (t0 > desde) huecos.push([desde, Math.min(t0, b)]); desde = Math.max(desde, t1); }
+  if (desde < b) huecos.push([desde, b]);
+  for (const [z0, z1] of huecos) pintarTramoFosa(c, v, o, x0, x1, z0, z1);
+  // La orilla acolchada al empezar la fosa.
+  if (o.z > v.camZ + 0.5) caja3d(c, v, x0, x1, 0, 0.12, o.z - 0.25, o.z, "#f2c230", "#ffd84a", "#c99a16");
+}
+
+function pintarTramoFosa(c: CanvasRenderingContext2D, v: Vista, o: Obstaculo, x0: number, x1: number, z0: number, z1: number): void {
+  if (z1 <= z0) return;
+  quadPiso(c, v, x0, x1, 0.003, z0, z1, "#2a3f6e");
+  // Los cubos, hasta donde llega el detalle. Se juntan por color y cada color se pinta de una
+  // sola vez (eran cientos de figuritas por cuadro).
+  const zt = Math.min(z1, v.camZ + DETALLE - 8);
+  CUBOS.forEach((color, ci) => {
+    c.beginPath();
+    for (let zz = Math.ceil(z0 / 0.75) * 0.75; zz < zt; zz += 0.75) {
+      for (let k = 0; k < 2; k++) {
+        const sem = zz * 7.3 + k * 3.1 + o.carril * 11;
+        if (Math.floor(azarFijo(sem * 2.1) * CUBOS.length) !== ci) continue;
+        const cx = x0 + 0.15 + azarFijo(sem) * (CARRIL - 0.5), w = 0.22 + azarFijo(sem * 1.3) * 0.14;
+        trazoPiso(c, v, cx, cx + w, 0.006, zz + k * 0.35, zz + k * 0.35 + w);
+      }
+    }
+    c.fillStyle = color; c.fill();
+  });
 }
 
 /** Franjas de cuidado amarillas y negras en un frente. */
@@ -750,9 +804,15 @@ export function pintarBatido(c: CanvasRenderingContext2D, v: Vista, b: Batido, r
   const giro = Math.cos(reloj * 3 + b.z * 0.7);
   const w = p.s * 0.26 * (0.55 + 0.45 * Math.abs(giro)), h = p.s * 0.42;
   // Brillo de atrás.
-  const halo = c.createRadialGradient(p.x, p.y, 0, p.x, p.y, h * 0.95);
-  halo.addColorStop(0, "rgba(255, 111, 216, 0.45)"); halo.addColorStop(1, "rgba(255, 111, 216, 0)");
-  c.fillStyle = halo; c.fillRect(p.x - h, p.y - h, h * 2, h * 2);
+  // Lejos (pocos píxeles) basta la silueta: el vaso rosa y la tapa.
+  if (p.s < 40) {
+    c.fillStyle = "#ff5fc8"; c.fillRect(p.x - w / 2, p.y - h / 2, w, h);
+    c.fillStyle = "#24262c"; c.fillRect(p.x - w * 0.56, p.y - h * 0.64, w * 1.12, h * 0.2);
+    return;
+  }
+  // (Un círculo tenue, sin degradado: en la ruta elevada hay decenas de batidos a la vista.)
+  c.fillStyle = "rgba(255, 111, 216, 0.22)";
+  c.beginPath(); c.arc(p.x, p.y, h * 0.75, 0, Math.PI * 2); c.fill();
   // El vaso transparente y el batido rosa adentro.
   c.fillStyle = "rgba(235, 245, 255, 0.55)";
   c.beginPath(); c.roundRect(p.x - w / 2, p.y - h / 2, w, h, w * 0.25); c.fill();

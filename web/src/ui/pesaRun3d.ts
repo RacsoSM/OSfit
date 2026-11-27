@@ -59,6 +59,12 @@ export function poligono(c: CanvasRenderingContext2D, pts: readonly { x: number;
   c.fill();
 }
 
+/** Agrega al trazo actual (sin pintar) un rectángulo del piso: para pintar muchos de un color de una sola vez. */
+export function trazoPiso(c: CanvasRenderingContext2D, v: Vista, x0: number, x1: number, y: number, z0: number, z1: number): void {
+  const a = proyectar(v, x0, y, z0), b = proyectar(v, x1, y, z0), d = proyectar(v, x1, y, z1), e = proyectar(v, x0, y, z1);
+  c.moveTo(a.x, a.y); c.lineTo(b.x, b.y); c.lineTo(d.x, d.y); c.lineTo(e.x, e.y); c.closePath();
+}
+
 /** Un rectángulo en un plano: el piso o el techo (y fija), una pared (x fija) o un frente (z fija). */
 export function quadPiso(c: CanvasRenderingContext2D, v: Vista, x0: number, x1: number, y: number, z0: number, z1: number, color: string | CanvasGradient): void {
   const P = (x: number, z: number) => proyectar(v, x, y, z);

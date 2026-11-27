@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  ALTO_BANCA, ALTO_COLCHONETA, ALTURA_SALTO, RAMPA, VEL_CARRO, carro, circuito, enAire, largoDe, sueloEn, CARRILES, PUNTOS_BATIDO, VEL_INICIAL, VEL_MAXIMA, accion, avanzar, choca, metros, nivel, nuevaCarrera, puntos,
+  ALTO_BANCA, ALTO_COLCHONETA, ALTURA_SALTO, RAMPA, SEGUNDOS_RUTA, VEL_CARRO, carro, circuito, enAire, rutaElevada, largoDe, sueloEn, CARRILES, PUNTOS_BATIDO, VEL_INICIAL, VEL_MAXIMA, accion, avanzar, choca, metros, nivel, nuevaCarrera, puntos,
   separacion, velocidad, type Carrera, type Obstaculo,
 } from "./pesaRun";
 
@@ -257,6 +257,79 @@ describe("Correle pa", () => {
       const cruce = c.z + c.vel * ((690 - c.z) / (c.vel + VEL_CARRO));
       expect(c.obstaculos.some((o) => o !== cr && o.carril === cr.carril && o.z > cruce - 18 && o.z < 690)).toBe(false);
       for (const o of c.obstaculos) if (Math.abs(o.z - cruce) < 18) expect(o.tipo).not.toBe("maquina");
+    }
+  });
+
+  /** Un piloto que solo mira lo que tiene adelante en la ruta elevada y hace lo correcto. */
+  function piloto(c: Carrera): void {
+    if (enAire(c) || Math.abs(c.x - c.carril) > 0.05) return;
+    const mats = c.obstaculos.filter((o) => o.tipo === "colchoneta");
+    const cubre = (l: number, z: number) => mats.some((m) => m.carril === l && z >= m.z && z <= m.z + largoDe(m));
+    // Continua de `z0` a `z1` (sin huecos en medio).
+    const continua = (l: number, z0: number, z1: number) => { for (let z = z0; z <= z1; z += 0.5) if (!cubre(l, z)) return false; return true; };
+    const vecinos = CARRILES.filter((l) => Math.abs(l - c.carril) === 1);
+    const cambiar = (l: number) => accion(c, l < c.carril ? "izquierda" : "derecha");
+    const arriba = c.obstaculos.filter((o) => o.base && o.carril === c.carril && o.z > c.z - 0.2);
+    const maq = arriba.find((o) => o.tipo === "maquina" && o.z - c.z < c.vel * 0.55);
+    if (maq) { const l = vecinos.find((l) => continua(l, c.z, maq.z + 1)); if (l !== undefined) cambiar(l); return; }
+    const obs = arriba.find((o) => o.tipo !== "maquina" && o.z - c.z < c.vel * 0.25 + 0.4);
+    if (obs) { accion(c, obs.tipo === "banca" ? "saltar" : "barrer"); return; }
+    if (c.suelo > 0 && !cubre(c.carril, c.z + c.vel * 0.22)) {
+      const l = vecinos.find((l) => continua(l, c.z, c.z + c.vel * 0.5));
+      if (l !== undefined) cambiar(l); else accion(c, "saltar");
+    }
+  }
+
+  it("ruta elevada: unos 15 s sobre una fosa; por el piso se cae, y con buen juego se sale entera", () => {
+    for (let sem = 1; sem <= 40; sem++) {
+      for (const z0 of [600, 1600]) {
+        const base = (): Carrera => { const c = vacia(); c.azar = semilla(sem); c.z = z0 - 30; rutaElevada(c, z0); c.proximaFila = 1e9; return c; };
+        const r = base();
+        const fin = r.ultimaRuta;
+        expect((fin - z0) / velocidad(z0)).toBeGreaterThan(SEGUNDOS_RUTA - 1);
+        // Hay de todo: huecos, cambios, obstáculos encima.
+        // Por el piso, en cualquier carril, se cae a la fosa o se choca.
+        for (const k of CARRILES) {
+          const c = base();
+          const rampa = c.obstaculos.find((o) => o.rampa)!;
+          if (k === rampa.carril) continue;
+          c.carril = k; c.x = k;
+          for (let i = 0; i < 3000 && !c.terminada; i++) avanzar(c, 1 / 60);
+          expect(c.terminada).toBe(true);
+        }
+        const c = base();
+        const rampa = c.obstaculos.find((o) => o.rampa)!;
+        c.carril = rampa.carril; c.x = c.carril;
+        for (let i = 0; i < 4000 && !c.terminada && c.z < fin + 20; i++) { piloto(c); avanzar(c, 1 / 60); }
+        if (c.terminada) throw new Error(`semilla ${sem}, z0 ${z0}: chocó con ${c.choque?.tipo} en ${c.z.toFixed(1)} (carril ${c.carril}, y ${c.y.toFixed(2)})`);
+        expect(c.z).toBeGreaterThan(fin);
+        expect(c.batidosTomados).toBeGreaterThan(10);
+      }
+    }
+  });
+
+  it("las rutas traen huecos, cambios de pila y obstáculos encima", () => {
+    let huecos = 0, encima = 0, maquinas = 0;
+    for (let sem = 1; sem <= 30; sem++) {
+      const c = vacia(); c.azar = semilla(sem); rutaElevada(c, 600);
+      const mats = c.obstaculos.filter((o) => o.tipo === "colchoneta").sort((a, b) => a.z - b.z);
+      for (const a of mats) if (mats.some((b) => b.carril === a.carril && b.z > a.z + largoDe(a) + 1 && b.z < a.z + largoDe(a) + 10)) huecos++;
+      encima += c.obstaculos.filter((o) => o.base).length;
+      maquinas += c.obstaculos.filter((o) => o.base && o.tipo === "maquina").length;
+    }
+    expect(huecos).toBeGreaterThan(10);
+    expect(encima).toBeGreaterThan(20);
+    expect(maquinas).toBeGreaterThan(5);
+  });
+
+  it("desde el nivel 5 a veces vienen dos carritos, y siempre queda un carril libre", () => {
+    for (let sem = 1; sem < 30; sem++) {
+      const c = nuevaCarrera(semilla(sem));
+      c.z = 1300; c.vel = 24; c.obstaculos = [];
+      carro(c, 1390, true);
+      const carros = c.obstaculos.filter((o) => o.tipo === "carro");
+      expect(carros.length).toBe(2);
+      expect(new Set(carros.map((o) => o.carril)).size).toBe(2);
     }
   });
 });

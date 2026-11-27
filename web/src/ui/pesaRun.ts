@@ -7,7 +7,7 @@ import { escapar } from "./tarjetaDia";
 import { ajustarMarcoJuego, pintarSeguro, prepararMarcoJuego, vigilarMarcoJuego, densidadJuego } from "./marcoJuego";
 import { marcasDe } from "./marcasRecords";
 import { CAM_ALTO, CAM_ATRAS, CARRIL, ORILLA, crearVista, niebla, proyectar } from "./pesaRun3d";
-import { cosasDeEscena, lineasVelocidad, pintarBanca, pintarBarra, pintarBatido, pintarColchonetas, pintarCarro, pintarMaquina, pintarPasillo, type Cosa } from "./pesaRunEscena";
+import { cosasDeEscena, lineasVelocidad, pintarBanca, pintarBarra, pintarBatido, pintarColchonetas, pintarCarro, pintarFosa, pintarMaquina, pintarPasillo, type Cosa } from "./pesaRunEscena";
 import { pintarMancuerna, type AnimMancuerna, type Gesto } from "./pesaRunMancuerna";
 
 /**
@@ -119,7 +119,7 @@ export function htmlCapaPesaRun(e: Estado, total: number, m: number, batidos: nu
       <div class="jd-capa-caja">
         <p class="jd-capa-marca">OSFIT · Arcade</p>
         <p class="jd-capa-titulo">Correle pa</p>
-        <p class="jd-capa-texto">La mancuerna corre sola por el gimnasio. Desliza el dedo a los lados para cambiar de carril, hacia arriba para saltar las bancas y hacia abajo para barrerte bajo las barras. Las máquinas de proteína y los carritos de discos que vienen hacia ti solo se esquivan. A veces el piso se cierra: sube por la cuña a las colchonetas y pásate de una a otra. Cada metro es un punto y cada batido vale ${PUNTOS_BATIDO}.</p>
+        <p class="jd-capa-texto">La mancuerna corre sola por el gimnasio. Desliza el dedo a los lados para cambiar de carril, hacia arriba para saltar las bancas y hacia abajo para barrerte bajo las barras. Las máquinas de proteína y los carritos de discos que vienen hacia ti solo se esquivan. A veces el piso se vuelve una fosa de hule espuma: sube por la cuña y ve por encima de las colchonetas, brincando los huecos y pasándote de una a otra. Cada metro es un punto y cada batido vale ${PUNTOS_BATIDO}.</p>
         <button type="button" class="jd-boton" data-pr="jugar">Jugar</button>
         <button type="button" class="jd-boton secundario" data-pr="marcador">Ver marcador</button>
       </div>`;
@@ -338,7 +338,9 @@ function dibujar(): void {
   if (!canvas) return;
   const W = canvas.clientWidth, H = canvas.clientHeight;
   if (W === 0 || H === 0) return;
-  const dpr = densidadJuego();
+  // Un poco menos que los otros juegos (1.25): la escena llena la pantalla de detalle y en
+  // teléfonos lentos costaba cuadros; a esta densidad casi no se nota.
+  const dpr = Math.min(1.25, densidadJuego());
   if (canvas.width !== Math.round(W * dpr) || canvas.height !== Math.round(H * dpr)) {
     canvas.width = Math.round(W * dpr);
     canvas.height = Math.round(H * dpr);
@@ -349,7 +351,9 @@ function dibujar(): void {
   if (sacudida > 0) c.translate((Math.random() - 0.5) * 12 * sacudida, (Math.random() - 0.5) * 8 * sacudida);
   const camZ = carrera.z - CAM_ATRAS;
   const v = crearVista(W, H, carrera.x * CARRIL * 0.55, CAM_ALTO + camSuelo, camZ, camZ + VISTA_DIBUJO);
-  pintarPasillo(c, v, carrera.z, reloj);
+  const fosas = carrera.obstaculos.filter((o) => o.tipo === "fosa" && o.carril === 0).map((o) => [o.z, o.z + largoDe(o)] as [number, number]);
+  const pilas = carrera.obstaculos.filter((o) => o.tipo === "colchoneta");
+  pintarPasillo(c, v, carrera.z, reloj, fosas);
 
   // Dónde quedan los records: una línea en el piso con su nombre. Los puntos no son solo metros
   // (los batidos suman), así que la línea va donde se rebasaría ese récord sin tomar más batidos.
@@ -373,15 +377,18 @@ function dibujar(): void {
   for (const o of carrera.obstaculos) {
     if (o.z > v.lejos || o.z + largoDe(o) < v.camZ + 0.5) continue;
     // Las colchonetas se ordenan por su orilla del fondo: lo que va encima o a su lado (la
-    // mancuerna, los batidos) se pinta después, por encima.
-    const orden = o.tipo === "colchoneta" ? o.z + largoDe(o) : o.z;
+    // mancuerna, los batidos) se pinta después, por encima. La fosa es piso: va antes que todo.
+    const orden = o.tipo === "fosa" ? Number.POSITIVE_INFINITY : o.tipo === "colchoneta" ? o.z + largoDe(o) : o.z;
+    // Lo que está encima de unas colchonetas se pinta igual, con la cámara bajada esa altura.
+    const vo = o.base ? { ...v, camY: v.camY - o.base } : v;
     cosas.push({ z: orden, pintar: () => {
-      c.globalAlpha = niebla(v, o.z);
-      if (o.tipo === "colchoneta") pintarColchonetas(c, v, o);
-      else if (o.tipo === "banca") pintarBanca(c, v, o);
-      else if (o.tipo === "barra") pintarBarra(c, v, o);
+      c.globalAlpha = o.tipo === "fosa" ? 1 : niebla(v, o.z);
+      if (o.tipo === "fosa") pintarFosa(c, v, o, pilas);
+      else if (o.tipo === "colchoneta") pintarColchonetas(c, v, o);
+      else if (o.tipo === "banca") pintarBanca(c, vo, o);
+      else if (o.tipo === "barra") pintarBarra(c, vo, o);
       else if (o.tipo === "carro") pintarCarro(c, v, o, reloj);
-      else pintarMaquina(c, v, o);
+      else pintarMaquina(c, vo, o);
       c.globalAlpha = 1;
     } });
   }
