@@ -1,5 +1,5 @@
 import { pintarAlrededores } from "./pesaRunFondo";
-import { ALTO_BARRA, ALTO_COLCHONETA, LARGO, METROS_POR_NIVEL, RAMPA, ZONAS, largoDe, type Batido, type Obstaculo } from "../pesaRun";
+import { ALTO_BARRA, ALTO_COLCHONETA, INICIO_NIVEL, LARGO, RAMPA, ZONAS, largoDe, nivel, tramoZona, type Batido, type Obstaculo } from "../pesaRun";
 import {
   CAM_ATRAS, CARRIL, ORILLA, PARED, TECHO, azarFijo, bola, caja3d, disco3d, mezclar, poligono, proyectar, quadFrente, quadPared, quadPiso,
   type Vista,
@@ -38,7 +38,7 @@ export const COLORES_ZONA: readonly Zona[] = [
 ];
 
 export function zonaDe(z: number): number {
-  return Math.max(0, Math.min(COLORES_ZONA.length - 1, Math.floor(Math.max(0, z) / METROS_POR_NIVEL)));
+  return nivel(z) - 1;
 }
 
 const TRAMO = 6;
@@ -93,7 +93,7 @@ export function pintarPasillo(c: CanvasRenderingContext2D, v: Vista, z: number, 
   const detalle = Math.min(lejos, v.camZ + DETALLE);
   // Piso, techo y paredes de base: una figura por zona (de lejos a cerca).
   const tramos: [number, number][] = [];
-  for (let n = zonaDe(lejosPiso); n >= zonaDe(cerca); n--) tramos.push([Math.max(cerca, n * METROS_POR_NIVEL), n === zonaDe(lejosPiso) ? lejosPiso : Math.min(lejosPiso, (n + 1) * METROS_POR_NIVEL)]);
+  for (let n = zonaDe(lejosPiso); n >= zonaDe(cerca); n--) tramos.push([Math.max(cerca, tramoZona(n)[0]), Math.min(lejosPiso, tramoZona(n)[1])]);
   for (const [z0, z1] of tramos) {
     if (z1 <= z0) continue;
     const zn = COLORES_ZONA[zonaDe(z0)]!;
@@ -442,7 +442,7 @@ export function cosasDeEscena(c: CanvasRenderingContext2D, v: Vista, reloj: numb
   }
   // El arco de cada zona.
   for (let n = 1; n < ZONAS.length; n++) {
-    const z = n * METROS_POR_NIVEL;
+    const z = INICIO_NIVEL[n]!;
     if (z > cerca + 0.5 && z < v.lejos) cosas.push({ z, pintar: () => pintarArco(c, v, z, n) });
   }
   return cosas;

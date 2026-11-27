@@ -151,12 +151,25 @@ export function velocidad(z: number): number {
 }
 
 /** Cada 250 m se sube de nivel (más máquinas y filas más juntas): hasta el 8. */
-export const METROS_POR_NIVEL = 250;
+/**
+ * Dónde empieza cada nivel, en metros (entrenador, 2026-11-27: "que tardes más en pasar de nivel
+ * ya que vas notablemente más rápido"). Cada nivel es más largo que el anterior: 250, 400, 550,
+ * 700, 900, 1100 y 1300 m, así duran de ~20 s al principio a ~46 s en los últimos; el 8 no acaba.
+ */
+export const INICIO_NIVEL = [0, 250, 650, 1200, 1900, 2800, 3900, 5200] as const;
 export const NIVELES = 8;
 export const ZONAS = ["Recepción", "Cardio", "Pesas libres", "Máquinas", "Crossfit", "Powerlifting", "Box", "Olimpo"] as const;
 
+/** El nivel (de 1 a 8) en ese metro. */
 export function nivel(m: number): number {
-  return Math.min(NIVELES, 1 + Math.floor(Math.max(0, m) / METROS_POR_NIVEL));
+  let n = 1;
+  while (n < NIVELES && Math.max(0, m) >= INICIO_NIVEL[n]!) n++;
+  return n;
+}
+
+/** El tramo de metros de la zona `i` (de 0 a 7): el último no acaba. */
+export function tramoZona(i: number): [number, number] {
+  return [INICIO_NIVEL[i]!, i + 1 < NIVELES ? INICIO_NIVEL[i + 1]! : Number.POSITIVE_INFINITY];
 }
 
 /** El tiempo entre fila y fila, en segundos: [mínimo, máximo]. Nunca menos de lo que tarda un salto. */

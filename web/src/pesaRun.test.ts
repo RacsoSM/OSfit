@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  ALTO_BANCA, ALTO_COLCHONETA, ALTURA_SALTO, RAMPA, SEGUNDOS_RUTA, VEL_CARRO, carro, circuito, enAire, rutaElevada, largoDe, sueloEn, CARRILES, PUNTOS_BATIDO, VEL_INICIAL, VEL_MAXIMA, accion, avanzar, choca, metros, nivel, nuevaCarrera, puntos,
+  ALTO_BANCA, ALTO_COLCHONETA, ALTURA_SALTO, RAMPA, INICIO_NIVEL, SEGUNDOS_RUTA, VEL_CARRO, carro, circuito, enAire, rutaElevada, largoDe, sueloEn, CARRILES, PUNTOS_BATIDO, VEL_INICIAL, VEL_MAXIMA, accion, avanzar, choca, metros, nivel, nuevaCarrera, puntos,
   separacion, velocidad, type Carrera, type Obstaculo,
 } from "./pesaRun";
 
@@ -401,5 +401,16 @@ describe("Correle pa", () => {
       expect(k.z).toBeGreaterThanOrEqual(k.tope!);
     }
     expect(vistos).toBeGreaterThan(5);
+  });
+
+  it("cada nivel es más largo que el anterior y dura más (aunque se vaya más rápido)", () => {
+    expect(nivel(0)).toBe(1); expect(nivel(249)).toBe(1); expect(nivel(250)).toBe(2);
+    expect(nivel(649)).toBe(2); expect(nivel(650)).toBe(3); expect(nivel(5199)).toBe(7); expect(nivel(5200)).toBe(8); expect(nivel(1e6)).toBe(8);
+    // Cuántos segundos dura cada nivel corriendo a la velocidad del juego.
+    const dura = (a: number, b: number) => { let t = 0; for (let z = a; z < b; z += 0.5) t += 0.5 / velocidad(z); return t; };
+    const tiempos = INICIO_NIVEL.slice(1).map((b, i) => dura(INICIO_NIVEL[i]!, b));
+    for (let i = 1; i < tiempos.length; i++) expect(tiempos[i]!).toBeGreaterThanOrEqual(tiempos[i - 1]! - 1);
+    expect(tiempos[0]!).toBeGreaterThan(18);
+    expect(tiempos.at(-1)!).toBeGreaterThan(40);
   });
 });

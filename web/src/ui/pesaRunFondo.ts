@@ -1,4 +1,4 @@
-import { METROS_POR_NIVEL } from "../pesaRun";
+import { nivel, tramoZona } from "../pesaRun";
 import { PARED, TECHO, azarFijo, bola, caja3d, poligono, proyectar, quadFrente, quadPared, quadPiso, type Vista } from "./pesaRun3d";
 
 /**
@@ -19,7 +19,7 @@ import { PARED, TECHO, azarFijo, bola, caja3d, poligono, proyectar, quadFrente, 
  */
 
 export function zonaFondo(z: number): number {
-  return Math.max(0, Math.min(7, Math.floor(Math.max(0, z) / METROS_POR_NIVEL)));
+  return nivel(z) - 1;
 }
 
 /** El piso de afuera de cada zona: a qué altura está y de qué color. */
@@ -34,7 +34,7 @@ export function pintarAlrededores(c: CanvasRenderingContext2D, v: Vista, reloj: 
   const z0 = v.camZ + 2, z1 = v.camZ + LEJOS;
   // El piso de afuera, por zona.
   for (let n = zonaFondo(z1); n >= zonaFondo(z0); n--) {
-    const a = Math.max(z0, n * METROS_POR_NIVEL), b = n === zonaFondo(z1) ? z1 : Math.min(z1, (n + 1) * METROS_POR_NIVEL);
+    const a = Math.max(z0, tramoZona(n)[0]), b = Math.min(z1, tramoZona(n)[1]);
     if (b <= a) continue;
     const [y, color] = SUELO[n]!;
     for (const lado of [-1, 1]) quadPiso(c, v, lado * (PARED + 0.3), lado * 140, y, a, b, color);
@@ -53,7 +53,7 @@ export function pintarAlrededores(c: CanvasRenderingContext2D, v: Vista, reloj: 
   }
   // Las tiras largas de cada zona (autopista, tribunas, cuerdas del ring), por tramo de zona.
   for (let n = zonaFondo(z1); n >= zonaFondo(z0); n--) {
-    const a = Math.max(z0, n * METROS_POR_NIVEL), b = n === zonaFondo(z1) ? z1 : Math.min(z1, (n + 1) * METROS_POR_NIVEL);
+    const a = Math.max(z0, tramoZona(n)[0]), b = Math.min(z1, tramoZona(n)[1]);
     if (b > a) TIRAS[n]?.(c, v, a, b, reloj);
   }
 }
