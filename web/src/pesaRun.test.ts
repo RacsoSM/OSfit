@@ -35,7 +35,7 @@ describe("Correle pa", () => {
     expect(c.x).toBe(1);
   });
 
-  it("el salto pasa la banca; la barrida pasa la barra; el rack solo se esquiva", () => {
+  it("el salto pasa la banca; la barrida pasa la barra y el rack", () => {
     const banca: Obstaculo = { carril: 0, z: 0, tipo: "banca" };
     const barra: Obstaculo = { carril: 0, z: 0, tipo: "barra" };
     const rack: Obstaculo = { carril: 0, z: 0, tipo: "rack" };
@@ -45,7 +45,9 @@ describe("Correle pa", () => {
     expect(choca(barra, 0, 0, false)).toBe(true);
     expect(choca(barra, 0, 1, false)).toBe(true);
     expect(choca(barra, 0, 0, true)).toBe(false);
-    expect(choca(rack, 0, 1.5, true)).toBe(true);
+    expect(choca(rack, 0, 0, false)).toBe(true);
+    expect(choca(rack, 0, 1.5, false)).toBe(true);
+    expect(choca(rack, 0, 0, true)).toBe(false);
     expect(choca(rack, 1, 0, false)).toBe(false);
   });
 

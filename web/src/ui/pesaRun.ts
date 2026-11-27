@@ -119,7 +119,7 @@ export function htmlCapaPesaRun(e: Estado, total: number, m: number, batidos: nu
       <div class="jd-capa-caja">
         <p class="jd-capa-marca">OSFIT · Arcade</p>
         <p class="jd-capa-titulo">Correle pa</p>
-        <p class="jd-capa-texto">La mancuerna corre sola por el gimnasio. Desliza el dedo a los lados para cambiar de carril, hacia arriba para saltar las bancas y hacia abajo para barrerte bajo las barras. Los racks solo se esquivan. Cada metro es un punto y cada batido vale ${PUNTOS_BATIDO}.</p>
+        <p class="jd-capa-texto">La mancuerna corre sola por el gimnasio. Desliza el dedo a los lados para cambiar de carril, hacia arriba para saltar las bancas y hacia abajo para barrerte bajo las barras y los racks. Cada metro es un punto y cada batido vale ${PUNTOS_BATIDO}.</p>
         <button type="button" class="jd-boton" data-pr="jugar">Jugar</button>
         <button type="button" class="jd-boton secundario" data-pr="marcador">Ver marcador</button>
       </div>`;

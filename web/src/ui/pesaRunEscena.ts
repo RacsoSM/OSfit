@@ -11,7 +11,7 @@ import {
  * en Cardio, árboles de discos en Pesas libres, cajas y llantas en Crossfit, costales en Box…).
  * En las paredes, columnas con neón y reflectores, espejos, ventanales, carteles, lockers y
  * repisas. No tiene techo (entrenador, 2026-11-27): arriba se ve el cielo de noche, con la
- * ciudad al horizonte y guirnaldas de foquitos de pared a pared.
+ * ciudad al horizonte (sin letrero: entrenador, 2026-11-27) y guirnaldas de foquitos de pared a pared.
  * Al empezar cada zona se cruza un arco con su nombre.
  *
  * Todo se pinta con figuras planas, sin sombras de canvas (`shadowBlur`), que en iPhone cuestan
@@ -245,7 +245,6 @@ function dibujarCielo(c: CanvasRenderingContext2D, v: Vista, zona: Zona): void {
     }
     x += w;
   }
-  neonTexto(c, "OSFIT", W / 2, hz - W * 0.13, Math.max(10, W * 0.07), zona.neon);
 }
 
 function neonTexto(c: CanvasRenderingContext2D, texto: string, x: number, y: number, tam: number, color: string): void {

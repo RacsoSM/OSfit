@@ -7,7 +7,8 @@
  * Los obstáculos son del gimnasio:
  *  - la banca plana, bajita: se salta;
  *  - la barra en sus soportes, a la altura del pecho: se pasa barriéndose por debajo;
- *  - el rack de sentadillas, una jaula entera: hay que cambiarse de carril;
+ *  - el rack de sentadillas, una jaula con su barra cargada arriba: se esquiva o se pasa
+ *    barriéndose por debajo (entrenador, 2026-11-27);
  *  - las colchonetas apiladas, largas y altas: a veces traen una cuña para subir corriendo; si
  *    no, se sube saltando. Arriba se corre por encima (con batidos) y al final se cae al piso.
  *    Chocar de frente o de lado contra ellas, abajo de su tapa, termina la carrera.
@@ -276,7 +277,7 @@ function contraColchonetas(c: Carrera): Obstaculo | null {
 export function choca(o: Obstaculo, x: number, y: number, barriendo: boolean): boolean {
   if (Math.abs(x - o.carril) > 0.5) return false;
   if (o.tipo === "colchoneta") return y < ALTO_COLCHONETA - TOLERANCIA_TAPA;
-  if (o.tipo === "rack") return true;
+  if (o.tipo === "rack") return !barriendo;
   if (o.tipo === "banca") return y < ALTO_BANCA;
   return !barriendo;
 }
