@@ -1,3 +1,4 @@
+import { pintarAlrededores } from "./pesaRunFondo";
 import { ALTO_BARRA, ALTO_COLCHONETA, LARGO, METROS_POR_NIVEL, RAMPA, ZONAS, largoDe, type Batido, type Obstaculo } from "../pesaRun";
 import {
   CAM_ATRAS, CARRIL, ORILLA, PARED, TECHO, azarFijo, bola, caja3d, disco3d, mezclar, poligono, proyectar, quadFrente, quadPared, quadPiso,
@@ -26,14 +27,14 @@ export interface Zona {
 
 /** Cada zona (nivel) del gimnasio, en el orden de `ZONAS`. */
 export const COLORES_ZONA: readonly Zona[] = [
-  { cielo: ["#1a1240", "#e0709a"], pared: "#3a2f56", zocalo: "#2a2240", hule: "#24212c", hule2: "#2b2834", madera: "#6b4a34", madera2: "#5a3d2a", techo: "#17131f", neon: "#7ef3ff", luz: "255, 244, 220" }, // Recepción
-  { cielo: ["#121a3f", "#6f5aa8"], pared: "#25405a", zocalo: "#1b2e42", hule: "#1c222b", hule2: "#222a35", madera: "#5f4a3a", madera2: "#4f3d30", techo: "#111720", neon: "#9dff5c", luz: "225, 245, 255" }, // Cardio
-  { cielo: ["#1a0f2e", "#a4487a"], pared: "#4d2a40", zocalo: "#371d2e", hule: "#251c20", hule2: "#2d2227", madera: "#6e4630", madera2: "#5c3a27", techo: "#1a1117", neon: "#ff6fd8", luz: "255, 236, 230" }, // Pesas libres
-  { cielo: ["#0e1a2a", "#3e6f8a"], pared: "#2a4350", zocalo: "#1e313b", hule: "#1b2226", hule2: "#212a2f", madera: "#5c4b3c", madera2: "#4c3e32", techo: "#10181c", neon: "#ffd45c", luz: "255, 250, 225" }, // Máquinas
-  { cielo: ["#1d1226", "#c46a3a"], pared: "#4e3a26", zocalo: "#3a2b1c", hule: "#211d18", hule2: "#29241e", madera: "#74512f", madera2: "#604326", techo: "#1a1510", neon: "#ff8a3d", luz: "255, 232, 200" }, // Crossfit
-  { cielo: ["#1a0b10", "#8a2a35"], pared: "#4a2626", zocalo: "#351b1b", hule: "#201616", hule2: "#281b1b", madera: "#6a3f2c", madera2: "#573324", techo: "#1a0f0f", neon: "#ff4d5e", luz: "255, 225, 215" }, // Powerlifting
-  { cielo: ["#0d0f24", "#4a3d8a"], pared: "#2b2f48", zocalo: "#1f2235", hule: "#181a23", hule2: "#1e212c", madera: "#57473f", madera2: "#483a33", techo: "#101219", neon: "#b48aff", luz: "235, 230, 255" }, // Box
-  { cielo: ["#1a1408", "#c79a3a"], pared: "#4a3a1a", zocalo: "#352a12", hule: "#1f1a10", hule2: "#272114", madera: "#7a5a2a", madera2: "#664a22", techo: "#1a150a", neon: "#ffe08a", luz: "255, 240, 200" }, // Olimpo
+  { cielo: ["#3b2a6b", "#ff9e6b"], pared: "#3a2f56", zocalo: "#2a2240", hule: "#24212c", hule2: "#2b2834", madera: "#6b4a34", madera2: "#5a3d2a", techo: "#17131f", neon: "#7ef3ff", luz: "255, 244, 220" }, // Recepción
+  { cielo: ["#1d1b4a", "#c4628a"], pared: "#25405a", zocalo: "#1b2e42", hule: "#1c222b", hule2: "#222a35", madera: "#5f4a3a", madera2: "#4f3d30", techo: "#111720", neon: "#9dff5c", luz: "225, 245, 255" }, // Cardio
+  { cielo: ["#0b0e2e", "#3a3a7a"], pared: "#4d2a40", zocalo: "#371d2e", hule: "#251c20", hule2: "#2d2227", madera: "#6e4630", madera2: "#5c3a27", techo: "#1a1117", neon: "#ff6fd8", luz: "255, 236, 230" }, // Pesas libres
+  { cielo: ["#1c1a22", "#7a6450"], pared: "#2a4350", zocalo: "#1e313b", hule: "#1b2226", hule2: "#212a2f", madera: "#5c4b3c", madera2: "#4c3e32", techo: "#10181c", neon: "#ffd45c", luz: "255, 250, 225" }, // Máquinas
+  { cielo: ["#0f1a30", "#3a5a7a"], pared: "#4e3a26", zocalo: "#3a2b1c", hule: "#211d18", hule2: "#29241e", madera: "#74512f", madera2: "#604326", techo: "#1a1510", neon: "#ff8a3d", luz: "255, 232, 200" }, // Crossfit
+  { cielo: ["#08080f", "#22223a"], pared: "#4a2626", zocalo: "#351b1b", hule: "#201616", hule2: "#281b1b", madera: "#6a3f2c", madera2: "#573324", techo: "#1a0f0f", neon: "#ff4d5e", luz: "255, 225, 215" }, // Powerlifting
+  { cielo: ["#07040a", "#3a1022"], pared: "#2b2f48", zocalo: "#1f2235", hule: "#181a23", hule2: "#1e212c", madera: "#57473f", madera2: "#483a33", techo: "#101219", neon: "#b48aff", luz: "235, 230, 255" }, // Box
+  { cielo: ["#f0b84a", "#fff3c4"], pared: "#4a3a1a", zocalo: "#352a12", hule: "#1f1a10", hule2: "#272114", madera: "#7a5a2a", madera2: "#664a22", techo: "#1a150a", neon: "#ffe08a", luz: "255, 240, 200" }, // Olimpo
 ];
 
 export function zonaDe(z: number): number {
@@ -83,7 +84,9 @@ export function pintarPasillo(c: CanvasRenderingContext2D, v: Vista, z: number, 
   const zona = COLORES_ZONA[zonaDe(z + 40)]!;
   const cerca = v.camZ + 0.3, lejos = v.lejos;
   const P = (x: number, y: number, zz: number) => proyectar(v, x, y, zz);
-  pintarCielo(c, v, zona, reloj);
+  pintarCielo(c, v, zona, zonaDe(z + 40), reloj);
+  // Lo de afuera del gimnasio, distinto en cada zona (detrás y por encima de las paredes).
+  pintarAlrededores(c, v, reloj);
   // El piso y las paredes llegan hasta el horizonte (los detalles, no).
   const lejosPiso = v.camZ + 180;
 
@@ -197,16 +200,16 @@ const EDIFICIOS = Array.from({ length: 26 }, (_, k) => ({ w: 0.035 + azarFijo(k 
  */
 let cieloGuardado: { lienzo: HTMLCanvasElement; llave: string } | null = null;
 
-function pintarCielo(c: CanvasRenderingContext2D, v: Vista, zona: Zona, _reloj: number): void {
+function pintarCielo(c: CanvasRenderingContext2D, v: Vista, zona: Zona, iz: number, _reloj: number): void {
   const dpr = c.getTransform().a;
-  const llave = `${v.W}x${v.H}@${dpr}:${Math.round(v.hz)}:${zona.cielo.join()}`;
+  const llave = `${v.W}x${v.H}@${dpr}:${Math.round(v.hz)}:${iz}`;
   if (cieloGuardado?.llave !== llave) {
     const lienzo = cieloGuardado?.lienzo ?? document.createElement("canvas");
     lienzo.width = Math.max(1, Math.round(v.W * dpr)); lienzo.height = Math.max(1, Math.round(v.H * dpr));
     const cc = lienzo.getContext("2d");
     if (!cc) return;
     cc.setTransform(dpr, 0, 0, dpr, 0, 0);
-    dibujarCielo(cc, v, zona);
+    dibujarCielo(cc, v, zona, iz);
     cieloGuardado = { lienzo, llave };
   }
   c.save(); c.setTransform(1, 0, 0, 1, 0, 0);
@@ -214,41 +217,79 @@ function pintarCielo(c: CanvasRenderingContext2D, v: Vista, zona: Zona, _reloj: 
   c.restore();
 }
 
-function dibujarCielo(c: CanvasRenderingContext2D, v: Vista, zona: Zona): void {
+/**
+ * El cielo de cada zona: atardecer con sol (Recepción), noche con luna y la ciudad (Cardio,
+ * Pesas libres, Crossfit), esmog industrial (Máquinas), negro de estadio y de arena (Powerlifting,
+ * Box) y cielo dorado con un templo en el horizonte (Olimpo).
+ */
+function dibujarCielo(c: CanvasRenderingContext2D, v: Vista, zona: Zona, iz: number): void {
   const { W, H, hz } = v;
   const g = c.createLinearGradient(0, 0, 0, hz);
   g.addColorStop(0, zona.cielo[0]); g.addColorStop(1, zona.cielo[1]);
   c.fillStyle = g; c.fillRect(-20, -20, W + 40, hz + 21);
   c.fillStyle = zona.cielo[1]; c.fillRect(-20, hz, W + 40, H - hz + 20);
-  for (const e of ESTRELLAS) {
-    const y = e.y * hz * 0.85;
-    c.globalAlpha = (0.35 + 0.35 * Math.sin(e.f)) * (1 - y / hz);
-    c.fillStyle = "#ffffff"; c.fillRect(e.x * W, y, e.r, e.r);
-  }
-  c.globalAlpha = 1;
-  // La luna.
-  const lx = W * 0.78, ly = hz * 0.28, lr = Math.max(10, W * 0.06);
-  c.fillStyle = "rgba(255, 244, 214, 0.12)"; c.beginPath(); c.arc(lx, ly, lr * 1.8, 0, Math.PI * 2); c.fill();
-  c.fillStyle = "#fff4d6"; c.beginPath(); c.arc(lx, ly, lr, 0, Math.PI * 2); c.fill();
-  c.fillStyle = "rgba(200, 190, 160, 0.5)";
-  c.beginPath(); c.arc(lx - lr * 0.3, ly - lr * 0.2, lr * 0.22, 0, Math.PI * 2); c.arc(lx + lr * 0.3, ly + lr * 0.25, lr * 0.15, 0, Math.PI * 2); c.fill();
-  // La ciudad, en silueta, con ventanas prendidas.
-  let x = -20;
-  for (let k = 0; x < W + 20; k++) {
-    const e = EDIFICIOS[k % EDIFICIOS.length]!;
-    const w = e.w * W, h = e.h * W;
-    c.fillStyle = k % 2 ? "#1a1630" : "#14122a"; c.fillRect(x, hz - h, w - 1, h + 1);
-    c.fillStyle = "rgba(255, 214, 140, 0.8)";
-    for (let f = 0; f < 6; f++) for (let col = 0; col < 3; col++) {
-      if (azarFijo(e.sem * 31 + f * 7 + col + k) < 0.7) continue;
-      const wy = hz - h + 3 + f * 5;
-      if (wy > hz - 3) break;
-      c.fillRect(x + 2 + col * (w / 3), wy, 1.6, 1.6);
+  // Estrellas en las zonas de noche.
+  if (iz >= 1 && iz <= 6) {
+    for (const e of ESTRELLAS) {
+      const y = e.y * hz * 0.85;
+      c.globalAlpha = (0.35 + 0.35 * Math.sin(e.f)) * (1 - y / hz) * (iz === 3 ? 0.4 : 1);
+      c.fillStyle = "#ffffff"; c.fillRect(e.x * W, y, e.r, e.r);
     }
-    x += w;
+    c.globalAlpha = 1;
+  }
+  // El sol: del atardecer en Recepción, dorado y grande en el Olimpo.
+  if (iz === 0 || iz === 7) {
+    const sx = W * 0.3, sy = hz * (iz === 0 ? 0.82 : 0.45), sr = W * (iz === 0 ? 0.11 : 0.09);
+    c.fillStyle = iz === 0 ? "rgba(255, 170, 90, 0.25)" : "rgba(255, 255, 230, 0.4)"; c.beginPath(); c.arc(sx, sy, sr * 1.9, 0, Math.PI * 2); c.fill();
+    const gs = c.createLinearGradient(0, sy - sr, 0, sy + sr);
+    gs.addColorStop(0, iz === 0 ? "#ffe08a" : "#ffffff"); gs.addColorStop(1, iz === 0 ? "#ff7a45" : "#ffe9a8");
+    c.fillStyle = gs; c.beginPath(); c.arc(sx, sy, sr, 0, Math.PI * 2); c.fill();
+  }
+  // La luna.
+  if (iz === 2 || iz === 4 || iz === 5) {
+    const lx = W * 0.78, ly = hz * 0.28, lr = Math.max(10, W * 0.06);
+    c.fillStyle = "rgba(255, 244, 214, 0.12)"; c.beginPath(); c.arc(lx, ly, lr * 1.8, 0, Math.PI * 2); c.fill();
+    c.fillStyle = "#fff4d6"; c.beginPath(); c.arc(lx, ly, lr, 0, Math.PI * 2); c.fill();
+    c.fillStyle = "rgba(200, 190, 160, 0.5)";
+    c.beginPath(); c.arc(lx - lr * 0.3, ly - lr * 0.2, lr * 0.22, 0, Math.PI * 2); c.arc(lx + lr * 0.3, ly + lr * 0.25, lr * 0.15, 0, Math.PI * 2); c.fill();
+  }
+  // Esmog en la zona industrial.
+  if (iz === 3) { c.fillStyle = "rgba(160, 140, 110, 0.25)"; c.fillRect(0, hz * 0.55, W, hz * 0.45); }
+  // La ciudad en silueta, en las zonas de ciudad (del color de cada una).
+  if (iz <= 2 || iz === 4) {
+    const tonos = [["#4a2a4a", "#3a2040"], ["#1a1630", "#14122a"], ["#141a3a", "#10142e"], ["", ""], ["#16223a", "#101a30"]][iz]!;
+    let x = -20;
+    for (let k = 0; x < W + 20; k++) {
+      const e = EDIFICIOS[k % EDIFICIOS.length]!;
+      const w = e.w * W, h = e.h * W * (iz === 2 ? 1.4 : 1);
+      c.fillStyle = tonos[k % 2]!; c.fillRect(x, hz - h, w - 1, h + 1);
+      c.fillStyle = "rgba(255, 214, 140, 0.8)";
+      for (let f = 0; f < 8; f++) for (let col = 0; col < 3; col++) {
+        if (azarFijo(e.sem * 31 + f * 7 + col + k) < 0.7) continue;
+        const wy = hz - h + 3 + f * 5;
+        if (wy > hz - 3) break;
+        c.fillRect(x + 2 + col * (w / 3), wy, 1.6, 1.6);
+      }
+      x += w;
+    }
+  }
+  // El resplandor de los reflectores del estadio y de la arena.
+  if (iz === 5 || iz === 6) {
+    for (const fx of [0.15, 0.85]) {
+      c.fillStyle = iz === 5 ? "rgba(255, 255, 220, 0.12)" : "rgba(255, 60, 90, 0.12)";
+      c.beginPath(); c.arc(W * fx, hz * 0.7, W * 0.25, 0, Math.PI * 2); c.fill();
+    }
+  }
+  // El templo del Olimpo en el horizonte: escalones, columnas y su frontón.
+  if (iz === 7) {
+    const cx = W / 2, base = hz, ancho = W * 0.34, alto = W * 0.14;
+    c.fillStyle = "#e0b850";
+    c.fillRect(cx - ancho / 2 - 6, base - 6, ancho + 12, 6);
+    for (let k = 0; k < 6; k++) c.fillRect(cx - ancho / 2 + 4 + (k * (ancho - 14)) / 5, base - alto, 6, alto - 6);
+    c.fillRect(cx - ancho / 2 - 3, base - alto - 5, ancho + 6, 6);
+    c.beginPath(); c.moveTo(cx - ancho / 2 - 5, base - alto - 5); c.lineTo(cx, base - alto - W * 0.07); c.lineTo(cx + ancho / 2 + 5, base - alto - 5); c.closePath(); c.fill();
   }
 }
-
 
 // ── Las paredes ──────────────────────────────────────────────────────────────
 
