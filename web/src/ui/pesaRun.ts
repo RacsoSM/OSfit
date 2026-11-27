@@ -41,6 +41,8 @@ let aterrizaje = 0;
 let feliz = 0;
 /** La cámara sube y baja suave con lo que pisa la mancuerna (al subirse a las colchonetas). */
 let camSuelo = 0;
+/** Dónde quedó cada meta de récord en esta carrera (fija desde que aparece). */
+const metasFijas = new Map<string, number>();
 /**
  * Hasta dónde se ve hacia adelante (entrenador, 2026-11-27: "que no se vea tan al fondo los
  * siguientes obstáculos"). Más allá los obstáculos ya existen, pero no se pintan.
@@ -228,6 +230,7 @@ function reenviarPendientes(): void {
 
 function jugar(): void {
   carrera = nuevaCarrera();
+  metasFijas.clear();
   particulas = []; letreros = []; sacudida = 0; aterrizaje = 0; feliz = 0; camSuelo = 0;
   nivelVisto = 1;
   gesto = null;
@@ -379,9 +382,19 @@ function dibujar(): void {
   // Dónde quedan los récords de los demás (y el tuyo): una meta a lo ancho de los carriles
   // (entrenador, 2026-11-27: "casi no se ve"). Los puntos no son solo metros (los batidos
   // suman), así que va donde se rebasaría ese récord sin tomar más batidos.
+  // Se calcula una sola vez, al aparecer a la vista, y ahí se queda quieta como un obstáculo más
+  // (entrenador, 2026-11-27: "se ve como que el letrero corre hacia mí"): antes se recalculaba
+  // con cada batido y se acercaba 5 m de golpe.
   const falta = carrera.z - puntos(carrera);
   if (estado !== "inicio") for (const m of marcasDe(tabla)) {
-    const zr = m.puntos + falta;
+    const llave = `${m.texto}|${m.puntos}`;
+    let zr = metasFijas.get(llave);
+    if (zr === undefined) {
+      const calculada = m.puntos + falta;
+      if (calculada > v.lejos) continue;
+      zr = calculada;
+      metasFijas.set(llave, zr);
+    }
     if (zr < v.camZ + CAM_ATRAS - 1 || zr > v.lejos) continue;
     const superada = metros(carrera) + carrera.batidosTomados * PUNTOS_BATIDO > m.puntos;
     cosas.push({ z: zr, pintar: () => { c.globalAlpha = niebla(v, zr) * (superada ? 0.5 : 1); pintarMeta(c, v, zr, m); c.globalAlpha = 1; } });
