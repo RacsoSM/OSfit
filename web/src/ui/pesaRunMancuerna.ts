@@ -28,7 +28,7 @@ export interface AnimMancuerna {
 }
 
 /** Metros que mide de alto la unidad del dibujo (la cabeza llega a ~1.36). */
-const TAM = 1.2;
+const TAM = 0.9;
 const CIAN = "#7ef3ff", CIAN2 = "#3fc6d8", ROSA = "#ff3d9a", NEGRO = "#16151c", NEGRO2 = "#0b0a10";
 const TAU = Math.PI * 2;
 
