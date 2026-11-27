@@ -657,8 +657,8 @@ body.menu-abierto { overflow: hidden; }
 .menu-abierto .menu-velo { opacity: 1; pointer-events: auto; }
 .menu-abierto .menu-panel { transform: none; box-shadow: -8px 0 24px rgba(0, 0, 0, 0.4); }
 .menu-encabezado {
-  display: flex; align-items: center; justify-content: space-between; gap: 8px;
-  margin: 0 0 12px 4px;
+  display: flex; align-items: center; justify-content: flex-end; gap: 8px;
+  margin: 0 0 4px 4px;
 }
 .menu-nombre {
   margin: 0; font-size: 18px; font-weight: 800;
@@ -670,10 +670,21 @@ body.menu-abierto { overflow: hidden; }
 }
 .menu-lista { display: flex; flex-direction: column; gap: 4px; }
 /* `margin-top: auto` empuja Ajustes al fondo del panel, por más ventanas que se agreguen. */
-.menu-pie { margin-top: auto; padding-top: 24px; }
-/* Qué deploy tiene la clienta (`__VERSION__`): hasta abajo del menú, debajo de Ajustes
-   (entrenador, 2026-11-26; antes iba arriba a la izquierda en Inicio). */
-.version-app { margin: 10px 0 0; padding: 0 16px; font-size: 11px; color: var(--texto-tenue); opacity: 0.7; }
+.menu-pie {
+  margin-top: auto; padding-top: 12px; display: flex; align-items: center; gap: 8px;
+  border-top: 1px solid rgba(127, 127, 127, 0.15);
+}
+.menu-pie .menu-opcion { flex: 1; width: auto; }
+/* Qué deploy tiene la clienta (`__VERSION__`): en el renglón de Ajustes, del lado derecho
+   (entrenador, 2026-11-27). */
+.version-app { flex: none; margin: 0; padding: 0 12px 0 0; font-size: 11px; color: var(--texto-tenue); opacity: 0.7; }
+/* Los encabezados de grupo y los íconos de línea (diseño C del entrenador, 2026-11-27). */
+.menu-grupo {
+  margin: 14px 0 2px; padding: 0 12px; font-size: 11px; font-weight: 700;
+  letter-spacing: 0.12em; text-transform: uppercase; color: var(--texto-tenue);
+}
+.menu-icono { flex: none; width: 22px; height: 22px; color: var(--texto-tenue); }
+.menu-opcion.activa .menu-icono { color: currentColor; }
 .menu-opcion {
   display: flex; align-items: center; gap: 12px; width: 100%; min-height: 48px;
   padding: 10px 12px; border: 0; border-radius: 12px; background: transparent;

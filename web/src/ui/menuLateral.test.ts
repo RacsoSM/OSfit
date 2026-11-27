@@ -33,10 +33,16 @@ describe("panelMenu", () => {
     expect(panelMenu(conUnaPorVenir, "Ana").match(/class="menu-pronto"/g)).toHaveLength(1);
   });
 
-  it("escapa el nombre", () => {
-    const raro = panelMenu(VENTANAS, "<b>Ana & Co</b>");
-    expect(raro).toContain("&lt;b&gt;Ana &amp; Co&lt;/b&gt;");
-    expect(raro).not.toContain("<b>Ana");
+  it("ya no lleva el nombre arriba (2026-11-27)", () => {
+    expect(panelMenu(VENTANAS, "Ana Lucía")).not.toContain("Ana Lucía");
+  });
+
+  it("agrupa con encabezados e íconos, y Arcade sigue siendo el renglón neón", () => {
+    for (const g of ["Tu progreso", "Tu cuenta", "Diversión"]) expect(html).toContain(`<p class="menu-grupo">${g}</p>`);
+    expect(html.indexOf("Tu progreso")).toBeLessThan(html.indexOf("Estadísticas"));
+    expect(html.indexOf("Tu cuenta")).toBeLessThan(html.indexOf("Pagos"));
+    expect(html.indexOf("Diversión")).toBeLessThan(html.indexOf("menu-arcade"));
+    expect(html.match(/class="menu-icono"/g)?.length).toBeGreaterThanOrEqual(6);
   });
 
   it("lleva la versión del deploy hasta abajo, después de Ajustes", () => {
