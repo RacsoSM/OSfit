@@ -12,7 +12,8 @@ import {
  * en Cardio, árboles de discos en Pesas libres, cajas y llantas en Crossfit, costales en Box…).
  * En las paredes, columnas con neón y reflectores, espejos, ventanales, carteles, lockers y
  * repisas. No tiene techo (entrenador, 2026-11-27): arriba se ve el cielo de noche, con la
- * ciudad al horizonte (sin letrero: entrenador, 2026-11-27) y guirnaldas de foquitos de pared a pared.
+ * ciudad al horizonte (sin letrero: entrenador, 2026-11-27). Sin guirnaldas de pared a pared: tapaban
+ * los obstáculos (entrenador, 2026-11-27).
  * Al empezar cada zona se cruza un arco con su nombre.
  *
  * Todo se pinta con figuras planas, sin sombras de canvas (`shadowBlur`), que en iPhone cuestan
@@ -168,25 +169,6 @@ export function pintarPasillo(c: CanvasRenderingContext2D, v: Vista, z: number, 
   const niebla = c.createLinearGradient(0, v.hz, 0, nb.y);
   niebla.addColorStop(0, horizonte); niebla.addColorStop(1, horizonte + "00");
   c.fillStyle = niebla; c.fillRect(0, v.hz - 1, W, nb.y - v.hz + 1);
-}
-
-/** Guirnaldas de foquitos de pared a pared, colgando en curva; se pintan con lo de adelante. */
-export function pintarGuirnalda(c: CanvasRenderingContext2D, v: Vista, z: number, reloj: number): void {
-  const n = 14;
-  const pts = [];
-  for (let k = 0; k <= n; k++) {
-    const f = k / n, x = -PARED + f * PARED * 2;
-    pts.push(proyectar(v, x, TECHO + 0.35 - Math.sin(f * Math.PI) * 0.7, z));
-  }
-  c.strokeStyle = "#1a1a1f"; c.lineWidth = Math.max(1, pts[0]!.s * 0.02);
-  c.beginPath(); pts.forEach((p, k) => (k ? c.lineTo(p.x, p.y) : c.moveTo(p.x, p.y))); c.stroke();
-  const colores = ["#ffd45c", "#ff6fd8", "#7ef3ff", "#9dff5c"];
-  for (let k = 1; k < n; k++) {
-    const p = pts[k]!;
-    const prendido = Math.sin(reloj * 3 + k * 1.3 + z) > -0.6;
-    c.fillStyle = prendido ? colores[k % 4]! : "#3a3a44";
-    c.beginPath(); c.arc(p.x, p.y + p.s * 0.05, Math.max(1.2, p.s * 0.055), 0, Math.PI * 2); c.fill();
-  }
 }
 
 /** El cielo de noche: degradado de la zona, estrellas, luna y la ciudad en el horizonte. */
@@ -433,12 +415,6 @@ export function cosasDeEscena(c: CanvasRenderingContext2D, v: Vista, reloj: numb
       if (z < v.camZ + CAM_ATRAS - 0.5 || z > v.camZ + DETALLE) continue;
       cosas.push({ z, pintar: () => pintarUtileria(c, v, tipo, lado, z, sem, reloj), orilla: true });
     }
-  }
-  // Las guirnaldas, cada dos tramos.
-  // Solo las que van más allá de la mancuerna: las de entre ella y la cámara cruzarían la pantalla.
-  for (let k = Math.floor(Math.min(v.lejos, v.camZ + DETALLE) / (TRAMO * 2)); k * TRAMO * 2 > v.camZ + CAM_ATRAS + 1; k--) {
-    const z = k * TRAMO * 2 + 0.25;
-    cosas.push({ z, pintar: () => pintarGuirnalda(c, v, z, reloj) });
   }
   // El arco de cada zona.
   for (let n = 1; n < ZONAS.length; n++) {
