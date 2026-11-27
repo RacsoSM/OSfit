@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  ALTO_BANCA, ALTO_COLCHONETA, ALTURA_SALTO, RAMPA, INICIO_NIVEL, SEGUNDOS_RUTA, VEL_CARRO, carro, circuito, enAire, rutaElevada, largoDe, sueloEn, CARRILES, PUNTOS_BATIDO, VEL_INICIAL, VEL_MAXIMA, accion, avanzar, choca, metros, nivel, nuevaCarrera, puntos,
+  ALTO_BANCA, ALTO_COLCHONETA, ALTURA_SALTO, RAMPA, COMBOS, INICIO_NIVEL, SEGUNDOS_RUTA, VEL_CARRO, combo, carro, circuito, enAire, rutaElevada, largoDe, sueloEn, CARRILES, PUNTOS_BATIDO, VEL_INICIAL, VEL_MAXIMA, accion, avanzar, choca, metros, nivel, nuevaCarrera, puntos,
   separacion, velocidad, type Carrera, type Obstaculo,
 } from "./pesaRun";
 
@@ -412,5 +412,73 @@ describe("Correle pa", () => {
     for (let i = 1; i < tiempos.length; i++) expect(tiempos[i]!).toBeGreaterThanOrEqual(tiempos[i - 1]! - 1);
     expect(tiempos[0]!).toBeGreaterThan(18);
     expect(tiempos.at(-1)!).toBeGreaterThan(40);
+  });
+
+  /**
+   * Un piloto de piso: mira la siguiente fila de obstáculos, se va (un swipe a la vez, también en
+   * el aire) al carril que la deja pasar y brinca o se barre a tiempo. Nada más ve lo que tiene
+   * adelante, como una persona.
+   */
+  function pilotoPiso(c: Carrera): void {
+    const obs = c.obstaculos.filter((o) => o.tipo !== "fosa" && o.z + largoDe(o) > c.z - 0.4 && o.z < c.z + c.vel * 1.2);
+    const bloquea = (o: Obstaculo) => o.tipo === "maquina" || o.tipo === "carro" || (o.tipo === "colchoneta" && !o.rampa);
+    // Carriles tapados por algo largo (colchonetas) desde aquí hasta `z`.
+    const tapado = (l: number, z: number) => obs.some((o) => o.carril === l && bloquea(o) && o.z < z + 1 && o.z + largoDe(o) > c.z - 0.4);
+    const filas = obs.filter((o) => o.tipo !== "colchoneta").map((o) => o.z).sort((a, b) => a - b);
+    const zf = filas.find((z) => z + 1.2 > c.z - 0.4);
+    if (zf === undefined) return;
+    const enFila = (l: number) => obs.filter((o) => o.carril === l && Math.abs(o.z - zf) < 0.6);
+    const libre = (l: number) => !enFila(l).some(bloquea) && !tapado(l, zf);
+    const sig = filas.find((z) => z > zf + 1.5);
+    const libreSig = (l: number) => sig === undefined || !obs.some((o) => o.carril === l && Math.abs(o.z - sig) < 0.6 && bloquea(o));
+    const opciones = CARRILES.filter(libre).sort((a, b) => (Number(!libreSig(a)) - Number(!libreSig(b))) || Math.abs(a - c.carril) - Math.abs(b - c.carril));
+    const meta = opciones[0];
+    if (meta === undefined) return;
+    if (meta !== c.carril) {
+      const paso = (c.carril + Math.sign(meta - c.carril)) as number;
+      // Solo si el carril de al lado no está tapado aquí mismo.
+      if (Math.abs(c.x - c.carril) < 0.05 && !obs.some((o) => o.carril === paso && bloquea(o) && o.z < c.z + 0.4 && o.z + largoDe(o) > c.z - 0.4)) accion(c, meta < c.carril ? "izquierda" : "derecha");
+      return;
+    }
+    const aqui = enFila(c.carril).find((o) => o.tipo === "banca" || o.tipo === "barra");
+    if (aqui && aqui.z - c.z < c.vel * 0.26 + 0.3 && aqui.z - c.z > -0.2) accion(c, aqui.tipo === "banca" ? "saltar" : "barrer");
+  }
+
+  it("combos: con la combinación correcta se pasan, a cualquier velocidad y en espejo", () => {
+    for (const tipo of COMBOS) for (const z0 of [400, 900, 1600, 3000]) for (let sem = 1; sem <= 8; sem++) {
+      const c = vacia(); c.azar = semilla(sem); c.z = z0 - 40; c.vel = velocidad(c.z);
+      const fin = combo(c, z0, tipo);
+      for (let i = 0; i < 1200 && !c.terminada && c.z < fin + 10; i++) { pilotoPiso(c); avanzar(c, 1 / 60); }
+      if (c.terminada) throw new Error(`${tipo} en ${z0} (semilla ${sem}): chocó con ${c.choque?.tipo} en ${c.z.toFixed(1)}, carril ${c.carril}`);
+      expect(c.z).toBeGreaterThan(fin);
+    }
+  });
+
+  it("combos: piden la combinación (quedarse en medio, aunque brinque o se barra a tiempo, es perder)", () => {
+    // (El pasillo es la excepción: ahí el camino es el carril de en medio; sin hacer nada o solo
+    // barriéndose, se pierde.)
+    for (const tipo of COMBOS) for (let sem = 1; sem <= 8; sem++) for (const accionMedio of (tipo === "pasillo" ? ["solo-barrer", null] : ["saltar", "barrer", null]) as ("solo-barrer" | "saltar" | "barrer" | null)[]) {
+      const c = vacia(); c.azar = semilla(sem); c.z = 860; c.vel = velocidad(c.z);
+      const fin = combo(c, 900, tipo);
+      for (let i = 0; i < 1200 && !c.terminada && c.z < fin + 10; i++) {
+        const cerca = c.obstaculos.find((o) => o.carril === 0 && o.z - c.z > 0 && o.z - c.z < c.vel * 0.26 + 0.3);
+        if (cerca && accionMedio === "solo-barrer") accion(c, "barrer");
+        else if (cerca && accionMedio && (cerca.tipo === "banca" || cerca.tipo === "barra")) accion(c, cerca.tipo === "banca" ? "saltar" : accionMedio === "barrer" ? "barrer" : "saltar");
+        avanzar(c, 1 / 60);
+      }
+      expect(c.terminada).toBe(true);
+    }
+  });
+
+  it("los combos salen solos desde el nivel 2", () => {
+    const c = nuevaCarrera(semilla(5));
+    let vistos = 0, antes = 0;
+    for (let i = 0; i < 12000; i++) {
+      c.obstaculos = c.obstaculos.filter((o) => o.z > c.z + 25);
+      avanzar(c, 1 / 30);
+      if (c.terminada) { c.terminada = false; c.y = c.suelo; }
+      if (c.ultimoCombo !== antes) { vistos++; expect(c.ultimoCombo).toBeGreaterThan(250); antes = c.ultimoCombo; }
+    }
+    expect(vistos).toBeGreaterThan(3);
   });
 });

@@ -129,6 +129,8 @@ export interface Carrera {
   ultimoCircuito: number;
   ultimoCarro: number;
   ultimaRuta: number;
+  /** Dónde terminó el último combo (secuencia armada de obstáculos). */
+  ultimoCombo: number;
   terminada: boolean;
   /** Con qué chocó (para pintarlo). */
   choque: Obstaculo | null;
@@ -191,6 +193,10 @@ export const SEGUNDOS_RUTA = 15;
 /** Carritos (entrenador, 2026-11-27: "que existan más carritos"): desde el nivel 2, cada vez más; desde el 5, a veces dos a la vez. */
 export function probCarro(n: number): number { return n < 2 ? 0 : [0, 0.16, 0.22, 0.26, 0.3, 0.33, 0.36, 0.4][Math.min(NIVELES, n) - 1]!; }
 export function probDosCarros(n: number): number { return n < 5 ? 0 : [0, 0, 0, 0, 0.25, 0.32, 0.38, 0.45][Math.min(NIVELES, n) - 1]!; }
+/** Los combos: desde el nivel 2, cada vez más seguido. */
+export function probCombo(n: number): number { return n < 2 ? 0 : [0, 0.2, 0.26, 0.32, 0.38, 0.44, 0.5, 0.55][Math.min(NIVELES, n) - 1]!; }
+export type Combo = "embudo" | "zigzag" | "pasillo" | "doble";
+export const COMBOS: readonly Combo[] = ["embudo", "zigzag", "pasillo", "doble"];
 export function probColchonetas(n: number): number { return [0.12, 0.2, 0.24, 0.26, 0.28, 0.3, 0.3, 0.32][Math.min(NIVELES, n) - 1]!; }
 export function probMaquina(n: number): number { return [0.2, 0.26, 0.32, 0.36, 0.4, 0.43, 0.46, 0.5][Math.min(NIVELES, n) - 1]!; }
 
@@ -407,11 +413,68 @@ export function rutaElevada(c: Carrera, z: number): void {
   c.proximaFila = finReal + Math.max(12, vel * 1.1);
 }
 
+/**
+ * Un combo (entrenador, 2026-11-27: "partes en las que tengas que hacer una combinación de
+ * movimientos específicos para pasar"): una secuencia armada, con el tiempo de reacción justo
+ * (`d`, ~0.6 s a la velocidad de ese tramo). Cada una puede salir hacia un lado o en espejo:
+ *  - embudo: máquinas en las dos orillas y en medio una banca o una barra; enseguida, máquinas en
+ *    medio y en una orilla: hay que irse a la otra orilla;
+ *  - zigzag: libre una orilla, luego la orilla contraria (dos swipes), y al final el centro con
+ *    una barra encima;
+ *  - pasillo: colchonetas altas sin rampa a los lados y, en medio, banca, barra y banca seguidas;
+ *  - doble: a una orilla a brincar una banca y, en el aire, cruzar dos carriles para esquivar
+ *    dos máquinas.
+ * Devuelve dónde termina.
+ */
+export function combo(c: Carrera, z: number, tipo?: Combo): number {
+  const az = c.azar;
+  const vel = velocidad(z);
+  const d = vel * 0.62;
+  const s = (az() < 0.5 ? -1 : 1) as 1 | -1;
+  const k = (l: number) => (l * s) as Carril;
+  const t = tipo ?? elegir(COMBOS, az);
+  const pon = (carril: Carril, zz: number, tipoO: TipoObstaculo) => c.obstaculos.push({ carril, z: zz, tipo: tipoO });
+  const batido = (carril: Carril, zz: number, alto = 0.5) => c.batidos.push({ carril, z: zz, alto, tomado: false });
+  let fin = z;
+  if (t === "embudo") {
+    pon(k(-1), z, "maquina"); pon(k(1), z, "maquina");
+    const medio: TipoObstaculo = az() < 0.5 ? "banca" : "barra";
+    pon(0, z, medio);
+    pon(0, z + d, "maquina"); pon(k(1), z + d, "maquina");
+    batido(0, z - 3); batido(k(-1), z + d - 2); batido(k(-1), z + d + 1);
+    fin = z + d + LARGO.maquina;
+  } else if (t === "zigzag") {
+    pon(0, z, "maquina"); pon(k(1), z, "maquina");
+    pon(k(-1), z + d, "maquina"); pon(0, z + d, "maquina");
+    pon(k(-1), z + 2 * d, "maquina"); pon(k(1), z + 2 * d, "maquina"); pon(0, z + 2 * d, "barra");
+    batido(k(-1), z - 2); batido(k(1), z + d - 2); batido(0, z + 2 * d - 3);
+    fin = z + 2 * d + LARGO.maquina;
+  } else if (t === "pasillo") {
+    const paso = vel * 0.7, largo = 4 + paso * 3;
+    for (const l of [-1, 1] as const) c.obstaculos.push({ carril: l, z, tipo: "colchoneta", largo, rampa: false });
+    pon(0, z + 3, "banca"); pon(0, z + 3 + paso, "barra"); pon(0, z + 3 + 2 * paso, "banca");
+    for (let j = 0; j < 3; j++) batido(0, z + 3 + j * paso + 0.7, j === 1 ? 0.3 : 1.4);
+    fin = z + largo;
+  } else {
+    pon(0, z, "maquina"); pon(k(1), z, "maquina"); pon(k(-1), z, "banca");
+    pon(k(-1), z + d, "maquina"); pon(0, z + d, "maquina");
+    batido(k(-1), z + 0.7, 1.4); batido(k(1), z + d - 1); batido(k(1), z + d + 1.5);
+    fin = z + d + LARGO.maquina;
+  }
+  c.ultimoCombo = fin;
+  return fin;
+}
+
 function nuevaFila(c: Carrera): void {
   const z = c.proximaFila;
   const n = nivel(z);
   const az = c.azar;
   if (z - c.ultimaRuta > SEPARACION_RUTAS && z - c.ultimoCircuito > 120 && az() < probRuta(n)) { rutaElevada(c, z); return; }
+  if (z - c.ultimoCombo > 50 && az() < probCombo(n)) {
+    const fin = combo(c, z);
+    c.proximaFila = fin + Math.max(12, velocidad(z) * 0.9);
+    return;
+  }
   if (z - c.ultimoCircuito > SEPARACION_CIRCUITOS && az() < probCircuito(n)) { circuito(c, z); return; }
   if (z - c.ultimoCarro > 40 && az() < probCarro(n) && carro(c, z, az() < probDosCarros(n))) {
     const [min, max] = separacion(n);
@@ -457,7 +520,7 @@ function nuevaFila(c: Carrera): void {
 export function nuevaCarrera(azar: () => number = Math.random): Carrera {
   const c: Carrera = {
     z: 0, vel: VEL_INICIAL, x: 0, carril: 0, y: 0, vy: 0, barrida: 0, barrerAlCaer: false, suelo: 0, despegue: 0,
-    obstaculos: [], batidos: [], batidosTomados: 0, proximaFila: 30, ultimoCircuito: 0, ultimoCarro: 0, ultimaRuta: 0, terminada: false, choque: null, azar,
+    obstaculos: [], batidos: [], batidosTomados: 0, proximaFila: 30, ultimoCircuito: 0, ultimoCarro: 0, ultimaRuta: 0, ultimoCombo: 0, terminada: false, choque: null, azar,
   };
   // Al arrancar, unos batidos derechito para calentar.
   for (let k = 0; k < 5; k++) c.batidos.push({ carril: 0, z: 12 + k * 1.6, alto: 0.5, tomado: false });
