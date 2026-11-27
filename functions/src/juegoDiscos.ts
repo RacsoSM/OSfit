@@ -26,28 +26,35 @@ export interface Juego {
   msMinimos: number;
   /** Cuántos `puntos` por punto acepta: Torre de discos acepta hasta 2 por las páginas viejas. */
   puntosPorPunto: number;
+  /**
+   * La puntuación más alta que acepta. Antes era una sola para todos (2000, pensada para Torre
+   * de discos) y en Correle pa ya se pasa de ahí: esas partidas se rechazaban y no se guardaban
+   * (entrenador, 2026-11-27: "supere al top 1 y no se guardó mi run").
+   */
+  maximo: number;
 }
 
 export const TORRE_DISCOS: Juego = {
-  coleccion: "juegoDiscos", nombre: "Torre de discos", clave: "torreDiscos", ventana: "juego", msMinimos: 250, puntosPorPunto: 2,
+  coleccion: "juegoDiscos", nombre: "Torre de discos", clave: "torreDiscos", ventana: "juego", msMinimos: 250, puntosPorPunto: 2, maximo: 2000,
 };
 /**
  * Box Jump: cada metro subido es un punto. Lo más rápido que se sube es con el trampolín, a
  * unos 19 m/s: menos de 40 ms por metro es imposible.
  */
 export const BOX_JUMP: Juego = {
-  coleccion: "juegoBoxJump", nombre: "Jumper", clave: "boxJump", ventana: "boxjump", msMinimos: 40, puntosPorPunto: 1,
+  coleccion: "juegoBoxJump", nombre: "Jumper", clave: "boxJump", ventana: "boxjump", msMinimos: 40, puntosPorPunto: 1, maximo: 100_000,
 };
 /**
- * Correle pa: cada metro es un punto y cada batido 5. A lo más rápido (26 m/s y una fila de
- * batidos cada 1.6 m) son ~110 puntos por segundo: menos de 8 ms por punto es imposible.
+ * Correle pa: cada metro es un punto y cada batido 5. A lo más rápido (28 m/s y una fila de
+ * batidos cada 1.6 m) son ~115 puntos por segundo: menos de 6 ms por punto es imposible. Sin
+ * tope práctico de puntos: los niveles son largos y el último no acaba.
  */
 export const PESA_RUN: Juego = {
-  coleccion: "juegoPesaRun", nombre: "Correle pa", clave: "pesaRun", ventana: "pesarun", msMinimos: 8, puntosPorPunto: 1,
+  coleccion: "juegoPesaRun", nombre: "Correle pa", clave: "pesaRun", ventana: "pesarun", msMinimos: 6, puntosPorPunto: 1, maximo: 1_000_000,
 };
 /** En el nivel más alto las barras van a ~0.47 s una de otra: menos de 0.35 s es imposible. */
 export const KETTLEBELL_BIRD: Juego = {
-  coleccion: "juegoKettlebell", nombre: "Fit Bird", clave: "kettlebellBird", ventana: "kettlebell", msMinimos: 350, puntosPorPunto: 1,
+  coleccion: "juegoKettlebell", nombre: "Fit Bird", clave: "kettlebellBird", ventana: "kettlebell", msMinimos: 350, puntosPorPunto: 1, maximo: 2000,
 };
 
 export const MAXIMO_DISCOS = 2000;
@@ -65,7 +72,7 @@ export function partidaValida(x: unknown, juego: Juego = TORRE_DISCOS): Partida 
   const { puntos, apilados, duracionMs } = x as Record<string, unknown>;
   const entero = (n: unknown): n is number => typeof n === "number" && Number.isInteger(n) && n >= 0;
   if (!entero(puntos) || !entero(apilados) || !entero(duracionMs)) return null;
-  if (apilados > MAXIMO_DISCOS || duracionMs > MAXIMA_DURACION_MS) return null;
+  if (apilados > juego.maximo || duracionMs > MAXIMA_DURACION_MS) return null;
   if (puntos < apilados || puntos > apilados * juego.puntosPorPunto) return null;
   if (duracionMs < apilados * juego.msMinimos) return null;
   return { puntos, apilados, duracionMs };

@@ -110,3 +110,15 @@ describe("Correle pa", () => {
     expect(a.id).toBe("auto_pesaRun_said_bogue_640");
   });
 });
+
+describe("Correle pa: puntuaciones altas", () => {
+  it("acepta partidas de más de 2000 puntos (antes se rechazaban y no se guardaban)", () => {
+    expect(partidaValida({ puntos: 2500, apilados: 2500, duracionMs: 120_000 }, PESA_RUN)).not.toBeNull();
+    expect(partidaValida({ puntos: 15_000, apilados: 15_000, duracionMs: 600_000 }, PESA_RUN)).not.toBeNull();
+    // Sigue rechazando lo imposible: demasiados puntos para el tiempo jugado.
+    expect(partidaValida({ puntos: 15_000, apilados: 15_000, duracionMs: 60_000 }, PESA_RUN)).toBeNull();
+  });
+  it("Torre de discos conserva su tope", () => {
+    expect(partidaValida({ puntos: 2001, apilados: 2001, duracionMs: 3_000_000 })).toBeNull();
+  });
+});
