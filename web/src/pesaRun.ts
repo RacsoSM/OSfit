@@ -195,8 +195,12 @@ export function probCarro(n: number): number { return n < 2 ? 0 : [0, 0.16, 0.22
 export function probDosCarros(n: number): number { return n < 5 ? 0 : [0, 0, 0, 0, 0.25, 0.32, 0.38, 0.45][Math.min(NIVELES, n) - 1]!; }
 /** Los combos: desde el nivel 2, cada vez más seguido. */
 export function probCombo(n: number): number { return n < 2 ? 0 : [0, 0.2, 0.26, 0.32, 0.38, 0.44, 0.5, 0.55][Math.min(NIVELES, n) - 1]!; }
-export type Combo = "embudo" | "zigzag" | "pasillo" | "doble" | "embestida" | "dobleEmbestida" | "esquiveTardio";
-export const COMBOS: readonly Combo[] = ["embudo", "zigzag", "pasillo", "doble", "embestida", "dobleEmbestida", "esquiveTardio"];
+export type Combo = "embudo" | "zigzag" | "pasillo" | "doble" | "embestida" | "dobleEmbestida" | "esquiveTardio" | "estampida" | "zigzagCarros" | "tunel";
+export const COMBOS: readonly Combo[] = ["embudo", "zigzag", "pasillo", "doble", "embestida", "dobleEmbestida", "esquiveTardio", "estampida", "zigzagCarros", "tunel"];
+/** Los combos de muchos carritos (desde el nivel 3). */
+export const COMBOS_DE_CARRITOS: readonly Combo[] = ["estampida", "zigzagCarros", "tunel"];
+/** Los carritos de las estampidas: un poco menos rápidos que los de las embestidas (son muchos). */
+export const VEL_CARRO_ESTAMPIDA = 10;
 /** Los carritos de los combos vienen a toda velocidad (el doble que los demás). */
 export const VEL_CARRO_RAPIDO = 14;
 /** Arrancan en cuanto se ven (a esta distancia de la mancuerna): siempre se alcanzan a ver venir. */
@@ -443,7 +447,7 @@ export function combo(c: Carrera, z: number, tipo?: Combo): number {
   const d = vel * 0.62;
   const s = (az() < 0.5 ? -1 : 1) as 1 | -1;
   const k = (l: number) => (l * s) as Carril;
-  const t = tipo ?? elegir(COMBOS, az);
+  const t = tipo ?? elegir(nivel(z) >= 3 ? COMBOS : COMBOS.filter((k) => !COMBOS_DE_CARRITOS.includes(k)), az);
   const pon = (carril: Carril, zz: number, tipoO: TipoObstaculo) => c.obstaculos.push({ carril, z: zz, tipo: tipoO });
   const batido = (carril: Carril, zz: number, alto = 0.5) => c.batidos.push({ carril, z: zz, alto, tomado: false });
   let fin = z;
@@ -469,6 +473,42 @@ export function combo(c: Carrera, z: number, tipo?: Combo): number {
     pon(0, z + 3, "banca"); pon(0, z + 3 + paso, "barra"); pon(0, z + 3 + 2 * paso, "banca");
     for (let j = 0; j < 3; j++) batido(0, z + 3 + j * paso + 0.7, j === 1 ? 0.3 : 1.4);
     fin = z + largo;
+  } else if (t === "estampida" || t === "zigzagCarros" || t === "tunel") {
+    // Muchos carritos (entrenador, 2026-11-27: "varios carritos [...] dejando espacios pequeños
+    // para pasar siempre en un carril a la vez, tipo 12 carros seguidos"). Arrancan todos a la vez
+    // (cuando la mancuerna está a `ACTIVA_CARRO_RAPIDO` del primero), así sus distancias no
+    // cambian: cada oleada llega `hueco` segundos después de la anterior.
+    const u = VEL_CARRO_ESTAMPIDA;
+    const primera = z + (ACTIVA_CARRO_RAPIDO * u) / (vel + u);
+    const carrito = (carril: Carril, zc: number) => c.obstaculos.push({ carril, z: zc, tipo: "carro", vz: -u, activa: ACTIVA_CARRO_RAPIDO + (zc - primera) });
+    let ultima = primera;
+    if (t === "tunel") {
+      // Dos filas de carritos pegaditos por las orillas; en medio, banca y barra; al pasar, una
+      // máquina en medio obliga a salir a una orilla.
+      const n = 8, sep = 2.4, cruza = (n * sep) / (vel + u);
+      for (let j = 0; j < n; j++) for (const l of [-1, 1] as const) { carrito(l, primera + j * sep); ultima = primera + j * sep; }
+      pon(0, z + 2, "banca");
+      pon(0, z + 2 + vel * Math.min(0.7, cruza * 0.75), "barra");
+      pon(0, z + vel * (cruza + 0.25) + 2, "maquina");
+      batido(0, z + 2.7, 1.4); batido(k(1), z + vel * (cruza + 0.25) + 3.5);
+      fin = z + vel * (cruza + 0.25) + 2 + LARGO.maquina;
+    } else {
+      // Oleadas de dos carritos: un solo carril libre en cada una. En la estampida el hueco se
+      // mueve de a un carril (a veces se queda); en el zigzag salta de orilla a orilla.
+      const oleadas = t === "estampida" ? Math.min(8, 5 + Math.floor(nivel(z) / 3)) : 4;
+      const hueco = (t === "estampida" ? 0.62 : 0.8) * (vel + u);
+      let libre: Carril = k(1);
+      for (let j = 0; j < oleadas; j++) {
+        const zc = primera + j * hueco;
+        for (const l of CARRILES) if (l !== libre) carrito(l, zc);
+        ultima = zc;
+        if (t === "zigzagCarros") libre = (libre === 0 ? k(-1) : -libre) as Carril;
+        else if (az() < 0.8 || libre === 0) libre = (libre === 0 ? (az() < 0.5 ? -1 : 1) : 0) as Carril;
+      }
+      fin = z + (oleadas * hueco * vel) / (vel + u);
+    }
+    // Lo que venga después empieza donde salieron los carritos (que no lo atraviesen).
+    fin = Math.max(fin, ultima + LARGO.carro + 1);
   } else if (t === "embestida" || t === "dobleEmbestida" || t === "esquiveTardio") {
     // Un carrito que llega a `zm` justo cuando la mancuerna pasa por ahí: arranca cuando ella está
     // a `ACTIVA_CARRO_RAPIDO`, así que sale de ese punto más lo que rueda mientras ella llega.

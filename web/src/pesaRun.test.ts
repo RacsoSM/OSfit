@@ -419,31 +419,34 @@ describe("Correle pa", () => {
    * el aire) al carril que la deja pasar y brinca o se barre a tiempo. Nada más ve lo que tiene
    * adelante, como una persona.
    */
-  const LARGO_CARRO = 1.4;
   function pilotoPiso(c: Carrera): void {
-    const obs = c.obstaculos.filter((o) => o.tipo !== "fosa" && o.z + largoDe(o) > c.z - 0.4 && o.z < c.z + c.vel * 1.2);
     const bloquea = (o: Obstaculo) => o.tipo === "maquina" || o.tipo === "carro" || (o.tipo === "colchoneta" && !o.rampa);
-    // Carriles tapados por algo largo (colchonetas) desde aquí hasta `z`.
-    // Un carrito que viene rodando tapa su carril hasta que pasa.
-    const viene = (l: number) => obs.some((o) => o.carril === l && o.tipo === "carro" && o.vz && o.z - c.z < (c.vel - o.vz) * 1.6 && o.z + LARGO_CARRO > c.z - 0.6);
-    const tapado = (l: number, z: number) => viene(l) || obs.some((o) => o.carril === l && bloquea(o) && o.z < z + 1 && o.z + largoDe(o) > c.z - 0.4);
-    const filas = obs.filter((o) => o.tipo !== "colchoneta" && !o.vz).map((o) => o.z).sort((a, b) => a - b);
-    const zf = filas.find((z) => z + 1.2 > c.z - 0.4);
-    if (zf === undefined) return;
-    const enFila = (l: number) => obs.filter((o) => o.carril === l && Math.abs(o.z - zf) < 0.6);
-    const libre = (l: number) => !enFila(l).some(bloquea) && !tapado(l, zf);
-    const sig = filas.find((z) => z > zf + 1.5);
-    const libreSig = (l: number) => sig === undefined || !obs.some((o) => o.carril === l && Math.abs(o.z - sig) < 0.6 && bloquea(o));
-    const opciones = CARRILES.filter(libre).sort((a, b) => (Number(!libreSig(a)) - Number(!libreSig(b))) || Math.abs(a - c.carril) - Math.abs(b - c.carril));
+    // Cuánto tarda en llegarle (los carritos se acercan más rápido que lo quieto).
+    const llega = (o: Obstaculo) => (o.z - c.z) / (c.vel - (o.vz ?? 0));
+    const obs = c.obstaculos.filter((o) => o.tipo !== "fosa" && o.z + largoDe(o) > c.z - 0.4 && llega(o) < 2.5);
+    // Carriles tapados por algo largo (colchonetas) desde aquí hasta que llegue la fila.
+    const tapado = (l: number, t: number) => obs.some((o) => o.tipo === "colchoneta" && o.carril === l && bloquea(o) && llega(o) < t + 0.1);
+    // Las filas: lo que llega al mismo tiempo (una oleada de carritos, una fila de máquinas…).
+    const sueltos = obs.filter((o) => o.tipo !== "colchoneta").sort((a, b) => llega(a) - llega(b));
+    const filas: Obstaculo[][] = [];
+    for (const o of sueltos) { const f = filas.at(-1); if (f && Math.abs(llega(o) - llega(f[0]!)) < 0.1) f.push(o); else filas.push([o]); }
+    const fila = filas[0];
+    if (!fila) return;
+    const tf = llega(fila[0]!);
+    const libre = (l: number, f: Obstaculo[], t: number) => !f.some((o) => o.carril === l && bloquea(o)) && !tapado(l, t);
+    const sig = filas[1];
+    const opciones = CARRILES.filter((l) => libre(l, fila, tf)).sort((a, b) =>
+      (Number(!!sig && !libre(a, sig, llega(sig[0]!))) - Number(!!sig && !libre(b, sig, llega(sig[0]!)))) || Math.abs(a - c.carril) - Math.abs(b - c.carril));
     const meta = opciones[0];
     if (meta === undefined) return;
     if (meta !== c.carril) {
       const paso = (c.carril + Math.sign(meta - c.carril)) as number;
-      // Solo si el carril de al lado no está tapado aquí mismo.
-      if (Math.abs(c.x - c.carril) < 0.05 && !viene(paso) && !obs.some((o) => o.carril === paso && bloquea(o) && o.z < c.z + 0.4 && o.z + largoDe(o) > c.z - 0.4)) accion(c, meta < c.carril ? "izquierda" : "derecha");
+      // Solo si en el carril de al lado no hay nada aquí mismo (ni a punto de llegar).
+      const ocupado = obs.some((o) => o.carril === paso && bloquea(o) && llega(o) < 0.15 && o.z + largoDe(o) > c.z - 0.5);
+      if (Math.abs(c.x - c.carril) < 0.05 && !ocupado) accion(c, meta < c.carril ? "izquierda" : "derecha");
       return;
     }
-    const aqui = enFila(c.carril).find((o) => o.tipo === "banca" || o.tipo === "barra");
+    const aqui = obs.filter((o) => o.carril === c.carril && (o.tipo === "banca" || o.tipo === "barra")).sort((p, q) => p.z - q.z).find((o) => o.z - c.z > -0.2);
     if (aqui && aqui.z - c.z < c.vel * 0.26 + 0.3 && aqui.z - c.z > -0.2) accion(c, aqui.tipo === "banca" ? "saltar" : "barrer");
   }
 
@@ -451,7 +454,7 @@ describe("Correle pa", () => {
     for (const tipo of COMBOS) for (const z0 of [400, 900, 1600, 3000]) for (let sem = 1; sem <= 8; sem++) {
       const c = vacia(); c.azar = semilla(sem); c.z = z0 - 40; c.vel = velocidad(c.z);
       const fin = combo(c, z0, tipo);
-      for (let i = 0; i < 1200 && !c.terminada && c.z < fin + 10; i++) { pilotoPiso(c); avanzar(c, 1 / 60); }
+      for (let i = 0; i < 2400 && !c.terminada && c.z < fin + 10; i++) { pilotoPiso(c); avanzar(c, 1 / 60); }
       if (c.terminada) throw new Error(`${tipo} en ${z0} (semilla ${sem}): chocó con ${c.choque?.tipo} en ${c.z.toFixed(1)}, carril ${c.carril}`);
       expect(c.z).toBeGreaterThan(fin);
     }

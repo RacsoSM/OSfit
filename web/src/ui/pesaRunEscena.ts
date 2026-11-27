@@ -803,6 +803,14 @@ export function pintarMaquina(c: CanvasRenderingContext2D, v: Vista, o: Obstacul
 export function pintarCarro(c: CanvasRenderingContext2D, v: Vista, o: Obstaculo, reloj: number): void {
   const x = o.carril * CARRIL, z0 = o.z, z1 = o.z + LARGO.carro;
   const acero = ["#3a3e47", "#4f5460", "#2a2d34"] as const;
+  // Lejos (pocos píxeles), solo la silueta: base, los discos de los lados y la torreta. En las
+  // estampidas hay muchos a la vista y el carrito completo cuesta.
+  if (proyectar(v, x, 0.9, z0).s < 24) {
+    caja3d(c, v, x - 0.6, x + 0.6, 0.05, 0.4, z0, z1, ...acero);
+    for (const s of [-1, 1]) caja3d(c, v, x + s * 0.18 - 0.05 + (s > 0 ? 0 : -0.2), x + s * 0.18 + 0.05 + (s > 0 ? 0.2 : 0), 0.4, 1.45, z0 + 0.3, z1 - 0.3, s > 0 ? "#2f7fe0" : "#e03a52", s > 0 ? "#4a92ea" : "#ea5266", s > 0 ? "#1d4f8f" : "#9e2738");
+    bola(c, v, x, 1.6, z0 + 0.7, 0.12, Math.floor(reloj * 6) % 2 === 0 ? "#ffb02e" : "#9a5a10", "rgba(255, 255, 255, 0.4)");
+    return;
+  }
   quadPiso(c, v, x - 0.7, x + 0.7, 0.004, Math.max(z0 - 0.1, v.camZ + 0.5), z1 + 0.1, "rgba(0, 0, 0, 0.35)");
   // Las ruedas (las de atrás primero) y la base.
   for (const zr of [z1 - 0.2, z0 + 0.2]) for (const s of [-1, 1]) bola(c, v, x + s * 0.5, 0.15, zr, 0.15, "#17181c", "rgba(255, 255, 255, 0.15)");
