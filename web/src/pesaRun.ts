@@ -7,15 +7,15 @@
  * Los obstáculos son del gimnasio:
  *  - la banca plana, bajita: se salta;
  *  - la barra en sus soportes, a la altura del pecho: se pasa barriéndose por debajo;
- *  - el rack de sentadillas, una jaula con su barra cargada arriba: se esquiva o se pasa
- *    barriéndose por debajo (entrenador, 2026-11-27);
+ *  - la máquina de proteína, una expendedora alta y maciza: solo se esquiva (entrenador,
+ *    2026-11-27: antes era un rack, pero por ser jaula daba la impresión de que se pasaba abajo);
  *  - las colchonetas apiladas, largas y altas: a veces traen una cuña para subir corriendo; si
  *    no, se sube saltando. Arriba se corre por encima (con batidos) y al final se cae al piso.
  *    Chocar de frente o de lado contra ellas, abajo de su tapa, termina la carrera.
  * Por el camino hay batidos de proteína; cada uno vale `PUNTOS_BATIDO`. Cada metro corrido es un
  * punto. La velocidad sube poco a poco.
  *
- * Siempre hay por dónde pasar: en cada fila de obstáculos al menos un carril no tiene rack, y
+ * Siempre hay por dónde pasar: en cada fila de obstáculos al menos un carril no tiene máquina, y
  * entre una fila y la siguiente siempre da tiempo de cambiarse de carril.
  *
  * Aquí solo la lógica (la pinta `ui/pesaRun.ts`). Unidades: metros y segundos; los carriles
@@ -45,10 +45,10 @@ export const ALTO_BARRA = 1.0;
 /** De la mitad del cuerpo de la mancuerna a cada lado, de frente. */
 const PROFUNDIDAD_JUGADORA = 0.35;
 
-export type TipoObstaculo = "banca" | "barra" | "rack" | "colchoneta";
+export type TipoObstaculo = "banca" | "barra" | "maquina" | "colchoneta";
 
 /** El largo de cada obstáculo; las colchonetas traen el suyo (`largo`). */
-export const LARGO: Readonly<Record<TipoObstaculo, number>> = { banca: 1.4, barra: 0.3, rack: 1.6, colchoneta: 12 };
+export const LARGO: Readonly<Record<TipoObstaculo, number>> = { banca: 1.4, barra: 0.3, maquina: 1.0, colchoneta: 12 };
 
 /** La altura de la pila de colchonetas y el largo de su cuña de subida. */
 export const ALTO_COLCHONETA = 1.3;
@@ -120,7 +120,7 @@ export function velocidad(z: number): number {
   return Math.min(VEL_MAXIMA, VEL_INICIAL + Math.max(0, z) * ACELERACION);
 }
 
-/** Cada 250 m se sube de nivel (más racks y filas más juntas): hasta el 8. */
+/** Cada 250 m se sube de nivel (más máquinas y filas más juntas): hasta el 8. */
 export const METROS_POR_NIVEL = 250;
 export const NIVELES = 8;
 export const ZONAS = ["Recepción", "Cardio", "Pesas libres", "Máquinas", "Crossfit", "Powerlifting", "Box", "Olimpo"] as const;
@@ -135,11 +135,11 @@ export function separacion(n: number): [number, number] {
   return tabla[Math.min(NIVELES, Math.max(1, n)) - 1]!;
 }
 
-/** Cuántos obstáculos lleva una fila: más con el nivel, nunca tres racks. */
+/** Cuántos obstáculos lleva una fila: más con el nivel, nunca tres máquinas. */
 export function probDos(n: number): number { return [0.25, 0.35, 0.45, 0.52, 0.58, 0.62, 0.66, 0.7][Math.min(NIVELES, n) - 1]!; }
 export function probTres(n: number): number { return [0, 0.05, 0.1, 0.15, 0.2, 0.24, 0.28, 0.32][Math.min(NIVELES, n) - 1]!; }
 export function probColchonetas(n: number): number { return [0.12, 0.2, 0.24, 0.26, 0.28, 0.3, 0.3, 0.32][Math.min(NIVELES, n) - 1]!; }
-export function probRack(n: number): number { return [0.2, 0.26, 0.32, 0.36, 0.4, 0.43, 0.46, 0.5][Math.min(NIVELES, n) - 1]!; }
+export function probMaquina(n: number): number { return [0.2, 0.26, 0.32, 0.36, 0.4, 0.43, 0.46, 0.5][Math.min(NIVELES, n) - 1]!; }
 
 function elegir<T>(lista: readonly T[], azar: () => number): T {
   return lista[Math.min(lista.length - 1, Math.floor(azar() * lista.length))]!;
@@ -176,11 +176,11 @@ function nuevaFila(c: Carrera): void {
   const libres = [...CARRILES].sort(() => az() - 0.5);
   const ocupados = libres.slice(0, cuantos);
   const fila: Obstaculo[] = ocupados.map((carril) => ({
-    carril, z, tipo: az() < probRack(n) ? "rack" : az() < 0.5 ? "banca" : "barra",
+    carril, z, tipo: az() < probMaquina(n) ? "maquina" : az() < 0.5 ? "banca" : "barra",
   }));
-  // Nunca los tres carriles con rack: con uno o dos obstáculos queda un carril vacío; con tres,
-  // el último rack de más se vuelve banca.
-  if (fila.length === 3 && fila.every((o) => o.tipo === "rack")) fila[2]!.tipo = "banca";
+  // Nunca los tres carriles con máquina: con uno o dos obstáculos queda un carril vacío; con
+  // tres, la última máquina de más se vuelve banca.
+  if (fila.length === 3 && fila.every((o) => o.tipo === "maquina")) fila[2]!.tipo = "banca";
   c.obstaculos.push(...fila);
 
   // Batidos: una línea en un carril libre de esta fila, antes de llegar a ella.
@@ -277,7 +277,7 @@ function contraColchonetas(c: Carrera): Obstaculo | null {
 export function choca(o: Obstaculo, x: number, y: number, barriendo: boolean): boolean {
   if (Math.abs(x - o.carril) > 0.5) return false;
   if (o.tipo === "colchoneta") return y < ALTO_COLCHONETA - TOLERANCIA_TAPA;
-  if (o.tipo === "rack") return !barriendo;
+  if (o.tipo === "maquina") return true;
   if (o.tipo === "banca") return y < ALTO_BANCA;
   return !barriendo;
 }

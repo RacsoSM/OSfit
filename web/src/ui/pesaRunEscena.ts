@@ -655,43 +655,55 @@ export function pintarBarra(c: CanvasRenderingContext2D, v: Vista, o: Obstaculo)
   }
 }
 
-/** El rack de sentadillas, una jaula con su barra cargada: solo se esquiva. */
-export function pintarRack(c: CanvasRenderingContext2D, v: Vista, o: Obstaculo): void {
-  const x = o.carril * CARRIL, z0 = o.z, z1 = o.z + LARGO.rack, alto = 2.4;
-  const acero = ["#30343d", "#464b56", "#22252b"] as const;
-  const poste = (px: number, pz: number, agujeros: boolean) => {
-    caja3d(c, v, px - 0.07, px + 0.07, 0, alto, pz, pz + 0.14, ...acero);
-    if (agujeros) for (let k = 0; k < 12; k++) {
-      const yh = 0.4 + k * 0.15;
-      quadFrente(c, v, px - 0.018, px + 0.018, yh, yh + 0.04, pz - 0.001, "#101115");
+/**
+ * La máquina expendedora de proteína (entrenador, 2026-11-27: reemplaza al rack, que por ser
+ * jaula parecía que se podía pasar por abajo): un gabinete alto y macizo, rosa, con su letrero
+ * iluminado arriba, la vitrina llena de batidos, el teclado, la ranura y la bandeja. Solo se
+ * esquiva.
+ */
+export function pintarMaquina(c: CanvasRenderingContext2D, v: Vista, o: Obstaculo): void {
+  const x = o.carril * CARRIL, z0 = o.z, z1 = o.z + LARGO.maquina, alto = 2.3;
+  const x0 = x - 0.62, x1 = x + 0.62;
+  quadPiso(c, v, x0 - 0.1, x1 + 0.1, 0.004, Math.max(z0 - 0.1, v.camZ + 0.5), z1 + 0.15, "rgba(0, 0, 0, 0.35)");
+  // El gabinete, con la tapa y una patita oscura abajo.
+  caja3d(c, v, x0 + 0.04, x1 - 0.04, 0, 0.1, z0 + 0.04, z1, "#1d1d22", "#2a2a31", "#141418");
+  caja3d(c, v, x0, x1, 0.1, alto, z0, z1, "#d9327e", "#f0559b", "#a52560");
+  if (z0 < v.camZ + 0.4) return;
+  const F = (a: number, b: number, y0: number, y1: number, col: string) => quadFrente(c, v, x + a, x + b, y0, y1, z0 - 0.002, col);
+  // El letrero iluminado de arriba.
+  F(-0.55, 0.55, 1.95, 2.22, "#fff1f8");
+  const t = proyectar(v, x, 2.085, z0);
+  if (t.s > 9) {
+    c.fillStyle = "#d9327e"; c.font = `900 ${Math.round(t.s * 0.17)}px system-ui, sans-serif`;
+    c.textAlign = "center"; c.textBaseline = "middle"; c.fillText("PROTEÍNA", t.x, t.y, t.s * 1.0);
+  }
+  // La vitrina: marco, fondo iluminado y tres repisas de batidos de colores.
+  F(-0.55, 0.25, 0.62, 1.88, "#2a1b24");
+  F(-0.51, 0.21, 0.66, 1.84, "#bfe6ff");
+  const sabores = ["#ff5fc8", "#8b5a2b", "#f2e6c9", "#7ad37a", "#ffb347"];
+  for (let r = 0; r < 3; r++) {
+    const yr = 0.7 + r * 0.39;
+    F(-0.51, 0.21, yr, yr + 0.03, "#8fa4b8");
+    for (let k = 0; k < 4; k++) {
+      const xa = -0.47 + k * 0.17;
+      const col = sabores[(r * 4 + k + Math.round(o.z)) % sabores.length]!;
+      F(xa, xa + 0.11, yr + 0.03, yr + 0.27, col);
+      F(xa - 0.005, xa + 0.115, yr + 0.27, yr + 0.31, "#24262c");
+      F(xa, xa + 0.11, yr + 0.12, yr + 0.16, "rgba(255, 255, 255, 0.85)");
     }
-  };
-  quadPiso(c, v, x - 0.75, x + 0.75, 0.004, Math.max(z0, v.camZ + 0.5), z1 + 0.1, "rgba(0, 0, 0, 0.3)");
-  poste(x - 0.64, z1 - 0.14, false); poste(x + 0.64, z1 - 0.14, false);
-  caja3d(c, v, x - 0.64, x + 0.64, alto - 0.12, alto, z1 - 0.14, z1, ...acero);
-  // La plataforma de madera del piso.
-  caja3d(c, v, x - 0.72, x + 0.72, 0, 0.05, z0, z1, "#8a6a45", "#a47e54", "#6e5436");
-  for (const lado of [-1, 1]) caja3d(c, v, x + lado * 0.64 - 0.04, x + lado * 0.64 + 0.04, 0.72, 0.8, z0, z1, "#9aa0aa", "#c7cbd3", "#6b707a");
-  // La barra cargada adentro.
-  const y = 1.45, zb = (z0 + z1) / 2;
-  caja3d(c, v, x - 0.95, x + 0.95, y - 0.03, y + 0.03, zb - 0.03, zb + 0.03, "#c7cbd3", "#eef0f4", "#9aa0aa");
-  for (const lado of [-1, 1]) {
-    disco3d(c, v, x + lado * 0.74, y, zb, 0.44, 0.08, "#e03a52", "#9e2738");
-    disco3d(c, v, x + lado * 0.83, y, zb, 0.44, 0.08, "#e03a52", "#9e2738");
-    disco3d(c, v, x + lado * 0.91, y, zb, 0.3, 0.06, "#3bb36a", "#287a48");
   }
-  poste(x - 0.64, z0, true); poste(x + 0.64, z0, true);
-  caja3d(c, v, x - 0.64, x + 0.64, alto - 0.12, alto, z0, z0 + 0.14, ...acero);
-  // La barra de dominadas, adelante, y el letrero de alto.
-  caja3d(c, v, x - 0.7, x + 0.7, alto - 0.04, alto + 0.02, z0 - 0.12, z0 - 0.06, "#c7cbd3", "#eef0f4", "#9aa0aa");
-  const p = proyectar(v, x, alto - 0.38, z0);
-  if (p.s > 8) {
-    const w = p.s * 0.62, h = p.s * 0.22;
-    c.fillStyle = "#ffffff"; c.fillRect(p.x - w / 2 - p.s * 0.02, p.y - h / 2 - p.s * 0.02, w + p.s * 0.04, h + p.s * 0.04);
-    c.fillStyle = "#e0283e"; c.fillRect(p.x - w / 2, p.y - h / 2, w, h);
-    c.fillStyle = "#fff"; c.font = `900 ${Math.round(h * 0.68)}px system-ui, sans-serif`;
-    c.textAlign = "center"; c.textBaseline = "middle"; c.fillText("RACK", p.x, p.y + h * 0.04);
-  }
+  // El reflejo del vidrio.
+  F(-0.45, -0.4, 0.7, 1.8, "rgba(255, 255, 255, 0.35)");
+  // El panel: pantallita, teclado y ranura.
+  F(0.29, 0.55, 0.62, 1.88, "#b8296b");
+  F(0.32, 0.52, 1.6, 1.78, "#1b2a1f");
+  const pv = proyectar(v, x + 0.42, 1.69, z0);
+  if (pv.s > 14) { c.fillStyle = "#7dff9a"; c.font = `800 ${Math.round(pv.s * 0.08)}px ui-monospace, monospace`; c.textAlign = "center"; c.textBaseline = "middle"; c.fillText("$25", pv.x, pv.y); }
+  for (let f = 0; f < 3; f++) for (let k = 0; k < 2; k++) F(0.34 + k * 0.1, 0.4 + k * 0.1, 1.2 + f * 0.11, 1.27 + f * 0.11, "#f6e3ec");
+  F(0.4, 0.44, 0.88, 1.08, "#1d1d22");
+  // La bandeja de salida.
+  F(-0.5, 0.2, 0.2, 0.5, "#1d1d22");
+  F(-0.46, 0.16, 0.24, 0.32, "#3a3a44");
 }
 
 /** Un batido de proteína: el shaker con su líquido, su tapa y su asa; gira, flota y brilla. */

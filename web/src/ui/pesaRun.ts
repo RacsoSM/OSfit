@@ -7,7 +7,7 @@ import { escapar } from "./tarjetaDia";
 import { ajustarMarcoJuego, pintarSeguro, prepararMarcoJuego, vigilarMarcoJuego, densidadJuego } from "./marcoJuego";
 import { marcasDe } from "./marcasRecords";
 import { CAM_ALTO, CAM_ATRAS, CARRIL, ORILLA, crearVista, niebla, proyectar } from "./pesaRun3d";
-import { cosasDeEscena, lineasVelocidad, pintarBanca, pintarBarra, pintarBatido, pintarColchonetas, pintarPasillo, pintarRack, type Cosa } from "./pesaRunEscena";
+import { cosasDeEscena, lineasVelocidad, pintarBanca, pintarBarra, pintarBatido, pintarColchonetas, pintarMaquina, pintarPasillo, type Cosa } from "./pesaRunEscena";
 import { pintarMancuerna, type AnimMancuerna, type Gesto } from "./pesaRunMancuerna";
 
 /**
@@ -119,7 +119,7 @@ export function htmlCapaPesaRun(e: Estado, total: number, m: number, batidos: nu
       <div class="jd-capa-caja">
         <p class="jd-capa-marca">OSFIT · Arcade</p>
         <p class="jd-capa-titulo">Correle pa</p>
-        <p class="jd-capa-texto">La mancuerna corre sola por el gimnasio. Desliza el dedo a los lados para cambiar de carril, hacia arriba para saltar las bancas y hacia abajo para barrerte bajo las barras y los racks. Cada metro es un punto y cada batido vale ${PUNTOS_BATIDO}.</p>
+        <p class="jd-capa-texto">La mancuerna corre sola por el gimnasio. Desliza el dedo a los lados para cambiar de carril, hacia arriba para saltar las bancas y hacia abajo para barrerte bajo las barras. Las máquinas de proteína solo se esquivan. Cada metro es un punto y cada batido vale ${PUNTOS_BATIDO}.</p>
         <button type="button" class="jd-boton" data-pr="jugar">Jugar</button>
         <button type="button" class="jd-boton secundario" data-pr="marcador">Ver marcador</button>
       </div>`;
@@ -380,7 +380,7 @@ function dibujar(): void {
       if (o.tipo === "colchoneta") pintarColchonetas(c, v, o);
       else if (o.tipo === "banca") pintarBanca(c, v, o);
       else if (o.tipo === "barra") pintarBarra(c, v, o);
-      else pintarRack(c, v, o);
+      else pintarMaquina(c, v, o);
       c.globalAlpha = 1;
     } });
   }

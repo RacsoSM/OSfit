@@ -35,20 +35,20 @@ describe("Correle pa", () => {
     expect(c.x).toBe(1);
   });
 
-  it("el salto pasa la banca; la barrida pasa la barra y el rack", () => {
+  it("el salto pasa la banca; la barrida pasa la barra; la máquina de proteína solo se esquiva", () => {
     const banca: Obstaculo = { carril: 0, z: 0, tipo: "banca" };
     const barra: Obstaculo = { carril: 0, z: 0, tipo: "barra" };
-    const rack: Obstaculo = { carril: 0, z: 0, tipo: "rack" };
+    const maquina: Obstaculo = { carril: 0, z: 0, tipo: "maquina" };
     expect(ALTURA_SALTO).toBeGreaterThan(ALTO_BANCA * 2);
     expect(choca(banca, 0, 0, false)).toBe(true);
     expect(choca(banca, 0, ALTO_BANCA + 0.1, false)).toBe(false);
     expect(choca(barra, 0, 0, false)).toBe(true);
     expect(choca(barra, 0, 1, false)).toBe(true);
     expect(choca(barra, 0, 0, true)).toBe(false);
-    expect(choca(rack, 0, 0, false)).toBe(true);
-    expect(choca(rack, 0, 1.5, false)).toBe(true);
-    expect(choca(rack, 0, 0, true)).toBe(false);
-    expect(choca(rack, 1, 0, false)).toBe(false);
+    expect(choca(maquina, 0, 0, false)).toBe(true);
+    expect(choca(maquina, 0, 1.5, false)).toBe(true);
+    expect(choca(maquina, 0, 0, true)).toBe(true);
+    expect(choca(maquina, 1, 0, false)).toBe(false);
   });
 
   it("chocar termina la carrera; saltar a tiempo no", () => {
@@ -87,7 +87,7 @@ describe("Correle pa", () => {
     expect(puntos(c)).toBe(metros(c) + PUNTOS_BATIDO);
   });
 
-  it("siempre hay por dónde pasar: ninguna fila tiene los tres carriles con rack", () => {
+  it("siempre hay por dónde pasar: ninguna fila tiene los tres carriles con máquina", () => {
     for (let s = 1; s < 40; s++) {
       const c = nuevaCarrera(semilla(s));
       // Corre lejos (sin chocar: se quitan los obstáculos ya revisados).
@@ -95,8 +95,8 @@ describe("Correle pa", () => {
         const filas = new Map<number, Obstaculo[]>();
         for (const o of c.obstaculos) filas.set(o.z, [...(filas.get(o.z) ?? []), o]);
         for (const fila of filas.values()) {
-          // Lo que no se puede pasar desde el piso: racks y colchonetas sin cuña.
-          const racks = fila.filter((o) => o.tipo === "rack" || (o.tipo === "colchoneta" && !o.rampa)).map((o) => o.carril);
+          // Lo que no se puede pasar desde el piso: máquinas y colchonetas sin cuña.
+          const racks = fila.filter((o) => o.tipo === "maquina" || (o.tipo === "colchoneta" && !o.rampa)).map((o) => o.carril);
           expect(CARRILES.some((k) => !racks.includes(k))).toBe(true);
         }
         c.obstaculos = c.obstaculos.filter((o) => o.z > c.z + 20);
