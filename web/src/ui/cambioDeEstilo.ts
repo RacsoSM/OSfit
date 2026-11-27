@@ -65,6 +65,24 @@ export function ponerEstilo(id: IdEstilo): void {
   ponerFondo(id);
 }
 
+/**
+ * Con un juego abierto, el fondo animado del estilo (los pétalos del sakura, los sustos de
+ * halloween) se detiene: queda tapado por el juego y seguía gastando cuadros (2026-11-27). Al
+ * cerrar el juego se vuelve a poner el del estilo actual. El CSS los esconde con `con-juego`.
+ */
+let fondoPausado = false;
+export function pausarFondoAnimado(pausar: boolean): void {
+  if (pausar === fondoPausado) return;
+  fondoPausado = pausar;
+  if (!fondos) return;
+  if (pausar) {
+    fondos.detenerPetalos();
+    fondos.detenerSustos();
+    return;
+  }
+  ponerFondo((document.documentElement.getAttribute("data-estilo") ?? "clasico") as IdEstilo);
+}
+
 /** Lo que el CSS del estilo necesita que exista, con la parte de los fondos ya cargada. */
 function ponerFondo(id: IdEstilo): void {
   if (!fondos) return;

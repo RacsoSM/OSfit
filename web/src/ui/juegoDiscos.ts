@@ -2,7 +2,7 @@ import {
   ANCHO_TABLERO, avanzar, nuevaPartida, pesoDe, soltar, type Partida,
 } from "../juegoDiscos";
 import { escapar } from "./tarjetaDia";
-import { ajustarMarcoJuego, pintarSeguro, prepararMarcoJuego, vigilarMarcoJuego } from "./marcoJuego";
+import { ajustarMarcoJuego, pintarSeguro, prepararMarcoJuego, vigilarMarcoJuego, densidadJuego } from "./marcoJuego";
 import { marcasDe, pintarEtiqueta, pintarLinea } from "./marcasRecords";
 
 /**
@@ -136,7 +136,9 @@ function recordarTabla(t: TablaDiscos): void {
 export function htmlJuego(): string {
   return `
     <div class="jd-pantalla" id="jd-pantalla">
+      <canvas id="jd-fondo" aria-hidden="true"></canvas>
       <canvas id="jd-canvas" aria-label="Torre de discos"></canvas>
+      <div class="jd-vineta" aria-hidden="true"></div>
       <div class="jd-hud" aria-live="polite">
         <p class="jd-hud-puntos" id="jd-puntos">0</p>
         <p class="jd-hud-record">Récord <b id="jd-record">—</b></p>
@@ -481,7 +483,7 @@ function dibujar(dt: number): void {
   if (!canvas) return;
   const W = canvas.clientWidth, H = canvas.clientHeight;
   if (W === 0 || H === 0) return;
-  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  const dpr = densidadJuego();
   if (canvas.width !== Math.round(W * dpr) || canvas.height !== Math.round(H * dpr)) {
     canvas.width = Math.round(W * dpr);
     canvas.height = Math.round(H * dpr);
@@ -506,26 +508,13 @@ function dibujar(dt: number): void {
   const sx = (x: number) => W / 2 + (x - ANCHO_TABLERO / 2) * e;
   const sy = (y: number) => H - (y - camY) * e;
 
-  // Fondo: la pared oscura del gym, con un reflector cálido desde arriba.
-  const fondo = c.createLinearGradient(0, 0, 0, H);
-  fondo.addColorStop(0, "#0d0e13");
-  fondo.addColorStop(1, "#17151a");
-  c.fillStyle = fondo;
-  c.fillRect(0, 0, W, H);
-  const foco = c.createRadialGradient(W / 2, -H * 0.1, 10, W / 2, -H * 0.1, H * 1.1);
-  foco.addColorStop(0, "rgba(255, 228, 180, 0.22)");
-  foco.addColorStop(0.45, "rgba(255, 210, 150, 0.07)");
-  foco.addColorStop(1, "rgba(0, 0, 0, 0)");
-  c.fillStyle = foco;
-  c.fillRect(0, 0, W, H);
-  // El cono del reflector y el polvo que flota en él.
+  // El fondo (la pared, el reflector y su cono) no cambia: va en su propio lienzo, detrás, y se
+  // pinta solo al cambiar de tamaño (2026-11-27: en iPhone, pintarlo en cada cuadro hacía que el
+  // juego se saltara cuadros). Aquí solo se limpia este lienzo, que es transparente.
+  pintarFondoFijo(W, H, dpr);
+  c.clearRect(0, 0, W, H);
+  // El polvo que flota en el cono del reflector.
   c.save();
-  c.globalCompositeOperation = "lighter";
-  const cono = c.createLinearGradient(0, 0, 0, H);
-  cono.addColorStop(0, "rgba(255, 236, 200, 0.08)");
-  cono.addColorStop(1, "rgba(255, 236, 200, 0)");
-  c.fillStyle = cono;
-  c.beginPath(); c.moveTo(W * 0.42, 0); c.lineTo(W * 0.58, 0); c.lineTo(W * 0.95, H); c.lineTo(W * 0.05, H); c.closePath(); c.fill();
   if (motas.length === 0) for (let k = 0; k < 28; k++) motas.push({ x: Math.random(), y: Math.random(), v: 0.01 + Math.random() * 0.02, r: 0.6 + Math.random() * 1.4 });
   for (const m of motas) {
     m.y -= m.v * dt; if (m.y < 0) { m.y = 1; m.x = Math.random(); }
@@ -649,13 +638,43 @@ function dibujar(dt: number): void {
     c.fillText(l.texto, 0, 0);
     c.restore();
   }
-  // Viñeta: oscurece las orillas.
+  // La viñeta que oscurece las orillas es una capa de CSS encima (`.jd-vineta`): no cambia, así
+  // que no se pinta en cada cuadro.
+}
+
+let fondoFijo = "";
+
+/** El fondo que no cambia, en `#jd-fondo`: solo se repinta si cambió el tamaño. */
+function pintarFondoFijo(W: number, H: number, dpr: number): void {
+  const lienzo = q<HTMLCanvasElement>("#jd-fondo");
+  if (!lienzo) return;
+  const clave = `${W}x${H}@${dpr}`;
+  if (clave === fondoFijo && lienzo.width > 0) return;
+  fondoFijo = clave;
+  lienzo.width = Math.round(W * dpr);
+  lienzo.height = Math.round(H * dpr);
+  const c = lienzo.getContext("2d");
+  if (!c) return;
   c.setTransform(dpr, 0, 0, dpr, 0, 0);
-  const vin = c.createRadialGradient(W / 2, H * 0.45, Math.min(W, H) * 0.35, W / 2, H * 0.45, Math.max(W, H) * 0.8);
-  vin.addColorStop(0, "rgba(0, 0, 0, 0)");
-  vin.addColorStop(1, "rgba(0, 0, 0, 0.55)");
-  c.fillStyle = vin;
+  // La pared oscura del gym, con un reflector cálido desde arriba.
+  const fondo = c.createLinearGradient(0, 0, 0, H);
+  fondo.addColorStop(0, "#0d0e13");
+  fondo.addColorStop(1, "#17151a");
+  c.fillStyle = fondo;
   c.fillRect(0, 0, W, H);
+  const foco = c.createRadialGradient(W / 2, -H * 0.1, 10, W / 2, -H * 0.1, H * 1.1);
+  foco.addColorStop(0, "rgba(255, 228, 180, 0.22)");
+  foco.addColorStop(0.45, "rgba(255, 210, 150, 0.07)");
+  foco.addColorStop(1, "rgba(0, 0, 0, 0)");
+  c.fillStyle = foco;
+  c.fillRect(0, 0, W, H);
+  // El cono del reflector.
+  c.globalCompositeOperation = "lighter";
+  const cono = c.createLinearGradient(0, 0, 0, H);
+  cono.addColorStop(0, "rgba(255, 236, 200, 0.08)");
+  cono.addColorStop(1, "rgba(255, 236, 200, 0)");
+  c.fillStyle = cono;
+  c.beginPath(); c.moveTo(W * 0.42, 0); c.lineTo(W * 0.58, 0); c.lineTo(W * 0.95, H); c.lineTo(W * 0.05, H); c.closePath(); c.fill();
 }
 
 // ── Montaje ──────────────────────────────────────────────────────────────────

@@ -84,3 +84,13 @@ export function pintarSeguro(pintar: () => void): void {
     if (!avisado) { avisado = true; console.error("Error al pintar el juego", e); }
   }
 }
+
+/**
+ * La resolución interna de los juegos: hasta 1.5 píxeles del lienzo por punto de pantalla
+ * (entrenador, 2026-11-27: "en iPhone tiene un leve retraso"). Los iPhone tienen 3, y pintar el
+ * lienzo entero 60 veces por segundo a esa densidad hacía que se saltaran cuadros; a 1.5 se ve
+ * casi igual y es la mitad de píxeles que a 2.
+ */
+export function densidadJuego(): number {
+  return Math.min(1.5, window.devicePixelRatio || 1);
+}

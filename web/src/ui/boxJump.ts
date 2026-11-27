@@ -4,7 +4,7 @@ import {
 import { conPartida, htmlLista, type ApiJuego, type EnvioPartida, type TablaDiscos } from "./juegoDiscos";
 import { ruido } from "./gimnasioFondo";
 import { escapar } from "./tarjetaDia";
-import { ajustarMarcoJuego, pintarSeguro, prepararMarcoJuego, vigilarMarcoJuego } from "./marcoJuego";
+import { ajustarMarcoJuego, pintarSeguro, prepararMarcoJuego, vigilarMarcoJuego, densidadJuego } from "./marcoJuego";
 import { marcasDe, pintarEtiqueta, pintarLinea } from "./marcasRecords";
 
 /**
@@ -662,7 +662,7 @@ function dibujar(_dt: number): void {
   if (!canvas) return;
   const W = canvas.clientWidth, H = canvas.clientHeight;
   if (W === 0 || H === 0) return;
-  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  const dpr = densidadJuego();
   if (canvas.width !== Math.round(W * dpr) || canvas.height !== Math.round(H * dpr)) {
     canvas.width = Math.round(W * dpr);
     canvas.height = Math.round(H * dpr);

@@ -2899,6 +2899,9 @@ body.con-juego { overflow: hidden; overscroll-behavior: none; }
 /* En los juegos no va el título de arriba: el juego llega hasta arriba de la pantalla
    (entrenador, 2026-11-25: "quita ese título, que el juego abarque toda la pantalla hacia arriba"). */
 body.con-juego .cabecera { visibility: hidden; }
+/* Con un juego abierto, los fondos de los estilos ni se dibujan: el juego los tapa, y sus
+   animaciones le quitaban cuadros (2026-11-27). Los de JS se detienen en `pausarFondoAnimado`. */
+body.con-juego :is(.fondo, .fondo-pixel, .fondo-sakura, .fondo-halloween, .petalos-frente, .hw-susto) { display: none; }
 body.con-juego .jd-pantalla { border-radius: 0; }
 .jd-pantalla {
   position: fixed; left: 50%; transform: translateX(-50%); width: min(100vw, 480px); top: 0; bottom: 0; z-index: 1;
@@ -2907,6 +2910,11 @@ body.con-juego .jd-pantalla { border-radius: 0; }
   touch-action: none; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent;
 }
 .jd-pantalla canvas { position: absolute; inset: 0; display: block; width: 100%; height: 100%; }
+/* La viñeta de Torre de discos: oscurece las orillas sin pintarse en cada cuadro (2026-11-27). */
+.jd-vineta {
+  position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(ellipse 80% 80% at 50% 45%, rgba(0, 0, 0, 0) 45%, rgba(0, 0, 0, 0.55) 100%);
+}
 .jd-hud { position: absolute; top: 14px; left: 0; right: 0; text-align: center; pointer-events: none; }
 .jd-hud-puntos { margin: 0; font-size: 64px; font-weight: 900; line-height: 1; color: #fff; font-variant-numeric: tabular-nums;
   text-shadow: 0 4px 18px rgba(0, 0, 0, 0.6); }

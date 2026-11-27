@@ -5,7 +5,7 @@ import { conPartida, htmlLista, type ApiJuego, type EnvioPartida, type TablaDisc
 import { ZONAS, pintarPolvo, pintarZona } from "./gimnasioFondo";
 import { escapar } from "./tarjetaDia";
 import { marcasDe, pintarEtiqueta } from "./marcasRecords";
-import { ajustarMarcoJuego, pintarSeguro, prepararMarcoJuego, vigilarMarcoJuego } from "./marcoJuego";
+import { ajustarMarcoJuego, pintarSeguro, prepararMarcoJuego, vigilarMarcoJuego, densidadJuego } from "./marcoJuego";
 
 /**
  * La pantalla de Kettlebell Bird (lógica en `../kettlebellBird.ts`), del Arcade. Como Torre de
@@ -71,6 +71,7 @@ export function htmlKettlebell(): string {
   return `
     <div class="jd-pantalla kb-pantalla" id="kb-pantalla">
       <canvas id="kb-canvas" aria-label="Fit Bird"></canvas>
+      <div class="jd-vineta kb-vineta" aria-hidden="true"></div>
       <div class="jd-hud" aria-live="polite">
         <p class="jd-hud-puntos" id="kb-puntos">0</p>
         <p class="jd-hud-record">Récord <b id="kb-record">—</b></p>
@@ -300,12 +301,16 @@ function caja2(c: CanvasRenderingContext2D, x: number, y: number, w: number, h: 
   c.arcTo(x, y + h, x, y, rr); c.arcTo(x, y, x + w, y, rr); c.closePath();
 }
 
+/** La densidad del lienzo del fondo del gimnasio (ver `dibujar`). */
+const DENSIDAD_FONDO = 1;
+let fondoKb: HTMLCanvasElement | null = null;
+
 function dibujar(): void {
   const canvas = q<HTMLCanvasElement>("#kb-canvas");
   if (!canvas) return;
   const W = canvas.clientWidth, H = canvas.clientHeight;
   if (W === 0 || H === 0) return;
-  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  const dpr = densidadJuego();
   if (canvas.width !== Math.round(W * dpr) || canvas.height !== Math.round(H * dpr)) {
     canvas.width = Math.round(W * dpr);
     canvas.height = Math.round(H * dpr);
@@ -319,14 +324,28 @@ function dibujar(): void {
   const piso = PISO * e;
 
   // El gimnasio de la zona del nivel; al subir de nivel, la zona nueva aparece sobre la anterior.
+  // Se pinta en un lienzo aparte a menor resolución (`DENSIDAD_FONDO`) y se pasa de un golpe: es
+  // casi todo lo que se dibuja en cada cuadro, y a la resolución del juego hacía que el iPhone se
+  // saltara cuadros (2026-11-27). Detrás de todo, un fondo un poco más suave ni se nota.
   const zona = ZONAS[nivelVisto - 1]!;
-  if (zonaAnterior !== null && mezcla < 1) {
-    pintarZona(c, ZONAS[zonaAnterior]!, W, H, e, piso, r, reloj);
-    c.globalAlpha = mezcla;
-    pintarZona(c, zona, W, H, e, piso, r, reloj);
-    c.globalAlpha = 1;
-  } else {
-    pintarZona(c, zona, W, H, e, piso, r, reloj);
+  const df = Math.min(DENSIDAD_FONDO, dpr);
+  const lienzoFondo = (fondoKb ??= document.createElement("canvas"));
+  if (lienzoFondo.width !== Math.round(W * df) || lienzoFondo.height !== Math.round(H * df)) {
+    lienzoFondo.width = Math.round(W * df);
+    lienzoFondo.height = Math.round(H * df);
+  }
+  const f = lienzoFondo.getContext("2d");
+  if (f) {
+    f.setTransform(df, 0, 0, df, 0, 0);
+    if (zonaAnterior !== null && mezcla < 1) {
+      pintarZona(f, ZONAS[zonaAnterior]!, W, H, e, piso, r, reloj);
+      f.globalAlpha = mezcla;
+      pintarZona(f, zona, W, H, e, piso, r, reloj);
+      f.globalAlpha = 1;
+    } else {
+      pintarZona(f, zona, W, H, e, piso, r, reloj);
+    }
+    c.drawImage(lienzoFondo, 0, 0, W, H);
   }
 
   // Las barras: una barra de acero con sus discos en la punta, colgando del techo y parada en el piso.
@@ -376,9 +395,7 @@ function dibujar(): void {
   pintarPolvo(c, zona, W, H, 1 / 60, reloj);
   c.setTransform(dpr, 0, 0, dpr, 0, 0);
   if (destello > 0) { c.fillStyle = `rgba(255, 255, 255, ${destello * 0.5})`; c.fillRect(0, 0, W, H); }
-  const vin = c.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.4, W / 2, H / 2, Math.max(W, H) * 0.8);
-  vin.addColorStop(0, "rgba(0, 0, 0, 0)"); vin.addColorStop(1, "rgba(0, 0, 0, 0.45)");
-  c.fillStyle = vin; c.fillRect(0, 0, W, H);
+  // La viñeta es una capa de CSS encima (`.kb-vineta`): no se pinta en cada cuadro (2026-11-27).
 }
 
 /** Una textura de grano (caucho o hierro martelinado), hecha una vez y repetida. */

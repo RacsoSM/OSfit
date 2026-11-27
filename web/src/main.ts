@@ -46,7 +46,7 @@ import { activarNotificaciones, entornoDelNavegador, sincronizarToken } from "./
 import { conectarNotificaciones } from "./ui/tarjetaNotificaciones";
 import { conectarAvisoReviveExtra } from "./ui/avisoReviveExtra";
 import { HORA_AVISO, conectarAvisoResumen, resumenPorAvisar } from "./ui/avisoResumen";
-import { almacenDeEstilo, ponerEstilo } from "./ui/cambioDeEstilo";
+import { almacenDeEstilo, pausarFondoAnimado, ponerEstilo } from "./ui/cambioDeEstilo";
 import { estiloGuardado, type IdEstilo } from "./estilo";
 import { cerrarSesion, credencialLista, huellaDeLaSesion, iniciarSesion, redDeFirestore, urlDeDescarga } from "./firebase";
 import { conPlazo, esperarRed, hayRed } from "./senal";
@@ -909,6 +909,7 @@ async function arrancar(): Promise<void> {
     // Con un juego abierto la página no se mueve (el juego es toda la pestaña).
     const conJuego = activa.contenedorPropio === "juego" || activa.contenedorPropio === "kettlebell" || activa.contenedorPropio === "boxjump";
     document.body.classList.toggle("con-juego", conJuego);
+    pausarFondoAnimado(conJuego);
     // Mi espacio también va a toda la pantalla, pero con el ☰ a la vista.
     document.body.classList.toggle("con-espacio", activa.id === "espacio");
     if (!conJuego && activa.id !== "espacio") soltarMarcoJuego();
