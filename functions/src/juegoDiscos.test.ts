@@ -97,7 +97,7 @@ describe("Box Jump", () => {
   });
 });
 
-describe("Pesa Run", () => {
+describe("Correle pa", () => {
   it("metros y batidos son puntos; más rápido que corriendo a tope con batidos es imposible", () => {
     expect(partidaValida({ puntos: 1500, apilados: 1500, duracionMs: 90_000 }, PESA_RUN)).not.toBeNull();
     expect(partidaValida({ puntos: 1500, apilados: 1500, duracionMs: 5_000 }, PESA_RUN)).toBeNull();
@@ -105,7 +105,7 @@ describe("Pesa Run", () => {
   });
   it("su aviso dice el juego y abre su ventana", () => {
     const a = avisoSuperada("said", "bogue", "Bogue", 640, PESA_RUN);
-    expect(a.titulo).toBe("Bogue te ha superado en Pesa Run");
+    expect(a.titulo).toBe("Bogue te ha superado en Correle pa");
     expect(a.abrir).toEqual({ ventana: "pesarun" });
     expect(a.id).toBe("auto_pesaRun_said_bogue_640");
   });

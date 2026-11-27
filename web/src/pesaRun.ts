@@ -1,5 +1,5 @@
 /**
- * Pesa Run (entrenador, 2026-11-27): el cuarto juego del Arcade. Un corredor sin fin de tres
+ * Correle pa (entrenador, 2026-11-27): el cuarto juego del Arcade. Un corredor sin fin de tres
  * carriles por el pasillo del gimnasio: la protagonista es una mancuerna con ojos y patitas que
  * corre sola hacia adelante. Con el dedo se cambia de carril (deslizar a los lados), se salta
  * (hacia arriba) y se barre por el piso (hacia abajo).

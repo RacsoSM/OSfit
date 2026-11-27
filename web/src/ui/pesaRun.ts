@@ -11,7 +11,7 @@ import { cosasDeEscena, lineasVelocidad, pintarBanca, pintarBarra, pintarBatido,
 import { pintarMancuerna, type AnimMancuerna, type Gesto } from "./pesaRunMancuerna";
 
 /**
- * La pantalla de Pesa Run (lógica en `../pesaRun.ts`), del Arcade. Como los otros juegos: toda la
+ * La pantalla de Correle pa (lógica en `../pesaRun.ts`), del Arcade. Como los otros juegos: toda la
  * pestaña es el juego, vive en su propio contenedor (`#pesarun`) fuera del repintado, el
  * resultado y el récord salen al instante, guardar va por detrás, y tiene sus Records
  * (`guardarPartidaPesaRun` y `tablaPesaRun` en functions).
@@ -81,7 +81,7 @@ function demo(): Carrera {
 export function htmlPesaRun(): string {
   return `
     <div class="jd-pantalla pr-pantalla" id="pr-pantalla">
-      <canvas id="pr-canvas" aria-label="Pesa Run"></canvas>
+      <canvas id="pr-canvas" aria-label="Correle pa"></canvas>
       <div class="jd-vineta" aria-hidden="true"></div>
       <div class="jd-hud" aria-live="polite">
         <p class="jd-hud-puntos" id="pr-puntos">0</p>
@@ -111,7 +111,7 @@ export function htmlCapaPesaRun(e: Estado, total: number, m: number, batidos: nu
     return `
       <div class="jd-capa-caja">
         <p class="jd-capa-marca">OSFIT · Arcade</p>
-        <p class="jd-capa-titulo">Pesa Run</p>
+        <p class="jd-capa-titulo">Correle pa</p>
         <p class="jd-capa-texto">La mancuerna corre sola por el gimnasio. Desliza el dedo a los lados para cambiar de carril, hacia arriba para saltar las bancas y hacia abajo para barrerte bajo las barras. Los racks solo se esquivan. Cada metro es un punto y cada batido vale ${PUNTOS_BATIDO}.</p>
         <button type="button" class="jd-boton" data-pr="jugar">Jugar</button>
         <button type="button" class="jd-boton secundario" data-pr="marcador">Ver marcador</button>

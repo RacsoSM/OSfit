@@ -15,7 +15,7 @@ function vacia(): Carrera {
   return c;
 }
 
-describe("Pesa Run", () => {
+describe("Correle pa", () => {
   it("corre sola hacia adelante y acelera hasta un tope", () => {
     const c = vacia();
     for (let i = 0; i < 60; i++) avanzar(c, 1 / 60);

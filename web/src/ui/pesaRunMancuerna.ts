@@ -3,7 +3,7 @@ import { CARRIL, proyectar, type Vista } from "./pesaRun3d";
 import { estrella } from "./pesaRunEscena";
 
 /**
- * La protagonista de Pesa Run (entrenador, 2026-11-27: "que el personaje principal se vea más
+ * La protagonista de Correle pa (entrenador, 2026-11-27: "que el personaje principal se vea más
  * carismático"): una mancuerna hexagonal con cara. En medio, un mango gordito y cromado que
  * hace de cara, con ojos grandes que se asoman por arriba, cejas, cachetes y boca; una cinta
  * rosa en la frente con sus puntas al viento; las cabezas dicen "OS" y "FIT"; y dos patitas

@@ -1,5 +1,5 @@
 /**
- * La perspectiva de Pesa Run: el mundo en metros (x a los lados, y hacia arriba, z hacia el
+ * La perspectiva de Correle pa: el mundo en metros (x a los lados, y hacia arriba, z hacia el
  * fondo) visto desde una cámara detrás de la mancuerna. Aquí solo la geometría y las figuras
  * básicas (cajas, discos); el escenario está en `pesaRunEscena.ts` y la mancuerna en
  * `pesaRunMancuerna.ts`.

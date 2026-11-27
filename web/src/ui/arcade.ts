@@ -27,7 +27,7 @@ export const JUEGOS_ARCADE: readonly JuegoArcade[] = [
   { ventana: "juego", nombre: "Torre de discos", imagen: "/arcade/torre.webp", llave: "osfit:torre-tabla", neon: "cian" },
   { ventana: "kettlebell", nombre: "Fit Bird", imagen: "/arcade/kettlebell.webp?v=3", llave: "osfit:kettlebell-tabla", neon: "rosa" },
   { ventana: "boxjump", nombre: "Jumper", imagen: "/arcade/boxjump.webp?v=3", llave: "osfit:boxjump-tabla", neon: "lima" },
-  { ventana: "pesarun", nombre: "Pesa Run", imagen: "/arcade/pesarun.webp", llave: "osfit:pesarun-tabla", neon: "naranja", nuevo: true },
+  { ventana: "pesarun", nombre: "Correle pa", imagen: "/arcade/pesarun.webp", llave: "osfit:pesarun-tabla", neon: "naranja", nuevo: true },
 ];
 
 function tablaDe(llave: string): TablaDiscos | null {

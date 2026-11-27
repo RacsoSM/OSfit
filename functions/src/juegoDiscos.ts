@@ -39,11 +39,11 @@ export const BOX_JUMP: Juego = {
   coleccion: "juegoBoxJump", nombre: "Jumper", clave: "boxJump", ventana: "boxjump", msMinimos: 40, puntosPorPunto: 1,
 };
 /**
- * Pesa Run: cada metro es un punto y cada batido 5. A lo más rápido (26 m/s y una fila de
+ * Correle pa: cada metro es un punto y cada batido 5. A lo más rápido (26 m/s y una fila de
  * batidos cada 1.6 m) son ~110 puntos por segundo: menos de 8 ms por punto es imposible.
  */
 export const PESA_RUN: Juego = {
-  coleccion: "juegoPesaRun", nombre: "Pesa Run", clave: "pesaRun", ventana: "pesarun", msMinimos: 8, puntosPorPunto: 1,
+  coleccion: "juegoPesaRun", nombre: "Correle pa", clave: "pesaRun", ventana: "pesarun", msMinimos: 8, puntosPorPunto: 1,
 };
 /** En el nivel más alto las barras van a ~0.47 s una de otra: menos de 0.35 s es imposible. */
 export const KETTLEBELL_BIRD: Juego = {

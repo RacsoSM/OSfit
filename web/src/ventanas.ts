@@ -374,7 +374,7 @@ export const VENTANAS: readonly Ventana[] = [
   { id: "juego", titulo: "Torre de discos", icono: "🏋️", grupo: "sub", contenedorPropio: "juego" },
   { id: "kettlebell", titulo: "Fit Bird", icono: "🏋️", grupo: "sub", contenedorPropio: "kettlebell" },
   { id: "boxjump", titulo: "Jumper", icono: "🏋️", grupo: "sub", contenedorPropio: "boxjump" },
-  { id: "pesarun", titulo: "Pesa Run", icono: "🏋️", grupo: "sub", contenedorPropio: "pesarun" },
+  { id: "pesarun", titulo: "Correle pa", icono: "🏋️", grupo: "sub", contenedorPropio: "pesarun" },
   // Medallas y Logros personales, ocultas del menú (decisión del entrenador, 2026-10-21). Las
   // ventanas siguen existiendo: volver a mostrarlas es quitar `oculta`.
   {

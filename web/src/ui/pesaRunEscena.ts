@@ -5,7 +5,7 @@ import {
 } from "./pesaRun3d";
 
 /**
- * El escenario de Pesa Run (entrenador, 2026-11-27: "que el escenario se vea más detallado e
+ * El escenario de Correle pa (entrenador, 2026-11-27: "que el escenario se vea más detallado e
  * interesante"): el pasillo del gimnasio OSFIT. Al centro, el piso de hule en losetas con los
  * tres carriles pintados; a los lados, piso de madera con la utilería de cada zona (caminadoras
  * en Cardio, árboles de discos en Pesas libres, cajas y llantas en Crossfit, costales en Box…).
