@@ -34,6 +34,7 @@ describe("erroresEstandares", () => {
 
 const pintan = leer("../../docs/estandares-fuerza/pintan.json");
 const nuncaPintan = leer("../../docs/estandares-fuerza/nuncaPintan.json");
+const respaldo = leer("../../docs/estandares-fuerza/respaldo.json");
 
 describe("pintan", () => {
   it("la lista de docs/estandares-fuerza se puede cargar", () => {
@@ -53,11 +54,18 @@ describe("pintan", () => {
     expect(pintaDe(pecDeck, {})).toEqual(["pecho"]);
   });
 
-  it("la lista de los que nunca pintan es válida y saca al press de pecho en máquina del pecho", () => {
+  it("la lista de los que nunca pintan es válida", () => {
     expect(erroresPintan(nuncaPintan, semilla)).toEqual([]);
+  });
+
+  it("el pec deck y el press de pecho en máquina pintan el pecho solo de respaldo (2026-11-27)", () => {
+    expect(erroresPintan(respaldo, semilla)).toEqual([]);
     const maquina = semilla.find((e) => e.id === "press-pecho-maquina");
+    const pecDeck = semilla.find((e) => e.id === "pec-deck");
     const banca = semilla.find((e) => e.id === "press-banca");
-    expect(nuncaPintaDe(maquina, nuncaPintan)).toEqual(["pecho"]);
-    expect(nuncaPintaDe(banca, nuncaPintan)).toEqual([]);
+    expect(nuncaPintaDe(maquina, respaldo)).toEqual(["pecho"]);
+    expect(nuncaPintaDe(pecDeck, respaldo)).toEqual(["pecho"]);
+    expect(nuncaPintaDe(banca, respaldo)).toEqual([]);
+    expect(nuncaPintaDe(maquina, nuncaPintan)).toEqual([]);
   });
 });

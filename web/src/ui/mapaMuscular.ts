@@ -314,7 +314,9 @@ export function bloqueSiguiente(f: FuerzaMusculo, sexo: Sexo, peso: number, musc
         <span style="width: ${porcentaje}%; background: linear-gradient(90deg, ${COLORES_RANGO[actual]}, ${COLORES_RANGO[s.rango]})"></span>
       </div>`;
   if (s.tipo === "otroEjercicio") {
-    const texto = `Para subir, registra un ejercicio que trabaje directo tu ${musculo.toLowerCase()}.`;
+    const texto = s.conTope
+      ? `Con ${s.conTope.toLowerCase()} llegas hasta Avanzado. Para subir, registra un ejercicio básico de tu ${musculo.toLowerCase()}, como el press de banca o con mancuernas.`
+      : `Para subir, registra un ejercicio que trabaje directo tu ${musculo.toLowerCase()}.`;
     return `<div class="hoja-sig">${barra}<p class="hoja-sig-texto">${texto}</p></div>`;
   }
   // Su mejor ejercicio del músculo y, si hizo otro, el segundo: dos caminos para subir, en un

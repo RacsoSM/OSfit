@@ -124,6 +124,11 @@ export interface OrigenFuerza {
    */
   edad?: number | null;
   factorEdad?: number;
+  /**
+   * El nivel más alto al que llega con este ejercicio (`TOPE_RESPALDO`), si pinta de respaldo:
+   * con él no se sube de Avanzado.
+   */
+  tope?: number;
   /** El factor por peso corporal que se le aplicó (`factorPeso`); solo en los de peso, si no 1. */
   factorPeso?: number;
   /** El peso contra el que se midió (`pesoParaFuerza`): el objetivo se calcula con el mismo. */
@@ -317,23 +322,29 @@ export function fuerzaPorMusculo(
     }
   }
 
-  // Solo los de la lista del músculo (`pinta`) lo pintan (entrenador, 2026-11-16): ya no hay
-  // respaldo, así que quien no hizo ninguno de la lista ve el músculo "sin datos".
+  // Los de la lista del músculo (`pinta`) deciden su color (entrenador, 2026-11-16). Los de
+  // respaldo (`respaldo`: el pec deck y el press de pecho en máquina, 2026-11-27) solo pintan a
+  // quien no hizo ninguno de la lista, y con tope en Avanzado: con ellos nunca sale Élite.
   const fuerza: Record<string, FuerzaMusculo> = {};
+  const deRespaldo: Record<string, FuerzaMusculo> = {};
   for (const [id, { marca, serie }] of mejor) {
     const b = porId.get(id)!;
     const estandares = b.estandares![sexo];
-    const nivel = nivelDe(marca, estandares);
+    const nivelLibre = nivelDe(marca, estandares);
     for (const [musculo, cuanto] of Object.entries(b.musculos)) {
       // Solo el trabajo directo pinta: un secundario no le da nivel al músculo de rebote.
-      if (cuanto < 1 || nuncaPintaMusculo(b, musculo) || !pintaMusculo(b, musculo)) continue;
-      const destino = fuerza;
+      if (cuanto < 1 || nuncaPintaMusculo(b, musculo)) continue;
+      const respaldo = pintaDeRespaldo(b, musculo);
+      if (!respaldo && !pintaMusculo(b, musculo)) continue;
+      const nivel = respaldo ? Math.min(nivelLibre, TOPE_RESPALDO) : nivelLibre;
+      const destino = respaldo ? deRespaldo : fuerza;
       const actual = destino[musculo];
       const origen: OrigenFuerza = {
         ejercicioId: id, nombre: b.nombre, tipo: b.tipo as "peso" | "corporal", cuanto,
         serie: { reps: serie.reps, peso: serie.peso }, estandares,
         pesoPorMancuerna: b.pesoPorMancuerna === true,
         edad, factorEdad: factor, factorPeso: b.tipo === "peso" ? porPeso : 1, pesoUsado: pesoCorporal,
+        ...(respaldo ? { tope: TOPE_RESPALDO } : {}),
       };
       // El mejor y el segundo mejor: el que baja de primero pasa a segundo.
       if (!actual) {
@@ -344,6 +355,9 @@ export function fuerzaPorMusculo(
         actual.segundo = { nivel, origen };
       }
     }
+  }
+  for (const [musculo, f] of Object.entries(deRespaldo)) {
+    if (!(musculo in fuerza)) fuerza[musculo] = f;
   }
   return fuerza;
 }
@@ -356,6 +370,19 @@ export function fuerzaPorMusculo(
 export function pintaMusculo(b: { pinta?: readonly string[] | null }, musculo: string): boolean {
   return !Array.isArray(b.pinta) || b.pinta.includes(musculo);
 }
+
+/**
+ * Si el ejercicio pinta ese músculo solo de respaldo (entrenador, 2026-11-27): el pec deck y el
+ * press de pecho en máquina dan color al pecho solo a quien no hizo ninguno de la lista, y con
+ * tope en Avanzado. Sale de `docs/estandares-fuerza/respaldo.json`. GEMELO de
+ * `pintaDeRespaldo` en `functions/src/fuerza.ts`.
+ */
+export function pintaDeRespaldo(b: { respaldo?: readonly string[] | null }, musculo: string): boolean {
+  return Array.isArray(b.respaldo) && b.respaldo.includes(musculo);
+}
+
+/** Hasta dónde llega un ejercicio de respaldo: dentro de Avanzado, nunca Élite (el dorado). */
+export const TOPE_RESPALDO = 7.99;
 
 /**
  * Si el ejercicio tiene prohibido pintar ese músculo, ni siquiera de respaldo (entrenador,
@@ -408,8 +435,11 @@ export type Siguiente =
   | { tipo: "maximo" }
   /** Con su mismo ejercicio: cuánto le falta, en kg (a sus mismas reps) o en reps. */
   | ({ tipo: "falta"; rango: number; avance: number; otra?: Meta } & Meta)
-  /** Su nivel sale de un ejercicio que trabaja el músculo de lado: con ese no llega. */
-  | { tipo: "otroEjercicio"; rango: number; avance: number };
+  /**
+   * Con el ejercicio de su nivel no llega: trabaja el músculo de lado, o es de respaldo y ya
+   * está en su tope (`conTope`, con el nombre de ese ejercicio).
+   */
+  | { tipo: "otroEjercicio"; rango: number; avance: number; conTope?: string };
 
 /**
  * El siguiente rango y qué le falta para llegar. `avance` es cuánto lleva del camino entre el
@@ -426,6 +456,7 @@ export function siguienteRango(f: FuerzaMusculo, pesoCorporal: number): Siguient
   const o = f.origen;
   const nivelEjercicio = o ? meta / o.cuanto : Infinity;
   if (!o || nivelEjercicio > NIVEL_MAX) return { tipo: "otroEjercicio", rango: i + 1, avance };
+  if (o.tope !== undefined && meta > o.tope) return { tipo: "otroEjercicio", rango: i + 1, avance, conTope: o.nombre };
 
   // La segunda opción: su otro mejor ejercicio del músculo, si con él se puede llegar.
   const s2 = f.segundo?.origen;

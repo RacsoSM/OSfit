@@ -1,7 +1,8 @@
 /**
  * Carga los estándares de fuerza: `docs/estandares-fuerza/estandares.json` → los campos
  * `estandares` y `pesoPorMancuerna` de `ejercicios/{id}`, y `pintan.json` → el campo `pinta`
- * (qué músculos pinta cada ejercicio en el mapa) y `nuncaPintan.json` → `nuncaPinta` (los que
+ * (qué músculos pinta cada ejercicio en el mapa), `respaldo.json` → `respaldo` (los que pinta
+ * solo a quien no hizo los de la lista, con tope en Avanzado) y `nuncaPintan.json` → `nuncaPinta` (los que
  * no pinta nunca, ni de respaldo). Nada más: no toca nombres, GIF,
  * videos ni los demás campos (escribe con `merge`). El archivo lo genera
  * `docs/estandares-fuerza/proponer.py`; con él se cambian los números, no a mano.
@@ -24,8 +25,10 @@ async function main() {
   const archivo = leer("../../docs/estandares-fuerza/estandares.json");
   const pintan = leer("../../docs/estandares-fuerza/pintan.json");
   const nuncaPintan = leer("../../docs/estandares-fuerza/nuncaPintan.json");
+  // Los que pintan solo de respaldo, con tope en Avanzado (entrenador, 2026-11-27).
+  const respaldo = leer("../../docs/estandares-fuerza/respaldo.json");
   const errores = [
-    ...erroresEstandares(archivo, semilla), ...erroresPintan(pintan, semilla), ...erroresPintan(nuncaPintan, semilla),
+    ...erroresEstandares(archivo, semilla), ...erroresPintan(pintan, semilla), ...erroresPintan(nuncaPintan, semilla), ...erroresPintan(respaldo, semilla),
   ];
   if (errores.length > 0) {
     console.error(errores.join("\n"));
@@ -53,7 +56,9 @@ async function main() {
   for (const e of semilla) {
     const ref = db.collection("ejercicios").doc(e.id);
     if (faltan.includes(e.id) || !(await ref.get()).exists) continue;
-    lote.set(ref, { pinta: pintaDe(e, pintan), nuncaPinta: nuncaPintaDe(e, nuncaPintan) }, { merge: true });
+    lote.set(ref, {
+      pinta: pintaDe(e, pintan), nuncaPinta: nuncaPintaDe(e, nuncaPintan), respaldo: nuncaPintaDe(e, respaldo),
+    }, { merge: true });
   }
   await lote.commit();
   console.log(`✓ ${ids.length - faltan.length} ejercicios actualizados (y la lista de qué pinta cada uno).`);

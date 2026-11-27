@@ -222,6 +222,28 @@ describe("fuerzaPorMusculo", () => {
     expect(fuerzaPorMusculo(solo, [{ ...maquina, pinta: ["pecho"], nuncaPinta: [] }], "H", 75, "2026-10-11").pecho).toBeDefined();
   });
 
+  it("de respaldo: pinta solo sin los de la lista, y nunca pasa de Avanzado", () => {
+    const pecDeck = { ...banca, id: "pec-deck", nombre: "Pec deck", pinta: [], respaldo: ["pecho"] };
+    const conMaquina = [sesion("2026-10-10", [{ ejercicioId: "pec-deck", nombre: "", series: [{ reps: 1, peso: 400 }] }])];
+    // Solo la máquina, muy pesada: pinta, pero se queda en Avanzado (nunca el dorado de Élite).
+    const solo = fuerzaPorMusculo(conMaquina, [banca, pecDeck], "H", 75, "2026-10-11").pecho;
+    expect(solo.nivel).toBeLessThan(8);
+    expect(solo.nivel).toBeGreaterThanOrEqual(7);
+    expect(solo.origen?.tope).toBeDefined();
+    // Con el press de banca, aunque sea más ligero, manda el press.
+    const conPress = fuerzaPorMusculo(
+      [sesion("2026-10-10", [
+        { ejercicioId: "pec-deck", nombre: "", series: [{ reps: 1, peso: 400 }] },
+        { ejercicioId: "press-banca", nombre: "", series: [{ reps: 1, peso: 40 }] },
+      ])],
+      [banca, pecDeck], "H", 75, "2026-10-11"
+    ).pecho;
+    expect(conPress.origen?.ejercicioId).toBe("press-banca");
+    expect(conPress.nivel).toBeLessThan(solo.nivel);
+    // En su tope, para subir le pide otro ejercicio.
+    expect(siguienteRango(solo, 75)).toMatchObject({ tipo: "otroEjercicio", conTope: "Pec deck" });
+  });
+
   it("solo cuentan las últimas 20 semanas", () => {
     const dentro = sesion("2026-06-01", [{ ejercicioId: "press-banca", nombre: "", series: [{ reps: 1, peso: 100 }] }]);
     expect(fuerzaPorMusculo([dentro], banco, "H", 75, "2026-10-11").pecho).toBeDefined();

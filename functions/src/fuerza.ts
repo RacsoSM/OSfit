@@ -18,6 +18,8 @@ export interface EjercicioFuerza {
   pinta?: readonly string[] | null;
   /** Los músculos que no pinta nunca, ni de respaldo (ver `web/src/fuerza.ts`). */
   nuncaPinta?: readonly string[] | null;
+  /** Los músculos que pinta solo de respaldo, con tope en Avanzado (ver `web/src/fuerza.ts`). */
+  respaldo?: readonly string[] | null;
 }
 
 export interface SesionFuerza {
@@ -101,6 +103,14 @@ export function nuncaPintaMusculo(b: { nuncaPinta?: readonly string[] | null }, 
   return Array.isArray(b.nuncaPinta) && b.nuncaPinta.includes(musculo);
 }
 
+/** Si pinta ese músculo solo de respaldo, con tope (`respaldo.json`). GEMELO de la web. */
+export function pintaDeRespaldo(b: { respaldo?: readonly string[] | null }, musculo: string): boolean {
+  return Array.isArray(b.respaldo) && b.respaldo.includes(musculo);
+}
+
+/** Hasta dónde llega un ejercicio de respaldo: dentro de Avanzado, nunca Élite. GEMELO de la web. */
+export const TOPE_RESPALDO = 7.99;
+
 /** Músculo → nivel (0 a 8). Mismas reglas que la web: ver su comentario. */
 export function nivelesPorMusculo(
   sesiones: readonly SesionFuerza[],
@@ -131,16 +141,28 @@ export function nivelesPorMusculo(
     }
   }
 
-  // Solo los de la lista del músculo (`pinta`): ya no hay respaldo (entrenador, 2026-11-16).
+  // Los de la lista del músculo (`pinta`) deciden su color. Los de respaldo (`respaldo`, el pec
+  // deck y el press de pecho en máquina, 2026-11-27) solo pintan a quien no hizo ninguno de la
+  // lista, y con tope en Avanzado.
   const deLista: Record<string, number> = {};
+  const deRespaldo: Record<string, number> = {};
   for (const [id, marca] of mejor) {
     const b = porId.get(id)!;
     const nivel = nivelDe(marca, b.estandares![sexo]);
     for (const [musculo, cuanto] of Object.entries(b.musculos)) {
       // Solo el trabajo directo pinta (× 1 en el banco); un secundario no cuenta de rebote.
-      if (cuanto < 1 || nuncaPintaMusculo(b, musculo) || !pintaMusculo(b, musculo)) continue;
+      if (cuanto < 1 || nuncaPintaMusculo(b, musculo)) continue;
+      if (pintaDeRespaldo(b, musculo)) {
+        const tope = Math.min(nivel, TOPE_RESPALDO);
+        if (tope > (deRespaldo[musculo] ?? -1)) deRespaldo[musculo] = tope;
+        continue;
+      }
+      if (!pintaMusculo(b, musculo)) continue;
       if (nivel > (deLista[musculo] ?? -1)) deLista[musculo] = nivel;
     }
+  }
+  for (const [musculo, nivel] of Object.entries(deRespaldo)) {
+    if (!(musculo in deLista)) deLista[musculo] = nivel;
   }
   return deLista;
 }

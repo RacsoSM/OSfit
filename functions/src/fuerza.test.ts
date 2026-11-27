@@ -18,6 +18,11 @@ describe("gemelo de web/src/fuerza.ts", () => {
     // Nunca pinta el pecho, ni de respaldo.
     { id: "press-maquina", nombre: "Press máquina", tipo: "peso" as const, musculos: { pecho: 1, hombro: 1 }, pinta: [] as string[],
       nuncaPinta: ["pecho"], estandares: { H: [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.25], M: [0.25, 0.4, 0.55, 0.7, 0.85, 1, 1.15, 1.3] } },
+    // De respaldo para el bíceps: con curl no cuenta; en el escenario de abajo sin curl, sí.
+    { id: "maquina-biceps", nombre: "Máquina", tipo: "peso" as const, musculos: { biceps: 1 }, pinta: [] as string[], respaldo: ["biceps"],
+      estandares: { H: [0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.5], M: [0.05, 0.08, 0.1, 0.13, 0.16, 0.2, 0.24, 0.3] } },
+    { id: "maquina-trapecio", nombre: "Máquina", tipo: "peso" as const, musculos: { trapecio: 1 }, pinta: [] as string[], respaldo: ["trapecio"],
+      estandares: { H: [0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.5], M: [0.05, 0.08, 0.1, 0.13, 0.16, 0.2, 0.24, 0.3] } },
   ];
   const sesiones = [
     { id: "a", fecha: "2026-10-10", origen: "manual" as const, ejercicios: [
@@ -31,6 +36,8 @@ describe("gemelo de web/src/fuerza.ts", () => {
     ] },
     { id: "maquina", fecha: "2026-10-01", origen: "manual" as const, ejercicios: [
       { ejercicioId: "press-maquina", nombre: "x", series: [{ reps: 5, peso: 200 }] },
+      { ejercicioId: "maquina-biceps", nombre: "x", series: [{ reps: 5, peso: 300 }] },
+      { ejercicioId: "maquina-trapecio", nombre: "x", series: [{ reps: 5, peso: 300 }] },
     ] },
     { id: "viejo", fecha: "2026-04-01", origen: "manual" as const, ejercicios: [
       { ejercicioId: "curl", nombre: "x", series: [{ reps: 10, peso: 40 }] },
@@ -45,6 +52,9 @@ describe("gemelo de web/src/fuerza.ts", () => {
       const deWeb = Object.fromEntries(Object.entries(web.fuerzaPorMusculo(sesiones, banco, sexo, p, hoy, edad)).map(([m, f]) => [m, f.nivel]));
       expect(nivelesPorMusculo(sesiones, banco, sexo, p, hoy, edad)).toEqual(deWeb);
       expect(Object.keys(deWeb).length).toBeGreaterThan(2);
+      // De respaldo: el trapecio sale de la máquina (sin pasar de Avanzado); el bíceps, del curl.
+      expect(deWeb.trapecio).toBeLessThan(8);
+      expect(deWeb.trapecio).toBeGreaterThanOrEqual(7);
     });
   }
 });

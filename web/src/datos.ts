@@ -74,6 +74,12 @@ export interface EjercicioBanco {
    */
   nuncaPinta?: string[] | null;
   /**
+   * Los músculos que pinta solo de respaldo, a quien no hizo ninguno de la lista, y con tope en
+   * Avanzado: nunca le da Élite (`docs/estandares-fuerza/respaldo.json`, entrenador, 2026-11-27:
+   * el pec deck y el press de pecho en máquina). Lo carga `cargarEstandares.mjs`.
+   */
+  respaldo?: string[] | null;
+  /**
    * Cómo se anota el peso cuando no es lo de siempre, por ejemplo "Ingresa el peso del disco."
    * en las elevaciones frontales, que en el gimnasio se hacen con disco. Registro lo muestra
    * debajo del peso. Opcional por la razón de siempre.
