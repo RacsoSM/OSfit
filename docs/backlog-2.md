@@ -1041,56 +1041,96 @@ implementan después.
 
 | Fase | Qué agrega | Qué ve la clienta |
 |---|---|---|
-| 1. Monedas | Ganar y acumular monedas por el Arcade | Su saldo, su historial y avisos de "¡Ganaste una moneda!" |
+| 1. Monedas | Ganar monedas por el Arcade y por entrenar, pedirlas y regalarlas | Su saldo, su historial, cómo ganar más y avisos de "¡Ganaste monedas!" |
 | 2. Mi espacio | Su lugar propio: un gimnasio sencillo, vacío al inicio | Una sección nueva con su espacio |
-| 3. Tienda | Comprar objetos con monedas y acomodarlos | Catálogo, precios y su espacio mejorando |
+| 3. Tienda | Comprar objetos de Mi espacio, decoraciones del nombre y avatares de los juegos | Catálogo, precios, su espacio y su nombre mejorando |
 | 4. Visitas | Ver los espacios de los demás | Entrar al espacio de otra persona desde el Ranking o el Arcade |
-| 5. Más formas de ganar | Monedas por entrenar, rachas, logros… | Más maneras de juntar monedas |
+| 5. Más formas de ganar | Otras que se definan (logros, retos…) | Más maneras de juntar monedas |
 
 ### Fase 1 — Monedas (después de la base de Mi espacio)
 
-Decidido por el entrenador (2026-11-25):
+> "prefiero que cada 24 horas, el 3er lugar de cualquier juego gane 1 moneda, el 2do lugar gane 2
+> monedas y el 1er lugar gane 3 monedas cada 24h, el cronometro me agrada, debera poder ser
+> seleccionable el contador de monedas [...] 1 entrenamiento completado dara 1 moneda, 1 semana
+> completa sin ninguna falta [...] dara 3 monedas y 1 mes sin ninguna falta dara 50 monedas [...]
+> añadelo a la idea, aun no la ejecutaremos" (2026-11-27)
 
-- **Nombre:** Monedas.
-- **Llegar al 1er lugar** en cualquier juego del Arcade: **5 monedas**.
-- **Mantener el 1er lugar:** **1 moneda extra por cada 24 horas** con el puesto.
-- **Sin tope diario.**
-- **Empate en el 1er lugar:** les da monedas a todos los empatados.
-- **Arranque:** al publicar, cada campeón actual recibe **1 moneda de bienvenida**, y desde ese
-  momento empieza su cronómetro de 24 h para la siguiente.
-- **El cronómetro se ve para todos** en el inicio de cada juego (cuánto le falta al campeón
-  para su siguiente moneda).
-- **La cuenta del entrenador gana monedas** como cualquier jugador.
+Las reglas del 2026-11-25 (5 monedas al llegar al 1er lugar, 1 por cada 24 h como campeón y la
+moneda de bienvenida) **quedan reemplazadas** por estas, decididas por el entrenador el
+2026-11-27. Aún no se implementa.
 
-Cuidados:
+#### Cómo se ganan
+
+| Acción | Monedas |
+|---|---|
+| 1er lugar de cualquier juego del Arcade, cada 24 h | 3 |
+| 2º lugar, cada 24 h | 2 |
+| 3er lugar, cada 24 h | 1 |
+| 1 entrenamiento completado | 1 |
+| 1 semana completa sin ninguna falta | 3 |
+| 1 mes completo sin ninguna falta | 50 |
+
+- Cuenta **cada juego por separado**: quien es 1º en dos juegos gana 3 + 3 cada 24 h.
+- **Las faltas justificadas también quitan** el bono de la semana y el del mes: el bono es solo
+  para semanas y meses sin ninguna falta, de ningún tipo.
+- **El cronómetro se queda:** en el inicio de cada juego, cuánto falta para el siguiente reparto
+  de monedas de ese juego (y quiénes van 1º, 2º y 3º).
+- **La cuenta del entrenador gana monedas** como cualquier jugador (de 2026-11-25, se mantiene).
+
+#### El contador de monedas
+
+Un contador con estética neón (en el Arcade y donde haga falta). **Se puede tocar** y abre una
+hoja con:
+
+- **La moneda:** qué es, para qué sirve (la tienda) y su saldo.
+- **El historial** de lo que ganó, gastó, pidió y regaló.
+- **Botón "Conseguir más":** explica qué acciones dan monedas y cuántas (la tabla de arriba).
+- **Botón "$$$"** (da a entender que se pueden comprar): al tocarlo sale un aviso que dice
+  "En esta aplicación no somos vendidos, si deseas más monedas, consíguelas por tus propios
+  medios...". No se venden monedas: es una broma con mensaje.
+- **Botón "Pedir monedas":** la mecánica de abajo.
+
+#### Pedir y regalar monedas
+
+1. Quien pide elige **a quién** (un selector con los demás jugadores) y **cuántas** monedas pide.
+2. A la otra persona le llega una notificación: "*nombrePersona* te está pidiendo monedas,
+   ¿deseas echarle la mano?".
+3. Esa persona decide **si le da o no**, y **cuántas** (puede dar menos de las que le pidieron).
+4. El servidor hace el traspaso (revisa que tenga el saldo) y le avisa a quien pidió.
+
+#### Cuidados (se mantienen)
 
 - **Lo decide el servidor, nunca el teléfono**, igual que hoy se validan las partidas
   (`functions/src/juegoDiscos.ts`). Nadie puede darse monedas editando la app.
-- **Sin duplicados:** cada moneda lleva un id único (como los avisos de "te ha superado",
+- **Sin duplicados:** cada movimiento lleva un id único (como los avisos de "te ha superado",
   `auto_<clave>_…`), así que si algo se repite no se paga doble.
-- **Sin tope diario**, turnarse el 1er lugar paga cada vez. Si se ve abuso, se revisa.
+- **Base de datos:** `monedas/{clienteId}` con el saldo y `monedas/{clienteId}/movimientos/{id}`
+  con el historial ("+3 · 1er lugar en Correle pa", "+1 · Entrenamiento", "+50 · Mes sin faltas",
+  "−5 · Le regalaste a Said"). Reglas: cada quien lee lo suyo; escribe solo el servidor.
+- **Avisos** por el sistema de notificaciones que ya existe (`notificaciones/` y
+  `enviarNotificacion`).
+- **Pruebas** de todas las reglas: repartos de 1º/2º/3º, empates, entrenamientos, semanas y
+  meses sin faltas (con faltas justificadas), pedir, regalar y saldo insuficiente.
 
-Lo que se construye:
+#### Propuestas de Claude, por decidir (2026-11-27)
 
-1. **Al guardar una partida** (`guardarPartida`): revisar si con esa partida llegó al 1er lugar.
-   Si sí, darle las 5 monedas y guardar desde cuándo es campeón de ese juego
-   (por ejemplo `juegoX/_campeon`: quién o quiénes y desde cuándo).
-2. **Revisión automática cada hora** (función programada, hora de Mazatlán): quien lleve 24 h o
-   más de campeón recibe 1 moneda por cada día completo. El id incluye el juego, la persona,
-   desde cuándo y el número de día.
-3. **Base de datos:** `monedas/{clienteId}` con el saldo y `monedas/{clienteId}/movimientos/{id}`
-   con el historial ("+5 · Llegaste al 1er lugar en Fit Bird", "+1 · 24 h de campeón en Jumper"). Reglas: cada quien lee lo suyo;
-   escribe solo el servidor.
-4. **Aviso** "¡Ganaste una moneda!" por el sistema de notificaciones que ya existe
-   (`notificaciones/` y `enviarNotificacion`).
-5. **En la web:**
-   - un contador de monedas en el Arcade, junto al letrero, con estética neón;
-   - al tocarlo, una hoja con el saldo, el historial y cómo ganar más;
-   - en el inicio de cada juego, el cronómetro del campeón: cuánto le falta para su siguiente
-     moneda.
-6. **Al publicar:** una corrida única que da la moneda de bienvenida a los campeones actuales
-   y arranca sus cronómetros.
-7. **Pruebas** de todas las reglas: conquista, empates, días completos y la bienvenida.
+1. **Hora fija del reparto:** que las monedas del Arcade se repartan todos los días a la misma
+   hora (por ejemplo, 9:00 p. m. de Mazatlán) en lugar de "24 h desde que llegó": más fácil de
+   entender y el cronómetro es el mismo para todos.
+2. **Empates:** quienes empatan en un lugar reciben lo de ese lugar (dos empatados en 1º, 3 cada
+   uno) y el siguiente lugar sigue siendo el 2º.
+3. **Para que pedir no se vuelva molesto:** una solicitud pendiente a la vez por persona, que
+   caduque a las 48 h; un tope de cuánto se puede pedir por solicitud; y la opción de "no recibir
+   solicitudes" en Ajustes.
+4. **"Gracias":** al recibir monedas regaladas, un botón para mandarle un "¡Gracias!" a quien
+   ayudó (otro aviso).
+5. **Qué es "entrenamiento completado":** definirlo con lo que ya registra la app (asistencia
+   marcada o sesión guardada en Registro), una vez por día, para que no se pueda repetir.
+6. **Resumen del día:** un solo aviso con todo lo ganado ("Hoy ganaste 5 monedas: 3 por el 1er
+   lugar en Fit Bird, 1 por entrenar…") en lugar de un aviso por moneda.
+7. **Economía de la tienda:** entrenando 3 veces por semana sin faltar se juntan ~12 + 12 + 50 =
+   ~74 monedas al mes; los precios conviene calcularlos con eso (objetos chicos de 5 a 15,
+   avatares de 30 a 60, lo especial de 100 o más).
 
 ### Fase 2 — Mi espacio (va primero)
 
@@ -1113,6 +1153,18 @@ en el menú ni se puede abrir.
 Objetos con precio en monedas para los tres lugares: la pradera, la casa y el gimnasio
 (mancuernas, rack, caminadora, posters, luces de neón, plantas, árboles, bancas…). Al comprar (función del servidor que valida el saldo y descuenta), el objeto se
 agrega a su espacio y lo puede acomodar.
+
+Además (entrenador, 2026-11-27):
+
+- **Decorar su nombre (nickname):** colores, efectos de neón, marcos o un emoji junto al nombre.
+  Se ve donde aparece su nombre: el Ranking, los Records y los campeones del Arcade.
+- **Avatares para los juegos:** cambiar el aspecto del personaje de cada juego. Por ejemplo, en
+  Correle pa otros colores de visera y de cinta o trajes para la mancuerna ninja; en Fit Bird
+  otras kettlebells; en Jumper otros personajes; en Torre de discos otros colores de discos.
+
+Propuesta de Claude: que algunos objetos solo se puedan comprar si se cumple algo (por ejemplo,
+un avatar dorado solo para quien haya sido 1º de ese juego), para que tenga más valor que solo
+juntar monedas.
 
 ### Fase 4 — Visitas
 
