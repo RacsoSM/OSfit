@@ -12,6 +12,11 @@
  *  - las colchonetas apiladas, largas y altas: a veces traen una cuña para subir corriendo; si
  *    no, se sube saltando. Arriba se corre por encima (con batidos) y al final se cae al piso.
  *    Chocar de frente o de lado contra ellas, abajo de su tapa, termina la carrera.
+ *  - el carrito de discos, que viene rodando por un carril directo hacia la mancuerna: solo se
+ *    esquiva cambiándose de carril (entrenador, 2026-11-27).
+ * Desde el nivel 2 hay circuitos de colchonetas: un tramo en que el piso de los tres carriles
+ * está cerrado por máquinas y hay que subir por la cuña e ir pasándose de una pila a la de al
+ * lado antes de que se acabe la que se pisa.
  * Por el camino hay batidos de proteína; cada uno vale `PUNTOS_BATIDO`. Cada metro corrido es un
  * punto. La velocidad sube poco a poco.
  *
@@ -45,10 +50,10 @@ export const ALTO_BARRA = 1.0;
 /** De la mitad del cuerpo de la mancuerna a cada lado, de frente. */
 const PROFUNDIDAD_JUGADORA = 0.35;
 
-export type TipoObstaculo = "banca" | "barra" | "maquina" | "colchoneta";
+export type TipoObstaculo = "banca" | "barra" | "maquina" | "colchoneta" | "carro";
 
 /** El largo de cada obstáculo; las colchonetas traen el suyo (`largo`). */
-export const LARGO: Readonly<Record<TipoObstaculo, number>> = { banca: 1.4, barra: 0.3, maquina: 1.0, colchoneta: 12 };
+export const LARGO: Readonly<Record<TipoObstaculo, number>> = { banca: 1.4, barra: 0.3, maquina: 1.0, colchoneta: 12, carro: 1.4 };
 
 /** La altura de la pila de colchonetas y el largo de su cuña de subida. */
 export const ALTO_COLCHONETA = 1.3;
@@ -64,7 +69,12 @@ export interface Obstaculo {
   /** Solo colchonetas: su largo y si traen cuña para subir corriendo. */
   largo?: number;
   rampa?: boolean;
+  /** Si se mueve: su velocidad a lo largo (negativa = viene hacia la mancuerna). */
+  vz?: number;
 }
+
+/** Qué tan rápido rueda el carrito de discos hacia la mancuerna. */
+export const VEL_CARRO = 7;
 
 export function largoDe(o: Obstaculo): number {
   return o.tipo === "colchoneta" ? o.largo ?? LARGO.colchoneta : LARGO[o.tipo];
@@ -99,6 +109,9 @@ export interface Carrera {
   batidosTomados: number;
   /** Dónde va la siguiente fila de obstáculos. */
   proximaFila: number;
+  /** Dónde terminó el último circuito de colchonetas y dónde salió el último carrito. */
+  ultimoCircuito: number;
+  ultimoCarro: number;
   terminada: boolean;
   /** Con qué chocó (para pintarlo). */
   choque: Obstaculo | null;
@@ -138,6 +151,10 @@ export function separacion(n: number): [number, number] {
 /** Cuántos obstáculos lleva una fila: más con el nivel, nunca tres máquinas. */
 export function probDos(n: number): number { return [0.25, 0.35, 0.45, 0.52, 0.58, 0.62, 0.66, 0.7][Math.min(NIVELES, n) - 1]!; }
 export function probTres(n: number): number { return [0, 0.05, 0.1, 0.15, 0.2, 0.24, 0.28, 0.32][Math.min(NIVELES, n) - 1]!; }
+/** Los circuitos de colchonetas (desde el nivel 2, separados al menos 250 m) y los carritos (desde el 3). */
+export function probCircuito(n: number): number { return n < 2 ? 0 : 0.14; }
+export const SEPARACION_CIRCUITOS = 250;
+export function probCarro(n: number): number { return n < 3 ? 0 : [0, 0, 0.12, 0.14, 0.16, 0.18, 0.2, 0.22][Math.min(NIVELES, n) - 1]!; }
 export function probColchonetas(n: number): number { return [0.12, 0.2, 0.24, 0.26, 0.28, 0.3, 0.3, 0.32][Math.min(NIVELES, n) - 1]!; }
 export function probMaquina(n: number): number { return [0.2, 0.26, 0.32, 0.36, 0.4, 0.43, 0.46, 0.5][Math.min(NIVELES, n) - 1]!; }
 
@@ -166,10 +183,86 @@ function filaColchonetas(c: Carrera, z: number, n: number): void {
   c.proximaFila = z + largo + Math.max(10, (min + az() * (max - min)) * velocidad(z));
 }
 
+/** ¿Hay unas colchonetas en ese carril que tapen de `z0` a `z1`? */
+function tapada(c: Carrera, carril: Carril, z0: number, z1: number): boolean {
+  return c.obstaculos.some((o) => o.tipo === "colchoneta" && o.carril === carril && o.z < z1 && o.z + largoDe(o) > z0);
+}
+
+/**
+ * Un circuito de colchonetas (entrenador, 2026-11-27: "puntos donde obligatoriamente tengas que
+ * subir por colchonetas y que tengas que cambiar entre ellas"). De tres a cuatro pilas, cada una
+ * en el carril de al lado de la anterior y encimadas un tramo, para pasarse de una a otra por
+ * arriba. La primera trae cuña. Abajo, máquinas cierran el piso: al empezar, en los otros dos
+ * carriles; en cada cambio, en el carril que queda libre; y al final de cada pila, en su
+ * carril. Arriba, batidos marcan el camino.
+ */
+export function circuito(c: Carrera, z: number): void {
+  const az = c.azar;
+  const vel = velocidad(z);
+  // Lo encimado: tiempo de sobra para cambiarse de carril arriba.
+  const encimado = Math.max(7, vel * 0.8);
+  const n = 3 + (az() < 0.5 ? 1 : 0);
+  const pilas: Obstaculo[] = [];
+  let carril = elegir(CARRILES, az);
+  let ini = z;
+  for (let k = 0; k < n; k++) {
+    const largo = (k === 0 ? RAMPA + 12 : 12) + Math.floor(az() * 5) + encimado;
+    pilas.push({ carril, z: ini, tipo: "colchoneta", largo, rampa: k === 0 });
+    ini = ini + largo - encimado;
+    carril = (carril === 0 ? (az() < 0.5 ? -1 : 1) : 0) as Carril;
+  }
+  c.obstaculos.push(...pilas);
+  const maquina = (carril: Carril, zm: number) => {
+    if (!tapada(c, carril, zm - 0.5, zm + LARGO.maquina + 0.5)) c.obstaculos.push({ carril, z: zm, tipo: "maquina" });
+  };
+  for (const k of CARRILES) if (k !== pilas[0]!.carril) maquina(k, z + 1);
+  pilas.forEach((p, k) => {
+    const sig = pilas[k + 1];
+    if (sig) {
+      for (const l of CARRILES) if (l !== p.carril && l !== sig.carril) maquina(l, sig.z);
+      maquina(p.carril, p.z + largoDe(p) + 0.4);
+    }
+    // Los batidos van arriba, hasta la mitad de lo encimado: ahí toca cambiarse.
+    const desde = p.z + (p.rampa ? RAMPA + 1 : 1.5), hasta = sig ? sig.z + encimado * 0.4 : p.z + largoDe(p) - 1;
+    for (let bz = desde; bz < hasta; bz += 1.6) c.batidos.push({ carril: p.carril, z: bz, alto: ALTO_COLCHONETA + 0.5, tomado: false });
+  });
+  const fin = pilas[pilas.length - 1]!;
+  c.ultimoCircuito = fin.z + largoDe(fin);
+  c.proximaFila = c.ultimoCircuito + Math.max(12, vel * 1.1);
+}
+
+/**
+ * Un carrito de discos que rueda hacia la mancuerna por un carril (entrenador, 2026-11-27: "algún
+ * obstáculo que venga en algún carril directo hacia ti"). Sale lejos, fuera de la vista; se
+ * calcula dónde se van a cruzar y en su carril, de ahí hasta donde sale, se quita todo lo demás
+ * (que no lo atraviese). Cerca del cruce, las máquinas de los otros carriles se vuelven bancas:
+ * siempre hay a dónde hacerse a un lado. No sale si en su camino hay colchonetas.
+ */
+export function carro(c: Carrera, z: number): boolean {
+  const az = c.azar;
+  const t = Math.max(0, z - c.z) / (c.vel + VEL_CARRO);
+  const cruce = c.z + c.vel * t;
+  const desde = cruce - 18;
+  if (c.obstaculos.some((o) => o.tipo === "colchoneta" && o.z < z + 2 && o.z + largoDe(o) > desde)) return false;
+  const carril = elegir(CARRILES, az);
+  c.obstaculos = c.obstaculos.filter((o) => !(o.carril === carril && o.z + largoDe(o) > desde && o.z < z + 2));
+  c.batidos = c.batidos.filter((b) => !(b.carril === carril && b.z > desde && b.z < z + 2));
+  for (const o of c.obstaculos) if (o.tipo === "maquina" && Math.abs(o.z - cruce) < 18) o.tipo = "banca";
+  c.obstaculos.push({ carril, z, tipo: "carro", vz: -VEL_CARRO });
+  c.ultimoCarro = z;
+  return true;
+}
+
 function nuevaFila(c: Carrera): void {
   const z = c.proximaFila;
   const n = nivel(z);
   const az = c.azar;
+  if (z - c.ultimoCircuito > SEPARACION_CIRCUITOS && az() < probCircuito(n)) { circuito(c, z); return; }
+  if (z - c.ultimoCarro > 70 && az() < probCarro(n) && carro(c, z)) {
+    const [min, max] = separacion(n);
+    c.proximaFila = z + Math.max(10, (min + az() * (max - min)) * velocidad(z));
+    return;
+  }
   if (az() < probColchonetas(n)) { filaColchonetas(c, z, n); return; }
   const r = az();
   const cuantos = r < probTres(n) ? 3 : r < probTres(n) + probDos(n) ? 2 : 1;
@@ -209,7 +302,7 @@ function nuevaFila(c: Carrera): void {
 export function nuevaCarrera(azar: () => number = Math.random): Carrera {
   const c: Carrera = {
     z: 0, vel: VEL_INICIAL, x: 0, carril: 0, y: 0, vy: 0, barrida: 0, barrerAlCaer: false, suelo: 0,
-    obstaculos: [], batidos: [], batidosTomados: 0, proximaFila: 30, terminada: false, choque: null, azar,
+    obstaculos: [], batidos: [], batidosTomados: 0, proximaFila: 30, ultimoCircuito: 0, ultimoCarro: 0, terminada: false, choque: null, azar,
   };
   // Al arrancar, unos batidos derechito para calentar.
   for (let k = 0; k < 5; k++) c.batidos.push({ carril: 0, z: 12 + k * 1.6, alto: 0.5, tomado: false });
@@ -277,7 +370,7 @@ function contraColchonetas(c: Carrera): Obstaculo | null {
 export function choca(o: Obstaculo, x: number, y: number, barriendo: boolean): boolean {
   if (Math.abs(x - o.carril) > 0.5) return false;
   if (o.tipo === "colchoneta") return y < ALTO_COLCHONETA - TOLERANCIA_TAPA;
-  if (o.tipo === "maquina") return true;
+  if (o.tipo === "maquina" || o.tipo === "carro") return true;
   if (o.tipo === "banca") return y < ALTO_BANCA;
   return !barriendo;
 }
@@ -294,6 +387,8 @@ export function avanzar(c: Carrera, dt: number): Evento {
   const paso = VEL_CARRIL * dt;
   c.x = Math.abs(d) <= paso ? c.carril : c.x + Math.sign(d) * paso;
 
+  // Lo que rueda (el carrito de discos) avanza hacia ella.
+  for (const o of c.obstaculos) if (o.vz) o.z += o.vz * dt;
   // Las colchonetas: chocar contra su parte maciza termina la carrera.
   const pila = contraColchonetas(c);
   if (pila) {
@@ -321,7 +416,8 @@ export function avanzar(c: Carrera, dt: number): Evento {
   // Choques: lo que pasó por donde va su cuerpo en este cuadro.
   for (const o of c.obstaculos) {
     if (o.tipo === "colchoneta") continue;
-    const ini = o.z - PROFUNDIDAD_JUGADORA, fin = o.z + LARGO[o.tipo] + PROFUNDIDAD_JUGADORA;
+    // Si se mueve, cuenta también lo que recorrió en este cuadro (no se "atraviesan").
+    const ini = o.z - PROFUNDIDAD_JUGADORA, fin = o.z + LARGO[o.tipo] + PROFUNDIDAD_JUGADORA + Math.abs(o.vz ?? 0) * dt;
     if (c.z < ini || antes > fin) continue;
     if (choca(o, c.x, c.y, barriendo)) {
       c.terminada = true;

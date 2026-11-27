@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  ALTO_BANCA, ALTO_COLCHONETA, ALTURA_SALTO, RAMPA, enAire, sueloEn, CARRILES, PUNTOS_BATIDO, VEL_INICIAL, VEL_MAXIMA, accion, avanzar, choca, metros, nivel, nuevaCarrera, puntos,
+  ALTO_BANCA, ALTO_COLCHONETA, ALTURA_SALTO, RAMPA, VEL_CARRO, carro, circuito, enAire, largoDe, sueloEn, CARRILES, PUNTOS_BATIDO, VEL_INICIAL, VEL_MAXIMA, accion, avanzar, choca, metros, nivel, nuevaCarrera, puntos,
   separacion, velocidad, type Carrera, type Obstaculo,
 } from "./pesaRun";
 
@@ -187,5 +187,76 @@ describe("Correle pa", () => {
       }
     }
     expect(vistas).toBeGreaterThan(0);
+  });
+
+  it("circuito de colchonetas: por el piso no se pasa; por arriba, pasándose de pila en pila, sí", () => {
+    for (let sem = 1; sem <= 25; sem++) {
+      const base = (): Carrera => { const c = vacia(); c.azar = semilla(sem); circuito(c, 20); c.proximaFila = 1e9; return c; };
+      // Quedándose en el piso, en cualquier carril, se choca.
+      for (const k of CARRILES) {
+        const c = base();
+        c.carril = k; c.x = k;
+        for (let i = 0; i < 1200 && !c.terminada; i++) avanzar(c, 1 / 60);
+        expect(c.terminada).toBe(true);
+      }
+      // Subiendo por la cuña y cambiándose a la pila siguiente en lo encimado, se sale entero.
+      const c = base();
+      const pilas = c.obstaculos.filter((o) => o.tipo === "colchoneta").sort((a, b) => a.z - b.z);
+      c.carril = pilas[0]!.carril; c.x = c.carril;
+      let k = 0, batidos = 0;
+      const fin = pilas.at(-1)!.z + largoDe(pilas.at(-1)!);
+      for (let i = 0; i < 3000 && !c.terminada && c.z < fin + 30; i++) {
+        const sig = pilas[k + 1];
+        if (sig && c.z > sig.z + 1) { accion(c, sig.carril < c.carril ? "izquierda" : "derecha"); k++; }
+        if (avanzar(c, 1 / 60) === "batido") batidos++;
+      }
+      expect(c.terminada).toBe(false);
+      expect(c.z).toBeGreaterThan(fin);
+      expect(batidos).toBeGreaterThan(5);
+    }
+  });
+
+  it("los circuitos salen solos desde el nivel 2", () => {
+    const c = nuevaCarrera(semilla(3));
+    let vistos = 0;
+    for (let i = 0; i < 9000; i++) {
+      c.obstaculos = c.obstaculos.filter((o) => o.z > c.z + 25 || o.tipo === "colchoneta");
+      const antes = c.ultimoCircuito;
+      avanzar(c, 1 / 30);
+      if (c.terminada) { c.terminada = false; c.y = c.suelo; }
+      if (c.ultimoCircuito !== antes) { vistos++; expect(antes === 0 || c.ultimoCircuito - antes > 250).toBe(true); }
+    }
+    expect(vistos).toBeGreaterThan(0);
+  });
+
+  it("el carrito de discos rueda hacia ella: en su carril choca, a un lado pasa", () => {
+    const c = vacia();
+    c.obstaculos = [{ carril: 0, z: 40, tipo: "carro", vz: -VEL_CARRO }];
+    for (let i = 0; i < 300 && !c.terminada; i++) avanzar(c, 1 / 60);
+    expect(c.terminada).toBe(true);
+    expect(c.choque?.tipo).toBe("carro");
+    expect(c.z).toBeLessThan(40 - VEL_CARRO * 0.5);
+
+    const d = vacia();
+    d.obstaculos = [{ carril: 0, z: 40, tipo: "carro", vz: -VEL_CARRO }];
+    accion(d, "izquierda");
+    for (let i = 0; i < 300; i++) avanzar(d, 1 / 60);
+    expect(d.terminada).toBe(false);
+    // Ya pasó (y se quitó al quedar atrás).
+    expect(d.obstaculos.length).toBe(0);
+  });
+
+  it("el carrito sale con su carril despejado hasta el cruce, y siempre hay a dónde hacerse a un lado", () => {
+    for (let sem = 1; sem < 40; sem++) {
+      const c = nuevaCarrera(semilla(sem));
+      c.z = 600; c.vel = 18;
+      c.obstaculos = [];
+      for (let z = 610; z < 690; z += 8) for (const k of CARRILES) c.obstaculos.push({ carril: k, z, tipo: k === 1 ? "banca" : "maquina" });
+      if (!carro(c, 690)) continue;
+      const cr = c.obstaculos.find((o) => o.tipo === "carro")!;
+      const cruce = c.z + c.vel * ((690 - c.z) / (c.vel + VEL_CARRO));
+      expect(c.obstaculos.some((o) => o !== cr && o.carril === cr.carril && o.z > cruce - 18 && o.z < 690)).toBe(false);
+      for (const o of c.obstaculos) if (Math.abs(o.z - cruce) < 18) expect(o.tipo).not.toBe("maquina");
+    }
   });
 });

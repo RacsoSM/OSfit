@@ -7,7 +7,7 @@ import { escapar } from "./tarjetaDia";
 import { ajustarMarcoJuego, pintarSeguro, prepararMarcoJuego, vigilarMarcoJuego, densidadJuego } from "./marcoJuego";
 import { marcasDe } from "./marcasRecords";
 import { CAM_ALTO, CAM_ATRAS, CARRIL, ORILLA, crearVista, niebla, proyectar } from "./pesaRun3d";
-import { cosasDeEscena, lineasVelocidad, pintarBanca, pintarBarra, pintarBatido, pintarColchonetas, pintarMaquina, pintarPasillo, type Cosa } from "./pesaRunEscena";
+import { cosasDeEscena, lineasVelocidad, pintarBanca, pintarBarra, pintarBatido, pintarColchonetas, pintarCarro, pintarMaquina, pintarPasillo, type Cosa } from "./pesaRunEscena";
 import { pintarMancuerna, type AnimMancuerna, type Gesto } from "./pesaRunMancuerna";
 
 /**
@@ -119,7 +119,7 @@ export function htmlCapaPesaRun(e: Estado, total: number, m: number, batidos: nu
       <div class="jd-capa-caja">
         <p class="jd-capa-marca">OSFIT · Arcade</p>
         <p class="jd-capa-titulo">Correle pa</p>
-        <p class="jd-capa-texto">La mancuerna corre sola por el gimnasio. Desliza el dedo a los lados para cambiar de carril, hacia arriba para saltar las bancas y hacia abajo para barrerte bajo las barras. Las máquinas de proteína solo se esquivan. Cada metro es un punto y cada batido vale ${PUNTOS_BATIDO}.</p>
+        <p class="jd-capa-texto">La mancuerna corre sola por el gimnasio. Desliza el dedo a los lados para cambiar de carril, hacia arriba para saltar las bancas y hacia abajo para barrerte bajo las barras. Las máquinas de proteína y los carritos de discos que vienen hacia ti solo se esquivan. A veces el piso se cierra: sube por la cuña a las colchonetas y pásate de una a otra. Cada metro es un punto y cada batido vale ${PUNTOS_BATIDO}.</p>
         <button type="button" class="jd-boton" data-pr="jugar">Jugar</button>
         <button type="button" class="jd-boton secundario" data-pr="marcador">Ver marcador</button>
       </div>`;
@@ -250,7 +250,7 @@ function gestoActual(): Gesto {
   if (feliz > 0) return "feliz";
   if (estado === "jugando") {
     const barriendo = c.barrida > 0;
-    const peligro = c.obstaculos.some((o) => !(o.tipo === "colchoneta" && o.rampa) && o.z > c.z && o.z - c.z < c.vel * 0.42 && choca(o, c.carril, c.y, barriendo) && choca(o, c.x, c.y, barriendo));
+    const peligro = c.obstaculos.some((o) => !(o.tipo === "colchoneta" && o.rampa) && o.z > c.z && o.z - c.z < (c.vel - (o.vz ?? 0)) * 0.42 && choca(o, c.carril, c.y, barriendo) && choca(o, c.x, c.y, barriendo));
     if (peligro) return "susto";
   }
   if (c.barrida > 0) return "barre";
@@ -380,6 +380,7 @@ function dibujar(): void {
       if (o.tipo === "colchoneta") pintarColchonetas(c, v, o);
       else if (o.tipo === "banca") pintarBanca(c, v, o);
       else if (o.tipo === "barra") pintarBarra(c, v, o);
+      else if (o.tipo === "carro") pintarCarro(c, v, o, reloj);
       else pintarMaquina(c, v, o);
       c.globalAlpha = 1;
     } });
@@ -395,7 +396,7 @@ function dibujar(): void {
 
   for (const p of particulas) {
     // El polvo que ya quedó atrás, junto a la cámara, se vería enorme.
-    if (p.z < v.camZ + 3.4) continue;
+    if (p.z < v.camZ + CAM_ATRAS - 0.9) continue;
     const pp = proyectar(v, p.x, p.y, p.z);
     c.globalAlpha = Math.max(0, Math.min(1, p.vida * 2));
     c.fillStyle = p.color; c.beginPath(); c.arc(pp.x, pp.y, Math.max(1, pp.s * p.r), 0, Math.PI * 2); c.fill();

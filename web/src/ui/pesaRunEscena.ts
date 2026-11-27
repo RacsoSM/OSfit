@@ -1,6 +1,6 @@
 import { ALTO_BARRA, ALTO_COLCHONETA, LARGO, METROS_POR_NIVEL, RAMPA, ZONAS, largoDe, type Batido, type Obstaculo } from "../pesaRun";
 import {
-  CARRIL, ORILLA, PARED, TECHO, azarFijo, bola, caja3d, disco3d, mezclar, poligono, proyectar, quadFrente, quadPared, quadPiso,
+  CAM_ATRAS, CARRIL, ORILLA, PARED, TECHO, azarFijo, bola, caja3d, disco3d, mezclar, poligono, proyectar, quadFrente, quadPared, quadPiso,
   type Vista,
 } from "./pesaRun3d";
 
@@ -47,7 +47,7 @@ const LOSETA = 2;
  * neblina casi no los deja ver, y eran cientos de figuritas que en un teléfono lento costaban
  * cuadros. Lo de base (piso, paredes, techo) y los obstáculos sí llegan hasta el fondo.
  */
-export const DETALLE = 46;
+export const DETALLE = 40;
 
 type Rasgo = "espejo" | "ventana" | "cartel" | "lockers" | "rackMancuernas" | "pizarron" | "repisaPesas" | "trofeos";
 type Utileria = "planta" | "garrafon" | "caminadora" | "bici" | "arbolDiscos" | "balones" | "poleas" | "cajasPlio" | "llanta" | "pilaDiscos" | "saco" | "estatua" | "kettlebells";
@@ -394,7 +394,8 @@ export function cosasDeEscena(c: CanvasRenderingContext2D, v: Vista, reloj: numb
     }
   }
   // Las guirnaldas, cada dos tramos.
-  for (let k = Math.floor(Math.min(v.lejos, v.camZ + DETALLE) / (TRAMO * 2)); k * TRAMO * 2 > cerca + 2; k--) {
+  // Solo las que van más allá de la mancuerna: las de entre ella y la cámara cruzarían la pantalla.
+  for (let k = Math.floor(Math.min(v.lejos, v.camZ + DETALLE) / (TRAMO * 2)); k * TRAMO * 2 > v.camZ + CAM_ATRAS + 1; k--) {
     const z = k * TRAMO * 2 + 0.25;
     cosas.push({ z, pintar: () => pintarGuirnalda(c, v, z, reloj) });
   }
@@ -704,6 +705,42 @@ export function pintarMaquina(c: CanvasRenderingContext2D, v: Vista, o: Obstacul
   // La bandeja de salida.
   F(-0.5, 0.2, 0.2, 0.5, "#1d1d22");
   F(-0.46, 0.16, 0.24, 0.32, "#3a3a44");
+}
+
+/**
+ * El carrito de discos (entrenador, 2026-11-27): viene rodando por su carril directo hacia la
+ * mancuerna. Base de acero con ruedas, discos de colores parados a los dos lados del poste, una
+ * defensa con franjas de cuidado al frente, el asa atrás y una torreta ámbar que parpadea.
+ */
+export function pintarCarro(c: CanvasRenderingContext2D, v: Vista, o: Obstaculo, reloj: number): void {
+  const x = o.carril * CARRIL, z0 = o.z, z1 = o.z + LARGO.carro;
+  const acero = ["#3a3e47", "#4f5460", "#2a2d34"] as const;
+  quadPiso(c, v, x - 0.7, x + 0.7, 0.004, Math.max(z0 - 0.1, v.camZ + 0.5), z1 + 0.1, "rgba(0, 0, 0, 0.35)");
+  // Las ruedas (las de atrás primero) y la base.
+  for (const zr of [z1 - 0.2, z0 + 0.2]) for (const s of [-1, 1]) bola(c, v, x + s * 0.5, 0.15, zr, 0.15, "#17181c", "rgba(255, 255, 255, 0.15)");
+  caja3d(c, v, x - 0.6, x + 0.6, 0.22, 0.38, z0, z1, ...acero);
+  // El asa de atrás.
+  caja3d(c, v, x - 0.45, x + 0.45, 1.45, 1.52, z1 - 0.1, z1 - 0.03, ...acero);
+  for (const s of [-1, 1]) caja3d(c, v, x + s * 0.45 - 0.03, x + s * 0.45 + 0.03, 0.38, 1.52, z1 - 0.1, z1 - 0.03, ...acero);
+  // El poste central y los discos parados a cada lado (los de más afuera, más chicos).
+  caja3d(c, v, x - 0.06, x + 0.06, 0.38, 1.45, z0 + 0.62, z1 - 0.62, ...acero);
+  const cols: [string, string][] = [["#e03a52", "#9e2738"], ["#2f7fe0", "#1d4f8f"], ["#f2c230", "#a8861f"], ["#3bb36a", "#287a48"]];
+  for (const s of [-1, 1]) {
+    // De adentro hacia afuera, para que los de afuera queden encima.
+    const orden = s * v.camX > s * x ? [0, 1, 2] : [2, 1, 0];
+    for (const k of orden) {
+      const [a, b] = cols[(k + (s > 0 ? 1 : 0)) % 4]!;
+      disco3d(c, v, x + s * (0.16 + k * 0.11), 0.92 - k * 0.08, (z0 + z1) / 2, 0.52 - k * 0.1, 0.08, a, b);
+    }
+  }
+  // La defensa del frente, con franjas de cuidado.
+  if (z0 > v.camZ + 0.4) for (let k = 0; k < 6; k++) quadFrente(c, v, x - 0.62 + k * 0.207, x - 0.62 + k * 0.207 + 0.1, 0.22, 0.42, z0 - 0.004, k % 2 ? "#1b1b1b" : "#f2c230");
+  // La torreta ámbar que parpadea.
+  caja3d(c, v, x - 0.08, x + 0.08, 1.45, 1.55, z0 + 0.62, z0 + 0.78, ...acero);
+  const prendida = Math.floor(reloj * 6) % 2 === 0;
+  const t = proyectar(v, x, 1.66, z0 + 0.7);
+  if (prendida) { c.fillStyle = "rgba(255, 170, 40, 0.3)"; c.beginPath(); c.arc(t.x, t.y, t.s * 0.32, 0, Math.PI * 2); c.fill(); }
+  bola(c, v, x, 1.66, z0 + 0.7, 0.11, prendida ? "#ffb02e" : "#9a5a10", "rgba(255, 255, 255, 0.5)");
 }
 
 /** Un batido de proteína: el shaker con su líquido, su tapa y su asa; gira, flota y brilla. */

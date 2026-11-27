@@ -13,9 +13,9 @@ export const PARED = 3.7;
 /** La altura de las paredes: no hay techo, arriba se ve el cielo. */
 export const TECHO = 3.6;
 /** La cámara: qué tan alto va sobre lo que pisa la mancuerna, qué tan atrás y cuánto mira hacia abajo. */
-export const CAM_ALTO = 3.1;
-export const CAM_ATRAS = 4.3;
-export const INCLINACION = 0.27;
+export const CAM_ALTO = 4.4;
+export const CAM_ATRAS = 7.2;
+export const INCLINACION = 0.3;
 
 export interface Vista {
   W: number; H: number;
@@ -42,8 +42,9 @@ export function proyectar(v: Vista, x: number, y: number, z: number): Punto {
 }
 
 export function crearVista(W: number, H: number, camX: number, camY: number, camZ: number, lejos: number): Vista {
-  // Que los tres carriles quepan a lo ancho, también en pantallas angostas.
-  const F = Math.min(W * 0.95, H * 0.62);
+  // Como teleobjetivo: la cámara lejos y la vista cerrada, así lo que viene adelante se ve
+  // grande (entrenador, 2026-11-27) y los tres carriles caben a lo ancho donde va la mancuerna.
+  const F = Math.min(W * 1.55, H * 0.95);
   const cos = Math.cos(INCLINACION), sin = Math.sin(INCLINACION);
   const cy = H * 0.44;
   return { W, H, F, cy, hz: cy - F * Math.tan(INCLINACION), camX, camY, camZ, cos, sin, lejos };
