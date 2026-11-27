@@ -400,7 +400,7 @@ function dibujar(): void {
       if (o.tipo === "fosa") pintarFosa(c, v, o, pilas);
       else if (o.tipo === "banca") pintarBanca(c, vo, o);
       else if (o.tipo === "barra") pintarBarra(c, vo, o);
-      else if (o.tipo === "carro") pintarCarro(c, v, o, reloj);
+      else if (o.tipo === "carro") pintarCarro(c, vo, o, reloj);
       else pintarMaquina(c, vo, o);
       c.globalAlpha = 1;
     } });

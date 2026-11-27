@@ -79,6 +79,10 @@ export interface Obstaculo {
   rampa?: boolean;
   /** Si se mueve: su velocidad a lo largo (negativa = viene hacia la mancuerna). */
   vz?: number;
+  /** Si espera: empieza a moverse cuando la mancuerna está a esta distancia (o menos). */
+  activa?: number;
+  /** Hasta dónde llega rodando (la orilla de la colchoneta por la que va): ahí se detiene. */
+  tope?: number;
   /** Si está encima de unas colchonetas: la altura de donde se apoya. */
   base?: number;
 }
@@ -283,6 +287,8 @@ export function carro(c: Carrera, z: number, dos = false): boolean {
  *  - brincar un hueco a la siguiente pila del mismo carril;
  *  - pasarse a la pila del carril de al lado, encimada un tramo;
  *  - en una pila doble (dos carriles juntos), esquivar una máquina pasándose a la otra;
+ *  - en una pila doble, esquivar un carrito de discos que viene rodando por encima de una de
+ *    ellas (entrenador, 2026-11-27);
  * y encima hay bancas para saltar y barras para barrerse. Los batidos marcan el camino.
  */
 export function rutaElevada(c: Carrera, z: number): void {
@@ -318,7 +324,19 @@ export function rutaElevada(c: Carrera, z: number): void {
     const r = az();
     let destino = carril;
     // (La pila que sigue a un cruce no es doble: su gemela quedaría en medio y bastaría un swipe.)
-    if (!cruce && !trasCruce && !primera && r < 0.35 && util1 - util0 > 10) {
+    if (!cruce && !trasCruce && !primera && r < 0.2 && util1 - util0 > 10) {
+      // Pila doble con un carrito que viene por encima de una de las dos: hay que estar en la otra.
+      const otro = (carril === 0 ? (az() < 0.5 ? -1 : 1) : 0) as Carril;
+      c.obstaculos.push({ carril: otro, z: zc, tipo: "colchoneta", largo, rampa: false });
+      const conCarro = az() < 0.5 ? carril : otro, libre = conCarro === carril ? otro : carril;
+      // Espera quieto al fondo de la pila y arranca cuando la mancuerna se acerca: así se cruzan
+      // dentro de la pila, con tiempo de sobra para cambiarse (~1.5 s).
+      const zCarro = zc + largo - LARGO.carro - 0.5;
+      const activa = Math.min(48, Math.max(25, 1.5 * (vel + VEL_CARRO)));
+      c.obstaculos.push({ carril: conCarro, z: zCarro, tipo: "carro", vz: -VEL_CARRO, base: arriba, activa, tope: zc + 1 });
+      batidos(libre, util0, util1);
+      destino = libre;
+    } else if (!cruce && !trasCruce && !primera && r < 0.45 && util1 - util0 > 10) {
       const otro = (carril === 0 ? (az() < 0.5 ? -1 : 1) : 0) as Carril;
       c.obstaculos.push({ carril: otro, z: zc, tipo: "colchoneta", largo, rampa: false });
       const zm = (util0 + util1) / 2;
@@ -523,8 +541,13 @@ export function avanzar(c: Carrera, dt: number): Evento {
   const paso = VEL_CARRIL * dt;
   c.x = Math.abs(d) <= paso ? c.carril : c.x + Math.sign(d) * paso;
 
-  // Lo que rueda (el carrito de discos) avanza hacia ella.
-  for (const o of c.obstaculos) if (o.vz) o.z += o.vz * dt;
+  // Lo que rueda (el carrito de discos) avanza hacia ella; el que espera, hasta que se acerca; el
+  // que va encima de unas colchonetas se detiene en la orilla.
+  for (const o of c.obstaculos) {
+    if (!o.vz || (o.activa !== undefined && o.z - c.z > o.activa)) continue;
+    o.z += o.vz * dt;
+    if (o.tope !== undefined && o.z < o.tope) o.z = o.tope;
+  }
   // Las colchonetas: chocar contra su parte maciza termina la carrera.
   const pila = contraColchonetas(c);
   if (pila) {

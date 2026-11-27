@@ -278,6 +278,9 @@ describe("Correle pa", () => {
     const vecinos = CARRILES.filter((l) => Math.abs(l - c.carril) === 1);
     const cambiar = (l: number) => accion(c, l < c.carril ? "izquierda" : "derecha");
     const arriba = c.obstaculos.filter((o) => o.base && o.carril === c.carril && o.z > c.z - 0.2);
+    // Un carrito que viene por encima de su pila: a la de al lado.
+    const carrito = arriba.find((o) => o.tipo === "carro" && o.z - c.z < (c.vel + VEL_CARRO) * 0.7);
+    if (carrito) { const l = vecinos.find((l) => continua(l, c.z, carrito.z + 2)); if (l !== undefined) cambiar(l); return; }
     const maq = arriba.find((o) => o.tipo === "maquina" && o.z - c.z < c.vel * 0.55);
     if (maq) {
       const l = vecinos.find((l) => continua(l, c.z, maq.z + 1));
@@ -286,7 +289,7 @@ describe("Correle pa", () => {
       else if (c.carril !== 0 && cubre(-c.carril, maq.z) && maq.z - c.z < c.vel * 0.3) { accion(c, "saltar"); plan.cruzarA = -c.carril; }
       return;
     }
-    const obs = arriba.find((o) => o.tipo !== "maquina" && o.z - c.z < c.vel * 0.25 + 0.4);
+    const obs = arriba.find((o) => (o.tipo === "banca" || o.tipo === "barra") && o.z - c.z < c.vel * 0.25 + 0.4);
     if (obs) { accion(c, obs.tipo === "banca" ? "saltar" : "barrer"); return; }
     if (c.suelo > 0 && !cubre(c.carril, c.z + c.vel * 0.22)) {
       const l = vecinos.find((l) => continua(l, c.z, c.z + c.vel * 0.5));
@@ -372,5 +375,31 @@ describe("Correle pa", () => {
         expect(c.terminada).toBe(true);
       }
     }
+  });
+
+  it("carritos encima de las colchonetas: esperan, ruedan hacia ella y en su pila se choca", () => {
+    let vistos = 0;
+    for (let sem = 1; sem <= 60; sem++) {
+      const r = vacia(); r.azar = semilla(sem); rutaElevada(r, 600);
+      const cr = r.obstaculos.find((o) => o.tipo === "carro" && o.base);
+      if (!cr) continue;
+      vistos++;
+      // Va sobre una pila, con otra al lado en todo su recorrido.
+      const mats = r.obstaculos.filter((o) => o.tipo === "colchoneta");
+      expect(mats.some((m) => m.carril === cr.carril && m.z <= cr.tope! && m.z + largoDe(m) >= cr.z)).toBe(true);
+      expect(mats.some((m) => Math.abs(m.carril - cr.carril) === 1 && m.z <= cr.tope! && m.z + largoDe(m) >= cr.z)).toBe(true);
+      // Quedándose en la pila del carrito, se choca con él.
+      const c = vacia(); c.azar = semilla(sem); rutaElevada(c, 600); c.proximaFila = 1e9;
+      const k = c.obstaculos.find((o) => o.tipo === "carro" && o.base)!;
+      const zIni = k.tope! + 0.5, inicio = k.z;
+      c.z = zIni; c.carril = k.carril; c.x = k.carril; c.y = ALTO_COLCHONETA; c.suelo = ALTO_COLCHONETA; c.despegue = ALTO_COLCHONETA;
+      for (let i = 0; i < 600 && !c.terminada; i++) avanzar(c, 1 / 60);
+      expect(c.terminada).toBe(true);
+      expect(c.choque?.tipo).toBe("carro");
+      // Esperó y luego rodó hacia ella (sin salirse de la pila).
+      expect(k.z).toBeLessThan(inicio);
+      expect(k.z).toBeGreaterThanOrEqual(k.tope!);
+    }
+    expect(vistos).toBeGreaterThan(5);
   });
 });

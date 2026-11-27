@@ -1,6 +1,6 @@
 import { ALTO_BARRA, ALTO_COLCHONETA, LARGO, METROS_POR_NIVEL, RAMPA, ZONAS, largoDe, type Batido, type Obstaculo } from "../pesaRun";
 import {
-  CAM_ATRAS, CARRIL, ORILLA, PARED, TECHO, azarFijo, bola, caja3d, disco3d, trazoPiso, mezclar, poligono, proyectar, quadFrente, quadPared, quadPiso,
+  CAM_ATRAS, CARRIL, ORILLA, PARED, TECHO, azarFijo, bola, caja3d, disco3d, mezclar, poligono, proyectar, quadFrente, quadPared, quadPiso,
   type Vista,
 } from "./pesaRun3d";
 
@@ -669,12 +669,11 @@ function pintarCuna(c: CanvasRenderingContext2D, v: Vista, o: Obstaculo, x0: num
 }
 
 /**
- * La fosa de cubos de hule espuma (entrenador, 2026-11-27): el piso de la ruta elevada. Un
- * hueco en el piso lleno de cubos de colores, con su orilla acolchada al empezar. Caer ahí es
- * perder. Los cubos solo se pintan cerca (más allá, el color de fondo basta).
+ * La fosa de espinas (entrenador, 2026-11-27: eligió las espinas en lugar del hule espuma): el
+ * piso de la ruta elevada es una cama de picos de metal en hileras, con una franja de cuidado
+ * amarilla y negra al empezar. Caer ahí es perder. Los picos solo se pintan cerca (más allá, el
+ * fondo oscuro basta) y van juntos, una cara clara y una oscura, de una sola pasada.
  */
-const CUBOS = ["#ff6fa8", "#7ec8ff", "#ffd45c", "#9dff8a", "#c79bff", "#ffffff"];
-
 export function pintarFosa(c: CanvasRenderingContext2D, v: Vista, o: Obstaculo, encima: readonly Obstaculo[] = []): void {
   const x = o.carril * CARRIL, x0 = x - CARRIL / 2, x1 = x + CARRIL / 2;
   const a = Math.max(o.z, v.camZ + 0.5), b = Math.min(o.z + largoDe(o), v.lejos);
@@ -686,28 +685,33 @@ export function pintarFosa(c: CanvasRenderingContext2D, v: Vista, o: Obstaculo, 
   for (const [t0, t1] of tapas) { if (t0 > desde) huecos.push([desde, Math.min(t0, b)]); desde = Math.max(desde, t1); }
   if (desde < b) huecos.push([desde, b]);
   for (const [z0, z1] of huecos) pintarTramoFosa(c, v, o, x0, x1, z0, z1);
-  // La orilla acolchada al empezar la fosa.
-  if (o.z > v.camZ + 0.5) caja3d(c, v, x0, x1, 0, 0.12, o.z - 0.25, o.z, "#f2c230", "#ffd84a", "#c99a16");
+  // La franja de cuidado al empezar la fosa.
+  if (o.z > v.camZ + 0.5) for (let k = 0; k < 6; k++) quadPiso(c, v, x0 + k * 0.25, x0 + k * 0.25 + 0.25, 0.005, o.z - 0.3, o.z, k % 2 ? "#1b1b1b" : "#f2c230");
+}
+
+function trazoTri(c: CanvasRenderingContext2D, v: Vista, a: [number, number, number], b: [number, number, number], d: [number, number, number]): void {
+  const p = proyectar(v, a[0], a[1], a[2]), q = proyectar(v, b[0], b[1], b[2]), r = proyectar(v, d[0], d[1], d[2]);
+  c.moveTo(p.x, p.y); c.lineTo(q.x, q.y); c.lineTo(r.x, r.y); c.closePath();
 }
 
 function pintarTramoFosa(c: CanvasRenderingContext2D, v: Vista, o: Obstaculo, x0: number, x1: number, z0: number, z1: number): void {
   if (z1 <= z0) return;
-  quadPiso(c, v, x0, x1, 0.003, z0, z1, "#2a3f6e");
-  // Los cubos, hasta donde llega el detalle. Se juntan por color y cada color se pinta de una
-  // sola vez (eran cientos de figuritas por cuadro).
+  quadPiso(c, v, x0, x1, 0.003, z0, z1, "#23252c");
+  // Los picos: hileras cada 0.6 m, cuatro por carril, alternadas. Cada pico es una cara oscura y
+  // una clara; todas las de un tono se pintan juntas.
   const zt = Math.min(z1, v.camZ + DETALLE - 8);
-  CUBOS.forEach((color, ci) => {
+  for (const [color, lado] of [["#7d838e", -1], ["#e3e7ee", 1]] as const) {
     c.beginPath();
-    for (let zz = Math.ceil(z0 / 0.75) * 0.75; zz < zt; zz += 0.75) {
-      for (let k = 0; k < 2; k++) {
-        const sem = zz * 7.3 + k * 3.1 + o.carril * 11;
-        if (Math.floor(azarFijo(sem * 2.1) * CUBOS.length) !== ci) continue;
-        const cx = x0 + 0.15 + azarFijo(sem) * (CARRIL - 0.5), w = 0.22 + azarFijo(sem * 1.3) * 0.14;
-        trazoPiso(c, v, cx, cx + w, 0.006, zz + k * 0.35, zz + k * 0.35 + w);
+    for (let zz = Math.ceil(z0 / 0.6) * 0.6; zz < zt; zz += 0.6) {
+      const desfase = (Math.round(zz / 0.6) % 2) * 0.12;
+      for (let k = 0; k < 4; k++) {
+        const xc = x0 + 0.19 + k * 0.37 + desfase;
+        if (xc > x1 - 0.1) continue;
+        trazoTri(c, v, [xc, 0, zz], [xc + lado * 0.13, 0, zz + 0.12], [xc, 0.5, zz + 0.12]);
       }
     }
     c.fillStyle = color; c.fill();
-  });
+  }
 }
 
 /** Franjas de cuidado amarillas y negras en un frente. */
