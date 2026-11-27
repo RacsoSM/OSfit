@@ -109,7 +109,7 @@ export function htmlCapaBoxJump(e: Estado, puntos: number, g: Guardado, nuevoRec
       <div class="jd-capa-caja">
         <p class="jd-capa-marca">OSFIT · Arcade</p>
         <p class="jd-capa-titulo">Jumper</p>
-        <p class="jd-capa-texto">Rebotas sola sobre las plataformas: desliza el dedo a la izquierda o a la derecha para moverte y sube de la Tierra al cielo, al espacio, a la Luna, a Marte… Cada metro es un punto. Cuidado con las que se rompen; los resortes te dan un súper salto.</p>
+        <p class="jd-capa-texto">Desliza a los lados para moverte y sube lo más alto que puedas. Cada metro es un punto.</p>
         <button type="button" class="jd-boton" data-bj="jugar">Jugar</button>
         <button type="button" class="jd-boton secundario" data-bj="marcador">Ver marcador</button>
       </div>`;

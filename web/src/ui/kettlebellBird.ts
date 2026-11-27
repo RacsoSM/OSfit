@@ -101,7 +101,7 @@ export function htmlCapaKettlebell(e: Estado, puntos: number, g: Guardado, nuevo
       <div class="jd-capa-caja">
         <p class="jd-capa-marca">OSFIT · Arcade</p>
         <p class="jd-capa-titulo">Fit Bird</p>
-        <p class="jd-capa-texto">Toca para que la kettlebell aletee y suba. Pasa por el hueco entre las barras sin tocarlas ni caer al piso. Cada barra es un punto, y cada 8 subes de nivel: otra zona del gimnasio, más rápido y con las barras más juntas.</p>
+        <p class="jd-capa-texto">Toca para aletear y pasa entre las barras sin tocarlas. Cada barra es un punto.</p>
         <button type="button" class="jd-boton" data-kb="jugar">Jugar</button>
         <button type="button" class="jd-boton secundario" data-kb="marcador">Ver marcador</button>
       </div>`;

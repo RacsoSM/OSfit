@@ -168,7 +168,7 @@ export function htmlCapa(e: Estado, puntos: number, apilados: number, g: Guardad
       <div class="jd-capa-caja">
         <p class="jd-capa-marca">OSFIT</p>
         <p class="jd-capa-titulo">Torre de discos</p>
-        <p class="jd-capa-texto">Toca para soltar cada disco sobre la torre. Lo que sobresale se corta y el siguiente sale más ligero. Cada disco que queda en la torre es un punto. Si lo sueltas justo encima es <b>perfecto</b>: no se corta.</p>
+        <p class="jd-capa-texto">Toca para soltar cada disco sobre la torre. Lo que sobresale se corta. Cada disco es un punto.</p>
         <button type="button" class="jd-boton" data-jd="jugar">Jugar</button>
         <button type="button" class="jd-boton secundario" data-jd="marcador">Ver marcador</button>
       </div>`;
