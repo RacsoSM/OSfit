@@ -6,11 +6,11 @@
  *
  * Los obstáculos son del gimnasio:
  *  - la banca plana, bajita: se salta;
- *  - la barra en sus soportes, a la altura del pecho: se pasa barriéndose por debajo;
+ *  - la barra en sus soportes, a la altura del pecho: se pasa barriéndose por debajo o brincándola;
  *  - la máquina de proteína, una expendedora alta y maciza: solo se esquiva (entrenador,
  *    2026-11-27: antes era un rack, pero por ser jaula daba la impresión de que se pasaba abajo);
- *  - las colchonetas apiladas, largas y altas: a veces traen una cuña para subir corriendo; si
- *    no, se sube saltando. Arriba se corre por encima (con batidos) y al final se cae al piso.
+ *  - las colchonetas apiladas, largas y altas: solo se sube por la cuña que a veces traen (de un
+ *    brinco desde el piso, no). Arriba se corre por encima (con batidos) y al final se cae al piso.
  *    Chocar de frente o de lado contra ellas, abajo de su tapa, termina la carrera.
  *  - el carrito de discos, que viene rodando por un carril directo hacia la mancuerna: solo se
  *    esquiva cambiándose de carril (entrenador, 2026-11-27).
@@ -109,6 +109,8 @@ export interface Carrera {
   barrerAlCaer: boolean;
   /** La altura de lo que tiene debajo: el piso (0) o la tapa de unas colchonetas. */
   suelo: number;
+  /** Desde qué altura despegó en el último salto o caída: desde el piso no se sube a las colchonetas. */
+  despegue: number;
   obstaculos: Obstaculo[];
   batidos: Batido[];
   batidosTomados: number;
@@ -288,9 +290,12 @@ export function rutaElevada(c: Carrera, z: number): void {
   const batidos = (carril: Carril, z0: number, z1: number, alto = arriba + 0.5) => {
     for (let bz = z0; bz < z1; bz += 1.6) c.batidos.push({ carril, z: bz, alto, tomado: false });
   };
-  let carril = elegir(CARRILES, az);
+  // Empieza en una orilla: el primer cambio es el cruce de extremo a extremo.
+  let carril: Carril = az() < 0.5 ? -1 : 1;
   let zc = z;
   let primera = true;
+  let cruces = 0;
+  let trasCruce = false;
   while (zc < fin - 10) {
     // Largas según la velocidad: cabe algo encima, el aterrizaje y el siguiente brinco.
     const largo = Math.min(fin - zc, (primera ? RAMPA : 0) + 12 + vel * 1.8 + Math.floor(az() * 8));
@@ -299,11 +304,16 @@ export function rutaElevada(c: Carrera, z: number): void {
     // Lo de encima, lejos del final: tras brincarlo (o barrerse) hay que alcanzar a aterrizar y
     // todavía brincar el hueco o cambiarse de pila.
     // Y lejos del principio: tras brincar el hueco anterior hay que alcanzar a aterrizar.
-    const util0 = zc + (primera ? RAMPA + 2 : vel * 0.75 + 2), util1 = zc + largo - (vel * 0.8 + 3);
+    // El cruce de extremo a extremo (entrenador, 2026-11-27): en una orilla, una máquina corta la
+    // pila y el camino sigue en la otra orilla; en medio solo hay fosa. Hay que brincar y dar
+    // dos swipes en el aire. Siempre hay al menos uno por ruta; los demás, de vez en cuando.
+    const cruce = carril !== 0 && zc + largo < fin - 20 && (cruces === 0 || az() < 0.3);
+    const util0 = zc + (primera ? RAMPA + 2 : vel * 0.75 + 2), util1 = zc + largo - (cruce ? vel * 1.5 + 3 : vel * 0.8 + 3);
     // Lo de encima: a veces una pila doble con una máquina que obliga a cambiarse; si no, una banca o una barra.
     const r = az();
     let destino = carril;
-    if (!primera && r < 0.35 && util1 - util0 > 10) {
+    // (La pila que sigue a un cruce no es doble: su gemela quedaría en medio y bastaría un swipe.)
+    if (!cruce && !trasCruce && !primera && r < 0.35 && util1 - util0 > 10) {
       const otro = (carril === 0 ? (az() < 0.5 ? -1 : 1) : 0) as Carril;
       c.obstaculos.push({ carril: otro, z: zc, tipo: "colchoneta", largo, rampa: false });
       const zm = (util0 + util1) / 2;
@@ -320,6 +330,22 @@ export function rutaElevada(c: Carrera, z: number): void {
       batidos(carril, zo + 3, util1);
     } else batidos(carril, util0, util1);
     carril = destino;
+    if (cruce) {
+      const zm = zc + largo - LARGO.maquina;
+      c.obstaculos.push({ carril, z: zm, tipo: "maquina", base: arriba });
+      const otro = -carril as Carril;
+      // Los batidos dibujan el brinco: sobre la fosa de en medio y aterrizando del otro lado.
+      c.batidos.push({ carril: 0, z: zm - vel * 0.12, alto: arriba + 1.3, tomado: false });
+      c.batidos.push({ carril: otro, z: zm + vel * 0.12, alto: arriba + 0.9, tomado: false });
+      // La pila de la otra orilla empieza antes de la máquina: el brinco cae en ella.
+      zc = zm - vel * 0.55;
+      carril = otro;
+      primera = false;
+      cruces++;
+      trasCruce = true;
+      continue;
+    }
+    trasCruce = false;
     zc = zc + largo;
     primera = false;
     if (zc >= fin - 10) break;
@@ -394,7 +420,7 @@ function nuevaFila(c: Carrera): void {
 
 export function nuevaCarrera(azar: () => number = Math.random): Carrera {
   const c: Carrera = {
-    z: 0, vel: VEL_INICIAL, x: 0, carril: 0, y: 0, vy: 0, barrida: 0, barrerAlCaer: false, suelo: 0,
+    z: 0, vel: VEL_INICIAL, x: 0, carril: 0, y: 0, vy: 0, barrida: 0, barrerAlCaer: false, suelo: 0, despegue: 0,
     obstaculos: [], batidos: [], batidosTomados: 0, proximaFila: 30, ultimoCircuito: 0, ultimoCarro: 0, ultimaRuta: 0, terminada: false, choque: null, azar,
   };
   // Al arrancar, unos batidos derechito para calentar.
@@ -415,6 +441,7 @@ export function accion(c: Carrera, a: Accion): boolean {
   }
   if (a === "saltar") {
     if (enAire(c)) return false;
+    c.despegue = c.suelo;
     c.barrida = 0;
     c.vy = SALTO;
     return true;
@@ -448,13 +475,19 @@ export function sueloEn(obstaculos: readonly Obstaculo[], x: number, z: number):
   return h;
 }
 
-/** ¿Se estrella contra la parte maciza de unas colchonetas (de frente o de lado, abajo de su tapa)? */
+/**
+ * ¿Se estrella contra la parte maciza de unas colchonetas? De frente o de lado abajo de su tapa,
+ * o llegando por el aire desde el piso (entrenador, 2026-11-27: "que no puedas subir a las
+ * colchonetas de un salto, solamente subiendo por la rampa"). Desde otra colchoneta o desde la
+ * cuña sí se llega brincando.
+ */
 function contraColchonetas(c: Carrera): Obstaculo | null {
+  const delPiso = c.y > c.suelo + 0.01 && c.despegue < 0.05;
   for (const o of c.obstaculos) {
     if (o.tipo !== "colchoneta" || !sobreCarril(o, c.x)) continue;
     const ini = o.z + (o.rampa ? RAMPA : 0) - PROFUNDIDAD_JUGADORA;
     if (c.z < ini || c.z > o.z + largoDe(o)) continue;
-    if (c.y < ALTO_COLCHONETA - TOLERANCIA_TAPA) return o;
+    if (c.y < ALTO_COLCHONETA - TOLERANCIA_TAPA || delPiso) return o;
   }
   return null;
 }
@@ -469,7 +502,8 @@ export function choca(o: Obstaculo, x: number, y: number, barriendo: boolean): b
   y -= o.base ?? 0;
   if (o.tipo === "maquina" || o.tipo === "carro") return true;
   if (o.tipo === "banca") return y < ALTO_BANCA;
-  return !barriendo;
+  // La barra: barriéndose por debajo o brincándola por encima (entrenador, 2026-11-27).
+  return !barriendo && y < ALTO_BARRA + 0.1;
 }
 
 /** Avanza `dt` segundos. Devuelve si tomó un batido o si chocó. */
@@ -494,6 +528,7 @@ export function avanzar(c: Carrera, dt: number): Evento {
     return "choque";
   }
   // Salto y caída: sobre el piso, la cuña o la tapa de las colchonetas.
+  const pisaba = c.y <= c.suelo + 0.01, sueloAntes = c.suelo;
   const suelo = sueloEn(c.obstaculos, c.x, c.z);
   if (c.y > suelo + 0.001 || c.vy > 0) {
     c.vy -= GRAVEDAD * dt;
@@ -506,6 +541,8 @@ export function avanzar(c: Carrera, dt: number): Evento {
     // Sube por la cuña, o se sube a la tapa si cayó apenas abajo de ella.
     c.y = suelo; c.vy = 0;
   }
+  // Si se le acabó lo que pisaba (salió de una orilla), cae desde esa altura.
+  if (pisaba && c.y > suelo + 0.01 && c.vy <= 0) c.despegue = sueloAntes;
   c.suelo = suelo;
   if (c.barrida > 0) c.barrida = Math.max(0, c.barrida - dt);
   const barriendo = c.barrida > 0;

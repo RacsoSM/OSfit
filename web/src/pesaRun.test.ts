@@ -45,6 +45,8 @@ describe("Correle pa", () => {
     expect(choca(barra, 0, 0, false)).toBe(true);
     expect(choca(barra, 0, 1, false)).toBe(true);
     expect(choca(barra, 0, 0, true)).toBe(false);
+    // La barra también se brinca por encima.
+    expect(choca(barra, 0, 1.2, false)).toBe(false);
     expect(choca(maquina, 0, 0, false)).toBe(true);
     expect(choca(maquina, 0, 1.5, false)).toBe(true);
     expect(choca(maquina, 0, 0, true)).toBe(true);
@@ -137,7 +139,7 @@ describe("Correle pa", () => {
     expect(c.y).toBeGreaterThan(ALTO_COLCHONETA + 0.3);
   });
 
-  it("sin cuña: de frente se choca; saltando a tiempo se sube", () => {
+  it("sin cuña: de frente se choca, y de un brinco desde el piso tampoco se sube", () => {
     const c = vacia();
     c.obstaculos = [{ carril: 0, z: 6, tipo: "colchoneta", largo: 12, rampa: false }];
     for (let i = 0; i < 120 && !c.terminada; i++) avanzar(c, 1 / 60);
@@ -150,8 +152,8 @@ describe("Correle pa", () => {
       if (d.z > 8 - d.vel * 0.3 && !enAire(d) && d.y === 0) accion(d, "saltar");
       avanzar(d, 1 / 60);
     }
-    expect(d.terminada).toBe(false);
-    expect(d.y).toBeCloseTo(ALTO_COLCHONETA, 5);
+    expect(d.terminada).toBe(true);
+    expect(d.choque?.tipo).toBe("colchoneta");
   });
 
   it("cambiarse de carril contra el costado de unas colchonetas es chocar; desde arriba a otra, no", () => {
@@ -261,7 +263,13 @@ describe("Correle pa", () => {
   });
 
   /** Un piloto que solo mira lo que tiene adelante en la ruta elevada y hace lo correcto. */
-  function piloto(c: Carrera): void {
+  function piloto(c: Carrera, plan: { cruzarA?: number }): void {
+    // En un cruce de extremo a extremo: ya en el aire, los dos swipes, uno tras otro.
+    if (plan.cruzarA !== undefined) {
+      if (c.carril !== plan.cruzarA && Math.abs(c.x - c.carril) < 0.05) accion(c, plan.cruzarA < c.carril ? "izquierda" : "derecha");
+      if (c.x === plan.cruzarA && !enAire(c)) plan.cruzarA = undefined;
+      return;
+    }
     if (enAire(c) || Math.abs(c.x - c.carril) > 0.05) return;
     const mats = c.obstaculos.filter((o) => o.tipo === "colchoneta");
     const cubre = (l: number, z: number) => mats.some((m) => m.carril === l && z >= m.z && z <= m.z + largoDe(m));
@@ -271,7 +279,13 @@ describe("Correle pa", () => {
     const cambiar = (l: number) => accion(c, l < c.carril ? "izquierda" : "derecha");
     const arriba = c.obstaculos.filter((o) => o.base && o.carril === c.carril && o.z > c.z - 0.2);
     const maq = arriba.find((o) => o.tipo === "maquina" && o.z - c.z < c.vel * 0.55);
-    if (maq) { const l = vecinos.find((l) => continua(l, c.z, maq.z + 1)); if (l !== undefined) cambiar(l); return; }
+    if (maq) {
+      const l = vecinos.find((l) => continua(l, c.z, maq.z + 1));
+      if (l !== undefined) cambiar(l);
+      // Nada al lado: la otra orilla, brincando (cuando ya está cerca la máquina).
+      else if (c.carril !== 0 && cubre(-c.carril, maq.z) && maq.z - c.z < c.vel * 0.3) { accion(c, "saltar"); plan.cruzarA = -c.carril; }
+      return;
+    }
     const obs = arriba.find((o) => o.tipo !== "maquina" && o.z - c.z < c.vel * 0.25 + 0.4);
     if (obs) { accion(c, obs.tipo === "banca" ? "saltar" : "barrer"); return; }
     if (c.suelo > 0 && !cubre(c.carril, c.z + c.vel * 0.22)) {
@@ -300,7 +314,8 @@ describe("Correle pa", () => {
         const c = base();
         const rampa = c.obstaculos.find((o) => o.rampa)!;
         c.carril = rampa.carril; c.x = c.carril;
-        for (let i = 0; i < 4000 && !c.terminada && c.z < fin + 20; i++) { piloto(c); avanzar(c, 1 / 60); }
+        const plan = {};
+        for (let i = 0; i < 4000 && !c.terminada && c.z < fin + 20; i++) { piloto(c, plan); avanzar(c, 1 / 60); }
         if (c.terminada) throw new Error(`semilla ${sem}, z0 ${z0}: chocó con ${c.choque?.tipo} en ${c.z.toFixed(1)} (carril ${c.carril}, y ${c.y.toFixed(2)})`);
         expect(c.z).toBeGreaterThan(fin);
         expect(c.batidosTomados).toBeGreaterThan(10);
@@ -330,6 +345,32 @@ describe("Correle pa", () => {
       const carros = c.obstaculos.filter((o) => o.tipo === "carro");
       expect(carros.length).toBe(2);
       expect(new Set(carros.map((o) => o.carril)).size).toBe(2);
+    }
+  });
+
+  it("cada ruta trae un cruce de extremo a extremo: sin brincar se cae; brincando con un solo swipe, también", () => {
+    for (let sem = 1; sem <= 30; sem++) {
+      const r = vacia(); r.azar = semilla(sem); rutaElevada(r, 600);
+      // El cruce: una máquina encima, en una orilla, al final de su pila; la pila de la otra orilla
+      // ya empezó, y en medio no hay colchonetas.
+      const mats = r.obstaculos.filter((o) => o.tipo === "colchoneta");
+      const cruce = r.obstaculos.find((o) => o.tipo === "maquina" && o.base && o.carril !== 0
+        && mats.some((m) => m.carril === -o.carril && m.z < o.z && m.z + largoDe(m) > o.z + 2)
+        && !mats.some((m) => m.carril === 0 && m.z < o.z + 1 && m.z + largoDe(m) > o.z - 8));
+      expect(cruce).toBeDefined();
+      // Llegando a ese cruce por arriba: sin brincar, o brincando y moviéndose un solo carril, se pierde.
+      for (const swipes of [0, 1]) {
+        const c = vacia(); c.azar = semilla(sem); rutaElevada(c, 600); c.proximaFila = 1e9;
+        const m = c.obstaculos.find((o) => o.tipo === "maquina" && o.base && o.carril === cruce!.carril && Math.abs(o.z - cruce!.z) < 0.01)!;
+        c.z = m.z - c.vel * 0.6; c.carril = m.carril; c.x = m.carril; c.y = ALTO_COLCHONETA; c.suelo = ALTO_COLCHONETA;
+        let hechos = 0;
+        for (let i = 0; i < 200 && !c.terminada; i++) {
+          if (m.z - c.z < c.vel * 0.3 && !enAire(c) && swipes > 0 && hechos === 0) accion(c, "saltar");
+          if (enAire(c) && hechos < swipes && Math.abs(c.x - c.carril) < 0.05) { accion(c, m.carril > 0 ? "izquierda" : "derecha"); hechos++; }
+          avanzar(c, 1 / 60);
+        }
+        expect(c.terminada).toBe(true);
+      }
     }
   });
 });
