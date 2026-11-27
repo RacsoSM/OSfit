@@ -424,7 +424,7 @@ export function rutaElevada(c: Carrera, z: number): void {
 /**
  * Un combo (entrenador, 2026-11-27: "partes en las que tengas que hacer una combinación de
  * movimientos específicos para pasar"): una secuencia armada, con el tiempo de reacción justo
- * (`d`, ~0.45 s a la velocidad de ese tramo; entrenador, 2026-11-27: "de 0.6 bájalo a 0.45").
+ * (`d`: ~0.62 s a la velocidad de ese tramo, y 0.45 s desde el nivel 6; entrenador, 2026-11-27).
  * Cada una puede salir hacia un lado o en espejo:
  *  - embudo: máquinas en las dos orillas y en medio una banca o una barra; enseguida, máquinas en
  *    medio y en una orilla: hay que irse a la otra orilla;
@@ -448,9 +448,11 @@ export function combo(c: Carrera, z: number, tipo?: Combo): number {
   const s = (az() < 0.5 ? -1 : 1) as 1 | -1;
   const k = (l: number) => (l * s) as Carril;
   const t = tipo ?? elegir(nivel(z) >= 3 ? COMBOS : COMBOS.filter((k) => !COMBOS_DE_CARRITOS.includes(k)), az);
-  // Los que mandan a una orilla y luego regresan al centro (zigzag y esquive tardío) conservan
-  // el tiempo anterior: con 0.45 s quedaban demasiado justos (entrenador, 2026-11-27).
-  const d = vel * (t === "zigzag" || t === "esquiveTardio" ? 0.62 : 0.45);
+  // El tiempo justo (0.45 s) solo desde el nivel 6; antes, ~0.62 s (entrenador, 2026-11-27).
+  // Los que mandan a una orilla y luego regresan al centro (zigzag y esquive tardío) se quedan
+  // siempre en ~0.62 s: con 0.45 s quedaban demasiado justos.
+  const alto = nivel(z) >= 6;
+  const d = vel * (t === "zigzag" || t === "esquiveTardio" || !alto ? 0.62 : 0.45);
   const pon = (carril: Carril, zz: number, tipoO: TipoObstaculo) => c.obstaculos.push({ carril, z: zz, tipo: tipoO });
   const batido = (carril: Carril, zz: number, alto = 0.5) => c.batidos.push({ carril, z: zz, alto, tomado: false });
   let fin = z;
@@ -502,7 +504,7 @@ export function combo(c: Carrera, z: number, tipo?: Combo): number {
       // mueve de a un carril (a veces se queda); en el zigzag salta de orilla a orilla.
       const oleadas = t === "estampida" ? Math.min(8, 5 + Math.floor(nivel(z) / 3)) : 4;
       // (El zigzag pide cruzar dos carriles en cada oleada: un poco más de tiempo.)
-      const hueco = (t === "estampida" ? 0.45 : 0.6) * (vel + u);
+      const hueco = (t === "estampida" ? (alto ? 0.45 : 0.62) : alto ? 0.6 : 0.8) * (vel + u);
       let libre: Carril = k(1);
       for (let j = 0; j < oleadas; j++) {
         const zc = primera + j * hueco;
