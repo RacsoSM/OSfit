@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { BOX_JUMP, KETTLEBELL_BIRD, armarTabla, avisoSuperada, nombreVisible, partidaValida, superadas, type Registro } from "./juegoDiscos";
+import { BOX_JUMP, KETTLEBELL_BIRD, PESA_RUN, armarTabla, avisoSuperada, nombreVisible, partidaValida, superadas, type Registro } from "./juegoDiscos";
 
 describe("partidaValida", () => {
   it("acepta una partida posible", () => {
@@ -94,5 +94,19 @@ describe("Box Jump", () => {
     expect(a.titulo).toBe("Bogue te ha superado en Jumper");
     expect(a.abrir).toEqual({ ventana: "boxjump" });
     expect(a.id).toBe("auto_boxJump_said_bogue_87");
+  });
+});
+
+describe("Pesa Run", () => {
+  it("metros y batidos son puntos; más rápido que corriendo a tope con batidos es imposible", () => {
+    expect(partidaValida({ puntos: 1500, apilados: 1500, duracionMs: 90_000 }, PESA_RUN)).not.toBeNull();
+    expect(partidaValida({ puntos: 1500, apilados: 1500, duracionMs: 5_000 }, PESA_RUN)).toBeNull();
+    expect(partidaValida({ puntos: 3000, apilados: 1500, duracionMs: 90_000 }, PESA_RUN)).toBeNull();
+  });
+  it("su aviso dice el juego y abre su ventana", () => {
+    const a = avisoSuperada("said", "bogue", "Bogue", 640, PESA_RUN);
+    expect(a.titulo).toBe("Bogue te ha superado en Pesa Run");
+    expect(a.abrir).toEqual({ ventana: "pesarun" });
+    expect(a.id).toBe("auto_pesaRun_said_bogue_640");
   });
 });

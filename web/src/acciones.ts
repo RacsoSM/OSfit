@@ -144,6 +144,12 @@ export const guardarPartidaBoxJump = llamable<EnvioPartida, RespuestaPartida>("g
 /** La tabla de puntuaciones de Box Jump. */
 export const tablaBoxJump = llamable<Record<string, never>, TablaDiscos>("tablaBoxJump");
 
+/** Pesa Run: guarda la partida (metros + batidos) y devuelve su tabla. */
+export const guardarPartidaPesaRun = llamable<EnvioPartida, RespuestaPartida>("guardarPartidaPesaRun");
+
+/** La tabla de puntuaciones de Pesa Run. */
+export const tablaPesaRun = llamable<Record<string, never>, TablaDiscos>("tablaPesaRun");
+
 /** La tabla de puntuaciones de Kettlebell Bird. */
 export const tablaKettlebell = llamable<Record<string, never>, TablaDiscos>("tablaKettlebell");
 

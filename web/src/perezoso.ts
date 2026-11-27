@@ -60,6 +60,7 @@ export const parteArcade = perezoso(() => import("./ui/arcade"));
 export const parteDiscos = perezoso(() => import("./ui/juegoDiscos"));
 export const parteKettlebell = perezoso(() => import("./ui/kettlebellBird"));
 export const parteBoxJump = perezoso(() => import("./ui/boxJump"));
+export const partePesaRun = perezoso(() => import("./ui/pesaRun"));
 export const parteEspacio = perezoso(() => import("./ui/espacio"));
 export const parteResumen = perezoso(() => import("./ui/resumenMensual"));
 export const parteComparar = perezoso(() => import("./ui/comparar"));

@@ -211,5 +211,7 @@ service cloud.firestore {
     match /juegoKettlebell/{doc} { allow read, write: if esEntrenador(); }
     // Box Jump (Arcade): igual, solo guardarPartidaBoxJump y tablaBoxJump.
     match /juegoBoxJump/{doc} { allow read, write: if esEntrenador(); }
+    // Pesa Run (Arcade): igual, solo guardarPartidaPesaRun y tablaPesaRun.
+    match /juegoPesaRun/{doc} { allow read, write: if esEntrenador(); }
   }
 }

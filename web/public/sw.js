@@ -364,7 +364,7 @@ self.addEventListener("notificationclick", (evento) => {
   // "Te superaron en <juego>" abre ese juego directo, para intentar recuperar el lugar.
   const destino = mesResumen
     ? { ventana: "inicio", mes: mesResumen, aviso }
-    : abrir && (abrir.ventana === "juego" || abrir.ventana === "kettlebell" || abrir.ventana === "boxjump")
+    : abrir && (abrir.ventana === "juego" || abrir.ventana === "kettlebell" || abrir.ventana === "boxjump" || abrir.ventana === "pesarun")
       ? { ventana: abrir.ventana, aviso }
       : { ventana: "notificaciones", aviso };
   evento.waitUntil(

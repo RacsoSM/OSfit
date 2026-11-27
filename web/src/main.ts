@@ -36,7 +36,7 @@ import type {
 import { horaEnMazatlan, hoyEnMazatlan } from "./fecha";
 import { mesAnterior, type Tirada } from "./tirada";
 import {
-  batallaAmigos, borrarSesion, cambiarDia, cambiarSemana, enviarSugerencia, guardarEsfuerzo, guardarPartidaBoxJump, guardarPartidaDiscos, guardarPartidaKettlebell, tablaBoxJump, tablaDiscos, tablaKettlebell, compararMusculos, editarSesion, elegirMostrarEnAmigos, guardarPeso, marcarAsistencia, obtenerRanking, registrarEntrada, registrarSesion,
+  batallaAmigos, borrarSesion, cambiarDia, cambiarSemana, enviarSugerencia, guardarEsfuerzo, guardarPartidaBoxJump, guardarPartidaDiscos, guardarPartidaKettlebell, guardarPartidaPesaRun, tablaBoxJump, tablaPesaRun, tablaDiscos, tablaKettlebell, compararMusculos, editarSesion, elegirMostrarEnAmigos, guardarPeso, marcarAsistencia, obtenerRanking, registrarEntrada, registrarSesion,
 } from "./acciones";
 import { modalRuleta, conectarRuleta } from "./ui/ruleta";
 import { conectarRanking, type EstadoRanking } from "./ui/tarjetaRanking";
@@ -90,7 +90,7 @@ import {
 } from "./navegacion";
 import type { EstadoComparar } from "./ui/comparar";
 import {
-  alCargar, cargando, parteArcade, parteBoxJump, parteComparar, parteDiscos, parteEspacio, parteEstadisticas,
+  alCargar, cargando, parteArcade, parteBoxJump, partePesaRun, parteComparar, parteDiscos, parteEspacio, parteEstadisticas,
   parteKettlebell, parteResumen,
 } from "./perezoso";
 import { marcarBotonAtras } from "./ui/botonAtras";
@@ -649,7 +649,7 @@ async function arrancar(): Promise<void> {
     // repintado destruiría.
     const barra = barraInferior(BARRA.map(ventana));
     app.innerHTML = `${cabecera(saludo(nombre))}<div id="contenido"></div>` +
-      `<div id="videos" hidden></div><div id="juego" hidden></div><div id="kettlebell" hidden></div><div id="boxjump" hidden></div><div id="barra">${barra}</div>` +
+      `<div id="videos" hidden></div><div id="juego" hidden></div><div id="kettlebell" hidden></div><div id="boxjump" hidden></div><div id="pesarun" hidden></div><div id="barra">${barra}</div>` +
       `<div id="menu"></div><div id="ruleta"></div>`;
     conectarSaludo();
     conectarCabecera(abrirMenu, () => abrirVentana("ajustes"), () => abrirVentana("notificaciones"));
@@ -804,6 +804,7 @@ async function arrancar(): Promise<void> {
         "osfit:torre-tabla": async () => (await tablaDiscos({})).data,
         "osfit:kettlebell-tabla": async () => (await tablaKettlebell({})).data,
         "osfit:boxjump-tabla": async () => (await tablaBoxJump({})).data,
+        "osfit:pesarun-tabla": async () => (await tablaPesaRun({})).data,
       }, () => { if (ventanaActiva() === "arcade") pintar(); })).catch(() => {});
     }
     // Cada vez y no solo al entrar: si el entrenador le pone el sexo con la ventana abierta,
@@ -906,8 +907,11 @@ async function arrancar(): Promise<void> {
     const cajaBoxJump = document.querySelector<HTMLElement>("#boxjump");
     const mBoxJump = juego(parteBoxJump, "boxjump");
     if (cajaBoxJump && mBoxJump) mBoxJump.mostrarBoxJump(cajaBoxJump, activa.contenedorPropio === "boxjump", { guardar: async (p) => (await guardarPartidaBoxJump(p)).data, tabla: async () => (await tablaBoxJump({})).data, nombre: cliente.nombre ?? "" });
+    const cajaPesaRun = document.querySelector<HTMLElement>("#pesarun");
+    const mPesaRun = juego(partePesaRun, "pesarun");
+    if (cajaPesaRun && mPesaRun) mPesaRun.mostrarPesaRun(cajaPesaRun, activa.contenedorPropio === "pesarun", { guardar: async (p) => (await guardarPartidaPesaRun(p)).data, tabla: async () => (await tablaPesaRun({})).data, nombre: cliente.nombre ?? "" });
     // Con un juego abierto la página no se mueve (el juego es toda la pestaña).
-    const conJuego = activa.contenedorPropio === "juego" || activa.contenedorPropio === "kettlebell" || activa.contenedorPropio === "boxjump";
+    const conJuego = activa.contenedorPropio === "juego" || activa.contenedorPropio === "kettlebell" || activa.contenedorPropio === "boxjump" || activa.contenedorPropio === "pesarun";
     document.body.classList.toggle("con-juego", conJuego);
     pausarFondoAnimado(conJuego);
     // Mi espacio también va a toda la pantalla, pero con el ☰ a la vista.

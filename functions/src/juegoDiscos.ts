@@ -38,6 +38,13 @@ export const TORRE_DISCOS: Juego = {
 export const BOX_JUMP: Juego = {
   coleccion: "juegoBoxJump", nombre: "Jumper", clave: "boxJump", ventana: "boxjump", msMinimos: 40, puntosPorPunto: 1,
 };
+/**
+ * Pesa Run: cada metro es un punto y cada batido 5. A lo más rápido (26 m/s y una fila de
+ * batidos cada 1.6 m) son ~110 puntos por segundo: menos de 8 ms por punto es imposible.
+ */
+export const PESA_RUN: Juego = {
+  coleccion: "juegoPesaRun", nombre: "Pesa Run", clave: "pesaRun", ventana: "pesarun", msMinimos: 8, puntosPorPunto: 1,
+};
 /** En el nivel más alto las barras van a ~0.47 s una de otra: menos de 0.35 s es imposible. */
 export const KETTLEBELL_BIRD: Juego = {
   coleccion: "juegoKettlebell", nombre: "Fit Bird", clave: "kettlebellBird", ventana: "kettlebell", msMinimos: 350, puntosPorPunto: 1,
@@ -190,3 +197,5 @@ export const guardarPartidaKettlebell = guardarPartida(KETTLEBELL_BIRD);
 export const tablaKettlebell = tabla(KETTLEBELL_BIRD);
 export const guardarPartidaBoxJump = guardarPartida(BOX_JUMP);
 export const tablaBoxJump = tabla(BOX_JUMP);
+export const guardarPartidaPesaRun = guardarPartida(PESA_RUN);
+export const tablaPesaRun = tabla(PESA_RUN);

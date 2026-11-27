@@ -30,6 +30,7 @@ const EN_SU_LUGAR: Record<string, string> = {
   juego: "arcade",
   kettlebell: "arcade",
   boxjump: "arcade",
+  pesarun: "arcade",
 };
 
 export function anotarLugar(almacen: AlmacenRetomar | null, ventana: string, scroll: number, ahora: number): void {
