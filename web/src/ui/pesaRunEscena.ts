@@ -1,4 +1,4 @@
-import { ALTO_BARRA, LARGO, METROS_POR_NIVEL, ZONAS, type Batido, type Obstaculo } from "../pesaRun";
+import { ALTO_BARRA, ALTO_COLCHONETA, LARGO, METROS_POR_NIVEL, RAMPA, ZONAS, largoDe, type Batido, type Obstaculo } from "../pesaRun";
 import {
   CARRIL, ORILLA, PARED, TECHO, azarFijo, bola, caja3d, disco3d, mezclar, poligono, proyectar, quadFrente, quadPared, quadPiso,
   type Vista,
@@ -9,8 +9,9 @@ import {
  * interesante"): el pasillo del gimnasio OSFIT. Al centro, el piso de hule en losetas con los
  * tres carriles pintados; a los lados, piso de madera con la utilería de cada zona (caminadoras
  * en Cardio, árboles de discos en Pesas libres, cajas y llantas en Crossfit, costales en Box…).
- * En las paredes, columnas con neón, espejos, ventanales a la ciudad de noche, carteles, lockers
- * y repisas; en el techo, vigas, ductos y lámparas industriales que dejan su luz en el piso.
+ * En las paredes, columnas con neón y reflectores, espejos, ventanales, carteles, lockers y
+ * repisas. No tiene techo (entrenador, 2026-11-27): arriba se ve el cielo de noche, con la
+ * ciudad al horizonte y guirnaldas de foquitos de pared a pared.
  * Al empezar cada zona se cruza un arco con su nombre.
  *
  * Todo se pinta con figuras planas, sin sombras de canvas (`shadowBlur`), que en iPhone cuestan
@@ -18,19 +19,21 @@ import {
  */
 
 export interface Zona {
+  /** El cielo: arriba y en el horizonte. */
+  cielo: [string, string];
   pared: string; zocalo: string; hule: string; hule2: string; madera: string; madera2: string; techo: string; neon: string; luz: string;
 }
 
 /** Cada zona (nivel) del gimnasio, en el orden de `ZONAS`. */
 export const COLORES_ZONA: readonly Zona[] = [
-  { pared: "#3a2f56", zocalo: "#2a2240", hule: "#24212c", hule2: "#2b2834", madera: "#6b4a34", madera2: "#5a3d2a", techo: "#17131f", neon: "#7ef3ff", luz: "255, 244, 220" }, // Recepción
-  { pared: "#25405a", zocalo: "#1b2e42", hule: "#1c222b", hule2: "#222a35", madera: "#5f4a3a", madera2: "#4f3d30", techo: "#111720", neon: "#9dff5c", luz: "225, 245, 255" }, // Cardio
-  { pared: "#4d2a40", zocalo: "#371d2e", hule: "#251c20", hule2: "#2d2227", madera: "#6e4630", madera2: "#5c3a27", techo: "#1a1117", neon: "#ff6fd8", luz: "255, 236, 230" }, // Pesas libres
-  { pared: "#2a4350", zocalo: "#1e313b", hule: "#1b2226", hule2: "#212a2f", madera: "#5c4b3c", madera2: "#4c3e32", techo: "#10181c", neon: "#ffd45c", luz: "255, 250, 225" }, // Máquinas
-  { pared: "#4e3a26", zocalo: "#3a2b1c", hule: "#211d18", hule2: "#29241e", madera: "#74512f", madera2: "#604326", techo: "#1a1510", neon: "#ff8a3d", luz: "255, 232, 200" }, // Crossfit
-  { pared: "#4a2626", zocalo: "#351b1b", hule: "#201616", hule2: "#281b1b", madera: "#6a3f2c", madera2: "#573324", techo: "#1a0f0f", neon: "#ff4d5e", luz: "255, 225, 215" }, // Powerlifting
-  { pared: "#2b2f48", zocalo: "#1f2235", hule: "#181a23", hule2: "#1e212c", madera: "#57473f", madera2: "#483a33", techo: "#101219", neon: "#b48aff", luz: "235, 230, 255" }, // Box
-  { pared: "#4a3a1a", zocalo: "#352a12", hule: "#1f1a10", hule2: "#272114", madera: "#7a5a2a", madera2: "#664a22", techo: "#1a150a", neon: "#ffe08a", luz: "255, 240, 200" }, // Olimpo
+  { cielo: ["#1a1240", "#e0709a"], pared: "#3a2f56", zocalo: "#2a2240", hule: "#24212c", hule2: "#2b2834", madera: "#6b4a34", madera2: "#5a3d2a", techo: "#17131f", neon: "#7ef3ff", luz: "255, 244, 220" }, // Recepción
+  { cielo: ["#121a3f", "#6f5aa8"], pared: "#25405a", zocalo: "#1b2e42", hule: "#1c222b", hule2: "#222a35", madera: "#5f4a3a", madera2: "#4f3d30", techo: "#111720", neon: "#9dff5c", luz: "225, 245, 255" }, // Cardio
+  { cielo: ["#1a0f2e", "#a4487a"], pared: "#4d2a40", zocalo: "#371d2e", hule: "#251c20", hule2: "#2d2227", madera: "#6e4630", madera2: "#5c3a27", techo: "#1a1117", neon: "#ff6fd8", luz: "255, 236, 230" }, // Pesas libres
+  { cielo: ["#0e1a2a", "#3e6f8a"], pared: "#2a4350", zocalo: "#1e313b", hule: "#1b2226", hule2: "#212a2f", madera: "#5c4b3c", madera2: "#4c3e32", techo: "#10181c", neon: "#ffd45c", luz: "255, 250, 225" }, // Máquinas
+  { cielo: ["#1d1226", "#c46a3a"], pared: "#4e3a26", zocalo: "#3a2b1c", hule: "#211d18", hule2: "#29241e", madera: "#74512f", madera2: "#604326", techo: "#1a1510", neon: "#ff8a3d", luz: "255, 232, 200" }, // Crossfit
+  { cielo: ["#1a0b10", "#8a2a35"], pared: "#4a2626", zocalo: "#351b1b", hule: "#201616", hule2: "#281b1b", madera: "#6a3f2c", madera2: "#573324", techo: "#1a0f0f", neon: "#ff4d5e", luz: "255, 225, 215" }, // Powerlifting
+  { cielo: ["#0d0f24", "#4a3d8a"], pared: "#2b2f48", zocalo: "#1f2235", hule: "#181a23", hule2: "#1e212c", madera: "#57473f", madera2: "#483a33", techo: "#101219", neon: "#b48aff", luz: "235, 230, 255" }, // Box
+  { cielo: ["#1a1408", "#c79a3a"], pared: "#4a3a1a", zocalo: "#352a12", hule: "#1f1a10", hule2: "#272114", madera: "#7a5a2a", madera2: "#664a22", techo: "#1a150a", neon: "#ffe08a", luz: "255, 240, 200" }, // Olimpo
 ];
 
 export function zonaDe(z: number): number {
@@ -74,32 +77,31 @@ const CARTELES = [["NO PAIN", "NO GAIN"], ["LEG", "DAY"], ["OS", "FIT"], ["1 REP
 // ── El pasillo (lo que no se ordena por distancia) ───────────────────────────
 
 export function pintarPasillo(c: CanvasRenderingContext2D, v: Vista, z: number, reloj: number): void {
-  const { W, H } = v;
+  const { W } = v;
   const zona = COLORES_ZONA[zonaDe(z + 40)]!;
   const cerca = v.camZ + 0.3, lejos = v.lejos;
   const P = (x: number, y: number, zz: number) => proyectar(v, x, y, zz);
-  c.fillStyle = "#0c0912"; c.fillRect(-20, -20, W + 40, H + 40);
-
-  // La pared del fondo, con el letrero de neón.
-  const fa = P(-PARED, TECHO, lejos), fb = P(PARED, 0, lejos);
-  c.fillStyle = zona.pared; c.fillRect(fa.x, fa.y, fb.x - fa.x, fb.y - fa.y);
-  neonTexto(c, "OSFIT", (fa.x + fb.x) / 2, fa.y + (fb.y - fa.y) * 0.42, Math.max(6, fa.s * 1.1), zona.neon);
+  pintarCielo(c, v, zona, reloj);
+  // El piso y las paredes llegan hasta el horizonte (los detalles, no).
+  const lejosPiso = v.camZ + 180;
 
   const detalle = Math.min(lejos, v.camZ + DETALLE);
   // Piso, techo y paredes de base: una figura por zona (de lejos a cerca).
   const tramos: [number, number][] = [];
-  for (let n = zonaDe(lejos); n >= zonaDe(cerca); n--) tramos.push([Math.max(cerca, n * METROS_POR_NIVEL), n === zonaDe(lejos) ? lejos : Math.min(lejos, (n + 1) * METROS_POR_NIVEL)]);
+  for (let n = zonaDe(lejosPiso); n >= zonaDe(cerca); n--) tramos.push([Math.max(cerca, n * METROS_POR_NIVEL), n === zonaDe(lejosPiso) ? lejosPiso : Math.min(lejosPiso, (n + 1) * METROS_POR_NIVEL)]);
   for (const [z0, z1] of tramos) {
     if (z1 <= z0) continue;
     const zn = COLORES_ZONA[zonaDe(z0)]!;
     quadPiso(c, v, -ORILLA, ORILLA, 0, z0, z1, zn.hule);
     quadPiso(c, v, -PARED, -ORILLA, 0, z0, z1, zn.madera);
     quadPiso(c, v, ORILLA, PARED, 0, z0, z1, zn.madera);
-    quadPiso(c, v, -PARED, PARED, TECHO, z0, z1, zn.techo);
     for (const lado of [-1, 1]) {
       quadPared(c, v, lado * PARED, 0, TECHO, z0, z1, zn.pared);
       quadPared(c, v, lado * PARED, 0, 1, z0, z1, zn.zocalo);
       quadPared(c, v, lado * PARED, 0.97, 1.03, z0, z1, mezclar(zn.zocalo.slice(0, 7), "#ffffff", 0.18));
+      // El remate de arriba de la pared (se ve su tapa cuando la cámara va alta).
+      quadPiso(c, v, lado * PARED, lado * (PARED + 0.35), TECHO, z0, z1, mezclar(zn.pared, "#000000", 0.35));
+      quadPared(c, v, lado * PARED, TECHO - 0.08, TECHO, z0, z1, zn.neon);
     }
   }
 
@@ -124,16 +126,6 @@ export function pintarPasillo(c: CanvasRenderingContext2D, v: Vista, z: number, 
     for (const lado of [-1, 1]) quadPiso(c, v, lado * ORILLA - 0.06, lado * ORILLA + 0.06, 0.002, z0, z1, (r % 2) ? "#e8c13a" : "#1d1d1d");
   }
 
-  // La luz de las lámparas en el piso.
-  for (let k = Math.floor(lejos / TRAMO); k >= Math.floor(cerca / TRAMO); k--) {
-    const zl = k * TRAMO + 3;
-    if (zl < v.camZ + 4.5 || zl > detalle) continue;
-    const zn = COLORES_ZONA[zonaDe(zl)]!;
-    const a = P(0, 0, zl), lx = P(1.9, 0, zl), cn = P(0, 0, zl - 1.6), cf = P(0, 0, zl + 1.6);
-    c.fillStyle = `rgba(${zn.luz}, 0.08)`;
-    c.beginPath(); c.ellipse(a.x, (cn.y + cf.y) / 2, Math.abs(lx.x - a.x), Math.abs(cn.y - cf.y) / 2, 0, 0, Math.PI * 2); c.fill();
-  }
-
   // Paredes: de lo lejano a lo cercano, cada tramo con su columna y su adorno.
   for (let k = Math.floor((detalle + 12) / TRAMO); k >= Math.floor(cerca / TRAMO) - 1; k--) {
     const z0 = k * TRAMO;
@@ -148,8 +140,13 @@ export function pintarPasillo(c: CanvasRenderingContext2D, v: Vista, z: number, 
       // La columna, con su tira de neón.
       if (z0 + 0.5 > cerca && z0 < lejos) {
         const xi = lado * (PARED - 0.28);
-        caja3d(c, v, Math.min(xi, lado * PARED), Math.max(xi, lado * PARED), 0, TECHO, z0, z0 + 0.5, mezclar(zn.pared, "#000000", 0.25), zn.pared, mezclar(zn.pared, "#000000", 0.4));
+        caja3d(c, v, Math.min(xi, lado * PARED), Math.max(xi, lado * PARED), 0, TECHO + 0.25, z0, z0 + 0.5, mezclar(zn.pared, "#000000", 0.25), zn.pared, mezclar(zn.pared, "#000000", 0.4));
         if (z0 > cerca) quadFrente(c, v, xi - lado * 0.0, xi + lado * 0.05, 0.3, TECHO - 0.3, z0 - 0.001, zn.neon);
+        // El reflector de arriba, apuntando al pasillo.
+        if (k % 2 === 0 && z0 > cerca + 1) {
+          caja3d(c, v, Math.min(xi, xi - lado * 0.3), Math.max(xi, xi - lado * 0.3), TECHO + 0.1, TECHO + 0.45, z0 + 0.05, z0 + 0.45, "#22242a", "#33363e", "#1a1b20");
+          quadFrente(c, v, Math.min(xi - lado * 0.04, xi - lado * 0.26), Math.max(xi - lado * 0.04, xi - lado * 0.26), TECHO + 0.15, TECHO + 0.4, z0 + 0.05 - 0.001, `rgb(${zn.luz})`);
+        }
       }
     }
   }
@@ -157,16 +154,98 @@ export function pintarPasillo(c: CanvasRenderingContext2D, v: Vista, z: number, 
   // El neón a lo largo de las paredes, abajo.
   for (const lado of [-1, 1]) {
     const x = lado * (PARED - 0.01);
-    quadPared(c, v, x, 0.02, 0.09, cerca, lejos, zona.neon);
+    quadPared(c, v, x, 0.02, 0.09, cerca, lejosPiso, zona.neon);
   }
 
-  pintarTecho(c, v, cerca, lejos, detalle);
+  // Neblina al fondo, del color del horizonte: tapa lo que va apareciendo.
+  const nb = P(0, 0, v.camZ + (lejos - v.camZ) * 0.55);
+  const horizonte = zona.cielo[1];
+  const niebla = c.createLinearGradient(0, v.hz, 0, nb.y);
+  niebla.addColorStop(0, horizonte); niebla.addColorStop(1, horizonte + "00");
+  c.fillStyle = niebla; c.fillRect(0, v.hz - 1, W, nb.y - v.hz + 1);
+}
 
-  // Neblina al fondo: tapa lo que va apareciendo.
-  const nb = P(0, 0, v.camZ + (lejos - v.camZ) * 0.6), nt = P(0, TECHO, v.camZ + (lejos - v.camZ) * 0.6);
-  const niebla = c.createLinearGradient(0, nt.y, 0, nb.y);
-  niebla.addColorStop(0, "rgba(12, 9, 18, 0)"); niebla.addColorStop(0.5, "rgba(12, 9, 18, 0.5)"); niebla.addColorStop(1, "rgba(12, 9, 18, 0)");
-  c.fillStyle = niebla; c.fillRect(0, nt.y, W, nb.y - nt.y);
+/** Guirnaldas de foquitos de pared a pared, colgando en curva; se pintan con lo de adelante. */
+export function pintarGuirnalda(c: CanvasRenderingContext2D, v: Vista, z: number, reloj: number): void {
+  const n = 14;
+  const pts = [];
+  for (let k = 0; k <= n; k++) {
+    const f = k / n, x = -PARED + f * PARED * 2;
+    pts.push(proyectar(v, x, TECHO + 0.35 - Math.sin(f * Math.PI) * 0.7, z));
+  }
+  c.strokeStyle = "#1a1a1f"; c.lineWidth = Math.max(1, pts[0]!.s * 0.02);
+  c.beginPath(); pts.forEach((p, k) => (k ? c.lineTo(p.x, p.y) : c.moveTo(p.x, p.y))); c.stroke();
+  const colores = ["#ffd45c", "#ff6fd8", "#7ef3ff", "#9dff5c"];
+  for (let k = 1; k < n; k++) {
+    const p = pts[k]!;
+    const prendido = Math.sin(reloj * 3 + k * 1.3 + z) > -0.6;
+    c.fillStyle = prendido ? colores[k % 4]! : "#3a3a44";
+    c.beginPath(); c.arc(p.x, p.y + p.s * 0.05, Math.max(1.2, p.s * 0.055), 0, Math.PI * 2); c.fill();
+  }
+}
+
+/** El cielo de noche: degradado de la zona, estrellas, luna y la ciudad en el horizonte. */
+const ESTRELLAS = Array.from({ length: 70 }, (_, k) => ({ x: azarFijo(k * 1.7), y: azarFijo(k * 3.1), r: 0.5 + azarFijo(k * 5.3) * 1.2, f: azarFijo(k) * 6 }));
+const EDIFICIOS = Array.from({ length: 26 }, (_, k) => ({ w: 0.035 + azarFijo(k * 2.9) * 0.05, h: 0.03 + azarFijo(k * 4.3) * 0.11, sem: k }));
+
+/**
+ * El cielo casi no cambia: se pinta una vez en un lienzo aparte (por tamaño y zona) y en cada
+ * cuadro solo se copia. Con cientos de ventanitas y estrellas, pintarlo cada cuadro costaba
+ * cuadros en teléfonos lentos.
+ */
+let cieloGuardado: { lienzo: HTMLCanvasElement; llave: string } | null = null;
+
+function pintarCielo(c: CanvasRenderingContext2D, v: Vista, zona: Zona, _reloj: number): void {
+  const dpr = c.getTransform().a;
+  const llave = `${v.W}x${v.H}@${dpr}:${Math.round(v.hz)}:${zona.cielo.join()}`;
+  if (cieloGuardado?.llave !== llave) {
+    const lienzo = cieloGuardado?.lienzo ?? document.createElement("canvas");
+    lienzo.width = Math.max(1, Math.round(v.W * dpr)); lienzo.height = Math.max(1, Math.round(v.H * dpr));
+    const cc = lienzo.getContext("2d");
+    if (!cc) return;
+    cc.setTransform(dpr, 0, 0, dpr, 0, 0);
+    dibujarCielo(cc, v, zona);
+    cieloGuardado = { lienzo, llave };
+  }
+  c.save(); c.setTransform(1, 0, 0, 1, 0, 0);
+  c.drawImage(cieloGuardado.lienzo, 0, 0);
+  c.restore();
+}
+
+function dibujarCielo(c: CanvasRenderingContext2D, v: Vista, zona: Zona): void {
+  const { W, H, hz } = v;
+  const g = c.createLinearGradient(0, 0, 0, hz);
+  g.addColorStop(0, zona.cielo[0]); g.addColorStop(1, zona.cielo[1]);
+  c.fillStyle = g; c.fillRect(-20, -20, W + 40, hz + 21);
+  c.fillStyle = zona.cielo[1]; c.fillRect(-20, hz, W + 40, H - hz + 20);
+  for (const e of ESTRELLAS) {
+    const y = e.y * hz * 0.85;
+    c.globalAlpha = (0.35 + 0.35 * Math.sin(e.f)) * (1 - y / hz);
+    c.fillStyle = "#ffffff"; c.fillRect(e.x * W, y, e.r, e.r);
+  }
+  c.globalAlpha = 1;
+  // La luna.
+  const lx = W * 0.78, ly = hz * 0.28, lr = Math.max(10, W * 0.06);
+  c.fillStyle = "rgba(255, 244, 214, 0.12)"; c.beginPath(); c.arc(lx, ly, lr * 1.8, 0, Math.PI * 2); c.fill();
+  c.fillStyle = "#fff4d6"; c.beginPath(); c.arc(lx, ly, lr, 0, Math.PI * 2); c.fill();
+  c.fillStyle = "rgba(200, 190, 160, 0.5)";
+  c.beginPath(); c.arc(lx - lr * 0.3, ly - lr * 0.2, lr * 0.22, 0, Math.PI * 2); c.arc(lx + lr * 0.3, ly + lr * 0.25, lr * 0.15, 0, Math.PI * 2); c.fill();
+  // La ciudad, en silueta, con ventanas prendidas.
+  let x = -20;
+  for (let k = 0; x < W + 20; k++) {
+    const e = EDIFICIOS[k % EDIFICIOS.length]!;
+    const w = e.w * W, h = e.h * W;
+    c.fillStyle = k % 2 ? "#1a1630" : "#14122a"; c.fillRect(x, hz - h, w - 1, h + 1);
+    c.fillStyle = "rgba(255, 214, 140, 0.8)";
+    for (let f = 0; f < 6; f++) for (let col = 0; col < 3; col++) {
+      if (azarFijo(e.sem * 31 + f * 7 + col + k) < 0.7) continue;
+      const wy = hz - h + 3 + f * 5;
+      if (wy > hz - 3) break;
+      c.fillRect(x + 2 + col * (w / 3), wy, 1.6, 1.6);
+    }
+    x += w;
+  }
+  neonTexto(c, "OSFIT", W / 2, hz - W * 0.13, Math.max(10, W * 0.07), zona.neon);
 }
 
 function neonTexto(c: CanvasRenderingContext2D, texto: string, x: number, y: number, tam: number, color: string): void {
@@ -177,36 +256,6 @@ function neonTexto(c: CanvasRenderingContext2D, texto: string, x: number, y: num
   c.globalAlpha = 1; c.fillStyle = "#ffffff"; c.fillText(texto, x, y);
   c.globalAlpha = 0.55; c.fillStyle = color; c.fillText(texto, x, y);
   c.restore();
-}
-
-/** Vigas, un ducto a lo largo y lámparas industriales colgando, con su cono de luz. */
-function pintarTecho(c: CanvasRenderingContext2D, v: Vista, cerca: number, lejos: number, detalle: number): void {
-  // El ducto plateado, con sus uniones.
-  caja3d(c, v, -2.9, -2.3, TECHO - 0.75, TECHO - 0.35, v.camZ + 3, lejos, "#7b818c", "#8d939e", "#5c616b");
-  for (let k = Math.floor(detalle / 3); k >= Math.floor(cerca / 3); k--) {
-    const z = k * 3;
-    if (z < v.camZ + 3 || z > lejos) continue;
-    quadPared(c, v, -2.3, TECHO - 0.75, TECHO - 0.35, z, z + 0.12, "#4c515a");
-  }
-  for (let k = Math.floor((detalle + 12) / TRAMO); k >= Math.floor(cerca / TRAMO); k--) {
-    const z0 = k * TRAMO;
-    const zn = COLORES_ZONA[zonaDe(z0)]!;
-    if (z0 > cerca + 0.5 && z0 < lejos) caja3d(c, v, -PARED, PARED, TECHO - 0.28, TECHO, z0, z0 + 0.3, "#24222c", "#2e2c37", "#1a1920");
-    // La lámpara, con su cable, su pantalla y su cono de luz.
-    const zl = z0 + 3;
-    if (zl < v.camZ + 4.5 || zl > detalle) continue;
-    const yb = TECHO - 1.0;
-    const cab = proyectar(v, 0, TECHO, zl), base = proyectar(v, 0, yb + 0.3, zl);
-    c.strokeStyle = "#0e0d12"; c.lineWidth = Math.max(1, cab.s * 0.02);
-    c.beginPath(); c.moveTo(cab.x, cab.y); c.lineTo(base.x, base.y); c.stroke();
-    const izq = proyectar(v, -0.45, yb, zl), der = proyectar(v, 0.45, yb, zl), ai = proyectar(v, -0.1, yb + 0.3, zl), ad = proyectar(v, 0.1, yb + 0.3, zl);
-    // El cono de luz hasta el piso.
-    const pi = proyectar(v, -1.5, 0, zl), pd = proyectar(v, 1.5, 0, zl);
-    if (zl < v.camZ + 30) poligono(c, [izq, der, pd, pi], `rgba(${zn.luz}, 0.045)`);
-    poligono(c, [izq, der, ad, ai], "#2b2d33");
-    c.fillStyle = `rgb(${zn.luz})`;
-    c.beginPath(); c.ellipse((izq.x + der.x) / 2, izq.y, (der.x - izq.x) / 2, Math.max(1, (der.x - izq.x) * 0.08), 0, 0, Math.PI * 2); c.fill();
-  }
 }
 
 // ── Las paredes ──────────────────────────────────────────────────────────────
@@ -345,6 +394,11 @@ export function cosasDeEscena(c: CanvasRenderingContext2D, v: Vista, reloj: numb
       cosas.push({ z, pintar: () => pintarUtileria(c, v, tipo, lado, z, sem, reloj) });
     }
   }
+  // Las guirnaldas, cada dos tramos.
+  for (let k = Math.floor(Math.min(v.lejos, v.camZ + DETALLE) / (TRAMO * 2)); k * TRAMO * 2 > cerca + 2; k--) {
+    const z = k * TRAMO * 2 + 0.25;
+    cosas.push({ z, pintar: () => pintarGuirnalda(c, v, z, reloj) });
+  }
   // El arco de cada zona.
   for (let n = 1; n < ZONAS.length; n++) {
     const z = n * METROS_POR_NIVEL;
@@ -474,7 +528,9 @@ function pintarUtileria(c: CanvasRenderingContext2D, v: Vista, tipo: Utileria, l
     case "saco": {
       const xs = X - lado * 0.15;
       const vaiven = Math.sin(reloj * 1.6 + sem) * 0.04;
-      const top = proyectar(v, xs, TECHO, z + 0.3), cad = proyectar(v, xs + vaiven, 2.25, z + 0.3);
+      // Cuelga de una ménsula de la pared (no hay techo).
+      caja3d(c, v, Math.min(lado * PARED, xs - lado * 0.05), Math.max(lado * PARED, xs - lado * 0.05), 2.62, 2.7, z + 0.26, z + 0.34, "#3b3e47", "#4b505b", "#2b2e35");
+      const top = proyectar(v, xs, 2.62, z + 0.3), cad = proyectar(v, xs + vaiven, 2.25, z + 0.3);
       c.strokeStyle = "#8a8f99"; c.lineWidth = Math.max(1, top.s * 0.025);
       c.beginPath(); c.moveTo(top.x, top.y); c.lineTo(cad.x, cad.y); c.stroke();
       caja3d(c, v, xs + vaiven - 0.24, xs + vaiven + 0.24, 0.85, 2.25, z + 0.06, z + 0.54, "#b8283b", "#d03548", "#8c1e2d");
@@ -519,6 +575,61 @@ export function pintarBanca(c: CanvasRenderingContext2D, v: Vista, o: Obstaculo)
   quadPiso(c, v, x - 0.3, x + 0.3, 0.581, Math.max(z0 + 0.06, v.camZ + 0.5), z1 - 0.06, "#cf3249");
   quadFrente(c, v, x - 0.3, x + 0.3, 0.52, 0.535, z0 - 0.001, "rgba(255, 255, 255, 0.35)");
   quadFrente(c, v, x - 0.36, x + 0.36, 0.38, 0.4, z0 - 0.001, "rgba(0, 0, 0, 0.3)");
+}
+
+/**
+ * Las colchonetas apiladas (entrenador, 2026-11-27: obstáculos largos "que te subes y vas por
+ * encima"): cuatro colchonetas gruesas, azules y una roja, con sus costuras, asas y el logo; la
+ * tapa más clara. Algunas traen al frente una cuña amarilla para subir corriendo.
+ */
+const CAPAS = [["#2a5fc4", "#3a74dd", "#1f4a9c"], ["#2f68d1", "#4280e8", "#2352a8"], ["#d23a4c", "#e65264", "#a52c3b"], ["#2f68d1", "#4a8af0", "#2352a8"]] as const;
+
+export function pintarColchonetas(c: CanvasRenderingContext2D, v: Vista, o: Obstaculo): void {
+  const x = o.carril * CARRIL, x0 = x - 0.7, x1 = x + 0.7;
+  const z0 = o.z + (o.rampa ? RAMPA : 0), z1 = o.z + largoDe(o);
+  const capa = ALTO_COLCHONETA / CAPAS.length;
+  quadPiso(c, v, x0 - 0.1, x1 + 0.1, 0.004, Math.max(o.z, v.camZ + 0.5), z1 + 0.3, "rgba(0, 0, 0, 0.3)");
+  if (z1 > v.camZ + 0.4) {
+    CAPAS.forEach(([frente, tapa, lado], k) => caja3d(c, v, x0, x1, k * capa, (k + 1) * capa, z0, z1, frente, tapa, lado));
+    const zc = Math.max(z0, v.camZ + 0.4);
+    // Costuras de la tapa y del costado, cada 1.5 m.
+    for (let zs = Math.ceil(zc / 1.5) * 1.5; zs < z1 - 0.2; zs += 1.5) {
+      quadPiso(c, v, x0 + 0.05, x1 - 0.05, ALTO_COLCHONETA + 0.001, zs, zs + 0.05, "rgba(20, 40, 90, 0.45)");
+      const xl = x0 > v.camX ? x0 : x1 < v.camX ? x1 : null;
+      if (xl !== null) quadPared(c, v, xl, 0.05, ALTO_COLCHONETA - 0.05, zs, zs + 0.04, "rgba(0, 0, 0, 0.25)");
+    }
+    quadPiso(c, v, x0 + 0.08, x1 - 0.08, ALTO_COLCHONETA + 0.002, zc, z1 - 0.08, "rgba(255, 255, 255, 0.06)");
+    if (z0 > v.camZ + 0.4) {
+      // Las asas y el logo del frente.
+      for (let k = 0; k < CAPAS.length; k++) for (const s of [-1, 1]) quadFrente(c, v, x + s * 0.4 - 0.1, x + s * 0.4 + 0.1, k * capa + capa * 0.4, k * capa + capa * 0.6, z0 - 0.002, "rgba(0, 0, 0, 0.4)");
+      const p = proyectar(v, x, capa * 2.5, z0);
+      if (p.s > 12) {
+        c.fillStyle = "#ffffff"; c.font = `900 ${Math.round(p.s * 0.2)}px system-ui, sans-serif`;
+        c.textAlign = "center"; c.textBaseline = "middle"; c.fillText("OSFIT", p.x, p.y);
+      }
+    }
+  }
+  if (o.rampa) pintarCuna(c, v, o, x0, x1);
+}
+
+/** La cuña: una colchoneta en rampa, amarilla, con flechas hacia arriba. */
+function pintarCuna(c: CanvasRenderingContext2D, v: Vista, o: Obstaculo, x0: number, x1: number): void {
+  const za = Math.max(o.z, v.camZ + 0.4), zb = o.z + RAMPA;
+  if (zb <= za) return;
+  const alto = (zz: number) => (ALTO_COLCHONETA * (zz - o.z)) / RAMPA;
+  const P = (x: number, y: number, z: number) => proyectar(v, x, y, z);
+  // El costado que mira a la cámara (un triángulo, o un trapecio si la cámara ya lo cortó).
+  const xl = x0 > v.camX ? x0 : x1 < v.camX ? x1 : null;
+  if (xl !== null) poligono(c, [P(xl, 0, za), P(xl, 0, zb), P(xl, ALTO_COLCHONETA, zb), P(xl, alto(za), za)], "#c99a16");
+  poligono(c, [P(x0, alto(za), za), P(x1, alto(za), za), P(x1, ALTO_COLCHONETA, zb), P(x0, ALTO_COLCHONETA, zb)], "#f2c230");
+  // Las flechas (chevrones) pintadas en la rampa.
+  for (const f of [0.3, 0.62]) {
+    const zf = o.z + RAMPA * f;
+    if (zf < za + 0.1) continue;
+    const zp = zf + 0.35;
+    const xm = (x0 + x1) / 2;
+    poligono(c, [P(x0 + 0.25, alto(zf), zf), P(xm, alto(zp), zp), P(x1 - 0.25, alto(zf), zf), P(x1 - 0.25, alto(zf + 0.15), zf + 0.15), P(xm, alto(zp + 0.15), zp + 0.15), P(x0 + 0.25, alto(zf + 0.15), zf + 0.15)], "#1d1d1d");
+  }
 }
 
 /** Franjas de cuidado amarillas y negras en un frente. */

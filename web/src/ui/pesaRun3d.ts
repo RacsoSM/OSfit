@@ -1,6 +1,7 @@
 /**
  * La perspectiva de Correle pa: el mundo en metros (x a los lados, y hacia arriba, z hacia el
- * fondo) visto desde una cámara detrás de la mancuerna. Aquí solo la geometría y las figuras
+ * fondo) visto desde una cámara alta detrás de la mancuerna, inclinada hacia abajo
+ * (entrenador, 2026-11-27: "que no se vea tan al fondo los siguientes obstáculos"). Aquí solo la geometría y las figuras
  * básicas (cajas, discos); el escenario está en `pesaRunEscena.ts` y la mancuerna en
  * `pesaRunMancuerna.ts`.
  */
@@ -9,17 +10,23 @@
 export const CARRIL = 1.5;
 export const ORILLA = 2.25;
 export const PARED = 3.7;
-export const TECHO = 3.9;
-export const CAM_ALTO = 2.15;
-export const CAM_ATRAS = 3.9;
+/** La altura de las paredes: no hay techo, arriba se ve el cielo. */
+export const TECHO = 3.6;
+/** La cámara: qué tan alto va sobre lo que pisa la mancuerna, qué tan atrás y cuánto mira hacia abajo. */
+export const CAM_ALTO = 3.1;
+export const CAM_ATRAS = 4.3;
+export const INCLINACION = 0.27;
 
 export interface Vista {
   W: number; H: number;
   /** Píxeles por metro a un metro de distancia. */
   F: number;
-  /** El horizonte (altura en pantalla del punto de fuga). */
+  /** Dónde cae en pantalla el centro de la vista, y el horizonte (el punto de fuga). */
+  cy: number;
   hz: number;
-  camX: number; camZ: number;
+  camX: number; camY: number; camZ: number;
+  /** Coseno y seno de la inclinación hacia abajo. */
+  cos: number; sin: number;
   /** Hasta dónde se ve. */
   lejos: number;
 }
@@ -27,9 +34,19 @@ export interface Vista {
 export interface Punto { x: number; y: number; s: number }
 
 export function proyectar(v: Vista, x: number, y: number, z: number): Punto {
-  const dz = Math.max(0.25, z - v.camZ);
-  const s = v.F / dz;
-  return { x: v.W / 2 + (x - v.camX) * s, y: v.hz + (CAM_ALTO - y) * s, s };
+  const dy = y - v.camY, dz = z - v.camZ;
+  const prof = Math.max(0.25, dz * v.cos - dy * v.sin);
+  const arriba = dy * v.cos + dz * v.sin;
+  const s = v.F / prof;
+  return { x: v.W / 2 + (x - v.camX) * s, y: v.cy - arriba * s, s };
+}
+
+export function crearVista(W: number, H: number, camX: number, camY: number, camZ: number, lejos: number): Vista {
+  // Que los tres carriles quepan a lo ancho, también en pantallas angostas.
+  const F = Math.min(W * 0.95, H * 0.62);
+  const cos = Math.cos(INCLINACION), sin = Math.sin(INCLINACION);
+  const cy = H * 0.44;
+  return { W, H, F, cy, hz: cy - F * Math.tan(INCLINACION), camX, camY, camZ, cos, sin, lejos };
 }
 
 export function poligono(c: CanvasRenderingContext2D, pts: readonly { x: number; y: number }[], color: string | CanvasGradient): void {
@@ -61,8 +78,8 @@ export function caja3d(c: CanvasRenderingContext2D, v: Vista, x0: number, x1: nu
   if (z1 <= z0) return;
   if (x0 > v.camX) quadPared(c, v, x0, y0, y1, z0, z1, lado);
   if (x1 < v.camX) quadPared(c, v, x1, y0, y1, z0, z1, lado);
-  if (y1 < CAM_ALTO) quadPiso(c, v, x0, x1, y1, z0, z1, tapa);
-  else if (y0 > CAM_ALTO) quadPiso(c, v, x0, x1, y0, z0, z1, tapa);
+  if (y1 < v.camY) quadPiso(c, v, x0, x1, y1, z0, z1, tapa);
+  else if (y0 > v.camY) quadPiso(c, v, x0, x1, y0, z0, z1, tapa);
   quadFrente(c, v, x0, x1, y0, y1, z0, frente);
 }
 

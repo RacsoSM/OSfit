@@ -31,10 +31,11 @@ const PIEL = "#d7dce4";
 
 export function pintarMancuerna(c: CanvasRenderingContext2D, v: Vista, car: Carrera, a: AnimMancuerna): void {
   const x = car.x * CARRIL;
-  const piso = proyectar(v, x, 0, car.z);
+  const piso = proyectar(v, x, car.suelo, car.z);
   const s = piso.s * TAM;
   const barriendo = car.barrida > 0 && !car.terminada;
-  const enAire = car.y > 0.01;
+  const sobre = car.y - car.suelo;
+  const enAire = sobre > 0.01;
   const fase = car.z * 2.2;
   const corriendo = !enAire && !barriendo && !car.terminada;
   const bote = corriendo ? Math.abs(Math.cos(fase)) * 0.04 : 0;
@@ -43,7 +44,7 @@ export function pintarMancuerna(c: CanvasRenderingContext2D, v: Vista, car: Carr
   const centro = proyectar(v, x, car.y + alto * TAM, car.z);
 
   // La sombra en el piso: más chica entre más alto va.
-  const sombra = Math.max(0.35, 1 - car.y * 0.35);
+  const sombra = Math.max(0.35, 1 - sobre * 0.35);
   c.fillStyle = "rgba(0, 0, 0, 0.42)";
   c.beginPath(); c.ellipse(piso.x, piso.y, s * 0.58 * sombra, s * 0.12 * sombra, 0, 0, Math.PI * 2); c.fill();
 
@@ -59,7 +60,7 @@ export function pintarMancuerna(c: CanvasRenderingContext2D, v: Vista, car: Carr
   c.lineCap = "round"; c.lineJoin = "round";
 
   puntasCinta(c, a.reloj, car.vel);
-  patas(c, car, a, fase, alto + bote + car.y / TAM, barriendo, enAire);
+  patas(c, car, a, fase, alto + bote + sobre / TAM, barriendo, enAire);
   cabezas(c);
   mango(c);
   cinta(c);

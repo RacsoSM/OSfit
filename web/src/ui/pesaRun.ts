@@ -1,13 +1,13 @@
 import {
-  LARGO, PUNTOS_BATIDO, VISTA, ZONAS, accion, avanzar, choca, metros, nivel, nuevaCarrera, puntos,
+  PUNTOS_BATIDO, ZONAS, accion, avanzar, choca, enAire, largoDe, metros, nivel, nuevaCarrera, puntos,
   type Accion, type Carrera,
 } from "../pesaRun";
 import { conPartida, htmlLista, type ApiJuego, type EnvioPartida, type TablaDiscos } from "./juegoDiscos";
 import { escapar } from "./tarjetaDia";
 import { ajustarMarcoJuego, pintarSeguro, prepararMarcoJuego, vigilarMarcoJuego, densidadJuego } from "./marcoJuego";
 import { marcasDe } from "./marcasRecords";
-import { CAM_ATRAS, CARRIL, ORILLA, niebla, proyectar, type Vista } from "./pesaRun3d";
-import { cosasDeEscena, lineasVelocidad, pintarBanca, pintarBarra, pintarBatido, pintarPasillo, pintarRack, type Cosa } from "./pesaRunEscena";
+import { CAM_ALTO, CAM_ATRAS, CARRIL, ORILLA, crearVista, niebla, proyectar } from "./pesaRun3d";
+import { cosasDeEscena, lineasVelocidad, pintarBanca, pintarBarra, pintarBatido, pintarColchonetas, pintarPasillo, pintarRack, type Cosa } from "./pesaRunEscena";
 import { pintarMancuerna, type AnimMancuerna, type Gesto } from "./pesaRunMancuerna";
 
 /**
@@ -39,6 +39,13 @@ let letreros: Letrero[] = [];
 let sacudida = 0;
 let aterrizaje = 0;
 let feliz = 0;
+/** La cámara sube y baja suave con lo que pisa la mancuerna (al subirse a las colchonetas). */
+let camSuelo = 0;
+/**
+ * Hasta dónde se ve hacia adelante (entrenador, 2026-11-27: "que no se vea tan al fondo los
+ * siguientes obstáculos"). Más allá los obstáculos ya existen, pero no se pintan.
+ */
+const VISTA_DIBUJO = 58;
 let cuadro = 0;
 let ultimo = 0;
 let reloj = 0;
@@ -51,7 +58,7 @@ let hoja = false;
 let idPartida = 0;
 let pendientes: { envio: EnvioPartida; id: number }[] = [];
 let porConfirmar = 0;
-/** Dónde empezó el deslizar del dedo (se reinicia tras cada movimiento, así se encadenan). */
+/** Dónde empezó el deslizar del dedo; tras el primer movimiento queda en null hasta soltar. */
 let gesto: { x: number; y: number } | null = null;
 const UMBRAL_GESTO = 22;
 
@@ -221,7 +228,7 @@ function reenviarPendientes(): void {
 
 function jugar(): void {
   carrera = nuevaCarrera();
-  particulas = []; letreros = []; sacudida = 0; aterrizaje = 0; feliz = 0;
+  particulas = []; letreros = []; sacudida = 0; aterrizaje = 0; feliz = 0; camSuelo = 0;
   nivelVisto = 1;
   gesto = null;
   guardado = "nada"; record = false; hoja = false;
@@ -243,17 +250,18 @@ function gestoActual(): Gesto {
   if (feliz > 0) return "feliz";
   if (estado === "jugando") {
     const barriendo = c.barrida > 0;
-    const peligro = c.obstaculos.some((o) => o.z > c.z && o.z - c.z < c.vel * 0.42 && choca(o, c.carril, c.y, barriendo) && choca(o, c.x, c.y, barriendo));
+    const peligro = c.obstaculos.some((o) => !(o.tipo === "colchoneta" && o.rampa) && o.z > c.z && o.z - c.z < c.vel * 0.42 && choca(o, c.carril, c.y, barriendo) && choca(o, c.x, c.y, barriendo));
     if (peligro) return "susto";
   }
   if (c.barrida > 0) return "barre";
-  if (c.y > 0.01) return "salta";
+  if (enAire(c)) return "salta";
   return "corre";
 }
 
 function polvo(x: number, z: number, n: number, fuerza: number, color = "rgba(220, 210, 230, 0.55)"): void {
+  const y = carrera.suelo + 0.05;
   for (let k = 0; k < n; k++) {
-    particulas.push({ x: x + (Math.random() - 0.5) * 0.4, y: 0.05, z: z + Math.random() * 0.3, vx: (Math.random() - 0.5) * fuerza, vy: Math.random() * fuerza * 0.6, vida: 0.35 + Math.random() * 0.25, color, sigue: false, r: 0.05 + Math.random() * 0.05 });
+    particulas.push({ x: x + (Math.random() - 0.5) * 0.4, y, z: z + Math.random() * 0.3, vx: (Math.random() - 0.5) * fuerza, vy: Math.random() * fuerza * 0.6, vida: 0.35 + Math.random() * 0.25, color, sigue: false, r: 0.05 + Math.random() * 0.05 });
   }
 }
 
@@ -261,7 +269,7 @@ function ciclo(ahora: number): void {
   const dt = Math.min(0.04, (ahora - ultimo) / 1000);
   ultimo = ahora;
   reloj += dt;
-  const yAntes = carrera.y;
+  const aireAntes = enAire(carrera);
   const pasoAntes = Math.floor((carrera.z * 2.2) / Math.PI);
   if (estado === "jugando") {
     const antes = puntos(carrera);
@@ -298,13 +306,14 @@ function ciclo(ahora: number): void {
     if (carrera.z > 200) carrera.z -= 200;
   }
   // Al caer de un salto se aplasta y levanta polvo; al correr, un poquito a cada paso.
-  if (yAntes > 0.01 && carrera.y <= 0.01 && !carrera.terminada) { aterrizaje = 1; polvo(carrera.x * CARRIL, carrera.z, 8, 2.2); }
+  if (aireAntes && !enAire(carrera) && !carrera.terminada) { aterrizaje = 1; polvo(carrera.x * CARRIL, carrera.z, 8, 2.2); }
   const pasoAhora = Math.floor((carrera.z * 2.2) / Math.PI);
-  if (pasoAhora !== pasoAntes && carrera.y <= 0.01 && !carrera.terminada) polvo(carrera.x * CARRIL, carrera.z, carrera.barrida > 0 ? 3 : 1, 1.2);
+  if (pasoAhora !== pasoAntes && !enAire(carrera) && !carrera.terminada) polvo(carrera.x * CARRIL, carrera.z, carrera.barrida > 0 ? 3 : 1, 1.2);
   aterrizaje = Math.max(0, aterrizaje - dt * 5);
+  camSuelo += (carrera.suelo - camSuelo) * Math.min(1, dt * 5);
   feliz = Math.max(0, feliz - dt);
   for (const p of particulas) {
-    p.vida -= dt; p.x += p.vx * dt; p.y = Math.max(0, p.y + p.vy * dt); p.vy -= 9 * dt;
+    p.vida -= dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vy -= 9 * dt;
     if (p.sigue && estado === "jugando") p.z += carrera.vel * dt * 0.9;
   }
   particulas = particulas.filter((p) => p.vida > 0);
@@ -338,10 +347,8 @@ function dibujar(): void {
   if (!c) return;
   c.setTransform(dpr, 0, 0, dpr, 0, 0);
   if (sacudida > 0) c.translate((Math.random() - 0.5) * 12 * sacudida, (Math.random() - 0.5) * 8 * sacudida);
-  // Que los tres carriles quepan a lo ancho, también en pantallas angostas.
-  const F = Math.min(W * 0.8, H * 0.58);
   const camZ = carrera.z - CAM_ATRAS;
-  const v: Vista = { W, H, F, hz: H * 0.45, camX: carrera.x * CARRIL * 0.55, camZ, lejos: camZ + VISTA };
+  const v = crearVista(W, H, carrera.x * CARRIL * 0.55, CAM_ALTO + camSuelo, camZ, camZ + VISTA_DIBUJO);
   pintarPasillo(c, v, carrera.z, reloj);
 
   // Dónde quedan los records: una línea en el piso con su nombre. Los puntos no son solo metros
@@ -364,10 +371,14 @@ function dibujar(): void {
   // De lo lejano a lo cercano: utilería, arcos, obstáculos, batidos y la mancuerna en su lugar.
   const cosas: Cosa[] = cosasDeEscena(c, v, reloj);
   for (const o of carrera.obstaculos) {
-    if (o.z > v.lejos || o.z + LARGO[o.tipo] < v.camZ + 0.5) continue;
-    cosas.push({ z: o.z, pintar: () => {
+    if (o.z > v.lejos || o.z + largoDe(o) < v.camZ + 0.5) continue;
+    // Las colchonetas se ordenan por su orilla del fondo: lo que va encima o a su lado (la
+    // mancuerna, los batidos) se pinta después, por encima.
+    const orden = o.tipo === "colchoneta" ? o.z + largoDe(o) : o.z;
+    cosas.push({ z: orden, pintar: () => {
       c.globalAlpha = niebla(v, o.z);
-      if (o.tipo === "banca") pintarBanca(c, v, o);
+      if (o.tipo === "colchoneta") pintarColchonetas(c, v, o);
+      else if (o.tipo === "banca") pintarBanca(c, v, o);
       else if (o.tipo === "barra") pintarBarra(c, v, o);
       else pintarRack(c, v, o);
       c.globalAlpha = 1;
@@ -446,7 +457,9 @@ function conectar(cont: HTMLElement): void {
     if (Math.max(Math.abs(dx), Math.abs(dy)) < UMBRAL_GESTO) return;
     if (Math.abs(dx) > Math.abs(dy)) mover(dx < 0 ? "izquierda" : "derecha");
     else mover(dy < 0 ? "saltar" : "barrer");
-    gesto = { x: ev.clientX, y: ev.clientY };
+    // Un solo movimiento por toque (entrenador, 2026-11-27: con un deslizar largo se cambiaba
+    // de dos carriles): para otro, hay que levantar el dedo y volver a deslizar.
+    gesto = null;
   });
   const soltar = () => { gesto = null; };
   pantalla?.addEventListener("pointerup", soltar);

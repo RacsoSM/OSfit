@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  ALTO_BANCA, ALTURA_SALTO, CARRILES, PUNTOS_BATIDO, VEL_INICIAL, VEL_MAXIMA, accion, avanzar, choca, metros, nivel, nuevaCarrera, puntos,
+  ALTO_BANCA, ALTO_COLCHONETA, ALTURA_SALTO, RAMPA, enAire, sueloEn, CARRILES, PUNTOS_BATIDO, VEL_INICIAL, VEL_MAXIMA, accion, avanzar, choca, metros, nivel, nuevaCarrera, puntos,
   separacion, velocidad, type Carrera, type Obstaculo,
 } from "./pesaRun";
 
@@ -93,7 +93,8 @@ describe("Correle pa", () => {
         const filas = new Map<number, Obstaculo[]>();
         for (const o of c.obstaculos) filas.set(o.z, [...(filas.get(o.z) ?? []), o]);
         for (const fila of filas.values()) {
-          const racks = fila.filter((o) => o.tipo === "rack").map((o) => o.carril);
+          // Lo que no se puede pasar desde el piso: racks y colchonetas sin cuña.
+          const racks = fila.filter((o) => o.tipo === "rack" || (o.tipo === "colchoneta" && !o.rampa)).map((o) => o.carril);
           expect(CARRILES.some((k) => !racks.includes(k))).toBe(true);
         }
         c.obstaculos = c.obstaculos.filter((o) => o.z > c.z + 20);
@@ -108,5 +109,81 @@ describe("Correle pa", () => {
     const c = nuevaCarrera(semilla(7));
     const zs = [...new Set(c.obstaculos.map((o) => o.z))].sort((a, b) => a - b);
     for (let i = 1; i < zs.length; i++) expect(zs[i]! - zs[i - 1]!).toBeGreaterThanOrEqual(10);
+  });
+
+  it("por la cuña se sube corriendo, arriba se corre por encima y al final se cae", () => {
+    const c = vacia();
+    c.obstaculos = [{ carril: 0, z: 5, tipo: "colchoneta", largo: 14, rampa: true }];
+    let maxY = 0;
+    for (let i = 0; i < 180 && !c.terminada; i++) {
+      avanzar(c, 1 / 60);
+      if (c.z > 5 + RAMPA + 0.5 && c.z < 18) { expect(c.y).toBeCloseTo(ALTO_COLCHONETA, 5); expect(enAire(c)).toBe(false); }
+      maxY = Math.max(maxY, c.y);
+    }
+    expect(c.terminada).toBe(false);
+    expect(maxY).toBeCloseTo(ALTO_COLCHONETA, 5);
+    expect(c.y).toBe(0);
+  });
+
+  it("arriba se puede saltar", () => {
+    const c = vacia();
+    c.obstaculos = [{ carril: 0, z: 0, tipo: "colchoneta", largo: 60, rampa: false }];
+    c.y = ALTO_COLCHONETA; c.suelo = ALTO_COLCHONETA;
+    avanzar(c, 1 / 60);
+    expect(accion(c, "saltar")).toBe(true);
+    for (let i = 0; i < 6; i++) avanzar(c, 1 / 60);
+    expect(c.y).toBeGreaterThan(ALTO_COLCHONETA + 0.3);
+  });
+
+  it("sin cuña: de frente se choca; saltando a tiempo se sube", () => {
+    const c = vacia();
+    c.obstaculos = [{ carril: 0, z: 6, tipo: "colchoneta", largo: 12, rampa: false }];
+    for (let i = 0; i < 120 && !c.terminada; i++) avanzar(c, 1 / 60);
+    expect(c.terminada).toBe(true);
+    expect(c.choque?.tipo).toBe("colchoneta");
+
+    const d = vacia();
+    d.obstaculos = [{ carril: 0, z: 8, tipo: "colchoneta", largo: 12, rampa: false }];
+    for (let i = 0; i < 90 && !d.terminada; i++) {
+      if (d.z > 8 - d.vel * 0.3 && !enAire(d) && d.y === 0) accion(d, "saltar");
+      avanzar(d, 1 / 60);
+    }
+    expect(d.terminada).toBe(false);
+    expect(d.y).toBeCloseTo(ALTO_COLCHONETA, 5);
+  });
+
+  it("cambiarse de carril contra el costado de unas colchonetas es chocar; desde arriba a otra, no", () => {
+    const c = vacia();
+    c.obstaculos = [{ carril: 1, z: 0, tipo: "colchoneta", largo: 60, rampa: false }];
+    for (let i = 0; i < 5; i++) avanzar(c, 1 / 60);
+    accion(c, "derecha");
+    for (let i = 0; i < 20 && !c.terminada; i++) avanzar(c, 1 / 60);
+    expect(c.terminada).toBe(true);
+
+    const d = vacia();
+    d.obstaculos = [{ carril: 0, z: 0, tipo: "colchoneta", largo: 60, rampa: false }, { carril: 1, z: 0, tipo: "colchoneta", largo: 60, rampa: false }];
+    d.y = ALTO_COLCHONETA; d.suelo = ALTO_COLCHONETA;
+    accion(d, "derecha");
+    for (let i = 0; i < 20; i++) avanzar(d, 1 / 60);
+    expect(d.terminada).toBe(false);
+    expect(d.x).toBe(1);
+    expect(sueloEn(d.obstaculos, d.x, d.z)).toBe(ALTO_COLCHONETA);
+  });
+
+  it("las carreras traen colchonetas, y con tres juntas al menos una tiene cuña", () => {
+    let vistas = 0;
+    for (let s = 1; s < 30; s++) {
+      const c = nuevaCarrera(semilla(s));
+      for (let i = 0; i < 3000; i++) {
+        const pilas = c.obstaculos.filter((o) => o.tipo === "colchoneta");
+        vistas += pilas.length;
+        const porZ = new Map<number, Obstaculo[]>();
+        for (const o of pilas) porZ.set(o.z, [...(porZ.get(o.z) ?? []), o]);
+        for (const f of porZ.values()) if (f.length === 3) expect(f.some((o) => o.rampa)).toBe(true);
+        c.obstaculos = c.obstaculos.filter((o) => o.z > c.z + 25);
+        avanzar(c, 1 / 30);
+      }
+    }
+    expect(vistas).toBeGreaterThan(0);
   });
 });
