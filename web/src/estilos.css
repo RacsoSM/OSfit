@@ -2876,7 +2876,9 @@ body:has(.arcade) :is(.fondo, .fondo-pixel, .fondo-sakura, .fondo-halloween, .pe
   color: #7ef3ff; text-shadow: 0 0 8px rgba(126, 243, 255, 0.8), 0 0 20px rgba(126, 243, 255, 0.4); }
 .ar-maquina.rosa .ar-titulo-campeon { color: #ff8be8; text-shadow: 0 0 8px rgba(255, 59, 212, 0.8), 0 0 20px rgba(255, 59, 212, 0.4); }
 .ar-hi { margin: 2px 2px 0; align-items: center; gap: 10px; white-space: nowrap; }
-.ar-hi span { overflow: hidden; text-overflow: ellipsis; font-size: 20px; font-weight: 800; color: #fff; letter-spacing: 0.5px; }
+/* Con empate, un campeón por renglón (entrenador, 2026-11-27). */
+.ar-campeones { display: flex; flex-direction: column; min-width: 0; }
+.ar-campeones span { overflow: hidden; text-overflow: ellipsis; font-size: 20px; font-weight: 800; color: #fff; letter-spacing: 0.5px; }
 .ar-hi b { flex: none; font-size: 30px; color: #ffd45c; text-shadow: 0 0 10px rgba(255, 212, 92, 0.5); }
 .ar-tuyo { margin: 6px 2px 0; font-size: 11px; color: rgba(255, 255, 255, 0.55); letter-spacing: 0.5px; }
 .ar-jugar { color: #ffd45c; font-weight: 800; letter-spacing: 1px; animation: ar-parpadeo 2.4s infinite; }

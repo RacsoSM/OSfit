@@ -40,15 +40,23 @@ function tablaDe(llave: string): TablaDiscos | null {
 /** Cuántas letras del nombre del campeón caben en la tarjeta. */
 export const MAX_NOMBRE = 18;
 
-/** "👑 Jessica Morales Iba" y su puntuación, o la invitación a estrenarlo. */
-export function hiScore(t: TablaDiscos | null): { quien: string; puntos: string } {
+/** Hasta 18 letras del nombre completo (entrenador, 2026-11-25); antes era "Jose J.". */
+function nombreCorto(nombre: string): string {
+  return nombre.trim().replace(/\s+/g, " ").slice(0, MAX_NOMBRE).trimEnd();
+}
+
+/**
+ * Los renglones del campeón ("👑 Jessica Morales Ib") y su puntuación, o la invitación a
+ * estrenarlo. Con empate en el primer lugar (entrenador, 2026-11-27) salen los dos, cada uno en
+ * su renglón con su nombre hasta 18 letras; si empatan más de dos, el segundo lleva "+1", "+2".
+ */
+export function hiScore(t: TablaDiscos | null): { quien: string[]; puntos: string } {
   const campeon = t?.filas[0];
-  if (!campeon) return { quien: t ? "¡Sé el primer campeón!" : "Cargando…", puntos: "" };
-  // Hasta 18 letras del nombre completo (entrenador, 2026-11-25); antes era "Jose J.".
-  const corto = campeon.nombre.trim().replace(/\s+/g, " ").slice(0, MAX_NOMBRE).trimEnd();
-  // Empate en el primer lugar: el primero en orden y "+1", "+2".
-  const empatados = t!.filas.filter((f) => f.puesto === 1).length - 1;
-  return { quien: `👑 ${corto}${empatados > 0 ? ` +${empatados}` : ""}`, puntos: String(campeon.puntos) };
+  if (!campeon) return { quien: [t ? "¡Sé el primer campeón!" : "Cargando…"], puntos: "" };
+  const primeros = t!.filas.filter((f) => f.puesto === 1);
+  const quien = primeros.slice(0, 2).map((f) => `👑 ${nombreCorto(f.nombre)}`);
+  if (primeros.length > 2) quien[1] += ` +${primeros.length - 2}`;
+  return { quien, puntos: String(campeon.puntos) };
 }
 
 export function ventanaArcade(tablas: Readonly<Record<string, TablaDiscos | null>> = {}): string {
@@ -64,7 +72,7 @@ export function ventanaArcade(tablas: Readonly<Record<string, TablaDiscos | null
         <span class="ar-pantalla"><img src="${j.imagen}" alt="" loading="lazy" decoding="async"></span>
         <span class="ar-nombre">${escapar(j.nombre)}</span>
         <span class="ar-titulo-campeon">CAMPEÓN</span>
-        <span class="ar-hi"><span>${escapar(hi.quien)}</span><b>${hi.puntos}</b></span>
+        <span class="ar-hi"><span class="ar-campeones">${hi.quien.map((q) => `<span>${escapar(q)}</span>`).join("")}</span><b>${hi.puntos}</b></span>
         <span class="ar-tuyo"><span>${escapar(tuyo)}</span><span class="ar-jugar">JUGAR ▶</span></span>
       </button>`;
   }).join("");

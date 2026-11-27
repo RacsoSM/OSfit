@@ -9,11 +9,20 @@ describe("Arcade", () => {
   afterEach(() => vi.unstubAllGlobals());
 
   it("el HI-SCORE es el campeón (primer nombre e inicial) y su puntuación; empates como +n", () => {
-    expect(hiScore(tabla([[1, "Jessica Morales Ibarra", 47], [2, "Said", 28]]))).toEqual({ quien: "👑 Jessica Morales Ib", puntos: "47" });
-    expect(hiScore(tabla([[1, "Jose  Juan", 36]])).quien).toBe("👑 Jose Juan");
-    expect(hiScore(tabla([[1, "Said", 31], [1, "Ana Soto", 31]]))).toEqual({ quien: "👑 Said +1", puntos: "31" });
-    expect(hiScore(tabla([]))).toEqual({ quien: "¡Sé el primer campeón!", puntos: "" });
-    expect(hiScore(null).quien).toBe("Cargando…");
+    expect(hiScore(tabla([[1, "Jessica Morales Ibarra", 47], [2, "Said", 28]]))).toEqual({ quien: ["👑 Jessica Morales Ib"], puntos: "47" });
+    expect(hiScore(tabla([[1, "Jose  Juan", 36]])).quien).toEqual(["👑 Jose Juan"]);
+    expect(hiScore(tabla([]))).toEqual({ quien: ["¡Sé el primer campeón!"], puntos: "" });
+    expect(hiScore(null).quien).toEqual(["Cargando…"]);
+  });
+
+  it("con empate en el primer lugar salen los dos campeones, cada uno hasta 18 letras", () => {
+    expect(hiScore(tabla([[1, "Said", 31], [1, "Ana Soto", 31], [3, "Bogue", 20]]))).toEqual({ quien: ["👑 Said", "👑 Ana Soto"], puntos: "31" });
+    expect(hiScore(tabla([[1, "Jessica Morales Ibarra", 47], [1, "Brianda Torres Quintero", 47]])).quien)
+      .toEqual(["👑 Jessica Morales Ib", "👑 Brianda Torres Qui"]);
+    // Más de dos empatados: los dos primeros, y el segundo dice cuántos más.
+    expect(hiScore(tabla([[1, "Said", 31], [1, "Ana", 31], [1, "Bogue", 31], [1, "Luz", 31]])).quien).toEqual(["👑 Said", "👑 Ana +2"]);
+    const html = ventanaArcade({ "osfit:torre-tabla": tabla([[1, "Said", 31], [1, "Ana Soto", 31]]) });
+    expect(html).toContain("<span>👑 Said</span><span>👑 Ana Soto</span>");
   });
 
   it("una maquinita por juego que abre su ventana, con su campeón y tu récord", () => {
