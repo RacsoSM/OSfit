@@ -195,8 +195,12 @@ export function probCarro(n: number): number { return n < 2 ? 0 : [0, 0.16, 0.22
 export function probDosCarros(n: number): number { return n < 5 ? 0 : [0, 0, 0, 0, 0.25, 0.32, 0.38, 0.45][Math.min(NIVELES, n) - 1]!; }
 /** Los combos: desde el nivel 2, cada vez más seguido. */
 export function probCombo(n: number): number { return n < 2 ? 0 : [0, 0.2, 0.26, 0.32, 0.38, 0.44, 0.5, 0.55][Math.min(NIVELES, n) - 1]!; }
-export type Combo = "embudo" | "zigzag" | "pasillo" | "doble";
-export const COMBOS: readonly Combo[] = ["embudo", "zigzag", "pasillo", "doble"];
+export type Combo = "embudo" | "zigzag" | "pasillo" | "doble" | "embestida" | "dobleEmbestida" | "esquiveTardio";
+export const COMBOS: readonly Combo[] = ["embudo", "zigzag", "pasillo", "doble", "embestida", "dobleEmbestida", "esquiveTardio"];
+/** Los carritos de los combos vienen a toda velocidad (el doble que los demás). */
+export const VEL_CARRO_RAPIDO = 14;
+/** Arrancan en cuanto se ven (a esta distancia de la mancuerna): siempre se alcanzan a ver venir. */
+export const ACTIVA_CARRO_RAPIDO = 56;
 export function probColchonetas(n: number): number { return [0.12, 0.2, 0.24, 0.26, 0.28, 0.3, 0.3, 0.32][Math.min(NIVELES, n) - 1]!; }
 export function probMaquina(n: number): number { return [0.2, 0.26, 0.32, 0.36, 0.4, 0.43, 0.46, 0.5][Math.min(NIVELES, n) - 1]!; }
 
@@ -423,7 +427,14 @@ export function rutaElevada(c: Carrera, z: number): void {
  *    una barra encima;
  *  - pasillo: colchonetas altas sin rampa a los lados y, en medio, banca, barra y banca seguidas;
  *  - doble: a una orilla a brincar una banca y, en el aire, cruzar dos carriles para esquivar
- *    dos máquinas.
+ *    dos máquinas;
+ * y con carritos que vienen a toda velocidad (entrenador, 2026-11-27):
+ *  - embestida: un carrito por una orilla y una máquina en medio: a la otra orilla, a brincar la
+ *    banca que hay ahí;
+ *  - doble embestida: carritos por las dos orillas: en medio, pasar la barra; en cuanto pasan, una
+ *    máquina en medio obliga a irse a una orilla;
+ *  - esquive tardío: el carrito por en medio, una máquina en una orilla y una barra en la otra: a
+ *    la de la barra y, enseguida, otra máquina regresa al centro (por donde ya pasó el carrito).
  * Devuelve dónde termina.
  */
 export function combo(c: Carrera, z: number, tipo?: Combo): number {
@@ -441,7 +452,10 @@ export function combo(c: Carrera, z: number, tipo?: Combo): number {
     const medio: TipoObstaculo = az() < 0.5 ? "banca" : "barra";
     pon(0, z, medio);
     pon(0, z + d, "maquina"); pon(k(1), z + d, "maquina");
-    batido(0, z - 3); batido(k(-1), z + d - 2); batido(k(-1), z + d + 1);
+    // Variante: en la orilla libre de la segunda fila, la mitad de las veces, una banca o una barra.
+    if (az() < 0.5) pon(k(-1), z + d, az() < 0.5 ? "banca" : "barra");
+    else { batido(k(-1), z + d - 2); batido(k(-1), z + d + 1); }
+    batido(0, z - 3);
     fin = z + d + LARGO.maquina;
   } else if (t === "zigzag") {
     pon(0, z, "maquina"); pon(k(1), z, "maquina");
@@ -455,6 +469,29 @@ export function combo(c: Carrera, z: number, tipo?: Combo): number {
     pon(0, z + 3, "banca"); pon(0, z + 3 + paso, "barra"); pon(0, z + 3 + 2 * paso, "banca");
     for (let j = 0; j < 3; j++) batido(0, z + 3 + j * paso + 0.7, j === 1 ? 0.3 : 1.4);
     fin = z + largo;
+  } else if (t === "embestida" || t === "dobleEmbestida" || t === "esquiveTardio") {
+    // Un carrito que llega a `zm` justo cuando la mancuerna pasa por ahí: arranca cuando ella está
+    // a `ACTIVA_CARRO_RAPIDO`, así que sale de ese punto más lo que rueda mientras ella llega.
+    const u = VEL_CARRO_RAPIDO;
+    const salida = z + (ACTIVA_CARRO_RAPIDO * u) / (vel + u);
+    const carrito = (carril: Carril) => c.obstaculos.push({ carril, z: salida, tipo: "carro", vz: -u, activa: ACTIVA_CARRO_RAPIDO });
+    if (t === "embestida") {
+      carrito(k(-1)); pon(0, z, "maquina"); pon(k(1), z, "banca");
+      batido(k(1), z + 0.7, 1.4);
+      fin = z + LARGO.banca;
+    } else if (t === "dobleEmbestida") {
+      carrito(-1); carrito(1); pon(0, z, "barra");
+      pon(0, z + d, "maquina");
+      batido(0, z - 2); batido(k(1), z + d + 1);
+      fin = z + d + LARGO.maquina;
+    } else {
+      carrito(0); pon(k(-1), z, "maquina"); pon(k(1), z, "barra");
+      pon(k(1), z + d, "maquina");
+      batido(k(1), z - 2); batido(0, z + d + 1);
+      fin = z + d + LARGO.maquina;
+    }
+    // Lo que venga después empieza donde salieron los carritos (que no lo atraviesen).
+    fin = Math.max(fin, salida + LARGO.carro + 1);
   } else {
     pon(0, z, "maquina"); pon(k(1), z, "maquina"); pon(k(-1), z, "banca");
     pon(k(-1), z + d, "maquina"); pon(0, z + d, "maquina");

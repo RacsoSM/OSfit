@@ -419,12 +419,15 @@ describe("Correle pa", () => {
    * el aire) al carril que la deja pasar y brinca o se barre a tiempo. Nada más ve lo que tiene
    * adelante, como una persona.
    */
+  const LARGO_CARRO = 1.4;
   function pilotoPiso(c: Carrera): void {
     const obs = c.obstaculos.filter((o) => o.tipo !== "fosa" && o.z + largoDe(o) > c.z - 0.4 && o.z < c.z + c.vel * 1.2);
     const bloquea = (o: Obstaculo) => o.tipo === "maquina" || o.tipo === "carro" || (o.tipo === "colchoneta" && !o.rampa);
     // Carriles tapados por algo largo (colchonetas) desde aquí hasta `z`.
-    const tapado = (l: number, z: number) => obs.some((o) => o.carril === l && bloquea(o) && o.z < z + 1 && o.z + largoDe(o) > c.z - 0.4);
-    const filas = obs.filter((o) => o.tipo !== "colchoneta").map((o) => o.z).sort((a, b) => a - b);
+    // Un carrito que viene rodando tapa su carril hasta que pasa.
+    const viene = (l: number) => obs.some((o) => o.carril === l && o.tipo === "carro" && o.vz && o.z - c.z < (c.vel - o.vz) * 1.6 && o.z + LARGO_CARRO > c.z - 0.6);
+    const tapado = (l: number, z: number) => viene(l) || obs.some((o) => o.carril === l && bloquea(o) && o.z < z + 1 && o.z + largoDe(o) > c.z - 0.4);
+    const filas = obs.filter((o) => o.tipo !== "colchoneta" && !o.vz).map((o) => o.z).sort((a, b) => a - b);
     const zf = filas.find((z) => z + 1.2 > c.z - 0.4);
     if (zf === undefined) return;
     const enFila = (l: number) => obs.filter((o) => o.carril === l && Math.abs(o.z - zf) < 0.6);
@@ -437,7 +440,7 @@ describe("Correle pa", () => {
     if (meta !== c.carril) {
       const paso = (c.carril + Math.sign(meta - c.carril)) as number;
       // Solo si el carril de al lado no está tapado aquí mismo.
-      if (Math.abs(c.x - c.carril) < 0.05 && !obs.some((o) => o.carril === paso && bloquea(o) && o.z < c.z + 0.4 && o.z + largoDe(o) > c.z - 0.4)) accion(c, meta < c.carril ? "izquierda" : "derecha");
+      if (Math.abs(c.x - c.carril) < 0.05 && !viene(paso) && !obs.some((o) => o.carril === paso && bloquea(o) && o.z < c.z + 0.4 && o.z + largoDe(o) > c.z - 0.4)) accion(c, meta < c.carril ? "izquierda" : "derecha");
       return;
     }
     const aqui = enFila(c.carril).find((o) => o.tipo === "banca" || o.tipo === "barra");
