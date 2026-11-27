@@ -361,7 +361,7 @@ private fun FilaFacturacion(
             ) {
                 Icon(Icons.AutoMirrored.Filled.ReceiptLong, contentDescription = null)
                 Column(modifier = Modifier.weight(1f)) {
-                    Text("Facturación en su web", style = MaterialTheme.typography.titleMedium)
+                    Text("Pagos en su web", style = MaterialTheme.typography.titleMedium)
                     Text(
                         if (activo) "Ve su periodo, su último pago, cuándo vence y cómo pagar."
                         else "Apagado: ve \"no tienes acceso a este apartado\".",

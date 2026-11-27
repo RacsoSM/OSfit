@@ -363,7 +363,7 @@ export const VENTANAS: readonly Ventana[] = [
     pintar: (d) => tarjetaRanking(d.ranking),
   },
   // Quejas y sugerencias (entrenador, 2026-11-24): un campo de texto que le llega como notificación.
-  { id: "facturacion", titulo: "Facturación", icono: "💳", grupo: "principal", pintar: (d) => ventanaFacturacion(d.cliente, d.hoy, d.configFacturacion ?? null) },
+  { id: "facturacion", titulo: "Pagos", icono: "💳", grupo: "principal", pintar: (d) => ventanaFacturacion(d.cliente, d.hoy, d.configFacturacion ?? null) },
   { id: "sugerencias", titulo: "Quejas y sugerencias", icono: "💬", grupo: "principal", pintar: () => ventanaSugerencias() },
   // El Arcade (entrenador, 2026-11-24), debajo de Quejas y sugerencias: reúne los minijuegos.
   { id: "arcade", titulo: "Arcade", icono: "🕹️", grupo: "principal", pintar: () => parteArcade.ya()?.ventanaArcade() ?? cargando() },
