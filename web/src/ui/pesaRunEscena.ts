@@ -249,15 +249,6 @@ function dibujarCielo(c: CanvasRenderingContext2D, v: Vista, zona: Zona): void {
   }
 }
 
-function neonTexto(c: CanvasRenderingContext2D, texto: string, x: number, y: number, tam: number, color: string): void {
-  c.save();
-  c.font = `900 ${tam}px system-ui, sans-serif`; c.textAlign = "center"; c.textBaseline = "middle";
-  c.globalAlpha = 0.35; c.strokeStyle = color; c.lineWidth = Math.max(2, tam * 0.22); c.lineJoin = "round";
-  c.strokeText(texto, x, y);
-  c.globalAlpha = 1; c.fillStyle = "#ffffff"; c.fillText(texto, x, y);
-  c.globalAlpha = 0.55; c.fillStyle = color; c.fillText(texto, x, y);
-  c.restore();
-}
 
 // ── Las paredes ──────────────────────────────────────────────────────────────
 
@@ -377,7 +368,12 @@ function neonPared(c: CanvasRenderingContext2D, v: Vista, x: number, lado: numbe
 
 // ── Lo que se ordena por distancia (utilería, arcos, obstáculos, batidos) ────
 
-export interface Cosa { z: number; pintar: () => void }
+/**
+ * Algo que se pinta ordenado por distancia. `orilla`: utilería del piso de madera, que siempre
+ * va a un lado de los carriles: se pinta antes que todo lo de los carriles (que puede taparla,
+ * pero ella a ellos no).
+ */
+export interface Cosa { z: number; pintar: () => void; orilla?: boolean }
 
 /** La utilería del piso de madera y el arco de cada zona, para ordenarse con lo demás. */
 export function cosasDeEscena(c: CanvasRenderingContext2D, v: Vista, reloj: number): Cosa[] {
@@ -391,8 +387,10 @@ export function cosasDeEscena(c: CanvasRenderingContext2D, v: Vista, reloj: numb
       if (azarFijo(sem * 1.7) > 0.8) continue;
       const tipo = UTILERIA[iz]![Math.floor(azarFijo(sem * 2.3) * UTILERIA[iz]!.length)]!;
       const z = z0 + 1.6 + azarFijo(sem * 4.1) * 1.6;
-      if (z < cerca || z > v.camZ + DETALLE) continue;
-      cosas.push({ z, pintar: () => pintarUtileria(c, v, tipo, lado, z, sem, reloj) });
+      // Solo la que va de la mancuerna en adelante: la que queda entre ella y la cámara se veía
+      // enorme en las esquinas, encima de los carriles.
+      if (z < v.camZ + CAM_ATRAS - 0.5 || z > v.camZ + DETALLE) continue;
+      cosas.push({ z, pintar: () => pintarUtileria(c, v, tipo, lado, z, sem, reloj), orilla: true });
     }
   }
   // Las guirnaldas, cada dos tramos.
@@ -416,8 +414,7 @@ function pintarArco(c: CanvasRenderingContext2D, v: Vista, z: number, n: number)
   quadFrente(c, v, -2.45, 2.45, 3.0, 3.06, z - 0.001, zn.neon);
   quadFrente(c, v, -2.45, 2.45, 3.44, 3.5, z - 0.001, zn.neon);
   for (const lado of [-1, 1]) quadFrente(c, v, lado * 2.35 - 0.04, lado * 2.35 + 0.04, 0.1, 2.95, z - 0.001, zn.neon);
-  const m = proyectar(v, 0, 3.25, z);
-  if (m.s > 4) neonTexto(c, `ZONA ${ZONAS[n]!.toUpperCase()}`, m.x, m.y, Math.max(5, m.s * 0.3), zn.neon);
+  textoEnFrente(c, v, -2.3, 2.3, 3.08, 3.42, z - 0.003, `ZONA ${ZONAS[n]!.toUpperCase()}`, zn.neon);
 }
 
 function pintarUtileria(c: CanvasRenderingContext2D, v: Vista, tipo: Utileria, lado: number, z: number, sem: number, reloj: number): void {
@@ -586,42 +583,69 @@ export function pintarBanca(c: CanvasRenderingContext2D, v: Vista, o: Obstaculo)
  */
 const CAPAS = [["#2a5fc4", "#3a74dd", "#1f4a9c"], ["#2f68d1", "#4280e8", "#2352a8"], ["#d23a4c", "#e65264", "#a52c3b"], ["#2f68d1", "#4a8af0", "#2352a8"]] as const;
 
-export function pintarColchonetas(c: CanvasRenderingContext2D, v: Vista, o: Obstaculo): void {
+/**
+ * Un tramo de una pila de colchonetas, de `za` a `zb` (dentro de su parte maciza). Las pilas se
+ * pintan por tramos cortos, cada uno ordenado por su distancia: así lo que va a un lado o detrás
+ * se tapa bien (entrenador, 2026-11-27: "objetos se superponen con otros"). El frente con sus
+ * asas y el logo va solo en el primer tramo.
+ */
+export function pintarColchonetas(c: CanvasRenderingContext2D, v: Vista, o: Obstaculo, za: number, zb: number): void {
   const x = o.carril * CARRIL, x0 = x - 0.7, x1 = x + 0.7;
-  const z0 = o.z + (o.rampa ? RAMPA : 0), z1 = o.z + largoDe(o);
+  const z0 = o.z + (o.rampa ? RAMPA : 0);
   const capa = ALTO_COLCHONETA / CAPAS.length;
-  quadPiso(c, v, x0 - 0.1, x1 + 0.1, 0.004, Math.max(o.z, v.camZ + 0.5), z1 + 0.3, "rgba(0, 0, 0, 0.3)");
-  if (z1 > v.camZ + 0.4) {
-    // Un solo bloque azul y, encima de sus caras, la franja de la colchoneta roja.
-    caja3d(c, v, x0, x1, 0, ALTO_COLCHONETA, z0, z1, CAPAS[0][0], CAPAS[3][1], CAPAS[0][2]);
-    const zc = Math.max(z0, v.camZ + 0.4);
-    const xl0 = x0 > v.camX ? x0 : x1 < v.camX ? x1 : null;
-    if (xl0 !== null) {
-      quadPared(c, v, xl0, capa * 2, capa * 3, zc, z1, CAPAS[2][2]);
-      for (const k of [1, 3]) quadPared(c, v, xl0, k * capa - 0.02, k * capa + 0.02, zc, z1, "rgba(0, 0, 0, 0.25)");
-    }
-    if (z0 > v.camZ + 0.4) {
-      quadFrente(c, v, x0, x1, capa * 2, capa * 3, z0 - 0.001, CAPAS[2][0]);
-      for (const k of [1, 3]) quadFrente(c, v, x0, x1, k * capa - 0.02, k * capa + 0.02, z0 - 0.001, "rgba(0, 0, 0, 0.25)");
-    }
-    // Costuras de la tapa y del costado, cada 3 m.
-    for (let zs = Math.ceil(zc / 3) * 3; zs < Math.min(z1 - 0.2, v.camZ + DETALLE); zs += 3) {
-      quadPiso(c, v, x0 + 0.05, x1 - 0.05, ALTO_COLCHONETA + 0.001, zs, zs + 0.05, "rgba(20, 40, 90, 0.45)");
-      const xl = x0 > v.camX ? x0 : x1 < v.camX ? x1 : null;
-      if (xl !== null) quadPared(c, v, xl, 0.05, ALTO_COLCHONETA - 0.05, zs, zs + 0.04, "rgba(0, 0, 0, 0.25)");
-    }
-    quadPiso(c, v, x0 + 0.08, x1 - 0.08, ALTO_COLCHONETA + 0.002, zc, z1 - 0.08, "rgba(255, 255, 255, 0.06)");
-    if (z0 > v.camZ + 0.4) {
-      // Las asas y el logo del frente.
-      for (let k = 0; k < CAPAS.length; k++) for (const s of [-1, 1]) quadFrente(c, v, x + s * 0.4 - 0.1, x + s * 0.4 + 0.1, k * capa + capa * 0.4, k * capa + capa * 0.6, z0 - 0.002, "rgba(0, 0, 0, 0.4)");
-      const p = proyectar(v, x, capa * 2.5, z0);
-      if (p.s > 12) {
-        c.fillStyle = "#ffffff"; c.font = `900 ${Math.round(p.s * 0.2)}px system-ui, sans-serif`;
-        c.textAlign = "center"; c.textBaseline = "middle"; c.fillText("OSFIT", p.x, p.y);
-      }
-    }
+  if (zb <= v.camZ + 0.4) return;
+  const zc = Math.max(za, v.camZ + 0.4);
+  quadPiso(c, v, x0 - 0.1, x1 + 0.1, 0.004, Math.max(za, v.camZ + 0.5), zb + 0.05, "rgba(0, 0, 0, 0.3)");
+  // Un bloque azul y, encima de sus caras, la franja de la colchoneta roja.
+  caja3d(c, v, x0, x1, 0, ALTO_COLCHONETA, za, zb, CAPAS[0][0], CAPAS[3][1], CAPAS[0][2]);
+  const xl0 = x0 > v.camX ? x0 : x1 < v.camX ? x1 : null;
+  if (xl0 !== null) {
+    quadPared(c, v, xl0, capa * 2, capa * 3, zc, zb, CAPAS[2][2]);
+    for (const k of [1, 3]) quadPared(c, v, xl0, k * capa - 0.02, k * capa + 0.02, zc, zb, "rgba(0, 0, 0, 0.25)");
   }
-  if (o.rampa) pintarCuna(c, v, o, x0, x1);
+  const primero = Math.abs(za - z0) < 0.01 && za > v.camZ + 0.4;
+  if (primero) {
+    quadFrente(c, v, x0, x1, capa * 2, capa * 3, za - 0.001, CAPAS[2][0]);
+    for (const k of [1, 3]) quadFrente(c, v, x0, x1, k * capa - 0.02, k * capa + 0.02, za - 0.001, "rgba(0, 0, 0, 0.25)");
+  }
+  // Costuras de la tapa y del costado, cada 3 m (las del tramo).
+  for (let zs = Math.ceil(zc / 3) * 3; zs < Math.min(zb - 0.2, v.camZ + DETALLE); zs += 3) {
+    quadPiso(c, v, x0 + 0.05, x1 - 0.05, ALTO_COLCHONETA + 0.001, zs, zs + 0.05, "rgba(20, 40, 90, 0.45)");
+    if (xl0 !== null) quadPared(c, v, xl0, 0.05, ALTO_COLCHONETA - 0.05, zs, zs + 0.04, "rgba(0, 0, 0, 0.25)");
+  }
+  quadPiso(c, v, x0 + 0.08, x1 - 0.08, ALTO_COLCHONETA + 0.002, zc, zb, "rgba(255, 255, 255, 0.06)");
+  if (primero) {
+    // Las asas y el logo del frente.
+    for (let k = 0; k < CAPAS.length; k++) for (const s of [-1, 1]) quadFrente(c, v, x + s * 0.4 - 0.1, x + s * 0.4 + 0.1, k * capa + capa * 0.4, k * capa + capa * 0.6, za - 0.002, "rgba(0, 0, 0, 0.4)");
+    textoEnFrente(c, v, x - 0.3, x + 0.3, capa * 2.1, capa * 2.9, za - 0.003, "OSFIT", "#ffffff");
+  }
+}
+
+/** La cuña de una pila (si trae): se ordena aparte, por su orilla del fondo. */
+export function pintarCunaDe(c: CanvasRenderingContext2D, v: Vista, o: Obstaculo): void {
+  const x = o.carril * CARRIL;
+  pintarCuna(c, v, o, x - 0.7, x + 0.7);
+}
+
+/**
+ * Un texto pintado en un frente (un plano de z fija), del tamaño de su recuadro ya en
+ * perspectiva: así no se sale ni se ve chueco (entrenador, 2026-11-27: "la máquina expendedora
+ * su título se ve dibujado raro").
+ */
+export function textoEnFrente(c: CanvasRenderingContext2D, v: Vista, x0: number, x1: number, y0: number, y1: number, z: number, texto: string, color: string, fuente = "900 {}px system-ui, sans-serif"): void {
+  if (z < v.camZ + 0.5) return;
+  const ym = (y0 + y1) / 2;
+  const izq = proyectar(v, x0, ym, z), der = proyectar(v, x1, ym, z);
+  const arriba = proyectar(v, (x0 + x1) / 2, y1, z), abajo = proyectar(v, (x0 + x1) / 2, y0, z);
+  const ancho = der.x - izq.x, alto = abajo.y - arriba.y;
+  // Cabe a lo alto (72 %) y a lo ancho (90 %).
+  const tam = Math.min(alto * 0.72, (ancho * 0.9) / (texto.length * 0.62));
+  if (tam < 5) return;
+  c.save();
+  c.font = fuente.replace("{}", String(Math.round(tam)));
+  c.fillStyle = color; c.textAlign = "center"; c.textBaseline = "middle";
+  c.fillText(texto, (izq.x + der.x) / 2, (arriba.y + abajo.y) / 2 + tam * 0.04, ancho * 0.92);
+  c.restore();
 }
 
 /** La cuña: una colchoneta en rampa, amarilla, con flechas hacia arriba. */
@@ -727,11 +751,7 @@ export function pintarMaquina(c: CanvasRenderingContext2D, v: Vista, o: Obstacul
   const F = (a: number, b: number, y0: number, y1: number, col: string) => quadFrente(c, v, x + a, x + b, y0, y1, z0 - 0.002, col);
   // El letrero iluminado de arriba.
   F(-0.55, 0.55, 1.95, 2.22, "#fff1f8");
-  const t = proyectar(v, x, 2.085, z0);
-  if (t.s > 9) {
-    c.fillStyle = "#d9327e"; c.font = `900 ${Math.round(t.s * 0.17)}px system-ui, sans-serif`;
-    c.textAlign = "center"; c.textBaseline = "middle"; c.fillText("PROTEÍNA", t.x, t.y, t.s * 1.0);
-  }
+  textoEnFrente(c, v, x - 0.52, x + 0.52, 1.97, 2.2, z0 - 0.003, "PROTEÍNA", "#d9327e");
   // La vitrina: marco, fondo iluminado y tres repisas de batidos de colores.
   F(-0.55, 0.25, 0.62, 1.88, "#2a1b24");
   F(-0.51, 0.21, 0.66, 1.84, "#bfe6ff");
@@ -752,8 +772,7 @@ export function pintarMaquina(c: CanvasRenderingContext2D, v: Vista, o: Obstacul
   // El panel: pantallita, teclado y ranura.
   F(0.29, 0.55, 0.62, 1.88, "#b8296b");
   F(0.32, 0.52, 1.6, 1.78, "#1b2a1f");
-  const pv = proyectar(v, x + 0.42, 1.69, z0);
-  if (pv.s > 14) { c.fillStyle = "#7dff9a"; c.font = `800 ${Math.round(pv.s * 0.08)}px ui-monospace, monospace`; c.textAlign = "center"; c.textBaseline = "middle"; c.fillText("$25", pv.x, pv.y); }
+  textoEnFrente(c, v, x + 0.33, x + 0.51, 1.62, 1.76, z0 - 0.003, "$25", "#7dff9a", "800 {}px ui-monospace, monospace");
   for (let f = 0; f < 3; f++) for (let k = 0; k < 2; k++) F(0.34 + k * 0.1, 0.4 + k * 0.1, 1.2 + f * 0.11, 1.27 + f * 0.11, "#f6e3ec");
   F(0.4, 0.44, 0.88, 1.08, "#1d1d22");
   // La bandeja de salida.

@@ -1,5 +1,5 @@
 import {
-  PUNTOS_BATIDO, ZONAS, accion, avanzar, choca, enAire, largoDe, metros, nivel, nuevaCarrera, puntos,
+  PUNTOS_BATIDO, RAMPA, ZONAS, accion, avanzar, choca, enAire, largoDe, metros, nivel, nuevaCarrera, puntos,
   type Accion, type Carrera,
 } from "../pesaRun";
 import { conPartida, htmlLista, type ApiJuego, type EnvioPartida, type TablaDiscos } from "./juegoDiscos";
@@ -7,7 +7,7 @@ import { escapar } from "./tarjetaDia";
 import { ajustarMarcoJuego, pintarSeguro, prepararMarcoJuego, vigilarMarcoJuego, densidadJuego } from "./marcoJuego";
 import { marcasDe } from "./marcasRecords";
 import { CAM_ALTO, CAM_ATRAS, CARRIL, ORILLA, crearVista, niebla, proyectar } from "./pesaRun3d";
-import { cosasDeEscena, lineasVelocidad, pintarBanca, pintarBarra, pintarBatido, pintarColchonetas, pintarCarro, pintarFosa, pintarMaquina, pintarPasillo, type Cosa } from "./pesaRunEscena";
+import { cosasDeEscena, lineasVelocidad, pintarBanca, pintarBarra, pintarBatido, pintarColchonetas, pintarCarro, pintarCunaDe, pintarFosa, DETALLE, pintarMaquina, pintarPasillo, type Cosa } from "./pesaRunEscena";
 import { pintarMancuerna, type AnimMancuerna, type Gesto } from "./pesaRunMancuerna";
 
 /**
@@ -376,15 +376,28 @@ function dibujar(): void {
   const cosas: Cosa[] = cosasDeEscena(c, v, reloj);
   for (const o of carrera.obstaculos) {
     if (o.z > v.lejos || o.z + largoDe(o) < v.camZ + 0.5) continue;
-    // Las colchonetas se ordenan por su orilla del fondo: lo que va encima o a su lado (la
-    // mancuerna, los batidos) se pinta después, por encima. La fosa es piso: va antes que todo.
-    const orden = o.tipo === "fosa" ? Number.POSITIVE_INFINITY : o.tipo === "colchoneta" ? o.z + largoDe(o) : o.z;
+    if (o.tipo === "colchoneta") {
+      // Las pilas, por tramos de 3 m: cada tramo se ordena por su orilla del fondo, así lo que
+      // va encima (la mancuerna, los batidos) se pinta después, y lo que va a un lado o detrás
+      // queda bien tapado por los tramos de enfrente. La cuña, aparte.
+      const ini = o.z + (o.rampa ? RAMPA : 0), fin = Math.min(o.z + largoDe(o), v.lejos);
+      if (o.rampa && o.z < v.lejos) cosas.push({ z: ini, pintar: () => { c.globalAlpha = niebla(v, o.z); pintarCunaDe(c, v, o); c.globalAlpha = 1; } });
+      // Tramos de 4 m cerca (donde se nota el orden); de ahí al fondo, uno solo.
+      const corte = v.camZ + DETALLE;
+      for (let za = ini; za < fin - 0.01; za = za < corte ? za + 4 : fin) {
+        const zb = za < corte ? Math.min(fin, za + 4) : fin;
+        if (zb < v.camZ + 0.5) continue;
+        cosas.push({ z: zb, pintar: () => { c.globalAlpha = niebla(v, za); pintarColchonetas(c, v, o, za, zb); c.globalAlpha = 1; } });
+      }
+      continue;
+    }
+    // La fosa es piso: va antes que todo.
+    const orden = o.tipo === "fosa" ? Number.POSITIVE_INFINITY : o.z;
     // Lo que está encima de unas colchonetas se pinta igual, con la cámara bajada esa altura.
     const vo = o.base ? { ...v, camY: v.camY - o.base } : v;
     cosas.push({ z: orden, pintar: () => {
       c.globalAlpha = o.tipo === "fosa" ? 1 : niebla(v, o.z);
       if (o.tipo === "fosa") pintarFosa(c, v, o, pilas);
-      else if (o.tipo === "colchoneta") pintarColchonetas(c, v, o);
       else if (o.tipo === "banca") pintarBanca(c, vo, o);
       else if (o.tipo === "barra") pintarBarra(c, vo, o);
       else if (o.tipo === "carro") pintarCarro(c, v, o, reloj);
@@ -398,7 +411,8 @@ function dibujar(): void {
   }
   const anim: AnimMancuerna = { reloj, gesto: gestoActual(), aterrizaje, suda: nivel(metros(carrera)) >= 3 };
   cosas.push({ z: carrera.z + 0.01, pintar: () => pintarMancuerna(c, v, carrera, anim) });
-  cosas.sort((a, b) => b.z - a.z);
+  // Primero la utilería de las orillas (de lejos a cerca), luego lo de los carriles.
+  cosas.sort((a, b) => (a.orilla === b.orilla ? b.z - a.z : a.orilla ? -1 : 1));
   for (const cosa of cosas) cosa.pintar();
 
   for (const p of particulas) {
