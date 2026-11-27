@@ -81,10 +81,8 @@ const CARTELES = [["NO PAIN", "NO GAIN"], ["LEG", "DAY"], ["OS", "FIT"], ["1 REP
 export function pintarPasillo(c: CanvasRenderingContext2D, v: Vista, z: number, reloj: number, fosas: readonly [number, number][] = []): void {
   // Donde hay fosa, las losetas y las líneas del piso quedan tapadas: no se pintan.
   const enFosa = (z0: number, z1: number) => fosas.some(([a, b]) => z0 >= a && z1 <= b);
-  const { W } = v;
   const zona = COLORES_ZONA[zonaDe(z + 40)]!;
   const cerca = v.camZ + 0.3, lejos = v.lejos;
-  const P = (x: number, y: number, zz: number) => proyectar(v, x, y, zz);
   pintarCielo(c, v, zona, zonaDe(z + 40), reloj);
   // Lo de afuera del gimnasio, distinto en cada zona (detrás y por encima de las paredes).
   pintarAlrededores(c, v, reloj);
@@ -163,12 +161,8 @@ export function pintarPasillo(c: CanvasRenderingContext2D, v: Vista, z: number, 
     quadPared(c, v, x, 0.02, 0.09, cerca, lejosPiso, zona.neon);
   }
 
-  // Neblina al fondo, del color del horizonte: tapa lo que va apareciendo.
-  const nb = P(0, 0, v.camZ + (lejos - v.camZ) * 0.55);
-  const horizonte = zona.cielo[1];
-  const niebla = c.createLinearGradient(0, v.hz, 0, nb.y);
-  niebla.addColorStop(0, horizonte); niebla.addColorStop(1, horizonte + "00");
-  c.fillStyle = niebla; c.fillRect(0, v.hz - 1, W, nb.y - v.hz + 1);
+  // (Sin banda de neblina a todo lo ancho: se veía como una luz rosa sobre las paredes
+  // —entrenador, 2026-11-27—. Lo que aparece al fondo ya se desvanece solo con `niebla`.)
 }
 
 /** El cielo de noche: degradado de la zona, estrellas, luna y la ciudad en el horizonte. */
